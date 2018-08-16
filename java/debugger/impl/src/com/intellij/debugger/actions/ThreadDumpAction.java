@@ -22,6 +22,7 @@ import com.intellij.util.SmartList;
 import com.intellij.xdebugger.XDebugSession;
 import com.sun.jdi.*;
 import gnu.trove.TIntObjectHashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,7 +31,8 @@ import java.util.Map;
 
 public class ThreadDumpAction extends AnAction implements AnAction.TransparentUpdate {
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) {
       return;
@@ -41,6 +43,7 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
     if(session != null && session.isAttached()) {
       final DebugProcessImpl process = context.getDebugProcess();
       process.getManagerThread().invoke(new DebuggerCommandImpl() {
+        @Override
         protected void action() {
           final VirtualMachineProxyImpl vm = process.getVirtualMachineProxy();
           vm.suspend();
@@ -120,7 +123,7 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
       }
 
       buffer.append("\n  java.lang.Thread.State: ").append(threadState.getJavaThreadState());
-      
+
       try {
         if (vmProxy.canGetOwnedMonitorInfo() && vmProxy.canGetMonitorInfo()) {
           List<ObjectReference> list = threadReference.ownedMonitors();
@@ -281,7 +284,8 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
   }
 
 
-  public void update(AnActionEvent e){
+  @Override
+  public void update(@NotNull AnActionEvent e){
     Presentation presentation = e.getPresentation();
     Project project = e.getProject();
     if (project == null) {

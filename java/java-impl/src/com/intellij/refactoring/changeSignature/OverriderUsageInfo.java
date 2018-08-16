@@ -40,6 +40,7 @@ public class OverriderUsageInfo extends UsageInfo implements OverriderMethodUsag
     myIsOriginalOverrider = isOriginalOverrider;
   }
 
+  @Override
   public PsiMethod getBaseMethod() {
     return myBaseMethod;
   }

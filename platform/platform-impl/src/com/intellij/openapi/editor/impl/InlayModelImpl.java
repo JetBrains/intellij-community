@@ -4,10 +4,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.EditorCustomElementRenderer;
-import com.intellij.openapi.editor.Inlay;
-import com.intellij.openapi.editor.InlayModel;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.PrioritizedInternalDocumentListener;
@@ -33,10 +30,10 @@ public class InlayModelImpl implements InlayModel, Disposable {
 
   private final EditorImpl myEditor;
   private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
-  
+
   final List<InlayImpl> myInlaysInvalidatedOnMove = new ArrayList<>();
   final RangeMarkerTree<InlayImpl> myInlayTree;
-  
+
   boolean myMoveInProgress;
   private List<Inlay> myInlaysAtCaret;
 
@@ -87,7 +84,7 @@ public class InlayModelImpl implements InlayModel, Disposable {
       }
 
       @Override
-      public void beforeDocumentChange(DocumentEvent event) {
+      public void beforeDocumentChange(@NotNull DocumentEvent event) {
         if (myEditor.getDocument().isInBulkUpdate()) return;
         int offset = event.getOffset();
         if (event.getOldLength() == 0 && offset == myEditor.getCaretModel().getOffset()) {
@@ -96,7 +93,7 @@ public class InlayModelImpl implements InlayModel, Disposable {
           if (inlayCount > 0) {
             VisualPosition inlaysStartPosition = myEditor.offsetToVisualPosition(offset, false, false);
             VisualPosition caretPosition = myEditor.getCaretModel().getVisualPosition();
-            if (inlaysStartPosition.line == caretPosition.line && 
+            if (inlaysStartPosition.line == caretPosition.line &&
                 caretPosition.column >= inlaysStartPosition.column && caretPosition.column <= inlaysStartPosition.column + inlayCount) {
               myInlaysAtCaret = inlays;
               for (int i = 0; i < inlayCount; i++) {
@@ -108,7 +105,7 @@ public class InlayModelImpl implements InlayModel, Disposable {
       }
 
       @Override
-      public void documentChanged(DocumentEvent event) {
+      public void documentChanged(@NotNull DocumentEvent event) {
         if (myInlaysAtCaret != null) {
           for (Inlay inlay : myInlaysAtCaret) {
             ((InlayImpl)inlay).setStickingToRight(inlay.isRelatedToPrecedingText());
@@ -118,7 +115,7 @@ public class InlayModelImpl implements InlayModel, Disposable {
       }
 
       @Override
-      public void moveTextHappened(int start, int end, int base) {
+      public void moveTextHappened(@NotNull Document document, int start, int end, int base) {
         for (InlayImpl inlay : myInlaysInvalidatedOnMove) {
           notifyRemoved(inlay);
         }
@@ -184,7 +181,7 @@ public class InlayModelImpl implements InlayModel, Disposable {
     int inlayCount = getInlineElementsInRange(offset, offset).size();
     if (inlayCount == 0) return false;
     VisualPosition inlayStartPosition = myEditor.offsetToVisualPosition(offset, false, false);
-    return visualPosition.line == inlayStartPosition.line && 
+    return visualPosition.line == inlayStartPosition.line &&
            visualPosition.column >= inlayStartPosition.column && visualPosition.column < inlayStartPosition.column + inlayCount;
   }
 

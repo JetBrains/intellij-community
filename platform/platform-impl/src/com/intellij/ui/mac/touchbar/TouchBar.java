@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.mac.foundation.ID;
@@ -24,6 +23,7 @@ class TouchBar implements NSTLibrary.ItemCreator {
   private final ItemListener myItemListener;
   private final TBItemButton myCustomEsc;
   private final @NotNull UpdateTimerWrapper myUpdateTimer = new UpdateTimerWrapper(500);
+  private long myStartShowNs = 0;
 
   private ID myNativePeer;        // java wrapper holds native object
   private String myDefaultOptionalContextName;
@@ -225,6 +225,7 @@ class TouchBar implements NSTLibrary.ItemCreator {
   void setPrincipal(@NotNull TBItem item) { NST.setPrincipal(myNativePeer, item.myUid); }
 
   void onBeforeShow() {
+    myStartShowNs = System.nanoTime();
     updateActionItems();
     myUpdateTimer.start();
   }
@@ -235,20 +236,18 @@ class TouchBar implements NSTLibrary.ItemCreator {
   void forEachDeep(Consumer<? super TBItem> proc) { myItems.forEachDeep(proc); }
 
   void updateActionItems() {
+    // When user types text and presses modifier keys it causes to show alternative touchbar layouts, some of them are visible less than second.
+    // To avoid unnecessary slow-update invocations for such bars we always try to use cached presentations for the first 500 ms (for slow actions only)
+    final long elapsedFromStartShowNs = System.nanoTime() - myStartShowNs;
+    final boolean forceUseCached = elapsedFromStartShowNs < 500*1000000l;
+
     final boolean[] layoutChanged = new boolean[]{false};
     forEachDeep(tbitem->{
       if (!(tbitem instanceof TBItemAnActionButton))
         return;
 
       final TBItemAnActionButton item = (TBItemAnActionButton)tbitem;
-      final Presentation presentation = item.getAnAction().getTemplatePresentation().clone();
-
-      try {
-        item.updateAnAction(presentation);
-      } catch (IndexNotReadyException e1) {
-        presentation.setEnabled(false);
-        presentation.setVisible(false);
-      }
+      final @NotNull Presentation presentation = item.updateAnAction(forceUseCached);
 
       final boolean itemVisibilityChanged = item.updateVisibility(presentation);
       if (itemVisibilityChanged)

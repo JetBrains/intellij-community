@@ -96,7 +96,7 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
   }
 
   @Override
-  public Object getData(final String dataId) {
+  public Object getData(@NotNull final String dataId) {
     if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
       return new ResourceBundleAsVirtualFile(myResourceBundle);
     } else if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {

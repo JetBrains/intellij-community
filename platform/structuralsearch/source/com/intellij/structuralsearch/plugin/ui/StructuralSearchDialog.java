@@ -146,7 +146,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     final Document document = profile.createDocument(searchContext.getProject(), myFileType, myDialect, text);
     document.addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(final DocumentEvent event) {
+      public void documentChanged(@NotNull final DocumentEvent event) {
         initiateValidation();
       }
     });
@@ -437,7 +437,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   protected JComponent createNorthPanel() {
     final DefaultActionGroup historyActionGroup = new DefaultActionGroup(new AnAction(getShowHistoryIcon()) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         final Object source = e.getInputEvent().getSource();
         if (!(source instanceof Component)) return;
         JBPopupFactory.getInstance()
@@ -500,13 +500,13 @@ public class StructuralSearchDialog extends DialogWrapper {
       new AnAction(SSRBundle.message("save.template.text.button")) {
 
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           ConfigurationManager.getInstance(getProject()).showSaveTemplateAsDialog(getConfiguration());
         }
       },
       new AnAction(SSRBundle.message("copy.existing.template.button")) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           final SelectTemplateDialog dialog = new SelectTemplateDialog(mySearchContext.getProject(), false, isReplaceDialog());
           if (!dialog.showAndGet()) {
             return;
@@ -534,7 +534,7 @@ public class StructuralSearchDialog extends DialogWrapper {
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(myFilterButtonEnabled);
       }
     };

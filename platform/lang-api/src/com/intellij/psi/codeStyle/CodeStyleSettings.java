@@ -92,6 +92,9 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
       for (final CodeStyleSettingsProvider provider : codeStyleSettingsProviders) {
         addCustomSettings(provider.createCustomSettings(this));
       }
+      for (CodeStyleSettingsProvider provider : LanguageCodeStyleSettingsProvider.getSettingsPagesProviders()) {
+        addCustomSettings(provider.createCustomSettings(this));
+      }
     }
   }
 
@@ -185,7 +188,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
       }
 
       myCommonSettingsManager = from.myCommonSettingsManager.clone(this);
-      
+
       myRepeatAnnotations.clear();
       myRepeatAnnotations.addAll(from.myRepeatAnnotations);
     }
@@ -195,6 +198,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
     CommonCodeStyleSettings.copyPublicFields(from, this);
     CommonCodeStyleSettings.copyPublicFields(from.OTHER_INDENT_OPTIONS, OTHER_INDENT_OPTIONS);
     mySoftMargins.setValues(from.getDefaultSoftMargins());
+    myExcludedFiles.setDescriptors(from.getExcludedFiles().getDescriptors());
     copyCustomSettingsFrom(from);
   }
 
@@ -374,7 +378,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   public final PackageEntryTable IMPORT_LAYOUT_TABLE = new PackageEntryTable();
-  
+
   @Override
   @Deprecated
   public boolean isLayoutStaticImportsSeparately() {
@@ -888,7 +892,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
         }
       }
     }
-    
+
     myCommonSettingsManager.writeExternal(element);
     if (!myRepeatAnnotations.isEmpty()) {
       Element annos = new Element(REPEAT_ANNOTATIONS);
@@ -909,6 +913,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
     return new IndentOptions();
   }
 
+  @Override
   @Nullable
   public IndentOptions getIndentOptions() {
     return OTHER_INDENT_OPTIONS;
@@ -1012,7 +1017,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
           }
         }
       }
-      
+
       Language language = LanguageUtil.getLanguageForPsi(file.getProject(), file.getVirtualFile());
       if (language != null) {
         IndentOptions options = getIndentOptions(language);
@@ -1026,7 +1031,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
     else
       return OTHER_INDENT_OPTIONS;
   }
-  
+
   private static boolean isFileFullyCoveredByRange(@NotNull PsiFile file, @Nullable TextRange formatRange) {
     return
       formatRange != null &&
@@ -1042,7 +1047,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
               ", use tabs=" + options.USE_TAB_CHARACTER +
               ", tab size=" + options.TAB_SIZE);
   }
-  
+
   @Nullable
   private IndentOptions getLanguageIndentOptions(@Nullable FileType fileType) {
     if (!(fileType instanceof LanguageFileType)) return null;
@@ -1199,14 +1204,14 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
       }
     }
   }
-  
+
   private static IndentOptions getFileTypeIndentOptions(FileTypeIndentOptionsProvider provider) {
     try {
       return provider.createIndentOptions();
     }
     catch (AbstractMethodError error) {
       LOG.error("Plugin uses obsolete API.", new ExtensionException(provider.getClass()));
-      return new IndentOptions(); 
+      return new IndentOptions();
     }
   }
 
@@ -1299,7 +1304,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
    * in language's CommonCodeStyleSettings instance.
    *
    * @param language The language to get right margin for or null if root (default) right margin is requested.
-   * @return The right margin for the language if it is defined (not null) and its settings contain non-negative margin. Root (default) 
+   * @return The right margin for the language if it is defined (not null) and its settings contain non-negative margin. Root (default)
    *         margin otherwise (CodeStyleSettings.RIGHT_MARGIN).
    */
   public int getRightMargin(@Nullable Language language) {
@@ -1314,7 +1319,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
 
   /**
    * Assigns another right margin for the language or (if it is null) to root (default) margin.
-   * 
+   *
    * @param language The language to assign the right margin to or null if root (default) right margin is to be changed.
    * @param rightMargin New right margin.
    */
@@ -1389,6 +1394,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
     if (!(obj instanceof CodeStyleSettings)) return false;
     if (!ReflectionUtil.comparePublicNonFinalFields(this, obj)) return false;
     if (!mySoftMargins.equals(((CodeStyleSettings)obj).mySoftMargins)) return false;
+    if (!myExcludedFiles.equals(((CodeStyleSettings)obj).getExcludedFiles())) return false;
     if (!OTHER_INDENT_OPTIONS.equals(((CodeStyleSettings)obj).OTHER_INDENT_OPTIONS)) return false;
     if (!myCommonSettingsManager.equals(((CodeStyleSettings)obj).myCommonSettingsManager)) return false;
     for (CustomCodeStyleSettings customSettings : myCustomSettings.values()) {

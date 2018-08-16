@@ -15,9 +15,9 @@
  */
 package com.intellij.cvsSupport2.javacvsImpl.io;
 
+import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.javacvsImpl.ProjectContentInfoProvider;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
-import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.netbeans.lib.cvsclient.IConnectionStreams;
@@ -42,6 +42,7 @@ public class LocalFileReaderBasedOnVFS implements ILocalFileReader {
     myProjectContentInfoProvider = projectContentInfoProvider;
   }
 
+  @Override
   public void transmitTextFile(FileObject fileObject,
                                IConnectionStreams connectionStreams,
                                ICvsFileSystem cvsFileSystem) throws IOException {
@@ -50,6 +51,7 @@ public class LocalFileReaderBasedOnVFS implements ILocalFileReader {
                                        cvsFileSystem);
   }
 
+  @Override
   public void transmitBinaryFile(FileObject fileObject,
                                  IConnectionStreams connectionStreams,
                                  ICvsFileSystem cvsFileSystem) throws IOException {
@@ -58,6 +60,7 @@ public class LocalFileReaderBasedOnVFS implements ILocalFileReader {
                                          cvsFileSystem);
   }
 
+  @Override
   public boolean exists(AbstractFileObject fileObject, ICvsFileSystem cvsFileSystem) {
     return getVirtualFile(fileObject, cvsFileSystem) != null;
   }
@@ -66,12 +69,14 @@ public class LocalFileReaderBasedOnVFS implements ILocalFileReader {
     return CvsVfsUtil.findFileByIoFile(cvsFileSystem.getLocalFileSystem().getFile(fileObject));
   }
 
+  @Override
   public boolean isWritable(FileObject fileObject, ICvsFileSystem cvsFileSystem) {
     VirtualFile virtualFile = getVirtualFile(fileObject, cvsFileSystem);
     if (virtualFile == null) return false;
     return CvsVfsUtil.isWritable(virtualFile);
   }
 
+  @Override
   public void listFilesAndDirectories(DirectoryObject directoryObject,
                                       Collection<String> fileNames,
                                       Collection<String> directoryNames,

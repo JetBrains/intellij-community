@@ -84,7 +84,7 @@ public class XmlCompletionContributor extends CompletionContributor {
     extend(CompletionType.BASIC, psiElement().inside(XmlPatterns.xmlFile()), new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
-                                    ProcessingContext context,
+                                    @NotNull ProcessingContext context,
                                     @NotNull CompletionResultSet result) {
         PsiElement position = parameters.getPosition();
         IElementType type = position.getNode().getElementType();
@@ -109,7 +109,7 @@ public class XmlCompletionContributor extends CompletionContributor {
            new CompletionProvider<CompletionParameters>() {
              @Override
              protected void addCompletions(@NotNull CompletionParameters parameters,
-                                           ProcessingContext context,
+                                           @NotNull ProcessingContext context,
                                            @NotNull final CompletionResultSet result) {
                final PsiElement position = parameters.getPosition();
                if (!position.getLanguage().isKindOf(XMLLanguage.INSTANCE)) {
@@ -143,7 +143,7 @@ public class XmlCompletionContributor extends CompletionContributor {
            new CompletionProvider<CompletionParameters>() {
              @Override
              protected void addCompletions(@NotNull CompletionParameters parameters,
-                                           ProcessingContext context,
+                                           @NotNull ProcessingContext context,
                                            @NotNull CompletionResultSet result) {
                XmlTag tag = PsiTreeUtil.getParentOfType(parameters.getPosition(), XmlTag.class, false);
                if (tag != null && !hasEnumerationReference(parameters, result)) {

@@ -34,18 +34,22 @@ public class ArrayElementDescriptorImpl extends ValueDescriptorImpl implements A
     setLvalue(true);
   }
 
+  @Override
   public int getIndex() {
     return myIndex;
   }
 
+  @Override
   public ArrayReference getArray() {
     return myArray;
   }
 
+  @Override
   public String getName() {
     return String.valueOf(myIndex);
   }
 
+  @Override
   public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
     return getArrayElement(myArray, myIndex);
   }
@@ -59,6 +63,7 @@ public class ArrayElementDescriptorImpl extends ValueDescriptorImpl implements A
     }
   }
 
+  @Override
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
     PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myProject).getElementFactory();
     try {
@@ -86,6 +91,7 @@ public class ArrayElementDescriptorImpl extends ValueDescriptorImpl implements A
           final ArrayType arrType = (ArrayType)array.referenceType();
           final DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(getProject()).getContext();
           set(expression, callback, debuggerContext, new SetValueRunnable() {
+            @Override
             public void setValue(EvaluationContextImpl evaluationContext, Value newValue)
               throws ClassNotLoadedException, InvalidTypeException, EvaluateException {
               array.setValue(elementDescriptor.getIndex(), preprocessValue(evaluationContext, newValue, getLType()));

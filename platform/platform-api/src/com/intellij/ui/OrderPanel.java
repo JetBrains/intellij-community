@@ -60,6 +60,7 @@ public abstract class OrderPanel<T> extends JPanel {
     myEntryTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     myEntryTable.registerKeyboardAction(
       new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           if (getCheckboxColumn() == -1) return;
 
@@ -220,6 +221,7 @@ public abstract class OrderPanel<T> extends JPanel {
       return getColumnCount() - 2;
     }
 
+    @Override
     public String getColumnName(int column) {
       if (column == getEntryColumn()) {
         return "";
@@ -230,6 +232,7 @@ public abstract class OrderPanel<T> extends JPanel {
       return null;
     }
 
+    @Override
     public Class getColumnClass(int column) {
       if (column == getEntryColumn()) {
         return myEntryClass;
@@ -240,10 +243,12 @@ public abstract class OrderPanel<T> extends JPanel {
       return super.getColumnClass(column);
     }
 
+    @Override
     public int getColumnCount() {
       return myShowCheckboxes ? 2 : 1;
     }
 
+    @Override
     public boolean isCellEditable(int row, int column) {
       if (column == getCheckboxColumn()) {
         return isCheckable(OrderPanel.this.getValueAt(row));
@@ -251,6 +256,7 @@ public abstract class OrderPanel<T> extends JPanel {
       return myEntryEditable;
     }
 
+    @Override
     public void setValueAt(Object aValue, int row, int column) {
       super.setValueAt(aValue, row, column);
       if (!isInsideMove() && column == getCheckboxColumn()) {

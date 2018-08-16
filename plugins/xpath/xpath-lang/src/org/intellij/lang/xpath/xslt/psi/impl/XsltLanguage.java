@@ -60,20 +60,24 @@ public class XsltLanguage extends Language {
     }
 
     private static class MyFindUsagesProvider implements FindUsagesProvider {
+        @Override
         @Nullable
         public WordsScanner getWordsScanner() {
             return LanguageFindUsages.INSTANCE.forLanguage(XMLLanguage.INSTANCE).getWordsScanner();
         }
 
+        @Override
         public boolean canFindUsagesFor(@NotNull PsiElement psiElement) {
             return psiElement instanceof PsiNamedElement;
         }
 
+        @Override
         @Nullable
         public String getHelpId(@NotNull PsiElement psiElement) {
             return null;
         }
 
+        @Override
         @NotNull
         public String getType(@NotNull PsiElement element) {
             if (element instanceof XsltParameter) {
@@ -98,6 +102,7 @@ public class XsltLanguage extends Language {
             return "parameter";
         }
 
+        @Override
         @NotNull
         public String getDescriptiveName(@NotNull PsiElement element) {
             if (element instanceof PsiNamedElement) {
@@ -107,6 +112,7 @@ public class XsltLanguage extends Language {
             return element.toString();
         }
 
+        @Override
         @NotNull
         public String getNodeText(@NotNull PsiElement element, boolean useFullName) {
             if (useFullName) {

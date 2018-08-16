@@ -30,13 +30,15 @@ import java.util.Set;
 
 public final class AntBuildGroup extends ActionGroup implements DumbAware {
 
-  public void update(AnActionEvent e) {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     Presentation presentation = e.getPresentation();
     presentation.setEnabled(project != null);
     presentation.setVisible(project != null);
   }
 
+  @Override
   @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     if (e == null) return AnAction.EMPTY_ARRAY;

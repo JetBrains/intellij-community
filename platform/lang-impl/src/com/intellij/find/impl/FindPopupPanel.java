@@ -72,8 +72,8 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
@@ -377,7 +377,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       final EditorTextField etf = (EditorTextField) editorComponent;
       etf.addDocumentListener(new DocumentListener() {
         @Override
-        public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent event) {
+        public void documentChanged(@NotNull com.intellij.openapi.editor.event.DocumentEvent event) {
           onFileMaskChanged();
         }
       });
@@ -386,7 +386,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       if (editorComponent instanceof JTextComponent) {
         ((JTextComponent)editorComponent).getDocument().addDocumentListener(new DocumentAdapter() {
           @Override
-          protected void textChanged(DocumentEvent e) {
+          protected void textChanged(@NotNull DocumentEvent e) {
             onFileMaskChanged();
           }
         });
@@ -521,14 +521,14 @@ public class FindPopupPanel extends JBPanel implements FindUI {
 
     new DumbAwareAction() {
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(
           e.getData(CommonDataKeys.EDITOR) == null ||
           SwingUtilities.isDescendingFrom(e.getData(PlatformDataKeys.CONTEXT_COMPONENT), myFileMaskField));
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         if (SwingUtilities.isDescendingFrom(e.getData(PlatformDataKeys.CONTEXT_COMPONENT), myFileMaskField) && myFileMaskField.isPopupVisible()) {
           myFileMaskField.hidePopup();
           return;
@@ -556,7 +556,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
 
     DumbAwareAction.create(__ -> myReplaceAllButton.doClick()).registerCustomShortcutSet(new CustomShortcutSet(REPLACE_ALL), this);
     myReplaceAllButton.setToolTipText(KeymapUtil.getKeystrokeText(REPLACE_ALL));
-    
+
     List<Shortcut> navigationKeyStrokes = ContainerUtil.newArrayList();
     KeyStroke viewSourceKeyStroke = KeymapUtil.getKeyStroke(CommonShortcuts.getViewSource());
     if (viewSourceKeyStroke != null && !Comparing.equal(viewSourceKeyStroke, ENTER_WITH_MODIFIERS) && !Comparing.equal(viewSourceKeyStroke, ENTER)) {
@@ -676,7 +676,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     });
     DocumentAdapter documentAdapter = new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         mySearchComponent.setRows(Math.max(1, Math.min(3, StringUtil.countChars(mySearchComponent.getText(), '\n') + 1)));
         myReplaceComponent.setRows(Math.max(1, Math.min(3, StringUtil.countChars(myReplaceComponent.getText(), '\n') + 1)));
 
@@ -1335,7 +1335,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     model.setFileFilter(mask);
   }
 
-  private void navigateToSelectedUsage(AnActionEvent e) {
+  private void navigateToSelectedUsage(@Nullable AnActionEvent e) {
     Navigatable[] navigatables = e != null ? e.getData(CommonDataKeys.NAVIGATABLE_ARRAY) : null;
     if (navigatables != null) {
       myBalloon.cancel();
@@ -1475,7 +1475,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       if (PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext()) == null) return;
 
       ListPopup listPopup =

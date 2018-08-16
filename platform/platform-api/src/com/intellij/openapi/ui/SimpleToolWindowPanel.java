@@ -53,7 +53,7 @@ public class SimpleToolWindowPanel extends JPanel implements QuickActionProvider
       @Override
       public void componentRemoved(ContainerEvent e) {
         Component child = e.getChild();
-        
+
         if (child instanceof Container) {
           ((Container)child).removeContainerListener(this);
         }
@@ -83,8 +83,9 @@ public class SimpleToolWindowPanel extends JPanel implements QuickActionProvider
     repaint();
   }
 
+  @Override
   @Nullable
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     return QuickActionProvider.KEY.is(dataId) && myProvideQuickActions ? this : null;
   }
 
@@ -93,6 +94,7 @@ public class SimpleToolWindowPanel extends JPanel implements QuickActionProvider
     return this;
   }
 
+  @Override
   @NotNull
   public List<AnAction> getActions(boolean originalProvider) {
     JBIterable<ActionToolbar> toolbars = UIUtil.uiTraverser(myToolbar).traverse().filter(ActionToolbar.class);
@@ -100,6 +102,7 @@ public class SimpleToolWindowPanel extends JPanel implements QuickActionProvider
     return toolbars.flatten(toolbar -> toolbar.getActions()).toList();
   }
 
+  @Override
   public JComponent getComponent() {
     return this;
   }

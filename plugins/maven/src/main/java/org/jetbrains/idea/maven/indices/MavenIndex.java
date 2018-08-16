@@ -517,6 +517,7 @@ public class MavenIndex {
   public synchronized void addArtifact(final File artifactFile) {
     doIndexTask(() -> {
       IndexedMavenId id = myData.addArtifact(artifactFile);
+      if (id == null) return null;
 
       myData.hasGroupCache.put(id.groupId, true);
 
@@ -728,6 +729,7 @@ public class MavenIndex {
   }
 
   private static class SetDescriptor implements DataExternalizer<Set<String>> {
+    @Override
     public void save(@NotNull DataOutput s, Set<String> set) throws IOException {
       s.writeInt(set.size());
       for (String each : set) {
@@ -735,6 +737,7 @@ public class MavenIndex {
       }
     }
 
+    @Override
     public Set<String> read(@NotNull DataInput s) throws IOException {
       int count = s.readInt();
       Set<String> result = new THashSet<>(count);

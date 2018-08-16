@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeMigration.ui;
 
 import com.intellij.find.FindSettings;
@@ -169,7 +167,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
       myToTypeEditor.setHistory(types != null ? types : new String[]{document.getText()});
       document.addDocumentListener(new DocumentListener() {
         @Override
-        public void documentChanged(final DocumentEvent e) {
+        public void documentChanged(@NotNull final DocumentEvent e) {
           documentManager.commitDocument(document);
           validateButtons();
         }
@@ -254,7 +252,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
         return myTypeCodeFragment.getType();
       }
       catch (PsiTypeCodeFragment.TypeSyntaxException | PsiTypeCodeFragment.NoTypeException e) {
-        LOG.info(e);
+        LOG.debug(e);
         return null;
       }
     }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.CommonBundle;
@@ -102,14 +88,16 @@ public final class PreviewFormAction extends AnAction{
     return new InstrumentationClassFinder(urls.toArray(new URL[0]));
   }
 
-  public void actionPerformed(final AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final GuiEditor editor = FormEditingUtil.getActiveEditor(e.getDataContext());
     if (editor != null) {
       showPreviewFrame(editor.getModule(), editor.getFile(), editor.getStringDescriptorLocale());
     }
   }
 
-  public void update(final AnActionEvent e) {
+  @Override
+  public void update(@NotNull final AnActionEvent e) {
     final GuiEditor editor = FormEditingUtil.getActiveEditor(e.getDataContext());
 
     if(editor == null){
@@ -227,6 +215,7 @@ public final class PreviewFormAction extends AnAction{
       FormEditingUtil.iterateStringDescriptors(
         rootContainer,
         new FormEditingUtil.StringDescriptorVisitor<IComponent>() {
+          @Override
           public boolean visit(final IComponent component, final StringDescriptor descriptor) {
             if (descriptor.getBundleName() != null) {
               bundleSet.add(descriptor.getDottedBundleName());
@@ -251,6 +240,7 @@ public final class PreviewFormAction extends AnAction{
         FileSetCompileScope scope = new FileSetCompileScope(virtualFiles, modules.toArray(Module.EMPTY_ARRAY));
 
         CompilerManager.getInstance(module.getProject()).make(scope, new CompileStatusNotification() {
+          @Override
           public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
             if (!aborted && errors == 0) {
               runPreviewProcess(tempPath, sources, module, formFile, stringDescriptorLocale);
@@ -273,6 +263,7 @@ public final class PreviewFormAction extends AnAction{
     FormEditingUtil.iterate(
       rootContainer,
       new FormEditingUtil.ComponentVisitor<LwComponent>() {
+        @Override
         public boolean visit(final LwComponent iComponent) {
           iComponent.setBinding(null);
           return true;
@@ -339,16 +330,20 @@ public final class PreviewFormAction extends AnAction{
       myStatusbarMessage = statusbarMessage;
     }
 
+    @Override
     public Icon getIcon() {
       return null;
     }
 
+    @Override
     public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
       return new JavaCommandLineState(env) {
+        @Override
         protected JavaParameters createJavaParameters() {
           return myParams;
         }
 
+        @Override
         @NotNull
         public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
           try {
@@ -369,10 +364,12 @@ public final class PreviewFormAction extends AnAction{
       };
     }
 
+    @Override
     public String getName() {
       return UIDesignerBundle.message("title.form.preview");
     }
 
+    @Override
     @NotNull
     public Module[] getModules() {
       return new Module[] {myModule};

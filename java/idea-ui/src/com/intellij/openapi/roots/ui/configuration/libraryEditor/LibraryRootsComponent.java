@@ -175,7 +175,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     toolbarDecorator.addExtraAction(myAddExcludedRootActionButton);
     toolbarDecorator.addExtraAction(new AnActionButton("Remove", IconUtil.getRemoveIcon()) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         final Object[] selectedElements = getSelectedElements();
         if (selectedElements.length == 0) {
           return;
@@ -202,7 +202,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       }
 
       @Override
-      public void updateButton(AnActionEvent e) {
+      public void updateButton(@NotNull AnActionEvent e) {
         super.updateButton(e);
         Object[] elements = getSelectedElements();
         Presentation presentation = e.getPresentation();
@@ -415,7 +415,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     }
 
     @Override
-    public void actionPerformed(@Nullable AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       perform();
     }
 
@@ -545,7 +545,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createMultipleJavaPathDescriptor();
       descriptor.setTitle("Exclude from Library");
       descriptor.setDescription("Select directories which should be excluded from the library content. Content of excluded directories won't be processed by IDE.");

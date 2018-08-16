@@ -22,15 +22,16 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 
 public class EditMacrosAction extends AnAction implements DumbAware {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     ShowSettingsUtil.getInstance().editConfigurable(e.getProject(), "#com.intellij.ide.actionMacro.EditMacrosDialog", new ActionMacroConfigurable());
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     ActionMacro[] macros = ActionMacroManager.getInstance().getAllMacros();
     e.getPresentation().setEnabled(macros != null && macros.length > 0);
   }

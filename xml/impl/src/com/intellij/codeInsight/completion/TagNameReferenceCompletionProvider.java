@@ -45,7 +45,7 @@ public class TagNameReferenceCompletionProvider extends CompletionProvider<Compl
 
   @Override
   protected void addCompletions(@NotNull CompletionParameters parameters,
-                                ProcessingContext context,
+                                @NotNull ProcessingContext context,
                                 @NotNull final CompletionResultSet result) {
     LegacyCompletionContributor.processReferences(parameters, result, (reference, set) -> {
       if (reference instanceof TagNameReference) {

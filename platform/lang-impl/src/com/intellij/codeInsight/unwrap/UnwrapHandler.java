@@ -108,24 +108,20 @@ public class UnwrapHandler implements CodeInsightActionHandler {
   private static void showPopup(final List<? extends AnAction> options, Editor editor) {
     final ScopeHighlighter highlighter = new ScopeHighlighter(editor);
 
-    List<String> model = options.stream().map(a -> ((MyUnwrapAction)a).getName()).collect(Collectors.toList());
-
-    Function<String, MyUnwrapAction> optionByName = s -> (MyUnwrapAction)options.stream()
-      .filter((it) -> ((MyUnwrapAction)it).getName().equals(s))
-      .findFirst().get();
+    List<MyItem> model = options.stream().map(a -> new MyItem(((MyUnwrapAction)a).getName(), options.indexOf(a))).collect(Collectors.toList());
+    Function<MyItem, MyUnwrapAction> optionByName = item -> (MyUnwrapAction)options.get(item.index);
 
     JBPopupFactory.getInstance()
       .createPopupChooserBuilder(model)
-
       .setTitle(CodeInsightBundle.message("unwrap.popup.title"))
       .setMovable(false)
       .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
       .setResizable(false)
       .setRequestFocus(true)
       .setItemChosenCallback((selectedValue) -> optionByName.apply(selectedValue).perform())
-      .setItemSelectedCallback(s -> {
-        if (s != null) {
-          MyUnwrapAction a = optionByName.apply(s);
+      .setItemSelectedCallback(item -> {
+        if (item != null) {
+          MyUnwrapAction a = optionByName.apply(item);
           List<PsiElement> toExtract = new NotNullList<>();
           PsiElement wholeRange = a.collectAffectedElements(toExtract);
           highlighter.highlight(wholeRange, toExtract);
@@ -138,6 +134,20 @@ public class UnwrapHandler implements CodeInsightActionHandler {
         }
       })
       .createPopup().showInBestPositionFor(editor);
+  }
+
+  private static class MyItem {
+    final String name;
+    final int index;
+    public MyItem(String name, int index) {
+      this.name = name;
+      this.index = index;
+    }
+
+    @Override
+    public String toString() {
+      return name;
+    }
   }
 
   public static TextAttributes getTestAttributesForExtract() {
@@ -163,11 +173,11 @@ public class UnwrapHandler implements CodeInsightActionHandler {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       perform();
     }
 
-    void perform() {
+    public void perform() {
       final PsiFile file = myElement.getContainingFile();
       if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 

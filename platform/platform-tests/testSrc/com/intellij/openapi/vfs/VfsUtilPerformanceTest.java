@@ -34,8 +34,8 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.testFramework.EdtTestUtil;
-import com.intellij.testFramework.JITSensitive;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.RunFirst;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
@@ -61,7 +61,7 @@ import java.util.stream.IntStream;
 
 import static org.junit.Assert.*;
 
-@JITSensitive
+@RunFirst
 @SkipSlowTestLocally
 public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
   @Rule public TempDirectory myTempDir = new TempDirectory();

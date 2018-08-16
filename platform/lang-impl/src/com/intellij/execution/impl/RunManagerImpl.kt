@@ -48,8 +48,8 @@ private const val RECENT = "recent_temporary"
 @State(name = "RunManager", storages = [(Storage(value = StoragePathMacros.WORKSPACE_FILE, useSaveThreshold = ThreeState.NO))])
 open class RunManagerImpl(internal val project: Project) : RunManagerEx(), PersistentStateComponent<Element>, Disposable {
   companion object {
-    const val CONFIGURATION: String = "configuration"
-    const val NAME_ATTR: String = "name"
+    const val CONFIGURATION = "configuration"
+    const val NAME_ATTR = "name"
 
     internal val LOG = logger<RunManagerImpl>()
 
@@ -148,7 +148,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     get() = project.messageBus.syncPublisher(RunManagerListener.TOPIC)
 
   init {
-    initializeConfigurationTypes(ConfigurationType.CONFIGURATION_TYPE_EP.extensions)
+    initializeConfigurationTypes(ConfigurationType.CONFIGURATION_TYPE_EP.extensionList)
     project.messageBus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
       override fun rootsChanged(event: ModuleRootEvent) {
         selectedConfiguration?.let {
@@ -159,7 +159,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   }
 
   // separate method needed for tests
-  fun initializeConfigurationTypes(factories: Array<ConfigurationType>) {
+  fun initializeConfigurationTypes(factories: List<ConfigurationType>) {
     val types = factories.toMutableList()
     types.sortBy { it.displayName }
     types.add(UnknownConfigurationType.INSTANCE)
@@ -531,11 +531,11 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     }
 
     val nameGenerator = UniqueNameGenerator()
-    workspaceSchemeManagerProvider.load(parentNode) {
-      var schemeKey: String? = it.getAttributeValue("name")
+    workspaceSchemeManagerProvider.load(parentNode) { element ->
+      var schemeKey: String? = element.getAttributeValue("name")
       if (schemeKey == "<template>" || schemeKey == null) {
         // scheme name must be unique
-        it.getAttributeValue("type")?.let {
+        element.getAttributeValue("type")?.let {
           if (schemeKey == null) {
             schemeKey = "<template>"
           }
@@ -543,7 +543,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
         }
       }
       else if (schemeKey != null) {
-        val typeId = it.getAttributeValue("type")
+        val typeId = element.getAttributeValue("type")
         if (typeId == null) {
           LOG.warn("typeId is null for '${schemeKey}'")
         }
@@ -555,7 +555,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
         schemeKey = nameGenerator.generateUniqueName("Unnamed")
       }
       else {
-        schemeKey = "${schemeKey!!}, factoryName: ${it.getAttributeValue("factoryName", "")}"
+        schemeKey = "${schemeKey!!}, factoryName: ${element.getAttributeValue("factoryName", "")}"
         nameGenerator.addExistingName(schemeKey!!)
       }
       schemeKey!!
@@ -649,7 +649,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   fun clearAll() {
     clear(true)
     idToType.clear()
-    initializeConfigurationTypes(emptyArray())
+    initializeConfigurationTypes(emptyList())
   }
 
   private fun clear(allConfigurations: Boolean) {
@@ -883,12 +883,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     return result ?: emptyList()
   }
 
-  override fun getBeforeRunTasks(configuration: RunConfiguration): List<BeforeRunTask<*>> {
-    return when (configuration) {
-      is WrappingRunConfiguration<*> -> getBeforeRunTasks(configuration.peer)
-      else -> configuration.beforeRunTasks
-    }
-  }
+  override fun getBeforeRunTasks(configuration: RunConfiguration) = doGetBeforeRunTasks(configuration)
 
   fun shareConfiguration(settings: RunnerAndConfigurationSettings, value: Boolean) {
     if (settings.isShared == value) {
@@ -1030,9 +1025,13 @@ private inline fun Collection<RunnerAndConfigurationSettings>.forEachManaged(han
   }
 }
 
-fun getBeforeRunTasks(configuration: RunConfiguration): List<BeforeRunTask<*>> {
+internal fun doGetBeforeRunTasks(configuration: RunConfiguration): List<BeforeRunTask<*>> {
   return when (configuration) {
-    is WrappingRunConfiguration<*> -> getBeforeRunTasks(configuration.peer)
+    is WrappingRunConfiguration<*> -> doGetBeforeRunTasks(configuration.peer)
     else -> configuration.beforeRunTasks
   }
+}
+
+internal fun RunConfiguration.cloneBeforeRunTasks() {
+  beforeRunTasks = doGetBeforeRunTasks(this).mapSmart { it.clone() }
 }

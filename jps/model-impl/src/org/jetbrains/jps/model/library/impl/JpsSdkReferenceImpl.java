@@ -45,6 +45,7 @@ public class JpsSdkReferenceImpl<P extends JpsElement> extends JpsNamedElementRe
     mySdkType = original.mySdkType;
   }
 
+  @Override
   @NotNull
   public String getSdkName() {
     return myElementName;
@@ -61,6 +62,7 @@ public class JpsSdkReferenceImpl<P extends JpsElement> extends JpsNamedElementRe
     return new JpsSdkReferenceImpl<>(this);
   }
 
+  @Override
   @Nullable
   protected JpsElementCollection<? extends JpsLibrary> getCollection(@NotNull JpsCompositeElement parent) {
     return parent.getContainer().getChild(JpsLibraryRole.LIBRARIES_COLLECTION_ROLE);

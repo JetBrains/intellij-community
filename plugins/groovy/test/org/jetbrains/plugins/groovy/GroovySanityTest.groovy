@@ -6,9 +6,12 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.propertyBased.CheckHighlighterConsistency
 import com.intellij.testFramework.propertyBased.MadTestingAction
+import com.intellij.testFramework.propertyBased.MadTestingUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.PropertyChecker
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConstant.GrEnumConstantImpl
 import org.jetbrains.plugins.groovy.util.EdtRule
 import org.jetbrains.plugins.groovy.util.FixtureRule
 import org.jetbrains.plugins.groovy.util.Slow
@@ -46,5 +49,13 @@ class GroovySanityTest {
   @Test
   void 'incremental highlighter update'() {
     PropertyChecker.checkScenarios(actionsOnGroovyFiles(CheckHighlighterConsistency.randomEditsWithHighlighterChecks))
+  }
+
+  @Test
+  void 'psi accessors'() {
+    PropertyChecker.checkScenarios(actionsOnGroovyFiles(MadTestingUtil.randomEditsWithPsiAccessorChecks {
+      (it.name == "getReference" || it.name == "getReferences") && it.declaringClass == GrLiteralImpl ||
+      it.name == "getOrCreateInitializingClass" && it.declaringClass == GrEnumConstantImpl
+    }))
   }
 }

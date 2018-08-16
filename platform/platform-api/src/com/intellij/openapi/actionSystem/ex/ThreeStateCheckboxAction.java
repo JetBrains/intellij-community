@@ -42,7 +42,7 @@ public abstract class ThreeStateCheckboxAction extends AnAction implements Custo
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     ThreeStateCheckBox.State state = isSelected(e);
 
     Presentation presentation = e.getPresentation();
@@ -56,8 +56,9 @@ public abstract class ThreeStateCheckboxAction extends AnAction implements Custo
     }
   }
 
+  @NotNull
   @Override
-  public JComponent createCustomComponent(Presentation presentation) {
+  public JComponent createCustomComponent(@NotNull Presentation presentation) {
     // this component cannot be stored right here because of action system architecture:
     // one action can be shown on multiple toolbars simultaneously
     ThreeStateCheckBox checkBox = new ThreeStateCheckBox();

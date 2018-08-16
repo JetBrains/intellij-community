@@ -18,7 +18,7 @@ fun NewProjectDialogScenarios.createJavaProjectScenario(projectPath: String,
                                                         template: String = "",
                                                         basePackage: String = "") {
   with(testCase) {
-    assertProjectPathExists(projectPath)
+    fileSystemUtils.assertProjectPathExists(projectPath)
     welcomePageDialogModel.createNewProject()
     newProjectDialogModel.createJavaProject(projectPath, libs, template, basePackage)
   }
@@ -28,7 +28,7 @@ fun NewProjectDialogScenarios.createJavaEnterpriseProjectScenario(projectPath: S
                                                                   libs: LibrariesSet = emptySet(),
                                                                   template: String = "") {
   with(testCase) {
-    assertProjectPathExists(projectPath)
+    fileSystemUtils.assertProjectPathExists(projectPath)
     welcomePageDialogModel.createNewProject()
     newProjectDialogModel.createJavaEnterpriseProject(projectPath, libs, template)
   }
@@ -36,7 +36,7 @@ fun NewProjectDialogScenarios.createJavaEnterpriseProjectScenario(projectPath: S
 
 fun NewProjectDialogScenarios.createJBossProjectScenario(projectPath: String, libs: LibrariesSet = emptySet()) {
   with(testCase) {
-    assertProjectPathExists(projectPath)
+    fileSystemUtils.assertProjectPathExists(projectPath)
     welcomePageDialogModel.createNewProject()
     newProjectDialogModel.createJBossProject(projectPath, libs)
   }
@@ -54,7 +54,7 @@ fun NewProjectDialogScenarios.createProjectInGroupScenario(group: NewProjectDial
                                                            projectPath: String,
                                                            libs: LibrariesSet = emptySet()) {
   with(testCase) {
-    assertProjectPathExists(projectPath)
+    fileSystemUtils.assertProjectPathExists(projectPath)
     welcomePageDialogModel.createNewProject()
     newProjectDialogModel.createProjectInGroup(group, projectPath, libs)
   }
@@ -62,7 +62,7 @@ fun NewProjectDialogScenarios.createProjectInGroupScenario(group: NewProjectDial
 
 fun NewProjectDialogScenarios.createGradleProjectScenario(projectPath: String, gradleOptions: NewProjectDialogModel.GradleProjectOptions){
   with(testCase) {
-    assertProjectPathExists(projectPath)
+    fileSystemUtils.assertProjectPathExists(projectPath)
     welcomePageDialogModel.createNewProject()
     newProjectDialogModel.createGradleProject(projectPath, gradleOptions)
   }
@@ -70,7 +70,7 @@ fun NewProjectDialogScenarios.createGradleProjectScenario(projectPath: String, g
 
 fun NewProjectDialogScenarios.createMavenProjectScenario(projectPath: String, mavenOptions: NewProjectDialogModel.MavenProjectOptions){
   with(testCase) {
-    assertProjectPathExists(projectPath)
+    fileSystemUtils.assertProjectPathExists(projectPath)
     welcomePageDialogModel.createNewProject()
     newProjectDialogModel.createMavenProject(projectPath, mavenOptions)
   }

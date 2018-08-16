@@ -6,6 +6,7 @@ import javax.swing.*;
 public abstract class BaseConfigurable implements Configurable {
   protected boolean myModified;
 
+  @Override
   public boolean isModified() {
     return myModified;
   }
@@ -15,6 +16,7 @@ public abstract class BaseConfigurable implements Configurable {
   }
 
   // defined here for backward-compatibility
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return null;
   }

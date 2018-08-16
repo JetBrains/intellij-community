@@ -33,6 +33,7 @@ public class EnableNotEqual extends DirDiffAction {
     return getModel().isShowDifferent();
   }
 
+  @Override
   public void updateState(boolean state) {
     getModel().setShowDifferent(state);
   }

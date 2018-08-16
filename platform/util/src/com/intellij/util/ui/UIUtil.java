@@ -29,8 +29,8 @@ import sun.java2d.SunGraphicsEnvironment;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
-import javax.swing.*;
 import javax.swing.Timer;
+import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
@@ -47,8 +47,8 @@ import javax.swing.plaf.basic.BasicRadioButtonUI;
 import javax.swing.plaf.basic.BasicTextUI;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.*;
-import javax.swing.text.html.*;
 import javax.swing.text.html.ParagraphView;
+import javax.swing.text.html.*;
 import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.*;
@@ -69,9 +69,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.text.NumberFormat;
-import java.util.*;
 import java.util.List;
 import java.util.Map;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -105,7 +105,7 @@ public class UIUtil {
   public static void decorateFrame(@NotNull JRootPane pane) {
     decorateWindowHeader(pane);
   }
-  
+
   public static void decorateWindowHeader(JRootPane pane) {
     if (pane != null && SystemInfo.isMac) {
       pane.putClientProperty("jetbrains.awt.windowDarkAppearance", Registry.is("ide.mac.allowDarkWindowDecorations") && isUnderDarcula());
@@ -404,15 +404,7 @@ public class UIUtil {
     }
   });
 
-  public static final Color SIDE_PANEL_BACKGROUND = new JBColor(new NotNullProducer<Color>() {
-    final JBColor myDefaultValue = new JBColor(new Color(0xE6EBF0), new Color(0x3E434C));
-    @NotNull
-    @Override
-    public Color produce() {
-      Color color = UIManager.getColor("SidePanel.background");
-      return color == null ? myDefaultValue : color;
-    }
-  });
+  public static final Color SIDE_PANEL_BACKGROUND = JBColor.namedColor("SidePanel.background", new JBColor(0xE6EBF0, 0x3E434C));
 
   public static final Color AQUA_SEPARATOR_FOREGROUND_COLOR = new JBColor(Gray._223, Gray.x51);
   public static final Color AQUA_SEPARATOR_BACKGROUND_COLOR = new JBColor(Gray._240, Gray.x51);
@@ -526,9 +518,6 @@ public class UIUtil {
         return false;
       }
       jreHiDPI_earlierVersion = true;
-      if (SystemInfo.isLinux) {
-        return false; // pending support
-      }
       if (SystemInfo.isJetBrainsJvm) {
         try {
           GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
@@ -1244,9 +1233,9 @@ public class UIUtil {
   public static Color getToolTipBackground() {
     return UIManager.getColor("ToolTip.background");
   }
-  
+
   public static Color getToolTipActionBackground() {
-    return JBColor.namedColor("ToolTip.actions.background", new JBColor(0xebebeb, 0x43474a)); 
+    return JBColor.namedColor("ToolTip.actions.background", new JBColor(0xebebeb, 0x43474a));
   }
 
   public static Color getToolTipForeground() {
@@ -1902,8 +1891,8 @@ public class UIUtil {
                                      final float startX,
                                      final float endX,
                                      final int height) {
-    Color c1 = new Color(255, 234, 162);
-    Color c2 = new Color(255, 208, 66);
+    Color c1 = JBColor.namedColor("SearchMatch.startColor", new Color(0xffeaa2));
+    Color c2 = JBColor.namedColor("SearchMatch.endColor", new Color(0xffd042));
     drawSearchMatch(g, startX, endX, height, c1, c2);
   }
 
@@ -1911,7 +1900,9 @@ public class UIUtil {
     final boolean drawRound = endXf - startXf > 4;
 
     GraphicsConfig config = new GraphicsConfig(g);
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
+    float alpha = ((float)JBUI.getInt("SearchMatch.transparency", 70) / 100f);
+    alpha = alpha < 0 || alpha > 1 ? 0.7f : alpha;
+    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
     g.setPaint(getGradientPaint(startXf, 2, c1, startXf, height - 5, c2));
 
     if (isJreHiDPI(g)) {
@@ -2995,11 +2986,13 @@ public class UIUtil {
 
   public static class JBWordWrapHtmlEditorKit extends JBHtmlEditorKit {
     private final HTMLFactory myFactory = new HTMLFactory() {
+      @Override
       public View create(Element e) {
         View view = super.create(e);
         if (view instanceof javax.swing.text.html.ParagraphView) {
           // wrap too long words, for example: ATEST_TABLE_SIGNLE_ROW_UPDATE_AUTOCOMMIT_A_FIK
           return new ParagraphView(e) {
+            @Override
             protected SizeRequirements calculateMinorAxisRequirements(int axis, SizeRequirements r) {
               if (r == null) {
                 r = new SizeRequirements();
@@ -3301,10 +3294,10 @@ public class UIUtil {
         // 2) the label font size is scaled
         int dpi = ((Integer)value).intValue() / 1024;
         if (dpi < 50) dpi = 50;
-        float scale = JBUI.discreteScale(dpi / 96f);
+        float scale = isJreHiDPIEnabled() ? 1f : JBUI.discreteScale(dpi / 96f); // no scaling in JRE-HiDPI mode
         DEF_SYSTEM_FONT_SIZE = font.getSize() / scale; // derive actual system base font size
         if (JBUI.SCALE_VERBOSE) {
-          LOG.info(String.format("DEF_SYSTEM_FONT_SIZE: %.2f, %d", DEF_SYSTEM_FONT_SIZE, dpi));
+          LOG.info(String.format("DEF_SYSTEM_FONT_SIZE: %.2f", DEF_SYSTEM_FONT_SIZE));
         }
       }
       else if (!SystemInfo.isJetBrainsJvm) {
@@ -4186,7 +4179,7 @@ public class UIUtil {
 
   private static final DocumentAdapter SET_TEXT_CHECKER = new DocumentAdapter() {
     @Override
-    protected void textChanged(DocumentEvent e) {
+    protected void textChanged(@NotNull DocumentEvent e) {
       Document document = e.getDocument();
       if (document instanceof AbstractDocument) {
         StackTraceElement[] stackTrace = new Throwable().getStackTrace();

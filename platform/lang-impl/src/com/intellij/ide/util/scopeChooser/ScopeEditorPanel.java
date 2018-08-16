@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.icons.AllIcons;
@@ -121,7 +107,7 @@ public class ScopeEditorPanel {
     myPatternField.setDialogCaption("Pattern");
     myPatternField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      public void textChanged(DocumentEvent event) {
+      public void textChanged(@NotNull DocumentEvent event) {
         onTextChange();
       }
     });
@@ -217,7 +203,7 @@ public class ScopeEditorPanel {
 
   private void createUIComponents() {
     myPatternField = new RawCommandLineEditor(text -> Arrays.asList(text.split("\\|\\|")),
-                                              strings -> StringUtil.join(strings, "||")); 
+                                              strings -> StringUtil.join(strings, "||"));
   }
 
   private static boolean invalidScopeInside(PackageSet currentScope) {
@@ -517,36 +503,36 @@ public class ScopeEditorPanel {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.add(new AnAction(IdeBundle.message("button.include")) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         includeSelected(false);
       }
     });
     actionGroup.add(new AnAction(IdeBundle.message("button.include.recursively")) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         includeSelected(true);
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(isButtonEnabled(true));
       }
     });
 
     actionGroup.add(new AnAction(IdeBundle.message("button.exclude")) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         excludeSelected(false);
       }
     });
     actionGroup.add(new AnAction(IdeBundle.message("button.exclude.recursively")) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         excludeSelected(true);
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(isButtonEnabled(true));
       }
     });
@@ -688,7 +674,7 @@ public class ScopeEditorPanel {
       for (final PatternDialectProvider provider : Extensions.getExtensions(PatternDialectProvider.EP_NAME)) {
         group.add(new AnAction(provider.getDisplayName()) {
           @Override
-          public void actionPerformed(final AnActionEvent e) {
+          public void actionPerformed(@NotNull final AnActionEvent e) {
             DependencyUISettings.getInstance().SCOPE_TYPE = provider.getShortName();
             myUpdate.run();
           }
@@ -698,7 +684,7 @@ public class ScopeEditorPanel {
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       final PatternDialectProvider provider = PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE);
       e.getPresentation().setText(provider.getDisplayName());
@@ -739,7 +725,7 @@ public class ScopeEditorPanel {
           setToComponent(component, requestFocus);
         }
       });
-      myRequestFocus = requestFocus; 
+      myRequestFocus = requestFocus;
     }
 
     @Override

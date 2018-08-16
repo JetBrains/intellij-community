@@ -12,6 +12,7 @@ import org.jetbrains.yaml.YAMLLanguage;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 
 public class YAMLScalarKeyDeclarationSearcher extends PomDeclarationSearcher {
+  @Override
   public void findDeclarationsAt(@NotNull PsiElement element, int offsetInElement, Consumer<PomTarget> consumer) {
     final Language language = element.getLanguage();
     if (language == YAMLLanguage.INSTANCE) {

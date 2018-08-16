@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.ExtensionPoints;
@@ -26,6 +12,8 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.module.Module;
@@ -34,6 +22,9 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightMethodBuilder;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -83,6 +74,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     return new FormBuilder().addComponentFillVertically(panel, 0).getPanel();
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return "PluginXmlValidity";
@@ -450,6 +442,36 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     final GenericAttributeValue<String> iconAttribute = group.getIcon();
     if (DomUtil.hasXml(iconAttribute)) {
       annotateResolveProblems(holder, iconAttribute);
+    }
+
+    GenericAttributeValue<ActionOrGroup> useShortcutOfAttribute = group.getUseShortcutOf();
+    if (!DomUtil.hasXml(useShortcutOfAttribute)) return;
+
+    GenericAttributeValue<PsiClass> clazz = group.getClazz();
+    if (!DomUtil.hasXml(clazz)) {
+      holder.createProblem(group, "'class' must be specified with 'use-shortcut-of'",
+                           new AddDomElementQuickFix<GenericAttributeValue>(group.getClazz()));
+      return;
+    }
+
+    PsiClass actionGroupClass = clazz.getValue();
+    if (actionGroupClass == null) return;
+
+    PsiMethod canBePerformedMethod = new LightMethodBuilder(actionGroupClass.getManager(), "canBePerformed")
+      .setContainingClass(JavaPsiFacade.getInstance(actionGroupClass.getProject()).findClass(ActionGroup.class.getName(),
+                                                                                             actionGroupClass.getResolveScope()))
+      .setModifiers(PsiModifier.PUBLIC)
+      .setMethodReturnType(PsiType.BOOLEAN)
+      .addParameter("context", DataContext.class.getName());
+
+    PsiMethod overriddenCanBePerformedMethod = actionGroupClass.findMethodBySignature(canBePerformedMethod, false);
+    if (overriddenCanBePerformedMethod == null) {
+      String methodPresentation = PsiFormatUtil.formatMethod(canBePerformedMethod, PsiSubstitutor.EMPTY,
+                                                             PsiFormatUtilBase.SHOW_NAME |
+                                                             PsiFormatUtilBase.SHOW_PARAMETERS |
+                                                             PsiFormatUtilBase.SHOW_CONTAINING_CLASS,
+                                                             PsiFormatUtilBase.SHOW_TYPE);
+      holder.createProblem(clazz, "Must override " + methodPresentation + " with 'use-shortcut-of'");
     }
   }
 

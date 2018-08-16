@@ -11,7 +11,6 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -21,14 +20,17 @@ import com.intellij.openapi.wm.impl.commands.FinalizableCommand;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBLayeredPane;
+import com.intellij.ui.paint.PaintUtil;
+import com.intellij.util.Function;
+import com.intellij.util.ui.JBUI.ScaleContext;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
-import java.lang.ref.Reference;
 import java.util.*;
 import java.util.List;
 
@@ -891,14 +893,15 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
           // Prepare bottom image.
           final Image bottomImage = myLayeredPane.getBottomImage();
 
+          Point2D bottomImageOffset = PaintUtil.getFractOffsetInRootPane(myLayeredPane);
           useSafely(bottomImage.getGraphics(), bottomGraphics -> {
             bottomGraphics.setClip(0, 0, bounds.width, bounds.height);
-            bottomGraphics.translate(-bounds.x, -bounds.y);
+            bottomGraphics.translate(bottomImageOffset.getX() - bounds.x, bottomImageOffset.getY() - bounds.y);
             myLayeredPane.paint(bottomGraphics);
           });
 
           // Start animation.
-          final Surface surface = new Surface(topImage, bottomImage, 1, myInfo.getAnchor(), UISettings.ANIMATION_DURATION);
+          final Surface surface = new Surface(topImage, bottomImage, PaintUtil.negate(bottomImageOffset), 1, myInfo.getAnchor(), UISettings.ANIMATION_DURATION);
           myLayeredPane.add(surface, JLayeredPane.PALETTE_LAYER);
           surface.setBounds(bounds);
           myLayeredPane.validate();
@@ -1099,15 +1102,16 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
           // under the component to is being removed.
           final Image bottomImage = myLayeredPane.getBottomImage();
 
+          Point2D bottomImageOffset = PaintUtil.getFractOffsetInRootPane(myLayeredPane);
           useSafely(bottomImage.getGraphics(), bottomGraphics -> {
             myLayeredPane.remove(myComponent);
             bottomGraphics.clipRect(0, 0, bounds.width, bounds.height);
-            bottomGraphics.translate(-bounds.x, -bounds.y);
+            bottomGraphics.translate(bottomImageOffset.getX() - bounds.x, bottomImageOffset.getY() - bounds.y);
             myLayeredPane.paint(bottomGraphics);
           });
 
           // Remove component from the layered pane and start animation.
-          final Surface surface = new Surface(topImage, bottomImage, -1, myInfo.getAnchor(), UISettings.ANIMATION_DURATION);
+          final Surface surface = new Surface(topImage, bottomImage, PaintUtil.negate(bottomImageOffset), -1, myInfo.getAnchor(), UISettings.ANIMATION_DURATION);
           myLayeredPane.add(surface, JLayeredPane.PALETTE_LAYER);
           surface.setBounds(bounds);
           myLayeredPane.validate();
@@ -1193,13 +1197,52 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     }
   }
 
+  private static class ImageRef extends SoftReference<BufferedImage> {
+    private @Nullable BufferedImage myStrongRef;
+
+    public ImageRef(@NotNull BufferedImage image) {
+      super(image);
+      myStrongRef = image;
+    }
+
+    @Override
+    public BufferedImage get() {
+      if (myStrongRef != null) {
+        BufferedImage img = myStrongRef;
+        myStrongRef = null; // drop on first request
+        return img;
+      }
+      return super.get();
+    }
+  }
+
+  private static class ImageCache extends ScaleContext.Cache<ImageRef> {
+    public ImageCache(@NotNull Function<ScaleContext, ImageRef> imageProvider) {
+      super(imageProvider);
+    }
+
+    public BufferedImage get(@NotNull ScaleContext ctx) {
+      ImageRef ref = getOrProvide(ctx);
+      BufferedImage image = SoftReference.dereference(ref);
+      if (image != null) return image;
+      clear(); // clear to recalculate the image
+      return get(ctx); // first recalculated image will be non-null
+    }
+  }
+
   private final class MyLayeredPane extends JBLayeredPane {
+    private final Function<ScaleContext, ImageRef> myImageProvider = (ctx) -> {
+      int width = Math.max(Math.max(1, getWidth()), myFrame.getWidth());
+      int height = Math.max(Math.max(1, getHeight()), myFrame.getHeight());
+      return new ImageRef(UIUtil.createImage(getGraphicsConfiguration(), width, height, BufferedImage.TYPE_INT_RGB));
+    };
+
     /*
      * These images are used to perform animated showing and hiding of components.
      * They are the member for performance reason.
      */
-    private Reference<BufferedImage> myBottomImageRef;
-    private Reference<BufferedImage> myTopImageRef;
+    private final ImageCache myBottomImageCache = new ImageCache(myImageProvider);
+    private final ImageCache myTopImageCache = new ImageCache(myImageProvider);
 
     MyLayeredPane(@NotNull JComponent splitter) {
       setOpaque(false);
@@ -1207,38 +1250,11 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     }
 
     final Image getBottomImage() {
-      Pair<BufferedImage, Reference<BufferedImage>> result = getImage(myBottomImageRef);
-      myBottomImageRef = result.second;
-      return result.first;
+      return myBottomImageCache.get(ScaleContext.create(this));
     }
 
     final Image getTopImage() {
-      Pair<BufferedImage, Reference<BufferedImage>> result = getImage(myTopImageRef);
-      myTopImageRef = result.second;
-      return result.first;
-    }
-
-    @NotNull
-    private Pair<BufferedImage, Reference<BufferedImage>> getImage(@Nullable Reference<BufferedImage> imageRef) {
-      LOG.assertTrue(UISettings.getInstance().getAnimateWindows());
-      BufferedImage image = SoftReference.dereference(imageRef);
-      if (image == null || image.getWidth(null) < getWidth() || image.getHeight(null) < getHeight()) {
-        final int width = Math.max(Math.max(1, getWidth()), myFrame.getWidth());
-        final int height = Math.max(Math.max(1, getHeight()), myFrame.getHeight());
-        if (SystemInfo.isWindows) {
-          image = myFrame.getGraphicsConfiguration().createCompatibleImage(width, height);
-        }
-        else {
-          // Under Linux we have found that images created by createCompatibleImage(),
-          // createVolatileImage(), etc extremely slow for rendering. TrueColor buffered image
-          // is MUCH faster.
-          // On Mac we create a retina-compatible image
-
-          image = UIUtil.createImage(getGraphics(), width, height, BufferedImage.TYPE_INT_RGB);
-        }
-        imageRef = new SoftReference<>(image);
-      }
-      return Pair.create(image, imageRef);
+      return myTopImageCache.get(ScaleContext.create(this));
     }
 
     /**

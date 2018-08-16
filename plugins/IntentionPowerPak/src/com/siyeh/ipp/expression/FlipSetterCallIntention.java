@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.siyeh.ipp.expression;
 
@@ -26,6 +24,7 @@ import java.util.List;
  */
 public class FlipSetterCallIntention extends Intention {
 
+  @Override
   protected void processIntention(@NotNull PsiElement element) {
     final Project project = element.getProject();
     final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
@@ -45,6 +44,7 @@ public class FlipSetterCallIntention extends Intention {
     }
   }
 
+  @Override
   @NotNull
   protected PsiElementPredicate getElementPredicate() {
     return new SetterCallPredicate();

@@ -78,5 +78,5 @@ public abstract class DiffGutterRenderer extends GutterIconRenderer implements N
     return System.identityHashCode(this);
   }
 
-  protected abstract void performAction(AnActionEvent e);
+  protected abstract void performAction(@NotNull AnActionEvent e);
 }

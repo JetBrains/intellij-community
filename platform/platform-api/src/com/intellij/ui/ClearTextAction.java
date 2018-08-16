@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.text.JTextComponent;
 import java.awt.*;
@@ -33,7 +34,8 @@ public class ClearTextAction extends AnAction implements DumbAware {
     setEnabledInModalContext(true);
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
     if (component instanceof JTextComponent) {
       final JTextComponent textComponent = (JTextComponent)component;
@@ -42,7 +44,8 @@ public class ClearTextAction extends AnAction implements DumbAware {
   }
 
 
-  public void update(AnActionEvent e) {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
     if (component instanceof JTextComponent) {
       final JTextComponent textComponent = (JTextComponent)component;

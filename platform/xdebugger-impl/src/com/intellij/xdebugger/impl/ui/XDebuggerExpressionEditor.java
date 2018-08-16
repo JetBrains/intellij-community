@@ -69,7 +69,7 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
       }
 
       @Override
-      public Object getData(String dataId) {
+      public Object getData(@NotNull String dataId) {
         if (LangDataKeys.CONTEXT_LANGUAGES.is(dataId)) {
           return new Language[]{myExpression.getLanguage()};
         } else if (CommonDataKeys.PSI_FILE.is(dataId)) {
@@ -120,6 +120,7 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
     return editor != null ? editor.getContentComponent() : null;
   }
 
+  @Override
   public void setEnabled(boolean enable) {
     if (enable == myComponent.isEnabled()) return;
     UIUtil.setEnabled(myComponent, enable, true);

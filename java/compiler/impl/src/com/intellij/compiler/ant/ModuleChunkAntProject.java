@@ -35,6 +35,7 @@ public class ModuleChunkAntProject extends Generator{
 
   }
 
+  @Override
   public void generate(PrintWriter out) throws IOException {
     writeXmlHeader(out);
     myAntProject.generate(out);

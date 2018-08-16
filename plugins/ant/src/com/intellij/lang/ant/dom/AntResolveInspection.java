@@ -45,16 +45,19 @@ public class AntResolveInspection extends AntInspection {
 
   public static final String SHORT_NAME = "AntResolveInspection";
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Ant references resolve problems";
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return SHORT_NAME;
   }
 
+  @Override
   protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
     if (element instanceof GenericDomValue) {
       final XmlElement valueElement = DomUtil.getValueElement(((GenericDomValue)element));
@@ -89,7 +92,7 @@ public class AntResolveInspection extends AntInspection {
       }
     }
   }
-  
+
   private static void checkReferences(final XmlElement xmlElement, final @NonNls DomElementAnnotationHolder holder, DomElement domElement) {
     if (xmlElement == null) {
       return;

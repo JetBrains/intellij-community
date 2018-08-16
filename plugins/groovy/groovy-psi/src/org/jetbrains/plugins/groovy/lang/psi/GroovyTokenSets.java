@@ -9,6 +9,8 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 
 public interface GroovyTokenSets {
 
+  TokenSet STRING_LITERALS = create(STRING_SQ, STRING_TSQ, STRING_DQ, STRING_TDQ);
+
   TokenSet LOGICAL_OPERATORS = create(T_LAND, T_LOR);
   TokenSet EQUALITY_OPERATORS = create(T_EQ, T_NEQ, T_ID, T_NID);
   TokenSet RELATIONAL_OPERATORS = create(T_GT, T_GE, T_LT, T_LE, T_COMPARE);

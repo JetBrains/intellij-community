@@ -84,8 +84,8 @@ import java.net.HttpURLConnection;
 import java.net.URLConnection;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
@@ -214,7 +214,8 @@ public class PluginManagerConfigurableNew
     editor.putClientProperty("JTextField.Search.GapEmptyText", JBUI.scale(8));
     editor.putClientProperty("StatusVisibleFunction", (BooleanFunction<JBTextField>)field -> field.getText().isEmpty());
     editor.setBorder(JBUI.Borders.empty(0, 25));
-    editor.getEmptyText().appendText("Search plugins");
+    editor.getEmptyText()
+      .appendText("Search plugins", new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, CellPluginComponent.GRAY_COLOR));
     editor.setOpaque(true);
     editor.setBackground(MAIN_BG_COLOR);
   }
@@ -245,7 +246,7 @@ public class PluginManagerConfigurableNew
     DefaultActionGroup actions = new DefaultActionGroup();
     actions.add(new DumbAwareAction("Manage Plugin Repositories...") {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         if (ShowSettingsUtil.getInstance().editConfigurable(panel, new PluginHostsConfigurable())) {
           // TODO: Auto-generated method stub
         }
@@ -253,7 +254,7 @@ public class PluginManagerConfigurableNew
     });
     actions.add(new DumbAwareAction(IdeBundle.message("button.http.proxy.settings")) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         if (HttpConfigurable.editConfigurable(panel)) {
           // TODO: Auto-generated method stub
         }
@@ -262,7 +263,7 @@ public class PluginManagerConfigurableNew
     actions.addSeparator();
     actions.add(new DumbAwareAction("Install Plugin from Disk...") {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         InstalledPluginsManagerMain.chooseAndInstall(myPluginsModel, pair -> myPluginsModel.appendOrUpdateDescriptor(pair.second), panel);
       }
     });
@@ -333,7 +334,7 @@ public class PluginManagerConfigurableNew
 
     mySearchTextField.getTextEditor().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         if (!mySkipDocumentEvents) {
           mySearchUpdateAlarm.cancelAllRequests();
           mySearchUpdateAlarm.addRequest(this::searchOnTheFly, 100, ModalityState.stateForComponent(mySearchTextField));
@@ -1127,7 +1128,7 @@ public class PluginManagerConfigurableNew
     JComponent toolbarComponent = toolbar.getComponent();
     toolbarActionGroup.add(new DumbAwareAction(null, null, AllIcons.General.Gear) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         ListPopup actionGroupPopup = JBPopupFactory.getInstance().
           createActionGroupPopup(null, actions, e.getDataContext(), true, null, Integer.MAX_VALUE);
 
@@ -1438,7 +1439,7 @@ public class PluginManagerConfigurableNew
     DataManager.registerDataProvider(component, new DataProvider() {
       @Nullable
       @Override
-      public Object getData(String dataId) {
+      public Object getData(@NotNull String dataId) {
         if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
           return copyProvider;
         }
@@ -1495,7 +1496,7 @@ public class PluginManagerConfigurableNew
       group.ui = uiGroup;
       myGroups.add(groupIndex == -1 ? myGroups.size() : groupIndex, uiGroup);
 
-      OpaquePanel panel = new OpaquePanel(new BorderLayout(), new JBColor(0xF7F7F7, 0x3D3F41));
+      OpaquePanel panel = new OpaquePanel(new BorderLayout(), new JBColor(0xF7F7F7, 0x3C3F41));
       panel.setBorder(JBUI.Borders.empty(4, 13));
 
       JLabel title = new JLabel(group.title);
@@ -3118,8 +3119,8 @@ public class PluginManagerConfigurableNew
   }
 
   public static abstract class CellPluginComponent extends JPanel {
-    private static final Color HOVER_COLOR = new JBColor(0xE9EEF5, 0x464A4D);
-    private static final Color GRAY_COLOR = new JBColor(Gray._130, Gray._120);
+    private static final Color HOVER_COLOR = new JBColor(0xF5F9FF, 0x36393B);
+    private static final Color GRAY_COLOR = new JBColor(Gray._120, Gray._135);
 
     protected final IdeaPluginDescriptor myPlugin;
 
@@ -3625,29 +3626,30 @@ public class PluginManagerConfigurableNew
       }
       if (restart) {
         group.add(new ButtonAnAction(((ListPluginComponent)selection.get(0)).myRestartButton));
+        return;
       }
-      else {
-        int size = selection.size();
-        JButton[] buttons = new JButton[size];
 
-        for (int i = 0; i < size; i++) {
-          JButton button = ((ListPluginComponent)selection.get(i)).myUpdateButton;
-          if (button == null) {
-            buttons = null;
-            break;
-          }
-          buttons[i] = button;
-        }
+      int size = selection.size();
+      JButton[] updateButtons = new JButton[size];
 
-        if (buttons != null) {
-          group.add(new ButtonAnAction(buttons));
+      for (int i = 0; i < size; i++) {
+        JButton button = ((ListPluginComponent)selection.get(i)).myUpdateButton;
+        if (button == null) {
+          updateButtons = null;
+          break;
         }
+        updateButtons[i] = button;
+      }
+
+      if (updateButtons != null) {
+        group.add(new ButtonAnAction(updateButtons));
+        return;
       }
 
       Pair<Boolean, IdeaPluginDescriptor[]> result = getSelectionNewState(selection);
       group.add(new MyAnAction(result.first ? "Enable" : "Disable", KeyEvent.VK_SPACE) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           myPluginModel.changeEnableDisable(result.second, result.first);
         }
       });
@@ -3661,7 +3663,7 @@ public class PluginManagerConfigurableNew
       group.addSeparator();
       group.add(new MyAnAction("Uninstall", KeyEvent.VK_BACK_SPACE) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           for (CellPluginComponent component : selection) {
             myPluginModel.doUninstall(component, component.myPlugin, null);
           }
@@ -3677,45 +3679,51 @@ public class PluginManagerConfigurableNew
         }
       }
 
-      if (keyCode == KeyEvent.VK_SPACE) {
-        if (selection.size() == 1) {
-          myPluginModel.changeEnableDisable(selection.get(0).myPlugin);
-        }
-        else {
-          Pair<Boolean, IdeaPluginDescriptor[]> result = getSelectionNewState(selection);
-          myPluginModel.changeEnableDisable(result.second, result.first);
+      boolean restart = true;
+      for (CellPluginComponent component : selection) {
+        if (((ListPluginComponent)component).myRestartButton == null) {
+          restart = false;
+          break;
         }
       }
-      else if (keyCode == KeyEvent.VK_ENTER) {
-        boolean restart = true;
-        for (CellPluginComponent component : selection) {
-          if (((ListPluginComponent)component).myRestartButton == null) {
-            restart = false;
-            break;
-          }
+
+      boolean update = true;
+      for (CellPluginComponent component : selection) {
+        if (((ListPluginComponent)component).myUpdateButton == null) {
+          update = false;
+          break;
         }
+      }
+
+      if (keyCode == KeyEvent.VK_ENTER) {
         if (restart) {
           ((ListPluginComponent)selection.get(0)).myRestartButton.doClick();
-          return;
         }
-
-        for (CellPluginComponent component : selection) {
-          if (((ListPluginComponent)component).myUpdateButton == null) {
-            return;
+        else if (update) {
+          for (CellPluginComponent component : selection) {
+            ((ListPluginComponent)component).myUpdateButton.doClick();
           }
-        }
-        for (CellPluginComponent component : selection) {
-          ((ListPluginComponent)component).myUpdateButton.doClick();
         }
       }
-      else if (keyCode == KeyEvent.VK_BACK_SPACE) {
-        for (CellPluginComponent component : selection) {
-          if (((ListPluginComponent)component).myUninstalled || component.myPlugin.isBundled()) {
-            return;
+      else if (!restart && !update) {
+        if (keyCode == KeyEvent.VK_SPACE) {
+          if (selection.size() == 1) {
+            myPluginModel.changeEnableDisable(selection.get(0).myPlugin);
+          }
+          else {
+            Pair<Boolean, IdeaPluginDescriptor[]> result = getSelectionNewState(selection);
+            myPluginModel.changeEnableDisable(result.second, result.first);
           }
         }
-        for (CellPluginComponent component : selection) {
-          myPluginModel.doUninstall(this, component.myPlugin, null);
+        else if (keyCode == KeyEvent.VK_BACK_SPACE) {
+          for (CellPluginComponent component : selection) {
+            if (((ListPluginComponent)component).myUninstalled || component.myPlugin.isBundled()) {
+              return;
+            }
+          }
+          for (CellPluginComponent component : selection) {
+            myPluginModel.doUninstall(this, component.myPlugin, null);
+          }
         }
       }
     }
@@ -3761,7 +3769,7 @@ public class PluginManagerConfigurableNew
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       for (JButton button : myButtons) {
         button.doClick();
       }
@@ -5010,13 +5018,13 @@ public class PluginManagerConfigurableNew
     }
   }
 
-  private static final Color DisabledColor = new JBColor(0xC6C6C6, 0x575859);
+  private static final Color DisabledColor = new JBColor(0xB1B1B1, 0x696969);
 
   @SuppressWarnings("UseJBColor")
   private static final Color WhiteForeground = new JBColor(Color.white, new Color(0xBBBBBB));
   @SuppressWarnings("UseJBColor")
   private static final Color BlueColor = new JBColor(0x1D73BF, 0x134D80);
-  private static final Color GreenColor = new JBColor(0x5D9B47, 0x457335);
+  private static final Color GreenColor = new JBColor(0x5D9B47, 0x2B7B50);
   @SuppressWarnings("UseJBColor")
   private static final Color GreenFocusedBackground = new Color(0xE1F6DA);
 

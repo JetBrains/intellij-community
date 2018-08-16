@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.intellij.images.thumbnail.ThumbnailView;
 import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActionUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Level up to browse images.
@@ -30,7 +31,8 @@ import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActionUtil;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public final class UpFolderAction extends AnAction {
-    public void actionPerformed(AnActionEvent e) {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
         ThumbnailView view = ThumbnailViewActionUtil.getVisibleThumbnailView(e);
         if (view != null) {
             VirtualFile root = view.getRoot();
@@ -43,7 +45,8 @@ public final class UpFolderAction extends AnAction {
         }
     }
 
-    public void update(AnActionEvent e) {
+    @Override
+    public void update(@NotNull AnActionEvent e) {
         super.update(e);
         if (ThumbnailViewActionUtil.setEnabled(e)) {
             ThumbnailView view = ThumbnailViewActionUtil.getVisibleThumbnailView(e);

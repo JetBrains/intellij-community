@@ -121,7 +121,7 @@ class RepositoryBrowserPanel(
     add(scrollPane, BorderLayout.CENTER)
   }
 
-  override fun getData(dataId: String?): Any? {
+  override fun getData(dataId: String): Any? {
     return when {
       CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> fileSystemTree.selectedFiles
       CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) ->

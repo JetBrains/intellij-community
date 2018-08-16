@@ -7,7 +7,10 @@ import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -41,17 +44,13 @@ import java.awt.peer.ComponentPeer;
 import java.awt.peer.FramePeer;
 import java.util.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 @State(
   name = "WindowManager",
   defaultStateAsResource = true,
   storages = @Storage(value = "window.manager.xml", roamingType = RoamingType.DISABLED)
 )
-public final class WindowManagerImpl extends WindowManagerEx implements NamedComponent, PersistentStateComponent<Element> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.WindowManagerImpl");
+public final class WindowManagerImpl extends WindowManagerEx implements PersistentStateComponent<Element> {
+  private static final Logger LOG = Logger.getInstance(WindowManagerImpl.class);
 
   @NonNls public static final String FULL_SCREEN = "ide.frame.full.screen";
 
@@ -682,12 +681,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
   @Override
   public final void setLayout(final DesktopLayout layout) {
     myLayout.copyFrom(layout);
-  }
-
-  @Override
-  @NotNull
-  public final String getComponentName() {
-    return "WindowManager";
   }
 
   public WindowWatcher getWindowWatcher() {

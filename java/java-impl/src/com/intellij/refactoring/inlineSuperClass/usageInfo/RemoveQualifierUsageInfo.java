@@ -29,6 +29,7 @@ public class RemoveQualifierUsageInfo extends FixableUsageInfo {
   }
 
 
+  @Override
   public void fixUsage() throws IncorrectOperationException {
     myExpression.getQualifierExpression().delete();
   }

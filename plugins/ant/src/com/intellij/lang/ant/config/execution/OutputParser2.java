@@ -46,6 +46,7 @@ final class OutputParser2 extends OutputParser implements PacketProcessor, Input
     printable.printOn(null);
   }
 
+  @Override
   public void processPacket(String packet) {
     SegmentReader reader = new SegmentReader(packet);
     int index = reader.readInt();
@@ -79,6 +80,7 @@ final class OutputParser2 extends OutputParser implements PacketProcessor, Input
     }
   }
 
+  @Override
   public void onOutput(String text, ConsoleViewContentType contentType) {
     if (text.length() == 0) return;
     if (myLastPacketIndex != -1) return;

@@ -32,6 +32,7 @@ public class AntlibDomFileDescription extends AntFileDescription<AntDomAntlib> {
     super(AntDomAntlib.class, ROOT_TAG_NAME);
   }
 
+  @Override
   public boolean isMyFile(@NotNull XmlFile file, @Nullable Module module) {
     return super.isMyFile(file, module) && isAntLibFile(file);
   }

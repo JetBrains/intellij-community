@@ -57,11 +57,13 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
     return myExternalSystemId;
   }
 
+  @Override
   @NotNull
   public ExternalSystemTaskId getId() {
     return myId;
   }
 
+  @Override
   @NotNull
   public ExternalSystemTaskState getState() {
     return myState.get();
@@ -90,6 +92,7 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
     return myExternalProjectPath;
   }
 
+  @Override
   public void refreshState() {
     if (getState() != ExternalSystemTaskState.IN_PROGRESS) {
       return;

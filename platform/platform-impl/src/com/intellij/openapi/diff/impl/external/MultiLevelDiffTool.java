@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.external;
 
 import com.intellij.openapi.Disposable;
@@ -69,7 +55,8 @@ public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
       builder.setDimensionServiceKey(request.getGroupKey());
 
       new AnAction() {
-        public void actionPerformed(final AnActionEvent e) {
+        @Override
+        public void actionPerformed(@NotNull final AnActionEvent e) {
           builder.getDialogWrapper().close(0);
         }
       }.registerCustomShortcutSet(getActiveKeymapShortcuts("CloseContent"), diffPanel.getComponent());
@@ -87,7 +74,8 @@ public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
       DiffUtil.initDiffFrame(request.getProject(), frameWrapper, diffPanel, diffPanel.getComponent());
 
       new AnAction() {
-        public void actionPerformed(final AnActionEvent e) {
+        @Override
+        public void actionPerformed(@NotNull final AnActionEvent e) {
           Disposer.dispose(frameWrapper);
         }
       }.registerCustomShortcutSet(getActiveKeymapShortcuts("CloseContent"), diffPanel.getComponent());
@@ -100,9 +88,10 @@ public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
     return new CompositeDiffPanel(request.getProject(), this, window, parentDisposable);
   }
 
+  @Override
   public DiffViewer viewerForRequest(Window window,
                                      @NotNull Disposable parentDisposable,
-                                      final String name, DiffRequest current) {
+                                     final String name, DiffRequest current) {
     DiffViewer viewer = null;
     for (DiffTool tool : myTools) {
       if (tool.canShow(current)) {

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.gdpr;
 
 import com.google.gson.Gson;
@@ -42,24 +40,29 @@ public final class ConsentOptions {
       private final File DEFAULT_CONSENTS_FILE = new File(Locations.getDataRoot(), ApplicationNamesInfo.getInstance().getLowercaseProductName() + "/consentOptions/cached");
       private final File CONFIRMED_CONSENTS_FILE = new File(Locations.getDataRoot(), "/consentOptions/accepted");
 
+      @Override
       public void writeDefaultConsents(@NotNull String data) throws IOException {
         FileUtil.writeToFile(DEFAULT_CONSENTS_FILE, data);
       }
 
+      @Override
       @NotNull
       public String readDefaultConsents() throws IOException {
         return loadText(new FileInputStream(DEFAULT_CONSENTS_FILE));
       }
 
+      @Override
       @NotNull
       public String readBundledConsents() {
         return loadText(ConsentOptions.class.getResourceAsStream(getBundledResourcePath()));
       }
 
+      @Override
       public void writeConfirmedConsents(@NotNull String data) throws IOException {
         FileUtil.writeToFile(CONFIRMED_CONSENTS_FILE, data);
       }
 
+      @Override
       @NotNull
       public String readConfirmedConsents() throws IOException {
         return loadText(new FileInputStream(CONFIRMED_CONSENTS_FILE));
@@ -269,12 +272,12 @@ public final class ConsentOptions {
   private static String consentsToJson(Stream<Consent> consents) {
     return consentAttributesToJson(consents.map(consent -> consent.toConsentAttributes()));
   }
-  
+
   private static String consentAttributesToJson(Stream<ConsentAttributes> attributes) {
     final Gson gson = new GsonBuilder().disableHtmlEscaping().create();
     return gson.toJson(attributes.toArray());
   }
-  
+
   private static String confirmedConsentToExternalString(Stream<ConfirmedConsent> consents) {
     return StringUtil.join(consents/*.sorted(Comparator.comparing(confirmedConsent -> confirmedConsent.getId()))*/.map(c -> c.toExternalString()).collect(Collectors.toList()), ";");
   }

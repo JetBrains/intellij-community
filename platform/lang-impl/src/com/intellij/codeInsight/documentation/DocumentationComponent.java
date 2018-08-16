@@ -4,9 +4,9 @@ package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintManagerImpl;
-import com.intellij.codeInsight.lookup.LookupAdapter;
 import com.intellij.codeInsight.lookup.LookupEvent;
 import com.intellij.codeInsight.lookup.LookupEx;
+import com.intellij.codeInsight.lookup.LookupListener;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -92,8 +92,8 @@ import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class DocumentationComponent extends JPanel implements Disposable, DataProvider {
 
@@ -248,7 +248,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     };
     DataProvider helpDataProvider = new DataProvider() {
       @Override
-      public Object getData(@NonNls String dataId) {
+      public Object getData(@NotNull @NonNls String dataId) {
         return PlatformDataKeys.HELP_ID.is(dataId) ? DOCUMENTATION_TOPIC_ID : null;
       }
     };
@@ -382,7 +382,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
                                                                    KeymapUtil.parseMouseShortcut("button5"));
       back.registerCustomShortcutSet(backShortcutSet, this);
       forward.registerCustomShortcutSet(forwardShortcutSet, this);
-      // mouse actions are checked only for exact component over which click was performed, 
+      // mouse actions are checked only for exact component over which click was performed,
       // so we need to register shortcuts for myEditorPane as well
       back.registerCustomShortcutSet(backShortcutSet, myEditorPane);
       forward.registerCustomShortcutSet(forwardShortcutSet, myEditorPane);
@@ -575,7 +575,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (DocumentationManager.SELECTED_QUICK_DOC_TEXT.getName().equals(dataId)) {
       // Javadocs often contain &nbsp; symbols (non-breakable white space). We don't want to copy them as is and replace
       // with raw white spaces. See IDEA-86633 for more details.
@@ -869,9 +869,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
           myHint.show(point);
           LookupEx lookup = LookupManager.getActiveLookup(editor);
           if (lookup != null) {
-            lookup.addLookupListener(new LookupAdapter() {
+            lookup.addLookupListener(new LookupListener() {
               @Override
-              public void lookupCanceled(LookupEvent event) {
+              public void lookupCanceled(@NotNull LookupEvent event) {
                 AbstractPopup hint = myHint;
                 if (hint != null && hint.canClose() && hint.isVisible()) {
                   hint.cancel();
@@ -1219,12 +1219,12 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       goBack();
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
       presentation.setEnabled(!myBackStack.isEmpty());
       if (!isToolbar(e)) {
@@ -1239,12 +1239,12 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       goForward();
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
       presentation.setEnabled(!myForwardStack.isEmpty());
       if (!isToolbar(e)) {
@@ -1262,7 +1262,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       super.actionPerformed(e);
       JBPopup hint = myHint;
       if (hint != null && hint.isVisible()) {
@@ -1282,7 +1282,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  private static boolean isToolbar(AnActionEvent e) {
+  private static boolean isToolbar(@NotNull AnActionEvent e) {
     return ActionPlaces.JAVADOC_TOOLBAR.equals(e.getPlace());
   }
 
@@ -1294,7 +1294,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       if (myElement == null) {
         return;
       }
@@ -1306,7 +1306,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
       presentation.setEnabled(hasExternalDoc());
     }
@@ -1543,7 +1543,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(mySettingsPanel, myFontSizeSlider).createPopup();
       setFontSizeSliderSize(getQuickDocFontSize());
       mySettingsPanel.setVisible(true);
@@ -1587,7 +1587,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private class PreviousLinkAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       int linkCount = getLinkCount();
       if (linkCount <= 0) return;
       highlightLink(myHighlightedLink < 0 ? (linkCount - 1) : (myHighlightedLink + linkCount - 1) % linkCount);
@@ -1596,7 +1596,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private class NextLinkAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       int linkCount = getLinkCount();
       if (linkCount <= 0) return;
       highlightLink((myHighlightedLink + 1) % linkCount);
@@ -1605,7 +1605,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private class ActivateLinkAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       activateLink(myHighlightedLink);
     }
   }
@@ -1714,12 +1714,12 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(myToolwindowCallback != null);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myToolwindowCallback.run();
     }
   }
@@ -1730,12 +1730,12 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(myHint != null && myHint.getDimensionServiceKey() != null);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       DimensionService.getInstance().setSize(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE, null, myManager.myProject);
       myHint.setDimensionServiceKey(null);
       showHint();

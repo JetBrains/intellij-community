@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -23,13 +24,13 @@ public class AddNewPropertyFileAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     ResourceBundle resourceBundle = getResourceBundle(e);
     e.getPresentation().setEnabledAndVisible(resourceBundle != null && CreateResourceBundleDialogComponent.getResourceBundlePlacementDirectory(resourceBundle) != null);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final ResourceBundle resourceBundle = getResourceBundle(e);
     if (resourceBundle == null) return;
     Project project = e.getProject();
@@ -38,7 +39,7 @@ public class AddNewPropertyFileAction extends AnAction {
   }
 
   @Nullable
-  private static ResourceBundle getResourceBundle(AnActionEvent e) {
+  private static ResourceBundle getResourceBundle(@NotNull AnActionEvent e) {
     final Navigatable[] data = CommonDataKeys.NAVIGATABLE_ARRAY.getData(e.getDataContext());
     if (data == null || data.length != 1) return null;
     if (!(data[0] instanceof ResourceBundleAwareNode)) return null;

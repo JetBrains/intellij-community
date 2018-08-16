@@ -39,7 +39,7 @@ public class GotoSymbolAction extends GotoActionBase {
   }
 
   @Override
-  public void gotoActionPerformed(AnActionEvent e) {
+  public void gotoActionPerformed(@NotNull AnActionEvent e) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.symbol");
 
     Project project = e.getProject();
@@ -61,7 +61,7 @@ public class GotoSymbolAction extends GotoActionBase {
   }
 
   @Override
-  protected boolean hasContributors(DataContext dataContext) {
+  protected boolean hasContributors(@NotNull DataContext dataContext) {
     return ChooseByNameRegistry.getInstance().getSymbolModelContributors().length > 0;
   }
 }

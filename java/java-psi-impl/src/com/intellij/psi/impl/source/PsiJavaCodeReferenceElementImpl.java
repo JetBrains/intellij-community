@@ -553,7 +553,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   }
 
   @Override
-  public final PsiElement handleElementRename(final String newElementName) throws IncorrectOperationException {
+  public final PsiElement handleElementRename(@NotNull final String newElementName) throws IncorrectOperationException {
     final PsiElement oldIdentifier = getReferenceNameElement();
     if (oldIdentifier == null) {
       throw new IncorrectOperationException();
@@ -648,12 +648,11 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     PsiReferenceParameterList parameterList = getParameterList();
     if (parameterList != null) {
       PsiElement cur = getReferenceNameElement();
-      do {
+      while (cur != parameterList) {
         assert cur != null : getText();
         cur = cur.getNextSibling();
         text.append(cur.getText());
       }
-      while (cur != parameterList);
     }
 
     PsiJavaCodeReferenceElement ref;
@@ -662,6 +661,11 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     }
     catch (IncorrectOperationException e) {
       throw new IncorrectOperationException(e.getMessage() + " [qname=" + qName + " class=" + aClass + ";" + aClass.getClass().getName() + "]");
+    }
+
+    PsiReferenceParameterList refParameterList = ref.getParameterList();
+    if (parameterList != null && refParameterList != null) {
+      refParameterList.replace(parameterList);
     }
 
     getTreeParent().replaceChildInternal(this, (TreeElement)ref.getNode());
@@ -732,7 +736,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   }
 
   @Override
-  public boolean isReferenceTo(final PsiElement element) {
+  public boolean isReferenceTo(@NotNull final PsiElement element) {
     PsiFile containingFile = getContainingFile();
     return isReferenceTo(element, containingFile);
   }

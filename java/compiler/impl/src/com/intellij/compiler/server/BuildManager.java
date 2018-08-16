@@ -97,8 +97,8 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -144,7 +144,7 @@ public class BuildManager implements Disposable {
   private final List<VFileEvent> myUnprocessedEvents = new ArrayList<>();
   private final ExecutorService myAutomakeTrigger = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
     "BuildManager Auto-Make Trigger");
-  private final Map<String, ProjectData> myProjectDataMap = Collections.synchronizedMap(new HashMap<String, ProjectData>());
+  private final Map<String, ProjectData> myProjectDataMap = Collections.synchronizedMap(new HashMap<>());
   private volatile int myFileChangeCounter;
 
   private final BuildManagerPeriodicTask myAutoMakeTask = new BuildManagerPeriodicTask() {
@@ -320,7 +320,7 @@ public class BuildManager implements Disposable {
 
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         if (Registry.is("compiler.document.save.enabled", true)) {
           final Document document = e.getDocument();
           if (FileDocumentManager.getInstance().isDocumentUnsaved(document)) {
@@ -551,7 +551,7 @@ public class BuildManager implements Disposable {
       }
     }
   }
-  
+
   private static boolean canStartAutoMake(@NotNull Project project) {
     if (project.isDisposed()) {
       return false;
@@ -933,7 +933,7 @@ public class BuildManager implements Disposable {
     }
   }
 
-  private void ensureListening() throws Exception {
+  private void ensureListening() {
     if (myListenPort < 0) {
       synchronized (this) {
         if (myListenPort < 0) {
@@ -1375,16 +1375,16 @@ public class BuildManager implements Disposable {
     myChannelRegistrar.close();
   }
 
-  private int startListening() throws Exception {
+  private int startListening() {
     BuiltInServer mainServer = StartupUtil.getServer();
-    boolean isOwnEventLoopGroup = !Registry.is("compiler.shared.event.group", true) || mainServer == null || mainServer.getEventLoopGroup() instanceof OioEventLoopGroup;
+    boolean isOwnEventLoopGroup = mainServer == null || mainServer.getEventLoopGroup() instanceof OioEventLoopGroup;
     EventLoopGroup group = isOwnEventLoopGroup
                            ? MultiThreadEventLoopGroup(1, ConcurrencyUtil.newNamedThreadFactory("External compiler"))
                            : mainServer.getEventLoopGroup();
     final ServerBootstrap bootstrap = NettyKt.serverBootstrap(group);
     bootstrap.childHandler(new ChannelInitializer() {
       @Override
-      protected void initChannel(@NotNull Channel channel) throws Exception {
+      protected void initChannel(@NotNull Channel channel) {
         channel.pipeline().addLast(myChannelRegistrar,
                                    new ProtobufVarint32FrameDecoder(),
                                    new ProtobufDecoder(CmdlineRemoteProto.Message.getDefaultInstance()),
@@ -1954,7 +1954,7 @@ public class BuildManager implements Disposable {
 
   private class CancelBuildSessionAction<T extends BuilderMessageHandler> implements RequestFuture.CancelAction<T> {
     @Override
-    public void cancel(RequestFuture<T> future) throws Exception {
+    public void cancel(RequestFuture<T> future) {
       myMessageDispatcher.cancelSession(future.getRequestID());
     }
   }

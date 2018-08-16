@@ -220,7 +220,7 @@ public class Notification {
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, new DataContext() {
       @Nullable
       @Override
-      public Object getData(@NonNls String dataId) {
+      public Object getData(@NotNull @NonNls String dataId) {
         if (KEY.is(dataId)) {
           return notification;
         }
@@ -236,7 +236,7 @@ public class Notification {
     DataManager.registerDataProvider(component, new DataProvider() {
       @Nullable
       @Override
-      public Object getData(@NonNls String dataId) {
+      public Object getData(@NotNull @NonNls String dataId) {
         return KEY.getName().equals(dataId) ? notification : null;
       }
     });

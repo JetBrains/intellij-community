@@ -1945,8 +1945,8 @@
                      level="WARNING" implementationClass="com.siyeh.ig.performance.LengthOneStringInIndexOfInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="SingleCharacterStringConcatenation" shortName="LengthOneStringsInConcatenation"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="length.one.strings.in.concatenation.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="false"
-                     level="WARNING" implementationClass="com.siyeh.ig.performance.LengthOneStringsInConcatenationInspection"/>
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="true"
+                     level="INFORMATION" implementationClass="com.siyeh.ig.performance.LengthOneStringsInConcatenationInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ManualArrayToCollectionCopy" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="manual.array.to.collection.copy.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"

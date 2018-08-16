@@ -38,7 +38,7 @@ import java.util.*;
  */
 public class ToggleBreakpointEnabledAction extends DumbAwareAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Collection<XLineBreakpoint> breakpoints = findLineBreakpoints(e);
     for (XLineBreakpoint breakpoint : breakpoints) {
       breakpoint.setEnabled(!breakpoint.isEnabled());
@@ -46,7 +46,7 @@ public class ToggleBreakpointEnabledAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(!findLineBreakpoints(e).isEmpty());
   }
 

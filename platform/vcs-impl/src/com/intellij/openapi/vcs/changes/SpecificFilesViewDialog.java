@@ -53,7 +53,7 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
     myView = new ChangesListView(project) {
       @Nullable
       @Override
-      public Object getData(String dataId) {
+      public Object getData(@NotNull String dataId) {
         if (shownDataKey.is(dataId)) {
           return getSelectedVirtualFiles(null);
         }
@@ -148,19 +148,23 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
   }
 
   private class Expander implements TreeExpander {
+    @Override
     public void expandAll() {
       TreeUtil.expandAll(myView);
     }
 
+    @Override
     public boolean canExpand() {
       return !myView.getGroupingSupport().isNone();
     }
 
+    @Override
     public void collapseAll() {
       TreeUtil.collapseAll(myView, 1);
       TreeUtil.expand(myView, 0);
     }
 
+    @Override
     public boolean canCollapse() {
       return !myView.getGroupingSupport().isNone();
     }

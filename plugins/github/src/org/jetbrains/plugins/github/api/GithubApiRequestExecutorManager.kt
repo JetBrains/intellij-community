@@ -16,14 +16,14 @@ class GithubApiRequestExecutorManager(private val authenticationManager: GithubA
                                       private val requestExecutorFactory: GithubApiRequestExecutor.Factory) {
   @CalledInAwt
   fun getExecutor(account: GithubAccount, project: Project): GithubApiRequestExecutor? {
-    return authenticationManager.getOrRequestTokenForAccount(account, project = project)
-             ?.let(requestExecutorFactory::create)
+    return authenticationManager.getOrRequestTokenForAccount(account, project)
+      ?.let(requestExecutorFactory::create)
   }
 
   @CalledInAwt
   fun getExecutor(account: GithubAccount, parentComponent: Component): GithubApiRequestExecutor? {
-    return authenticationManager.getOrRequestTokenForAccount(account, parentComponent = parentComponent)
-             ?.let(requestExecutorFactory::create)
+    return authenticationManager.getOrRequestTokenForAccount(account, null, parentComponent)
+      ?.let(requestExecutorFactory::create)
   }
 
   @CalledInAwt

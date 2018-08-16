@@ -492,36 +492,27 @@ public class StringUtilTest {
   public void testFormatFileSize() {
     assertEquals("0 B", StringUtil.formatFileSize(0));
     assertEquals("1 B", StringUtil.formatFileSize(1));
-    assertEquals("2 GB", StringUtil.formatFileSize(Integer.MAX_VALUE));
-    assertEquals("8 EB", StringUtil.formatFileSize(Long.MAX_VALUE));
+    assertEquals("2.15 GB", StringUtil.formatFileSize(Integer.MAX_VALUE));
+    assertEquals("9.22 EB", StringUtil.formatFileSize(Long.MAX_VALUE));
 
-    assertEquals("58.69 KB", StringUtil.formatFileSize(60100));
+    assertEquals("60.1 kB", StringUtil.formatFileSize(60_100));
 
-    assertEquals("1.21 KB", StringUtil.formatFileSize(1234));
-    assertEquals("12.06 KB", StringUtil.formatFileSize(12345));
-    assertEquals("120.56 KB", StringUtil.formatFileSize(123456));
-    assertEquals("1.18 MB", StringUtil.formatFileSize(1234567));
-    assertEquals("11.77 MB", StringUtil.formatFileSize(12345678));
-    assertEquals("117.74 MB", StringUtil.formatFileSize(123456789));
-    assertEquals("1.15 GB", StringUtil.formatFileSize(1234567890));
-  }
+    assertEquals("1.23 kB", StringUtil.formatFileSize(1_234));
+    assertEquals("12.35 kB", StringUtil.formatFileSize(12_345));
+    assertEquals("123.46 kB", StringUtil.formatFileSize(123_456));
+    assertEquals("1.23 MB", StringUtil.formatFileSize(1234_567));
+    assertEquals("12.35 MB", StringUtil.formatFileSize(1_2345_678));
+    assertEquals("123.46 MB", StringUtil.formatFileSize(123_456_789));
+    assertEquals("1.23 GB", StringUtil.formatFileSize(1_234_567_890));
 
-  @Test
-  public void testFormatNumber() {
-    assertEquals("0", StringUtil.formatNumber(0));
-    assertEquals("1", StringUtil.formatNumber(1));
-    assertEquals("2.15G", StringUtil.formatNumber(Integer.MAX_VALUE));
-    assertEquals("9.22E", StringUtil.formatNumber(Long.MAX_VALUE));
-
-    assertEquals("60.10K", StringUtil.formatNumber(60100));
-
-    assertEquals("1.23K", StringUtil.formatNumber(1234));
-    assertEquals("12.35K", StringUtil.formatNumber(12345));
-    assertEquals("123.46K", StringUtil.formatNumber(123456));
-    assertEquals("1.23M", StringUtil.formatNumber(1234567));
-    assertEquals("12.35M", StringUtil.formatNumber(12345678));
-    assertEquals("123.46M", StringUtil.formatNumber(123456789));
-    assertEquals("1.23G", StringUtil.formatNumber(1234567890));
+    assertEquals("999 B", StringUtil.formatFileSize(999));
+    assertEquals("1 kB", StringUtil.formatFileSize(1000));
+    assertEquals("999.99 kB", StringUtil.formatFileSize(999_994));
+    assertEquals("1 MB", StringUtil.formatFileSize(999_995));
+    assertEquals("999.99 MB", StringUtil.formatFileSize(999_994_999));
+    assertEquals("1 GB", StringUtil.formatFileSize(999_995_000));
+    assertEquals("999.99 GB", StringUtil.formatFileSize(999_994_999_999L));
+    assertEquals("1 TB", StringUtil.formatFileSize(999_995_000_000L));
   }
 
   @Test

@@ -146,6 +146,7 @@ public abstract class SwingWorker {
     final Runnable doFinished = () -> finished();
 
     Runnable doConstruct = new Runnable() {
+      @Override
       public void run() {
         try{
           setValue(construct());

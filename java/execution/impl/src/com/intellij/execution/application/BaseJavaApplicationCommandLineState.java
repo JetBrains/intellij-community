@@ -15,10 +15,8 @@
  */
 package com.intellij.execution.application;
 
-import com.intellij.execution.CommonJavaRunConfigurationParameters;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.JavaRunConfigurationExtensionManager;
-import com.intellij.execution.RunConfigurationExtension;
+import com.intellij.execution.*;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaCommandLineState;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunConfigurationBase;
@@ -55,6 +53,11 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
     ProcessTerminatedListener.attach(handler);
     JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(getConfiguration(), handler, getRunnerSettings());
     return handler;
+  }
+
+  @Override
+  protected GeneralCommandLine createCommandLine() throws ExecutionException {
+    return super.createCommandLine().withInput(InputRedirectAware.getInputFile(myConfiguration));
   }
 
   protected T getConfiguration() {

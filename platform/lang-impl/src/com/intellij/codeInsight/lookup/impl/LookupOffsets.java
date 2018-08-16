@@ -36,7 +36,7 @@ public class LookupOffsets implements DocumentListener {
   }
 
   @Override
-  public void documentChanged(DocumentEvent e) {
+  public void documentChanged(@NotNull DocumentEvent e) {
     if (myStartMarkerDisposeInfo == null && !myLookupStartMarker.isValid()) {
       Throwable throwable = new Throwable();
       String eString = e.toString();
@@ -99,7 +99,7 @@ public class LookupOffsets implements DocumentListener {
     if (myLookupStartMarker.isValid() && myLookupStartMarker.getStartOffset() == start && myLookupStartMarker.getEndOffset() == start) {
       return;
     }
-    
+
     myLookupStartMarker.dispose();
     myLookupStartMarker = createLeftGreedyMarker(start);
     myStartMarkerDisposeInfo = null;

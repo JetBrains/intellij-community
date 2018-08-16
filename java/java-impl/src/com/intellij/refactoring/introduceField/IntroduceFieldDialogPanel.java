@@ -50,6 +50,7 @@ public class IntroduceFieldDialogPanel extends IntroduceFieldCentralPanel {
           occurrences, allowInitInMethod, allowInitInMethodIfAll, typeSelectorManager);
   }
 
+  @Override
   protected void initializeControls(PsiExpression initializerExpression, BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace) {
     initializeInitializerPlace(initializerExpression, ourLastInitializerPlace);
     String ourLastVisibility = JavaRefactoringSettings.getInstance().INTRODUCE_FIELD_VISIBILITY;
@@ -60,6 +61,7 @@ public class IntroduceFieldDialogPanel extends IntroduceFieldCentralPanel {
     super.initializeControls(initializerExpression, ourLastInitializerPlace);
   }
 
+  @Override
   protected void initializeInitializerPlace(PsiExpression initializerExpression,
                                             BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace) {
     if (initializerExpression != null) {
@@ -108,6 +110,7 @@ public class IntroduceFieldDialogPanel extends IntroduceFieldCentralPanel {
     }
   }
 
+  @Override
   public BaseExpressionToFieldHandler.InitializationPlace getInitializerPlace() {
     if (myRbInConstructor.isSelected()) {
       return BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR;
@@ -126,10 +129,12 @@ public class IntroduceFieldDialogPanel extends IntroduceFieldCentralPanel {
     return BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION;
   }
 
+  @Override
   public String getFieldVisibility() {
     return myVisibilityPanel.getVisibility();
   }
 
+  @Override
   protected JComponent createInitializerPlacePanel(ItemListener itemListener, ItemListener finalUpdater) {
     JPanel mainPanel = new JPanel();
     mainPanel.setLayout(new BorderLayout());
@@ -214,10 +219,12 @@ public class IntroduceFieldDialogPanel extends IntroduceFieldCentralPanel {
     return myRbInSetUp != null;
   }
 
+  @Override
   public void setInitializeInFieldDeclaration() {
     myRbInFieldDeclaration.setSelected(true);
   }
 
+  @Override
   public void setVisibility(String visibility) {
     myVisibilityPanel.setVisibility(visibility);
   }
@@ -241,6 +248,7 @@ public class IntroduceFieldDialogPanel extends IntroduceFieldCentralPanel {
     }
   }
 
+  @Override
   protected JPanel composeWholePanel(JComponent initializerPlacePanel, JPanel checkboxPanel) {
     JPanel panel = new JPanel(new GridBagLayout());
     final GridBagConstraints constraints =

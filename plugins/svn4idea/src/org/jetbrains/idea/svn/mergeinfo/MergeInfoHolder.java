@@ -100,9 +100,11 @@ public class MergeInfoHolder {
       myBranchPath = myPanel.getLocalBranch();
     }
 
+    @Override
     public void onBeforeStartReport() {
     }
 
+    @Override
     public boolean report(final CommittedChangeList list) {
       if (list instanceof SvnChangeList) {
         final SvnMergeInfoCache.MergeCheckResult checkState =
@@ -120,6 +122,7 @@ public class MergeInfoHolder {
       return true;
     }
 
+    @Override
     public void onAfterEndReport() {
       ApplicationManager.getApplication().invokeLater(() -> {
         myCachedMap.remove(getCacheKey());

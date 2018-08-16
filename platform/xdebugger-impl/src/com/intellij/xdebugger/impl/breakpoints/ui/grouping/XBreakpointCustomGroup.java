@@ -37,11 +37,13 @@ public class XBreakpointCustomGroup extends XBreakpointGroup {
     myIsDefault = name.equals(((XBreakpointManagerImpl)XDebuggerManager.getInstance(project).getBreakpointManager()).getDefaultGroup());
   }
 
+  @Override
   @Nullable
   public Icon getIcon(final boolean isOpen) {
     return AllIcons.Nodes.NewFolder;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return myName;

@@ -43,7 +43,7 @@ public class MethodChainCompletionContributor extends CompletionContributor {
     extend(CompletionType.SMART, pattern, new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
-                                    ProcessingContext context,
+                                    @NotNull ProcessingContext context,
                                     @NotNull CompletionResultSet result) {
         try {
           if (!Registry.is(REGISTRY_KEY)) return;

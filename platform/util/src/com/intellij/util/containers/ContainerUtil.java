@@ -10,9 +10,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Array;
-import java.util.*;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -228,7 +228,7 @@ public class ContainerUtil extends ContainerUtilRt {
       return Collections.unmodifiableList(original);
     }
   }
-  
+
   @NotNull
   @Contract(pure = true)
   public static <T> Set<T> unmodifiableOrEmptySet(Set<? extends T> original) {
@@ -240,7 +240,7 @@ public class ContainerUtil extends ContainerUtilRt {
       return Collections.unmodifiableSet(original);
     }
   }
-  
+
   @NotNull
   @Contract(pure = true)
   public static <K,V> Map<K,V> unmodifiableOrEmptyMap(Map<? extends K, ? extends V> original) {
@@ -618,8 +618,8 @@ public class ContainerUtil extends ContainerUtilRt {
     return res;
   }
 
-  public static <T> void processSortedListsInOrder(@NotNull List<T> list1,
-                                                   @NotNull List<T> list2,
+  public static <T> void processSortedListsInOrder(@NotNull List<? extends T> list1,
+                                                   @NotNull List<? extends T> list2,
                                                    @NotNull Comparator<? super T> comparator,
                                                    boolean mergeEqualItems,
                                                    @NotNull Consumer<? super T> processor) {
@@ -835,7 +835,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @Nullable
   @Contract(pure=true)
   public static <T, V extends T> V find(@NotNull Iterable<V> iterable, @NotNull Condition<T> condition) {
-    return find(iterable.iterator(), condition);
+    return ContainerUtilRt.find(iterable, condition);
   }
 
   @Nullable
@@ -862,11 +862,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @Nullable
   public static <T, V extends T> V find(@NotNull Iterator<V> iterator, @NotNull Condition<T> condition) {
-    while (iterator.hasNext()) {
-      V value = iterator.next();
-      if (condition.value(value)) return value;
-    }
-    return null;
+    return ContainerUtilRt.find(iterator, condition);
   }
 
   @Nullable
@@ -1685,13 +1681,13 @@ public class ContainerUtil extends ContainerUtilRt {
   @Nullable
   @Contract(pure=true)
   public static <T, L extends List<T>> T getLastItem(@Nullable L list, @Nullable T def) {
-    return isEmpty(list) ? def : list.get(list.size() - 1);
+    return ContainerUtilRt.getLastItem(list, def);
   }
 
   @Nullable
   @Contract(pure=true)
   public static <T, L extends List<T>> T getLastItem(@Nullable L list) {
-    return getLastItem(list, null);
+    return ContainerUtilRt.getLastItem(list);
   }
 
   /**
@@ -1958,18 +1954,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T, V> List<V> mapNotNull(@NotNull Collection<? extends T> collection, @NotNull Function<T, V> mapping) {
-    if (collection.isEmpty()) {
-      return emptyList();
-    }
-
-    List<V> result = new ArrayList<V>(collection.size());
-    for (T t : collection) {
-      final V o = mapping.fun(t);
-      if (o != null) {
-        result.add(o);
-      }
-    }
-    return result.isEmpty() ? ContainerUtil.<V>emptyList() : result;
+    return ContainerUtilRt.mapNotNull(collection, mapping);
   }
 
   /**
@@ -2379,13 +2364,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @Contract(pure=true)
   public static <T> int indexOf(@NotNull List<T> list, @NotNull Condition<? super T> condition) {
-    for (int i = 0, listSize = list.size(); i < listSize; i++) {
-      T t = list.get(i);
-      if (condition.value(t)) {
-        return i;
-      }
-    }
-    return -1;
+    return ContainerUtilRt.indexOf(list, condition);
   }
 
   @Contract(pure=true)
@@ -2666,7 +2645,7 @@ public class ContainerUtil extends ContainerUtilRt {
   public static <K, V> List<Pair<K, V>> map2List(@NotNull Map<K, V> map) {
     return ContainerUtilRt.map2List(map);
   }
-  
+
   @NotNull
   @Contract(pure=true)
   public static <T, V> Set<V> map2Set(@NotNull T[] collection, @NotNull Function<T, V> mapper) {
@@ -2727,6 +2706,22 @@ public class ContainerUtil extends ContainerUtilRt {
     return a;
   }
 
+  @Contract("null -> null")
+  public static <T> List<T> copyList(@Nullable List<T> list) {
+    if (list == null) {
+      return null;
+    }
+    else if (list == Collections.emptyList()) {
+      return Collections.emptyList();
+    }
+    else if (list.size() == 1) {
+      return new SmartList<T>(list.get(0));
+    }
+    else {
+      return new ArrayList<T>(list);
+    }
+  }
+
   @NotNull
   @Contract(pure=true)
   public static <T> Collection<T> toCollection(@NotNull Iterable<T> iterable) {
@@ -2748,7 +2743,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @Contract(value = "null -> true", pure = true)
   public static <T> boolean isEmpty(@Nullable Collection<T> collection) {
-    return collection == null || collection.isEmpty();
+    return ContainerUtilRt.isEmpty(collection);
   }
 
   @Contract(value = "null -> true", pure = true)

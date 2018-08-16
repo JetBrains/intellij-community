@@ -41,8 +41,7 @@ import java.util.*;
  * @author gregsh
  */
 public abstract class PerFileMappingsBase<T> implements PersistentStateComponent<Element>, PerFileMappings<T>, Disposable {
-
-  private Element myDeferredState;
+  private List<PerFileMappingState> myDeferredMappings;
   private final Map<VirtualFile, T> myMappings = ContainerUtil.newHashMap();
 
   public PerFileMappingsBase() {
@@ -156,7 +155,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   public void setMappings(@NotNull Map<VirtualFile, T> mappings) {
     Collection<VirtualFile> oldFiles;
     synchronized (myMappings) {
-      myDeferredState = null;
+      myDeferredMappings = null;
       oldFiles = ContainerUtil.newArrayList(myMappings.keySet());
       myMappings.clear();
       myMappings.putAll(mappings);
@@ -166,6 +165,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     handleMappingChange(mappings.keySet(), oldFiles, project != null && !project.isDefault());
   }
 
+  @Override
   public void setMapping(@Nullable VirtualFile file, @Nullable T value) {
     synchronized (myMappings) {
       ensureStateLoaded();
@@ -208,9 +208,11 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   @Override
   public Element getState() {
     synchronized (myMappings) {
-      if (myDeferredState != null) {
-        return myDeferredState;
+      if (myDeferredMappings != null) {
+        //noinspection deprecation
+        return PerFileMappingState.write(myDeferredMappings, getValueAttribute());
       }
+
       cleanup();
       Element element = new Element("x");
       List<VirtualFile> files = new ArrayList<>(myMappings.keySet());
@@ -225,6 +227,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
         Element child = new Element("file");
         element.addContent(child);
         child.setAttribute("url", file == null ? "PROJECT" : file.getUrl());
+        //noinspection deprecation
         child.setAttribute(getValueAttribute(), valueStr);
       }
       return element;
@@ -236,23 +239,38 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     return null;
   }
 
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @NotNull
+  @Deprecated
+  // better to not override
   protected String getValueAttribute() {
     return "value";
   }
 
   @Override
-  public void loadState(@NotNull Element state) {
+  public void loadState(@NotNull Element element) {
+    // read not under lock
+    @SuppressWarnings("deprecation")
+    List<PerFileMappingState> list = PerFileMappingState.read(element, getValueAttribute());
     synchronized (myMappings) {
-      myDeferredState = state;
+      if (list.isEmpty()) {
+        myMappings.clear();
+        myDeferredMappings = null;
+      }
+      else {
+        myDeferredMappings = list;
+      }
     }
   }
 
   private void ensureStateLoaded() {
     synchronized (myMappings) {
-      Element state = myDeferredState;
-      if (state == null) return;
-      myDeferredState = null;
+      List<PerFileMappingState> state = myDeferredMappings;
+      if (state == null) {
+        return;
+      }
+
+      myDeferredMappings = null;
       THashMap<String, T> valuesMap = new THashMap<>();
       for (T value : getAvailableValues()) {
         String key = serialize(value);
@@ -261,11 +279,9 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
         }
       }
       myMappings.clear();
-      List<Element> files = state.getChildren("file");
-      for (Element fileElement : files) {
-        String url = fileElement.getAttributeValue("url");
-        if (url == null) continue;
-        String valueStr = fileElement.getAttributeValue(getValueAttribute());
+      for (PerFileMappingState entry : state) {
+        String url = entry.getUrl();
+        String valueStr = entry.getValue();
         VirtualFile file = "PROJECT".equals(url) ? null : VirtualFileManager.getInstance().findFileByUrl(url);
         T value = valuesMap.get(valueStr);
         if (value == null) {
@@ -282,7 +298,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   @TestOnly
   public void cleanupForNextTest() {
     synchronized (myMappings) {
-      myDeferredState = null;
+      myDeferredMappings = null;
       myMappings.clear();
     }
   }

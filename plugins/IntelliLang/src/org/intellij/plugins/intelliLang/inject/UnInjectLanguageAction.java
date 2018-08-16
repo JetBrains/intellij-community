@@ -41,16 +41,19 @@ import java.util.List;
  */
 public class UnInjectLanguageAction implements IntentionAction, LowPriorityAction {
 
+  @Override
   @NotNull
   public String getText() {
     return "Un-inject Language/Reference";
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getText();
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final int offset = editor.getCaretModel().getOffset();
     PsiElement element = InjectedLanguageUtil.findInjectedPsiNoCommit(file, offset);
@@ -60,6 +63,7 @@ public class UnInjectLanguageAction implements IntentionAction, LowPriorityActio
     return element.getUserData(LanguageInjectionSupport.INJECTOR_SUPPORT) != null;
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     ApplicationManager.getApplication().runReadAction(() -> invokeImpl(project, editor, file));
   }
@@ -116,6 +120,7 @@ public class UnInjectLanguageAction implements IntentionAction, LowPriorityActio
     return Configuration.getProjectInstance(host.getProject()).setHostInjectionEnabled(host, languages, false);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

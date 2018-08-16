@@ -267,6 +267,12 @@
   <action id="NextTab">
     <keyboard-shortcut first-keystroke="control PAGE_DOWN"/>
   </action>
+  <action id="Diff.PrevChange">
+    <keyboard-shortcut first-keystroke="control PAGE_UP"/>
+  </action>
+  <action id="Diff.NextChange">
+    <keyboard-shortcut first-keystroke="control PAGE_DOWN"/>
+  </action>
   <action id="OpenFile">
     <keyboard-shortcut first-keystroke="shift control O"/>
   </action>

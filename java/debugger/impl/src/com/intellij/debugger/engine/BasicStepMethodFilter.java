@@ -61,15 +61,18 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
     myCallingExpressionLines = callingExpressionLines;
   }
 
+  @Override
   @NotNull
   public String getMethodName() {
     return myTargetMethodName;
   }
 
+  @Override
   public boolean locationMatches(DebugProcessImpl process, Location location) throws EvaluateException {
     return locationMatches(process, location, () -> null);
   }
 
+  @Override
   public boolean locationMatches(DebugProcessImpl process, Location location, @NotNull EvaluatingComputable<ObjectReference> thisProvider)
     throws EvaluateException {
     Method method = location.method();

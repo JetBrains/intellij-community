@@ -171,7 +171,7 @@ public class TipUIUtil {
         String path = img.substring(srcIndex + 5, endIndex);
         URL url;
         try {
-          url = tipLoader != null ? ResourceUtil.getResource(tipLoader, "/tips/", path) : new URL("file://" + FileUtil.join(tipPath, path));
+          url = tipLoader != null ? ResourceUtil.getResource(tipLoader, "/tips/", path) : new File(tipPath, path).toURI().toURL();
         }
         catch (MalformedURLException e) {
           url = null;
@@ -323,6 +323,7 @@ public class TipUIUtil {
       setBackground(UIUtil.getTextFieldBackground());
       addHyperlinkListener(
         new HyperlinkListener() {
+          @Override
           public void hyperlinkUpdate(HyperlinkEvent e) {
             if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
               BrowserUtil.browse(e.getURL());

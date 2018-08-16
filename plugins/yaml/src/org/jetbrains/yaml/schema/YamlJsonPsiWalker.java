@@ -189,6 +189,7 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
     return includeWhitespaces ? "\n  " : "";
   }
 
+  @Override
   @Nullable public String defaultObjectValueDescription() { return "start object"; }
 
   @Override
@@ -196,6 +197,7 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
     return includeWhitespaces ? "\n  - " : "- ";
   }
 
+  @Override
   @Nullable public String defaultArrayValueDescription() { return "start array"; }
 
   @Override

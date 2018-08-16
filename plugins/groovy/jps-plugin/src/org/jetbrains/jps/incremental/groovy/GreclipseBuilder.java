@@ -28,6 +28,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
@@ -222,14 +223,14 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
 
   private boolean performCompilation(List<String> args, StringWriter out, StringWriter err, Map<String, List<String>> outputs, CompileContext context, ModuleChunk chunk) {
     String bytecodeTarget = JpsGroovycRunner.getBytecodeTarget(context, chunk);
-    if (bytecodeTarget != null && System.getProperty(JpsGroovycRunner.GROOVY_TARGET_BYTECODE) == null) {
+    if (bytecodeTarget != null && System.getProperty(GroovyRtConstants.GROOVY_TARGET_BYTECODE) == null) {
       synchronized (ourGlobalEnvironmentLock) {
         try {
-          System.setProperty(JpsGroovycRunner.GROOVY_TARGET_BYTECODE, bytecodeTarget);
+          System.setProperty(GroovyRtConstants.GROOVY_TARGET_BYTECODE, bytecodeTarget);
           return performCompilationInner(args, out, err, outputs, context, chunk);
         }
         finally {
-          System.clearProperty(JpsGroovycRunner.GROOVY_TARGET_BYTECODE);
+          System.clearProperty(GroovyRtConstants.GROOVY_TARGET_BYTECODE);
         }
       }
     }

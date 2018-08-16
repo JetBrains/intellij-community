@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -149,8 +148,6 @@ public class BringVariableIntoScopeFix implements IntentionAction {
     if (HighlightControlFlowUtil.checkVariableInitializedBeforeUsage(myUnresolvedReference, addedVar, new THashMap<>(), file) != null) {
       initialize(addedVar);
     }
-
-    DaemonCodeAnalyzer.getInstance(project).updateVisibleHighlighters(editor);
   }
 
   private static void initialize(final PsiLocalVariable variable) throws IncorrectOperationException {

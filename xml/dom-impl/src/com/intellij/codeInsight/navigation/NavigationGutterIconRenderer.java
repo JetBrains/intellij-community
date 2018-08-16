@@ -96,7 +96,7 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
   public AnAction getClickAction() {
     return new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         navigate(e == null ? null : (MouseEvent)e.getInputEvent(), null);
       }
     };

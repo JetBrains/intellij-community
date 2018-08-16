@@ -32,10 +32,12 @@ public class ErrorTreeViewConfiguration implements PersistentStateComponent<Erro
     HIDE_WARNINGS = value;
   }
 
+  @Override
   public ErrorTreeViewConfiguration getState() {
     return this;
   }
 
+  @Override
   public void loadState(@NotNull final ErrorTreeViewConfiguration state) {
     XmlSerializerUtil.copyBean(state, this);
   }

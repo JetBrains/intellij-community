@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.xpath.xslt.associations.impl;
 
 import com.intellij.ide.projectView.ProjectViewNode;
@@ -39,6 +25,7 @@ import com.intellij.util.ui.UIUtil;
 import icons.XpathIcons;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -88,16 +75,19 @@ class AssociationsEditor {
 
     myListModel = new AssociationsModel(myTree, myManager);
     myListModel.addListDataListener(new ListDataListener() {
+      @Override
       public void intervalAdded(ListDataEvent listDataEvent) {
         myTree.invalidate();
         myTree.repaint();
       }
 
+      @Override
       public void intervalRemoved(ListDataEvent listDataEvent) {
         myTree.invalidate();
         myTree.repaint();
       }
 
+      @Override
       public void contentsChanged(ListDataEvent listDataEvent) {
       }
     });
@@ -196,13 +186,15 @@ class AssociationsEditor {
       super(myManager);
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final PsiFile selection = (PsiFile)getTreeSelection(myTree);
       addAssociation(selection);
       myListModel.update(selection);
     }
 
-    public void update(AnActionEvent e) {
+    @Override
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(getTreeSelection(myTree) instanceof PsiFile);
     }
   }
@@ -212,7 +204,8 @@ class AssociationsEditor {
       super("Remove", "Remove Association", IconUtil.getRemoveIcon());
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final PsiFile selection = (PsiFile)getTreeSelection(myTree);
       final PsiFile listSelection = (PsiFile)getListSelection();
 
@@ -220,7 +213,8 @@ class AssociationsEditor {
       myListModel.update(selection);
     }
 
-    public void update(AnActionEvent e) {
+    @Override
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(getListSelection() instanceof PsiFile);
     }
 
@@ -234,6 +228,7 @@ class AssociationsEditor {
       super(true);
     }
 
+    @Override
     protected boolean isSortByType() {
       return false;
     }
@@ -307,14 +302,17 @@ class AssociationsEditor {
       myTree.addTreeSelectionListener(this);
     }
 
+    @Override
     public int getSize() {
       return myFiles.length;
     }
 
+    @Override
     public Object getElementAt(int index) {
       return myFiles[index];
     }
 
+    @Override
     public void valueChanged(TreeSelectionEvent e) {
       final Object selection = getTreeSelection(myTree);
       if (selection instanceof PsiFile) {
@@ -344,6 +342,7 @@ class AssociationsEditor {
       myManager = manager;
     }
 
+    @Override
     public void customizeCellRenderer(JTree tree,
                                       Object value,
                                       boolean selected,
@@ -376,10 +375,12 @@ class AssociationsEditor {
         myNode = nodeDescriptor.getElement();
       }
 
+      @Override
       public boolean update() {
         return false;
       }
 
+      @Override
       public PsiFileNode getElement() {
         return myNode;
       }
@@ -387,10 +388,12 @@ class AssociationsEditor {
   }
 
   private static class MyCellRenderer extends PsiElementListCellRenderer<PsiFile> {
+    @Override
     public String getElementText(PsiFile file) {
       return file.getName();
     }
 
+    @Override
     protected String getContainerText(PsiFile psiElement, String string) {
       //noinspection ConstantConditions
       return "(" + psiElement.getVirtualFile().getParent().getPresentableUrl() + ")";

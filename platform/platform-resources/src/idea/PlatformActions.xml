@@ -100,9 +100,9 @@
       <action id="EditorPageDown" class="com.intellij.openapi.editor.actions.PageDownAction"/>
       <action id="EditorPageUpWithSelection" class="com.intellij.openapi.editor.actions.PageUpWithSelectionAction"/>
       <action id="EditorPageDownWithSelection" class="com.intellij.openapi.editor.actions.PageDownWithSelectionAction"/>
-      <action id="EditorCopy" class="com.intellij.openapi.editor.actions.CopyAction" use-shortcut-of="$Copy"/>
-      <action id="EditorCut" class="com.intellij.openapi.editor.actions.CutAction" use-shortcut-of="$Cut"/>
-      <action id="EditorPaste" class="com.intellij.openapi.editor.actions.PasteAction" use-shortcut-of="$Paste"/>
+      <action id="EditorCopy" class="com.intellij.openapi.editor.actions.CopyAction" use-shortcut-of="$Copy" icon="AllIcons.Actions.Copy"/>
+      <action id="EditorCut" class="com.intellij.openapi.editor.actions.CutAction" use-shortcut-of="$Cut" icon="AllIcons.Actions.Menu_cut"/>
+      <action id="EditorPaste" class="com.intellij.openapi.editor.actions.PasteAction" use-shortcut-of="$Paste" icon="AllIcons.Actions.Menu_paste"/>
       <action id="EditorPasteSimple" class="com.intellij.openapi.editor.actions.SimplePasteAction"/>
       <action id="EditorPasteFromX11" class="com.intellij.openapi.editor.actions.PasteFromX11Action"/>
       <action id="EditorHungryBackSpace" class="com.intellij.openapi.editor.actions.HungryBackspaceAction"/>
@@ -220,6 +220,9 @@
               text="Show Diff in External Tool"/>
       <separator/>
 
+      <action id="Diff.PrevChange" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Actions.Back"/>
+      <action id="Diff.NextChange" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Actions.Forward"/>
+
       <action id="NextDiff" class="com.intellij.openapi.diff.actions.NextDiffAction" icon="AllIcons.Actions.NextOccurence"/>
       <action id="PreviousDiff" class="com.intellij.openapi.diff.actions.PreviousDiffAction" icon="AllIcons.Actions.PreviousOccurence"/>
       <action id="Diff.NextConflict" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Actions.MoveDown"/>
@@ -241,14 +244,15 @@
       <action id="Diff.ApplyNonConflicts.Right" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.ApplyNotConflictsRight"/>
       <action id="Diff.MagicResolveConflicts" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.MagicResolveToolbar"/>
 
-      <action id="Diff.ComparePartial.Base.Left" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.Compare4LeftMiddle"/>
-      <action id="Diff.ComparePartial.Base.Right" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.Compare4MiddleRight"/>
-      <action id="Diff.ComparePartial.Left.Right" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.Compare4LeftRight"/>
+      <group text="Compare Contents" icon="AllIcons.Actions.Diff" popup="true">
+        <action id="Diff.ComparePartial.Base.Left" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+        <action id="Diff.ComparePartial.Base.Right" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+        <action id="Diff.ComparePartial.Left.Right" class="com.intellij.openapi.actionSystem.EmptyAction"/>
 
-      <action id="Diff.CompareWithBase.Left" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.Compare4LeftBottom"/>
-      <action id="Diff.CompareWithBase.Result" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.Compare4MiddleBottom"/>
-      <action id="Diff.CompareWithBase.Right" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.Compare4RightBottom"/>
-      <separator/>
+        <action id="Diff.CompareWithBase.Left" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+        <action id="Diff.CompareWithBase.Result" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+        <action id="Diff.CompareWithBase.Right" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+      </group>
 
       <action id="CompareDirs" class="com.intellij.diff.actions.CompareFilesAction" text="Compare Directories" use-shortcut-of="CompareTwoFiles"/>
 

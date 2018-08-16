@@ -26,6 +26,7 @@ public class InstrumentIdeaExtensions extends Javac2 {
      * @return false, meaning that java classes are not compiled
      * @see com.intellij.ant.Javac2#areJavaClassesCompiled()
      */
+    @Override
     protected boolean areJavaClassesCompiled() {
         return false;
     }

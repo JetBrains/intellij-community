@@ -18,6 +18,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.Equality;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -273,7 +274,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent event) {
+    public void actionPerformed(@NotNull AnActionEvent event) {
       final String profileName = askForProfileName("Copy {0}");
       if (profileName == null) return;
 
@@ -286,7 +287,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
 
 
     @Override
-    public void update(AnActionEvent event) {
+    public void update(@NotNull AnActionEvent event) {
       super.update(event);
       event.getPresentation().setEnabled(getSelectedObject() != null);
     }
@@ -302,7 +303,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent event) {
+    public void actionPerformed(@NotNull AnActionEvent event) {
       final T newItem = createItem();
       if (newItem != null) {
         onItemCreated(newItem);

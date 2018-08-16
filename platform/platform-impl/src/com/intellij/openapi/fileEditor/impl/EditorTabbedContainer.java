@@ -435,7 +435,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       e.getPresentation().setIcon(AllIcons.Actions.CloseNew);
       e.getPresentation().setHoveredIcon(AllIcons.Actions.CloseNewHovered);
       e.getPresentation().setVisible(UISettings.getInstance().getShowCloseButton());
@@ -443,7 +443,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     }
 
     @Override
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       final FileEditorManagerEx mgr = FileEditorManagerEx.getInstanceEx(myProject);
       EditorWindow window;
       if (ActionPlaces.EDITOR_TAB.equals(e.getPlace())) {
@@ -468,7 +468,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
   private final class MyDataProvider implements DataProvider {
     @Override
-    public Object getData(@NonNls final String dataId) {
+    public Object getData(@NotNull @NonNls final String dataId) {
       if (CommonDataKeys.PROJECT.is(dataId)) {
         return myProject;
       }

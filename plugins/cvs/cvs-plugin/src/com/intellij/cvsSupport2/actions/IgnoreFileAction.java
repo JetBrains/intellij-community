@@ -62,11 +62,13 @@ public class IgnoreFileAction extends AnAction implements DumbAware {
     myVisibility.addCondition(ActionOnSelectedElement.FILES_ARE_NOT_IGNORED);
   }
 
-  public void update(AnActionEvent e) {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     myVisibility.applyToEvent(e);
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final MultiMap<VirtualFile, VirtualFile> parentToSelectedChildren = MultiMap.createSmart();
     final CvsContext context = CvsContextWrapper.createCachedInstance(e);
     final VirtualFile[] selectedFiles = context.getSelectedFiles();
@@ -99,6 +101,7 @@ public class IgnoreFileAction extends AnAction implements DumbAware {
     final Collection<VirtualFile> createdCvsIgnoreFiles = new ArrayList<>();
     for (final VirtualFile parent : parentToSelectedChildren.keySet()) {
       final Runnable runnable = new Runnable() {
+        @Override
         public void run() {
           try {
             final VirtualFile cvsIgnoreFile =
@@ -142,6 +145,7 @@ public class IgnoreFileAction extends AnAction implements DumbAware {
 
         private AddFileOrDirectoryAction createAddFilesAction() {
           return new AddFileOrDirectoryAction(CvsBundle.message("adding.cvsignore.files.to.cvs.action.name"), Options.ON_FILE_ADDING) {
+            @Override
             protected void onActionPerformed(CvsContext context,
                                              CvsTabbedWindow tabbedWindow,
                                              boolean successfully,
@@ -157,15 +161,18 @@ public class IgnoreFileAction extends AnAction implements DumbAware {
 
   private static CvsContextAdapter createContext(final Collection<VirtualFile> createdCvsIgnoreFiles, final CvsContext context) {
     return new CvsContextAdapter() {
+      @Override
       @NotNull
       public VirtualFile[] getSelectedFiles() {
         return VfsUtil.toVirtualFileArray(createdCvsIgnoreFiles);
       }
 
+      @Override
       public Refreshable getRefreshableDialog() {
         return context.getRefreshableDialog();
       }
 
+      @Override
       public Project getProject() {
         return context.getProject();
       }

@@ -36,10 +36,12 @@ public class IfStatementEvaluator implements Evaluator {
     myElseEvaluator = elseEvaluator == null ? null : DisableGC.create(elseEvaluator);
   }
 
+  @Override
   public Modifier getModifier() {
     return myModifier;
   }
 
+  @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     Object value = myConditionEvaluator.evaluate(context);
     if(!(value instanceof BooleanValue)) {

@@ -35,11 +35,13 @@ abstract class SimpleAttributeReference implements PsiReference {
         myAttribute = attribute;
     }
 
+    @Override
     @NotNull
     public String getCanonicalText() {
         return getTextRange().substring(myAttribute.getValue());
     }
 
+    @Override
     @NotNull
     public PsiElement getElement() {
         final XmlAttributeValue value = myAttribute.getValueElement();
@@ -47,12 +49,14 @@ abstract class SimpleAttributeReference implements PsiReference {
         return value;
     }
 
+    @Override
     @NotNull
     public TextRange getRangeInElement() {
         return getTextRange().shiftRight(1);
     }
 
-    public boolean isReferenceTo(PsiElement element) {
+    @Override
+    public boolean isReferenceTo(@NotNull PsiElement element) {
         if (this instanceof PsiPolyVariantReference) {
             final PsiPolyVariantReference reference = (PsiPolyVariantReference)this;
             final ResolveResult[] results = reference.multiResolve(false);
@@ -65,17 +69,20 @@ abstract class SimpleAttributeReference implements PsiReference {
         }
     }
 
+    @Override
     public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
         throw new UnsupportedOperationException();
     }
 
-    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    @Override
+    public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
         myAttribute.setValue(getTextRange().replace(myAttribute.getValue(), newElementName));
         final XmlAttributeValue value = myAttribute.getValueElement();
         assert value != null;
         return value;
     }
 
+    @Override
     @Nullable
     public final PsiElement resolve() {
         return ResolveCache.getInstance(myAttribute.getProject()).resolveWithCaching(this,

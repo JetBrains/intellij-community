@@ -43,6 +43,7 @@ class DirectoryElementType extends CompositePackagingElementType<DirectoryPackag
     return AllIcons.Actions.NewFolder;
   }
 
+  @Override
   @NotNull
   public DirectoryPackagingElement createEmpty(@NotNull Project project) {
     return new DirectoryPackagingElement();
@@ -57,6 +58,7 @@ class DirectoryElementType extends CompositePackagingElementType<DirectoryPackag
     return null;
   }
 
+  @Override
   public CompositePackagingElement<?> createComposite(CompositePackagingElement<?> parent, String baseName, @NotNull ArtifactEditorContext context) {
     final String initialValue = PackagingElementFactoryImpl.suggestFileName(parent, baseName != null ? baseName : "folder", "");
     String path = Messages.showInputDialog(context.getProject(), "Enter directory name: ", "New Directory", null, initialValue, new FilePathValidator());

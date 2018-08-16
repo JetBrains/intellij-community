@@ -15,8 +15,8 @@
  */
 package org.intellij.lang.xpath.psi;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import org.intellij.lang.xpath.context.ContextProvider;
 import org.intellij.lang.xpath.context.XPathVersion;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 @SuppressWarnings({"NullableProblems"})
 public interface XPathElement extends PsiElement {
 
+  @Override
   @NotNull
   ASTNode getNode();
 

@@ -244,7 +244,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   }
 
   public void rebuild() {
-    myStructureTreeModel.getInvoker().invokeLaterIfNeeded(() -> {
+    myStructureTreeModel.getInvoker().runOrInvokeLater(() -> {
       UIUtil.putClientProperty(myTree, STRUCTURE_VIEW_STATE_RESTORED_KEY, null);
       myTreeStructure.rebuildTree();
       myStructureTreeModel.invalidate(null);
@@ -616,7 +616,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   }
 
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
       PsiElement element = getSelectedValues().filter(PsiElement.class).single();
       return element != null && element.isValid() ? element : null;

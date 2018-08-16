@@ -39,6 +39,7 @@ public abstract class AbstractValueEditor<T> implements ValueEditor<T> {
    * Try parsing the text field value or return the default value if parsing fails.
    * @return The parsed value as returned by {@link #parseValue(String)} method or the default value.
    */
+  @Override
   @NotNull
   public T getValue() {
     try {
@@ -64,6 +65,7 @@ public abstract class AbstractValueEditor<T> implements ValueEditor<T> {
    * @param newValue The new value to set. It must be either a default value or a value following the rules defined in
    * {@link #isValid(Object)} method, otherwise the default value will be used.
    */
+  @Override
   public void setValue(@NotNull T newValue) {
     if (!newValue.equals(getDefaultValue()) && !isValid(newValue)) {
       newValue = getDefaultValue();
@@ -76,6 +78,7 @@ public abstract class AbstractValueEditor<T> implements ValueEditor<T> {
    * failure.
    * @throws ConfigurationException If the text doesn't represent a valid value.
    */
+  @Override
   public void validateContent() throws ConfigurationException {
     try {
       parseValue(getValueText());

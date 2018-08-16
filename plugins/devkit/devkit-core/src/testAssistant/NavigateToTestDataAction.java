@@ -47,7 +47,7 @@ import java.util.List;
  */
 public class NavigateToTestDataAction extends AnAction implements TestTreeViewAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = e.getProject();
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
@@ -114,7 +114,7 @@ public class NavigateToTestDataAction extends AnAction implements TestTreeViewAc
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(findTargetMethod(e.getDataContext()) != null);
   }
 

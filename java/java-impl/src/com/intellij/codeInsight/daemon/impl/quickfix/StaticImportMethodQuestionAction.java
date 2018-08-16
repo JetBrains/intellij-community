@@ -104,7 +104,7 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
     }
     final BaseListPopupStep<T> step =
       new BaseListPopupStep<T>(getPopupTitle(), myCandidates) {
-        
+
         @Override
         public boolean isAutoSelectionEnabled() {
           return false;
@@ -114,7 +114,7 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
         public boolean isSpeedSearchEnabled() {
           return true;
         }
-        
+
         @Override
         public PopupStep onChosen(T selectedValue, boolean finalChoice) {
           if (selectedValue == null) {
@@ -155,10 +155,12 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
       @Override
       protected ListCellRenderer getListElementRenderer() {
         return new PsiElementListCellRenderer<T>() {
+          @Override
           public String getElementText(T element) {
             return getElementPresentableName(element);
           }
 
+          @Override
           public String getContainerText(final T element, final String name) {
             return PsiClassListCellRenderer.getContainerTextStatic(element);
           }

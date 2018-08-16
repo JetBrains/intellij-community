@@ -49,8 +49,8 @@ import org.jetbrains.lang.manifest.psi.Header;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Robert F. Beeger (robert@beeger.net)
@@ -133,7 +133,7 @@ public class MisspelledHeaderInspection extends LocalInspectionTool {
 
       area.getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
-        protected void textChanged(DocumentEvent e) {
+        protected void textChanged(@NotNull DocumentEvent e) {
           headers.clear();
           for (String line : StringUtil.split(area.getText(), "\n")) {
             String header = line.trim();

@@ -33,6 +33,7 @@ public class UndeclaredTestsInspectionTest extends InspectionTestCase {
     return "test";
   }
 
+  @Override
   @BeforeMethod
   protected void setUp() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
@@ -45,6 +46,7 @@ public class UndeclaredTestsInspectionTest extends InspectionTestCase {
     });
   }
 
+  @Override
   @AfterMethod
   protected void tearDown() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
@@ -57,6 +59,7 @@ public class UndeclaredTestsInspectionTest extends InspectionTestCase {
     });
   }
 
+  @Override
   @NonNls
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("testng") + "/testData/inspection";

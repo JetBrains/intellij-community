@@ -18,7 +18,6 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,11 +84,5 @@ public class PyKeywordArgumentReference extends PsiReferenceBase.Poly<PyKeywordA
       return resolveToFunction(resolveResult, visited);
     }
     return null;
-  }
-
-  @NotNull
-  @Override
-  public Object[] getVariants() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 }

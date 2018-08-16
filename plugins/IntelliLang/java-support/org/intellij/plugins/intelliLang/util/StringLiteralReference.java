@@ -34,30 +34,36 @@ public abstract class StringLiteralReference implements PsiReference {
     myValue = value;
   }
 
+  @Override
   @NotNull
   public PsiElement getElement() {
     return myValue;
   }
 
+  @Override
   @NotNull
   public TextRange getRangeInElement() {
     return ElementManipulators.getValueTextRange(myValue);
   }
 
+  @Override
   @NotNull
   public String getCanonicalText() {
     return myValue.getText();
   }
 
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  @Override
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     return myValue;
   }
 
+  @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     return myValue;
   }
 
-  public boolean isReferenceTo(PsiElement element) {
+  @Override
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return resolve() == element;
   }
 

@@ -115,6 +115,8 @@ open class FileBasedStorage(file: Path,
       var result = cachedVirtualFile
       if (result == null) {
         result = LocalFileSystem.getInstance().findFileByPath(file.systemIndependentPath)
+        // otherwise virtualFile.contentsToByteArray() will query expensive FileTypeManager.getInstance()).getByFile()
+        result?.charset = StandardCharsets.UTF_8
         cachedVirtualFile = result
       }
       return cachedVirtualFile
@@ -187,7 +189,8 @@ open class FileBasedStorage(file: Path,
       LOG.warn(e)
     }
 
-    if (!ApplicationManager.getApplication().isUnitTestMode && !ApplicationManager.getApplication().isHeadlessEnvironment) {
+    val app = ApplicationManager.getApplication()
+    if (!app.isUnitTestMode && !app.isHeadlessEnvironment) {
       val reason = if (contentTruncated) "content truncated" else e!!.message
       val action = if (blockSavingTheContent) "Please correct the file content" else "File content will be recreated"
       Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
@@ -259,7 +262,11 @@ private fun doWrite(requestor: Any, file: VirtualFile, dataWriterOrByteArray: An
       is DataWriter -> dataWriterOrByteArray.toBufferExposingByteArray(lineSeparator)
       else -> dataWriterOrByteArray as BufferExposingByteArrayOutputStream
     }
-    throw ReadOnlyModificationException(file, StateStorage.SaveSession { doWrite(requestor, file, byteArray, lineSeparator, prependXmlProlog) })
+    throw ReadOnlyModificationException(file, object : StateStorage.SaveSession {
+      override fun save() {
+        doWrite(requestor, file, byteArray, lineSeparator, prependXmlProlog)
+      }
+    })
   }
 
   runUndoTransparentWriteAction {
@@ -304,7 +311,11 @@ private fun deleteFile(file: Path, requestor: Any, virtualFile: VirtualFile?) {
       deleteFile(requestor, virtualFile)
     }
     else {
-      throw ReadOnlyModificationException(virtualFile, StateStorage.SaveSession { deleteFile(requestor, virtualFile) })
+      throw ReadOnlyModificationException(virtualFile, object : StateStorage.SaveSession {
+        override fun save() {
+          deleteFile(requestor, virtualFile)
+        }
+      })
     }
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl;
 
 import com.intellij.icons.AllIcons;
@@ -99,6 +85,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
   private DiffRequest.ToolbarAddons createToolbar() {
     return new DiffRequest.ToolbarAddons() {
+      @Override
       public void customize(DiffToolbar toolbar) {
         ActionManager actionManager = ActionManager.getInstance();
         toolbar.addAction(actionManager.getAction("DiffPanel.Toolbar"));
@@ -262,11 +249,13 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     });
   }
 
+  @Override
   @Nullable
   public Editor getEditor1() {
     return myLeftSide.getEditor();
   }
 
+  @Override
   @Nullable
   public Editor getEditor2() {
     if (myDisposed) LOG.error("Disposed");
@@ -276,6 +265,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     return editor;
   }
 
+  @Override
   public void setContents(DiffContent content1, DiffContent content2) {
     LOG.assertTrue(content1 != null && content2 != null);
     LOG.assertTrue(!myDisposed);
@@ -309,10 +299,12 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     mySplitter.setResizeEnabled(true);
   }
 
+  @Override
   public void removeStatusBar() {
     myPanel.removeStatusBar();
   }
 
+  @Override
   public void enableToolbar(final boolean value) {
     myPanel.disableToolbar(!value);
   }
@@ -356,12 +348,14 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     }
   }
 
+  @Override
   public void setTooBigFileErrorContents() {
     setLineBlocks(LineBlocks.EMPTY);
     myTopMessageDiffPanel = new CanNotCalculateDiffPanel();
     myPanel.insertTopComponent(myTopMessageDiffPanel);
   }
 
+  @Override
   public void setPatchAppliedApproximately() {
     if (!(myTopMessageDiffPanel instanceof CanNotCalculateDiffPanel)) {
       myTopMessageDiffPanel = new DiffIsApproximate();
@@ -384,6 +378,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     }
   }
 
+  @Override
   public void setTitle1(String title) {
     setTitle(title, true);
   }
@@ -413,6 +408,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     return title;
   }
 
+  @Override
   public void setTitle2(String title) {
     setTitle(title, false);
   }
@@ -440,6 +436,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     return getLineBlocks().getBeginnings(side);
   }
 
+  @Override
   public void dispose() {
     myDisposed = true;
     myDiffUpdater.dispose();
@@ -450,6 +447,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     myPanel.setScrollingPanel(null);
   }
 
+  @Override
   public JComponent getComponent() {
     return myPanel;
   }
@@ -462,10 +460,12 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     return DiffBundle.message("diff.count.differences.status.text", getLineBlocks().getCount());
   }
 
+  @Override
   public boolean hasDifferences() {
     return getLineBlocks().getCount() > 0 || myTopMessageDiffPanel != null;
   }
 
+  @Override
   @Nullable
   public JComponent getPreferredFocusedComponent() {
     return myCurrentSide.getFocusableComponent();
@@ -476,10 +476,12 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     return DiffViewerType.contents.equals(type);
   }
 
+  @Override
   public ComparisonPolicy getComparisonPolicy() {
     return myData.getComparisonPolicy();
   }
 
+  @Override
   public void setComparisonPolicy(@NotNull ComparisonPolicy comparisonPolicy) {
     setComparisonPolicy(comparisonPolicy, true);
   }
@@ -493,11 +495,13 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     }
   }
 
+  @Override
   @NotNull
   public HighlightMode getHighlightMode() {
     return myData.getHighlightMode();
   }
 
+  @Override
   public void setHighlightMode(@NotNull HighlightMode mode) {
     setHighlightMode(mode, true);
   }
@@ -511,10 +515,12 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     }
   }
 
+  @Override
   public void setAutoScrollEnabled(boolean enabled) {
     myScrollSupport.setEnabled(enabled);
   }
 
+  @Override
   public boolean isAutoScrollEnabled() {
     return myScrollSupport.isEnabled();
   }
@@ -523,6 +529,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     return myDiffUpdater;
   }
 
+  @Override
   public void onContentChangedIn(EditorSource source) {
     myDiffUpdater.contentRemoved(source);
     final EditorEx editor = source.getEditor();
@@ -561,11 +568,13 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     }
     myFontSizeSynchronizer.synchronize(editor);
     source.addDisposable(new Disposable() {
+      @Override
       public void dispose() {
         myFontSizeSynchronizer.stopSynchronize(editor);
       }
     });
     source.addDisposable(new Disposable() {
+      @Override
       public void dispose() {
         if (visibleAreaListener != null) {
           scrollingModel.removeVisibleAreaListener(visibleAreaListener);
@@ -576,6 +585,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     });
   }
 
+  @Override
   public void setCurrentSide(@NotNull DiffSideView viewSide) {
     LOG.assertTrue(viewSide != myCurrentSide);
     if (myCurrentSide != null) myCurrentSide.beSlave();
@@ -584,18 +594,22 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
   public DiffSideView getCurrentSide() { return myCurrentSide; }
 
+  @Override
   public Project getProject() {
     return myData.getProject();
   }
 
+  @Override
   public void showSource(@Nullable Navigatable descriptor) {
     myOptions.showSource(descriptor);
   }
 
+  @Override
   public DiffPanelOptions getOptions() {
     return myOptions;
   }
 
+  @Override
   public Editor getEditor(FragmentSide side) {
     return getSideView(side).getEditor();
   }
@@ -608,6 +622,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     throw new IllegalArgumentException(String.valueOf(side));
   }
 
+  @Override
   public LineBlocks getLineBlocks() { return myLineBlocks; }
 
   static JComponent createComponentForTitle(@Nullable String title,
@@ -636,6 +651,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     return myParentTool != null && myParentTool.canShow(request);
   }
 
+  @Override
   public void setDiffRequest(DiffRequest data) {
     myDiffRequest = data;
     if (data.getHints().contains(DiffTool.HINT_DO_NOT_IGNORE_WHITESPACES)) {
@@ -737,12 +753,14 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     }
   }
 
+  @Override
   public void setRequestFocus(boolean isRequestFocus) {
     myIsRequestFocus = isRequestFocus;
   }
 
   private class MyScrollingPanel implements DiffPanelOuterComponent.ScrollingPanel {
 
+    @Override
     public void scrollEditors() {
       getOptions().onNewContent(myCurrentSide);
       scrollCurrentToFirstDiff();
@@ -762,17 +780,19 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     }
 
     private final FocusDiffSide myFocusDiffSide = new FocusDiffSide() {
+      @Override
       public Editor getEditor() {
         return myDiffPanel.getCurrentSide().getEditor();
       }
 
+      @Override
       public int[] getFragmentStartingLines() {
         return myDiffPanel.getFragmentBeginnings();
       }
     };
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       if (PlatformDataKeys.DIFF_VIEWER.is(dataId)) {
         return myDiffPanel;
       }

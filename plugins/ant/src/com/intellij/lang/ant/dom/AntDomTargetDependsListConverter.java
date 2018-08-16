@@ -39,7 +39,8 @@ import java.util.List;
  * @author Eugene Zhuravlev
  */
 public class AntDomTargetDependsListConverter extends Converter<TargetResolver.Result> implements CustomReferenceConverter<TargetResolver.Result>{
-  
+
+  @Override
   public TargetResolver.Result fromString(@Nullable @NonNls String s, ConvertContext context) {
     final AntDomProject project = context.getInvocationElement().getParentOfType(AntDomProject.class, false);
     if (project == null) {
@@ -66,11 +67,13 @@ public class AntDomTargetDependsListConverter extends Converter<TargetResolver.R
     return result;
   }
 
+  @Override
   @Nullable
   public String toString(@Nullable TargetResolver.Result result, ConvertContext context) {
     return result != null? result.getRefsString() : null;
   }
 
+  @Override
   @NotNull
   public PsiReference[] createReferences(GenericDomValue<TargetResolver.Result> value, PsiElement element, ConvertContext context) {
     final XmlElement xmlElement = value.getXmlElement();

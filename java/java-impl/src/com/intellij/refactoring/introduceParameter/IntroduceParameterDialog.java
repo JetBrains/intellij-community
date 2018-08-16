@@ -104,6 +104,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     myPanel.updateTypeSelector();
   }
 
+  @Override
   protected void dispose() {
     myParameterNameField.removeDataChangedListener(myParameterNameChangedListener);
     super.dispose();
@@ -120,6 +121,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     return myParameterNameField.getEnteredName().trim();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myParameterNameField.getFocusableComponent();
   }
@@ -128,10 +130,12 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     return myTypeSelector.getSelectedType();
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.INTRODUCE_PARAMETER);
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     GridBagConstraints gbConstraints = new GridBagConstraints();
 
@@ -223,19 +227,20 @@ public class IntroduceParameterDialog extends RefactoringDialog {
 
     gbConstraints.gridy++;
     myPanel.createDelegateCb(gbConstraints, panel);
-    
+
     myCbCollapseToLambda = new NonFocusableCheckBox(RefactoringBundle.message("introduce.parameter.convert.lambda"));
-    final PsiAnonymousClass anonymClass = myExpression instanceof PsiNewExpression ? ((PsiNewExpression)myExpression).getAnonymousClass() 
+    final PsiAnonymousClass anonymClass = myExpression instanceof PsiNewExpression ? ((PsiNewExpression)myExpression).getAnonymousClass()
                                                                                    : null;
     myCbCollapseToLambda.setVisible(anonymClass != null && AnonymousCanBeLambdaInspection.isLambdaForm(anonymClass, false, Collections.emptySet()));
     myCbCollapseToLambda.setSelected(PropertiesComponent.getInstance(myProject).getBoolean(INTRODUCE_PARAMETER_LAMBDA));
     gbConstraints.gridy++;
     panel.add(myCbCollapseToLambda, gbConstraints);
-    
+
     return panel;
   }
 
 
+  @Override
   protected JComponent createCenterPanel() {
     if(Util.anyFieldsWithGettersPresent(myClassMembersList)) {
       return myPanel.createReplaceFieldsWithGettersPanel();
@@ -244,6 +249,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
       return null;
   }
 
+  @Override
   protected void doAction() {
     final JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
     settings.INTRODUCE_PARAMETER_REPLACE_FIELDS_WITH_GETTERS =
@@ -264,7 +270,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     PsiExpression parameterInitializer = myExpression;
     if (myLocalVar != null) {
       if (myPanel.isUseInitializer()) {
-        parameterInitializer = myLocalVar.getInitializer();    
+        parameterInitializer = myLocalVar.getInitializer();
       }
       isDeleteLocalVariable = myPanel.isDeleteLocalVariable();
     }

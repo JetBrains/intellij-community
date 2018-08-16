@@ -86,9 +86,6 @@ public final class ProjectDescriptor {
     myTargetsState = targetsState;
   }
 
-  /**
-   * @Deprecated not used after file traversal rewrite to NIO
-   */
   @NotNull
   public FSCache getFSCache() {
     return myFSCache;

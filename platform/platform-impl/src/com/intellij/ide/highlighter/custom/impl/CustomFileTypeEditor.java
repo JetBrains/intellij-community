@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.highlighter.custom.impl;
 
 import com.intellij.CommonBundle;
@@ -25,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
@@ -62,7 +49,7 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
   public CustomFileTypeEditor() {
     myLineComment.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         boolean enabled = StringUtil.isNotEmpty(myLineComment.getText());
         myCommentAtLineStart.setEnabled(enabled);
         if (!enabled) {
@@ -98,6 +85,9 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
       myKeywordsLists[1].setText(StreamEx.of(table.getKeywords2()).sorted().joining("\n"));
       myKeywordsLists[2].setText(StreamEx.of(table.getKeywords3()).sorted().joining("\n"));
       myKeywordsLists[3].setText(StreamEx.of(table.getKeywords4()).sorted().joining("\n"));
+      for (int i = 0; i < 4; i++) {
+        myKeywordsLists[i].setCaretPosition(0);
+      }
     }
   }
 
@@ -167,7 +157,9 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
     tabbedPaneWrapper.getComponent().setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("listbox.customfiletype.keywords"),
                                                                                    false));
     for (int i = 0; i < 4; i++) {
-      tabbedPaneWrapper.addTab(" " + (i + 1) + " ", myKeywordsLists[i]);
+      JTextArea list = myKeywordsLists[i];
+      list.setRows(10);
+      tabbedPaneWrapper.addTab(" " + (i + 1) + " ", new JBScrollPane(list));
     }
 
     highlighterPanel.add(tabbedPaneWrapper.getComponent(), BorderLayout.CENTER);

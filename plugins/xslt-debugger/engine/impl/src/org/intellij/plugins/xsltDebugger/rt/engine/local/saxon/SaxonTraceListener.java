@@ -196,6 +196,7 @@ public class SaxonTraceListener implements TraceListener {
       myEventQueue = myDebugger.getEventQueue();
     }
 
+    @Override
     public void writeAttribute(int nameCode, String value, boolean noEscape) throws TransformerException {
       if (myEventQueue.isEnabled()) {
         final String localName = myNamePool.getLocalName(nameCode);
@@ -205,31 +206,37 @@ public class SaxonTraceListener implements TraceListener {
       super.writeAttribute(nameCode, value, noEscape);
     }
 
+    @Override
     public void writeComment(String comment) throws TransformerException {
       myEventQueue.comment(comment);
       super.writeComment(comment);
     }
 
+    @Override
     public void writeContent(char[] chars, int start, int length) throws TransformerException {
       myEventQueue.characters(new String(chars, start, length));
       super.writeContent(chars, start, length);
     }
 
+    @Override
     public void writeContent(StringBuffer chars, int start, int len) throws TransformerException {
       myEventQueue.characters(chars.substring(start, start + len));
       super.writeContent(chars, start, len);
     }
 
+    @Override
     public void writeEndTag(int nameCode) throws TransformerException {
       myEventQueue.endElement();
       super.writeEndTag(nameCode);
     }
 
+    @Override
     public void writePI(String target, String data) throws TransformerException {
       myEventQueue.pi(target, data);
       super.writePI(target, data);
     }
 
+    @Override
     public void writeStartTag(int nameCode) throws TransformerException {
       if (myEventQueue.isEnabled()) {
         final String localName = myNamePool.getLocalName(nameCode);

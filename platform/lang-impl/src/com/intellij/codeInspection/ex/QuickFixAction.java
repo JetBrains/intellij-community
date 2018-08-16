@@ -54,7 +54,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
   public static final QuickFixAction[] EMPTY = new QuickFixAction[0];
   protected final InspectionToolWrapper myToolWrapper;
 
-  protected static InspectionResultsView getInvoker(AnActionEvent e) {
+  protected static InspectionResultsView getInvoker(@NotNull AnActionEvent e) {
     return InspectionResultsView.DATA_KEY.getData(e.getDataContext());
   }
 
@@ -71,7 +71,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final InspectionResultsView view = getInvoker(e);
     if (view == null) {
       e.getPresentation().setEnabled(false);
@@ -104,7 +104,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
 
   @Override
   @ReviseWhenPortedToJDK("9")
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final InspectionResultsView view = getInvoker(e);
     final InspectionTree tree = view.getTree();
     try {
@@ -141,7 +141,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
                           @NotNull Set<VirtualFile> readOnlyFiles,
                           @NotNull GlobalInspectionContextImpl context) {
     if (!FileModificationService.getInstance().prepareVirtualFilesForWrite(project, readOnlyFiles)) return;
-    
+
     final RefManagerImpl refManager = (RefManagerImpl)context.getRefManager();
     final boolean initial = refManager.isInProcess();
 
@@ -161,7 +161,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
   protected boolean startInWriteAction() {
     return false;
   }
-  
+
   protected void performFixesInBatch(@NotNull Project project,
                                      @NotNull List<CommonProblemDescriptor[]> descriptors,
                                      @NotNull GlobalInspectionContextImpl context,
@@ -277,8 +277,9 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     return true;
   }
 
+  @NotNull
   @Override
-  public JComponent createCustomComponent(Presentation presentation) {
+  public JComponent createCustomComponent(@NotNull Presentation presentation) {
     final JButton button = new JButton(presentation.getText());
     Icon icon = presentation.getIcon();
     if (icon == null) {
@@ -320,7 +321,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
 
     @Override
     protected void applyFix(Project project, CommonProblemDescriptor descriptor) {
-      if (descriptor instanceof ProblemDescriptor && 
+      if (descriptor instanceof ProblemDescriptor &&
           ((ProblemDescriptor)descriptor).getStartElement() == null &&
           ((ProblemDescriptor)descriptor).getEndElement() == null) {
         if (LOG.isDebugEnabled()) {

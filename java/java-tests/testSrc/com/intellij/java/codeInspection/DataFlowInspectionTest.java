@@ -150,6 +150,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testSkipAssertions() {
     final DataFlowInspection inspection = new DataFlowInspection();
     inspection.DONT_REPORT_TRUE_ASSERT_STATEMENTS = true;
+    inspection.REPORT_CONSTANT_REFERENCE_VALUES = true;
     myFixture.enableInspections(inspection);
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
@@ -620,5 +621,21 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testNanComparisonWrong() { doTest(); }
   public void testConstantMethods() { doTest(); }
   public void testPolyadicEquality() { doTest(); }
+  public void testEqualsInLoopNotTooComplex() { doTest(); }
+  public void testEqualsWithItself() { doTest(); }
+  public void testBoxingBoolean() { doTest(); }
+  public void testOrWithAssignment() { doTest(); }
+  public void testAndAndLastOperand() { doTest(); }
+  public void testReportAlwaysNull() {
+    DataFlowInspection inspection = new DataFlowInspection();
+    inspection.REPORT_CONSTANT_REFERENCE_VALUES = true;
+    myFixture.enableInspections(inspection);
+    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
+  }
   public void testBoxUnboxArrayElement() { doTest(); }
+  public void testExactInstanceOf() { doTest(); }
+  public void testNullFlushed() { doTest(); }
+  public void testBooleanMergeInLoop() { doTest(); }
+  public void testVoidIsAlwaysNull() { doTest(); }
+  public void testStringEquality() { doTest(); }
 }

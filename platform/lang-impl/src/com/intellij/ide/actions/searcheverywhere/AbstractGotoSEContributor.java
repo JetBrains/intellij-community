@@ -106,6 +106,7 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
   //todo param is unnecessary #UX-1
   protected abstract FilteringGotoByModel<F> createModel(Project project);
 
+  @Override
   public String filterControlSymbols(String pattern) {
     if (StringUtil.containsAnyChar(pattern, ":,;@[( #") || pattern.contains(" line ") || pattern.contains("?l=")) { // quick test if reg exp should be used
       return applyPatternFilter(pattern, patternToDetectLinesAndColumns);

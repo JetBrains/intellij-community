@@ -57,6 +57,7 @@ public class PythonLookupElement extends LookupElement implements Comparable<Loo
     this(lookupString, null, null, bold, icon, null, new BasicInsertHandler<>());
   }
 
+  @Override
   @NotNull
   public String getLookupString() {
     return myLookupString;
@@ -99,6 +100,7 @@ public class PythonLookupElement extends LookupElement implements Comparable<Loo
     presentation.setIcon(getIcon());
   }
 
+  @Override
   public int compareTo(final LookupElement o) {
     return myLookupString.compareTo(o.getLookupString());
   }

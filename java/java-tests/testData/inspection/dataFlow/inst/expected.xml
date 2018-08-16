@@ -5,5 +5,10 @@
     <line>16</line>
     <description>Condition 'a instanceof A' is always true</description>
   </problem>
+  <problem>
+    <file>Inst.java</file>
+    <line>25</line>
+    <description>Condition 'a instanceof B' is always false</description>
+  </problem>
 </problems>
 

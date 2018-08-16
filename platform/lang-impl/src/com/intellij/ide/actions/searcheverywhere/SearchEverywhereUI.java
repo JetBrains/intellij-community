@@ -7,12 +7,14 @@ import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.SearchEverywhereClassifier;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.gotoByName.QuickSearchComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -31,6 +33,7 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
@@ -58,8 +61,8 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -137,6 +140,11 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
         }
       }
     });
+
+    if (Registry.is("new.search.everywhere.use.editor.font")) {
+      Font editorFont = EditorUtil.getEditorFont();
+      myResultsList.setFont(editorFont);
+    }
 
     ScrollingUtil.installActions(myResultsList, getSearchField());
 
@@ -282,7 +290,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     IntStream indicesStream = Arrays.stream(myResultsList.getSelectedIndices())
                                     .filter(i -> !myListModel.isMoreElement(i));
 
@@ -351,7 +359,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       @Override
       public Dimension getPreferredSize() {
         Dimension size = super.getPreferredSize();
-        size.height = JBUI.scale(29);
+        size.height = Integer.max(JBUI.scale(29), size.height);
         return size;
       }
     };
@@ -386,13 +394,24 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     };
     searchField.setExtensions(searchExtension, hintExtension);
 
-    //todo gap between icon and text #UX-1
     Insets insets = JBUI.CurrentTheme.SearchEverywhere.searchFieldInsets();
     Border empty = JBUI.Borders.empty(insets.top, insets.left, insets.bottom, insets.right);
     Border topLine = JBUI.Borders.customLine(JBUI.CurrentTheme.SearchEverywhere.searchFieldBorderColor(), 1, 0, 0, 0);
     searchField.setBorder(JBUI.Borders.merge(empty, topLine, true));
     searchField.setBackground(JBUI.CurrentTheme.SearchEverywhere.searchFieldBackground());
     searchField.setFocusTraversalKeysEnabled(false);
+
+    if (Registry.is("new.search.everywhere.use.editor.font")) {
+      Font editorFont = EditorUtil.getEditorFont();
+      searchField.setFont(editorFont);
+    }
+
+    int fontDelta = Registry.intValue("new.search.everywhere.font.size.delta");
+    if (fontDelta != 0) {
+      Font font = searchField.getFont();
+      font = font.deriveFont((float) fontDelta + font.getSize());
+      searchField.setFont(font);
+    }
 
     return searchField;
   }
@@ -568,7 +587,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
 
     mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         String newSearchString = getSearchPattern();
         if (nonProjectCheckBoxAutoSet && isUseNonProjectItems() && !newSearchString.contains(notFoundString)) {
           doSetUseNonProjectItems(false, true);
@@ -843,8 +862,11 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       }
 
       SearchEverywhereContributor contributor = myListModel.getContributorForIndex(index);
-      Component component = contributor.getElementsRenderer(myResultsList)
-                                       .getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      Component component = SearchEverywhereClassifier.EP_Manager.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      if (component == null) {
+        component = contributor.getElementsRenderer(myResultsList)
+          .getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      }
 
       if (isAllTabSelected() && myListModel.isGroupFirstItem(index)) {
         component = groupTitleRenderer.withDisplayedData(contributor.getGroupName(), component);
@@ -1042,7 +1064,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       stopSearching();
 
       Collection<SearchEverywhereContributor> contributors = isAllTabSelected() ? getUsedContributors() : Collections.singleton(mySelectedTab.getContributor().get());
@@ -1141,7 +1163,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Boolean enabled = mySelectedTab.getContributor().map(contributor -> contributor.showInFindResults()).orElse(true);
       e.getPresentation().setEnabled(enabled);
     }

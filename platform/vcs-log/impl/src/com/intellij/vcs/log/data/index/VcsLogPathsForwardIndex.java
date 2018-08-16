@@ -11,7 +11,7 @@ import com.intellij.util.indexing.impl.MapBasedForwardIndex;
 import com.intellij.util.indexing.impl.RemovedKeyProcessor;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
-import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.impl.VcsIndexableDetails;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +26,7 @@ import java.util.Set;
 public abstract class VcsLogPathsForwardIndex
   extends MapBasedForwardIndex<Integer, List<VcsLogPathsIndex.ChangeData>, List<Collection<Integer>>> {
 
-  protected VcsLogPathsForwardIndex(@NotNull IndexExtension<Integer, List<VcsLogPathsIndex.ChangeData>, VcsFullCommitDetails> extension)
+  protected VcsLogPathsForwardIndex(@NotNull IndexExtension<Integer, List<VcsLogPathsIndex.ChangeData>, VcsIndexableDetails> extension)
     throws IOException {
     super(extension);
   }
@@ -64,6 +64,7 @@ public abstract class VcsLogPathsForwardIndex
 
   public static class IntCollectionListExternalizer implements DataExternalizer<List<Collection<Integer>>> {
 
+    @Override
     public void save(@NotNull DataOutput out, @NotNull List<Collection<Integer>> value) throws IOException {
       DataInputOutputUtil.writeINT(out, value.size());
       for (Collection<Integer> collection : value) {
@@ -74,6 +75,7 @@ public abstract class VcsLogPathsForwardIndex
       }
     }
 
+    @Override
     @NotNull
     public List<Collection<Integer>> read(@NotNull DataInput in) throws IOException {
       SmartList<Collection<Integer>> result = new SmartList<>();

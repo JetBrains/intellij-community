@@ -16,10 +16,9 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -48,6 +47,8 @@ class CommonCodeStyleSettingsManager {
 
   @NonNls static final String COMMON_SETTINGS_TAG = "codeStyleSettings";
   private static final String LANGUAGE_ATTR = "language";
+
+  private static final Logger LOG = Logger.getInstance(CommonCodeStyleSettingsManager.class);
 
   private static class DefaultsHolder {
     private final static CommonCodeStyleSettings SETTINGS = new CommonCodeStyleSettings(Language.ANY);
@@ -116,7 +117,7 @@ class CommonCodeStyleSettingsManager {
     for (final LanguageCodeStyleSettingsProvider provider : providers) {
       Language target = provider.getLanguage();
       if (!myCommonSettingsMap.containsKey(target)) {
-        CommonCodeStyleSettings initialSettings = provider.getDefaultCommonSettings();
+        CommonCodeStyleSettings initialSettings = safelyGetDefaults(provider);
         if (initialSettings != null) {
           init(initialSettings, target);
         }
@@ -173,7 +174,7 @@ class CommonCodeStyleSettingsManager {
           if (isKnownLanguage) {
             final LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(target);
             if (provider != null) {
-              CommonCodeStyleSettings settings = provider.getDefaultCommonSettings();
+              CommonCodeStyleSettings settings = safelyGetDefaults(provider);
               if (settings != null) {
                 settings.readExternal(commonSettingsElement);
                 init(settings, target);
@@ -189,6 +190,23 @@ class CommonCodeStyleSettingsManager {
         }
       }
       initNonReadSettings();
+    }
+  }
+
+  private static CommonCodeStyleSettings safelyGetDefaults(LanguageCodeStyleSettingsProvider provider) {
+    Ref<CommonCodeStyleSettings> defaultSettingsRef =
+      RecursionManager.doPreventingRecursion(provider, true, () -> Ref.create(provider.getDefaultCommonSettings()));
+    if (defaultSettingsRef == null) {
+      LOG.error(provider.getClass().getCanonicalName() + ".getDefaultCommonSettings() recursively creates root settings.");
+      return null;
+    }
+    else {
+      CommonCodeStyleSettings defaultSettings = defaultSettingsRef.get();
+      if (defaultSettings instanceof CodeStyleSettings) {
+        LOG.error(
+          provider.getClass().getName() + ".getDefaultCommonSettings() creates root CodeStyleSettings instead of CommonCodeStyleSettings");
+      }
+      return defaultSettings;
     }
   }
 

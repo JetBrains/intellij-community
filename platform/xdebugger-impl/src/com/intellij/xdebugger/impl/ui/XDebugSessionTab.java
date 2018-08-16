@@ -156,7 +156,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (XWatchesView.DATA_KEY.is(dataId)) {
       return myWatchesView;
     }

@@ -38,6 +38,7 @@ public class SvnRepositoryLocation implements RepositoryLocation {
     return myUrlValue;
   }
 
+  @Override
   public String toPresentableString() {
     return myUrlValue;
   }
@@ -46,6 +47,7 @@ public class SvnRepositoryLocation implements RepositoryLocation {
     return myUrlValue;
   }
 
+  @Override
   public String getKey() {
     return myUrlValue;
   }

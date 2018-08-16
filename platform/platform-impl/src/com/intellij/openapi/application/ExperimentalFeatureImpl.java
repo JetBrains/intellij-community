@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
  * @author Konstantin Bulenkov
  */
 public final class ExperimentalFeatureImpl extends ExperimentalFeature{
+  @Override
   public boolean isEnabled() {
     Application app = ApplicationManager.getApplication();
     if (app == null) return false;

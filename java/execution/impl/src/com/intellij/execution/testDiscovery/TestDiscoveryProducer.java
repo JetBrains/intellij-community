@@ -23,7 +23,7 @@ public interface TestDiscoveryProducer {
   @NotNull
   MultiMap<String, String> getDiscoveredTests(@NotNull Project project,
                                               @NotNull String classFQName,
-                                              @NotNull String methodName,
+                                              @Nullable String methodName,
                                               byte frameworkId);
 
   boolean isRemote();
@@ -32,7 +32,7 @@ public interface TestDiscoveryProducer {
 
   static void consumeDiscoveredTests(@NotNull Project project,
                                      @NotNull String classFQName,
-                                     @NotNull String methodName,
+                                     @Nullable String methodName,
                                      byte frameworkId,
                                      @NotNull TestProcessor processor) {
     MultiMap<String, String> visitedTests = new MultiMap<String, String>() {

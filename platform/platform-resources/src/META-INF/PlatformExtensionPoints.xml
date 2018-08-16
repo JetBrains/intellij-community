@@ -115,6 +115,7 @@
                     beanClass="com.intellij.platform.ProjectTemplateEP"/>
 
     <extensionPoint name="ApplicationLoadListener" interface="com.intellij.ide.ApplicationLoadListener"/>
+    <extensionPoint name="applicationInitializedListener" interface="com.intellij.ide.ApplicationInitializedListener"/>
 
     <extensionPoint name="editorTabTitleProvider" interface="com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider"/>
     <extensionPoint name="editorTabColorProvider" interface="com.intellij.openapi.fileEditor.impl.EditorTabColorProvider"/>
@@ -311,6 +312,11 @@
 
     <extensionPoint qualifiedName="com.intellij.tree.CustomLanguageASTComparator" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.tree.CustomLanguageASTComparator"/>
+    </extensionPoint>
+
+    <extensionPoint qualifiedName="com.intellij.editor.injectedFileChangesHandlerProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.injected.editor.InjectedFileChangesHandlerProvider"/>
     </extensionPoint>
   </extensionPoints>
 </idea-plugin>

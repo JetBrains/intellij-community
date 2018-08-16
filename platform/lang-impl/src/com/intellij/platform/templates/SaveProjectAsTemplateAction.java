@@ -68,7 +68,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
   static final String FILE_HEADER_TEMPLATE_PLACEHOLDER = "<IntelliJ_File_Header>";
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = getEventProject(e);
     assert project != null;
     if (!ProjectKt.isDirectoryBased(project)) {
@@ -356,7 +356,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Project project = getEventProject(e);
     e.getPresentation().setEnabled(project != null && !project.isDefault());
   }
@@ -388,7 +388,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
     }
 
     @Override
-    public boolean processFile(final VirtualFile virtualFile) {
+    public boolean processFile(@NotNull final VirtualFile virtualFile) {
       if (!virtualFile.isDirectory()) {
         final String fileName = virtualFile.getName();
         myIndicator.setText2(fileName);

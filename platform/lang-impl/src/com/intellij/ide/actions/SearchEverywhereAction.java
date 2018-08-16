@@ -6,7 +6,6 @@ import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.RunnerRegistry;
 import com.intellij.execution.actions.ChooseRunConfigurationPopup;
 import com.intellij.execution.actions.ExecutorProvider;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -112,9 +111,9 @@ import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
 import java.util.List;
 import java.util.Vector;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
@@ -196,8 +195,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private FileEditor myFileEditor;
   private HistoryItem myHistoryItem;
 
+  @NotNull
   @Override
-  public JComponent createCustomComponent(Presentation presentation) {
+  public JComponent createCustomComponent(@NotNull Presentation presentation) {
     return new ActionButton(this, presentation, ActionPlaces.NAVIGATION_BAR_TOOLBAR, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
       @Override protected void updateToolTipText() {
         String shortcutText = getShortcut();
@@ -290,7 +290,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     return null;
   }
 
@@ -307,7 +307,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 //    onFocusLost();
     editor.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         final String pattern = editor.getText();
         if (editor.hasFocus()) {
           rebuildList(pattern);
@@ -552,7 +552,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     if (Registry.is("ide.suppress.double.click.handler") && e.getInputEvent() instanceof KeyEvent) {
       if (((KeyEvent)e.getInputEvent()).getKeyCode() == KeyEvent.VK_SHIFT) {
         return;
@@ -867,7 +867,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     Executor executor = ourShiftIsPressed.get() ? runExecutor : debugExecutor;
     RunConfiguration runConf = settings.getConfiguration();
     if (executor == null) return null;
-    ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), runConf);
+    ProgramRunner runner = ProgramRunner.getRunner(executor.getId(), runConf);
     if (runner == null) {
       executor = runExecutor == executor ? debugExecutor : runExecutor;
     }
@@ -878,7 +878,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     DataManager.registerDataProvider(panel, new DataProvider() {
       @Nullable
       @Override
-      public Object getData(@NonNls String dataId) {
+      public Object getData(@NotNull @NonNls String dataId) {
         final Object value = myList.getSelectedValue();
         if (CommonDataKeys.PSI_ELEMENT.is(dataId) && value instanceof PsiElement) {
           return value;
@@ -942,7 +942,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }).registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER", "shift ENTER"), editor, balloon);
     new DumbAwareAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         final PropertiesComponent storage = PropertiesComponent.getInstance(e.getProject());
         final String[] values = storage.getValues(SE_HISTORY_KEY);
         if (values != null) {
@@ -958,7 +958,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(editor.getCaretPosition() == 0);
       }
     }.registerCustomShortcutSet(CustomShortcutSet.fromString("LEFT"), editor, balloon);
@@ -1000,7 +1000,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     @Nullable
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) {
         return getTextEditor().getText();
       }
@@ -2091,9 +2091,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             updatePopupBounds();
             myPopup.show(new RelativePoint(getField().getParent(), new Point(0, getField().getParent().getHeight())));
 
-            ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
+            ApplicationManager.getApplication().getMessageBus().connect(myPopup).subscribe(AnActionListener.TOPIC, new AnActionListener() {
               @Override
-              public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+              public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
                 if (action instanceof TextComponentEditorAction) {
                   return;
                 }
@@ -2101,7 +2101,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                   myPopup.cancel();
                 }
               }
-            }, myPopup);
+            });
           }
           else {
             myList.revalidate();

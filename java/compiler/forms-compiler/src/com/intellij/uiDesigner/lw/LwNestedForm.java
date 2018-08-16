@@ -16,8 +16,8 @@
 
 package com.intellij.uiDesigner.lw;
 
-import org.jdom.Element;
 import com.intellij.uiDesigner.UIFormXmlConstants;
+import org.jdom.Element;
 
 /**
  * @author yole
@@ -29,6 +29,7 @@ public class LwNestedForm extends LwComponent {
     super("");
   }
 
+  @Override
   public void read(Element element, PropertiesProvider provider) throws Exception {
     myFormFileName = LwXmlReader.getRequiredString(element, UIFormXmlConstants.ATTRIBUTE_FORM_FILE);
     readBase(element);

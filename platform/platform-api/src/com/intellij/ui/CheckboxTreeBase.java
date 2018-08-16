@@ -108,6 +108,7 @@ public class CheckboxTreeBase extends Tree {
   }
 
 
+  @Override
   public int getToggleClickCount() {
     // to prevent node expanding/collapsing on checkbox toggling
     return -1;
@@ -136,6 +137,7 @@ public class CheckboxTreeBase extends Tree {
       myCheckbox.setSelected(false);
       myCheckbox.setThirdStateEnabled(false);
       myTextRenderer = new ColoredTreeCellRenderer() {
+        @Override
         public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) { }
       };
       myTextRenderer.setOpaque(opaque);
@@ -147,6 +149,7 @@ public class CheckboxTreeBase extends Tree {
       this(true);
     }
 
+    @Override
     public final Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       invalidate();
       if (value instanceof CheckedTreeNode) {

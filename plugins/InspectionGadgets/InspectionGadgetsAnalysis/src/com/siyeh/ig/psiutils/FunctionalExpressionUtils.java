@@ -50,6 +50,7 @@ public class FunctionalExpressionUtils {
       return ref != null &&
              method != null &&
              MethodUtils.methodMatches(method, className, returnType, methodName, parameterTypes) &&
+             method.getContainingClass() != null &&
              ref.isReferenceTo(method.getContainingClass());
     }
     if (expression instanceof PsiLambdaExpression) {

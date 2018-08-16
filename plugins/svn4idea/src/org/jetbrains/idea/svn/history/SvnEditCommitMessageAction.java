@@ -34,7 +34,7 @@ import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class SvnEditCommitMessageAction extends DumbAwareAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext dc = e.getDataContext();
     final ChangeList[] lists = VcsDataKeys.CHANGE_LISTS.getData(dc);
     final boolean enabled = lists != null && lists.length == 1 && lists[0] instanceof SvnChangeList;
@@ -58,7 +58,7 @@ public class SvnEditCommitMessageAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final DataContext dc = e.getDataContext();
     final ChangeList[] lists = VcsDataKeys.CHANGE_LISTS.getData(dc);
     final boolean enabled = lists != null && lists.length == 1 && lists[0] instanceof SvnChangeList;

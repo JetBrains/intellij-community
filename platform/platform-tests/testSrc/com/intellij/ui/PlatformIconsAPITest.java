@@ -6,7 +6,7 @@ import com.intellij.testFramework.PlatformTestCase;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.TreeSet;
 
 /**
  * @author Konstantin Bulenkov
@@ -33,14 +33,14 @@ public class PlatformIconsAPITest extends PlatformTestCase {
 
   private static String missedIconsMsg(ArrayList<String> icons) {
     StringBuilder str =
-      new StringBuilder("API compatibility is broken. Please add the following icons to './community/platform/icons/old_icons_src/':");
+      new StringBuilder("API compatibility is broken. Please add the following icons to './community/platform/icons/compatibilityResources/':");
     for (String icon: icons) {
       str.append("\n'").append(icon).append("'");
     }
     return str.toString();
   }
 
-  public static final HashSet<String> PUBLIC_API_ICONS = new HashSet<>(Arrays.asList(
+  public static final TreeSet<String> PUBLIC_API_ICONS = new TreeSet<>(Arrays.asList(
     "/actions/addFacesSupport.png",
     "/actions/AddMulticaret.png",
     "/actions/allLeft.png",

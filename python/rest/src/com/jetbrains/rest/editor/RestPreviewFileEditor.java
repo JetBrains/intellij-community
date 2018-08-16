@@ -59,12 +59,12 @@ public class RestPreviewFileEditor extends UserDataHolderBase implements FileEdi
       myDocument.addDocumentListener(new DocumentListener() {
 
         @Override
-        public void beforeDocumentChange(DocumentEvent e) {
+        public void beforeDocumentChange(@NotNull DocumentEvent e) {
           myPooledAlarm.cancelAllRequests();
         }
 
         @Override
-        public void documentChanged(final DocumentEvent e) {
+        public void documentChanged(@NotNull final DocumentEvent e) {
           myPooledAlarm.addRequest(() -> updateHtml(), PARSING_CALL_TIMEOUT_MS);
         }
       }, this);

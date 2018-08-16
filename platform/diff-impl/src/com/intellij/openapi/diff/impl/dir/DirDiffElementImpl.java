@@ -128,18 +128,22 @@ public class DirDiffElementImpl implements DirDiffElement {
     return new DirDiffElementImpl(parent, source, target, DiffType.EQUAL, source.getName(), null);
   }
 
+  @Override
   public DiffType getType() {
     return myType;
   }
 
+  @Override
   public DiffElement getSource() {
     return mySource;
   }
 
+  @Override
   public DiffElement getTarget() {
     return myTarget;
   }
 
+  @Override
   public String getName() {
     return myName;
   }
@@ -187,6 +191,7 @@ public class DirDiffElementImpl implements DirDiffElement {
     return myType == DiffType.TARGET;
   }
 
+  @Override
   public DirDiffOperation getOperation() {
     return myOperation == null ? myDefaultOperation : myOperation;
   }

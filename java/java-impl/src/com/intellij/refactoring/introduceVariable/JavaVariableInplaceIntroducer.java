@@ -19,7 +19,6 @@ import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -116,6 +115,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     super.beforeTemplateStart();
   }
 
+  @Override
   @Nullable
   protected PsiVariable getVariable() {
     final PsiElement declarationStatement = myPointer != null ? myPointer.getElement() : null;
@@ -182,7 +182,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     if (psiVariable == null) {
       return;
     }
-    
+
     TypeSelectorManagerImpl.typeSelected(psiVariable.getType(), myTypeSelectorManager.getDefaultType());
     if (myCanBeFinalCb != null) {
       JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS = psiVariable.hasModifierProperty(PsiModifier.FINAL);
@@ -231,6 +231,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     return handler instanceof IntroduceVariableHandler && super.startsOnTheSameElement(handler, element);
   }
 
+  @Override
   @Nullable
   protected JComponent getComponent() {
     if (!myCantChangeFinalModifier) {
@@ -268,6 +269,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     return panel;
   }
 
+  @Override
   protected void addAdditionalVariables(TemplateBuilderImpl builder) {
     final PsiVariable variable = getVariable();
     if (variable != null) {
@@ -340,7 +342,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     LOG.assertTrue(initializer != null);
     final PsiType type = psiVariable.getType();
     final PsiType initializerType = initializer.getType();
-    if (initializerType != null && 
+    if (initializerType != null &&
         !TypeConversionUtil.isAssignable(type, initializerType) &&
         !PsiTypesUtil.hasUnresolvedComponents(type)) {
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);

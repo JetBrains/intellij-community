@@ -34,6 +34,7 @@ import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.xml.util.XmlUtil;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -76,7 +77,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
       return;
     }
 
-    ExternalResourceManagerExImpl.addTestResource(url, location, myFixture.getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily(url, location, myFixture.getTestRootDisposable());
   }
 
   public void testCompleteWithAnyInSchema() {
@@ -753,6 +754,12 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.configureByText("unknown.xml", "<unknown_tag_name xmlns=\"<caret>\"/>");
     myFixture.completeBasic();
     assertTrue(myFixture.getLookupElementStrings().size() > 3); // all standard schemas actually
+  }
+
+  public void testCustomNamespaceCompletion() {
+    myFixture.configureByFiles("main.xsd", "sub.xsd");
+    LookupElement[] elements = myFixture.completeBasic();
+    assertTrue(Arrays.stream(elements).anyMatch(element -> "http://www.test.com/sub".equals(element.getLookupString())));
   }
 
   public void testRootTagCompletion() {

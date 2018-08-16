@@ -95,12 +95,12 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setIcon(AllIcons.Debugger.Watch);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myTree.clear();
     }
   }
@@ -187,12 +187,12 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(myAllocation.getDocument().getLength() > 0);
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         try {
           CopyPasteManager.getInstance().setContents(new TextTransferable(myAllocation.getText()));
         }

@@ -35,7 +35,7 @@ public class MarkLocallyDeletedTreeConflictResolvedAction extends DumbAwareActio
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final MyLocallyDeletedChecker locallyDeletedChecker = new MyLocallyDeletedChecker(e);
     if (! locallyDeletedChecker.isEnabled()) return;
 
@@ -47,6 +47,7 @@ public class MarkLocallyDeletedTreeConflictResolvedAction extends DumbAwareActio
     if (result == Messages.YES) {
       final Ref<VcsException> exception = new Ref<>();
       ProgressManager.getInstance().run(new Task.Backgroundable(project, markText, true) {
+        @Override
         public void run(@NotNull ProgressIndicator indicator) {
           resolveLocallyDeletedTextConflict(locallyDeletedChecker, exception);
         }
@@ -58,7 +59,7 @@ public class MarkLocallyDeletedTreeConflictResolvedAction extends DumbAwareActio
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final MyLocallyDeletedChecker locallyDeletedChecker = new MyLocallyDeletedChecker(e);
     e.getPresentation().setVisible(locallyDeletedChecker.isEnabled());
     e.getPresentation().setEnabled(locallyDeletedChecker.isEnabled());

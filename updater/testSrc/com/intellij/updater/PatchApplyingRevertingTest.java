@@ -23,7 +23,8 @@ import static org.junit.Assume.assumeTrue;
 
 public abstract class PatchApplyingRevertingTest extends PatchTestCase {
   private File myFile;
-  protected PatchSpec myPatchSpec;
+  private PatchSpec myPatchSpec;
+  private boolean myDoBackup;
 
   @Before
   @Override
@@ -32,23 +33,22 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
     myFile = getTempFile("patch.zip");
     myPatchSpec = new PatchSpec()
       .setOldFolder(myOlderDir.getAbsolutePath())
-      .setNewFolder(myNewerDir.getAbsolutePath());
+      .setNewFolder(myNewerDir.getAbsolutePath())
+      .setBinary(isBinary());
+    myDoBackup = isBackup();
+  }
+
+  protected boolean isBinary() {
+    return false;
+  }
+
+  protected boolean isBackup() {
+    return true;
   }
 
   @Test
   public void testCreatingAndApplying() throws Exception {
     assertAppliedAndReverted();
-  }
-
-  @Test
-  public void testCreatingAndApplyingWithoutBackup() throws Exception {
-    createPatch();
-    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
-    Map<String, Long> expected = digest(preparationResult.patch, myNewerDir);
-
-    PatchFileCreator.ApplicationResult applicationResult = PatchFileCreator.apply(preparationResult, Collections.emptyMap(), null, TEST_UI);
-    assertTrue(applicationResult.applied);
-    assertEquals(expected, digest(preparationResult.patch, myOlderDir));
   }
 
   @Test
@@ -575,6 +575,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
   }
 
 
+  @Override
   protected Patch createPatch() throws IOException {
     assertFalse(myFile.exists());
     Patch patch = PatchFileCreator.create(myPatchSpec, myFile, TEST_UI);
@@ -600,14 +601,16 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
   private void assertNotApplied(PatchFileCreator.PreparationResult preparationResult,
                                 Map<String, ValidationResult.Option> options) throws Exception {
     Patch patch = preparationResult.patch;
-    File backup = getTempFile("backup");
+    File backupDir = myDoBackup ? getTempFile("backup") : null;
     Map<String, Long> original = digest(patch, myOlderDir);
 
-    PatchFileCreator.ApplicationResult applicationResult = PatchFileCreator.apply(preparationResult, options, backup, TEST_UI);
+    PatchFileCreator.ApplicationResult applicationResult = PatchFileCreator.apply(preparationResult, options, backupDir, TEST_UI);
     assertFalse(applicationResult.applied);
 
-    PatchFileCreator.revert(preparationResult, applicationResult.appliedActions, backup, TEST_UI);
-    assertEquals(original, digest(patch, myOlderDir));
+    if (myDoBackup) {
+      PatchFileCreator.revert(preparationResult, applicationResult.appliedActions, backupDir, TEST_UI);
+      assertEquals(original, digest(patch, myOlderDir));
+    }
   }
 
   private void assertAppliedAndReverted() throws Exception {
@@ -628,7 +631,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
     Map<String, Long> original = digest(patch, myOlderDir);
     Map<String, Long> target = digest(patch, myNewerDir);
     corrector.accept(target);
-    File backup = getTempFile("backup");
+    File backupDir = myDoBackup ? getTempFile("backup") : null;
 
     Map<String, ValidationResult.Option> options = new HashMap<>();
     for (ValidationResult each : preparationResult.validationResults) {
@@ -641,12 +644,17 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
       }
     }
 
-    PatchFileCreator.ApplicationResult applicationResult = PatchFileCreator.apply(preparationResult, options, backup, TEST_UI);
+    PatchFileCreator.ApplicationResult applicationResult = PatchFileCreator.apply(preparationResult, options, backupDir, TEST_UI);
+    if (applicationResult.error != null) {
+      throw new AssertionError("patch failed", applicationResult.error);
+    }
     assertTrue(applicationResult.applied);
     assertEquals(target, digest(patch, myOlderDir));
 
-    PatchFileCreator.revert(preparationResult, applicationResult.appliedActions, backup, TEST_UI);
-    assertEquals(original, digest(patch, myOlderDir));
+    if (myDoBackup) {
+      PatchFileCreator.revert(preparationResult, applicationResult.appliedActions, backupDir, TEST_UI);
+      assertEquals(original, digest(patch, myOlderDir));
+    }
   }
 
   private static class MyFailOnApplyPatchAction extends PatchAction {

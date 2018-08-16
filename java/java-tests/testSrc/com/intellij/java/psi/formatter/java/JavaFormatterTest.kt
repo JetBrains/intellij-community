@@ -3670,4 +3670,35 @@ public class Test {
        "}"
     )
   }
+
+
+  fun testIdea192024() {
+    codeStyleBean.apply{
+      rightMargin = 30
+    }
+    doTextTest(
+        """
+          public class Main {
+          public static void main(String[] args) {
+        int longCountVar = 0;
+              do {
+        System.out.println("Test");
+                  longCountVar ++;
+              } while(longCountVar <= 1000);
+          }
+      }""".trimIndent(),
+
+      """
+      public class Main {
+          public static void main(String[] args) {
+              int longCountVar = 0;
+              do {
+                  System.out.println("Test");
+                  longCountVar++;
+              } while (longCountVar <= 1000);
+          }
+      }""".trimIndent()
+    )
+  }
+
 }

@@ -12,6 +12,7 @@ public class DelayCommand extends AbstractCommand {
     super(text, line);
   }
 
+  @Override
   public Promise<Object> _execute(PlaybackContext context) {
     final String s = getText().substring(PREFIX.length()).trim();
 

@@ -22,23 +22,36 @@ import org.jetbrains.annotations.Nullable;
  * @author Roman Chernyatchik
 */
 public class SMTRunnerEventsAdapter implements SMTRunnerEventsListener {
+  @Override
   public void onTestingStarted(@NotNull SMTestProxy.SMRootTestProxy testsRoot){}
+  @Override
   public void onTestingFinished(@NotNull SMTestProxy.SMRootTestProxy testsRoot){}
+  @Override
   public void onTestsCountInSuite(final int count) {}
 
+  @Override
   public void onTestStarted(@NotNull final SMTestProxy test) {}
+  @Override
   public void onTestFinished(@NotNull final SMTestProxy test) {}
+  @Override
   public void onTestFailed(@NotNull final SMTestProxy test) {}
+  @Override
   public void onTestIgnored(@NotNull final SMTestProxy test) {}
 
+  @Override
   public void onSuiteStarted(@NotNull final SMTestProxy suite) {}
+  @Override
   public void onSuiteFinished(@NotNull final SMTestProxy suite) {}
 
   // Custom progress status
 
+  @Override
   public void onCustomProgressTestsCategory(@Nullable String categoryName, final int testCount) {}
+  @Override
   public void onCustomProgressTestStarted() {}
+  @Override
   public void onCustomProgressTestFailed() {}
+  @Override
   public void onCustomProgressTestFinished() {}
 
   @Override public void onSuiteTreeNodeAdded(SMTestProxy testProxy) {}

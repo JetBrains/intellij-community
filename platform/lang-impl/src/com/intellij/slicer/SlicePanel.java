@@ -395,14 +395,14 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     }
 
     @Override
-    public final void actionPerformed(final AnActionEvent e) {
+    public final void actionPerformed(@NotNull final AnActionEvent e) {
       SliceNode rootNode = (SliceNode)myBuilder.getRootNode().getUserObject();
       rootNode.setChanged();
       myBuilder.addSubtreeToUpdate(myBuilder.getRootNode());
     }
 
     @Override
-    public final void update(final AnActionEvent event) {
+    public final void update(@NotNull final AnActionEvent event) {
       final Presentation presentation = event.getPresentation();
       presentation.setEnabled(true);
     }

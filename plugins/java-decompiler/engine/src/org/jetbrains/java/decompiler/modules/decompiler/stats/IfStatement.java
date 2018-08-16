@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
-import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.DecHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
@@ -11,6 +10,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.IfExprent;
 import org.jetbrains.java.decompiler.struct.match.IMatchable;
 import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
+import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.util.TextUtil;
 
 import java.util.ArrayList;
@@ -187,6 +187,7 @@ public class IfStatement extends Statement {
     return null;
   }
 
+  @Override
   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
     TextBuffer buf = new TextBuffer();
 
@@ -266,6 +267,7 @@ public class IfStatement extends Statement {
     return buf;
   }
 
+  @Override
   public void initExprents() {
 
     IfExprent ifexpr = (IfExprent)first.getExprents().remove(first.getExprents().size() - 1);
@@ -278,6 +280,7 @@ public class IfStatement extends Statement {
     headexprent.set(0, ifexpr);
   }
 
+  @Override
   public List<Object> getSequentialObjects() {
 
     List<Object> lst = new ArrayList<>(stats);
@@ -286,12 +289,14 @@ public class IfStatement extends Statement {
     return lst;
   }
 
+  @Override
   public void replaceExprent(Exprent oldexpr, Exprent newexpr) {
     if (headexprent.get(0) == oldexpr) {
       headexprent.set(0, newexpr);
     }
   }
 
+  @Override
   public void replaceStatement(Statement oldstat, Statement newstat) {
 
     super.replaceStatement(oldstat, newstat);
@@ -324,6 +329,7 @@ public class IfStatement extends Statement {
     }
   }
 
+  @Override
   public Statement getSimpleCopy() {
 
     IfStatement is = new IfStatement();
@@ -333,6 +339,7 @@ public class IfStatement extends Statement {
     return is;
   }
 
+  @Override
   public void initSimpleCopy() {
 
     first = stats.get(0);

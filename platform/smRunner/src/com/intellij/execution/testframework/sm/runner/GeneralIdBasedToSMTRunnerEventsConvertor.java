@@ -228,6 +228,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     }
   }
 
+  @Override
   public void onSuiteFinished(@NotNull final TestSuiteFinishedEvent suiteFinishedEvent) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("onSuiteFinished " + suiteFinishedEvent.getId());
@@ -296,7 +297,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       activeProxy.addError(localizedMessage, stackTrace, isCritical);
     });
   }
-  
+
   @Override
   public void onTestFailure(@NotNull final TestFailedEvent testFailedEvent) {
     if (LOG.isDebugEnabled()) {
@@ -401,7 +402,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     Node node = myNodeByIdMap.get(id);
     return node != null ? node.getProxy() : null;
   }
-  
+
   /*
    * Remove listeners,  etc
    */

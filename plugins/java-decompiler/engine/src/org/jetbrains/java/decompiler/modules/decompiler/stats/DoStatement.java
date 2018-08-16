@@ -1,11 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
-import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -77,6 +77,7 @@ public class DoStatement extends Statement {
     return null;
   }
 
+  @Override
   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
     TextBuffer buf = new TextBuffer();
 
@@ -126,6 +127,7 @@ public class DoStatement extends Statement {
     return buf;
   }
 
+  @Override
   public List<Object> getSequentialObjects() {
 
     List<Object> lst = new ArrayList<>();
@@ -152,6 +154,7 @@ public class DoStatement extends Statement {
     return lst;
   }
 
+  @Override
   public void replaceExprent(Exprent oldexpr, Exprent newexpr) {
     if (initExprent.get(0) == oldexpr) {
       initExprent.set(0, newexpr);
@@ -164,6 +167,7 @@ public class DoStatement extends Statement {
     }
   }
 
+  @Override
   public Statement getSimpleCopy() {
     return new DoStatement();
   }

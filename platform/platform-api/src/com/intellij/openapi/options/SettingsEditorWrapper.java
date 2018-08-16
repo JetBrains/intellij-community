@@ -35,6 +35,7 @@ public class SettingsEditorWrapper <Src, Dst> extends SettingsEditor<Src> {
     mySrcToDstConvertor = convertor;
     myWrapped = wrapped;
     myListener = new SettingsEditorListener<Dst>() {
+      @Override
       public void stateChanged(SettingsEditor<Dst> settingsEditor) {
         fireEditorStateChanged();
       }
@@ -42,19 +43,23 @@ public class SettingsEditorWrapper <Src, Dst> extends SettingsEditor<Src> {
     myWrapped.addSettingsEditorListener(myListener);
   }
 
+  @Override
   public void resetEditorFrom(@NotNull Src src) {
     myWrapped.resetFrom(mySrcToDstConvertor.convert(src));
   }
 
+  @Override
   public void applyEditorTo(@NotNull Src src) throws ConfigurationException {
     myWrapped.applyTo(mySrcToDstConvertor.convert(src));
   }
 
+  @Override
   @NotNull
   public JComponent createEditor() {
     return myWrapped.createEditor();
   }
 
+  @Override
   public void disposeEditor() {
     myWrapped.removeSettingsEditorListener(myListener);
     Disposer.dispose(myWrapped);

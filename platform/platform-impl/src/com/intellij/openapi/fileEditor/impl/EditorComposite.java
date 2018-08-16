@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.Disposable;
@@ -29,9 +15,13 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
+import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -57,8 +47,8 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * This class hides internal structure of UI component which represent
@@ -68,7 +58,7 @@ import java.util.List;
  * @author Vladimir Kondratyev
  */
 public abstract class EditorComposite implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.EditorComposite");
+  private static final Logger LOG = Logger.getInstance(EditorComposite.class);
 
   /**
    * File for which composite is created
@@ -381,7 +371,13 @@ public abstract class EditorComposite implements Disposable {
    * @return currently selected myEditor with its provider.
    */
   @NotNull
-  public abstract Pair<FileEditor, FileEditorProvider> getSelectedEditorWithProvider();
+  public abstract FileEditorWithProvider getSelectedWithProvider();
+
+  @Deprecated
+  public Pair<FileEditor, FileEditorProvider> getSelectedEditorWithProvider() {
+    FileEditorWithProvider info = getSelectedWithProvider();
+    return Pair.create(info.getFileEditor(), info.getProvider());
+  }
 
   void setSelectedEditor(final int index){
     if(myEditors.length == 1){
@@ -464,7 +460,7 @@ public abstract class EditorComposite implements Disposable {
     }
 
     @Override
-    public final Object getData(String dataId){
+    public final Object getData(@NotNull String dataId){
       if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
         return getSelectedEditor();
       }

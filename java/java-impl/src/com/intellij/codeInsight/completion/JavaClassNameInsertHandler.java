@@ -136,7 +136,7 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
 
   static void overwriteTopmostReference(InsertionContext context) {
     context.commitDocument();
-    PsiJavaCodeReferenceElement ref = findJavaReference(context.getFile(), context.getTailOffset());
+    PsiJavaCodeReferenceElement ref = findJavaReference(context.getFile(), context.getTailOffset() - 1);
     if (ref != null) {
       while (ref.getParent() instanceof PsiJavaCodeReferenceElement) ref = (PsiJavaCodeReferenceElement)ref.getParent();
       context.getDocument().deleteString(context.getTailOffset(), ref.getTextRange().getEndOffset());

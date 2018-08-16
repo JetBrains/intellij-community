@@ -237,6 +237,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
 
   @NotNull
   static String getTabNameForChangeList(@NotNull String changelistName) {
+    changelistName = changelistName.trim();
     String suffix = "Changelist";
     return StringUtil.endsWithIgnoreCase(changelistName, suffix) ? changelistName : changelistName + " " + suffix;
   }

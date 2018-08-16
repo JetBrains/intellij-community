@@ -14,16 +14,14 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
+import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -52,7 +50,7 @@ import java.util.Set;
 /**
  * @author Dennis.Ushakov
  */
-public class XmlTagNameSynchronizer implements NamedComponent, CommandListener {
+public class XmlTagNameSynchronizer implements CommandListener {
   private static final Key<Boolean> SKIP_COMMAND = Key.create("tag.name.synchronizer.skip.command");
   private static final Logger LOG = Logger.getInstance(XmlTagNameSynchronizer.class);
   private static final Set<Language> SUPPORTED_LANGUAGES = ContainerUtil.set(HTMLLanguage.INSTANCE,
@@ -62,15 +60,15 @@ public class XmlTagNameSynchronizer implements NamedComponent, CommandListener {
   private static final Key<TagNameSynchronizer> SYNCHRONIZER_KEY = Key.create("tag_name_synchronizer");
   private final FileDocumentManager myFileDocumentManager;
 
-  public XmlTagNameSynchronizer(EditorFactory editorFactory, FileDocumentManager manager, CommandProcessor processor) {
+  public XmlTagNameSynchronizer(EditorFactory editorFactory, FileDocumentManager manager) {
     myFileDocumentManager = manager;
-    editorFactory.addEditorFactoryListener(new EditorFactoryAdapter() {
+    editorFactory.addEditorFactoryListener(new EditorFactoryListener() {
       @Override
       public void editorCreated(@NotNull EditorFactoryEvent event) {
         installSynchronizer(event.getEditor());
       }
     }, ApplicationManager.getApplication());
-    processor.addCommandListener(this);
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(CommandListener.TOPIC, this);
   }
 
   private void installSynchronizer(final Editor editor) {
@@ -94,12 +92,6 @@ public class XmlTagNameSynchronizer implements NamedComponent, CommandListener {
       }
     }
     return null;
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "XmlTagNameSynchronizer";
   }
 
   @NotNull
@@ -150,7 +142,7 @@ public class XmlTagNameSynchronizer implements NamedComponent, CommandListener {
     }
 
     @Override
-    public void beforeDocumentChange(DocumentEvent event) {
+    public void beforeDocumentChange(@NotNull DocumentEvent event) {
       if (!WebEditorOptions.getInstance().isSyncTagEditing()) return;
 
       final Document document = event.getDocument();

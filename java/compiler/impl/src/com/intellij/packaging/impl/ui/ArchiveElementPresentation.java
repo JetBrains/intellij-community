@@ -33,10 +33,12 @@ public class ArchiveElementPresentation extends PackagingElementPresentation {
     myElement = element;
   }
 
+  @Override
   public String getPresentableName() {
     return myElement.getArchiveFileName();
   }
 
+  @Override
   public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
     presentationData.setIcon(PlatformIcons.JAR_ICON);
     presentationData.addText(myElement.getArchiveFileName(), mainAttributes);

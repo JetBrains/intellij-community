@@ -41,7 +41,7 @@ import java.awt.event.ActionListener;
  */
 @SuppressWarnings({"UnusedDeclaration"})
 public class TaskConfigurable extends BindableConfigurable implements SearchableConfigurable.Parent, Configurable.NoScroll {
-  
+
   private JPanel myPanel;
 
   @BindControl("updateEnabled")
@@ -83,6 +83,7 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
     super();
     myProject = project;
     myUpdateCheckBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         enableCachePanel();
       }
@@ -139,6 +140,7 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
       TaskSettings.getInstance().CONNECTION_TIMEOUT != Integer.valueOf(myConnectionTimeout.getText());
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return "Tasks";
@@ -149,16 +151,19 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
     return "reference.settings.project.tasks";
   }
 
+  @Override
   public JComponent createComponent() {
     bindAnnotations();
     return myPanel;
   }
 
+  @Override
   @NotNull
   public String getId() {
     return "tasks";
   }
 
+  @Override
   public boolean hasOwnContent() {
     return true;
   }

@@ -46,6 +46,7 @@ public class TreeTableCellRenderer implements TableCellRenderer, ClientPropertyH
     myTree = tree;
   }
 
+  @Override
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     int modelRow  = table.convertRowIndexToModel(row);
     final boolean lineHasFocus = table.hasFocus();
@@ -88,6 +89,7 @@ public class TreeTableCellRenderer implements TableCellRenderer, ClientPropertyH
     myDefaultBorder = border;
   }
 
+  @Override
   public void putClientProperty(String key, Object value) {
     myTree.putClientProperty(key, value);
   }

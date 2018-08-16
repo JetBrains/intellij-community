@@ -108,7 +108,7 @@ class AdvancedArrayAccess {
 
   void testMethodQualifier() {
     if(getData()[0] == null) {
-      System.out.println(getData()[0].<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>());
+      System.out.println(getData()[0].<warning descr="Method invocation 'trim' will produce 'java.lang.NullPointerException'">trim</warning>());
     }
   }
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.conflicts;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -67,6 +53,7 @@ public class ChangelistConflictConfigurable extends BindableConfigurable impleme
     myConflictTracker = manager.getConflictTracker();
 
     myClearButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         myIgnoredFiles.setModel(new DefaultListModel());
         myIgnoredFilesCleared = true;
@@ -77,6 +64,7 @@ public class ChangelistConflictConfigurable extends BindableConfigurable impleme
     myIgnoredFiles.getEmptyText().setText(VcsBundle.message("no.ignored.files"));
   }
 
+  @Override
   public JComponent createComponent() {
     getBinder().bindAnnotations(this);
     return myPanel;
@@ -97,7 +85,7 @@ public class ChangelistConflictConfigurable extends BindableConfigurable impleme
     super.apply();
     if (myIgnoredFilesCleared) {
       for (ChangelistConflictTracker.Conflict conflict : myConflictTracker.getConflicts().values()) {
-        conflict.ignored = false;        
+        conflict.ignored = false;
       }
     }
     if (myEnablePartialChangelists.isSelected() != myVcsApplicationSettings.ENABLE_PARTIAL_CHANGELISTS) {
@@ -114,6 +102,7 @@ public class ChangelistConflictConfigurable extends BindableConfigurable impleme
            myEnablePartialChangelists.isSelected() != myVcsApplicationSettings.ENABLE_PARTIAL_CHANGELISTS;
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return "Changelists";
@@ -124,6 +113,7 @@ public class ChangelistConflictConfigurable extends BindableConfigurable impleme
     return "project.propVCSSupport.ChangelistConflict";
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();

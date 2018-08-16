@@ -48,6 +48,7 @@ object KotlinCompileUtil {
     val set = mutableSetOf<URL>()
     set.addAll(ServiceManager::class.java.classLoader.forcedUrls())
     set.addAll(PerformScriptAction::class.java.classLoader.forcedUrls())
+    set.addAll(PerformScriptAction::class.java.classLoader.forcedBaseUrls())
     if (!ApplicationManager.getApplication().isUnitTestMode)
       set.addAll(ServiceManager::class.java.classLoader.forcedBaseUrls())
     expandClasspathInJar(set)
@@ -55,9 +56,10 @@ object KotlinCompileUtil {
   }
 
   private fun expandClasspathInJar(setOfUrls: MutableSet<URL>) {
-    val classpathUrl = setOfUrls.firstOrNull{Regex("classpath\\d*.jar").containsMatchIn(it.path) || it.path.endsWith("pathing.jar")}
+    val classpathUrl = setOfUrls.firstOrNull { Regex("classpath\\d*.jar").containsMatchIn(it.path) || it.path.endsWith("pathing.jar") }
     if (classpathUrl != null) {
       val classpathFile = Paths.get(classpathUrl.toURI()).toFile()
+      if (!classpathFile.exists()) return
       val classpathLine = JarFile(classpathFile).manifest.mainAttributes.getValue("Class-Path")
       val classpathList = classpathLine.split(" ").filter { it.startsWith("file") }.map { URL(it) }
       setOfUrls.addAll(classpathList)
@@ -81,8 +83,9 @@ object KotlinCompileUtil {
 
   private fun ClassLoader.forcedBaseUrls(): List<URL> {
     try {
-      return ((this.javaClass.getMethod("getBaseUrls").invoke(
-        this) as? List<*>)!!.filter { it is URL && it.protocol == "file" && !it.file.endsWith("jar!") }) as List<URL>
+      return ((this.javaClass.getMethod("getBaseUrls").invoke(this) as? List<*>)!!
+        .filterIsInstance(URL::class.java)
+        .map { if (it.protocol == "jar") URL(it.toString().removeSurrounding("jar:", "!/")) else it })
 
     }
     catch (e: NoSuchMethodException) {

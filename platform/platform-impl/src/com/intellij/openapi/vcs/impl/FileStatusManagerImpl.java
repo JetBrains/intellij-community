@@ -31,11 +31,11 @@ import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.Color;
+import java.awt.*;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -100,7 +100,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
       if (factory != null) {
         factory.getEventMulticaster().addDocumentListener(new DocumentListener() {
           @Override
-          public void documentChanged(DocumentEvent event) {
+          public void documentChanged(@NotNull DocumentEvent event) {
             if (event.getOldLength() == 0 && event.getNewLength() == 0) return;
             VirtualFile file = FileDocumentManager.getInstance().getFile(event.getDocument());
             if (file != null) {

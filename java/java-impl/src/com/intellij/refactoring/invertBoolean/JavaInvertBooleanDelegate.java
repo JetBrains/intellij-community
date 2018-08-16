@@ -132,6 +132,7 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
     return toInvert;
   }
 
+  @Override
   public PsiElement getElementToInvert(PsiElement namedElement, PsiElement element) {
     if (element instanceof PsiReferenceExpression) {
       final PsiReferenceExpression refExpr = (PsiReferenceExpression)element;
@@ -155,7 +156,7 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
   }
 
   private static boolean canInvertReferenceElement(PsiElement expression, boolean recursive) {
-    PsiExpression qualifierExpression = expression instanceof PsiReferenceExpression ? ((PsiReferenceExpression)expression).getQualifierExpression() 
+    PsiExpression qualifierExpression = expression instanceof PsiReferenceExpression ? ((PsiReferenceExpression)expression).getQualifierExpression()
                                                                                      : null;
     if (qualifierExpression == null || !"super".equals(qualifierExpression.getText())) {
       PsiElement parent = expression.getParent();
@@ -235,6 +236,7 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
     }
   }
 
+  @Override
   public void collectRefElements(final PsiElement element,
                                  final RenameProcessor renameProcessor,
                                  @NotNull final String newName,
@@ -290,8 +292,8 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
             final PsiExpression[] args = argumentList.getExpressions();
             if (index < args.length) {
               if (methodExpression == null ||
-                  canInvertReferenceElement(methodExpression, 
-                                            args[index] instanceof PsiReferenceExpression && 
+                  canInvertReferenceElement(methodExpression,
+                                            args[index] instanceof PsiReferenceExpression &&
                                             ((PsiReferenceExpression)args[index]).resolve() == element)) {
                 elementsToInvert.add(args[index]);
               }

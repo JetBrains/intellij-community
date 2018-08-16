@@ -15,8 +15,6 @@
  */
 package jetbrains.antlayout.datatypes;
 
-import java.io.File;
-
 /**
  * @author max
  */
@@ -28,10 +26,12 @@ public class IdeaModule extends IdeaModuleBase {
     super(fileset);
   }
 
+  @Override
   protected String getKind() {
     return "production";
   }
 
+  @Override
   protected String getOutputDirProperty() {
     return "module." + getName() + ".output.main";
   }

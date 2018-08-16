@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -9,7 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
@@ -53,13 +51,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * @author max
  */
-public class PersistentFSImpl extends PersistentFS implements ApplicationComponent, Disposable {
+public class PersistentFSImpl extends PersistentFS implements BaseComponent, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.PersistentFS");
 
   private final Map<String, VirtualFileSystemEntry> myRoots =
     ConcurrentCollectionFactory.createMap(10, 0.4f, JobSchedulerImpl.getCPUCoresCount(), FileUtil.PATH_HASHING_STRATEGY);
-  private final IntObjectMap<VirtualFileSystemEntry>
-    myRootsById = ContainerUtil.createConcurrentIntObjectMap(10, 0.4f, JobSchedulerImpl.getCPUCoresCount());
 
   // FS roots must be in this map too. findFileById() relies on this.
   private final ConcurrentIntObjectMap<VirtualFileSystemEntry> myIdToDirCache = ContainerUtil.createConcurrentIntObjectSoftValueMap();
@@ -96,13 +92,6 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       FSRecords.dispose();
       LOG.info("VFS dispose completed");
     }
-  }
-
-  @Override
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "app.component.PersistentFS";
   }
 
   @Override
@@ -780,38 +769,43 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
                               int end,
                               @NotNull List<? super VFileEvent> outValidated,
                               @NotNull List<? super Runnable> outApplyEvents) {
-    MultiMap<VirtualDirectoryImpl, VFileCreateEvent> grouped = new MultiMap<VirtualDirectoryImpl, VFileCreateEvent>(){
-      @NotNull
-      @Override
-      protected Map<VirtualDirectoryImpl, Collection<VFileCreateEvent>> createMap() {
-        return new THashMap<>(end-start);
-      }
-    };
+    MultiMap<VirtualDirectoryImpl, VFileCreateEvent> grouped = null;
 
     for (int i = start; i < end; i++) {
       VFileEvent e = events.get(i);
       if (!(e instanceof VFileCreateEvent)) continue;
       VFileCreateEvent event = (VFileCreateEvent)e;
       VirtualDirectoryImpl parent = (VirtualDirectoryImpl)event.getParent();
+      if (grouped == null) {
+        grouped = new MultiMap<VirtualDirectoryImpl, VFileCreateEvent>(){
+          @NotNull
+          @Override
+          protected Map<VirtualDirectoryImpl, Collection<VFileCreateEvent>> createMap() {
+            return new THashMap<>(end-start);
+          }
+        };
+      }
       grouped.putValue(parent, event);
     }
+    if (grouped != null) {
+      // since the VCreateEvent.isValid() is extremely expensive, combine all creation events for the directory together
+      // and use VirtualDirectoryImpl.validateChildrenToCreate() optimised for bulk validation
+      boolean hasValidEvents = false;
+      for (Map.Entry<VirtualDirectoryImpl, Collection<VFileCreateEvent>> entry : grouped.entrySet()) {
+        VirtualDirectoryImpl directory = entry.getKey();
+        List<VFileCreateEvent> createEvents = (List<VFileCreateEvent>)entry.getValue();
+        directory.validateChildrenToCreate(createEvents);
+        hasValidEvents |= !createEvents.isEmpty();
+        outValidated.addAll(createEvents);
+      }
 
-    // since the VCreateEvent.isValid() is extremely expensive, combine all creation events for the directory together
-    // and use VirtualDirectoryImpl.validateChildrenToCreate() optimised for bulk validation
-    boolean hasValidEvents = false;
-    for (Map.Entry<VirtualDirectoryImpl, Collection<VFileCreateEvent>> entry : grouped.entrySet()) {
-      VirtualDirectoryImpl directory = entry.getKey();
-      List<VFileCreateEvent> createEvents = (List<VFileCreateEvent>)entry.getValue();
-      directory.validateChildrenToCreate(createEvents);
-      hasValidEvents |= !createEvents.isEmpty();
-      outValidated.addAll(createEvents);
-    }
-
-    if (hasValidEvents) {
-      outApplyEvents.add((Runnable)()->{
-        applyCreations(grouped);
-        incStructuralModificationCount();
-      });
+      if (hasValidEvents) {
+        MultiMap<VirtualDirectoryImpl, VFileCreateEvent> finalGrouped = grouped;
+        outApplyEvents.add((Runnable)() -> {
+          applyCreations(finalGrouped);
+          incStructuralModificationCount();
+        });
+      }
     }
   }
 
@@ -822,28 +816,32 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
                               int end,
                               @NotNull List<? super VFileEvent> outValidated,
                               @NotNull List<? super Runnable> outApplyEvents) {
-    MultiMap<VirtualDirectoryImpl, VFileDeleteEvent> grouped = new MultiMap<VirtualDirectoryImpl, VFileDeleteEvent>(){
-      @NotNull
-      @Override
-      protected Map<VirtualDirectoryImpl, Collection<VFileDeleteEvent>> createMap() {
-        return new HashMap<>(end-start); // can be null keys
-      }
-    };
+    MultiMap<VirtualDirectoryImpl, VFileDeleteEvent> grouped = null;
     boolean hasValidEvents = false;
     for (int i = start; i < end; i++) {
       VFileEvent event = events.get(i);
       if (!(event instanceof VFileDeleteEvent) || !event.isValid()) continue;
       VFileDeleteEvent de = (VFileDeleteEvent)event;
       @Nullable VirtualDirectoryImpl parent = (VirtualDirectoryImpl)de.getFile().getParent();
+      if (grouped == null) {
+        grouped = new MultiMap<VirtualDirectoryImpl, VFileDeleteEvent>(){
+          @NotNull
+          @Override
+          protected Map<VirtualDirectoryImpl, Collection<VFileDeleteEvent>> createMap() {
+            return new HashMap<>(end-start); // can be null keys
+          }
+        };
+      }
       grouped.putValue(parent, de);
       outValidated.add(event);
       hasValidEvents = true;
     }
 
     if (hasValidEvents) {
+      MultiMap<VirtualDirectoryImpl, VFileDeleteEvent> finalGrouped = grouped;
       outApplyEvents.add((Runnable)() -> {
         clearIdCache();
-        applyDeletions(grouped);
+        applyDeletions(finalGrouped);
         incStructuralModificationCount();
       });
     }
@@ -1018,7 +1016,6 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       mark = writeAttributesToRecord(rootId, 0, newRoot, fs, attributes);
 
       myRoots.put(rootUrl, newRoot);
-      myRootsById.put(rootId, newRoot);
       myIdToDirCache.put(rootId, newRoot);
     }
 
@@ -1043,11 +1040,13 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @Override
   public void clearIdCache() {
-    // remove all except myRootsById contents
-    int[] ids = myIdToDirCache.keys();
-    for (int id : ids) {
-      if (!myRootsById.containsKey(id)) {
-        myIdToDirCache.remove(id);
+    // remove all except roots
+    for (IntObjectMap.Entry<VirtualFileSystemEntry> e : myIdToDirCache.entries()) {
+      // leave root in the map
+      VirtualFileSystemEntry dir = e.getValue();
+      if (dir.getParent() != null) {
+        int id = e.getKey();
+        myIdToDirCache.remove(id, dir);
       }
     }
   }
@@ -1127,21 +1126,23 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         final VFilePropertyChangeEvent propertyChangeEvent = (VFilePropertyChangeEvent)event;
         VirtualFile file = propertyChangeEvent.getFile();
         Object newValue = propertyChangeEvent.getNewValue();
-        if (VirtualFile.PROP_NAME.equals(propertyChangeEvent.getPropertyName())) {
-          executeRename(file, (String)newValue);
-        }
-        else if (VirtualFile.PROP_WRITABLE.equals(propertyChangeEvent.getPropertyName())) {
-          executeSetWritable(file, ((Boolean)newValue).booleanValue());
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("File " + file + " writable=" + file.isWritable() + " id=" + getFileId(file));
-          }
-        }
-        else if (VirtualFile.PROP_HIDDEN.equals(propertyChangeEvent.getPropertyName())) {
-          executeSetHidden(file, ((Boolean)newValue).booleanValue());
-        }
-        else if (VirtualFile.PROP_SYMLINK_TARGET.equals(propertyChangeEvent.getPropertyName())) {
-          executeSetTarget(file, (String)newValue);
-          markForContentReloadRecursively(getFileId(file));
+        switch (propertyChangeEvent.getPropertyName()) {
+          case VirtualFile.PROP_NAME:
+            executeRename(file, (String)newValue);
+            break;
+          case VirtualFile.PROP_WRITABLE:
+            executeSetWritable(file, ((Boolean)newValue).booleanValue());
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("File " + file + " writable=" + file.isWritable() + " id=" + getFileId(file));
+            }
+            break;
+          case VirtualFile.PROP_HIDDEN:
+            executeSetHidden(file, ((Boolean)newValue).booleanValue());
+            break;
+          case VirtualFile.PROP_SYMLINK_TARGET:
+            executeSetTarget(file, (String)newValue);
+            markForContentReloadRecursively(getFileId(file));
+            break;
         }
       }
     }
@@ -1205,7 +1206,6 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       String rootUrl = normalizeRootUrl(file.getPath(), (NewVirtualFileSystem)file.getFileSystem());
       synchronized (myRoots) {
         myRoots.remove(rootUrl);
-        myRootsById.remove(id);
         myIdToDirCache.remove(id);
         FSRecords.deleteRootRecord(id);
       }

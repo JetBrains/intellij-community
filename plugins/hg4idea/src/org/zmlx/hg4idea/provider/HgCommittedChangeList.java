@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.provider;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,6 +30,7 @@ public class HgCommittedChangeList extends CommittedChangeListForRevision {
     return (HgRevisionNumber)super.getRevisionNumber();
   }
 
+  @Override
   @NotNull
   public String getBranch() {
     return myBranch;

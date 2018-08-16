@@ -6,6 +6,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.UnknownConfigurationType;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.openapi.project.Project;
@@ -39,6 +40,9 @@ public abstract class AbstractRunConfigurationTypeUsagesCollector extends Projec
           }
 
           final ConfigurationType configurationType = configurationFactory.getType();
+          if (configurationType instanceof UnknownConfigurationType) {
+            continue;
+          }
           final StringBuilder keyBuilder = new StringBuilder();
           keyBuilder.append(configurationType.getId());
           if (configurationType.getConfigurationFactories().length > 1) {

@@ -241,10 +241,12 @@ public class JdkChooserPanel extends JPanel {
       updateOkButton();
     }
 
+    @Override
     protected String getDimensionServiceKey() {
       return "#com.intellij.ide.util.projectWizard.JdkChooserPanel.MyDialog";
     }
 
+    @Override
     public void valueChanged(ListSelectionEvent e) {
       updateOkButton();
     }
@@ -253,20 +255,24 @@ public class JdkChooserPanel extends JPanel {
       setOKActionEnabled(myList.getSelectedValue() != null);
     }
 
+    @Override
     public void dispose() {
       myList.removeListSelectionListener(this);
       super.dispose();
     }
 
+    @Override
     protected JComponent createCenterPanel() {
       return JdkChooserPanel.this;
     }
 
+    @Override
     @NotNull
     protected Action[] createActions() {
       return new Action[]{new ConfigureAction(), getOKAction(), getCancelAction()};
     }
 
+    @Override
     public JComponent getPreferredFocusedComponent() {
       return myList;
     }
@@ -277,6 +283,7 @@ public class JdkChooserPanel extends JPanel {
         putValue(Action.MNEMONIC_KEY, new Integer('E'));
       }
 
+      @Override
       public void actionPerformed(ActionEvent e) {
         editJdkTable();
       }

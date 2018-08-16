@@ -184,7 +184,7 @@ public class UpdateSettingsConfigurable implements SearchableConfigurable {
     private void createUIComponents() {
       myIgnoredBuildsLink = new ActionLink(IdeBundle.message("updates.settings.ignored"), new AnAction() {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           List<String> buildNumbers = mySettings.getIgnoredBuildNumbers();
           String text = StringUtil.join(buildNumbers, "\n");
           String result = Messages.showMultilineInputDialog(null, null, IdeBundle.message("updates.settings.ignored.title"), text, null, null);

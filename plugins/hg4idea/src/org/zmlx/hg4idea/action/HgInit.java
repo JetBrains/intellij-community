@@ -34,7 +34,7 @@ public class HgInit extends DumbAwareAction {
   private Project myProject;
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     myProject = notNull(e.getData(CommonDataKeys.PROJECT), ProjectManager.getInstance().getDefaultProject());
 
     // provide window to select the root directory

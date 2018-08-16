@@ -79,7 +79,7 @@ public class DataManagerImpl extends DataManager {
         ids.add(dataId);
         data = dataRule.getData(new DataProvider() {
           @Override
-          public Object getData(String dataId) {
+          public Object getData(@NotNull String dataId) {
             return getDataFromProvider(provider, dataId, ids);
           }
         });
@@ -125,7 +125,7 @@ public class DataManagerImpl extends DataManager {
           return plainRule.getData(new DataProvider() {
             @Override
             @Nullable
-            public Object getData(@NonNls String dataId) {
+            public Object getData(@NotNull @NonNls String dataId) {
               return dataProvider.getData(AnActionEvent.injectedId(dataId));
             }
           });
@@ -346,7 +346,7 @@ public class DataManagerImpl extends DataManager {
     }
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       if (dataId == null) return null;
       int currentEventCount = IdeEventQueue.getInstance().getEventCount();
       if (myEventCount != -1 && myEventCount != currentEventCount) {
@@ -390,6 +390,7 @@ public class DataManagerImpl extends DataManager {
       return ((DataManagerImpl)DataManager.getInstance()).getData(dataId, component);
     }
 
+    @Override
     @NonNls
     public String toString() {
       return "component=" + SoftReference.dereference(myRef);

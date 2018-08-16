@@ -34,12 +34,14 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.xml.XmlNamespaceHelper;
 import com.intellij.xml.XmlSchemaProvider;
+import com.intellij.xml.index.XmlNamespaceIndex;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Dmitry Avdeev
@@ -81,11 +83,6 @@ public class XmlLocationCompletionContributor extends CompletionContributor {
   private static Object[] completeNamespace(PsiElement myElement) {
     final XmlFile file = (XmlFile)myElement.getContainingFile();
     PsiElement parent = myElement.getParent();
-    final Set<Object> preferred = new HashSet<>();
-    if (parent instanceof XmlAttribute && "xmlns".equals(((XmlAttribute)parent).getName())) {
-      XmlNamespaceHelper helper = XmlNamespaceHelper.getHelper(file);
-      preferred.addAll(helper.guessUnboundNamespaces(parent.getParent(), file));
-    }
     Set<String> list = new HashSet<>();
     for (XmlSchemaProvider provider : Extensions.getExtensions(XmlSchemaProvider.EP_NAME)) {
       if (provider.isAvailable(file)) {
@@ -95,7 +92,13 @@ public class XmlLocationCompletionContributor extends CompletionContributor {
     if (!list.isEmpty()) {
       return ArrayUtil.toObjectArray(list);
     }
-    Object[] resourceUrls = ExternalResourceManagerEx.getInstanceEx().getUrlsByNamespace(myElement.getProject()).keySet().toArray();
+    Set<String> set = new HashSet<>(ExternalResourceManagerEx.getInstanceEx().getUrlsByNamespace(myElement.getProject()).keySet());
+    Set<String> fromIndex =
+      XmlNamespaceIndex.getAllResources(null, myElement.getProject(), null).stream()
+        .filter(resource -> "xsd".equals(resource.getFile().getExtension())).map(resource -> resource.getValue().getNamespace())
+        .collect(Collectors.toSet());
+    ContainerUtil.addAllNotNull(set, fromIndex);
+    Object[] resourceUrls = set.toArray();
     final XmlDocument document = file.getDocument();
     assert document != null;
     XmlTag rootTag = document.getRootTag();
@@ -107,6 +110,11 @@ public class XmlLocationCompletionContributor extends CompletionContributor {
     });
     resourceUrls = ArrayUtil.mergeArrays(resourceUrls, ArrayUtil.toStringArray(additionalNs));
 
+    final Set<Object> preferred = new HashSet<>();
+    if (parent instanceof XmlAttribute && "xmlns".equals(((XmlAttribute)parent).getName())) {
+      XmlNamespaceHelper helper = XmlNamespaceHelper.getHelper(file);
+      preferred.addAll(helper.guessUnboundNamespaces(parent.getParent(), file));
+    }
     return ContainerUtil.map2Array(resourceUrls, o -> {
       LookupElementBuilder builder = LookupElementBuilder.create(o);
       return preferred.contains(o) ? PrioritizedLookupElement.withPriority(builder, 100) : builder;

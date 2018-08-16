@@ -18,11 +18,11 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 
 /**
- * Holds values to use for common {@link PrioritizedDocumentListener prioritized document listeners} used within standard IntelliJ
- * editor.
+ * Document listeners are sorted according {@link PrioritizedDocumentListener#getPriority()}.
+ * (the smaller the priority value the sooner the listener will be called)
+ * Some standard priorities are listed here.
  *
  * @author Denis Zhdanov
- * @since Sep 13, 2010 2:30:48 PM
  */
 public class EditorDocumentPriorities {
 

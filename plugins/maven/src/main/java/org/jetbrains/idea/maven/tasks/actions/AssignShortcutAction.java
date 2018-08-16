@@ -35,7 +35,7 @@ import java.util.List;
 
 public class AssignShortcutAction extends MavenAction {
   @Override
-  protected boolean isAvailable(AnActionEvent e) {
+  protected boolean isAvailable(@NotNull AnActionEvent e) {
     final DataContext context = e.getDataContext();
     return super.isAvailable(e) && !isIgnoredProject(context) && getGoalActionId(context) != null;
   }
@@ -47,6 +47,7 @@ public class AssignShortcutAction extends MavenAction {
     return projectsManager != null && projectsManager.isIgnored(project);
   }
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext context = e.getDataContext();
     String actionId = getGoalActionId(context);

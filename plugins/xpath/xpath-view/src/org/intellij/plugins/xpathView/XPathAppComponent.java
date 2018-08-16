@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2002-2005 Sascha Weinreuter
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,7 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.template.impl.DefaultLiveTemplatesProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -50,7 +50,7 @@ import java.util.List;
  * Also used to manage highlighters.
  */
 @State(name = "XPathView.XPathViewPlugin", storages = @Storage("xpath.xml"))
-public class XPathAppComponent implements PersistentStateComponent<Config>, DefaultLiveTemplatesProvider, ApplicationComponent {
+public class XPathAppComponent implements PersistentStateComponent<Config>, DefaultLiveTemplatesProvider, BaseComponent {
   private static final String ACTION_FIND_NEXT = "FindNext";
   private static final String ACTION_FIND_PREVIOUS = "FindPrevious";
 
@@ -127,7 +127,7 @@ public class XPathAppComponent implements PersistentStateComponent<Config>, Defa
     }
 
     @Override
-    public void actionPerformed(AnActionEvent event) {
+    public void actionPerformed(@NotNull AnActionEvent event) {
       final Editor editor = CommonDataKeys.EDITOR.getData(event.getDataContext());
       if (editor != null) {
         if (HighlighterUtil.hasHighlighters(editor)) {
@@ -179,7 +179,7 @@ public class XPathAppComponent implements PersistentStateComponent<Config>, Defa
     }
 
     @Override
-    public void update(AnActionEvent event) {
+    public void update(@NotNull AnActionEvent event) {
       super.update(event);
       origAction.update(event);
     }

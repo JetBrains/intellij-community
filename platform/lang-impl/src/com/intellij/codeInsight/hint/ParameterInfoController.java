@@ -144,7 +144,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
 
     myEditorCaretListener = new CaretListener(){
       @Override
-      public void caretPositionChanged(CaretEvent e) {
+      public void caretPositionChanged(@NotNull CaretEvent e) {
         syncUpdateOnCaretMove();
         rescheduleUpdate();
       }
@@ -154,7 +154,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
 
     myEditor.getDocument().addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         rescheduleUpdate();
       }
     }, this);
@@ -181,6 +181,10 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
       showHint(requestFocus, mySingleParameterInfo);
     }
     updateComponent();
+  }
+
+  void setDescriptors(Object[] descriptors) {
+    myComponent.setDescriptors(descriptors);
   }
 
   private void syncUpdateOnCaretMove() {
@@ -218,7 +222,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     }
 
     mySingleParameterInfo = singleParameterInfo && myKeepOnHintHidden;
-    
+
     Pair<Point, Short> pos = myProvider.getBestPointPosition(myHint, myComponent.getParameterOwner(), myLbraceMarker.getStartOffset(),
                                                              null, HintManager.ABOVE);
     HintHint hintHint = HintManagerImpl.createHintHint(myEditor, pos.getFirst(), myHint, pos.getSecond());
@@ -307,7 +311,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
 
     if (elementForUpdating != null) {
       myHandler.updateParameterInfo(elementForUpdating, context);
-      boolean knownParameter = (myComponent.getObjects().length == 1 || myComponent.getHighlighted() != null) && 
+      boolean knownParameter = (myComponent.getObjects().length == 1 || myComponent.getHighlighted() != null) &&
                                myComponent.getCurrentParameterIndex() != -1;
       if (mySingleParameterInfo && !knownParameter && myHint.isVisible()) {
         hideHint();
@@ -377,7 +381,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     if (argsList == null && !CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION) return;
 
     if (!myHint.isVisible()) AutoPopupController.getInstance(myProject).autoPopupParameterInfo(myEditor, null);
-    
+
     offset = adjustOffsetToInlay(offset);
     VisualPosition visualPosition = myEditor.offsetToVisualPosition(offset);
     if (myEditor.getInlayModel().hasInlineElementAt(visualPosition)) {
@@ -663,6 +667,11 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     }
 
     @Override
+    public boolean isSingleParameterInfo() {
+      return mySingleParameterInfo;
+    }
+
+    @Override
     public UserDataHolderEx getCustomContext() {
       return ParameterInfoController.this;
     }
@@ -769,7 +778,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
       setBorder(JBUI.Borders.empty());
     }
 
-    // foreground/background/font are used to style the popup (HintManagerImpl.createHintHint) 
+    // foreground/background/font are used to style the popup (HintManagerImpl.createHintHint)
     @Override
     public Color getForeground() {
       return getComponentCount() == 0 ? super.getForeground() : getComponent(0).getForeground();

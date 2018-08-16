@@ -775,10 +775,10 @@ public class AbstractPopup implements JBPopup {
     }
 
     if (sizeToSet != null) {
+      JBInsets.addTo(sizeToSet, myContent.getInsets());
+
       sizeToSet.width = Math.max(sizeToSet.width, myContent.getMinimumSize().width);
       sizeToSet.height = Math.max(sizeToSet.height, myContent.getMinimumSize().height);
-
-      JBInsets.addTo(sizeToSet, myContent.getInsets());
 
       myContent.setSize(sizeToSet);
       myContent.setPreferredSize(sizeToSet);
@@ -1008,9 +1008,7 @@ public class AbstractPopup implements JBPopup {
         return;
       }
       if (myPreferredFocusedComponent != null && myInStack && myFocusable) {
-        if (myPreferredFocusedComponent instanceof JTextComponent) {
-          IJSwingUtilities.moveMousePointerOn(myPreferredFocusedComponent);
-        }
+        IJSwingUtilities.moveMousePointerOn(myPreferredFocusedComponent);
       }
 
       removeActivity();
@@ -1476,7 +1474,7 @@ public class AbstractPopup implements JBPopup {
 
     @Nullable
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       return myDataProvider != null ? myDataProvider.getData(dataId) : null;
     }
 

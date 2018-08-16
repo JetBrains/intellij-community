@@ -21,21 +21,21 @@ package org.jetbrains.plugins.terminal.vfs;
 
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.tabs.TabInfo;
-import com.jediterm.terminal.ui.JediTermWidget;
 import com.jediterm.terminal.ui.settings.TabbedSettingsProvider;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.terminal.JBTabInnerTerminalWidget;
 
 /**
  * @author traff
  */
 public class TerminalSessionVirtualFileImpl extends LightVirtualFile {
-  private final JediTermWidget myTerminal;
+  private final JBTabInnerTerminalWidget myTerminal;
   private final TabbedSettingsProvider mySettingsProvider;
 
   private final TabInfo myTabInfo;
 
   public TerminalSessionVirtualFileImpl(@NotNull TabInfo tabInfo,
-                                        @NotNull JediTermWidget terminal,
+                                        @NotNull JBTabInnerTerminalWidget terminal,
                                         @NotNull TabbedSettingsProvider settingsProvider) {
     myTabInfo = tabInfo;
     myTerminal = terminal;
@@ -44,13 +44,18 @@ public class TerminalSessionVirtualFileImpl extends LightVirtualFile {
     setWritable(true);
   }
 
-  public JediTermWidget getTerminal() {
+  public JBTabInnerTerminalWidget getTerminalWidget() {
     return myTerminal;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return myTabInfo.getText();
+  }
+
+  public TabInfo getTabInfo() {
+    return myTabInfo;
   }
 
   public TabbedSettingsProvider getSettingsProvider() {

@@ -457,7 +457,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
     @Nullable
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       if (TouchbarDataKeys.ACTIONS_KEY.is(dataId))
         return myTouchbarActions;
       return null;

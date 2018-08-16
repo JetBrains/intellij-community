@@ -19,6 +19,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 
 public interface InputConsumer {
   InputConsumer DEAF = new InputConsumer() {
+    @Override
     public void onOutput(String text, ConsoleViewContentType contentType) {}
   };
   void onOutput(String text, ConsoleViewContentType contentType);

@@ -83,6 +83,7 @@ public class RunConfigurationNode extends ExternalSystemNode {
     return mySettings.getName();
   }
 
+  @Override
   public boolean isAlwaysLeaf() {
     return true;
   }

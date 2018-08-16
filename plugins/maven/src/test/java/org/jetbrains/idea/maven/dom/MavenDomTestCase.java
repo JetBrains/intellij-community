@@ -388,7 +388,7 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
     final MapDataContext context = createDataContext(file);
     UsageTarget[] targets = UsageTargetUtil.findUsageTargets(new DataProvider() {
       @Override
-      public Object getData(@NonNls String dataId) {
+      public Object getData(@NotNull @NonNls String dataId) {
         return context.getData(dataId);
       }
     });

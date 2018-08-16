@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import org.intellij.images.thumbnail.ThumbnailView;
 import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActionUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Toggle recursive flag.
@@ -29,11 +30,13 @@ import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActionUtil;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public final class ToggleRecursiveAction extends ToggleAction {
+    @Override
     public boolean isSelected(AnActionEvent e) {
         ThumbnailView view = ThumbnailViewActionUtil.getVisibleThumbnailView(e);
         return view != null && view.isRecursive();
     }
 
+    @Override
     public void setSelected(AnActionEvent e, boolean state) {
         ThumbnailView view = ThumbnailViewActionUtil.getVisibleThumbnailView(e);
         if (view != null) {
@@ -41,7 +44,8 @@ public final class ToggleRecursiveAction extends ToggleAction {
         }
     }
 
-    public void update(final AnActionEvent e) {
+    @Override
+    public void update(@NotNull final AnActionEvent e) {
         super.update(e);
         ThumbnailViewActionUtil.setEnabled(e);
     }

@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -62,7 +63,8 @@ public class CvsTabbedWindowComponent extends JPanel implements DataProvider, Cv
   }
 
 
-  public Object getData(String dataId) {
+  @Override
+  public Object getData(@NotNull String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return myHelpId;
     }
@@ -86,13 +88,15 @@ public class CvsTabbedWindowComponent extends JPanel implements DataProvider, Cv
       super(com.intellij.CvsBundle.message("close.tab.action.name"), "", AllIcons.Actions.Cancel);
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myContentManager.removeContent(myContent, true);
 
       deactivated();
     }
   }
 
+  @Override
   public void deactivated() {
     if (myComponent instanceof CvsTabbedWindow.DeactivateListener) {
       ((CvsTabbedWindow.DeactivateListener) myComponent).deactivated();

@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class ImportAction extends ActionOnSelectedElement {
   private ImportDetails myImportDetails;
@@ -27,15 +28,18 @@ public class ImportAction extends ActionOnSelectedElement {
     super(false);
   }
 
-  public void update(AnActionEvent e) {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setVisible(true);
     e.getPresentation().setEnabled(true);
   }
 
+  @Override
   protected String getTitle(VcsContext context) {
     return CvsBundle.message("operation.name.import");
   }
 
+  @Override
   protected CvsHandler getCvsHandler(CvsContext context) {
     final VirtualFile selectedFile = context.getSelectedFile();
     final ImportWizard importWizard = new ImportWizard(context.getProject(), selectedFile);
@@ -48,6 +52,7 @@ public class ImportAction extends ActionOnSelectedElement {
     return CommandCvsHandler.createImportHandler(myImportDetails);
   }
 
+  @Override
   protected void onActionPerformed(CvsContext context, CvsTabbedWindow tabbedWindow, boolean successfully, CvsHandler handler) {
     super.onActionPerformed(context, tabbedWindow, successfully, handler);
     final ImportConfiguration importConfiguration = ImportConfiguration.getInstance();
@@ -58,10 +63,12 @@ public class ImportAction extends ActionOnSelectedElement {
 
   private AbstractAction createCheckoutAction(final boolean makeNewFilesReadOnly) {
     return new AbstractAction(false) {
+      @Override
       protected String getTitle(VcsContext context) {
         return CvsBundle.message("operation.name.check.out.project");
       }
 
+      @Override
       protected CvsHandler getCvsHandler(CvsContext context) {
         final Project project = context.getProject();
         return CommandCvsHandler.createCheckoutHandler(myImportDetails.getCvsRoot(),
@@ -71,6 +78,7 @@ public class ImportAction extends ActionOnSelectedElement {
                                                        project == null ? null : VcsConfiguration.getInstance(project).getCheckoutOption());
       }
 
+      @Override
       protected void onActionPerformed(CvsContext context, CvsTabbedWindow tabbedWindow, boolean successfully, CvsHandler handler) {
         super.onActionPerformed(context, tabbedWindow, successfully, handler);
         final Project project = context.getProject();

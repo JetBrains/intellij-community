@@ -30,8 +30,8 @@ import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfoRt;
 import icons.MavenIcons;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
@@ -220,7 +220,8 @@ public class MavenKeymapExtension implements ExternalSystemKeymapExtension.Actio
       template.setIcon(MavenIcons.Phase);
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final DataContext context = e.getDataContext();
       final Project project = MavenActionUtil.getProject(context);
       if (project == null) return;

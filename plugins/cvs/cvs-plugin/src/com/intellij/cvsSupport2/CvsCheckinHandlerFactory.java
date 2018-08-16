@@ -48,6 +48,7 @@ class CvsCheckinHandlerFactory extends VcsCheckinHandlerFactory {
   @Override
   protected CheckinHandler createVcsHandler(final CheckinProjectPanel panel) {
     return new CheckinHandler() {
+      @Override
       @Nullable
       public RefreshableOnComponent getAfterCheckinConfigurationPanel(Disposable parentDisposable) {
         final Project project = panel.getProject();

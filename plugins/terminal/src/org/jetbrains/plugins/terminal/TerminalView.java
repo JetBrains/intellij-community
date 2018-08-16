@@ -24,6 +24,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.InternalDecorator;
+import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.Content;
@@ -33,9 +34,6 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.util.ui.UIUtil;
 import com.jediterm.terminal.TtyConnector;
-import com.jediterm.terminal.ui.JediTermWidget;
-import com.jediterm.terminal.ui.TabbedTerminalWidget;
-import com.jediterm.terminal.ui.TerminalWidget;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl;
@@ -125,9 +123,9 @@ public class TerminalView {
     content.setCloseable(true);
 
     myTerminalWidget = terminalRunner.createTerminalWidget(content);
-    myTerminalWidget.addTabListener(new TabbedTerminalWidget.TabListener() {
+    myTerminalWidget.addTabListener(new JBTabbedTerminalWidget.TabListener<JBTerminalWidget>() {
       @Override
-      public void tabClosed(JediTermWidget terminal) {
+      public void tabClosed(JBTerminalWidget terminal) {
         UIUtil.invokeLaterIfNeeded(() -> {
           if (myTerminalWidget != null) {
             hideIfNoActiveSessions(toolWindow, myTerminalWidget);
@@ -230,16 +228,16 @@ public class TerminalView {
 
   private static class NewSession extends DumbAwareAction {
     private final AbstractTerminalRunner myTerminalRunner;
-    private final TerminalWidget myTerminal;
+    private final JBTabbedTerminalWidget myTerminal;
 
-    public NewSession(@NotNull AbstractTerminalRunner terminalRunner, @NotNull TerminalWidget terminal) {
+    public NewSession(@NotNull AbstractTerminalRunner terminalRunner, @NotNull JBTabbedTerminalWidget terminal) {
       super("New Session", "Create New Terminal Session", AllIcons.General.Add);
       myTerminalRunner = terminalRunner;
       myTerminal = terminal;
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myTerminalRunner.openSession(myTerminal);
     }
   }
@@ -255,7 +253,7 @@ public class TerminalView {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myTerminal.closeCurrentSession();
 
       hideIfNoActiveSessions(myToolWindow, myTerminal);
@@ -297,8 +295,8 @@ public class TerminalView {
     public void add(@NotNull DockableContent content, RelativePoint dropTarget) {
       if (isTerminalSessionContent(content)) {
         TerminalSessionVirtualFileImpl terminalFile = (TerminalSessionVirtualFileImpl)content.getKey();
-        myTerminalWidget.addTab(terminalFile.getName(), terminalFile.getTerminal());
-        terminalFile.getTerminal().setNextProvider(myTerminalWidget);
+        myTerminalWidget.addTab(terminalFile.getName(), terminalFile.getTerminalWidget());
+        terminalFile.getTerminalWidget().setNextProvider(myTerminalWidget);
       }
     }
 

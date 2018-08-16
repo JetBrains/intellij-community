@@ -15,13 +15,12 @@
  */
 package com.intellij.ide;
 
-import com.intellij.application.options.CodeStyleBean;
-import com.intellij.application.options.IndentOptionsEditor;
-import com.intellij.application.options.JavaIndentOptionsEditor;
+import com.intellij.application.options.*;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
@@ -38,6 +37,27 @@ import static com.intellij.application.options.JavaDocFormattingPanel.*;
  * @author rvishnyakov
  */
 public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
+  @NotNull
+  @Override
+  public Configurable createSettingsPage(CodeStyleSettings settings, CodeStyleSettings modelSettings) {
+    return new CodeStyleAbstractConfigurable(settings, modelSettings, "Java") {
+      @Override
+      protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
+        return new JavaCodeStyleMainPanel(getCurrentSettings(), settings);
+      }
+      @Override
+      public String getHelpTopic() {
+        return "reference.settingsdialog.codestyle.java";
+      }
+    };
+  }
+
+  @Nullable
+  @Override
+  public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
+    return new JavaCodeStyleSettings(settings);
+  }
+
   @NotNull
   @Override
   public Language getLanguage() {

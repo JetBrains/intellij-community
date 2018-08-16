@@ -23,7 +23,7 @@ public class XAddToWatchesTreeAction extends XDebuggerTreeActionBase {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     for (XValueNodeImpl node : getSelectedNodes(e.getDataContext())) {
       if (node != null) {
         String nodeName = node.getName();

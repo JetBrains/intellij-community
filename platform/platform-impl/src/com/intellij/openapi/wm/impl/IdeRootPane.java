@@ -13,7 +13,6 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaRootPaneUI;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -69,11 +68,10 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
   private final boolean myGlassPaneInitialized;
 
   private MemoryUsagePanel myMemoryWidget;
-  private final StatusBarCustomComponentFactory[] myStatusBarCustomComponentFactories;
 
   private boolean myFullScreen;
 
-  IdeRootPane(ActionManagerEx actionManager, DataManager dataManager, Application application, final IdeFrame frame) {
+  IdeRootPane(ActionManagerEx actionManager, DataManager dataManager, final IdeFrame frame) {
     if (SystemInfo.isWindows && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) && frame instanceof IdeFrameImpl) {
       //setUI(DarculaRootPaneUI.createUI(this));
       try {
@@ -87,9 +85,8 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
 
     myContentPane.add(myNorthPanel, BorderLayout.NORTH);
 
-    myContentPane.addMouseMotionListener(new MouseMotionAdapter() {}); // listen to mouse motion events for a11y
-
-    myStatusBarCustomComponentFactories = application.getExtensions(StatusBarCustomComponentFactory.EP_NAME);
+    myContentPane.addMouseMotionListener(new MouseMotionAdapter() {
+    }); // listen to mouse motion events for a11y
 
     createStatusBar(frame);
 
@@ -133,7 +130,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
    * Invoked when enclosed frame is being shown.
    */
   @Override
-  public final void addNotify(){
+  public final void addNotify() {
     super.addNotify();
   }
 
@@ -141,7 +138,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
    * Invoked when enclosed frame is being disposed.
    */
   @Override
-  public final void removeNotify(){
+  public final void removeNotify() {
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
       if (!myStatusBarDisposed) {
         myStatusBarDisposed = true;
@@ -160,13 +157,13 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
    */
   final void setToolWindowsPane(@Nullable final ToolWindowsPane toolWindowsPane) {
     final JComponent contentPane = (JComponent)getContentPane();
-    if(myToolWindowsPane != null){
+    if (myToolWindowsPane != null) {
       contentPane.remove(myToolWindowsPane);
     }
 
     myToolWindowsPane = toolWindowsPane;
-    if(myToolWindowsPane != null) {
-      contentPane.add(myToolWindowsPane,BorderLayout.CENTER);
+    if (myToolWindowsPane != null) {
+      contentPane.add(myToolWindowsPane, BorderLayout.CENTER);
     }
 
     contentPane.revalidate();
@@ -180,7 +177,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
   }
 
   @Override
-  protected final Container createContentPane(){
+  protected final Container createContentPane() {
     return myContentPane = new IdePanePanel(new BorderLayout());
   }
 
@@ -206,14 +203,14 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
     myContentPane.revalidate();
   }
 
-  void updateMainMenuActions(){
+  void updateMainMenuActions() {
     ((IdeMenuBar)menuBar).updateMenuActions();
     menuBar.repaint();
   }
 
   private JComponent createToolbar() {
     ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_TOOLBAR);
-    final ActionToolbar toolBar= myActionManager.createActionToolbar(
+    final ActionToolbar toolBar = myActionManager.createActionToolbar(
       ActionPlaces.MAIN_TOOLBAR,
       group,
       true
@@ -235,36 +232,34 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
 
     myMemoryWidget = new MemoryUsagePanel();
 
-    if (myStatusBarCustomComponentFactories != null) {
-      for (final StatusBarCustomComponentFactory<JComponent> componentFactory : myStatusBarCustomComponentFactories) {
-        final JComponent c = componentFactory.createComponent(myStatusBar);
-        myStatusBar.addWidget(new CustomStatusBarWidget() {
-          @Override
-          public JComponent getComponent() {
-            return c;
-          }
+    for (final StatusBarCustomComponentFactory<JComponent> componentFactory : StatusBarCustomComponentFactory.EP_NAME.getExtensions()) {
+      final JComponent c = componentFactory.createComponent(myStatusBar);
+      myStatusBar.addWidget(new CustomStatusBarWidget() {
+        @Override
+        public JComponent getComponent() {
+          return c;
+        }
 
-          @Override
-          @NotNull
-          public String ID() {
-            return c.getClass().getSimpleName();
-          }
+        @Override
+        @NotNull
+        public String ID() {
+          return c.getClass().getSimpleName();
+        }
 
-          @Override
-          public WidgetPresentation getPresentation(@NotNull PlatformType type) {
-            return null;
-          }
+        @Override
+        public WidgetPresentation getPresentation(@NotNull PlatformType type) {
+          return null;
+        }
 
-          @Override
-          public void install(@NotNull StatusBar statusBar) {
-          }
+        @Override
+        public void install(@NotNull StatusBar statusBar) {
+        }
 
-          @Override
-          public void dispose() {
-            componentFactory.disposeComponent(myStatusBar, c);
-          }
-        }, StatusBar.Anchors.before(MemoryUsagePanel.WIDGET_ID));
-      }
+        @Override
+        public void dispose() {
+          componentFactory.disposeComponent(myStatusBar, c);
+        }
+      }, StatusBar.Anchors.before(MemoryUsagePanel.WIDGET_ID));
     }
 
     myStatusBar.addWidget(myMemoryWidget);
@@ -291,11 +286,11 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
     return myStatusBar.isVisible() ? myStatusBar.getHeight() : 0;
   }
 
-  private void updateToolbarVisibility(){
+  private void updateToolbarVisibility() {
     myToolbar.setVisible(UISettings.getInstance().getShowMainToolbar() && !UISettings.getInstance().getPresentationMode());
   }
 
-  private void updateStatusBarVisibility(){
+  private void updateStatusBarVisibility() {
     myStatusBar.setVisible(UISettings.getInstance().getShowStatusBar() && !UISettings.getInstance().getPresentationMode());
   }
 
@@ -307,7 +302,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
     }
   }
 
-  void deinstallNorthComponents(){
+  void deinstallNorthComponents() {
     for (IdeRootPaneNorthExtension northComponent : myNorthComponents) {
       myNorthPanel.remove(northComponent.getComponent());
       Disposer.dispose(northComponent);

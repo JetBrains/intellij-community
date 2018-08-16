@@ -168,7 +168,8 @@ public class TreeModelBuilder {
       myFileIndex.iterateContent(new ContentIterator() {
         PackageDependenciesNode lastParent;
         VirtualFile dir;
-        public boolean processFile(VirtualFile fileOrDir) {
+        @Override
+        public boolean processFile(@NotNull VirtualFile fileOrDir) {
           if (!fileOrDir.isDirectory()) {
             if (lastParent != null && !Comparing.equal(dir, fileOrDir.getParent())) {
               lastParent = null;

@@ -250,7 +250,7 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     final ConsoleView consoleView = getSubConsoleView(isPrimaryConsoleEnabled());
     if (consoleView instanceof DataProvider) {
       return ((DataProvider)consoleView).getData(dataId);
@@ -377,7 +377,7 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myAction1.actionPerformed(e);
       myAction2.actionPerformed(e);
     }

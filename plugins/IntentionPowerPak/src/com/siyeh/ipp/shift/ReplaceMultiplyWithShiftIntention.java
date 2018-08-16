@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ReplaceMultiplyWithShiftIntention extends MutablyNamedIntention {
 
+  @Override
   protected String getTextForElement(PsiElement element) {
     if (element instanceof PsiBinaryExpression) {
       final PsiBinaryExpression exp = (PsiBinaryExpression)element;
@@ -62,11 +63,13 @@ public class ReplaceMultiplyWithShiftIntention extends MutablyNamedIntention {
     }
   }
 
+  @Override
   @NotNull
   public PsiElementPredicate getElementPredicate() {
     return new MultiplyByPowerOfTwoPredicate();
   }
 
+  @Override
   public void processIntention(PsiElement element) {
     if (element instanceof PsiBinaryExpression) {
       replaceMultiplyOrDivideWithShift((PsiBinaryExpression)element);

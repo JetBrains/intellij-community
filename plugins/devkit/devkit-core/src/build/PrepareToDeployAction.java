@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.build;
 
 import com.intellij.compiler.server.CompileServerPlugin;
@@ -71,7 +57,8 @@ public class PrepareToDeployAction extends AnAction {
 
   private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.balloonGroup("Plugin DevKit Deployment");
 
-  public void actionPerformed(final AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final Module module = LangDataKeys.MODULE.getData(e.getDataContext());
     if (module != null && PluginModuleType.isOfType(module)) {
       doPrepare(Arrays.asList(module), e.getProject());
@@ -85,6 +72,7 @@ public class PrepareToDeployAction extends AnAction {
     final CompilerManager compilerManager = CompilerManager.getInstance(project);
     compilerManager.make(compilerManager.createModulesCompileScope(pluginModules.toArray(Module.EMPTY_ARRAY), true),
                          new CompileStatusNotification() {
+                           @Override
                            public void finished(final boolean aborted,
                                                 final int errors,
                                                 final int warnings,
@@ -389,7 +377,8 @@ public class PrepareToDeployAction extends AnAction {
     return manifest;
   }
 
-  public void update(AnActionEvent e) {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     final Module module = LangDataKeys.MODULE.getData(e.getDataContext());
     boolean enabled = module != null && PluginModuleType.isOfType(module);
     e.getPresentation().setVisible(enabled);

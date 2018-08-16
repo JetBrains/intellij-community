@@ -37,6 +37,7 @@ import java.util.Properties;
 public class PropertiesElementFactory {
   private static final UserDataCache<PropertiesFile,Project,Void> PROPERTIES = new UserDataCache<PropertiesFile, Project, Void>("system.properties.file") {
 
+    @Override
     protected PropertiesFile compute(Project project, Void p) {
       return createPropertiesFile(project, System.getProperties(), "system");
     }

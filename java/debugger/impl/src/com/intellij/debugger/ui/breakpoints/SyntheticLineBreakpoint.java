@@ -24,14 +24,17 @@ public class SyntheticLineBreakpoint extends LineBreakpoint<JavaLineBreakpointPr
     return mySuspendPolicy;
   }
 
+  @Override
   public void setSuspendPolicy(String policy) {
     mySuspendPolicy = policy;
   }
 
+  @Override
   protected boolean isLogEnabled() {
     return false;
   }
 
+  @Override
   protected boolean isLogStack() {
     return false;
   }
@@ -50,10 +53,12 @@ public class SyntheticLineBreakpoint extends LineBreakpoint<JavaLineBreakpointPr
   public void setEnabled(boolean enabled) {
   }
 
+  @Override
   public boolean isCountFilterEnabled() {
     return false;
   }
 
+  @Override
   public boolean isClassFiltersEnabled() {
     return false;
   }

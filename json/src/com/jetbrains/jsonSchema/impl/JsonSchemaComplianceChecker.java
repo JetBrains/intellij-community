@@ -6,8 +6,10 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
@@ -80,18 +82,53 @@ public class JsonSchemaComplianceChecker {
 
   private void createWarnings(@Nullable JsonSchemaAnnotatorChecker checker) {
     if (checker != null && ! checker.isCorrect()) {
+
+      // compute intersecting ranges - we'll solve warning priorities based on this information
+      List<TextRange> ranges = ContainerUtil.newArrayList();
+      List<List<Map.Entry<PsiElement, JsonValidationError>>> entries = ContainerUtil.newArrayList();
       for (Map.Entry<PsiElement, JsonValidationError> entry : checker.getErrors().entrySet()) {
-        if (checkIfAlreadyProcessed(entry.getKey())) continue;
-        String value = entry.getValue().getMessage();
-        if (myMessagePrefix != null) value = myMessagePrefix + value;
-        LocalQuickFix fix = entry.getValue().createFix(myWalker.getQuickFixAdapter(myHolder.getProject()));
-        if (fix == null) {
-          myHolder.registerProblem(entry.getKey(), value);
+        TextRange range = entry.getKey().getTextRange();
+        boolean processed = false;
+        for (int i = 0; i < ranges.size(); i++) {
+          TextRange currRange = ranges.get(i);
+          if (currRange.intersects(range)) {
+            ranges.set(i, new TextRange(Math.min(currRange.getStartOffset(), range.getStartOffset()), Math.max(currRange.getEndOffset(), range.getEndOffset())));
+            entries.get(i).add(entry);
+            processed = true;
+            break;
+          }
         }
-        else {
-          myHolder.registerProblem(entry.getKey(), value, fix);
+        if (processed) continue;
+
+        ranges.add(range);
+        entries.add(ContainerUtil.newArrayList(entry));
+      }
+
+      // for each set of intersecting ranges, compute the best errors to show
+      for (List<Map.Entry<PsiElement, JsonValidationError>> entryList : entries) {
+        int min = entryList.stream().map(v -> v.getValue().getPriority().ordinal()).min(Integer::compareTo).orElse(Integer.MAX_VALUE);
+        for (Map.Entry<PsiElement, JsonValidationError> entry : entryList) {
+          JsonValidationError validationError = entry.getValue();
+          PsiElement psiElement = entry.getKey();
+          if (validationError.getPriority().ordinal() > min) {
+            continue;
+          }
+          registerError(psiElement, validationError);
         }
       }
+    }
+  }
+
+  private void registerError(@NotNull PsiElement psiElement, @NotNull JsonValidationError validationError) {
+    if (checkIfAlreadyProcessed(psiElement)) return;
+    String value = validationError.getMessage();
+    if (myMessagePrefix != null) value = myMessagePrefix + value;
+    LocalQuickFix[] fix = validationError.createFixes(myWalker.getQuickFixAdapter(myHolder.getProject()));
+    if (fix.length == 0) {
+      myHolder.registerProblem(psiElement, value);
+    }
+    else {
+      myHolder.registerProblem(psiElement, value, fix);
     }
   }
 

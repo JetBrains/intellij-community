@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.tree;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -20,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -28,7 +15,8 @@ abstract class BaseTreeNodeAction extends AnAction implements DumbAware {
     setEnabledInModalContext(true);
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Object sourceComponent = getSourceComponent(e);
     if (sourceComponent instanceof JTree) {
       performOn((JTree)sourceComponent);
@@ -40,7 +28,8 @@ abstract class BaseTreeNodeAction extends AnAction implements DumbAware {
 
   protected abstract void performOn(JTree tree);
 
-  public void update(AnActionEvent e) {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(enabledOn(getSourceComponent(e)));
   }
 
@@ -54,7 +43,7 @@ abstract class BaseTreeNodeAction extends AnAction implements DumbAware {
     return false;
   }
 
-  private static Object getSourceComponent(AnActionEvent e) {
+  private static Object getSourceComponent(@NotNull AnActionEvent e) {
     return PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
   }
 }

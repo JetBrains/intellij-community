@@ -148,7 +148,7 @@ public abstract class ProjectFileNodeUpdater {
    * Usually, it is needed to find an added file in a tree right after adding.
    */
   public void updateImmediately() {
-    invoker.invokeLaterIfNeeded(this::onInvokerThread);
+    invoker.runOrInvokeLater(this::onInvokerThread);
   }
 
   /**
@@ -214,7 +214,7 @@ public abstract class ProjectFileNodeUpdater {
     }
     else {
       LOG.debug("spent ", System.currentTimeMillis() - startedAt, "ms to collect ", size, " files to update @ ", invoker);
-      invoker.invokeLaterIfNeeded(() -> updateStructure(fromRoot, files));
+      invoker.runOrInvokeLater(() -> updateStructure(fromRoot, files));
     }
   }
 

@@ -26,7 +26,7 @@ import javax.swing.*;
 
 public abstract class MavenTreeAction extends MavenAction {
   @Override
-  protected boolean isAvailable(AnActionEvent e) {
+  protected boolean isAvailable(@NotNull AnActionEvent e) {
     return super.isAvailable(e) && MavenActionUtil.isMavenizedProject(e.getDataContext()) && getTree(e) != null;
   }
 
@@ -36,6 +36,7 @@ public abstract class MavenTreeAction extends MavenAction {
   }
 
   public static class CollapseAll extends MavenTreeAction {
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       JTree tree = getTree(e);
       if (tree == null) return;
@@ -49,6 +50,7 @@ public abstract class MavenTreeAction extends MavenAction {
   }
 
   public static class ExpandAll extends MavenTreeAction {
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       JTree tree = getTree(e);
       if (tree == null) return;

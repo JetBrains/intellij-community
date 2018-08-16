@@ -52,7 +52,7 @@ public abstract class GitAbstractRebaseAction extends DumbAwareAction {
   }
 
   @Override
-  public final void actionPerformed(AnActionEvent e) {
+  public final void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     if (getRepositoryManager(project).hasOngoingRebase()) {
       ProgressManager.getInstance().run(new Task.Backgroundable(project, getProgressTitle()) {

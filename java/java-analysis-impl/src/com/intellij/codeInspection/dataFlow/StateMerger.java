@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
@@ -30,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.codeInspection.dataFlow.DfaFactType.CAN_BE_NULL;
 import static com.intellij.codeInspection.dataFlow.DfaFactType.RANGE;
 
 /**
@@ -72,10 +70,9 @@ class StateMerger {
         if (group1.isEmpty() || group2.isEmpty()) continue;
 
         final Collection<DfaMemoryStateImpl> group = ContainerUtil.newArrayList(ContainerUtil.concat(group1, group2));
-        
-        final Set<DfaVariableValue> unknowns = getAllUnknownVariables(group);
+
         replacements.stripAndMerge(group, original -> {
-          DfaMemoryStateImpl copy = withUnknownVariables(original, unknowns);
+          DfaMemoryStateImpl copy = original.createCopy();
           fact.removeFromState(copy);
           if (fact instanceof EqualityFact) {
             restoreOtherInequalities((EqualityFact)fact, group, copy);
@@ -213,79 +210,6 @@ class StateMerger {
     return otherInequalities;
   }
 
-  @NotNull
-  private static Set<DfaVariableValue> getAllUnknownVariables(@NotNull Collection<DfaMemoryStateImpl> complementary) {
-    final Set<DfaVariableValue> toFlush = ContainerUtil.newLinkedHashSet();
-    for (DfaMemoryStateImpl removedState : complementary) {
-      toFlush.addAll(removedState.getUnknownVariables());
-    }
-    return toFlush;
-  }
-
-  @NotNull
-  private static DfaMemoryStateImpl withUnknownVariables(@NotNull DfaMemoryStateImpl original, @NotNull Set<DfaVariableValue> toFlush) {
-    DfaMemoryStateImpl copy = original.createCopy();
-    for (DfaVariableValue value : toFlush) {
-      copy.doFlush(value, true);
-    }
-    return copy;
-  }
-
-  @Nullable
-  List<DfaMemoryStateImpl> mergeByUnknowns(@NotNull List<DfaMemoryStateImpl> states) {
-    MultiMap<Integer, DfaMemoryStateImpl> byHash = new MultiMap<>();
-    for (DfaMemoryStateImpl state : states) {
-      ProgressManager.checkCanceled();
-      byHash.putValue(state.getPartialHashCode(false, true), state);
-    }
-
-    Replacements replacements = new Replacements(states);
-    for (Integer key : byHash.keySet()) {
-      Collection<DfaMemoryStateImpl> similarStates = byHash.get(key);
-      if (similarStates.size() < 2) continue;
-      
-      for (final DfaMemoryStateImpl state1 : similarStates) {
-        ProgressManager.checkCanceled();
-        List<DfaMemoryStateImpl> complementary = ContainerUtil.filter(similarStates, state2 -> state1.equalsByRelations(state2) && state1.equalsByVariableStates(state2));
-        if (mergeUnknowns(replacements, complementary)) break;
-      }
-    }
-
-    return replacements.getMergeResult();
-  }
-  
-  @Nullable
-  List<DfaMemoryStateImpl> mergeByNullability(List<DfaMemoryStateImpl> states) {
-    MultiMap<Integer, DfaMemoryStateImpl> byHash = new MultiMap<>();
-    for (DfaMemoryStateImpl state : states) {
-      ProgressManager.checkCanceled();
-      byHash.putValue(state.getPartialHashCode(false, false), state);
-    }
-
-    Replacements replacements = new Replacements(states);
-    for (Integer key : byHash.keySet()) {
-      Collection<DfaMemoryStateImpl> similarStates = byHash.get(key);
-      if (similarStates.size() < 2) continue;
-      
-      groupLoop:
-      for (final DfaMemoryStateImpl state1 : similarStates) {
-        ProgressManager.checkCanceled();
-        for (final DfaVariableValue var : state1.getChangedVariables()) {
-          if (state1.getVariableState(var).getNullability() != Nullability.NULLABLE) {
-            continue;
-          }
-          
-          List<DfaMemoryStateImpl> complementary = ContainerUtil.filter(similarStates, state2 -> state1.equalsByRelations(state2) &&
-                                                                                             areEquivalentModuloVar(state1, state2, var) &&
-                                                                                             areVarStatesEqualModuloNullability(state1, state2, var));
-          if (mergeUnknowns(replacements, complementary)) break groupLoop;
-        }
-      }
-    }
-
-    return replacements.getMergeResult();
-  }
-
   @Nullable
   List<DfaMemoryStateImpl> mergeByRanges(List<DfaMemoryStateImpl> states) {
     Map<DfaVariableValue, Set<LongRangeSet>> ranges = createRangeMap(states);
@@ -346,9 +270,7 @@ class StateMerger {
       DfaMemoryStateImpl getState() {
         if(myCommonEqualities != null) {
           myState.removeEquivalenceRelations(var);
-          if (!myState.isUnknownState(var)) {
-            myState.setVariableState(var, myState.getVariableState(var).withFact(RANGE, myRange));
-          }
+          myState.setVariableState(var, myState.getVariableState(var).withFact(RANGE, myRange));
           for (EqualityFact equality : myCommonEqualities) {
             equality.applyTo(myState);
           }
@@ -382,21 +304,6 @@ class StateMerger {
     return new ArrayList<>(new HashSet<>(states));
   }
 
-  private static boolean mergeUnknowns(@NotNull Replacements replacements, @NotNull List<DfaMemoryStateImpl> complementary) {
-    if (complementary.size() < 2) return false;
-
-    final Set<DfaVariableValue> toFlush = getAllUnknownVariables(complementary);
-    if (toFlush.isEmpty()) return false;
-
-    return replacements.stripAndMerge(complementary, original -> withUnknownVariables(original, toFlush));
-  }
-
-  private boolean areEquivalentModuloVar(@NotNull DfaMemoryStateImpl state1, @NotNull DfaMemoryStateImpl state2, @NotNull DfaVariableValue var) {
-    DfaMemoryStateImpl copy1 = copyWithoutVar(state1, var);
-    DfaMemoryStateImpl copy2 = copyWithoutVar(state2, var);
-    return copy2.equalsByRelations(copy1) && copy2.equalsByVariableStates(copy1);
-  }
-
   @NotNull
   private DfaMemoryStateImpl copyWithoutVar(@NotNull DfaMemoryStateImpl state, @NotNull DfaVariableValue var) {
     Map<DfaVariableValue, DfaMemoryStateImpl> map = myCopyCache.computeIfAbsent(state, k -> ContainerUtil.newIdentityHashMap());
@@ -407,12 +314,6 @@ class StateMerger {
       map.put(var, copy);
     }
     return copy;
-  }
-
-  private static boolean areVarStatesEqualModuloNullability(@NotNull DfaMemoryStateImpl state1,
-                                                            @NotNull DfaMemoryStateImpl state2,
-                                                            @NotNull DfaVariableValue var) {
-    return state1.getVariableState(var).withoutFact(CAN_BE_NULL).equals(state2.getVariableState(var).withoutFact(CAN_BE_NULL));
   }
 
   @NotNull
@@ -706,24 +607,21 @@ class StateMerger {
       return null;
     }
 
-    private boolean stripAndMerge(@NotNull Collection<DfaMemoryStateImpl> group,
-                                  @NotNull Function<DfaMemoryStateImpl, DfaMemoryStateImpl> stripper) {
-      if (group.size() <= 1) return false;
+    private void stripAndMerge(@NotNull Collection<DfaMemoryStateImpl> group,
+                               @NotNull Function<DfaMemoryStateImpl, DfaMemoryStateImpl> stripper) {
+      if (group.size() <= 1) return;
 
       MultiMap<DfaMemoryStateImpl, DfaMemoryStateImpl> strippedToOriginals = MultiMap.create();
       for (DfaMemoryStateImpl original : group) {
         strippedToOriginals.putValue(stripper.fun(original), original);
       }
-      boolean hasMerges = false;
       for (Map.Entry<DfaMemoryStateImpl, Collection<DfaMemoryStateImpl>> entry : strippedToOriginals.entrySet()) {
         Collection<DfaMemoryStateImpl> merged = entry.getValue();
         if (merged.size() > 1) {
           myRemovedStates.addAll(merged);
           myMerged.add(entry.getKey());
-          hasMerges = true;
         }
       }
-      return hasMerges;
     }
   }
 

@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.codeInsight.ClassUtil;
@@ -77,8 +76,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrAnnotationCollector;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
-import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.InheritConstructorContributor;
 import org.jetbrains.plugins.groovy.transformations.immutable.GrImmutableUtils;
@@ -364,7 +363,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     if (nameElement == null) return;
 
     final IElementType elementType = nameElement.getNode().getElementType();
-    if (elementType == GroovyTokenTypes.mSTRING_LITERAL || elementType == GroovyTokenTypes.mGSTRING_LITERAL) {
+    if (GroovyTokenSets.STRING_LITERALS.contains(elementType)) {
       checkStringLiteral(nameElement);
     }
     else if (elementType == GroovyTokenTypes.mREGEX_LITERAL || elementType == GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL) {
@@ -622,7 +621,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     checkGetterOfImmutable(myHolder, method);
 
     final PsiElement nameIdentifier = method.getNameIdentifierGroovy();
-    if (nameIdentifier.getNode().getElementType() == GroovyTokenTypes.mSTRING_LITERAL) {
+    if (GroovyTokenSets.STRING_LITERALS.contains(nameIdentifier.getNode().getElementType())) {
       checkStringLiteral(nameIdentifier);
     }
 
@@ -863,7 +862,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     if (value != null) {
       final PsiType type = value.getType();
       if (type != null) {
-        final GrParametersOwner owner = PsiTreeUtil.getParentOfType(returnStatement, GrMethod.class, GrClosableBlock.class);
+        final GrParameterListOwner owner = PsiTreeUtil.getParentOfType(returnStatement, GrParameterListOwner.class);
         if (owner instanceof PsiMethod) {
           final PsiMethod method = (PsiMethod)owner;
           if (method.isConstructor()) {
@@ -1365,7 +1364,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   @Override
   public void visitLiteralExpression(@NotNull GrLiteral literal) {
     final IElementType elementType = literal.getFirstChild().getNode().getElementType();
-    if (elementType == GroovyTokenTypes.mSTRING_LITERAL || elementType == GroovyTokenTypes.mGSTRING_LITERAL) {
+    if (GroovyTokenSets.STRING_LITERALS.contains(elementType)) {
       checkStringLiteral(literal);
     }
     else if (elementType == GroovyTokenTypes.mREGEX_LITERAL || elementType == GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL) {

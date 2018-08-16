@@ -43,6 +43,7 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
     myProject = project;
   }
 
+  @Override
   public RefreshableOnComponent createAdditionalOptionsPanel(final CheckinProjectPanel panel,
                                                              PairConsumer<Object, Object> additionalDataConsumer) {
     return null;
@@ -50,6 +51,7 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
     /*return new CvsProjectAdditionalPanel(panel, myProject);*/
   }
 
+  @Override
   public String getDefaultMessageFor(FilePath[] filesToCheckin) {
     if (filesToCheckin == null) {
       return null;
@@ -60,14 +62,17 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
     return CvsUtil.getTemplateFor(filesToCheckin[0]);
   }
 
+  @Override
   public String getHelpId() {
     return "cvs.commitProject";
   }
 
+  @Override
   public String getCheckinOperationName() {
     return CvsBundle.message("operation.name.checkin.project");
   }
 
+  @Override
   public List<VcsException> commit(List<Change> changes,
                                    String preparedComment,
                                    @NotNull NullableFunction<Object, Object> parametersHolder,
@@ -105,10 +110,12 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
     return executor.getResult().getErrorsAndWarnings();
   }
 
+  @Override
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
     return commit(changes, preparedComment, FunctionUtil.nullConstant(), null);
   }
 
+  @Override
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {
     for (FilePath file : files) {
       if (file.isDirectory()) {
@@ -127,6 +134,7 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
     return Collections.emptyList();
   }
 
+  @Override
   public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
     final CvsHandler handler = AddFileOrDirectoryAction.getDefaultHandler(myProject, VfsUtil.toVirtualFileArray(files));
     final CvsOperationExecutor executor = new CvsOperationExecutor(myProject);

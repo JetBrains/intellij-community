@@ -376,7 +376,7 @@ public final class LanguageConsoleBuilder {
       }
 
       @Override
-      public void documentChanged(DocumentEvent event) {
+      public void documentChanged(@NotNull DocumentEvent event) {
         DocumentEx document = getDocument();
         if (document.isInBulkUpdate()) {
           return;

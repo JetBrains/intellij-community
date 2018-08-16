@@ -106,18 +106,22 @@ public class SMTestProxy extends AbstractTestProxy {
     myPreferredPrinter = preferredPrinter;
   }
 
+  @Override
   public boolean isInProgress() {
     return myState.isInProgress();
   }
 
+  @Override
   public boolean isDefect() {
     return myState.isDefect();
   }
 
+  @Override
   public boolean shouldRun() {
     return true;
   }
 
+  @Override
   public int getMagnitude() {
     // Is used by some of Tests Filters
     //WARN: It is Hack, see PoolOfTestStates, API is necessary
@@ -156,6 +160,7 @@ public class SMTestProxy extends AbstractTestProxy {
     return myLocator;
   }
 
+  @Override
   public boolean isLeaf() {
     return myChildren == null || myChildren.isEmpty();
   }
@@ -196,6 +201,7 @@ public class SMTestProxy extends AbstractTestProxy {
     return myState.getMagnitude() == TestStateInfo.Magnitude.IGNORED_INDEX;
   }
 
+  @Override
   public boolean isPassed() {
     return myState.getMagnitude() == TestStateInfo.Magnitude.SKIPPED_INDEX ||
            myState.getMagnitude() == TestStateInfo.Magnitude.COMPLETE_INDEX ||
@@ -239,10 +245,12 @@ public class SMTestProxy extends AbstractTestProxy {
     return printer;
   }
 
+  @Override
   public void setPrinter(Printer printer) {
     super.setPrinter(getRightPrinter(printer));
   }
 
+  @Override
   public String getName() {
     return myName;
   }
@@ -252,6 +260,7 @@ public class SMTestProxy extends AbstractTestProxy {
     return myConfig;
   }
 
+  @Override
   @Nullable
   public Location getLocation(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
     String locationUrl = getLocationUrl();
@@ -290,6 +299,7 @@ public class SMTestProxy extends AbstractTestProxy {
     return null;
   }
 
+  @Override
   @Nullable
   public Navigatable getDescriptor(@Nullable Location location, @NotNull TestConsoleProperties properties) {
     // by location gets navigatable element.
@@ -313,14 +323,17 @@ public class SMTestProxy extends AbstractTestProxy {
     return myIsSuite;
   }
 
+  @Override
   public SMTestProxy getParent() {
     return myParent;
   }
 
+  @Override
   public List<? extends SMTestProxy> getChildren() {
     return myChildren != null ? myChildren : Collections.emptyList();
   }
 
+  @Override
   public List<SMTestProxy> getAllTests() {
     final List<SMTestProxy> allTests = new ArrayList<>();
 
@@ -602,6 +615,7 @@ public class SMTestProxy extends AbstractTestProxy {
    *
    * @param printer Printer
    */
+  @Override
   public void printOn(final Printer printer) {
     final Printer rightPrinter = getRightPrinter(printer);
     super.printOn(rightPrinter);
@@ -637,7 +651,7 @@ public class SMTestProxy extends AbstractTestProxy {
   public final void addStdOutput(@NotNull String output) {
     addOutput(output, ProcessOutputTypes.STDOUT);
   }
-  
+
   public final void addStdErr(@NotNull String output) {
     addOutput(output, ProcessOutputTypes.STDERR);
   }
@@ -648,6 +662,7 @@ public class SMTestProxy extends AbstractTestProxy {
 
   public void addOutput(@NotNull String output, @NotNull Key outputType) {
     addAfterLastPassed(new Printable() {
+      @Override
       public void printOn(@NotNull Printer printer) {
         printer.printWithAnsiColoring(output, outputType);
       }
@@ -662,6 +677,7 @@ public class SMTestProxy extends AbstractTestProxy {
     setStacktraceIfNotSet(stackTrace);
 
     addAfterLastPassed(new Printable() {
+      @Override
       public void printOn(final Printer printer) {
         String errorText = TestFailedState.buildErrorPresentationText(output, stackTrace);
         if (errorText != null) {
@@ -739,11 +755,13 @@ public class SMTestProxy extends AbstractTestProxy {
     return myState.wasTerminated();
   }
 
+  @Override
   @Nullable
   public String getLocationUrl() {
     return myLocationUrl;
   }
 
+  @Override
   @Nullable
   public String getMetainfo() {
     return myMetainfo;
@@ -984,6 +1002,7 @@ public class SMTestProxy extends AbstractTestProxy {
       myShouldPrintOwnContentOnly = shouldPrintOwnContentOnly;
     }
 
+    @Override
     public void printOn(@NotNull Printer printer) {
       if (myShouldPrintOwnContentOnly) {
         printOwnPrintablesOn(printer, false);

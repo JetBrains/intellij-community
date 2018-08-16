@@ -105,7 +105,7 @@ public abstract class SourceScope {
     return new ModuleSourceScope(modules[0].getProject()) {
       @Override
       public GlobalSearchScope getGlobalSearchScope() {
-        return evaluateScopesAndUnite(modules, module -> GlobalSearchScope.moduleWithDependenciesScope(module));
+        return evaluateScopesAndUnite(modules, module -> module.getModuleRuntimeScope(true));
       }
 
       @Override

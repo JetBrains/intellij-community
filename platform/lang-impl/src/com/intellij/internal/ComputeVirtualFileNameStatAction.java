@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -39,7 +40,7 @@ public class ComputeVirtualFileNameStatAction extends AnAction implements DumbAw
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     long start = System.currentTimeMillis();
 
     suffixes.clear();

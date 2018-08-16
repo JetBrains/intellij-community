@@ -38,6 +38,7 @@ final class AntBuildFileNodeDescriptor extends AntNodeDescriptor {
     myBuildFile = buildFile;
   }
 
+  @Override
   public Object getElement() {
     return myBuildFile;
   }
@@ -46,6 +47,7 @@ final class AntBuildFileNodeDescriptor extends AntNodeDescriptor {
     return myBuildFile;
   }
 
+  @Override
   public boolean update() {
     CompositeAppearance oldAppearance = myAppearance;
     myAppearance = new CompositeAppearance();
@@ -59,6 +61,7 @@ final class AntBuildFileNodeDescriptor extends AntNodeDescriptor {
     return !Comparing.equal(myAppearance, oldAppearance);
   }
 
+  @Override
   public void customize(@NotNull SimpleColoredComponent component) {
     if (myAppearance != null) {
       myAppearance.customize(component);
@@ -78,6 +81,7 @@ final class AntBuildFileNodeDescriptor extends AntNodeDescriptor {
     }
   }
 
+  @Override
   public boolean isAutoExpand() {
     return myBuildFile.shouldExpand();
   }

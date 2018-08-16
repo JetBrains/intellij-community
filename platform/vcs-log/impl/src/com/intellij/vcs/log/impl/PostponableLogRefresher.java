@@ -19,6 +19,7 @@ import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -32,6 +33,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class PostponableLogRefresher implements VcsLogRefresher {
+  private static final Logger LOG = Logger.getInstance(PostponableLogRefresher.class);
   @NotNull protected final VcsLogData myLogData;
   @NotNull private final Set<VirtualFile> myRootsToRefresh = ContainerUtil.newHashSet();
   @NotNull private final Set<VcsLogWindow> myLogWindows = ContainerUtil.newHashSet();
@@ -39,6 +41,7 @@ public class PostponableLogRefresher implements VcsLogRefresher {
   public PostponableLogRefresher(@NotNull VcsLogData logData) {
     myLogData = logData;
     myLogData.addDataPackChangeListener(dataPack -> {
+      LOG.debug("Refreshing log windows " + myLogWindows);
       for (VcsLogWindow window : myLogWindows) {
         dataPackArrived(window.getRefresher(), window.isVisible());
       }
@@ -49,7 +52,10 @@ public class PostponableLogRefresher implements VcsLogRefresher {
   public Disposable addLogWindow(@NotNull VcsLogWindow window) {
     myLogWindows.add(window);
     refresherActivated(window.getRefresher(), true);
-    return () -> myLogWindows.remove(window);
+    return () -> {
+      LOG.debug("Removing disposed log window " + window.toString());
+      myLogWindows.remove(window);
+    };
   }
 
   @NotNull
@@ -75,7 +81,7 @@ public class PostponableLogRefresher implements VcsLogRefresher {
 
   public void refresherActivated(@NotNull VisiblePackRefresher refresher, boolean firstTime) {
     myLogData.initialize();
-    
+
     if (!myRootsToRefresh.isEmpty()) {
       refreshPostponedRoots();
     }
@@ -87,17 +93,20 @@ public class PostponableLogRefresher implements VcsLogRefresher {
   private static void dataPackArrived(@NotNull VisiblePackRefresher refresher, boolean visible) {
     if (!visible) {
       refresher.setValid(false, true);
-    } else {
+    }
+    else {
       refresher.onRefresh();
     }
   }
 
+  @Override
   public void refresh(@NotNull final VirtualFile root) {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (canRefreshNow()) {
         myLogData.refresh(Collections.singleton(root));
       }
       else {
+        LOG.debug("Postponed refresh for " + root);
         myRootsToRefresh.add(root);
       }
     }, ModalityState.any());
@@ -128,6 +137,11 @@ public class PostponableLogRefresher implements VcsLogRefresher {
 
     public boolean isVisible() {
       return true;
+    }
+
+    @Override
+    public String toString() {
+      return "VcsLogWindow \'" + myRefresher + "\'";
     }
   }
 }

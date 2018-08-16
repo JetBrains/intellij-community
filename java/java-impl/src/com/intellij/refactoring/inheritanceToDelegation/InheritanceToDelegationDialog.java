@@ -80,6 +80,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     return myFieldNameField;
   }
 
+  @Override
   protected void dispose() {
     myInnerClassNameField.removeDataChangedListener(myDataChangedListener);
     myFieldNameField.removeDataChangedListener(myDataChangedListener);
@@ -130,10 +131,12 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
   }
 
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.INHERITANCE_TO_DELEGATION);
   }
 
+  @Override
   protected void doAction() {
     JavaRefactoringSettings.getInstance().INHERITANCE_TO_DELEGATION_DELEGATE_OTHER = myCbGenerateGetter.isSelected();
 
@@ -158,6 +161,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
                                                            isGenerateGetter(), isGenerateGetter()));
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbc = new GridBagConstraints();
@@ -222,11 +226,12 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     }
     myInnerClassNameField.setVisible(innerClassNeeded);
     innerClassNameLabel.setVisible(innerClassNeeded);
-    
+
     return panel;
   }
 
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbc = new GridBagConstraints();
@@ -289,6 +294,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
       }
     }
 
+    @Override
     public boolean isMemberEnabled(MemberInfo memberInfo) {
       if (getGraph().getDependent().contains(memberInfo.getMember())) {
         return false;
@@ -298,30 +304,37 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
       }
     }
 
+    @Override
     public boolean isCheckedWhenDisabled(MemberInfo member) {
       return true;
     }
 
+    @Override
     public boolean isAbstractEnabled(MemberInfo member) {
       return false;
     }
 
+    @Override
     public boolean isAbstractWhenDisabled(MemberInfo member) {
       return false;
     }
 
+    @Override
     public Boolean isFixedAbstract(MemberInfo member) {
       return null;
     }
 
+    @Override
     public int checkForProblems(@NotNull MemberInfo member) {
       return OK;
     }
 
+    @Override
     public String getTooltipText(MemberInfo member) {
       return null;
     }
 
+    @Override
     public void memberInfoChanged(MemberInfoChange<PsiMember, MemberInfo> event) {
       final Collection<MemberInfo> changedMembers = event.getChangedMembers();
 
@@ -336,6 +349,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
   }
 
   private class MyClassComboItemListener implements ItemListener {
+    @Override
     public void itemStateChanged(ItemEvent e) {
       if (e.getStateChange() == ItemEvent.SELECTED) {
         updateTargetClass();

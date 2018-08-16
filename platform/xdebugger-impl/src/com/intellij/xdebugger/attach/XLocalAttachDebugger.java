@@ -7,15 +7,17 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 public interface XLocalAttachDebugger extends XAttachDebugger {
+  @Override
   @NotNull
   String getDebuggerDisplayName();
 
   void attachDebugSession(@NotNull Project project,
                           @NotNull ProcessInfo info) throws ExecutionException;
 
+  @Override
   default void attachDebugSession(@NotNull Project project,
-                          @NotNull XAttachHost hostInfo,
-                          @NotNull ProcessInfo info) throws ExecutionException {
+                                  @NotNull XAttachHost hostInfo,
+                                  @NotNull ProcessInfo info) throws ExecutionException {
     attachDebugSession(project, info);
   }
 }

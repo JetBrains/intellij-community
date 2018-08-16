@@ -35,6 +35,7 @@ public class HgDiffProvider implements DiffProvider {
     this.project = project;
   }
 
+  @Override
   public VcsRevisionNumber getCurrentRevision(VirtualFile file) {
     VirtualFile vcsRoot = VcsUtil.getVcsRootFor(project, file);
     if (vcsRoot == null) {
@@ -45,6 +46,7 @@ public class HgDiffProvider implements DiffProvider {
     return new HgWorkingCopyRevisionsCommand(project).parents(vcsRoot, filePath).first;
   }
 
+  @Override
   public ItemLatestState getLastRevision(VirtualFile file) {
     VirtualFile vcsRoot = VcsUtil.getVcsRootFor(project, file);
     if (vcsRoot == null) {
@@ -57,6 +59,7 @@ public class HgDiffProvider implements DiffProvider {
     return new ItemLatestState(revision, file.exists(), true);
   }
 
+  @Override
   public ItemLatestState getLastRevision(FilePath filePath) {
     VirtualFile vcsRoot = VcsUtil.getVcsRootFor(project, filePath);
     if (vcsRoot == null) {
@@ -77,10 +80,12 @@ public class HgDiffProvider implements DiffProvider {
     return new ItemLatestState(currentRevision, fileExists, true);
   }
 
+  @Override
   public VcsRevisionNumber getLatestCommittedRevision(VirtualFile vcsRoot) {
     return new HgWorkingCopyRevisionsCommand(project).tip(vcsRoot);
   }
 
+  @Override
   public ContentRevision createFileContent(VcsRevisionNumber revisionNumber, VirtualFile file) {
     if (file == null) {
       return null;

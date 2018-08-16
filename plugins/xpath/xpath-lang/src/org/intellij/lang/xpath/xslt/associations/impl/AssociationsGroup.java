@@ -31,6 +31,7 @@ public class AssociationsGroup extends ActionGroup {
         getTemplatePresentation().setIcon(XpathIcons.Association);
     }
 
+    @Override
     @NotNull
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
         if (!isEnabled(e)) return AnAction.EMPTY_ARRAY;
@@ -58,7 +59,8 @@ public class AssociationsGroup extends ActionGroup {
         return children;
     }
 
-    public void update(AnActionEvent e) {
+    @Override
+    public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setVisible(isVisible(e));
         e.getPresentation().setEnabled(isEnabled(e));
     }
@@ -73,7 +75,7 @@ public class AssociationsGroup extends ActionGroup {
         return PsiManager.getInstance(project).isInProject(psiFile);
     }
 
-    private static boolean isVisible(AnActionEvent e) {
+    private static boolean isVisible(@NotNull AnActionEvent e) {
         final PsiFile psiFile = getPsiFile(e);
         if (psiFile == null) return false;
         return XsltSupport.isXsltFile(psiFile);

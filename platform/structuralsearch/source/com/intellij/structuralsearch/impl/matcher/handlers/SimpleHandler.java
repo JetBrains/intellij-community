@@ -14,7 +14,8 @@ public final class SimpleHandler extends MatchingHandler {
    * @param context of the matching
    * @return true if matching was successful and false otherwise
    */
-  public boolean match(PsiElement patternNode,PsiElement matchedNode, MatchContext context) {
+  @Override
+  public boolean match(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
     if (!super.match(patternNode,matchedNode,context)) return false;
     return context.getMatcher().match(patternNode,matchedNode);
   }

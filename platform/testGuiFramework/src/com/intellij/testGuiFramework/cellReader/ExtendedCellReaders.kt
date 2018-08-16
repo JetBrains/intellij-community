@@ -17,6 +17,7 @@ package com.intellij.testGuiFramework.cellReader
 
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.findAllWithBFS
+import com.intellij.ui.MultilineTreeCellRenderer
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.components.JBList
 import org.fest.swing.cell.JComboBoxCellReader
@@ -77,7 +78,7 @@ class ExtendedJComboboxCellReader : BasicJComboBoxCellReader(), JComboBoxCellRea
   private val REFERENCE_JLIST = newJList()
 
   override fun valueAt(comboBox: JComboBox<*>, index: Int): String? {
-    val item: Any = comboBox.getItemAt(index)
+    val item: Any? = comboBox.getItemAt(index)
     val listCellRenderer: ListCellRenderer<Any?> = comboBox.renderer as ListCellRenderer<Any?>
     val cellRendererComponent = listCellRenderer.getListCellRendererComponent(REFERENCE_JLIST, item, index, true, true)
     return getValueWithCellRenderer(cellRendererComponent)
@@ -95,6 +96,7 @@ private fun getValueWithCellRenderer(cellRendererComponent: Component): String? 
   val result = when (cellRendererComponent) {
     is JLabel -> cellRendererComponent.text
     is SimpleColoredComponent -> cellRendererComponent.getText()
+    is MultilineTreeCellRenderer -> cellRendererComponent.text
     else -> cellRendererComponent.findText()
   }
   return result?.trimEnd()

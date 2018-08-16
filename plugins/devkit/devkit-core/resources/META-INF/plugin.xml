@@ -11,6 +11,7 @@
   <vendor>JetBrains</vendor>
 
   <depends>com.intellij.properties</depends>
+  <depends>com.intellij.modules.json</depends>
   <depends config-file="gradle-devkit.xml" optional="true">org.jetbrains.plugins.gradle</depends>
 
   <resource-bundle>org.jetbrains.idea.devkit.DevKitBundle</resource-bundle>
@@ -250,6 +251,9 @@
     <!-- must be before SubstringConsoleFolding to be able to fold the entire stacktrace -->
     <console.folding order="first" implementation="com.intellij.testFramework.FailedTestDebugLogConsoleFolding"/>
   </extensions>
+  <extensions defaultExtensionNs="JavaScript.JsonSchema">
+    <ProviderFactory implementation="org.jetbrains.idea.devkit.themes.ThemeJsonSchemaProviderFactory"/>
+  </extensions>
 
   <project-components>
     <component>
@@ -276,6 +280,9 @@
               class="org.jetbrains.idea.devkit.actions.service.NewProjectServiceAction"/>
       <action text="Module Service" id="NewModuleService"
               class="org.jetbrains.idea.devkit.actions.service.NewModuleServiceAction"/>
+      <separator/>
+      <action text="Theme" id="DevKit.NewTheme"
+              class="org.jetbrains.idea.devkit.actions.NewThemeAction"/>
       <add-to-group group-id="NewGroup" anchor="last"/>
     </group>
 

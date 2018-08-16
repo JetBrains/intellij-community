@@ -35,10 +35,12 @@ public class MigrationUsagesPanel extends UsagesPanel {
     super(project);
   }
 
+  @Override
   public String getInitialPositionText() {
     return "Select root to find reasons to migrate";
   }
 
+  @Override
   public String getCodeUsagesString() {
     return "Found reasons to migrate";
   }

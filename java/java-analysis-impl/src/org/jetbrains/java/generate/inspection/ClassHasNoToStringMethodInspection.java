@@ -191,7 +191,7 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
         document.addDocumentListener(new DocumentAdapter() {
 
             @Override
-            protected void textChanged(DocumentEvent e) {
+            protected void textChanged(@NotNull DocumentEvent e) {
                 try {
                     excludeClassNamesField.commitEdit();
                     excludeClassNamesPattern = (Pattern)excludeClassNamesField.getValue();

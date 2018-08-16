@@ -93,7 +93,7 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
 
   @Override
   public ListCellRenderer getElementsRenderer(JList<?> list) {
-    return myModel.getListCellRenderer();
+    return new GotoActionModel.GotoActionListCellRenderer(myModel::getGroupName, true);
   }
 
   @Override

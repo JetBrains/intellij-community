@@ -17,8 +17,8 @@
 package org.jetbrains.idea.maven.model;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,14 +78,17 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
     myStubbed = stubbed;
   }
 
+  @Override
   public String getGroupId() {
     return myGroupId;
   }
 
+  @Override
   public String getArtifactId() {
     return myArtifactId;
   }
 
+  @Override
   public String getVersion() {
     return myVersion;
   }
@@ -151,7 +154,7 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
   }
 
   public String getPath() {
-    return FileUtil.toSystemIndependentName(myFile.getPath());
+    return FileUtilRt.toSystemIndependentName(myFile.getPath());
   }
 
   public String getRelativePath() {
@@ -196,7 +199,7 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
 
   @Nullable
   public String getFullClassifier(@Nullable String extraClassifier) {
-    if (StringUtil.isEmptyOrSpaces(extraClassifier)) {
+    if (StringUtilRt.isEmptyOrSpaces(extraClassifier)) {
       return myClassifier;
     }
 
@@ -204,10 +207,10 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
     if (MavenConstants.TYPE_TEST_JAR.equals(myType) || "tests".equals(myClassifier)) {
       result += "test";
     }
-    if (!StringUtil.isEmptyOrSpaces(extraClassifier)) {
+    if (!StringUtilRt.isEmptyOrSpaces(extraClassifier)) {
       result += (!result.isEmpty() ? "-" + extraClassifier : extraClassifier);
     }
-    return StringUtil.isEmptyOrSpaces(result) ? null : result;
+    return StringUtilRt.isEmptyOrSpaces(result) ? null : result;
   }
 
   public String getPathForExtraArtifact(@Nullable String extraArtifactClassifier, @Nullable String customExtension) {
@@ -276,7 +279,7 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
     MavenId.append(builder, myGroupId);
     MavenId.append(builder, myArtifactId);
     MavenId.append(builder, myType);
-    if (!StringUtil.isEmptyOrSpaces(myClassifier)) MavenId.append(builder, myClassifier);
+    if (!StringUtilRt.isEmptyOrSpaces(myClassifier)) MavenId.append(builder, myClassifier);
     MavenId.append(builder, myVersion);
 
     return builder.toString();
@@ -288,9 +291,9 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
     MavenId.append(builder, myGroupId);
     MavenId.append(builder, myArtifactId);
     MavenId.append(builder, myType);
-    if (!StringUtil.isEmptyOrSpaces(myClassifier)) MavenId.append(builder, myClassifier);
+    if (!StringUtilRt.isEmptyOrSpaces(myClassifier)) MavenId.append(builder, myClassifier);
     MavenId.append(builder, myVersion);
-    if (!StringUtil.isEmptyOrSpaces(myScope)) MavenId.append(builder, myScope);
+    if (!StringUtilRt.isEmptyOrSpaces(myScope)) MavenId.append(builder, myScope);
 
     return builder.toString();
   }
@@ -303,11 +306,11 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
       MavenId.append(builder, myGroupId);
       MavenId.append(builder, myArtifactId);
 
-      if (!StringUtil.isEmptyOrSpaces(myType) && !MavenConstants.TYPE_JAR.equals(myType)) MavenId.append(builder, myType);
-      if (!StringUtil.isEmptyOrSpaces(myClassifier)) MavenId.append(builder, myClassifier);
+      if (!StringUtilRt.isEmptyOrSpaces(myType) && !MavenConstants.TYPE_JAR.equals(myType)) MavenId.append(builder, myType);
+      if (!StringUtilRt.isEmptyOrSpaces(myClassifier)) MavenId.append(builder, myClassifier);
 
-      String version = !StringUtil.isEmptyOrSpaces(myBaseVersion) ? myBaseVersion : myVersion;
-      if (!StringUtil.isEmptyOrSpaces(version)) MavenId.append(builder, version);
+      String version = !StringUtilRt.isEmptyOrSpaces(myBaseVersion) ? myBaseVersion : myVersion;
+      if (!StringUtilRt.isEmptyOrSpaces(version)) MavenId.append(builder, version);
 
       builder.insert(0, MAVEN_LIB_PREFIX);
 

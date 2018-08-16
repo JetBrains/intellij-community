@@ -7,6 +7,7 @@ import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.vcs.changes.committed.ChangeListFilteringStrategy;
 import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
 import icons.SvnIcons;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 
 /**
@@ -24,7 +25,7 @@ public class ShowHideMergePanelAction extends DumbAwareToggleAction {
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     super.update(e);
     final Presentation presentation = e.getPresentation();
     presentation.setIcon(SvnIcons.ShowIntegratedFrom);
@@ -32,10 +33,12 @@ public class ShowHideMergePanelAction extends DumbAwareToggleAction {
     presentation.setDescription(SvnBundle.message("committed.changes.action.enable.merge.highlighting.description.text"));
   }
 
+  @Override
   public boolean isSelected(final AnActionEvent e) {
     return myIsSelected;
   }
 
+  @Override
   public void setSelected(final AnActionEvent e, final boolean state) {
     myIsSelected = state;
     if (state) {

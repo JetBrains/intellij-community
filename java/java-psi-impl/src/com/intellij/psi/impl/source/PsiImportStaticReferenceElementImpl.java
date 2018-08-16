@@ -253,7 +253,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     final String name = getReferenceName();
     if (name == null || !(element instanceof PsiNamedElement) || !name.equals(((PsiNamedElement)element).getName())) {
       return false;
@@ -269,7 +269,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     PsiElement oldIdentifier = findChildByRoleAsPsiElement(ChildRole.REFERENCE_NAME);
     if (oldIdentifier == null) {
       throw new IncorrectOperationException();

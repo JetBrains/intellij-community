@@ -17,10 +17,12 @@ import static org.jetbrains.plugins.github.util.GithubAuthData.AuthType;
 public class GithubSettings implements PersistentStateComponent<GithubSettings.State> {
   private State myState = new State();
 
+  @Override
   public State getState() {
     return myState;
   }
 
+  @Override
   public void loadState(@NotNull State state) {
     myState = state;
   }

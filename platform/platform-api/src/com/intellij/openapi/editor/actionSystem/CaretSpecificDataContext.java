@@ -35,7 +35,7 @@ public class CaretSpecificDataContext extends DataContextWrapper {
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     Project project = (Project)super.getData(CommonDataKeys.PROJECT.getName());
     if (project != null) {
       FileEditorManager fm = FileEditorManager.getInstance(project);

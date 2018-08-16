@@ -66,13 +66,15 @@ public class GradleJavaSettingsImportingTest extends GradleSettingsImportingTest
         "idea {\n" +
         "  project.settings {\n" +
         "    ideArtifacts {\n" +
-        "      ideArtifact(\"myArt\") {\n" +
+        "      myArt {\n" +
         "         file(\"build.gradle\")\n" +
         "      }\n" +
         "    }\n" +
         "  }\n" +
-        "}")
+        "}"
+      )
     );
+    importProject();
     final ArtifactManager artifactManager = ArtifactManager.getInstance(myProject);
 
     final Artifact artifact = artifactManager.getArtifacts()[0];

@@ -236,6 +236,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
         return;
       }
 
+      lookup.fireBeforeAppendPrefix(c);
       lookup.appendPrefix(c);
       final CompletionProgressIndicator completion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
       if (completion != null) {

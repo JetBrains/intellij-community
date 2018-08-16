@@ -297,7 +297,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     group.add(new DumbAwareAction(KeyMapBundle.message("filter.clear.action.text"),
                                   KeyMapBundle.message("filter.clear.action.text"), AllIcons.Actions.GC) {
       @Override
-      public void update(AnActionEvent event) {
+      public void update(@NotNull AnActionEvent event) {
         boolean enabled = null != myFilteringPanel.getShortcut();
         Presentation presentation = event.getPresentation();
         presentation.setEnabled(enabled);
@@ -654,7 +654,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
         final String appId = Utils.getAppId();
         if (appId != null && !appId.isEmpty()) {
           myShowFnInitial = NSDefaults.isShowFnKeysEnabled(appId);
-          myCheckbox = new JCheckBox("Always show function keys (F1-F12) on the Touch Bar", myShowFnInitial);
+          myCheckbox = new JCheckBox("Show F1, F2, etc. keys on the Touch Bar", myShowFnInitial);
         } else
           Logger.getInstance(KeymapPanel.class).error("can't obtain application id from NSBundle");
       }
@@ -679,8 +679,9 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       NSDefaults.setShowFnKeysEnabled(appId, myShowFnInitial);
 
       if (myShowFnInitial != NSDefaults.isShowFnKeysEnabled(appId)) {
-        Logger.getInstance(KeymapPanel.class).error("can't write settings via NSDefaults.setShowFnKeysEnabled");
-        return;
+        NSDefaults.setShowFnKeysEnabled(appId, myShowFnInitial, true); // try again with extra checks
+        if (myShowFnInitial != NSDefaults.isShowFnKeysEnabled(appId))
+          return;
       }
 
       ApplicationManager.getApplication().executeOnPooledThread(() -> {

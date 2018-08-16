@@ -19,16 +19,19 @@ public class JiraRepositoryType extends BaseRepositoryType<JiraRepository> {
   public JiraRepositoryType() {
   }
 
+  @Override
   @NotNull
   public String getName() {
     return "JIRA";
   }
 
+  @Override
   @NotNull
   public Icon getIcon() {
     return TasksCoreIcons.Jira;
   }
 
+  @Override
   @NotNull
   public JiraRepository createRepository() {
     return new JiraRepository(this);

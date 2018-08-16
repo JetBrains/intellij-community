@@ -1,7 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.impl;
 
+import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
@@ -10,6 +11,7 @@ import com.intellij.ide.structureView.impl.StructureViewComposite;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -23,6 +25,7 @@ import com.intellij.openapi.module.InternalModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
@@ -51,6 +54,8 @@ import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
 import java.util.List;
 
+import static com.intellij.openapi.application.ApplicationManager.getApplication;
+
 /**
  * @author Eugene Belyaev
  */
@@ -72,39 +77,37 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   private JPanel[] myPanels = new JPanel[0];
   private final MergingUpdateQueue myUpdateQueue;
 
-  // -------------------------------------------------------------------------
-  // Constructor
-  // -------------------------------------------------------------------------
-
   private Runnable myPendingSelection;
   private boolean myFirstRun = true;
+  private int myActivityCount;
 
-  public StructureViewWrapperImpl(Project project, ToolWindowEx toolWindow) {
+  public StructureViewWrapperImpl(@NotNull Project project, @NotNull ToolWindowEx toolWindow) {
     myProject = project;
     myToolWindow = toolWindow;
-    JComponent component = myToolWindow.getComponent();
+    JComponent component = toolWindow.getComponent();
 
-    myUpdateQueue = new MergingUpdateQueue("StructureView", REBUILD_TIME, false, component, this, component, true);
+    myUpdateQueue = new MergingUpdateQueue("StructureView", REBUILD_TIME, false, component, this, component);
     myUpdateQueue.setRestartTimerOnAdd(true);
 
-    final TimerListener timerListener = new TimerListener() {
-      @Override
-      public ModalityState getModalityState() {
-        return ModalityState.stateForComponent(component);
-      }
+    Timer timer = UIUtil.createNamedTimer("StructureView", REFRESH_TIME, event -> {
+      if (!component.isShowing()) return;
 
-      @Override
-      public void run() {
-        loggedRun("check if update needed", StructureViewWrapperImpl.this::checkUpdate);
-      }
-    };
+      int count = ActivityTracker.getInstance().getCount();
+      if (count == myActivityCount) return;
+
+      ModalityState state = ModalityState.stateForComponent(component);
+      if (ModalityState.current().dominates(state)) return;
+
+      boolean successful = loggedRun("check if update needed", this::checkUpdate);
+      if (successful) myActivityCount = count; // to check on the next turn
+    });
     LOG.debug("timer to check if update needed: add");
-    ActionManager.getInstance().addTimerListener(REFRESH_TIME, timerListener);
+    timer.start();
     Disposer.register(this, new Disposable() {
       @Override
       public void dispose() {
         LOG.debug("timer to check if update needed: remove");
-        ActionManager.getInstance().removeTimerListener(timerListener);
+        timer.stop();
       }
     });
 
@@ -172,7 +175,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
       StructureViewModel model = myStructureView.getTreeModel();
       StructureViewTreeElement treeElement = model.getRoot();
       Object value = treeElement.getValue();
-      if (value == null || 
+      if (value == null ||
           value instanceof PsiElement && !((PsiElement)value).isValid() ||
           myStructureView instanceof StructureViewComposite && ((StructureViewComposite)myStructureView).isOutdated()) {
         forceRebuild = true;
@@ -347,7 +350,6 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
       myPendingSelection = null;
       selection.run();
     }
-
   }
 
   private void updateHeaderActions(StructureView structureView) {
@@ -377,17 +379,20 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   private StructureViewBuilder createStructureViewBuilder(@NotNull VirtualFile file) {
     if (file.getLength() > PersistentFSConstants.getMaxIntellisenseFileSize()) return null;
 
-    FileEditorProviderManager editorProviderManager = FileEditorProviderManager.getInstance();
-    FileEditorProvider[] providers = editorProviderManager.getProviders(myProject, file);
+    FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(myProject, file);
     FileEditorProvider provider = providers.length == 0 ? null : providers[0];
     if (provider == null) return null;
     if (provider instanceof TextEditorProvider) {
       return StructureViewBuilder.PROVIDER.getStructureViewBuilder(file.getFileType(), file, myProject);
     }
+
     FileEditor editor = provider.createEditor(myProject, file);
-    StructureViewBuilder builder = editor.getStructureViewBuilder();
-    Disposer.dispose(editor);
-    return builder;
+    try {
+      return editor.getStructureViewBuilder();
+    }
+    finally {
+      Disposer.dispose(editor);
+    }
   }
 
 
@@ -404,20 +409,32 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     }
 
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (WRAPPER_DATA_KEY.is(dataId)) return StructureViewWrapperImpl.this;
       return null;
     }
   }
 
-  private static void loggedRun(@NotNull String message, @NotNull Runnable task) {
+  private static boolean loggedRun(@NotNull String message, @NotNull Runnable task) {
     try {
       if (LOG.isTraceEnabled()) LOG.trace(message + ": started");
-      task.run();
+      Application application = getApplication();
+      if (application == null || application.isReadAccessAllowed()) {
+        task.run();
+      }
+      else {
+        LOG.debug(new IllegalStateException("called from unexpected place"));
+        application.runReadAction(task);
+      }
+      return true;
+    }
+    catch (ProcessCanceledException exception) {
+      LOG.debug(message, ": canceled");
+      return false;
     }
     catch (Throwable throwable) {
       LOG.warn(message, throwable);
-      throw throwable;
+      return false;
     }
     finally {
       if (LOG.isTraceEnabled()) LOG.trace(message + ": finished");

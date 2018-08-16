@@ -65,6 +65,7 @@ public class ShowPropertiesAction extends BasicAction {
     w.activate(() -> component.setFile(vcs, ioFiles[0]));
   }
 
+  @Override
   protected boolean isBatchAction() {
     return false;
   }

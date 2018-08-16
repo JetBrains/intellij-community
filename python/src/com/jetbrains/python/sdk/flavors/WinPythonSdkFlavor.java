@@ -16,6 +16,7 @@
 package com.jetbrains.python.sdk.flavors;
 
 import com.google.common.collect.ImmutableMap;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -23,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.jetbrains.python.PythonHelpersLocator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
@@ -48,7 +50,7 @@ public final class WinPythonSdkFlavor extends CPythonSdkFlavor {
   }
 
   @Override
-  public Collection<String> suggestHomePaths() {
+  public Collection<String> suggestHomePaths(@Nullable Module module) {
     Set<String> candidates = new TreeSet<>();
     findInCandidatePaths(candidates, "python.exe", "jython.bat", "pypy.exe");
     findInstallations(candidates, "python.exe", PythonHelpersLocator.getHelpersRoot().getParent());
