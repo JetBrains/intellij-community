@@ -71,6 +71,7 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
     return null;
   }
 
+  @Override
   protected boolean queryExternalUsagesRequests(@NotNull final RefManager manager, @NotNull final GlobalJavaInspectionContext globalContext,
                                                 @NotNull final ProblemDescriptionsProcessor processor) {
     final Project project = manager.getProject();
@@ -128,6 +129,7 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
     return false;
   }
 
+  @Override
   public String getHint(@NotNull final QuickFix fix) {
     if (fix instanceof AcceptSuggested) {
       return ((AcceptSuggested)fix).getHint();
@@ -136,6 +138,7 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
   }
 
 
+  @Override
   @Nullable
   public QuickFix getQuickFix(final String hint) {
     return new AcceptSuggested(null, null, hint);

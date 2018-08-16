@@ -46,6 +46,7 @@ public abstract class XWatchesTreeActionBase extends AnAction implements DumbAwa
     return list;
   }
 
+  @Override
   public void update(@NotNull final AnActionEvent e) {
     final XDebuggerTree tree = XDebuggerTree.getTree(e);
     XWatchesView watchesView = e.getData(XWatchesView.DATA_KEY);

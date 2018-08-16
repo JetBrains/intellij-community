@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.options;
 
 import com.intellij.codeInsight.NullableNotNullDialog;
@@ -46,8 +32,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.compiler.options.CompilerOptionsFilter.Setting;
 
@@ -104,7 +90,8 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     myPatternLegendLabel.setForeground(new JBColor(Gray._50, Gray._130));
     tweakControls(project);
     myVMOptionsField.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(DocumentEvent e) {
+      @Override
+      protected void textChanged(@NotNull DocumentEvent e) {
         mySharedVMOptionsField.setEnabled(e.getDocument().getLength() == 0);
         myHeapSizeField.setEnabled(ContainerUtil.find(ParametersListUtil.parse(myVMOptionsField.getText()),
                                                       s -> StringUtil.startsWithIgnoreCase(s, "-Xmx")) == null);
@@ -141,7 +128,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
         }
       }
     }
-    
+
     Map<Setting, Collection<JComponent>> controls = ContainerUtilRt.newHashMap();
     controls.put(Setting.RESOURCE_PATTERNS, ContainerUtilRt.newArrayList(myResourcePatternsLabel, myResourcePatternsField, myPatternLegendLabel));
     controls.put(Setting.CLEAR_OUTPUT_DIR_ON_REBUILD, Collections.singleton(myCbClearOutputDirectory));
@@ -153,7 +140,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     controls.put(Setting.REBUILD_MODULE_ON_DEPENDENCY_CHANGE, ContainerUtilRt.newArrayList(myCbRebuildOnDependencyChange));
     controls.put(Setting.HEAP_SIZE, ContainerUtilRt.newArrayList(myHeapSizeLabel, myHeapSizeField));
     controls.put(Setting.COMPILER_VM_OPTIONS, ContainerUtilRt.newArrayList(myVMOptionsLabel, myVMOptionsField, mySharedVMOptionsLabel, mySharedVMOptionsField));
-    
+
     for (Setting setting : myDisabledSettings) {
       Collection<JComponent> components = controls.get(setting);
       if (components != null) {
@@ -164,6 +151,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     }
   }
 
+  @Override
   public void reset() {
 
     final CompilerConfigurationImpl configuration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
@@ -206,6 +194,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     return extensionsString.toString();
   }
 
+  @Override
   public void apply() throws ConfigurationException {
 
     CompilerConfigurationImpl configuration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
@@ -251,7 +240,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
       String extensionString = myResourcePatternsField.getText().trim();
       applyResourcePatterns(extensionString, configuration);
     }
-    
+
     BuildManager.getInstance().clearState(myProject);
   }
 
@@ -286,6 +275,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     }
   }
 
+  @Override
   public boolean isModified() {
     final CompilerWorkspaceConfiguration workspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(myProject);
     boolean isModified = !myDisabledSettings.contains(Setting.AUTO_SHOW_FIRST_ERROR_IN_EDITOR)
@@ -316,6 +306,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     return isModified;
   }
 
+  @Override
   public String getDisplayName() {
     return "General";
   }
@@ -325,11 +316,13 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     return null;
   }
 
+  @Override
   @NotNull
   public String getId() {
     return "compiler.general";
   }
 
+  @Override
   public JComponent createComponent() {
     return myPanel;
   }

@@ -50,6 +50,7 @@ public class SingleStatementInBlockFixTest extends IGQuickFixesTestCase {
     return new SingleStatementInBlockInspection();
   }
 
+  @Override
   protected void doTest(String keyword) {
     super.doTest(getMessage(keyword));
   }

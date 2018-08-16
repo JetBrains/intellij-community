@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -30,6 +30,7 @@ public class SvnLogUtil implements SvnLogLoader {
     myRepositoryRoot = repositoryRoot;
   }
 
+  @Override
   public List<CommittedChangeList> loadInterval(final Revision fromIncluding, final Revision toIncluding,
                                                 final int maxCount, final boolean includingYoungest, final boolean includeOldest)
     throws VcsException {

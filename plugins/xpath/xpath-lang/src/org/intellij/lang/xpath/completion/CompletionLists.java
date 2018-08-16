@@ -292,6 +292,7 @@ public class CompletionLists {
 
     for (PsiFile xpathFile : files) {
       xpathFile.accept(new PsiRecursiveElementVisitor() {
+        @Override
         public void visitElement(PsiElement e) {
           if (e instanceof XPathNodeTest) {
             final XPathNodeTest nodeTest = (XPathNodeTest)e;

@@ -83,6 +83,7 @@ public class PropertyFileGeneratorImpl extends PropertyFileGenerator {
     ChunkBuildExtension.generateAllProperties(this, project, genOptions);
   }
 
+  @Override
   public void addProperty(String name, String value) {
     myProperties.add(Couple.of(name, value));
   }

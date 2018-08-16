@@ -21,8 +21,9 @@ public class DefaultCustomComponentAction extends AnAction implements CustomComp
     //do nothing
   }
 
+  @NotNull
   @Override
-  public JComponent createCustomComponent(Presentation presentation) {
+  public JComponent createCustomComponent(@NotNull Presentation presentation) {
     return myProducer.produce();
   }
 }

@@ -44,6 +44,7 @@ public class HgRunConflictResolverDialog extends DialogWrapper {
     super(project, false);
     this.project = project;
     repositorySelector.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         onChangeRepository();
       }
@@ -64,6 +65,7 @@ public class HgRunConflictResolverDialog extends DialogWrapper {
     onChangeRepository();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return mainPanel;
   }

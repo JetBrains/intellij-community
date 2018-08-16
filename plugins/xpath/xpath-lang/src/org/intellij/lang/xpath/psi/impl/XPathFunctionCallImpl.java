@@ -42,6 +42,7 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
     super(node);
   }
 
+  @Override
   @NotNull
   public XPathExpression[] getArgumentList() {
     final ASTNode[] nodes = getNode().getChildren(XPath2ElementTypes.EXPRESSIONS);
@@ -52,6 +53,7 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
     return expressions;
   }
 
+  @Override
   public PsiElement add(@NotNull PsiElement psiElement) throws IncorrectOperationException {
     if (psiElement instanceof XPathExpression) {
       if (getNode().getChildren(XPath2ElementTypes.EXPRESSIONS).length > 0) {
@@ -70,6 +72,7 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
     return super.add(psiElement);
   }
 
+  @Override
   @NotNull
   public String getFunctionName() {
     final ASTNode node = getNameNode();
@@ -88,6 +91,7 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
     return getNode().findChildByType(XPathTokenTypes.EXT_PREFIX);
   }
 
+  @Override
   @NotNull
   public PrefixedName getQName() {
     final ASTNode node = getNameNode();
@@ -95,12 +99,14 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
     return new PrefixedNameImpl(getPrefixNode(), node);
   }
 
+  @Override
   @Nullable
   public XPathFunction resolve() {
     final Reference reference = getReference();
     return reference != null ? reference.resolve() : null;
   }
 
+  @Override
   @Nullable
   public Reference getReference() {
     final ASTNode nameNode = getNameNode();
@@ -110,6 +116,7 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
     return null;
   }
 
+  @Override
   @NotNull
   public PsiReference[] getReferences() {
     if (getPrefixNode() != null && getNameNode() != null) {
@@ -118,6 +125,7 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
     return super.getReferences();
   }
 
+  @Override
   @NotNull
   public XPathType getType() {
     final XPathFunction f = resolve();
@@ -133,6 +141,7 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
       super(XPathFunctionCallImpl.this, node);
     }
 
+    @Override
     @Nullable
     public XPathFunction resolve() {
       if (myFunction != null && myFunction.first.equals(getQName().toString())) {
@@ -177,6 +186,7 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
         return XPathFunctionCallImpl.this;
       }
 
+      @Override
       public String getName() {
         return myFunctionDecl != null ? myFunctionDecl.getName() : getFunctionName();
       }
@@ -185,43 +195,52 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
         return "Function: " + getName();
       }
 
+      @Override
       @SuppressWarnings({"ConstantConditions"})
       public String getText() {
         return getName();
       }
 
+      @Override
       public ItemPresentation getPresentation() {
         return this;
       }
 
+      @Override
       @Nullable
       public Icon getIcon(boolean open) {
         return getIcon(0);
       }
 
+      @Override
       @Nullable
       public String getLocationString() {
         return null;
       }
 
+      @Override
       @Nullable
       public String getPresentableText() {
         return myFunctionDecl != null ? myFunctionDecl.buildSignature() +
                 ": " + myFunctionDecl.getReturnType().getName() : null;
       }
 
+      @Override
       public Icon getIcon(int i) {
         return XpathIcons.Function;
       }
 
+      @Override
       public PsiElement copy() {
         return this;
       }
 
+      @Override
       public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
         throw new IncorrectOperationException();
       }
 
+      @Override
       public boolean isValid() {
         return true;
       }
@@ -237,6 +256,7 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
         return name != null && name.equals(getName()) || getName() == null;
       }
 
+      @Override
       public Function getDeclaration() {
         return myFunctionDecl;
       }
@@ -260,12 +280,14 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
         return getElement().getXPathVersion();
       }
 
+      @Override
       public void accept(XPathElementVisitor visitor) {
         visitor.visitXPathFunction(this);
       }
     }
   }
 
+  @Override
   public void accept(XPathElementVisitor visitor) {
     visitor.visitXPathFunctionCall(this);
   }

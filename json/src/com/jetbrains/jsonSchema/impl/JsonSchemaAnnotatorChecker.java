@@ -6,6 +6,7 @@ import com.intellij.json.psi.JsonContainer;
 import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -341,6 +342,19 @@ class JsonSchemaAnnotatorChecker {
     validateAsJsonSchema(object.getDelegate());
   }
 
+  @Nullable
+  private static Object getDefaultValueFromEnum(@NotNull JsonSchemaObject propertySchema, @NotNull Ref<Integer> enumCount) {
+    List<Object> enumValues = propertySchema.getEnum();
+    if (enumValues != null) {
+      enumCount.set(enumValues.size());
+      if (enumValues.size() == 1) {
+        Object defaultObject = enumValues.get(0);
+        return defaultObject instanceof String ? StringUtil.unquoteString((String)defaultObject) : defaultObject;
+      }
+    }
+    return null;
+  }
+
   @NotNull
   private static JsonValidationError.MissingMultiplePropsIssueData createMissingPropertiesData(@NotNull JsonSchemaObject schema,
                                                                                                HashSet<String> requiredNames) {
@@ -348,15 +362,39 @@ class JsonSchemaAnnotatorChecker {
     for (String req: requiredNames) {
       JsonSchemaObject propertySchema = resolvePropertySchema(schema, req);
       Object defaultValue = propertySchema == null ? null : propertySchema.getDefault();
-      int enumCount = 0;
-      if (propertySchema != null && propertySchema.getEnum() != null && (enumCount = propertySchema.getEnum().size()) == 1) {
-        Object defaultObject = propertySchema.getEnum().get(0);
-        defaultValue = defaultObject instanceof String ? StringUtil.unquoteString((String)defaultObject) : defaultObject;
+      Ref<Integer> enumCount = Ref.create(0);
+
+      JsonSchemaType type = null;
+
+      if (propertySchema != null) {
+        MatchResult result = null;
+        Object valueFromEnum = getDefaultValueFromEnum(propertySchema, enumCount);
+        if (valueFromEnum != null) {
+          defaultValue = valueFromEnum;
+        }
+        else {
+          result = new JsonSchemaResolver(propertySchema).detailedResolve();
+          if (result.mySchemas.size() == 1) {
+            valueFromEnum = getDefaultValueFromEnum(result.mySchemas.get(0), enumCount);
+            if (valueFromEnum != null) {
+              defaultValue = valueFromEnum;
+            }
+          }
+        }
+        type = propertySchema.getType();
+        if (type == null) {
+          if (result == null) {
+            result = new JsonSchemaResolver(propertySchema).detailedResolve();
+          }
+          if (result.mySchemas.size() == 1) {
+            type = result.mySchemas.get(0).getType();
+          }
+        }
       }
       allProps.add(new JsonValidationError.MissingPropertyIssueData(req,
-                                                                    propertySchema == null ? null : propertySchema.getType(),
+                                                                    type,
                                                                     defaultValue,
-                                                                    enumCount));
+                                                                    enumCount.get()));
     }
 
     return new JsonValidationError.MissingMultiplePropsIssueData(allProps);

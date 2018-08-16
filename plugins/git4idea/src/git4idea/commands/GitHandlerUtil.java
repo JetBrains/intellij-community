@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -49,6 +35,7 @@ public class GitHandlerUtil {
   @Nullable
   public static String doSynchronously(final GitSimpleHandler handler, final String operationTitle, @NonNls final String operationName) {
     handler.addListener(new GitHandlerListenerBase(handler, operationName) {
+      @Override
       protected String getErrorText() {
         String text = handler.getStderr();
         if (text.length() == 0) {
@@ -77,6 +64,7 @@ public class GitHandlerUtil {
   public static int doSynchronously(final GitLineHandler handler, final String operationTitle, @NonNls final String operationName) {
     final ProgressManager manager = ProgressManager.getInstance();
     manager.run(new Task.Modal(handler.project(), operationTitle, true) {
+      @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         handler.addLineListener(new GitLineHandlerListenerProgress(indicator, handler, operationName, true));
         runInCurrentThread(handler, indicator, true, operationTitle);
@@ -165,6 +153,7 @@ public class GitHandlerUtil {
     /**
      * {@inheritDoc}
      */
+    @Override
     public void processTerminated(final int exitCode) {
       if (exitCode != 0) {
         ensureError(exitCode);
@@ -201,6 +190,7 @@ public class GitHandlerUtil {
     /**
      * {@inheritDoc}
      */
+    @Override
     public void startFailed(final Throwable exception) {
       //noinspection ThrowableInstanceNeverThrown
       myHandler.addError(new VcsException("Git start failed: " + exception.getMessage(), exception));
@@ -252,6 +242,7 @@ public class GitHandlerUtil {
     /**
      * {@inheritDoc}
      */
+    @Override
     protected String getErrorText() {
       // all lines are already calculated as errors
       return "";
@@ -260,6 +251,7 @@ public class GitHandlerUtil {
     /**
      * {@inheritDoc}
      */
+    @Override
     public void onLineAvailable(final String line, final Key outputType) {
       if (isErrorLine(line.trim())) {
         //noinspection ThrowableInstanceNeverThrown

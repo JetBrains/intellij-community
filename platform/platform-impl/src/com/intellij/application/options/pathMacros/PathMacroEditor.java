@@ -36,7 +36,7 @@ public class PathMacroEditor extends DialogWrapper {
     myNameField.setText(macroName);
     DocumentListener documentListener = new DocumentAdapter() {
       @Override
-      public void textChanged(DocumentEvent event) {
+      public void textChanged(@NotNull DocumentEvent event) {
         updateControls();
       }
     };

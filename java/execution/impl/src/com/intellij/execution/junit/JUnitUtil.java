@@ -163,9 +163,9 @@ public class JUnitUtil {
     if (isJUnit5(psiClass) && isJUnit5TestClass(psiClass, checkAbstract)) {
       return true;
     }
-    
+
     if (!PsiClassUtil.isRunnableClass(psiClass, true, checkAbstract)) return false;
-    
+
     final PsiClass topLevelClass = getTopmostClass(psiClass);
     if (topLevelClass != null) {
       final PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(topLevelClass, Collections.singleton(RUN_WITH));
@@ -258,7 +258,7 @@ public class JUnitUtil {
   public static boolean isJUnit5TestClass(@NotNull final PsiClass psiClass, boolean checkAbstract) {
     final PsiModifierList modifierList = psiClass.getModifierList();
     if (modifierList == null || JavaExecutionUtil.findModule(psiClass) == null) return false;
-    
+
     if (psiClass.isAnnotationType()) return false;
 
     if (psiClass.getContainingClass() != null && MetaAnnotationUtil.isMetaAnnotated(psiClass, Collections.singleton(JUNIT5_NESTED))) {
@@ -479,6 +479,7 @@ public class JUnitUtil {
       this.framework = (framework instanceof JavaTestFramework) ? (JavaTestFramework)framework : null;
     }
 
+    @Override
     public boolean value(final PsiMethod method) {
       return framework != null
              ? framework.isTestMethod(method, myClass)

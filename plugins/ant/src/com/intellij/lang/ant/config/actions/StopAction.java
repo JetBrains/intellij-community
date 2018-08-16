@@ -31,10 +31,12 @@ public final class StopAction extends AnAction {
     myAntBuildMessageView = antBuildMessageView;
   }
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     myAntBuildMessageView.stopProcess();
   }
 
+  @Override
   public void update(@NotNull AnActionEvent event){
     Presentation presentation = event.getPresentation();
     presentation.setEnabled(!myAntBuildMessageView.isStopped());

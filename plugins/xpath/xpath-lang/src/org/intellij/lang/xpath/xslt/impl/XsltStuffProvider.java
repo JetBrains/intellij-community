@@ -78,10 +78,12 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
             myTemplate = template;
         }
 
+        @Override
         public Icon getIcon(boolean isOpen) {
             return myTemplate.getIcon(0);
         }
 
+        @Override
         @NotNull
         public String getText(UsageView view) {
             final StringBuilder sb = new StringBuilder();
@@ -103,26 +105,32 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
             return null;
         }
 
+        @Override
         public boolean isValid() {
             return myTemplate.isValid();
         }
 
+        @Override
         public void update() {
         }
 
+        @Override
         public int compareTo(@NotNull UsageGroup usageGroup) {
             final TemplateUsageGroup myUsageGroup = ((TemplateUsageGroup)usageGroup);
             return myTemplate.getTextOffset() - myUsageGroup.myTemplate.getTextOffset();
         }
 
+        @Override
         public void navigate(boolean requestFocus) {
             ((Navigatable)myTemplate.getTag()).navigate(requestFocus);
         }
 
+        @Override
         public boolean canNavigate() {
             return ((Navigatable)myTemplate.getTag()).canNavigate();
         }
 
+        @Override
         public boolean canNavigateToSource() {
             return canNavigate();
         }

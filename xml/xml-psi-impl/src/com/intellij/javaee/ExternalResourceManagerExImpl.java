@@ -342,6 +342,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     }
   }
 
+  @Override
   public void addIgnoredResources(@NotNull List<String> urls, @Nullable Disposable disposable) {
     Application app = ApplicationManager.getApplication();
     if (app.isWriteAccessAllowed()) {

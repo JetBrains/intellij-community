@@ -150,7 +150,7 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
   }
 
   @Override
-  public void addFocusChangeListner(@NotNull FocusChangeListener listener, @NotNull Disposable parentDisposable) {
+  public void addFocusChangeListener(@NotNull FocusChangeListener listener, @NotNull Disposable parentDisposable) {
     myFocusChangeListenerMulticaster.addListener(listener,parentDisposable);
   }
 

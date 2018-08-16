@@ -119,6 +119,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
                                           "Subversion move had not been performed. ", e.getMessage()));
   }
 
+  @Override
   @Nullable
   public File copy(final VirtualFile file, final VirtualFile toDir, final String copyName) {
     startOperation(file);
@@ -204,6 +205,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     }
   }
 
+  @Override
   public boolean move(VirtualFile file, VirtualFile toDir) {
     startOperation(file);
 
@@ -234,6 +236,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     }
   }
 
+  @Override
   public boolean rename(VirtualFile file, String newName) {
     startOperation(file);
 
@@ -395,12 +398,14 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
   }
 
 
+  @Override
   public boolean createFile(VirtualFile dir, String name) {
     startOperation(dir);
 
     return createItem(dir, name, false, false);
   }
 
+  @Override
   public boolean createDirectory(VirtualFile dir, String name) {
     startOperation(dir);
 
@@ -421,6 +426,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
    * <p/>
    * deleted: do nothing, return true (strange)
    */
+  @Override
   public boolean delete(VirtualFile file) {
     startOperation(file);
 
@@ -744,6 +750,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
           if (copyFrom != null) {
             try {
               new ActionWithTempFile(ioFile) {
+                @Override
                 protected void executeInternal() throws VcsException {
                   // not recursive
                   new RepeatSvnActionThroughBusy() {
@@ -1008,6 +1015,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     }
   }
 
+  @Override
   public void afterDone(final ThrowableConsumer<LocalFileOperationsHandler, IOException> invoker) {
     if (!myIsInCommand && myGuessedProject != null) {
       commandFinished(myGuessedProject);

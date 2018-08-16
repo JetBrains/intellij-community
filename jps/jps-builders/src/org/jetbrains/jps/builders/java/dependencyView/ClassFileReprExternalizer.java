@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
@@ -23,6 +23,7 @@ class ClassFileReprExternalizer implements DataExternalizer<ClassFileRepr> {
     myModuleReprExternalizer = ModuleRepr.externalizer(context);
   }
 
+  @Override
   public void save(@NotNull DataOutput out, ClassFileRepr value) throws IOException {
     if (value instanceof ClassRepr) {
       out.writeByte(CLASS);
@@ -34,6 +35,7 @@ class ClassFileReprExternalizer implements DataExternalizer<ClassFileRepr> {
     }
   }
 
+  @Override
   public ClassFileRepr read(@NotNull DataInput in) throws IOException {
     return in.readByte() == CLASS ? myClassReprExternalizer.read(in) : myModuleReprExternalizer.read(in);
   }

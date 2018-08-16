@@ -267,11 +267,6 @@
 
     <action id="ChangesView.Browse" class="com.intellij.openapi.vcs.changes.actions.BrowseChangesAction"/>
 
-    <action id="Diff.PrevChange" class="com.intellij.openapi.actionSystem.EmptyAction"
-            icon="AllIcons.Actions.Back" use-shortcut-of="PreviousTab"/>
-    <action id="Diff.NextChange" class="com.intellij.openapi.actionSystem.EmptyAction"
-            icon="AllIcons.Actions.Forward" use-shortcut-of="NextTab"/>
-
     <group id="EditorGutterVcsPopupMenu">
       <reference ref="Annotate"/>
       <add-to-group group-id="EditorGutterPopupMenu" anchor="first"/>
@@ -444,9 +439,6 @@
       <reference ref="Compare.Specified"/>
       <reference ref="Vcs.ShowDiffWithLocal.Before"/>
       <reference ref="Vcs.ShowDiffWithLocal"/>
-      <separator/>
-      <reference ref="Diff.PrevChange"/>
-      <reference ref="Diff.NextChange"/>
       <separator/>
 
       <add-to-group group-id="Diff.KeymapGroup" anchor="after" relative-to-action="CompareClipboardWithSelection"/>

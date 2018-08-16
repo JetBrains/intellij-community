@@ -29,10 +29,12 @@ public class HotSwapManager {
   public HotSwapManager(Project project, DebuggerManagerEx manager) {
     myProject = project;
     manager.addDebuggerManagerListener(new DebuggerManagerListener() {
+      @Override
       public void sessionCreated(DebuggerSession session) {
         myTimeStamps.put(session, Long.valueOf(System.currentTimeMillis()));
       }
 
+      @Override
       public void sessionRemoved(DebuggerSession session) {
         myTimeStamps.remove(session);
       }
@@ -144,6 +146,7 @@ public class HotSwapManager {
     for (final DebuggerSession debuggerSession : sessions) {
       if (debuggerSession.isAttached()) {
                  scanClassesCommand.addCommand(debuggerSession.getProcess(), new DebuggerCommandImpl() {
+                   @Override
                    protected void action() {
                      swapProgress.setDebuggerSession(debuggerSession);
                      final Map<String, HotSwapFile> sessionClasses =
@@ -175,6 +178,7 @@ public class HotSwapManager {
 
     for (final DebuggerSession debuggerSession : modifiedClasses.keySet()) {
       reloadClassesCommand.addCommand(debuggerSession.getProcess(), new DebuggerCommandImpl() {
+        @Override
         protected void action() {
           reloadClassesProgress.setDebuggerSession(debuggerSession);
           getInstance(reloadClassesProgress.getProject()).reloadClasses(
@@ -182,6 +186,7 @@ public class HotSwapManager {
           );
         }
 
+        @Override
         protected void commandCancelled() {
           debuggerSession.setModifiedClassesScanRequired(true);
         }

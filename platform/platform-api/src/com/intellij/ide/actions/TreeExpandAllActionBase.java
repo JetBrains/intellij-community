@@ -31,6 +31,7 @@ public abstract class TreeExpandAllActionBase extends AnAction implements DumbAw
   @Nullable
   protected abstract TreeExpander getExpander(DataContext dataContext);
 
+  @Override
   public final void actionPerformed(@NotNull AnActionEvent e) {
     TreeExpander expander = getExpander(e.getDataContext());
     if (expander == null) return;
@@ -38,6 +39,7 @@ public abstract class TreeExpandAllActionBase extends AnAction implements DumbAw
     expander.expandAll();
   }
 
+  @Override
   public final void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     TreeExpander expander = getExpander(event.getDataContext());

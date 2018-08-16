@@ -20,26 +20,31 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
  */
 public class MavenRedundantGroupIdInspection extends XmlSuppressableInspectionTool {
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return MavenDomBundle.message("inspection.group");
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return MavenDomBundle.message("inspection.redundant.groupId.name");
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return "MavenRedundantGroupId";
   }
 
+  @Override
   @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.WARNING;
   }
 
+  @Override
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (file instanceof XmlFile && (file.isPhysical() || ApplicationManager.getApplication().isUnitTestMode())) {

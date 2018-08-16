@@ -37,14 +37,17 @@ public class ExtendableTextField extends JBTextField implements ExtendableTextCo
     super(text, columns);
   }
 
+  @Override
   public List<Extension> getExtensions() {
     return extensions;
   }
 
+  @Override
   public void setExtensions(Extension... extensions) {
     setExtensions(asList(extensions));
   }
 
+  @Override
   public void setExtensions(Collection<Extension> extensions) {
     setExtensions(new ArrayList<>(extensions));
   }
@@ -55,11 +58,13 @@ public class ExtendableTextField extends JBTextField implements ExtendableTextCo
     putClientProperty("JTextField.variant", ExtendableTextComponent.VARIANT);
   }
 
+  @Override
   public void addExtension(@NotNull Extension extension) {
     ArrayList<Extension> extensions = new ArrayList<>(getExtensions());
     if (extensions.add(extension)) setExtensions(extensions);
   }
 
+  @Override
   public void removeExtension(@NotNull Extension extension) {
     ArrayList<Extension> extensions = new ArrayList<>(getExtensions());
     if (extensions.remove(extension)) setExtensions(extensions);

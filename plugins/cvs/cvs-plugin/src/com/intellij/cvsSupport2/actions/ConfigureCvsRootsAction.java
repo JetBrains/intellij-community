@@ -29,6 +29,7 @@ import java.util.List;
  */
 public class ConfigureCvsRootsAction extends CvsGlobalAction {
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final CvsApplicationLevelConfiguration configuration = CvsApplicationLevelConfiguration.getInstance();
     final List<CvsRootConfiguration> configurations = configuration.CONFIGURATIONS;

@@ -77,6 +77,7 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
     }
   }
 
+  @Override
   public void printOn(final Printer printer) {
     final ArrayList<Printable> printables;
     synchronized (myNestedPrintables) {

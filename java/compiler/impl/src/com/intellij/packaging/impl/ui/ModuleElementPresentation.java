@@ -43,6 +43,7 @@ public class ModuleElementPresentation extends TreeNodePresentation {
     myElementType = elementType;
   }
 
+  @Override
   public String getPresentableName() {
     return myModulePointer != null ? myModulePointer.getModuleName() : "<unknown>";
   }
@@ -65,6 +66,7 @@ public class ModuleElementPresentation extends TreeNodePresentation {
     }
   }
 
+  @Override
   public void render(@NotNull PresentationData presentationData,
                      SimpleTextAttributes mainAttributes,
                      SimpleTextAttributes commentAttributes) {

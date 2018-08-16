@@ -43,6 +43,7 @@ public class XBreakpointCustomGroupingRule<B> extends XBreakpointGroupingRule<B,
     return true;
   }
 
+  @Override
   public XBreakpointCustomGroup getGroup(@NotNull final B breakpoint, @NotNull final Collection<XBreakpointCustomGroup> groups) {
     if (!(breakpoint instanceof XBreakpointBase)) {
       return null;

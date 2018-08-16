@@ -57,6 +57,7 @@ import java.util.List;
 public class PopFrameAction extends DebuggerAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(PopFrameAction.class);
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     final JavaStackFrame stackFrame = getStackFrame(e);
@@ -317,6 +318,7 @@ public class PopFrameAction extends DebuggerAction implements DumbAware {
     return suspendContext != null && debuggerContext.getThreadProxy() == suspendContext.getThread();
   }
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     boolean enable = false;
 

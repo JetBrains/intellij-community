@@ -46,6 +46,7 @@ public class YourkitFilter implements Filter{
     myProject = project;
   }
 
+  @Override
   public Result applyFilter(final String line, final int entireLength) {
     if (!line.endsWith(".java\n")) {
       return null;
@@ -87,6 +88,7 @@ public class YourkitFilter implements Filter{
       myPsiFiles = psiFiles;
     }
 
+    @Override
     public void navigate(final Project project) {
       DefaultPsiElementListCellRenderer renderer = new DefaultPsiElementListCellRenderer();
       final Editor editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
@@ -111,10 +113,12 @@ public class YourkitFilter implements Filter{
 
 
   private static class DefaultPsiElementListCellRenderer extends PsiElementListCellRenderer<PsiElement> {
+    @Override
     public String getElementText(final PsiElement element) {
       return element.getContainingFile().getName();
     }
 
+    @Override
     @Nullable
     protected String getContainerText(final PsiElement element, final String name) {
       final PsiDirectory parent = ((PsiFile)element).getParent();

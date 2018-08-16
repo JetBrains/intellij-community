@@ -25,6 +25,7 @@ public class CommonActionsManagerImpl extends CommonActionsManager {
     return new NextOccurenceToolbarAction(navigator);
   }
 
+  @Override
   public AnAction createExpandAllAction(TreeExpander expander) {
     return new ExpandAllToolbarAction(expander);
   }
@@ -49,6 +50,7 @@ public class CommonActionsManagerImpl extends CommonActionsManager {
     return createExpandAllHeaderAction(new DefaultTreeExpander(tree), tree);
   }
 
+  @Override
   public AnAction createCollapseAllAction(TreeExpander expander) {
     return new CollapseAllToolbarAction(expander);
   }

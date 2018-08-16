@@ -47,6 +47,7 @@ public class InlineSuperClassRefactoringDialog extends InlineOptionsDialog {
     setTitle(InlineSuperClassRefactoringHandler.REFACTORING_NAME);
   }
 
+  @Override
   protected void doAction() {
     JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
     if(myRbInlineThisOnly.isEnabled() && myRbInlineAll.isEnabled()) {
@@ -66,6 +67,7 @@ public class InlineSuperClassRefactoringDialog extends InlineOptionsDialog {
     return "Inline_Super_Class";
   }
 
+  @Override
   @NotNull
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new GridBagLayout());

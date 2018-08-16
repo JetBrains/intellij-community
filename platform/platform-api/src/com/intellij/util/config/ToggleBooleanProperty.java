@@ -32,10 +32,12 @@ public class ToggleBooleanProperty extends ToggleAction {
     myProperty = property;
   }
 
+  @Override
   public boolean isSelected(AnActionEvent e) {
     return myProperty.get(myProperties).booleanValue();
   }
 
+  @Override
   public void setSelected(AnActionEvent e, boolean state) {
     myProperty.set(myProperties, Boolean.valueOf(state));
   }
@@ -56,6 +58,7 @@ public class ToggleBooleanProperty extends ToggleAction {
     protected abstract boolean isEnabled();
     protected abstract boolean isVisible();
 
+    @Override
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabled(isEnabled());

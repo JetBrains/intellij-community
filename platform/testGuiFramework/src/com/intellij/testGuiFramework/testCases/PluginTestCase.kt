@@ -17,7 +17,9 @@ package com.intellij.testGuiFramework.testCases
 
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
 import com.intellij.testGuiFramework.framework.Timeouts
+import com.intellij.testGuiFramework.framework.Timeouts.seconds05
 import com.intellij.testGuiFramework.impl.*
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.ignoreComponentLookupException
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitProgressDialogUntilGone
 import com.intellij.testGuiFramework.launcher.GuiTestOptions
 import com.intellij.testGuiFramework.remote.transport.MessageType
@@ -79,26 +81,28 @@ open class PluginTestCase : GuiTestCase() {
     welcomeFrame {
       actionLink("Configure").click()
       popupMenu("Plugins").clickSearchedItem()
-      dialog("Plugins") {
-        //Check if plugin has already been installed
-        try {
-          table(pluginName, timeout = Timeouts.seconds05).cell(pluginName).click()
-          button("OK").click()
-          ensureButtonOkHasPressed(this@PluginTestCase)
+      pluginDialog {
+        showInstalledPlugins()
+        if (isPluginInstalled(pluginName).not()) {
+          showInstallPluginFromDiskDialog()
+          installPluginFromDiskDialog {
+            setPath(pluginPath)
+            clickOk()
+            ignoreComponentLookupException {
+              dialog(title = "Warning", timeout = seconds05) {
+                message("Warning") {
+                  button("OK").click()
+                }
+              }
+            }
+          }
         }
-        catch (e: Exception) {
-          button("Install plugin from disk...").click()
-          chooseFileInFileChooser(pluginPath)
-          button("OK").click()
-          ensureButtonOkHasPressed(this@PluginTestCase)
+        button("OK").click()
+        ignoreComponentLookupException {
+          dialog(title = "IDE and Plugin Updates", timeout = seconds05) {
+            button("Postpone").click()
+          }
         }
-      }
-      try {
-        message("IDE and Plugin Updates", timeout = Timeouts.seconds05) {
-          button("Postpone").click()
-        }
-      }
-      catch (e: Exception) {
       }
     }
   }
@@ -107,7 +111,7 @@ open class PluginTestCase : GuiTestCase() {
     val dialogTitle = "Plugins"
     try {
       GuiTestUtilKt.waitUntilGone(robot = guiTestCase.robot(),
-                                  timeout = Timeouts.seconds05,
+                                  timeout = seconds05,
                                   matcher = GuiTestUtilKt.typeMatcher(
                                     JDialog::class.java) { it.isShowing && it.title == dialogTitle })
     }

@@ -78,6 +78,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     init();
   }
 
+  @Override
   protected void dispose() {
     myNameField.removeDataChangedListener(myNameChangedListener);
     if (myCbReplaceAll != null) {
@@ -87,29 +88,35 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     super.dispose();
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
+  @Override
   protected void init() {
     super.init();
     updateOkStatus();
   }
 
+  @Override
   public String getEnteredName() {
     return myNameField.getEnteredName();
   }
 
+  @Override
   public boolean isReplaceAllOccurrences() {
     if (myOccurrencesCount <= 1) return false;
     return myCbReplaceAll.isSelected();
   }
 
+  @Override
   public boolean isDeclareFinal() {
     return myCbFinal.isSelected();
   }
 
+  @Override
   public boolean isReplaceLValues() {
     if (myOccurrencesCount <= 1 || !myAnyLValueOccurences || myCbReplaceWrite == null) {
       return true;
@@ -119,10 +126,12 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     }
   }
 
+  @Override
   public PsiType getSelectedType() {
     return myTypeSelector.getSelectedType();
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     myNameField = new NameSuggestionsField(myProject);
     myNameChangedListener = () -> updateOkStatus();
@@ -164,6 +173,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
 
     myNameSuggestionsManager = new NameSuggestionsManager(myTypeSelector, myNameField,
             new NameSuggestionsGenerator() {
+              @Override
               public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
                 return IntroduceVariableBase.getSuggestedName(type, myExpression);
               }
@@ -173,6 +183,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     return panel;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
@@ -190,6 +201,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
 
       panel.add(myCbReplaceAll, gbConstraints);
       myReplaceAllListener = new ItemListener() {
+        @Override
         public void itemStateChanged(ItemEvent e) {
           updateControls();
         }
@@ -217,6 +229,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     gbConstraints.gridy++;
     panel.add(myCbFinal, gbConstraints);
     myFinalListener = new ItemListener() {
+      @Override
       public void itemStateChanged(ItemEvent e) {
         if (myCbFinal.isEnabled()) {
           myCbFinalState = myCbFinal.isSelected();
@@ -258,6 +271,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     }
   }
 
+  @Override
   protected void doOKAction() {
     if (!myValidator.isOK(this)) return;
     myNameSuggestionsManager.nameSelected();
@@ -273,10 +287,12 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     setOKActionEnabled(PsiNameHelper.getInstance(myProject).isIdentifier(text));
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myNameField.getFocusableComponent();
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.INTRODUCE_VARIABLE);
   }

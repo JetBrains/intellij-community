@@ -30,6 +30,7 @@ public class TextFilter extends FilterAction {
     return !StringUtil.isEmpty(myTable.getConstraint().getRegExp());
   }
 
+  @Override
   public void clearFilter() {
     final MatchVariableConstraint constraint = myTable.getConstraint();
     constraint.setRegExp("");
@@ -67,6 +68,7 @@ public class TextFilter extends FilterAction {
                                 "<p>Use \"!\" to invert the pattern." +
                                 "<p>Regular expressions are supported.");
 
+      @Override
       protected void layoutComponents() {
         final GroupLayout layout = new GroupLayout(this);
         setLayout(layout);

@@ -142,6 +142,7 @@ public class CreateBranchOrTagAction extends BasicAction {
   protected void batchPerform(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files, @NotNull DataContext context) {
   }
 
+  @Override
   protected boolean isBatchAction() {
     return false;
   }

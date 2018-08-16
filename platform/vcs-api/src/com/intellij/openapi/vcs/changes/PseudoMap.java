@@ -32,6 +32,7 @@ public class PseudoMap<Key, Value> implements PairConsumer<Key, Value>, Nullable
     return new HashMap<>();
   }
 
+  @Override
   public Value fun(Key key) {
     return myMap.get(key);
   }

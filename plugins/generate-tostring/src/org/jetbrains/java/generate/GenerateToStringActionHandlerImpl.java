@@ -76,6 +76,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
     }
 
 
+    @Override
     public void executeActionQuickFix(final Project project, final PsiClass clazz) {
         doExecuteAction(project, clazz, null);
     }
@@ -222,6 +223,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
             };
             comboBox.setRenderer(renderer);
             settingsButton.addActionListener(new ActionListener() {
+                @Override
                 public void actionPerformed(ActionEvent e) {
                   final TemplatesPanel ui = new TemplatesPanel(clazz.getProject());
                   Configurable composite = new TabbedConfigurable() {
@@ -234,6 +236,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
                             return res;
                         }
 
+                        @Override
                         public String getDisplayName() {
                             return "toString() Generation Settings";
                         }

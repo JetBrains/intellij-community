@@ -58,6 +58,7 @@ import java.util.*;
 public class CustomAntElementsRegistry {
 
   public static ThreadLocal<Boolean> ourIsBuildingClasspathForCustomTagLoading = new ThreadLocal<Boolean>() {
+    @Override
     protected Boolean initialValue() {
       return Boolean.FALSE;
     }
@@ -87,10 +88,10 @@ public class CustomAntElementsRegistry {
   public Set<XmlName> getCompletionVariants(AntDomElement parentElement) {
     if (parentElement instanceof AntDomCustomElement) {
       // this case is already handled in AntDomExtender when defining children
-      return Collections.emptySet(); 
+      return Collections.emptySet();
     }
     final Set<XmlName> result = new HashSet<>();
-    
+
     final Pair<AntDomMacroDef, AntDomScriptDef> contextMacroOrScriptDef = getContextMacroOrScriptDef(parentElement);
     final AntDomMacroDef restrictToMacroDef = Pair.getFirst(contextMacroOrScriptDef);
     final AntDomScriptDef restrictToScriptDef = Pair.getSecond(contextMacroOrScriptDef);
@@ -123,11 +124,11 @@ public class CustomAntElementsRegistry {
           final AntDomTypeDef typedef = (AntDomTypeDef)declaringElement;
           final Class clazz = lookupClass(xmlName);
           if (clazz != null && typedef.isTask(clazz)) {
-            continue;                                                           
+            continue;
           }
         }
       }
-      
+
       result.add(xmlName);
     }
     return result;
@@ -157,7 +158,7 @@ public class CustomAntElementsRegistry {
     if (declaration == null) {
       return null;
     }
-    
+
     if (declaration instanceof AntDomMacrodefElement) {
       final Pair<AntDomMacroDef, AntDomScriptDef> contextMacroOrScriptDef = getContextMacroOrScriptDef(parentElement);
       final AntDomMacroDef macrodefUsed = Pair.getFirst(contextMacroOrScriptDef);
@@ -172,14 +173,14 @@ public class CustomAntElementsRegistry {
         return null;
       }
     }
-    
+
     return declaration;
   }
 
   public AntDomNamedElement getDeclaringElement(XmlName customElementName) {
     return myDeclarations.get(customElementName);
   }
-  
+
   @Nullable
   public Class lookupClass(XmlName xmlName) {
     final ClassProvider provider = myCustomElements.get(xmlName);
@@ -219,7 +220,7 @@ public class CustomAntElementsRegistry {
     }
     return errors == null ? Collections.emptyList() : errors;
   }
-  
+
   private void rememberNamedClassLoader(AntDomCustomClasspathComponent typedef, AntDomProject antProject) {
     final String loaderRef = typedef.getLoaderRef().getStringValue();
     if (loaderRef != null) {
@@ -333,7 +334,7 @@ public class CustomAntElementsRegistry {
         }
       }
       // check nested elements
-      
+
       for (final Iterator<AntDomElement> it = typedef.getAntChildrenIterator(); it.hasNext();) {
         AntDomElement child = it.next();
         if (child instanceof AntFilesProvider) {
@@ -370,6 +371,7 @@ public class CustomAntElementsRegistry {
       myAntProject = antProject;
     }
 
+    @Override
     public void visitAntDomElement(AntDomElement element) {
       if (element instanceof AntDomCustomElement || myElementsOnThePath.contains(element)) {
         return; // avoid stack overflow
@@ -411,6 +413,7 @@ public class CustomAntElementsRegistry {
       }
     }
 
+    @Override
     public void visitMacroDef(AntDomMacroDef macrodef) {
       final String customTagName = macrodef.getName().getStringValue();
       if (customTagName != null) {
@@ -425,6 +428,7 @@ public class CustomAntElementsRegistry {
       }
     }
 
+    @Override
     public void visitScriptDef(AntDomScriptDef scriptdef) {
       final String customTagName = scriptdef.getName().getStringValue();
       if (customTagName != null) {
@@ -469,6 +473,7 @@ public class CustomAntElementsRegistry {
       }
     }
 
+    @Override
     public void visitPresetDef(AntDomPresetDef presetdef) {
       final String customTagName = presetdef.getName().getStringValue();
       if (customTagName != null) {
@@ -477,16 +482,19 @@ public class CustomAntElementsRegistry {
       }
     }
 
+    @Override
     public void visitTypeDef(AntDomTypeDef typedef) {
       // if loaderRef attribute is specified, make sure the loader is built and stored
       rememberNamedClassLoader(typedef, myAntProject);
       defineCustomElements(typedef, myAntProject);
     }
 
+    @Override
     public void visitInclude(AntDomInclude includeTag) {
       processInclude(includeTag);
     }
 
+    @Override
     public void visitImport(AntDomImport importTag) {
       processInclude(importTag);
     }

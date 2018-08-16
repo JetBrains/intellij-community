@@ -60,10 +60,8 @@ public class GradleJavaSettingsImportingTest extends GradleSettingsImportingTest
 
   @Test
   public void testArtifactsSettingsImport() throws Exception {
-    createProjectConfig(
-        "plugins {\n" +
-        "  id 'org.jetbrains.gradle.plugin.idea-ext' version '0.4'\n" +
-        "}\n" +
+    importProject(
+      withGradleIdeaExtPlugin(
         "import org.jetbrains.gradle.ext.*\n" +
         "idea {\n" +
         "  project.settings {\n" +
@@ -74,6 +72,7 @@ public class GradleJavaSettingsImportingTest extends GradleSettingsImportingTest
         "    }\n" +
         "  }\n" +
         "}"
+      )
     );
     importProject();
     final ArtifactManager artifactManager = ArtifactManager.getInstance(myProject);

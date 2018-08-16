@@ -51,6 +51,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     super(true);
   }
 
+  @Override
   protected String getHelpID() {
     return HelpID.INTRODUCE_CONSTANT;
   }
@@ -64,6 +65,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     super.invoke(project, expressions, null);
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
 
@@ -71,6 +73,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     ElementToWorkOn.processElementToWorkOn(editor, file, REFACTORING_NAME, getHelpID(), project, getElementProcessor(project, editor));
   }
 
+  @Override
   protected boolean invokeImpl(final Project project, final PsiLocalVariable localVariable, final Editor editor) {
     final PsiElement parent = localVariable.getParent();
     if (!(parent instanceof PsiDeclarationStatement)) {
@@ -91,6 +94,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
   }
 
 
+  @Override
   protected Settings showRefactoringDialog(Project project,
                                            final Editor editor,
                                            PsiClass parentClass,
@@ -198,6 +202,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     }
   }
 
+  @Override
   protected String getRefactoringName() {
     return REFACTORING_NAME;
   }
@@ -216,6 +221,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     return visitor.getElementReference();
   }
 
+  @Override
   protected OccurrenceManager createOccurrenceManager(final PsiExpression selectedExpr, final PsiClass parentClass) {
     return new ExpressionOccurrenceManager(selectedExpr, parentClass, null);
   }
@@ -271,6 +277,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
       super.visitLambdaExpression(expression);
     }
 
+    @Override
     protected void visitClassMemberReferenceElement(PsiMember classMember, PsiJavaCodeReferenceElement classMemberReference) {
       if (!classMember.hasModifierProperty(PsiModifier.STATIC)) {
         myElementReference = classMemberReference;
@@ -289,6 +296,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     }
   }
 
+  @Override
   public PsiClass getParentClass(@NotNull PsiExpression initializerExpression) {
     final PsiType type = initializerExpression.getType();
 
@@ -321,6 +329,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     return initializer != null && isStaticFinalInitializer(initializer) == null;
   }
 
+  @Override
   protected boolean validClass(PsiClass parentClass, Editor editor) {
     return true;
   }

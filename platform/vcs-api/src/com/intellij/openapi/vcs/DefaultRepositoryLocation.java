@@ -40,10 +40,12 @@ public class DefaultRepositoryLocation implements RepositoryLocation {
     return myLocation;
   }
 
+  @Override
   public String toPresentableString() {
     return myURL;
   }
 
+  @Override
   public String getKey() {
     return myURL + "|" + myLocation;
   }

@@ -49,38 +49,47 @@ public class CustomMaven3Artifact implements Artifact {
     myWrapee = a;
   }
 
+  @Override
   public String getGroupId() {
     return myWrapee.getGroupId();
   }
 
+  @Override
   public String getArtifactId() {
     return myWrapee.getArtifactId();
   }
 
+  @Override
   public String getVersion() {
     return myWrapee.getVersion();
   }
 
+  @Override
   public void setVersion(String version) {
     myWrapee.setVersion(version);
   }
 
+  @Override
   public String getScope() {
     return myWrapee.getScope();
   }
 
+  @Override
   public String getType() {
     return myWrapee.getType();
   }
 
+  @Override
   public String getClassifier() {
     return myWrapee.getClassifier();
   }
 
+  @Override
   public boolean hasClassifier() {
     return myWrapee.hasClassifier();
   }
 
+  @Override
   public File getFile() {
     update();
     return myWrapee.getFile();
@@ -156,6 +165,7 @@ public class CustomMaven3Artifact implements Artifact {
     }
   }
 
+  @Override
   public void setFile(File destination) {
     myWrapee.setFile(destination);
   }
@@ -164,14 +174,17 @@ public class CustomMaven3Artifact implements Artifact {
     return isStub;
   }
 
+  @Override
   public String getBaseVersion() {
     return myWrapee.getBaseVersion();
   }
 
+  @Override
   public void setBaseVersion(String baseVersion) {
     myWrapee.setBaseVersion(baseVersion);
   }
 
+  @Override
   public String getId() {
     try {
       return myWrapee.getId();
@@ -188,134 +201,167 @@ public class CustomMaven3Artifact implements Artifact {
     }
   }
 
+  @Override
   public String getDependencyConflictId() {
     return myWrapee.getDependencyConflictId();
   }
 
+  @Override
   public void addMetadata(ArtifactMetadata metadata) {
     myWrapee.addMetadata(metadata);
   }
 
+  @Override
   public Collection<ArtifactMetadata> getMetadataList() {
     return myWrapee.getMetadataList();
   }
 
+  @Override
   public void setRepository(ArtifactRepository remoteRepository) {
     myWrapee.setRepository(remoteRepository);
   }
 
+  @Override
   public ArtifactRepository getRepository() {
     return myWrapee.getRepository();
   }
 
+  @Override
   public void updateVersion(String version, ArtifactRepository localRepository) {
     myWrapee.updateVersion(version, localRepository);
   }
 
+  @Override
   public String getDownloadUrl() {
     return myWrapee.getDownloadUrl();
   }
 
+  @Override
   public void setDownloadUrl(String downloadUrl) {
     myWrapee.setDownloadUrl(downloadUrl);
   }
 
+  @Override
   public ArtifactFilter getDependencyFilter() {
     return myWrapee.getDependencyFilter();
   }
 
+  @Override
   public void setDependencyFilter(ArtifactFilter artifactFilter) {
     myWrapee.setDependencyFilter(artifactFilter);
   }
 
+  @Override
   public ArtifactHandler getArtifactHandler() {
     return myWrapee.getArtifactHandler();
   }
 
+  @Override
   public List<String> getDependencyTrail() {
     return myWrapee.getDependencyTrail();
   }
 
+  @Override
   public void setDependencyTrail(List<String> dependencyTrail) {
     myWrapee.setDependencyTrail(dependencyTrail);
   }
 
+  @Override
   public void setScope(String scope) {
     myWrapee.setScope(scope);
   }
 
+  @Override
   public VersionRange getVersionRange() {
     return myWrapee.getVersionRange();
   }
 
+  @Override
   public void setVersionRange(VersionRange newRange) {
     myWrapee.setVersionRange(newRange);
   }
 
+  @Override
   public void selectVersion(String version) {
     myWrapee.selectVersion(version);
   }
 
+  @Override
   public void setGroupId(String groupId) {
     myWrapee.setGroupId(groupId);
   }
 
+  @Override
   public void setArtifactId(String artifactId) {
     myWrapee.setArtifactId(artifactId);
   }
 
+  @Override
   public boolean isSnapshot() {
     return myWrapee.isSnapshot();
   }
 
+  @Override
   public void setResolved(boolean resolved) {
     myWrapee.setResolved(resolved);
   }
 
+  @Override
   public boolean isResolved() {
     return myWrapee.isResolved();
   }
 
+  @Override
   public void setResolvedVersion(String version) {
     myWrapee.setResolvedVersion(version);
   }
 
+  @Override
   public void setArtifactHandler(ArtifactHandler handler) {
     myWrapee.setArtifactHandler(handler);
   }
 
+  @Override
   public boolean isRelease() {
     return myWrapee.isRelease();
   }
 
+  @Override
   public void setRelease(boolean release) {
     myWrapee.setRelease(release);
   }
 
+  @Override
   public List<ArtifactVersion> getAvailableVersions() {
     return myWrapee.getAvailableVersions();
   }
 
+  @Override
   public void setAvailableVersions(List<ArtifactVersion> versions) {
     myWrapee.setAvailableVersions(versions);
   }
 
+  @Override
   public boolean isOptional() {
     return myWrapee.isOptional();
   }
 
+  @Override
   public void setOptional(boolean optional) {
     myWrapee.setOptional(optional);
   }
 
+  @Override
   public ArtifactVersion getSelectedVersion() throws OverConstrainedVersionException {
     return myWrapee.getSelectedVersion();
   }
 
+  @Override
   public boolean isSelectedVersionKnown() throws OverConstrainedVersionException {
     return myWrapee.isSelectedVersionKnown();
   }
 
+  @Override
   public int compareTo(Artifact o) {
     if (o instanceof CustomMaven3Artifact) o = ((CustomMaven3Artifact)o).myWrapee;
     return myWrapee.compareTo(o);

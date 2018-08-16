@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.ui.ListCellRendererWrapper;
@@ -49,21 +35,25 @@ public class ButtonGroupProperty extends Property<RadComponent, RadButtonGroup> 
     super(null, "Button Group");
   }
 
+  @Override
   public RadButtonGroup getValue(RadComponent component) {
     final RadRootContainer rootContainer = (RadRootContainer) FormEditingUtil.getRoot(component);
     return rootContainer == null ? null : (RadButtonGroup) FormEditingUtil.findGroupForComponent(rootContainer, component);
   }
 
+  @Override
   protected void setValueImpl(RadComponent component, RadButtonGroup value) throws Exception {
     final RadRootContainer radRootContainer = (RadRootContainer) FormEditingUtil.getRoot(component);
     assert radRootContainer != null;
     radRootContainer.setGroupForComponent(component, value);
   }
 
+  @Override
   @NotNull public PropertyRenderer<RadButtonGroup> getRenderer() {
     return myRenderer;
   }
 
+  @Override
   public PropertyEditor<RadButtonGroup> getEditor() {
     return myEditor;
   }
@@ -97,6 +87,7 @@ public class ButtonGroupProperty extends Property<RadComponent, RadButtonGroup> 
       });
 
       myCbx.addItemListener(new ItemListener() {
+        @Override
         public void itemStateChanged(ItemEvent e) {
           if (e.getStateChange() == ItemEvent.SELECTED && e.getItem() == RadButtonGroup.NEW_GROUP) {
             String newGroupName = myRootContainer.suggestGroupName();
@@ -115,6 +106,7 @@ public class ButtonGroupProperty extends Property<RadComponent, RadButtonGroup> 
     }
 
 
+    @Override
     public JComponent getComponent(RadComponent component, RadButtonGroup value, InplaceContext inplaceContext) {
       myComponent = component;
       myRootContainer = (RadRootContainer) FormEditingUtil.getRoot(myComponent);

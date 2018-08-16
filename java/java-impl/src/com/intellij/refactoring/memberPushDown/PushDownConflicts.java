@@ -174,7 +174,7 @@ public class PushDownConflicts {
       }
     }
     RefactoringConflictsUtil.analyzeAccessibilityConflicts(myMovedMembers, targetClass, myConflicts, null, context, myAbstractMembers);
-    
+
   }
 
   public void checkMemberPlacementInTargetClassConflict(final PsiClass targetClass, final PsiMember movedMember) {
@@ -227,8 +227,8 @@ public class PushDownConflicts {
                                                PsiElement referenceOnSuper) {
     if (member instanceof PsiMethod) {
       PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(sourceClass, targetClass, PsiSubstitutor.EMPTY);
-      PsiMethod methodInTarget = MethodSignatureUtil.findMethodBySuperSignature(targetClass, 
-                                                                                ((PsiMethod)member).getSignature(substitutor), 
+      PsiMethod methodInTarget = MethodSignatureUtil.findMethodBySuperSignature(targetClass,
+                                                                                ((PsiMethod)member).getSignature(substitutor),
                                                                                 true);
       return methodInTarget != null && PsiTreeUtil.isAncestor(methodInTarget, referenceOnSuper, false);
     }
@@ -243,6 +243,7 @@ public class PushDownConflicts {
       mySource = source;
     }
 
+    @Override
     protected void visitClassMemberReferenceElement(PsiMember classMember, PsiJavaCodeReferenceElement classMemberReference) {
       if(myMovedMembers.contains(classMember) && !myAbstractMembers.contains(classMember)) {
         String message = RefactoringBundle.message("0.uses.1.which.is.pushed.down", RefactoringUIUtil.getDescription(mySource, false),

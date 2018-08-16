@@ -68,6 +68,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
 
   public static List<MemberInfo> getClassMembersToPush(PsiClass superClass) {
     MemberInfoStorage memberInfoStorage = new MemberInfoStorage(superClass, new MemberInfo.Filter<PsiMember>() {
+      @Override
       public boolean includeMember(PsiMember element) {
         return !(element instanceof PsiClass) || PsiTreeUtil.isAncestor(superClass, element, true);
       }
@@ -75,12 +76,14 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
     return memberInfoStorage.getClassMemberInfos(superClass);
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(@NotNull final UsageInfo[] usages) {
     return new InlineSuperClassUsageViewDescriptor(mySuperClass);
   }
 
 
+  @Override
   protected void findUsages(@NotNull final List<FixableUsageInfo> usages) {
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(myProject);
     final PsiElementFactory elementFactory = facade.getElementFactory();
@@ -271,7 +274,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
   }
 
   private boolean skipTargetClass(PsiClass targetClass) {
-    return targetClass instanceof PsiAnonymousClass || 
+    return targetClass instanceof PsiAnonymousClass ||
            PsiTreeUtil.isAncestor(mySuperClass, targetClass, false);
   }
 
@@ -302,6 +305,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
     return type;
   }
 
+  @Override
   protected void performRefactoring(@NotNull final UsageInfo[] usages) {
     try {
       final UsageInfo[] infos = ContainerUtil.map2Array(myTargetClasses, UsageInfo.class, UsageInfo::new);
@@ -440,6 +444,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
     return subst;
   }
 
+  @Override
   @NotNull
   protected String getCommandName() {
     return InlineSuperClassRefactoringHandler.REFACTORING_NAME;

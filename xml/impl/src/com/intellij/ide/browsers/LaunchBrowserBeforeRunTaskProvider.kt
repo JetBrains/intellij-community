@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers
 
 import com.intellij.execution.BeforeRunTask
@@ -23,6 +21,7 @@ import com.intellij.ui.layout.*
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.xml.XmlBundle
+import org.jetbrains.concurrency.Promise
 import javax.swing.Icon
 import javax.swing.border.EmptyBorder
 
@@ -41,7 +40,7 @@ internal class LaunchBrowserBeforeRunTaskProvider : BeforeRunTaskProvider<Launch
 
   override fun createTask(runConfiguration: RunConfiguration) = LaunchBrowserBeforeRunTask()
 
-  override fun configureTask(runConfiguration: RunConfiguration, task: LaunchBrowserBeforeRunTask): Boolean {
+  override fun configureTask(context: DataContext, runConfiguration: RunConfiguration, task: LaunchBrowserBeforeRunTask): Promise<Boolean> {
     val state = task.state
     val modificationCount = state.modificationCount
 
@@ -80,7 +79,7 @@ internal class LaunchBrowserBeforeRunTaskProvider : BeforeRunTaskProvider<Launch
     if (startJavaScriptDebuggerCheckBox != null) {
       state.withDebugger = startJavaScriptDebuggerCheckBox.isSelected
     }
-    return modificationCount != state.modificationCount
+    return Promise.resolve(modificationCount != state.modificationCount)
   }
 
   override fun executeTask(context: DataContext?, configuration: RunConfiguration, env: ExecutionEnvironment, task: LaunchBrowserBeforeRunTask): Boolean {

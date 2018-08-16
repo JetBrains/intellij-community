@@ -33,6 +33,7 @@ public class JarApplicationConfigurationType extends ConfigurationTypeBase imple
         }
       }
 
+      @Override
       @NotNull
       public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
         return new JarApplicationConfiguration(project, this, "");

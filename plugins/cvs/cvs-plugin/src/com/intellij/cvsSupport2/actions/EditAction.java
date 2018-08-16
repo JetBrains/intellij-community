@@ -35,6 +35,7 @@ public class EditAction extends AbstractActionFromEditGroup {
   public EditAction() {
   }
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     if (!e.getPresentation().isVisible()) {
@@ -48,10 +49,12 @@ public class EditAction extends AbstractActionFromEditGroup {
   }
 
 
+  @Override
   protected String getTitle(VcsContext context) {
     return com.intellij.CvsBundle.message("action.name.edit");
   }
 
+  @Override
   protected CvsHandler getCvsHandler(CvsContext context) {
     Project project = context.getProject();
     if (CvsVcs2.getInstance(project).getEditOptions().getValue()

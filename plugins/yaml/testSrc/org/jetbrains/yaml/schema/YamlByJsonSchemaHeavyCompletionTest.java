@@ -63,6 +63,7 @@ public class YamlByJsonSchemaHeavyCompletionTest extends JsonBySchemaHeavyComple
     baseCompletionTest("oneOfWithEnumValue", "oneOfWithEmptyPropertyValue", "business", "home");
   }
 
+  @Override
   public void testObjectLiteral() throws Exception {
     baseInsertTest("insertArrayOrObjectLiteral", "objectLiteral");
     complete();

@@ -12,6 +12,7 @@ import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalModuleBuilder;
@@ -28,9 +29,11 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.psi.PsiFile;
@@ -166,21 +169,7 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessor {
           final Project project = module.getProject();
           FileDocumentManager.getInstance().saveAllDocuments();
           final GradleProjectSettings gradleProjectSettings = getExternalProjectSettings();
-          Runnable runnable = () -> {
-            gradleProjectSettings.setExternalProjectPath(rootProjectPath);
-            AbstractExternalSystemSettings settings = ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID);
-            //noinspection unchecked
-            settings.linkProject(gradleProjectSettings);
-
-            ImportSpec importSpec = new ImportSpecBuilder(project, GradleConstants.SYSTEM_ID)
-              .use(ProgressExecutionMode.IN_BACKGROUND_ASYNC)
-              .useDefaultCallback()
-              .build();
-            ExternalSystemUtil.refreshProject(rootProjectPath, importSpec);
-          };
-
-          // execute when current dialog is closed
-          ExternalSystemUtil.invokeLater(project, ModalityState.NON_MODAL, runnable);
+          attachGradleProjectAndRefresh(project, rootProjectPath, gradleProjectSettings);
         }
 
         @Override
@@ -221,6 +210,12 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessor {
     }
   }
 
+  public static void attachGradleProjectAndRefresh(@NotNull Project project, @NotNull String gradleProjectPath) {
+    GradleProjectSettings gradleProjectSettings = createDefaultProjectSettings();
+    setupGradleJvm(project, gradleProjectSettings);
+    attachGradleProjectAndRefresh(project, gradleProjectPath, gradleProjectSettings);
+  }
+
   @NotNull
   public static GradleProjectSettings createDefaultProjectSettings() {
     GradleProjectSettings settings = new GradleProjectSettings();
@@ -228,6 +223,40 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessor {
     settings.setStoreProjectFilesExternally(ThreeState.YES);
     settings.setUseQualifiedModuleNames(true);
     return settings;
+  }
+
+  private static void attachGradleProjectAndRefresh(@NotNull Project project,
+                                                    @NotNull String gradleProjectPath,
+                                                    @NotNull GradleProjectSettings gradleProjectSettings) {
+    Runnable runnable = () -> {
+      gradleProjectSettings.setExternalProjectPath(gradleProjectPath);
+      AbstractExternalSystemSettings settings = ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID);
+      //noinspection unchecked
+      settings.linkProject(gradleProjectSettings);
+
+      ImportSpec importSpec = new ImportSpecBuilder(project, GradleConstants.SYSTEM_ID)
+        .use(ProgressExecutionMode.IN_BACKGROUND_ASYNC)
+        .useDefaultCallback()
+        .build();
+      ExternalSystemUtil.refreshProject(gradleProjectPath, importSpec);
+    };
+    ExternalProjectsManagerImpl.getInstance(project)
+      .runWhenInitialized(
+        () -> DumbService.getInstance(project).runWhenSmart(
+          () -> ExternalSystemUtil.ensureToolWindowInitialized(project, GradleConstants.SYSTEM_ID)));
+
+    // execute when current dialog(if any) is closed
+    ExternalSystemUtil.invokeLater(project, ModalityState.NON_MODAL, runnable);
+  }
+
+  private static void setupGradleJvm(@NotNull Project project, @NotNull GradleProjectSettings projectSettings) {
+    final Pair<String, Sdk> sdkPair = ExternalSystemJdkUtil.getAvailableJdk(project);
+    if (!ExternalSystemJdkUtil.USE_INTERNAL_JAVA.equals(sdkPair.first)) {
+      projectSettings.setGradleJvm(sdkPair.first);
+    }
+    else {
+      projectSettings.setGradleJvm(ExternalSystemJdkUtil.USE_JAVA_HOME);
+    }
   }
 
   private static void createProjectPreview(Project project, String rootProjectPath, VirtualFile virtualFile) {

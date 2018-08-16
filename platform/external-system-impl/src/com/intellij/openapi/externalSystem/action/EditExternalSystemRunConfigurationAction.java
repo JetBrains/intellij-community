@@ -33,6 +33,7 @@ import java.util.List;
  */
 public class EditExternalSystemRunConfigurationAction extends ExternalSystemAction {
 
+  @Override
   protected boolean isEnabled(@NotNull AnActionEvent e) {
     if (!super.isEnabled(e)) return false;
     final List<ExternalSystemNode> selectedNodes = ExternalSystemDataKeys.SELECTED_NODES.getData(e.getDataContext());

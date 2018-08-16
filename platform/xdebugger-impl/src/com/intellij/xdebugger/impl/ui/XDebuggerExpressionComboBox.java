@@ -68,15 +68,18 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     return myComponent;
   }
 
+  @Override
   @Nullable
   public Editor getEditor() {
     return myEditor.getEditorTextField().getEditor();
   }
 
+  @Override
   public JComponent getEditorComponent() {
     return myEditor.getEditorTextField();
   }
 
+  @Override
   public void setEnabled(boolean enable) {
     if (enable == myComboBox.isEnabled()) return;
 
@@ -141,6 +144,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     myComboBox.getEditor().selectAll();
   }
 
+  @Override
   protected void prepareEditor(Editor editor) {
     super.prepareEditor(editor);
     editor.getColorsScheme().setEditorFontSize(Math.min(myComboBox.getFont().getSize(), EditorUtil.getEditorFont().getSize()));

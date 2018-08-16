@@ -36,11 +36,13 @@ public class ExpressionReturnValue implements ReturnValue {
     return myExpression;
   }
 
+  @Override
   public boolean isEquivalent(ReturnValue other) {
     if (!(other instanceof ExpressionReturnValue)) return false;
     return PsiEquivalenceUtil.areElementsEquivalent(myExpression, ((ExpressionReturnValue)other).myExpression);
   }
 
+  @Override
   @Nullable
   public PsiStatement createReplacement(@NotNull final PsiMethod extractedMethod, @NotNull final PsiMethodCallExpression methodCallExpression, @Nullable PsiType returnType)
     throws IncorrectOperationException {

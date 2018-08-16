@@ -166,7 +166,7 @@ class TestDirectory extends TestPackage {
             LOG.assertTrue(rootPath != null);
             JUnitStarter
               .printClassesList(Collections.singletonList("\u002B" + rootPath.toFile().getAbsolutePath()), packageName, "",
-                                classes.isEmpty() ? packageName + ".*" : StringUtil.join(classes, aClass -> ClassUtil.getJVMClassName(aClass), "||"), 
+                                classes.isEmpty() ? packageName + "\\..*" : StringUtil.join(classes, aClass -> ClassUtil.getJVMClassName(aClass), "||"), 
                                 myTempFile);
           }
           catch (IOException e) {

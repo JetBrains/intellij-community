@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.hierarchy;
 
 import com.intellij.icons.AllIcons;
@@ -48,8 +46,8 @@ import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.io.File;
 import java.text.MessageFormat;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implements OccurenceNavigator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.HierarchyBrowserBaseEx");
@@ -135,7 +133,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       myOccurrenceNavigators.put(key, new OccurenceNavigatorSupport(tree) {
         @Override
         @Nullable
-        protected Navigatable createDescriptorForNode(DefaultMutableTreeNode node) {
+        protected Navigatable createDescriptorForNode(@NotNull DefaultMutableTreeNode node) {
           HierarchyNodeDescriptor descriptor = getDescriptor(node);
           if (descriptor != null) {
             PsiElement psiElement = getOpenFileElementFromDescriptor(descriptor);
@@ -689,7 +687,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       for(String name: getValidScopeNames()) {
         group.add(new MenuAction(name));
       }
-      
+
       group.add(new ConfigureScopesAction());
 
       return group;
@@ -704,8 +702,9 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       ApplicationManager.getApplication().invokeLater(() -> doRefresh(true));
     }
 
+    @NotNull
     @Override
-    public final JComponent createCustomComponent(final Presentation presentation) {
+    public final JComponent createCustomComponent(@NotNull final Presentation presentation) {
       final JPanel panel = new JPanel(new GridBagLayout());
       panel.add(new JLabel(IdeBundle.message("label.scope")),
                 new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.BOTH, JBUI.insetsLeft(5), 0, 0));
@@ -727,7 +726,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
         selectScope(myScopeType);
       }
     }
-    
+
     private final class ConfigureScopesAction extends AnAction {
       private ConfigureScopesAction() {
         super("Configure...");

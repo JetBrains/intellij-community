@@ -55,24 +55,29 @@ public class HgHistoryProvider implements VcsHistoryProvider {
     myProject = project;
   }
 
+  @Override
   public VcsDependentHistoryComponents getUICustomization(VcsHistorySession session,
                                                           JComponent forShortcutRegistration) {
     return VcsDependentHistoryComponents.createOnlyColumns(ColumnInfo.EMPTY_ARRAY);
   }
 
+  @Override
   public AnAction[] getAdditionalActions(Runnable runnable) {
     return new AnAction[]{ShowAllAffectedGenericAction.getInstance(),
       ActionManager.getInstance().getAction(VcsActions.ACTION_COPY_REVISION_NUMBER)};
   }
 
+  @Override
   public boolean isDateOmittable() {
     return false;
   }
 
+  @Override
   public String getHelpId() {
     return null;
   }
 
+  @Override
   public VcsHistorySession createSessionFor(FilePath filePath) {
     final VirtualFile vcsRoot = VcsUtil.getVcsRootFor(myProject, filePath);
     if (vcsRoot == null) {
@@ -82,6 +87,7 @@ public class HgHistoryProvider implements VcsHistoryProvider {
     return createAppendableSession(vcsRoot, filePath, revisions, null);
   }
 
+  @Override
   public void reportAppendableHistory(FilePath filePath, final VcsAppendableHistorySessionPartner partner) throws VcsException {
     final VirtualFile vcsRoot = HgUtil.getHgRootOrThrow(myProject, filePath);
 
@@ -102,11 +108,13 @@ public class HgHistoryProvider implements VcsHistoryProvider {
                                                             @NotNull List<VcsFileRevision> revisions,
                                                             @Nullable VcsRevisionNumber number) {
     return new VcsAbstractHistorySession(revisions, number) {
+      @Override
       @Nullable
       protected VcsRevisionNumber calcCurrentRevisionNumber() {
         return new HgWorkingCopyRevisionsCommand(myProject).parents(vcsRoot, filePath).first;
       }
 
+      @Override
       public HistoryAsTreeProvider getHistoryAsTreeProvider() {
         return null;
       }
@@ -177,6 +185,7 @@ public class HgHistoryProvider implements VcsHistoryProvider {
     return HgHistoryUtil.getCommitRecords(project, result, new HgFileRevisionLogParser(project, originalHgFile, version));
   }
 
+  @Override
   public boolean supportsHistoryForDirectories() {
     return true;
   }

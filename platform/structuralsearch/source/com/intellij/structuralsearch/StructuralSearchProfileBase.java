@@ -352,6 +352,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
         myGlobalVisitor.handle(element);
         final MatchingHandler handler = pattern.getHandler(element);
         handler.setFilter(new NodeFilter() {
+          @Override
           public boolean accepts(PsiElement other) {
             return canBePatternVariableValue(other);
           }

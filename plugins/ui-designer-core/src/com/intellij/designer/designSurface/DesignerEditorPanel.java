@@ -238,6 +238,7 @@ public abstract class DesignerEditorPanel extends JPanel
     return content;
   }
 
+  @Override
   public final ThreeComponentsSplitter getContentSplitter() {
     return myContentSplitter;
   }
@@ -398,6 +399,7 @@ public abstract class DesignerEditorPanel extends JPanel
 
       if (message.myQuickFix != null) {
         warnLabel.addHyperlinkListener(new HyperlinkListener() {
+          @Override
           public void hyperlinkUpdate(final HyperlinkEvent e) {
             if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
               message.myQuickFix.run();
@@ -777,6 +779,7 @@ public abstract class DesignerEditorPanel extends JPanel
     return null;
   }
 
+  @Override
   @Nullable
   public RadComponent getRootComponent() {
     return myRootComponent;
@@ -914,6 +917,7 @@ public abstract class DesignerEditorPanel extends JPanel
       return DesignerEditorPanel.this.getRootSelectionDecorator();
     }
 
+    @Override
     @Nullable
     public EditOperation processRootOperation(OperationContext context) {
       return DesignerEditorPanel.this.processRootOperation(context);
@@ -1015,6 +1019,7 @@ public abstract class DesignerEditorPanel extends JPanel
   }
 
   private final class MyLayeredPane extends JBLayeredPane implements Scrollable {
+    @Override
     public void doLayout() {
       for (int i = getComponentCount() - 1; i >= 0; i--) {
         Component component = getComponent(i);
@@ -1022,10 +1027,12 @@ public abstract class DesignerEditorPanel extends JPanel
       }
     }
 
+    @Override
     public Dimension getMinimumSize() {
       return getPreferredSize();
     }
 
+    @Override
     public Dimension getPreferredSize() {
       Rectangle bounds = myScrollPane.getViewport().getBounds();
       Dimension size = getSceneSize(this);
@@ -1036,14 +1043,17 @@ public abstract class DesignerEditorPanel extends JPanel
       return size;
     }
 
+    @Override
     public Dimension getPreferredScrollableViewportSize() {
       return getPreferredSize();
     }
 
+    @Override
     public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
       return 10;
     }
 
+    @Override
     public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
       if (orientation == SwingConstants.HORIZONTAL) {
         return visibleRect.width - 10;
@@ -1051,10 +1061,12 @@ public abstract class DesignerEditorPanel extends JPanel
       return visibleRect.height - 10;
     }
 
+    @Override
     public boolean getScrollableTracksViewportWidth() {
       return false;
     }
 
+    @Override
     public boolean getScrollableTracksViewportHeight() {
       return false;
     }

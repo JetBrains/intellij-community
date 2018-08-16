@@ -21,6 +21,7 @@ final class ExternalEditorOptionsImpl implements ExternalEditorOptions, JDOMExte
     this.propertyChangeSupport = propertyChangeSupport;
   }
 
+  @Override
   public String getExecutablePath() {
     return executablePath;
   }
@@ -33,14 +34,17 @@ final class ExternalEditorOptionsImpl implements ExternalEditorOptions, JDOMExte
     }
   }
 
+  @Override
   public ExternalEditorOptions clone() throws CloneNotSupportedException {
     return (ExternalEditorOptions)super.clone();
   }
 
+  @Override
   public void inject(ExternalEditorOptions options) {
     setExecutablePath(options.getExecutablePath());
   }
 
+  @Override
   public boolean setOption(String name, Object value) {
     if (ATTR_EXECUTABLE_PATH.equals(name)) {
       setExecutablePath((String)value);
@@ -51,10 +55,12 @@ final class ExternalEditorOptionsImpl implements ExternalEditorOptions, JDOMExte
     return true;
   }
 
+  @Override
   public void readExternal(Element element) {
     executablePath = JDOMExternalizer.readString(element, ATTR_EXECUTABLE_PATH);
   }
 
+  @Override
   public void writeExternal(Element element) {
     if (!StringUtil.isEmpty(executablePath)) {
       JdomKt.addOptionTag(element, ATTR_EXECUTABLE_PATH, executablePath, "setting");

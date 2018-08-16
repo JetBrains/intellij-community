@@ -15,6 +15,7 @@ public enum GrCreateClassKind implements ClassKind {
     myDescription = description;
   }
 
+  @Override
   public String getDescription() {
     return myDescription;
   }

@@ -38,6 +38,7 @@ public abstract class ModulePackagingElementBase extends PackagingElement<Module
            && myModulePointer.equals(((ModulePackagingElementBase)element).myModulePointer);
   }
 
+  @Override
   public ModulePackagingElementState getState() {
     final ModulePackagingElementState state = new ModulePackagingElementState();
     if (myModulePointer != null) {
@@ -46,6 +47,7 @@ public abstract class ModulePackagingElementBase extends PackagingElement<Module
     return state;
   }
 
+  @Override
   public void loadState(@NotNull ModulePackagingElementState state) {
     final String moduleName = state.getModuleName();
     myModulePointer = moduleName != null ? ModulePointerManager.getInstance(myProject).create(moduleName) : null;

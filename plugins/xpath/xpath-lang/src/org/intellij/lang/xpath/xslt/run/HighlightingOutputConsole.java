@@ -59,26 +59,31 @@ public class HighlightingOutputConsole extends AdditionalTabComponent implements
         }
     }
 
+    @Override
     @Nullable
     public JComponent getSearchComponent() {
         return null;
     }
 
+    @Override
     @Nullable
     public ActionGroup getToolbarActions() {
         return null;
     }
 
+    @Override
     @Nullable
     public JComponent getToolbarContextComponent() {
         return null;
     }
 
+    @Override
     @Nullable
     public String getToolbarPlace() {
         return null;
     }
 
+    @Override
     public boolean isContentBuiltIn() {
         return true;
     }
@@ -88,10 +93,12 @@ public class HighlightingOutputConsole extends AdditionalTabComponent implements
         return (EditorEx)((DataProvider)myConsole).getData(LangDataKeys.EDITOR.getName());
     }
 
+    @Override
     public JComponent getPreferredFocusableComponent() {
         return myConsoleComponent;
     }
 
+    @Override
     @Nullable
     public Object getData(@NotNull @NonNls String dataId) {
         if (LangDataKeys.EDITOR.is(dataId)) {
@@ -108,11 +115,13 @@ public class HighlightingOutputConsole extends AdditionalTabComponent implements
         }
     }
 
+    @Override
     @NotNull
     public String getTabTitle() {
         return TAB_TITLE;
     }
 
+    @Override
     public void dispose() {
       Disposer.dispose(myConsole);
     }

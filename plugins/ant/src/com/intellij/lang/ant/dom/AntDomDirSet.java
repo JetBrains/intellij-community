@@ -43,6 +43,7 @@ public abstract class AntDomDirSet extends AntDomFilesProviderImpl{
   @Convert(value = AntPathConverter.class)
   public abstract GenericAttributeValue<PsiFileSystemItem> getFile();
 
+  @Override
   @NotNull
   protected List<File> getFiles(@Nullable AntDomPattern pattern, Set<AntFilesProvider> processed) {
     assert pattern != null;

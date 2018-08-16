@@ -243,12 +243,14 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
   private static class PathCollectionExternalizer implements DataExternalizer<Collection<String>> {
     static final PathCollectionExternalizer INSTANCE = new PathCollectionExternalizer();
 
+    @Override
     public void save(@NotNull DataOutput out, Collection<String> value) throws IOException {
       for (String str : value) {
         IOUtil.writeString(str, out);
       }
     }
 
+    @Override
     public Collection<String> read(@NotNull DataInput in) throws IOException {
       final Set<String> result = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
       final DataInputStream stream = (DataInputStream)in;

@@ -21,7 +21,19 @@ public class NSDefaults {
   private static class Path {
     private final @NotNull ArrayList<Node> myPath = new ArrayList<Node>();
 
-    String readStringVal(@NotNull String key) {
+    @Override
+    public String toString() {
+      String res = "";
+      for (Node pn: myPath) {
+        if (!res.isEmpty()) res += " | ";
+        res += pn.toString();
+      }
+      return res;
+    }
+
+    String readStringVal(@NotNull String key) { return readStringVal(key, false); }
+
+    String readStringVal(@NotNull String key, boolean doSyncronize) {
       if (myPath.isEmpty())
         return null;
 
@@ -30,6 +42,11 @@ public class NSDefaults {
         final ID defaults = Foundation.invoke("NSUserDefaults", "standardUserDefaults");
         if (defaults == null || defaults.equals(ID.NIL))
           return null;
+
+        if (doSyncronize) {
+          // NOTE: AppleDoc proposes to skip call of Foundation.invoke(myDefaults, "synchronize") - "this method is unnecessary and shouldn't be used."
+          Foundation.invoke(defaults, "synchronize");
+        }
 
         _readPath(defaults);
         final Node tail = myPath.get(myPath.size() - 1);
@@ -132,7 +149,7 @@ public class NSDefaults {
       }
 
       @Override
-      public String toString() { return String.format("sel=%s nodeName=%s",mySelector, myNodeName); }
+      public String toString() { return String.format("sel='%s' nodeName='%s'",mySelector, myNodeName); }
 
       boolean isValid() { return !cachedNodeObj.equals(ID.NIL); }
 
@@ -201,14 +218,35 @@ public class NSDefaults {
   /**
    * @return True when value has been changed
    */
-  public static boolean setShowFnKeysEnabled(String appId, boolean val) {
+  public static boolean setShowFnKeysEnabled(String appId, boolean val) { return setShowFnKeysEnabled(appId, val, false); }
+
+  public static boolean setShowFnKeysEnabled(String appId, boolean val, boolean performExtraDebugChecks) {
     final Path path = Path.createDomainPath(ourTouchBarDomain, ourTouchBarNode);
-    final String sval = path.readStringVal(appId);
+    String sval = path.readStringVal(appId);
     final boolean settingEnabled = sval != null && sval.equals(ourTouchBarShowFnValue);
-    if (val == settingEnabled)
+
+    final String initDesc = "appId='" + String.valueOf(appId)
+                            + "', value (requested be set) ='" + String.valueOf(val)
+                            + "', initial path (tail) value = '" + String.valueOf(sval)
+                            + "', path='" + path.toString() + "'";
+
+    if (val == settingEnabled) {
+      if (performExtraDebugChecks) LOG.error("nothing to change: " + initDesc);
       return false;
+    }
 
     path.writeStringValue(appId, val ? ourTouchBarShowFnValue : null);
+
+    if (performExtraDebugChecks) {
+      // just for embedded debug: make call of Foundation.invoke(myDefaults, "synchronize") - It waits for any pending asynchronous updates to the defaults database and returns; this method is unnecessary and shouldn't be used.
+      sval = path.readStringVal(appId, true);
+      final boolean isFNEnabled = sval != null && sval.equals(ourTouchBarShowFnValue);
+      if (val != isFNEnabled)
+        LOG.error("can't write value '" + String.valueOf(val) + "' (was written just now, but read '" + String.valueOf(sval) + "'): " + initDesc);
+      else
+        LOG.error("value '" + String.valueOf(val) + "' was written from second attempt: " + initDesc);
+    }
+
     return true;
   }
 

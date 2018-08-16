@@ -25,6 +25,7 @@ public class RemoteConfigurationType implements ConfigurationType {
   /**reflection*/
   public RemoteConfigurationType() {
     myFactory = new ConfigurationFactory(this) {
+      @Override
       @NotNull
       public RunConfiguration createTemplateConfiguration(Project project) {
         return new RemoteConfiguration(project, this);
@@ -33,18 +34,22 @@ public class RemoteConfigurationType implements ConfigurationType {
     };
   }
 
+  @Override
   public String getDisplayName() {
     return ExecutionBundle.message("remote.debug.configuration.display.name");
   }
 
+  @Override
   public String getConfigurationTypeDescription() {
     return ExecutionBundle.message("remote.debug.configuration.description");
   }
 
+  @Override
   public Icon getIcon() {
     return AllIcons.RunConfigurations.Remote;
   }
 
+  @Override
   public ConfigurationFactory[] getConfigurationFactories() {
     return new ConfigurationFactory[]{myFactory};
   }
@@ -54,6 +59,7 @@ public class RemoteConfigurationType implements ConfigurationType {
     return myFactory;
   }
 
+  @Override
   @NotNull
   public String getId() {
     return "Remote";

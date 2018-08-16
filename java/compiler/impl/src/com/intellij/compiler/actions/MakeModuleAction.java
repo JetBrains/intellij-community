@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public class MakeModuleAction extends CompileActionBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.actions.MakeModuleAction");
 
+  @Override
   protected void doAction(DataContext dataContext, Project project) {
     Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
     Module module;
@@ -44,6 +45,7 @@ public class MakeModuleAction extends CompileActionBase {
     }
   }
 
+  @Override
   public void update(@NotNull AnActionEvent event){
     super.update(event);
     Presentation presentation = event.getPresentation();

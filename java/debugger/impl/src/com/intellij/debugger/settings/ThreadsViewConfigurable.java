@@ -40,14 +40,17 @@ public class ThreadsViewConfigurable implements Configurable {
     myDataBinding.addBinding(new ToggleButtonBinding("SHOW_CURRENT_THREAD", myShowCurrentThreadChechBox));
   }
 
+  @Override
   public String getDisplayName() {
     return DebuggerBundle.message("threads.view.configurable.display.name");
   }
 
+  @Override
   public JComponent createComponent() {
     return myPanel;
   }
 
+  @Override
   public void apply() {
     myDataBinding.saveData(mySettings);
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
@@ -58,10 +61,12 @@ public class ThreadsViewConfigurable implements Configurable {
     }
   }
 
+  @Override
   public void reset() {
     myDataBinding.loadData(mySettings);
   }
 
+  @Override
   public boolean isModified() {
     return myDataBinding.isModified(mySettings);
   }

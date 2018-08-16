@@ -8,7 +8,6 @@
     <orderEntry type="jdk" jdkName="IDEA jdk" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.maven.server" />
-    <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>

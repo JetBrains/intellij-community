@@ -60,6 +60,7 @@ public abstract class AbstractFieldPanel extends JPanel {
 
   public abstract void setText(String text);
 
+  @Override
   public void setEnabled(boolean enabled) {
     getComponent().setEnabled(enabled);
     if (myLabel != null) {
@@ -70,6 +71,7 @@ public abstract class AbstractFieldPanel extends JPanel {
     }
   }
 
+  @Override
   public boolean isEnabled() {
     return myComponent != null && myComponent.isEnabled();
   }
@@ -84,7 +86,7 @@ public abstract class AbstractFieldPanel extends JPanel {
     if (myLabel == null){
       myLabel = new JLabel(myLabelText);
       add(myLabel, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insetsBottom(5), 0, 0));
-      myLabel.setLabelFor(getComponent());      
+      myLabel.setLabelFor(getComponent());
     }
     return myLabel;
   }
@@ -140,6 +142,7 @@ public abstract class AbstractFieldPanel extends JPanel {
       showViewerButton.setFocusable(false);
       showViewerButton.setIcon(PlatformIcons.OPEN_EDIT_DIALOG_ICON);
       showViewerButton.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           Viewer viewer = new Viewer();
           viewer.setTitle(myViewerDialogTitle);
@@ -184,27 +187,32 @@ public abstract class AbstractFieldPanel extends JPanel {
       init();
     }
 
+    @Override
     @NotNull
     protected Action[] createActions() {
       return new Action[]{getOKAction(), getCancelAction()};
     }
 
+    @Override
     public JComponent getPreferredFocusedComponent() {
       return myTextArea;
     }
 
+    @Override
     protected void doOKAction() {
       setText(myTextArea.getText());
       super.doOKAction();
     }
 
+    @Override
     protected JComponent createCenterPanel() {
       myTextArea = new JTextArea(10, 50);
       myTextArea.setText(getText());
       myTextArea.setWrapStyleWord(true);
       myTextArea.setLineWrap(true);
       myTextArea.getDocument().addDocumentListener(new DocumentAdapter() {
-        public void textChanged(DocumentEvent event) {
+        @Override
+        public void textChanged(@NotNull DocumentEvent event) {
           if (myChangeListener != null) {
             myChangeListener.run();
           }

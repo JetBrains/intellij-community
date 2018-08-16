@@ -15,9 +15,9 @@
  */
 package org.intellij.lang.xpath.xslt.util;
 
-import com.intellij.openapi.ui.InputValidator;
-import com.intellij.openapi.project.Project;
 import com.intellij.lang.refactoring.NamesValidator;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.InputValidator;
 
 public class NameValidator implements InputValidator {
     private final Project myProject;
@@ -28,10 +28,12 @@ public class NameValidator implements InputValidator {
         myNamesValidator = namesValidator;
     }
 
+    @Override
     public boolean checkInput(String inputString) {
         return myNamesValidator.isIdentifier(inputString, myProject);
     }
 
+    @Override
     public boolean canClose(String inputString) {
         return checkInput(inputString);
     }

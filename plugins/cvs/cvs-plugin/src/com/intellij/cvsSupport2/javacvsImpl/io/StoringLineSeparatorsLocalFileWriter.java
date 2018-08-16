@@ -60,14 +60,17 @@ public class StoringLineSeparatorsLocalFileWriter implements ILocalFileWriter {
     myProjectContentInfoProvider = projectContentInfoProvider;
   }
 
+  @Override
   public void setNextFileMode(String nextFileMode) {
     myLocalFileWriter.setNextFileMode(nextFileMode);
   }
 
+  @Override
   public void setNextFileDate(Date modifiedDate) {
     myLocalFileWriter.setNextFileDate(modifiedDate);
   }
 
+  @Override
   public void renameLocalFile(FileObject fileObject, ICvsFileSystem cvsFileSystem, String newFileName)
     throws IOException {
     final File originalFile = cvsFileSystem.getLocalFileSystem().getFile(fileObject);
@@ -81,6 +84,7 @@ public class StoringLineSeparatorsLocalFileWriter implements ILocalFileWriter {
     }
   }
 
+  @Override
   public void removeLocalFile(FileObject fileObject,
                               ICvsFileSystem cvsFileSystem,
                               IFileReadOnlyHandler fileReadOnlyHandler) throws IOException {
@@ -94,6 +98,7 @@ public class StoringLineSeparatorsLocalFileWriter implements ILocalFileWriter {
 
   }
 
+  @Override
   public void writeBinaryFile(FileObject fileObject,
                               int length,
                               InputStream inputStream,
@@ -122,6 +127,7 @@ public class StoringLineSeparatorsLocalFileWriter implements ILocalFileWriter {
     return !myProjectContentInfoProvider.fileIsUnderProject(localFile);
   }
 
+  @Override
   public void writeTextFile(FileObject fileObject,
                             int length,
                             InputStream inputStream,

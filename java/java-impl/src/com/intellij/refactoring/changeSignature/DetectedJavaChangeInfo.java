@@ -306,6 +306,7 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
     };
     final JavaChangeSignatureDialog dialog =
       new JavaChangeSignatureDialog(method.getProject(), descriptor, true, method) {
+        @Override
         protected BaseRefactoringProcessor createRefactoringProcessor() {
           return createChangeSignatureProcessor(method);
         }

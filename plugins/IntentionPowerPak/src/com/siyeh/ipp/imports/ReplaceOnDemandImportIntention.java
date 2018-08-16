@@ -29,11 +29,13 @@ import java.util.Set;
 
 public class ReplaceOnDemandImportIntention extends Intention {
 
+  @Override
   @NotNull
   protected PsiElementPredicate getElementPredicate() {
     return new OnDemandImportPredicate();
   }
 
+  @Override
   protected void processIntention(@NotNull PsiElement element) {
     final PsiImportStatementBase importStatementBase = (PsiImportStatementBase)element;
     if (importStatementBase instanceof PsiImportStatement) {
@@ -99,6 +101,7 @@ public class ReplaceOnDemandImportIntention extends Intention {
   private static final class PsiClassComparator
     implements Comparator<PsiClass> {
 
+    @Override
     public int compare(PsiClass class1, PsiClass class2) {
       final String qualifiedName1 = class1.getQualifiedName();
       final String qualifiedName2 = class2.getQualifiedName();

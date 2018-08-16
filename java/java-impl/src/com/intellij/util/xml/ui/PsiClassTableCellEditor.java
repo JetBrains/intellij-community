@@ -48,32 +48,39 @@ public class PsiClassTableCellEditor extends AbstractTableCellEditor {
     mySearchScope = searchScope;
   }
 
+  @Override
   public final Object getCellEditorValue() {
     return myEditor.getText();
   }
 
+  @Override
   public final boolean stopCellEditing() {
     final boolean b = super.stopCellEditing();
     myEditor = null;
     return b;
   }
 
+  @Override
   public boolean isCellEditable(EventObject e) {
     return !(e instanceof MouseEvent) || ((MouseEvent)e).getClickCount() >= 2;
   }
 
+  @Override
   public final Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
     final Document document = JavaReferenceEditorUtil.createDocument(value == null ? "" : (String)value, myProject, true);
     myEditor = new EditorTextField(document, myProject, StdFileTypes.JAVA){
+      @Override
       protected boolean shouldHaveBorder() {
         return false;
       }
 
+      @Override
       public void addNotify() {
         super.addNotify();
         final JComponent editorComponent = getEditor().getContentComponent();
         editorComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "ENTER");
         editorComponent.getActionMap().put("ENTER", new AbstractAction() {
+          @Override
           public void actionPerformed(ActionEvent e) {
             stopCellEditing();
           }
@@ -86,6 +93,7 @@ public class PsiClassTableCellEditor extends AbstractTableCellEditor {
     final FixedSizeButton button = new FixedSizeButton(myEditor);
     panel.add(button, BorderLayout.EAST);
     button.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject)
           .createInheritanceClassChooser(UIBundle.message("choose.class"), mySearchScope, null, true, true, Conditions.alwaysTrue());
@@ -97,6 +105,7 @@ public class PsiClassTableCellEditor extends AbstractTableCellEditor {
       }
     });
     panel.addFocusListener(new FocusListener() {
+      @Override
       public void focusGained(FocusEvent e) {
         if (!e.isTemporary() && myEditor != null) {
           IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
@@ -105,13 +114,16 @@ public class PsiClassTableCellEditor extends AbstractTableCellEditor {
         }
       }
 
+      @Override
       public void focusLost(FocusEvent e) {
       }
     });
     myEditor.addFocusListener(new FocusListener() {
+      @Override
       public void focusGained(FocusEvent e) {
       }
 
+      @Override
       public void focusLost(FocusEvent e) {
         if (!e.isTemporary()) {
           stopCellEditing();

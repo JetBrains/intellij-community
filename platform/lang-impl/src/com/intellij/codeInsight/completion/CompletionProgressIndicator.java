@@ -102,9 +102,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final Semaphore myFinishSemaphore = new Semaphore(1);
   @NotNull private final OffsetMap myOffsetMap;
   private final Set<Pair<Integer, ElementPattern<String>>> myRestartingPrefixConditions = ContainerUtil.newConcurrentSet();
-  private final LookupAdapter myLookupListener = new LookupAdapter() {
+  private final LookupListener myLookupListener = new LookupListener() {
     @Override
-    public void lookupCanceled(final LookupEvent event) {
+    public void lookupCanceled(@NotNull final LookupEvent event) {
       finishCompletionProcess(true);
     }
   };

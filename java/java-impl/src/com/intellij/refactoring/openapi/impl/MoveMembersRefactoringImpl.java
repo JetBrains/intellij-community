@@ -32,18 +32,22 @@ import java.util.List;
 public class MoveMembersRefactoringImpl extends RefactoringImpl<MoveMembersProcessor> implements MoveMembersRefactoring {
   MoveMembersRefactoringImpl(Project project, final PsiMember[] elements, final String targetClassQualifiedName, final String newVisibility, final boolean makeEnumConstants) {
     super(new MoveMembersProcessor(project, new MoveMembersOptions() {
+      @Override
       public PsiMember[] getSelectedMembers() {
         return elements;
       }
 
+      @Override
       public String getTargetClassName() {
         return targetClassQualifiedName;
       }
 
+      @Override
       public String getMemberVisibility() {
         return newVisibility;
       }
 
+      @Override
       public boolean makeEnumConstant() {
         return makeEnumConstants;
       }
@@ -51,10 +55,12 @@ public class MoveMembersRefactoringImpl extends RefactoringImpl<MoveMembersProce
     }));
   }
 
+  @Override
   public List<PsiElement> getMembers() {
     return myProcessor.getMembers();
   }
 
+  @Override
   public PsiClass getTargetClass() {
     return myProcessor.getTargetClass();
   }

@@ -61,11 +61,13 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     }
 
 
+    @Override
     @NotNull
     protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usageInfos) {
         return new MyUsageViewDescriptorAdapter();
     }
 
+    @Override
     @NotNull
     protected UsageInfo[] findUsages() {
         int usageCount = myOtherExpressions.size() + 1;
@@ -102,6 +104,7 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
         return usageInfos;
     }
 
+  @Override
   protected void performRefactoring(@NotNull UsageInfo[] usageInfos) {
         XmlTag tag;
         if (myTemplate != null) {
@@ -159,6 +162,7 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
         }
     }
 
+    @Override
     @NotNull
     protected String getCommandName() {
         return XsltIntroduceParameterAction.COMMAND_NAME;
@@ -166,11 +170,13 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
 
     private class MyUsageViewDescriptorAdapter extends UsageViewDescriptorAdapter {
 
+        @Override
         @NotNull
         public PsiElement[] getElements() {
             return new PsiElement[]{ myTemplate };
         }
 
+        @Override
         public String getProcessedElementsHeader() {
             return "Adding parameter to template";
         }

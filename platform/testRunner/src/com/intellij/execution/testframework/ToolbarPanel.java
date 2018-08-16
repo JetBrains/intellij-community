@@ -42,14 +42,14 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
                       final JComponent parent) {
     super(new BorderLayout());
     final DefaultActionGroup actionGroup = new DefaultActionGroup(null, false);
-    actionGroup.addAction(new DumbAwareToggleInvertedBooleanProperty(ExecutionBundle.message("junit.run.hide.passed.action.name"), ExecutionBundle.message("junit.run.hide.passed.action.description"), 
-                                                                     AllIcons.RunConfigurations.ShowPassed, 
+    actionGroup.addAction(new DumbAwareToggleInvertedBooleanProperty(ExecutionBundle.message("junit.run.hide.passed.action.name"), ExecutionBundle.message("junit.run.hide.passed.action.description"),
+                                                                     AllIcons.RunConfigurations.ShowPassed,
                                                                      properties, TestConsoleProperties.HIDE_PASSED_TESTS));
-    actionGroup.add(new DumbAwareToggleInvertedBooleanProperty("Show Ignored", "Show Ignored", AllIcons.RunConfigurations.ShowIgnored, 
+    actionGroup.add(new DumbAwareToggleInvertedBooleanProperty("Show Ignored", "Show Ignored", AllIcons.RunConfigurations.ShowIgnored,
                                                                properties, TestConsoleProperties.HIDE_IGNORED_TEST));
     actionGroup.addSeparator();
 
-   
+
 
     actionGroup.addAction(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.sort.alphabetically.action.name"),
                                                              ExecutionBundle.message("junit.runing.info.sort.alphabetically.action.description"),
@@ -141,7 +141,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
           builder.setTestsComparator(model);
         }
       }
-    }, model, true); 
+    }, model, true);
     TestFrameworkActions.addPropertyListener(TestConsoleProperties.SORT_BY_DURATION, new TestFrameworkPropertyListener<Boolean>() {
       @Override
       public void onChanged(Boolean value) {
@@ -153,30 +153,37 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     }, model, true);
   }
 
+  @Override
   public boolean hasNextOccurence() {
     return myOccurenceNavigator.hasNextOccurence();
   }
 
+  @Override
   public boolean hasPreviousOccurence() {
     return myOccurenceNavigator.hasPreviousOccurence();
   }
 
+  @Override
   public OccurenceInfo goNextOccurence() {
     return myOccurenceNavigator.goNextOccurence();
   }
 
+  @Override
   public OccurenceInfo goPreviousOccurence() {
     return myOccurenceNavigator.goPreviousOccurence();
   }
 
+  @Override
   public String getNextOccurenceActionName() {
     return myOccurenceNavigator.getNextOccurenceActionName();
   }
 
+  @Override
   public String getPreviousOccurenceActionName() {
     return myOccurenceNavigator.getPreviousOccurenceActionName();
   }
 
+  @Override
   public void dispose() {
     myScrollToSource.setModel(null);
     if (myExportAction != null) {
@@ -189,7 +196,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     private TestFrameworkRunningModel myModel;
 
     public SortByDurationAction(TestConsoleProperties properties) {
-      super(ExecutionBundle.message("junit.runing.info.sort.by.statistics.action.name"), 
+      super(ExecutionBundle.message("junit.runing.info.sort.by.statistics.action.name"),
             ExecutionBundle.message("junit.runing.info.sort.by.statistics.action.description"),
             AllIcons.RunConfigurations.SortbyDuration, properties,
             TestConsoleProperties.SORT_BY_DURATION);

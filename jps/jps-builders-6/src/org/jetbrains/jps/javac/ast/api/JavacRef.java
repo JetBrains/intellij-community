@@ -80,6 +80,7 @@ public interface JavacRef {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public boolean isAnonymous() {
       return myAnonymous;
     }
@@ -95,6 +96,7 @@ public interface JavacRef {
       myParamCount = paramCount;
     }
 
+    @Override
     public byte getParamCount() {
       return myParamCount;
     }

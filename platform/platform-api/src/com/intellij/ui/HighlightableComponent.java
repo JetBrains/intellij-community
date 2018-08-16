@@ -197,6 +197,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
     myDoNotHighlight = b;
   }
 
+  @Override
   protected void paintComponent(Graphics g) {
 
     // determine color of background
@@ -396,6 +397,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
     return map;
   }
 
+  @Override
   public Dimension getPreferredSize() {
     FontMetrics defFontMetrics = getFontMetrics(getFont());
 

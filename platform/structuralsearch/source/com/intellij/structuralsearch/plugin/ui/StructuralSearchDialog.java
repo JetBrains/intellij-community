@@ -146,7 +146,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     final Document document = profile.createDocument(searchContext.getProject(), myFileType, myDialect, text);
     document.addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(final DocumentEvent event) {
+      public void documentChanged(@NotNull final DocumentEvent event) {
         initiateValidation();
       }
     });

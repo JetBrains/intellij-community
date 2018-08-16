@@ -50,6 +50,7 @@ public class DownloadSelectedSourcesAndDocsAction extends MavenProjectsAction {
     return result == null ? Collections.emptyList() : result;
   }
 
+  @Override
   protected void perform(@NotNull MavenProjectsManager manager, List<MavenProject> mavenProjects, AnActionEvent e) {
     manager.scheduleArtifactsDownloading(mavenProjects, getDependencies(e), mySources, myDocs, null);
   }

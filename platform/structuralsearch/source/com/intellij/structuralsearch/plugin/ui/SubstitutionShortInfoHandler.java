@@ -111,7 +111,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
   }
 
   @Override
-  public void caretPositionChanged(CaretEvent e) {
+  public void caretPositionChanged(@NotNull CaretEvent e) {
     handleInputFocusMovement(e.getNewPosition(), true);
   }
 

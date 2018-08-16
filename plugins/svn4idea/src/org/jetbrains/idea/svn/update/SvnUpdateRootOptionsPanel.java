@@ -159,6 +159,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     }
   }
 
+  @Override
   public JPanel getPanel() {
     return myPanel;
   }
@@ -177,6 +178,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     return rootInfo != null ? SvnBranchConfigurationManager.getInstance(myVcs.getProject()).get(rootInfo.getVirtualFile()) : null;
   }
 
+  @Override
   public void reset(final SvnConfiguration configuration) {
     final UpdateRootInfo rootInfo = configuration.getUpdateRootInfo(myRoot.getIOFile(), myVcs);
 
@@ -195,6 +197,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     myBranchField.setEnabled(myUpdateToSpecificUrl.isSelected() && (mySourceUrl != null));
   }
 
+  @Override
   public void apply(final SvnConfiguration configuration) throws ConfigurationException {
     final UpdateRootInfo rootInfo = configuration.getUpdateRootInfo(myRoot.getIOFile(), myVcs);
     if (myUpdateToSpecificUrl.isSelected()) {
@@ -214,6 +217,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     rootInfo.setRevision(revision);
   }
 
+  @Override
   public boolean canApply() {
     return true;
   }

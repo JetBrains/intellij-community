@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.connections;
 
 import com.intellij.cvsSupport2.errorHandling.ErrorRegistry;
@@ -59,6 +45,7 @@ public abstract class ConnectionOnProcess implements IConnection {
     myErrorRegistry = errorRegistry;
     }
 
+  @Override
   public synchronized void close() throws IOException {
     if (myWaitForThreadFuture != null) {
       myWaitForThreadFuture.cancel(true);
@@ -110,24 +97,29 @@ public abstract class ConnectionOnProcess implements IConnection {
 
   }
 
+  @Override
   public InputStream getInputStream() {
     return myInputStream;
   }
 
+  @Override
   public OutputStream getOutputStream() {
     return myOutputStream;
   }
 
   public abstract void open() throws AuthenticationException;
 
+  @Override
   public String getRepository() {
     return myRepository;
   }
 
+  @Override
   public void verify(IStreamLogger streamLogger) throws AuthenticationException {
     open(streamLogger);
   }
 
+  @Override
   public void open(IStreamLogger streamLogger) throws AuthenticationException {
     open();
   }
@@ -139,6 +131,7 @@ public abstract class ConnectionOnProcess implements IConnection {
 
       myErrThread = new ReadProcessThread(
         new BufferedReader(new InputStreamReader(myProcess.getErrorStream(), EncodingManager.getInstance().getDefaultCharset()))) {
+        @Override
         protected void textAvailable(String s) {
           myErrorText.append(s);
           myErrorRegistry.registerError(s);
@@ -202,6 +195,7 @@ public abstract class ConnectionOnProcess implements IConnection {
       myIsProcessTerminated = isProcessTerminated;
     }
 
+    @Override
     public void run() {
       try {
         while (readAvailable()) {

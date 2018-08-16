@@ -56,6 +56,7 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
   private DocCommentPanel myJavaDocPanel;
 
   private final InterfaceContainmentVerifier myInterfaceContainmentVerifier = new InterfaceContainmentVerifier() {
+    @Override
     public boolean checkedInterfacesContain(PsiMethod psiMethod) {
       return PullUpProcessor.checkedInterfacesContain(myMemberInfos, psiMethod);
     }
@@ -78,6 +79,7 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
     return myJavaDocPanel.getPolicy();
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.refactoring.memberPullUp.PullUpDialog";
   }
@@ -90,6 +92,7 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
   protected void initClassCombo(JComboBox classCombo) {
     classCombo.setRenderer(new ClassCellRenderer(classCombo.getRenderer()));
     classCombo.addItemListener(new ItemListener() {
+      @Override
       public void itemStateChanged(ItemEvent e) {
         if (e.getStateChange() == ItemEvent.SELECTED) {
           if (myMemberSelectionPanel != null) {
@@ -102,6 +105,7 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
     });
   }
 
+  @Override
   protected PsiClass getPreselection() {
     PsiClass preselection = RefactoringHierarchyUtil.getNearestBaseClass(myClass, false);
 
@@ -123,10 +127,12 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
     return preselection;
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.MEMBERS_PULL_UP);
   }
 
+  @Override
   protected void doAction() {
     if (!myCallback.checkConflicts(this)) return;
     JavaRefactoringSettings.getInstance().PULL_UP_MEMBERS_JAVADOC = myJavaDocPanel.getPolicy();
@@ -159,7 +165,7 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
       info.setToAbstract(abstractWhenDisabled);
       if (myMemberInfoModel.isAbstractEnabled(info) || abstractWhenDisabled) {
         if (!hasJavadoc &&
-            member instanceof PsiDocCommentOwner && 
+            member instanceof PsiDocCommentOwner &&
             ((PsiDocCommentOwner)member).getDocComment() != null) {
           hasJavadoc = true;
         }

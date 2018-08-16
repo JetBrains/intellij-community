@@ -47,6 +47,7 @@ public class AdditionalOptionsPanel implements RefreshableOnComponent, TagNameFi
     myConfiguration = configuration;
     TagsHelper.addChooseBranchAction(myTagName, files, project);
     myTag.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         updateEnable();
       }
@@ -60,12 +61,14 @@ public class AdditionalOptionsPanel implements RefreshableOnComponent, TagNameFi
     myOverrideExisting.setEnabled(tag);
   }
 
+  @Override
   public void refresh() {
     myTagName.setText(myConfiguration.TAG_AFTER_PROJECT_COMMIT_NAME);
     myOverrideExisting.setSelected(false); // always reset override existing checkbox
     updateEnable();
   }
 
+  @Override
   public void saveState() {
     if (!myIsCorrect) {
       throw new InputException(CvsBundle.message("error.message.incorrect.tag.name", myErrorMessage), myTagName);
@@ -75,23 +78,28 @@ public class AdditionalOptionsPanel implements RefreshableOnComponent, TagNameFi
     myConfiguration.TAG_AFTER_PROJECT_COMMIT_NAME = myTagName.getText().trim();
   }
 
+  @Override
   public void restoreState() {
     refresh();
   }
 
+  @Override
   public JComponent getComponent() {
     return myPanel;
   }
 
+  @Override
   public void enableOkAction() {
     myIsCorrect = true;
   }
 
+  @Override
   public void disableOkAction(String errorMessage) {
     myIsCorrect = false;
     myErrorMessage = errorMessage;
   }
 
+  @Override
   public boolean tagFieldIsActive() {
     return myTag.isSelected();
   }

@@ -100,11 +100,13 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
                       CodeStyle.getSettings(elements[0].getContainingFile());
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(@NotNull final UsageInfo[] usages) {
     return new ExtractMethodObjectViewDescriptor(getMethod());
   }
 
+  @Override
   @NotNull
   protected UsageInfo[] findUsages() {
     final ArrayList<UsageInfo> result = new ArrayList<>();
@@ -154,6 +156,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 
+  @Override
   public void performRefactoring(@NotNull final UsageInfo[] usages) {
     try {
       if (isCreateInnerClass()) {
@@ -375,7 +378,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
 
     for (PsiLocalVariable var : vars) {
       final String fieldName = var2FieldNames.get(var.getName());
-      for (PsiReference reference : ReferencesSearch.search(var)) {
+      for (PsiReference reference : ReferencesSearch.search(var, var.getUseScope())) {
         reference.handleElementRename(fieldName);
       }
     }
@@ -529,6 +532,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     return "";
   }
 
+  @Override
   @NotNull
   protected String getCommandName() {
     return REFACTORING_NAME;
@@ -624,7 +628,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       parameterList.add(parm);
 
       final PsiField field = createField(parm, constructor, parameterModifierList.hasModifierProperty(PsiModifier.FINAL));
-      for (PsiReference reference : ReferencesSearch.search(parameter)) {
+      for (PsiReference reference : ReferencesSearch.search(parameter, parameter.getUseScope())) {
         reference.handleElementRename(field.getName());
       }
     }
@@ -723,7 +727,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   public PsiClass getInnerClass() {
     return myInnerClass;
   }
-  
+
   protected boolean isFoldingApplicable() {
     return true;
   }
@@ -867,8 +871,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
           PsiStatement st = null;
           final String pureName = getPureName(variable);
           final int varIdxInOutput = ArrayUtil.find(myOutputVariables, variable);
-          final String getterName = varIdxInOutput > -1 && myOutputFields[varIdxInOutput] != null 
-                                    ? GenerateMembersUtil.suggestGetterName(myOutputFields[varIdxInOutput]) 
+          final String getterName = varIdxInOutput > -1 && myOutputFields[varIdxInOutput] != null
+                                    ? GenerateMembersUtil.suggestGetterName(myOutputFields[varIdxInOutput])
                                     : GenerateMembersUtil.suggestGetterName(pureName, variable.getType(), myProject);
           if (isDeclaredInside(variable)) {
             st = myElementFactory.createStatementFromText(

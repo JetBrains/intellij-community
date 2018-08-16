@@ -44,6 +44,7 @@ public class NSDeclTracker implements ModificationTracker {
         myCount = 0;
     }
 
+    @Override
     public long getModificationCount() {
         return myFile.getModificationStamp() == myRootCount ? myCount : queryCount();
     }

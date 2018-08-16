@@ -100,6 +100,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   @NonNls public static final String OVERRIDES_ATTR_NAME = "overrides";
   @NonNls public static final String KEEP_CONTENT_ATTR_NAME = "keep-content";
   @NonNls public static final String PROJECT_TYPE = "project-type";
+  @NonNls public static final String UNREGISTER_ELEMENT_NAME = "unregister";
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.impl.ActionManagerImpl");
   private static final int DEACTIVATED_TIMER_DELAY = 5000;
   private static final int TIMER_DELAY = 500;
@@ -860,6 +861,28 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
+  private void processUnregisterNode(Element element, PluginId pluginId) {
+    String id = element.getAttributeValue(ID_ATTR_NAME);
+    if (id == null) {
+      reportActionError(pluginId, "'id' attribute is required for 'unregister' elements");
+      return;
+    }
+    AnAction action = getAction(id);
+    if (action == null) {
+      reportActionError(pluginId, "Trying to unregister non-existing action " + id);
+      return;
+    }
+
+    AbbreviationManager.getInstance().removeAllAbbreviations(id);
+    for (AnAction anAction : myId2Action.values()) {
+      if (anAction instanceof DefaultActionGroup) {
+        ((DefaultActionGroup) anAction).remove(action, id);
+      }
+    }
+
+    unregisterAction(id);
+  }
+
   private void processKeyboardShortcutNode(Element element, String actionId, PluginId pluginId) {
     String firstStrokeString = element.getAttributeValue(FIRST_KEYSTROKE_ATTR_NAME);
     if (firstStrokeString == null) {
@@ -956,6 +979,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
     else if (REFERENCE_ELEMENT_NAME.equals(name)) {
       processReferenceNode(child, pluginId);
+    }
+    else if (UNREGISTER_ELEMENT_NAME.equals(name)) {
+      processUnregisterNode(child, pluginId);
     }
     else {
       reportActionError(pluginId, "unexpected name of element \"" + name + "\n");

@@ -34,17 +34,21 @@ public class SoutMavenConsole extends MavenConsole {
     super(outputLevel, printStrackTrace);
   }
 
+  @Override
   public boolean canPause() {
     return false;
   }
 
+  @Override
   public boolean isOutputPaused() {
     return false;
   }
 
+  @Override
   public void setOutputPaused(boolean outputPaused) {
   }
 
+  @Override
   public void attachToProcess(ProcessHandler processHandler) {
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override
@@ -62,6 +66,7 @@ public class SoutMavenConsole extends MavenConsole {
     });
   }
 
+  @Override
   protected void doPrint(String text, OutputType type) {
     System.out.print(text);
     MavenLog.LOG.info(StringUtil.trimTrailing(text));

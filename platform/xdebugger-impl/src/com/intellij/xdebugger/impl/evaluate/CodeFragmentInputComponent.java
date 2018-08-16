@@ -62,6 +62,7 @@ public class CodeFragmentInputComponent extends EvaluationInputComponent {
     return myMultilineEditor;
   }
 
+  @Override
   public JPanel getMainComponent() {
     return myMainForm.getMainPanel();
   }

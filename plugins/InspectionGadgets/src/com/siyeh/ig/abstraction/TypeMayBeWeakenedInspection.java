@@ -28,9 +28,7 @@ import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -44,7 +42,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.util.ObjectUtils;
@@ -52,6 +49,7 @@ import com.intellij.util.Query;
 import com.intellij.util.containers.OrderedSet;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.WeakestTypeFinder;
 import com.siyeh.ig.ui.UiUtils;
@@ -63,9 +61,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.*;
-import java.util.List;
 import java.util.stream.Collectors;
 
 public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -345,10 +341,11 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
       final PsiElement replacement;
       if (isInferredType) {
         PsiTypeElement newTypeElement = factory.createTypeElement(classType);
-        replacement = typeElement.replace(newTypeElement);
-      } else {
+        replacement = new CommentTracker().replaceAndRestoreComments(typeElement, newTypeElement);
+      }
+      else {
         final PsiJavaCodeReferenceElement referenceElement = factory.createReferenceElementByType(classType);
-        replacement = componentReferenceElement.replace(referenceElement);
+        replacement = new CommentTracker().replaceAndRestoreComments(componentReferenceElement, referenceElement);
       }
       final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
       javaCodeStyleManager.shortenClassReferences(replacement);

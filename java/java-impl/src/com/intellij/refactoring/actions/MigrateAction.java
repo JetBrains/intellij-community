@@ -24,11 +24,13 @@ import com.intellij.refactoring.RefactoringManager;
 import org.jetbrains.annotations.NotNull;
 
 public class MigrateAction extends AnAction {
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     RefactoringManager.getInstance(project).getMigrateManager().showMigrationDialog();
   }
 
+  @Override
   public void update(@NotNull AnActionEvent event){
     Presentation presentation = event.getPresentation();
     Project project = event.getProject();

@@ -174,7 +174,7 @@ public class DarculaUIUtil {
     return -1;
   }
 
-  public static void paintCellEditorBorder(Graphics2D g2, Component c, Rectangle r) {
+  public static void paintCellEditorBorder(Graphics2D g2, Component c, Rectangle r, boolean hasFocus) {
     g2 = (Graphics2D)g2.create();
     try {
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -188,9 +188,11 @@ public class DarculaUIUtil {
       border.append(new Rectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2), false);
 
       Object op = ((JComponent)c).getClientProperty("JComponent.outline");
-      Outline outline = op == null ? Outline.focus : Outline.valueOf(op.toString());
-      outline.setGraphicsColor(g2, true);
-      g2.fill(border);
+      if (op != null || hasFocus) {
+        Outline outline = op == null ? Outline.focus : Outline.valueOf(op.toString());
+        outline.setGraphicsColor(g2, true);
+        g2.fill(border);
+      }
     } finally {
       g2.dispose();
     }
@@ -211,9 +213,10 @@ public class DarculaUIUtil {
 
       EditorTextField editorTextField = UIUtil.getParentOfType(EditorTextField.class, c);
       if (editorTextField == null) return;
+      boolean hasFocus = editorTextField.getFocusTarget().hasFocus();
 
       if (isTableCellEditor(c)) {
-        paintCellEditorBorder((Graphics2D)g, c, new Rectangle(x, y, width, height));
+        paintCellEditorBorder((Graphics2D)g, c, new Rectangle(x, y, width, height), hasFocus);
       } else {
         Graphics2D g2 = (Graphics2D)g.create();
         try {
@@ -242,7 +245,6 @@ public class DarculaUIUtil {
 
           g2.translate(x, y);
 
-          boolean hasFocus = editorTextField.getFocusTarget().hasFocus();
           Object op = editorTextField.getClientProperty("JComponent.outline");
           if (op != null) {
             paintOutlineBorder(g2, width, height, 0, true, hasFocus, Outline.valueOf(op.toString()));
@@ -267,13 +269,13 @@ public class DarculaUIUtil {
       super(editorTextField, editor);
       editor.addEditorMouseListener(new EditorMouseListener() {
         @Override
-        public void mouseEntered(EditorMouseEvent e) {
+        public void mouseEntered(@NotNull EditorMouseEvent e) {
           editorTextField.putClientProperty(HOVER_PROPERTY, Boolean.TRUE);
           editorTextField.repaint();
         }
 
         @Override
-        public void mouseExited(EditorMouseEvent e) {
+        public void mouseExited(@NotNull EditorMouseEvent e) {
           editorTextField.putClientProperty(HOVER_PROPERTY, Boolean.FALSE);
           editorTextField.repaint();
         }

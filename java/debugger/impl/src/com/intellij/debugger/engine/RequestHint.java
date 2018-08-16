@@ -70,6 +70,7 @@ public class RequestHint {
       frameCount = stepThread.frameCount();
 
       position = ContextUtil.getSourcePosition(new StackFrameContext() {
+        @Override
         public StackFrameProxy getFrameProxy() {
           try {
             return stepThread.frame(0);
@@ -80,6 +81,7 @@ public class RequestHint {
           }
         }
 
+        @Override
         @NotNull
         public DebugProcess getDebugProcess() {
           return suspendContext.getDebugProcess();

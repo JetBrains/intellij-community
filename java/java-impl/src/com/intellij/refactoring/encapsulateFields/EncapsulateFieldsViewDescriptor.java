@@ -33,19 +33,23 @@ class EncapsulateFieldsViewDescriptor implements UsageViewDescriptor {
     }
   }
 
+  @Override
   public String getProcessedElementsHeader() {
     return RefactoringBundle.message("encapsulate.fields.fields.to.be.encapsulated");
   }
 
+  @Override
   @NotNull
   public PsiElement[] getElements() {
     return myFields;
   }
 
+  @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("references.to.be.changed", UsageViewBundle.getReferencesString(usagesCount, filesCount));
   }
 
+  @Override
   public String getCommentReferencesText(int usagesCount, int filesCount) {
     return null;
   }

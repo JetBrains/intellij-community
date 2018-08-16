@@ -35,10 +35,12 @@ import java.util.*;
 public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameJavaMethodProcessor");
 
+  @Override
   public boolean canProcessElement(@NotNull final PsiElement element) {
     return element instanceof PsiMethod;
   }
 
+  @Override
   public void renameElement(@NotNull final PsiElement psiElement,
                             @NotNull final String newName,
                             @NotNull final UsageInfo[] usages,
@@ -108,7 +110,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     }
     qualifyOuterMemberReferences(outerHides);
     qualifyStaticImportReferences(staticImportHides);
-    
+
     if (!method.isConstructor() && method.isPhysical() && method.findDeepestSuperMethods().length == 0) {
       PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, true, CommonClassNames.JAVA_LANG_OVERRIDE);
       if (annotation != null && annotation.isPhysical()) {
@@ -150,12 +152,14 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     }
   }
 
+  @Override
   @NotNull
   public Collection<PsiReference> findReferences(@NotNull final PsiElement element) {
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(element.getProject());
     return MethodReferencesSearch.search((PsiMethod)element, projectScope, true).findAll();
   }
 
+  @Override
   public void findCollisions(@NotNull final PsiElement element, @NotNull final String newName, @NotNull final Map<? extends PsiElement, String> allRenames,
                              @NotNull final List<UsageInfo> result) {
     final PsiMethod methodToRename = (PsiMethod)element;
@@ -194,7 +198,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
 
       final PsiMethod[] methodsByName = containingClass.findMethodsByName(newName, true);
       if (methodsByName.length > 0) {
-        
+
         for (UsageInfo info : result) {
           final PsiElement element = info.getElement();
           if (element instanceof PsiReferenceExpression) {
@@ -217,7 +221,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
                 result.add(new UnresolvableCollisionUsageInfo(element, methodToRename) {
                   @Override
                   public String getDescription() {
-                    return "Method call would be linked to \"" + RefactoringUIUtil.getDescription(resolveResultElement, true)  + 
+                    return "Method call would be linked to \"" + RefactoringUIUtil.getDescription(resolveResultElement, true)  +
                            "\" after rename";
                   }
                 });
@@ -242,6 +246,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     return prototype;
   }
 
+  @Override
   public void findExistingNameConflicts(@NotNull final PsiElement element, @NotNull final String newName, @NotNull final MultiMap<PsiElement, String> conflicts) {
     if (element instanceof PsiCompiledElement) return;
     final PsiMethod refactoredMethod = (PsiMethod)element;
@@ -291,19 +296,23 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     }
   }
 
+  @Override
   @NonNls
   public String getHelpID(final PsiElement element) {
     return HelpID.RENAME_METHOD;
   }
 
+  @Override
   public boolean isToSearchInComments(@NotNull final PsiElement psiElement) {
     return JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_METHOD;
   }
 
+  @Override
   public void setToSearchInComments(@NotNull final PsiElement element, final boolean enabled) {
     JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_METHOD = enabled;
   }
 
+  @Override
   @Nullable
   public PsiElement substituteElementToRename(@NotNull PsiElement element, Editor editor) {
     PsiMethod psiMethod = (PsiMethod)element;
@@ -370,10 +379,12 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     }
   }
 
+   @Override
    public boolean isToSearchForTextOccurrences(@NotNull final PsiElement element) {
     return JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_METHOD;
   }
 
+  @Override
   public void setToSearchForTextOccurrences(@NotNull final PsiElement element, final boolean enabled) {
     JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_METHOD = enabled;
   }

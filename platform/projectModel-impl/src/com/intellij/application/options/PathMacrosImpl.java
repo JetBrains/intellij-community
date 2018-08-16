@@ -97,6 +97,7 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
     if (!myIgnoredMacros.contains(name)) myIgnoredMacros.add(name);
   }
 
+  @Override
   public long getModificationCount() {
     myLock.readLock().lock();
     try {

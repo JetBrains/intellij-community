@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
 import com.google.common.collect.Collections2;
@@ -66,11 +52,13 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
     return result;
   }
 
+  @Override
   @NotNull
   public PyExpression[] getArguments() {
     return childrenToPsi(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), PyExpression.EMPTY_ARRAY);
   }
 
+  @Override
   @Nullable
   public PyKeywordArgument getKeywordArgument(String name) {
     ASTNode node = getNode().getFirstChildNode();
@@ -143,6 +131,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
     return Queues.newArrayDeque(PsiTreeUtil.findChildrenOfType(this, PyKeywordArgument.class));
   }
 
+  @Override
   public void addArgumentFirst(PyExpression arg) {
     ASTNode node = getNode();
     ASTNode[] pars = node.getChildren(TokenSet.create(PyTokenTypes.LPAR));
@@ -210,6 +199,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
     }
   }
 
+  @Override
   @Nullable
   public ASTNode getClosingParen() {
     ASTNode node = getNode();
@@ -233,6 +223,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
     }
   }
 
+  @Override
   public void addArgumentAfter(PyExpression argument, @Nullable PyExpression afterThis) {
     if (afterThis == null) {
       addArgumentFirst(argument);
@@ -280,6 +271,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
     }
   }
 
+  @Override
   @Nullable
   public PyCallExpression getCallExpression() {
     return PsiTreeUtil.getParentOfType(this, PyCallExpression.class);

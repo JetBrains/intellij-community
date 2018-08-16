@@ -72,7 +72,7 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
     Disposer.register(parent, this);
   }
 
-  public void highlightInBackground(@NotNull String branchToCompare, @NotNull VcsLogDataProvider dataProvider) {
+  public void highlightInBackground(@NotNull String branchToCompare) {
     if (myTask != null) {
       LOG.error("Shouldn't be possible");
       return;
@@ -85,7 +85,7 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
       return;
     }
 
-    myTask = new MyTask(myProject, repositories, dataProvider, branchToCompare);
+    myTask = new MyTask(myProject, repositories, branchToCompare);
     myTask.queue();
   }
 
@@ -161,7 +161,6 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
 
     if (refreshHappened) {
       Map<GitRepository, GitBranch> repositoriesWithCurrentBranches = myTask.myRepositoriesWithCurrentBranches;
-      VcsLogDataProvider provider = myTask.myProvider;
 
       stopTask();
 
@@ -169,7 +168,7 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
       Map<GitRepository, GitBranch> repositories = getRepositories(dataPack.getLogProviders(), comparedBranch);
       if (repositories.equals(repositoriesWithCurrentBranches)) {
         // but not if current branch changed
-        highlightInBackground(comparedBranch, provider);
+        highlightInBackground(comparedBranch);
       }
       else {
         LOG.debug(String.format("Repositories with current branches changed. Actual:\n%s\nExpected:\n%s",
@@ -223,7 +222,6 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
 
     @NotNull private final Project myProject;
     @NotNull private final Map<GitRepository, GitBranch> myRepositoriesWithCurrentBranches;
-    @NotNull private final VcsLogDataProvider myProvider;
     @NotNull private final String myComparedBranch;
 
     @NotNull private final Set<CommitId> myCollectedNonPickedCommits = ContainerUtil.newHashSet();
@@ -232,12 +230,10 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
 
     public MyTask(@NotNull Project project,
                   @NotNull Map<GitRepository, GitBranch> repositoriesWithCurrentBranches,
-                  @NotNull VcsLogDataProvider dataProvider,
                   @NotNull String branchToCompare) {
       super(project, "Comparing Branches...");
       myProject = project;
       myRepositoriesWithCurrentBranches = repositoriesWithCurrentBranches;
-      myProvider = dataProvider;
       myComparedBranch = branchToCompare;
     }
 

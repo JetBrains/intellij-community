@@ -4,7 +4,6 @@ package com.intellij.util.messages.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.EventDispatcher;
@@ -333,15 +332,19 @@ public class MessageBusImpl implements MessageBus {
     }
     else {
       final Map<MessageBusImpl, Integer> map = asRoot().myWaitingBuses.get();
-      if (map != null) {
-        List<MessageBusImpl> buses = ContainerUtil.filter(map.keySet(), new Condition<MessageBusImpl>() {
-          @Override
-          public boolean value(MessageBusImpl bus) {
-            return ensureAlive(map, bus);
+      if (map != null && !map.isEmpty()) {
+        List<MessageBusImpl> liveBuses = null;
+        for (MessageBusImpl bus : map.keySet()) {
+          if (ensureAlive(map, bus)) {
+            if (liveBuses == null) {
+              liveBuses = new SmartList<MessageBusImpl>();
+            }
+            liveBuses.add(bus);
           }
-        });
-        if (!buses.isEmpty()) {
-          pumpWaitingBuses(buses);
+        }
+
+        if (liveBuses != null) {
+          pumpWaitingBuses(liveBuses);
         }
       }
     }

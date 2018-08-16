@@ -49,6 +49,7 @@ import java.util.Optional;
  * @author nik
  */
 public abstract class MavenCompilingTestCase extends MavenImportingTestCase {
+  @Override
   protected void tearDown() throws Exception {
     try {
       CompilerTestUtil.disableExternalCompiler(myProject);

@@ -105,6 +105,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       }
     }
 
+    @Override
     public List<String> getDescendantsOf(String className, boolean includeSelf, Project project) {
       SmartList<String> result = new SmartList<>();
 

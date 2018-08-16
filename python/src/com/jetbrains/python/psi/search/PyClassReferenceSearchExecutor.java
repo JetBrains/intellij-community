@@ -18,6 +18,7 @@ import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class PyClassReferenceSearchExecutor extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
+  @Override
   public void processQuery(@NotNull ReferencesSearch.SearchParameters queryParameters, @NotNull final Processor<? super PsiReference> consumer) {
     PyClass pyClass = PyUtil.as(queryParameters.getElementToSearch(), PyClass.class);
     if (pyClass == null) {

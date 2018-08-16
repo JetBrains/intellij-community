@@ -59,7 +59,7 @@ public class EditorHyperlinkSupport {
 
     editor.addEditorMouseListener(new EditorMouseListener() {
       @Override
-      public void mouseClicked(EditorMouseEvent e) {
+      public void mouseClicked(@NotNull EditorMouseEvent e) {
         final MouseEvent mouseEvent = e.getMouseEvent();
         if (mouseEvent.getButton() == MouseEvent.BUTTON1 && !mouseEvent.isPopupTrigger()) {
           Runnable runnable = getLinkNavigationRunnable(myEditor.xyToLogicalPosition(e.getMouseEvent().getPoint()));

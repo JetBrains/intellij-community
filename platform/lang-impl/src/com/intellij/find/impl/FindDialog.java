@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.find.impl;
 
@@ -89,8 +75,8 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -287,7 +273,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
 
       DocumentListener listener = new DocumentListener() {
         @Override
-        public void documentChanged(final DocumentEvent e) {
+        public void documentChanged(@NotNull final DocumentEvent e) {
           handleComboBoxValueChanged(comboBox);
         }
       };
@@ -299,7 +285,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
         final javax.swing.text.Document document = ((JTextComponent)editorComponent).getDocument();
         final DocumentAdapter documentAdapter = new DocumentAdapter() {
           @Override
-          protected void textChanged(javax.swing.event.DocumentEvent e) {
+          protected void textChanged(@NotNull javax.swing.event.DocumentEvent e) {
             handleAnyComboBoxValueChanged(comboBox);
           }
         };
@@ -365,6 +351,26 @@ public class FindDialog extends DialogWrapper implements FindUI {
           else action.actionPerformed(e);
         }
       }.registerCustomShortcutSet(CommonShortcuts.ENTER, comboBox, myDisposable);
+      DumbAwareAction escAction = new DumbAwareAction() {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          doCancelAction();
+        }
+
+        @Override
+        public void update(@NotNull AnActionEvent e) {
+          if (myInputComboBox.isPopupVisible()
+              || myReplaceComboBox.isPopupVisible()
+              || mySearchContext.isPopupVisible()
+              || myDirectoryComboBox.isPopupVisible()
+              || myFileFilter.isPopupVisible()
+              || myScopeCombo.getComboBox().isPopupVisible()
+          ) {
+            e.getPresentation().setEnabled(false);
+          }
+        }
+      };
+      escAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, this.getRootPane(), myDisposable);
     }
   }
 
@@ -585,9 +591,9 @@ public class FindDialog extends DialogWrapper implements FindUI {
     topOptionsPanel.setLayout(new GridLayout(1, 2, UIUtil.DEFAULT_HGAP, 0));
     topOptionsPanel.add(createFindOptionsPanel());
     optionsPanel.add(topOptionsPanel, gbConstraints);
-    
+
     JPanel resultsOptionPanel = null;
-    
+
     if (myHelper.getModel().isMultipleFiles()) {
       optionsPanel.add(createGlobalScopePanel(), gbConstraints);
       gbConstraints.weightx = 1;
@@ -1547,7 +1553,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
     private final ColoredTableCellRenderer myFileAndLineNumber = new ColoredTableCellRenderer() {
       private final SimpleTextAttributes REPEATED_FILE_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, new JBColor(0xCCCCCC, 0x5E5E5E));
       private final SimpleTextAttributes ORDINAL_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, new JBColor(0x999999, 0x999999));
-      
+
       @Override
       protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
         if (value instanceof UsageInfo2UsageAdapter) {

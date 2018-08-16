@@ -48,10 +48,12 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     myProject = project;
   }
 
+  @Override
   public ChangesBrowserSettingsEditor<ChangeBrowserSettings> createFilterUI(final boolean showDateFilter) {
     return new CvsVersionFilterComponent(showDateFilter);
   }
 
+  @Override
   @Nullable
   public VcsCommittedListsZipper getZipper() {
     return new MyZipper();
@@ -63,11 +65,13 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
 
     private MyZipper() {
       super(new GroupCreator() {
+        @Override
         public Object createKey(final RepositoryLocation location) {
           final CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation) location;
           return cvsLocation.getEnvironment().getRepository();
         }
 
+        @Override
         public RepositoryLocationGroup createGroup(final Object key, final Collection<RepositoryLocation> locations) {
           final RepositoryLocationGroup group = new RepositoryLocationGroup((String) key);
           for (RepositoryLocation location : locations) {
@@ -99,6 +103,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     }
   }
 
+  @Override
   @Nullable
   public CvsRepositoryLocation getLocationFor(final FilePath root) {
     if (!CvsUtil.fileIsUnderCvs(root.getIOFile())) {
@@ -110,15 +115,18 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     return new CvsRepositoryLocation(root.getVirtualFile(), connectionSettings, module);
   }
 
+  @Override
   public ChangeListColumn[] getColumns() {
     return new ChangeListColumn[] { ChangeListColumn.DATE, ChangeListColumn.NAME, ChangeListColumn.DESCRIPTION, BRANCH_COLUMN };
   }
 
+  @Override
   @Nullable
   public VcsCommittedViewAuxiliary createActions(final DecoratorManager manager, final RepositoryLocation location) {
     return null;
   }
 
+  @Override
   public int getUnlimitedCountValue() {
     return 0;
   }
@@ -192,6 +200,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     return true;
   }
 
+  @Override
   public List<CvsChangeList> getCommittedChanges(ChangeBrowserSettings settings, RepositoryLocation location, final int maxCount)
     throws VcsException {
     final CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation) location;
@@ -200,6 +209,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     return loadCommittedChanges(settings, module, cvsLocation.getEnvironment(), rootFile);
   }
 
+  @Override
   public void loadCommittedChanges(ChangeBrowserSettings settings,
                                    RepositoryLocation location,
                                    int maxCount,
@@ -282,35 +292,43 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     }
   }
 
+  @Override
   public int getFormatVersion() {
     return 3;
   }
 
+  @Override
   public void writeChangeList(final DataOutput stream, final CvsChangeList list) throws IOException {
     list.writeToStream(stream);
   }
 
+  @Override
   public CvsChangeList readChangeList(final RepositoryLocation location, final DataInput stream) throws IOException {
     final CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation) location;
     return new CvsChangeList(myProject, cvsLocation.getEnvironment(), cvsLocation.getRootFile(), stream);
   }
 
+  @Override
   public boolean isMaxCountSupported() {
     return false;
   }
 
+  @Override
   public Collection<FilePath> getIncomingFiles(final RepositoryLocation location) {
     return null;
   }
 
+  @Override
   public boolean refreshCacheByNumber() {
     return false;
   }
 
+  @Override
   public String getChangelistTitle() {
     return null;
   }
 
+  @Override
   public boolean isChangeLocallyAvailable(final FilePath filePath, @Nullable VcsRevisionNumber localRevision,
                                           VcsRevisionNumber changeRevision, final CvsChangeList changeList) {
     if (localRevision instanceof CvsRevisionNumber && changeRevision instanceof CvsRevisionNumber) {
@@ -368,15 +386,18 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     return dirTag.substring(1);
   }
 
+  @Override
   public boolean refreshIncomingWithCommitted() {
     return true;
   }
 
   private final ChangeListColumn<CvsChangeList> BRANCH_COLUMN = new ChangeListColumn<CvsChangeList>() {
+    @Override
     public String getTitle() {
       return CvsBundle.message("changelist.column.branch");
     }
 
+    @Override
     public Object getValue(final CvsChangeList changeList) {
       final String branch = changeList.getBranch();
       return branch == null ? "HEAD" : branch;

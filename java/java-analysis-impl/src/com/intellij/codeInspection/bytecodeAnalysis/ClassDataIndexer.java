@@ -188,6 +188,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
 
     classReader.accept(new KeyedMethodVisitor() {
 
+      @Override
       protected MethodVisitor visitMethod(final MethodNode node, Member method, final EKey key) {
         return new MethodVisitor(Opcodes.API_VERSION, node) {
           private boolean jsr;

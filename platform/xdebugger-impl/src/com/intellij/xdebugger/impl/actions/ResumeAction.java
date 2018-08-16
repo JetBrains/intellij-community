@@ -54,6 +54,7 @@ public class ResumeAction extends XDebuggerActionBase implements DumbAware {
     }
   }
 
+  @Override
   @NotNull
   protected DebuggerActionHandler getHandler(@NotNull final DebuggerSupport debuggerSupport) {
     return debuggerSupport.getResumeActionHandler();

@@ -212,8 +212,11 @@ public final class PythonImportUtils {
   }
 
   private static boolean isPossibleModuleReference(PyElement node) {
-    if (node.getParent() instanceof PyCallExpression && node == ((PyCallExpression) node.getParent()).getCallee()) {
-      return false;
+    final PyCallExpression callExpression = as(node.getParent(), PyCallExpression.class);
+    if (callExpression != null && node == callExpression.getCallee()) {
+      final PyDecorator decorator = as(callExpression, PyDecorator.class);
+      // getArgumentList() still returns empty (but not null) element in this case
+      return decorator != null && !decorator.hasArgumentList();
     }
     if (node.getParent() instanceof PyArgumentList) {
       final PyArgumentList argumentList = (PyArgumentList)node.getParent();

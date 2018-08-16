@@ -53,6 +53,7 @@ public class ChangesViewContentManager implements ChangesViewContentI {
     myProject.getMessageBus().connect().subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, new MyVcsListener());
   }
 
+  @Override
   public void setUp(ToolWindow toolWindow) {
 
     final ContentManager contentManager = toolWindow.getContentManager();
@@ -60,6 +61,7 @@ public class ChangesViewContentManager implements ChangesViewContentI {
     contentManager.addContentManagerListener(myContentManagerListener);
 
     Disposer.register(myProject, new Disposable(){
+      @Override
       public void dispose() {
         contentManager.removeContentManagerListener(myContentManagerListener);
       }
@@ -140,6 +142,7 @@ public class ChangesViewContentManager implements ChangesViewContentI {
     }
   }
 
+  @Override
   public boolean isAvailable() {
     final List<VcsDirectoryMapping> mappings = myVcsManager.getDirectoryMappings();
     return mappings.stream().anyMatch(mapping -> !StringUtil.isEmpty(mapping.getVcs()));
@@ -166,6 +169,7 @@ public class ChangesViewContentManager implements ChangesViewContentI {
     if (toolWindow != null) ((ToolWindowEx)toolWindow).setTitleActions(myToolWindowTitleActions.toArray(AnAction.EMPTY_ARRAY));
   }
 
+  @Override
   public void addContent(Content content) {
     if (myContentManager == null) {
       myAddedContents.add(content);
@@ -175,17 +179,20 @@ public class ChangesViewContentManager implements ChangesViewContentI {
     }
   }
 
+  @Override
   public void removeContent(final Content content) {
     if (myContentManager != null && (! myContentManager.isDisposed())) { // for unit tests
       myContentManager.removeContent(content, true);
     }
   }
 
+  @Override
   public void setSelectedContent(final Content content) {
     if (myContentManager == null) return;
     myContentManager.setSelectedContent(content);
   }
 
+  @Override
   @Nullable
   public <T> T getActiveComponent(final Class<T> aClass) {
     if (myContentManager == null) return null;
@@ -204,6 +211,7 @@ public class ChangesViewContentManager implements ChangesViewContentI {
     return Comparing.equal(contentName, selectedContent.getTabName());
   }
 
+  @Override
   public void selectContent(@NotNull String tabName) {
     selectContent(tabName, false);
   }
@@ -219,6 +227,7 @@ public class ChangesViewContentManager implements ChangesViewContentI {
   }
 
   private class MyVcsListener implements VcsListener {
+    @Override
     public void directoryMappingChanged() {
       myVcsChangeAlarm.cancelAllRequests();
       myVcsChangeAlarm.addRequest(() -> {
@@ -244,6 +253,7 @@ public class ChangesViewContentManager implements ChangesViewContentI {
   }
 
   private class MyContentManagerListener extends ContentManagerAdapter {
+    @Override
     public void selectionChanged(final ContentManagerEvent event) {
       Content content = event.getContent();
       if (content.getComponent() instanceof ContentStub) {

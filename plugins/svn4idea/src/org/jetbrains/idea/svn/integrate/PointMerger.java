@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.vcs.VcsException;
@@ -37,6 +37,7 @@ public class PointMerger extends Merger {
     mySelectedChanges = ContainerUtil.sorted(selectedChanges, ChangesComparator.getInstance());
   }
 
+  @Override
   protected void doMerge() throws VcsException {
     for (Change change : mySelectedChanges) {
       SvnRepositoryContentRevision before = (SvnRepositoryContentRevision)change.getBeforeRevision();
@@ -92,6 +93,7 @@ public class PointMerger extends Merger {
       return ourInstance;
     }
 
+    @Override
     public int compare(final Change o1, final Change o2) {
       final SvnRepositoryContentRevision after1 = (SvnRepositoryContentRevision) o1.getAfterRevision();
       final SvnRepositoryContentRevision after2 = (SvnRepositoryContentRevision) o2.getAfterRevision();

@@ -40,23 +40,28 @@ public class InlineToAnonymousClassDialog extends InlineOptionsWithSearchSetting
     init();
   }
 
+  @Override
   protected String getNameLabelText() {
     String className = PsiFormatUtil.formatClass(myClass, PsiFormatUtil.SHOW_NAME);
     return RefactoringBundle.message("inline.to.anonymous.name.label", className);
   }
 
+  @Override
   protected String getBorderTitle() {
     return RefactoringBundle.message("inline.to.anonymous.border.title");
   }
 
+  @Override
   protected String getInlineAllText() {
     return RefactoringBundle.message("all.references.and.remove.the.class");
   }
 
+  @Override
   protected String getInlineThisText() {
     return RefactoringBundle.message("this.reference.only.and.keep.the.class");
   }
 
+  @Override
   protected boolean isInlineThis() {
     return false;
   }
@@ -71,6 +76,7 @@ public class InlineToAnonymousClassDialog extends InlineOptionsWithSearchSetting
     return JavaRefactoringSettings.getInstance().INLINE_CLASS_SEARCH_IN_NON_JAVA;
   }
 
+  @Override
   protected void doAction() {
     super.doAction();
     invokeRefactoring(new InlineToAnonymousClassProcessor(getProject(), myClass, myCallToInline, isInlineThisOnly(),
@@ -86,12 +92,13 @@ public class InlineToAnonymousClassDialog extends InlineOptionsWithSearchSetting
   protected boolean allowInlineAll() {
     return true;
   }
-  
+
   @Override
   protected void saveSearchInTextOccurrences(boolean searchInTextOccurrences) {
     JavaRefactoringSettings.getInstance().INLINE_CLASS_SEARCH_IN_NON_JAVA = searchInTextOccurrences;
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.INLINE_CLASS);
   }

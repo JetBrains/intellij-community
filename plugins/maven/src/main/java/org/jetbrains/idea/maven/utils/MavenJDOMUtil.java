@@ -69,9 +69,11 @@ public class MavenJDOMUtil {
     final Element[] result = {null};
     XmlBuilderDriver driver = new XmlBuilderDriver(text);
     XmlBuilder builder = new XmlBuilder() {
+      @Override
       public void doctype(@Nullable CharSequence publicId, @Nullable CharSequence systemId, int startOffset, int endOffset) {
       }
 
+      @Override
       public ProcessingOrder startTag(CharSequence localName, String namespace, int startoffset, int endoffset, int headerEndOffset) {
         String name = localName.toString();
         if (StringUtil.isEmptyOrSpaces(name)) return ProcessingOrder.TAGS;
@@ -96,6 +98,7 @@ public class MavenJDOMUtil {
         return ProcessingOrder.TAGS_AND_TEXTS;
       }
 
+      @Override
       public void endTag(CharSequence localName, String namespace, int startoffset, int endoffset) {
         String name = localName.toString();
         if (StringUtil.isEmptyOrSpaces(name)) return;
@@ -110,16 +113,20 @@ public class MavenJDOMUtil {
         }
       }
 
+      @Override
       public void textElement(CharSequence text, CharSequence physical, int startoffset, int endoffset) {
         stack.getLast().addContent(JDOMUtil.legalizeText(text.toString()));
       }
 
+      @Override
       public void attribute(CharSequence name, CharSequence value, int startoffset, int endoffset) {
       }
 
+      @Override
       public void entityRef(CharSequence ref, int startOffset, int endOffset) {
       }
 
+      @Override
       public void error(String message, int startOffset, int endOffset) {
         if (handler != null) handler.onSyntaxError();
       }

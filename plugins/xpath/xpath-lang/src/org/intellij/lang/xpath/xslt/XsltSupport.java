@@ -355,6 +355,7 @@ public class XsltSupport {
   private static class XsltSupportProvider implements ParameterizedCachedValueProvider<XsltChecker.LanguageLevel, PsiFile> {
     public static final ParameterizedCachedValueProvider<XsltChecker.LanguageLevel, PsiFile> INSTANCE = new XsltSupportProvider();
 
+    @Override
     public CachedValueProvider.Result<XsltChecker.LanguageLevel> compute(PsiFile psiFile) {
       if (!(psiFile instanceof XmlFile)) {
         return CachedValueProvider.Result.create(XsltChecker.LanguageLevel.NONE, PsiModificationTracker.MODIFICATION_COUNT);

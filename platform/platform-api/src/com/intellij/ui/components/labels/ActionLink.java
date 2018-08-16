@@ -78,6 +78,7 @@ public class ActionLink extends LinkLabel implements DataProvider {
     return myActiveColor == null ? super.getActive() : myActiveColor;
   }
 
+  @Override
   protected Color getTextColor() {
     return myUnderline ? getActiveColor() : getNormal();
   }

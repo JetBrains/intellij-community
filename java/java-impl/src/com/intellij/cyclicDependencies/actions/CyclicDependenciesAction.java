@@ -46,13 +46,15 @@ public class CyclicDependenciesAction extends AnAction{
     myTitle = AnalysisScopeBundle.message("action.cyclic.dependency.title");
   }
 
+  @Override
   public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     presentation.setEnabled(
-      getInspectionScope(event.getDataContext()) != null || 
+      getInspectionScope(event.getDataContext()) != null ||
       event.getData(CommonDataKeys.PROJECT) != null);
   }
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
@@ -175,6 +177,7 @@ public class CyclicDependenciesAction extends AnAction{
       return myIncludeTestSourcesCb.isSelected();
     }
 
+    @Override
     protected JComponent createCenterPanel() {
       myScopePanel.setBorder(IdeBorderFactory.createTitledBorder(
         AnalysisScopeBundle.message("analysis.scope.title", myAnalysisNoun), true));

@@ -44,7 +44,7 @@ class ActionTracker {
     });
     myEditor.getDocument().addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         if (!myIgnoreDocumentChanges) {
           myActionsHappened = true;
         }

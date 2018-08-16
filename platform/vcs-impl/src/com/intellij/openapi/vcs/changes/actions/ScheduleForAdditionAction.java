@@ -34,6 +34,7 @@ import static com.intellij.util.containers.UtilKt.notNullize;
 
 public class ScheduleForAdditionAction extends AnAction implements DumbAware {
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     boolean enabled = e.getProject() != null && !isEmpty(getUnversionedFiles(e, e.getProject()));
 
@@ -48,6 +49,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
     }
   }
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     List<VirtualFile> unversionedFiles = getUnversionedFiles(e, project).collect(Collectors.toList());

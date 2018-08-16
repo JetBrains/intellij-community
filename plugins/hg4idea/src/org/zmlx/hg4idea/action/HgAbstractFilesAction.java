@@ -42,6 +42,7 @@ abstract class HgAbstractFilesAction extends DumbAwareAction {
   protected abstract void batchPerform(Project project, final HgVcs activeVcs,
     List<VirtualFile> files, DataContext context);
 
+  @Override
   public final void actionPerformed(@NotNull AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
 
@@ -60,6 +61,7 @@ abstract class HgAbstractFilesAction extends DumbAwareAction {
 
     final AbstractVcsHelper helper = AbstractVcsHelper.getInstance(project);
     List<VcsException> exceptions = helper.runTransactionRunnable(vcs, new TransactionRunnable() {
+      @Override
       public void run(List<VcsException> exceptions) {
         try {
           execute(project, vcs, files, dataContext);
@@ -72,6 +74,7 @@ abstract class HgAbstractFilesAction extends DumbAwareAction {
     helper.showErrors(exceptions, vcs.getName());
   }
 
+  @Override
   public final void update(@NotNull AnActionEvent e) {
     super.update(e);
 

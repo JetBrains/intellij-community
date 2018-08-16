@@ -10,7 +10,6 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
@@ -19,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -45,6 +45,7 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
     return myResourceBundle.isValid() ? myResourceBundle : null;
   }
 
+  @Override
   @NotNull
   public synchronized StructureViewTreeElement[] getChildren() {
     final MultiMap<String, IProperty> propertyNames = getPropertiesMap(myResourceBundle, myShowOnlyIncomplete);
@@ -126,17 +127,21 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
     return propertyNames;
   }
 
+  @Override
   @NotNull
   public ItemPresentation getPresentation() {
     return new ItemPresentation() {
+      @Override
       public String getPresentableText() {
         return myResourceBundle.isValid() ? myResourceBundle.getBaseName() : null;
       }
 
+      @Override
       public String getLocationString() {
         return null;
       }
 
+      @Override
       public Icon getIcon(boolean open) {
         return AllIcons.FileTypes.Properties;
       }
@@ -158,14 +163,17 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
     return ContainerUtil.map2Array(files, new PsiFile[files.size()], propertiesFile -> propertiesFile.getContainingFile());
   }
 
+  @Override
   public void navigate(boolean requestFocus) {
 
   }
 
+  @Override
   public boolean canNavigate() {
     return false;
   }
 
+  @Override
   public boolean canNavigateToSource() {
     return false;
   }

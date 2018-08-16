@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.util.Comparing;
@@ -60,6 +46,7 @@ public final class RadRootContainer extends RadContainer implements IRootContain
   /**
    * Always returns {@code false} because root group isn't selectable.
    */
+  @Override
   public boolean isSelected() {
     return false;
   }
@@ -67,12 +54,14 @@ public final class RadRootContainer extends RadContainer implements IRootContain
   /**
    * {@code RadRootContainer} is not selectable
    */
+  @Override
   public void setSelected(final boolean ignored) { }
 
   /**
    * @return full qualified name of the class. If there is no bound class
    * then the method returns {@code null}.
    */
+  @Override
   @Nullable
   public String getClassToBind(){
     return myClassToBind;
@@ -90,6 +79,7 @@ public final class RadRootContainer extends RadContainer implements IRootContain
     myMainComponentBinding = mainComponentBinding;
   }
 
+  @Override
   public void write(final XmlWriter writer) {
     writer.startElement("form", Utils.FORM_NAMESPACE);
     try{
@@ -161,6 +151,7 @@ public final class RadRootContainer extends RadContainer implements IRootContain
     }
   }
 
+  @Override
   public RadButtonGroup[] getButtonGroups() {
     return myButtonGroups.toArray(new RadButtonGroup[0]);
   }
@@ -218,6 +209,7 @@ public final class RadRootContainer extends RadContainer implements IRootContain
     return result;
   }
 
+  @Override
   public String getButtonGroupName(IComponent component) {
     for(RadButtonGroup group: myButtonGroups) {
       if (group.contains((RadComponent)component)) {
@@ -227,6 +219,7 @@ public final class RadRootContainer extends RadContainer implements IRootContain
     return null;
   }
 
+  @Override
   public String[] getButtonGroupComponentIds(String groupName) {
     for(RadButtonGroup group: myButtonGroups) {
       if (group.getName().equals(groupName)) {
@@ -259,6 +252,7 @@ public final class RadRootContainer extends RadContainer implements IRootContain
     myInspectionSuppressions.add(new LwInspectionSuppression(inspectionId, component == null ? null : component.getId()));
   }
 
+  @Override
   public boolean isInspectionSuppressed(final String inspectionId, final String componentId) {
     for(LwInspectionSuppression suppression: myInspectionSuppressions) {
       if ((suppression.getComponentId() == null || suppression.getComponentId().equals(componentId)) &&

@@ -101,7 +101,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
                                MoveDestination moveDestination,
                                String newClassName,
                                String newVisibility,
-                               boolean generateAccessors, 
+                               boolean generateAccessors,
                                List<MemberInfo> enumConstants,
                                boolean extractInnerClass) {
     super(sourceClass.getProject());
@@ -208,6 +208,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
   private boolean initializerDependsOnMoved(PsiElement initializer) {
     final boolean [] dependsOnMoved = new boolean[]{false};
     initializer.accept(new JavaRecursiveElementWalkingVisitor(){
+      @Override
       public void visitReferenceExpression(final PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         final PsiElement resolved = expression.resolve();
@@ -249,16 +250,19 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     return false;
   }
 
+  @Override
   @NotNull
   protected String getCommandName() {
     return RefactorJBundle.message("extracted.class.command.name", newClassName);
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usageInfos) {
     return new ExtractClassUsageViewDescriptor(sourceClass);
   }
 
+  @Override
   protected void performRefactoring(@NotNull UsageInfo[] usageInfos) {
     final PsiClass psiClass = buildClass(true);
     if (psiClass == null) return;
@@ -465,6 +469,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     return "private";
   }
 
+  @Override
   public void findUsages(@NotNull List<FixableUsageInfo> usages) {
     for (PsiField field : fields) {
       findUsagesForField(field, usages);
@@ -821,6 +826,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     private final Set<PsiField> fieldsNeedingGetter = new HashSet<>();
     private final Set<PsiField> fieldsNeedingSetter = new HashSet<>();
 
+    @Override
     public void visitReferenceExpression(PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       if (isProhibitedReference(expression)) {
@@ -837,6 +843,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       return modifierList.hasModifierProperty(PsiModifier.STATIC) && modifierList.hasModifierProperty(PsiModifier.FINAL);
     }
 
+    @Override
     public void visitAssignmentExpression(PsiAssignmentExpression expression) {
       super.visitAssignmentExpression(expression);
 
@@ -849,6 +856,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       }
     }
 
+    @Override
     public void visitUnaryExpression(PsiUnaryExpression expression) {
       super.visitUnaryExpression(expression);
       checkSetterNeeded(expression.getOperand(), expression.getOperationSign());

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -37,6 +23,7 @@ import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -59,10 +46,11 @@ public class EditorNotificationsImpl extends EditorNotifications {
   private static final ExecutorService ourExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
     "EditorNotificationsImpl Pool");
   private final MergingUpdateQueue myUpdateMerger;
+  @NotNull private final Project myProject;
 
-  public EditorNotificationsImpl(Project project) {
-    super(project);
+  public EditorNotificationsImpl(@NotNull Project project) {
     myUpdateMerger = new MergingUpdateQueue("EditorNotifications update merger", 100, true, null, project);
+    myProject = project;
     MessageBusConnection connection = project.getMessageBus().connect(project);
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
@@ -115,9 +103,8 @@ public class EditorNotificationsImpl extends EditorNotifications {
 
   @Nullable
   private ReadTask createTask(@NotNull final ProgressIndicator indicator, @NotNull final VirtualFile file) {
-    List<FileEditor> editors = ContainerUtil.filter(
-      FileEditorManager.getInstance(myProject).getAllEditors(file),
-      editor -> !(editor instanceof TextEditor) || AsyncEditorLoader.isEditorLoaded(((TextEditor) editor).getEditor()));
+    List<FileEditor> editors = ContainerUtil.filter(FileEditorManager.getInstance(myProject).getAllEditors(file),
+                                                    editor -> !(editor instanceof TextEditor) || AsyncEditorLoader.isEditorLoaded(((TextEditor)editor).getEditor()));
     if (editors.isEmpty()) return null;
 
     return new ReadTask() {
@@ -143,7 +130,7 @@ public class EditorNotificationsImpl extends EditorNotifications {
         final List<Provider> providers = DumbService.getInstance(myProject).
           filterByDumbAwareness(EXTENSION_POINT_NAME.getExtensions(myProject));
 
-        final List<Runnable> updates = ContainerUtil.newArrayList();
+        final List<Runnable> updates = new SmartList<>();
         for (final FileEditor editor : editors) {
           for (final Provider<?> provider : providers) {
             final JComponent component = provider.createNotificationPanel(file, editor);
@@ -173,7 +160,6 @@ public class EditorNotificationsImpl extends EditorNotifications {
   private static ProgressIndicator getCurrentProgress(VirtualFile file) {
     return SoftReference.dereference(file.getUserData(CURRENT_UPDATES));
   }
-
 
   private void updateNotification(@NotNull FileEditor editor, @NotNull Key<? extends JComponent> key, @Nullable JComponent component) {
     JComponent old = editor.getUserData(key);

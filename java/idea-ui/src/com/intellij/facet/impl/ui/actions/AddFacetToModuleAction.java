@@ -50,6 +50,7 @@ public class AddFacetToModuleAction extends AnAction implements DumbAware {
     myType = type;
   }
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     FacetInfo parent = myEditor.getSelectedFacetInfo();
     final FacetTypeId<?> underlyingFacetType = myType.getUnderlyingFacetType();
@@ -67,6 +68,7 @@ public class AddFacetToModuleAction extends AnAction implements DumbAware {
     ProjectStructureConfigurable.getInstance(myProject).select(facet, true);
   }
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setVisible(isVisible(myEditor, myType));
   }

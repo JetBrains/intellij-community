@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.scopeView;
 
 import com.intellij.ide.projectView.ProjectView;
@@ -45,6 +31,7 @@ public class ClassesScopeTreeStructureExpander implements ScopeTreeStructureExpa
     myProject = project;
   }
 
+  @Override
   public void treeWillExpand(TreeExpansionEvent event) throws ExpandVetoException {
     if (myProject.isDisposed()) return;
     ProjectView projectView = ProjectView.getInstance(myProject);
@@ -81,11 +68,11 @@ public class ClassesScopeTreeStructureExpander implements ScopeTreeStructureExpa
                         @Override public void visitClass(PsiClass aClass) {
                           classNode.add(new ClassNode(aClass));
                         }
-  
+
                         @Override public void visitMethod(PsiMethod method) {
                           classNode.add(new MethodNode(method));
                         }
-  
+
                         @Override public void visitField(PsiField field) {
                           classNode.add(new FieldNode(field));
                         }
@@ -112,6 +99,7 @@ public class ClassesScopeTreeStructureExpander implements ScopeTreeStructureExpa
     }
   }
 
+  @Override
   public void treeWillCollapse(TreeExpansionEvent event) throws ExpandVetoException {
     final TreePath path = event.getPath();
     if (path == null) return;

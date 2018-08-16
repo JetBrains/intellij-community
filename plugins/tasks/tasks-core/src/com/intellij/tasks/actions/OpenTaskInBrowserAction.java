@@ -28,7 +28,8 @@ import org.jetbrains.annotations.Nullable;
  * @author Dmitry Avdeev
  */
 public class OpenTaskInBrowserAction extends BaseTaskAction {
-  
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     String url = getIssueUrl(e);
     if (url != null) {

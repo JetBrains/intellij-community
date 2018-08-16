@@ -1,28 +1,12 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.text;
 
-import com.intellij.util.Function;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -42,7 +26,6 @@ public class StringUtilRt {
   @Contract(pure = true)
   public static CharSequence toUpperCase(@NotNull CharSequence s) {
     StringBuilder answer = null;
-
     for (int i = 0; i < s.length(); i++) {
       char c = s.charAt(i);
       char upCased = toUpperCase(c);
@@ -50,36 +33,24 @@ public class StringUtilRt {
         answer = new StringBuilder(s.length());
         answer.append(s.subSequence(0, i));
       }
-
       if (answer != null) {
         answer.append(upCased);
       }
     }
-
     return answer == null ? s : answer;
   }
 
   @Contract(pure = true)
   public static char toUpperCase(char a) {
-    if (a < 'a') {
-      return a;
-    }
-    if (a <= 'z') {
-      return (char)(a + ('A' - 'a'));
-    }
+    if (a < 'a') return a;
+    if (a <= 'z') return (char)(a + ('A' - 'a'));
     return Character.toUpperCase(a);
   }
 
   @Contract(pure = true)
   public static char toLowerCase(char a) {
-    if (a < 'A' || a >= 'a' && a <= 'z') {
-      return a;
-    }
-
-    if (a <= 'Z') {
-      return (char)(a + ('a' - 'A'));
-    }
-
+    if (a < 'A' || a >= 'a' && a <= 'z') return a;
+    if (a <= 'Z') return (char)(a + ('a' - 'A'));
     return Character.toLowerCase(a);
   }
 
@@ -130,7 +101,7 @@ public class StringUtilRt {
                                                   boolean keepCarriageReturn) {
     StringBuilder buffer = null;
     int intactLength = 0;
-    final boolean newSeparatorIsSlashN = "\n".equals(newSeparator);
+    boolean newSeparatorIsSlashN = "\n".equals(newSeparator);
     for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);
       if (c == '\n') {
@@ -199,50 +170,30 @@ public class StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static int parseInt(@Nullable String string, final int defaultValue) {
-    if (string == null) {
-      return defaultValue;
+  public static int parseInt(@Nullable String string, int defaultValue) {
+    if (string != null) {
+      try { return Integer.parseInt(string); }
+      catch (NumberFormatException ignored) { }
     }
-
-    try {
-      return Integer.parseInt(string);
-    }
-    catch (Exception e) {
-      return defaultValue;
-    }
+    return defaultValue;
   }
 
   @Contract(pure = true)
   public static long parseLong(@Nullable String string, long defaultValue) {
-    if (string == null) {
-      return defaultValue;
+    if (string != null) {
+      try { return Long.parseLong(string); }
+      catch (NumberFormatException ignored) { }
     }
-    try {
-      return Long.parseLong(string);
-    }
-    catch (Exception e) {
-      return defaultValue;
-    }
+    return defaultValue;
   }
 
   @Contract(pure = true)
-  public static double parseDouble(final String string, final double defaultValue) {
-    try {
-      return Double.parseDouble(string);
+  public static double parseDouble(@Nullable String string, double defaultValue) {
+    if (string != null) {
+      try { return Double.parseDouble(string); }
+      catch (NumberFormatException ignored) { }
     }
-    catch (Exception e) {
-      return defaultValue;
-    }
-  }
-
-  @Contract(pure = true)
-  public static boolean parseBoolean(final String string, final boolean defaultValue) {
-    try {
-      return Boolean.parseBoolean(string);
-    }
-    catch (Exception e) {
-      return defaultValue;
-    }
+    return defaultValue;
   }
 
   @Contract(pure = true)
@@ -283,14 +234,14 @@ public class StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static boolean startsWithIgnoreCase(@NonNls @NotNull String str, @NonNls @NotNull String prefix) {
-    final int stringLength = str.length();
-    final int prefixLength = prefix.length();
+  public static boolean startsWithIgnoreCase(@NotNull String str, @NotNull String prefix) {
+    int stringLength = str.length();
+    int prefixLength = prefix.length();
     return stringLength >= prefixLength && str.regionMatches(true, 0, prefix, 0, prefixLength);
   }
 
   @Contract(pure = true)
-  public static boolean endsWithIgnoreCase(@NonNls @NotNull CharSequence text, @NonNls @NotNull CharSequence suffix) {
+  public static boolean endsWithIgnoreCase(@NotNull CharSequence text, @NotNull CharSequence suffix) {
     int l1 = text.length();
     int l2 = suffix.length();
     if (l1 < l2) return false;
@@ -343,16 +294,6 @@ public class StringUtilRt {
 
   @NotNull
   @Contract(pure = true)
-  public static <T> Function<T, String> createToStringFunction() {
-    return new Function<T, String>() {
-      public String fun(@NotNull T o) {
-        return o.toString();
-      }
-    };
-  }
-
-  @NotNull
-  @Contract(pure = true)
   public static String notNullize(@Nullable String s) {
     return notNullize(s, "");
   }
@@ -365,50 +306,12 @@ public class StringUtilRt {
 
   @NotNull
   @Contract(pure = true)
-  public static <T> String join(@NotNull Collection<? extends T> items,
-                                @NotNull Function<? super T, String> f,
-                                @NotNull String separator) {
-    if (items.isEmpty()) return "";
-    if (items.size() == 1) return notNullize(f.fun(items.iterator().next()));
-    return join((Iterable<? extends T>)items, f, separator);
-  }
-
-  @NotNull
-  @Contract(pure = true)
-  public static <T> String join(@NotNull Iterable<? extends T> items,
-                                @NotNull Function<? super T, String> f,
-                                @NotNull String separator) {
-    final StringBuilder result = new StringBuilder();
-    join(items, f, separator, result);
-    return result.toString();
-  }
-
-  public static <T> void join(@NotNull Iterable<? extends T> items,
-                              @NotNull Function<? super T, String> f,
-                              @NotNull String separator,
-                              @NotNull StringBuilder result) {
-    boolean isFirst = true;
-    for (T item : items) {
-      String string = f.fun(item);
-      if (string != null && string.length() > 0) {
-        if (isFirst) {
-          isFirst = false;
-        } else {
-          result.append(separator);
-        }
-        result.append(string);
-      }
-    }
-  }
-
-  @NotNull
-  @Contract(pure = true)
   public static List<String> splitHonorQuotes(@NotNull String s, char separator) {
-    final List<String> result = new ArrayList<String>();
-    final StringBuilder builder = new StringBuilder(s.length());
+    List<String> result = new ArrayList<String>();
+    StringBuilder builder = new StringBuilder(s.length());
     boolean inQuotes = false;
     for (int i = 0; i < s.length(); i++) {
-      final char c = s.charAt(i);
+      char c = s.charAt(i);
       if (c == separator && !inQuotes) {
         if (builder.length() > 0) {
           result.add(builder.toString());
@@ -416,39 +319,17 @@ public class StringUtilRt {
         }
         continue;
       }
-
       if ((c == '"' || c == '\'') && !(i > 0 && s.charAt(i - 1) == '\\')) {
         inQuotes = !inQuotes;
       }
       builder.append(c);
     }
-
     if (builder.length() > 0) {
       result.add(builder.toString());
     }
     return result;
   }
 
-  @NotNull
-  @Contract(pure = true)
-  public static String formatNumber(long number) {
-    return formatNumber(number, "");
-  }
-
-  @NotNull
-  @Contract(pure = true)
-  public static String formatNumber(long number, @NotNull String unitSeparator) {
-    return formatValue(number, null,
-                       unitSeparator, new String[]{"", "K", "M", "G", "T", "P", "E"},
-                       new long[]{1, 1000, 1000, 1000, 1000, 1000, 1000});
-  }
-
-  /**
-   * Formats the specified file size as a string.
-   *
-   * @param fileSize the size to format.
-   * @return the size formatted as a string.
-   */
   @NotNull
   @Contract(pure = true)
   public static String formatFileSize(long fileSize) {
@@ -458,96 +339,29 @@ public class StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String formatFileSize(long fileSize, @NotNull String unitSeparator) {
-    return formatValue(fileSize, null,
-                       unitSeparator, new String[]{"B", "KB", "MB", "GB", "TB", "PB", "EB"},
-                       new long[]{1, 1024, 1024, 1024, 1024, 1024, 1024});
-  }
-
-  @NotNull
-  @Contract(pure = true)
-  public static String formatDuration(long duration) {
-    return formatDuration(duration, " ");
-  }
-
-  @NotNull
-  @Contract(pure = true)
-  public static String formatDuration(long duration, @NotNull String unitSeparator) {
-    return formatValue(duration, " ", unitSeparator,
-                       new String[]{"ms", "s", "m", "h", "d", "mo", "yr", "c", "ml", "ep"},
-                       new long[]{1, 1000, 60, 60, 24, 30, 12, 100, 10, 10000});
-  }
-
-  @NotNull
-  private static String formatValue(long value,
-                                    @Nullable String partSeparator, @NotNull String unitSeparator,
-                                    @NotNull String[] units, @NotNull long[] multipliers) {
-    if (units.length != multipliers.length) {
-      throw new IllegalArgumentException(units.length + " != " + multipliers.length);
-    }
-    StringBuilder sb = new StringBuilder();
-    long count = value;
-    long remainder = 0;
-    int i = 1;
-    for (; i < units.length && count > 0; i++) {
-      long multiplier = multipliers[i];
-      if (count < multiplier) break;
-      remainder = count % multiplier;
-      count /= multiplier;
-      if (partSeparator != null && (remainder != 0 || sb.length() > 0)) {
-        if (units[i - 1].length() > 0) {
-          sb.insert(0, units[i - 1]);
-          sb.insert(0, unitSeparator);
-        }
-        sb.insert(0, remainder).insert(0, partSeparator);
-      }
-      else {
-        remainder = Math.round(remainder * 100 / (double)multiplier);
-        count += remainder / 100;
-        remainder %= 100;
-      }
-    }
-    if (partSeparator != null || remainder == 0) {
-      if (units[i - 1].length() > 0) {
-        sb.insert(0, units[i - 1]);
-        sb.insert(0, unitSeparator);
-      }
-      sb.insert(0, count);
-    }
-    else if (remainder > 0) {
-      sb.append(count).append(".").append(remainder / 10 == 0 ? "0" : "").append(remainder);
-      if (units[i - 1].length() > 0) {
-        sb.append(unitSeparator);
-        sb.append(units[i - 1]);
-      }
-    }
-    return sb.toString();
-  }
-
-  private static boolean isQuoteAt(@NotNull String s, int ind) {
-    char ch = s.charAt(ind);
-    return ch == '\'' || ch == '\"';
+    if (fileSize < 0) throw new IllegalArgumentException("Invalid value: " + fileSize);
+    if (fileSize == 0) return '0' + unitSeparator + 'B';
+    int rank = (int)((Math.log10(fileSize) + 0.0000021714778384307465) / 3);  // (3 - Math.log10(999.995))
+    double value = fileSize / Math.pow(1000, rank);
+    String[] units = {"B", "kB", "MB", "GB", "TB", "PB", "EB"};
+    return new DecimalFormat("0.##").format(value) + unitSeparator + units[rank];
   }
 
   @Contract(pure = true)
   public static boolean isQuotedString(@NotNull String s) {
-    return s.length() > 1 && isQuoteAt(s, 0) && s.charAt(0) == s.charAt(s.length() - 1);
+    return s.length() > 1 && (s.charAt(0) == '\'' || s.charAt(0) == '\"') && s.charAt(0) == s.charAt(s.length() - 1);
   }
 
   @NotNull
   @Contract(pure = true)
   public static String unquoteString(@NotNull String s) {
-    if (isQuotedString(s)) {
-      return s.substring(1, s.length() - 1);
-    }
-    return s;
+    return isQuotedString(s) ? s.substring(1, s.length() - 1) : s;
   }
 
   @NotNull
   @Contract(pure = true)
   public static String unquoteString(@NotNull String s, char quotationChar) {
-    if (s.length() > 1 && quotationChar == s.charAt(0) && quotationChar == s.charAt(s.length() - 1)) {
-      return s.substring(1, s.length() - 1);
-    }
-    return s;
+    boolean quoted = s.length() > 1 && quotationChar == s.charAt(0) && quotationChar == s.charAt(s.length() - 1);
+    return quoted ? s.substring(1, s.length() - 1) : s;
   }
 }

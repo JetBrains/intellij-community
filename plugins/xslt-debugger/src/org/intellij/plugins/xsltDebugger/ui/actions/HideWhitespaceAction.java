@@ -35,10 +35,12 @@ public class HideWhitespaceAction extends ToggleAction {
     getTemplatePresentation().setIcon(XsltDebuggerIcons.Actions.FilterWhitespace);
   }
 
+  @Override
   public boolean isSelected(AnActionEvent e) {
     return myEventModel.isFilterWhitespace();
   }
 
+  @Override
   public void setSelected(AnActionEvent e, boolean state) {
     final TreeState treeState = TreeState.createOn(myStructureTree);
     myEventModel.setFilterWhitespace(state);

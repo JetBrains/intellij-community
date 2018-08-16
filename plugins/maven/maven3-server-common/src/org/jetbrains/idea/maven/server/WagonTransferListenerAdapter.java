@@ -32,6 +32,7 @@ public class WagonTransferListenerAdapter implements TransferListener {
     myIndicator = indicator;
   }
 
+  @Override
   public void transferInitiated(TransferEvent event) {
     checkCanceled();
   }
@@ -45,6 +46,7 @@ public class WagonTransferListenerAdapter implements TransferListener {
     }
   }
 
+  @Override
   public void transferStarted(TransferEvent event) {
     checkCanceled();
 
@@ -55,6 +57,7 @@ public class WagonTransferListenerAdapter implements TransferListener {
     updateProgress(resourceName, data);
   }
 
+  @Override
   public void transferProgress(TransferEvent event, byte[] bytes, int i) {
     checkCanceled();
 
@@ -64,6 +67,7 @@ public class WagonTransferListenerAdapter implements TransferListener {
     updateProgress(resourceName, data);
   }
 
+  @Override
   public void transferCompleted(TransferEvent event) {
     try {
       Maven3ServerGlobals.getDownloadListener().artifactDownloaded(event.getLocalFile(), event.getResource().getName());
@@ -80,6 +84,7 @@ public class WagonTransferListenerAdapter implements TransferListener {
     updateProgress(resourceName, data);
   }
 
+  @Override
   public void transferError(TransferEvent event) {
     checkCanceled();
 
@@ -91,6 +96,7 @@ public class WagonTransferListenerAdapter implements TransferListener {
     }
   }
 
+  @Override
   public void debug(String s) {
     checkCanceled();
   }

@@ -150,7 +150,7 @@ public class FormatChangedTextUtil {
   @NotNull
   public <T extends PsiElement> List<T> getChangedElements(@NotNull Project project,
                                                            @NotNull Change[] changes,
-                                                           @NotNull Convertor<VirtualFile, List<T>> elementsConvertor) {
+                                                           @NotNull Convertor<? super VirtualFile, ? extends List<T>> elementsConvertor) {
     return Arrays.stream(changes).map(Change::getVirtualFile).filter(Objects::nonNull)
                  .flatMap(file -> elementsConvertor.convert(file).stream()).filter(Objects::nonNull)
                  .collect(Collectors.toList());

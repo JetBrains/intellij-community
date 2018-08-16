@@ -90,7 +90,7 @@ class PyAddPipEnvPanel(private val project: Project?,
     }
 
     pipEnvPathField.textField.document.addDocumentListener(object : DocumentAdapter() {
-      override fun textChanged(e: DocumentEvent?) {
+      override fun textChanged(e: DocumentEvent) {
         update()
       }
     })
@@ -121,7 +121,7 @@ class PyAddPipEnvPanel(private val project: Project?,
 
   override fun addChangeListener(listener: Runnable) {
     pipEnvPathField.textField.document.addDocumentListener(object : DocumentAdapter() {
-      override fun textChanged(e: DocumentEvent?) {
+      override fun textChanged(e: DocumentEvent) {
         listener.run()
       }
     })

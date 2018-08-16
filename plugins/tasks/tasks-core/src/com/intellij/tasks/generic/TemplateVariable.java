@@ -106,6 +106,7 @@ public class TemplateVariable {
     myShownOnFirstTab = shownOnFirstTab;
   }
 
+  @Override
   public TemplateVariable clone() {
     return new TemplateVariable(this);
   }

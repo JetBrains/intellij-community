@@ -6,6 +6,7 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Point2D;
 
 /**
  * @author Eugene Belyaev
@@ -13,6 +14,7 @@ import java.awt.*;
 final class Surface extends JComponent {
   private final Image myTopImage;
   private final Image myBottomImage;
+  private final Point2D myBottomImageOffset;
   private final int myDirection;
   private final int myDesiredTimeToComplete;
   private final ToolWindowAnchor myAnchor;
@@ -20,11 +22,13 @@ final class Surface extends JComponent {
 
   public Surface(final Image topImage,
                  final Image bottomImage,
+                 final Point2D bottomImageOffset,
                  final int direction,
                  final ToolWindowAnchor anchor,
                  final int desiredTimeToComplete) {
     myTopImage = topImage;
     myBottomImage = bottomImage;
+    myBottomImageOffset = (Point2D)bottomImageOffset.clone();
     myAnchor = anchor;
     myDirection = direction;
     myDesiredTimeToComplete = desiredTimeToComplete;
@@ -64,6 +68,7 @@ final class Surface extends JComponent {
   @Override
   public final void paint(final Graphics g) {
     final Rectangle bounds = getBounds();
+    ((Graphics2D)g).translate(myBottomImageOffset.getX(), myBottomImageOffset.getY());
     if (myAnchor == ToolWindowAnchor.LEFT) {
       if (myDirection == 1) {
         g.setClip(null);

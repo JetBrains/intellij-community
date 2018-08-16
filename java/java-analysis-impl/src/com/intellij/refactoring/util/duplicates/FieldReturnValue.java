@@ -31,6 +31,7 @@ public class FieldReturnValue implements ReturnValue {
     myField = psiField;
   }
 
+  @Override
   public boolean isEquivalent(ReturnValue other) {
     if (!(other instanceof FieldReturnValue)) return false;
     return myField == ((FieldReturnValue)other).myField;
@@ -40,6 +41,7 @@ public class FieldReturnValue implements ReturnValue {
     return myField;
   }
 
+  @Override
   @Nullable
   public PsiStatement createReplacement(@NotNull final PsiMethod extractedMethod, @NotNull final PsiMethodCallExpression methodCallExpression, @Nullable PsiType returnType) throws IncorrectOperationException {
 

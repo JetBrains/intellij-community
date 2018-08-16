@@ -50,7 +50,7 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
       return true;
     }
   };
-  
+
   @NotNull private final Project myProject;
   @NotNull private final Object myActiveTargetLock = new Object();
   @Nullable private ExecutionTarget myActiveTarget;
@@ -176,6 +176,7 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
     return null;
   }
 
+  @Override
   protected boolean doCanRun(@Nullable RunnerAndConfigurationSettings settings, @NotNull ExecutionTarget target) {
     if (settings == null) return false;
 
@@ -276,7 +277,7 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
     ApplicationManager.getApplication().assertIsDispatchThread();
     updateActiveTarget();
   }
-  
+
   @TestOnly
   public void reset() {
     mySavedActiveTargetId = null;

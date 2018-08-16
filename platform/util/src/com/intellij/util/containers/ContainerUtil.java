@@ -10,9 +10,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Array;
-import java.util.*;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -228,7 +228,7 @@ public class ContainerUtil extends ContainerUtilRt {
       return Collections.unmodifiableList(original);
     }
   }
-  
+
   @NotNull
   @Contract(pure = true)
   public static <T> Set<T> unmodifiableOrEmptySet(Set<? extends T> original) {
@@ -240,7 +240,7 @@ public class ContainerUtil extends ContainerUtilRt {
       return Collections.unmodifiableSet(original);
     }
   }
-  
+
   @NotNull
   @Contract(pure = true)
   public static <K,V> Map<K,V> unmodifiableOrEmptyMap(Map<? extends K, ? extends V> original) {
@@ -618,8 +618,8 @@ public class ContainerUtil extends ContainerUtilRt {
     return res;
   }
 
-  public static <T> void processSortedListsInOrder(@NotNull List<T> list1,
-                                                   @NotNull List<T> list2,
+  public static <T> void processSortedListsInOrder(@NotNull List<? extends T> list1,
+                                                   @NotNull List<? extends T> list2,
                                                    @NotNull Comparator<? super T> comparator,
                                                    boolean mergeEqualItems,
                                                    @NotNull Consumer<? super T> processor) {
@@ -2645,7 +2645,7 @@ public class ContainerUtil extends ContainerUtilRt {
   public static <K, V> List<Pair<K, V>> map2List(@NotNull Map<K, V> map) {
     return ContainerUtilRt.map2List(map);
   }
-  
+
   @NotNull
   @Contract(pure=true)
   public static <T, V> Set<V> map2Set(@NotNull T[] collection, @NotNull Function<T, V> mapper) {
@@ -2704,6 +2704,22 @@ public class ContainerUtil extends ContainerUtilRt {
       if (clear) collection.clear();
     }
     return a;
+  }
+
+  @Contract("null -> null")
+  public static <T> List<T> copyList(@Nullable List<T> list) {
+    if (list == null) {
+      return null;
+    }
+    else if (list == Collections.emptyList()) {
+      return Collections.emptyList();
+    }
+    else if (list.size() == 1) {
+      return new SmartList<T>(list.get(0));
+    }
+    else {
+      return new ArrayList<T>(list);
+    }
   }
 
   @NotNull

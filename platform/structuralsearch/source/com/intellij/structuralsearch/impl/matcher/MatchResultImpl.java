@@ -69,6 +69,7 @@ public final class MatchResultImpl extends MatchResult {
     this.name = name;
   }
 
+  @Override
   public List<MatchResult> getChildren() {
     return Collections.unmodifiableList(myChildren);
   }
@@ -104,6 +105,7 @@ public final class MatchResultImpl extends MatchResult {
     matchImage = null;
   }
 
+  @Override
   public boolean hasChildren() {
     return !myChildren.isEmpty();
   }

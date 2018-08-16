@@ -48,6 +48,7 @@ public class TestModuleOutputPackagingElement extends ModuleOutputPackagingEleme
     return "module-tests:" + getModuleName();
   }
 
+  @Override
   protected String getDirectoryAntProperty(ArtifactAntGenerationContext generationContext) {
     return generationContext.getModuleTestOutputPath(myModulePointer.getModuleName());
   }
@@ -61,6 +62,7 @@ public class TestModuleOutputPackagingElement extends ModuleOutputPackagingEleme
     return context.getModulesProvider().getRootModel(module).getSourceRoots(JavaModuleSourceRootTypes.TESTS);
   }
 
+  @Override
   @NotNull
   public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new DelegatedPackagingElementPresentation(new ModuleElementPresentation(myModulePointer, context, TestModuleOutputElementType.ELEMENT_TYPE));

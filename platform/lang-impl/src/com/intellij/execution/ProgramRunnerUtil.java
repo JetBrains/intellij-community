@@ -33,8 +33,8 @@ public class ProgramRunnerUtil {
   }
 
   @Nullable
-  public static ProgramRunner getRunner(@NotNull final String executorId, final RunnerAndConfigurationSettings configuration) {
-    return configuration == null ? null : RunnerRegistry.getInstance().getRunner(executorId, configuration.getConfiguration());
+  public static ProgramRunner getRunner(@NotNull String executorId, @Nullable RunnerAndConfigurationSettings configuration) {
+    return configuration == null ? null : ProgramRunner.getRunner(executorId, configuration.getConfiguration());
   }
 
   public static void executeConfiguration(@NotNull final ExecutionEnvironment environment, boolean showSettings, boolean assignNewId) {

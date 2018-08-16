@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -49,10 +49,12 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
     myProject = project;
   }
 
+  @Override
   public ChangesBrowserSettingsEditor<ChangeBrowserSettings> createFilterUI(boolean showDateFilter) {
     return new GitVersionFilterComponent(showDateFilter);
   }
 
+  @Override
   public RepositoryLocation getLocationFor(@NotNull FilePath root) {
     VirtualFile gitRoot = GitUtil.getGitRootOrNull(root);
     if (gitRoot == null) {
@@ -75,11 +77,13 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
     return new GitRepositoryLocation(trackedBranch.getRemote().getFirstUrl(), rootFile);
   }
 
+  @Override
   @Nullable
   public VcsCommittedListsZipper getZipper() {
     return null;
   }
 
+  @Override
   public void loadCommittedChanges(ChangeBrowserSettings settings, RepositoryLocation location, int maxCount,
                                    final AsynchConsumer<CommittedChangeList> consumer) throws VcsException {
     try {
@@ -90,6 +94,7 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
     }
   }
 
+  @Override
   public List<CommittedChangeList> getCommittedChanges(ChangeBrowserSettings settings, RepositoryLocation location, final int maxCount)
     throws VcsException {
 
@@ -139,14 +144,17 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
     }, consumer, false);
   }
 
+  @Override
   public ChangeListColumn[] getColumns() {
     return new ChangeListColumn[]{ChangeListColumn.NUMBER, ChangeListColumn.DATE, ChangeListColumn.DESCRIPTION, ChangeListColumn.NAME};
   }
 
+  @Override
   public VcsCommittedViewAuxiliary createActions(DecoratorManager manager, RepositoryLocation location) {
     return null;
   }
 
+  @Override
   public int getUnlimitedCountValue() {
     return -1;
   }

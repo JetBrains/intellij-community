@@ -180,6 +180,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   }
 
   // requests creation
+  @Override
   @Nullable
   public ClassPrepareRequest createClassPrepareRequest(ClassPrepareRequestor requestor, String pattern) {
     if (myEventRequestManager == null) { // detached already
@@ -287,6 +288,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     }
   }
 
+  @Override
   public void callbackOnPrepareClasses(final ClassPrepareRequestor requestor, final SourcePosition classPosition) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
@@ -304,6 +306,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     }
   }
 
+  @Override
   public void callbackOnPrepareClasses(ClassPrepareRequestor requestor, String classOrPatternToBeLoaded) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     ClassPrepareRequest classPrepareRequest = createClassPrepareRequest(requestor, classOrPatternToBeLoaded);
@@ -317,6 +320,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     }
   }
 
+  @Override
   public void enableRequest(EventRequest request) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     LOG.assertTrue(findRequestor(request) != null);
@@ -347,6 +351,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     }
   }
 
+  @Override
   public void setInvalid(Requestor requestor, String message) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     //deleteRequest(requestor);
@@ -355,7 +360,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       myRequestWarnings.put(requestor, message);
     }
   }
-  
+
   public @Nullable String getWarning(Requestor requestor) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     return myRequestWarnings.get(requestor);
@@ -367,6 +372,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     return findRequests(requestor).stream().anyMatch(r -> !(r instanceof ClassPrepareRequest));
   }
 
+  @Override
   public void processDetached(DebugProcessImpl process, boolean closedByUser) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myEventRequestManager = null;
@@ -374,6 +380,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     myRequestorToBelongedRequests.clear();
   }
 
+  @Override
   public void processAttached(DebugProcessImpl process) {
     myEventRequestManager = myDebugProcess.getVirtualMachineProxy().eventRequestManager();
   }

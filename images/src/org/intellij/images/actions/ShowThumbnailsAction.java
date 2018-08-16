@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public final class ShowThumbnailsAction extends AnAction {
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
         Project project = e.getData(CommonDataKeys.PROJECT);
         VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
@@ -43,6 +44,7 @@ public final class ShowThumbnailsAction extends AnAction {
         }
     }
 
+    @Override
     public void update(@NotNull AnActionEvent e) {
         VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
         boolean enabled = file != null && file.isDirectory();

@@ -70,6 +70,7 @@ public class InstrumentationClassFinder {
     final ClassLoader cpLoader = new URLClassLoader(myClasspathUrls, platformLoader);
     loader = new ClassLoader(cpLoader) {
 
+      @Override
       public InputStream getResourceAsStream(String name) {
         InputStream is = null;
         is = super.getResourceAsStream(name);
@@ -83,6 +84,7 @@ public class InstrumentationClassFinder {
         return is;
       }
 
+      @Override
       protected Class findClass(String name) throws ClassNotFoundException {
         final InputStream is = lookupClassBeforeClasspath(name.replace('.', '/'));
         if (is == null) {
@@ -437,6 +439,7 @@ public class InstrumentationClassFinder {
       super(Opcodes.API_VERSION);
     }
 
+    @Override
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
       if ((access & Opcodes.ACC_PUBLIC) > 0) {
         myMethods.add(new PseudoMethod(access, name, desc));
@@ -444,6 +447,7 @@ public class InstrumentationClassFinder {
       return super.visitMethod(access, name, desc, signature, exceptions);
     }
 
+    @Override
     public void visit(int version, int access, String pName, String signature, String pSuperName, String[] pInterfaces) {
       mySuperclassName = pSuperName;
       myInterfaces = pInterfaces;
@@ -592,9 +596,11 @@ public class InstrumentationClassFinder {
         }
       }
 
+      @Override
       public void releaseResources() {
       }
 
+      @Override
       public Resource getResource(final String name) {
         try {
           final URL url = new URL(getBaseURL(), name);
@@ -635,6 +641,7 @@ public class InstrumentationClassFinder {
         myURL = url;
       }
 
+      @Override
       public void releaseResources() {
         final ZipFile zipFile = myZipFile;
         if (zipFile != null) {
@@ -669,6 +676,7 @@ public class InstrumentationClassFinder {
         return null;
       }
 
+      @Override
       public Resource getResource(String name) {
         try {
           final ZipFile file = acquireZipFile();

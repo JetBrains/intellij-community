@@ -27,6 +27,7 @@ import org.netbeans.lib.cvsclient.command.Watch;
 import org.netbeans.lib.cvsclient.command.watch.WatchMode;
 
 public abstract class AbstractWatchAction extends AbstractActionFromEditGroup {
+  @Override
   protected CvsHandler getCvsHandler(CvsContext context) {
     CvsConfiguration configuration = CvsConfiguration.getInstance(context.getProject());
     WatcherDialog dialog = createDialog(configuration, context);

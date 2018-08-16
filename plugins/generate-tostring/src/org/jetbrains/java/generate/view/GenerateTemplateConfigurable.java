@@ -45,8 +45,8 @@ import org.jetbrains.java.generate.template.TemplatesManager;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class GenerateTemplateConfigurable implements UnnamedConfigurable{
     private final TemplateResource template;
@@ -72,7 +72,7 @@ public class GenerateTemplateConfigurable implements UnnamedConfigurable{
           map.put("class", TemplatesManager.createElementType(project, ClassElement.class));
           if (multipleFields) {
             map.put("fields", TemplatesManager.createFieldListElementType(project));
-          } 
+          }
           else {
             map.put("field", TemplatesManager.createElementType(project, FieldElement.class));
           }
@@ -93,7 +93,8 @@ public class GenerateTemplateConfigurable implements UnnamedConfigurable{
     public void setHint(String hint) {
       myHint = hint;
     }
-  
+
+    @Override
     public JComponent createComponent() {
       final JComponent component = myEditor.getComponent();
       if (availableImplicits.isEmpty() && myHint == null) {
@@ -102,27 +103,31 @@ public class GenerateTemplateConfigurable implements UnnamedConfigurable{
       final JPanel panel = new JPanel(new BorderLayout());
       panel.add(component, BorderLayout.CENTER);
       JLabel label =
-        new JLabel("<html>" + 
+        new JLabel("<html>" +
                    (!availableImplicits.isEmpty() ? "Available implicit variables:<br/>" + StringUtil.join(availableImplicits, ", ") + "<br/>": "") +
                    (myHint != null ? myHint : "") + "</html>");
       panel.add(label, BorderLayout.SOUTH);
       return panel;
     }
 
+    @Override
     public boolean isModified() {
         return !Comparing.equal(myEditor.getDocument().getText(), template.getTemplate());
     }
 
+    @Override
     public void apply() throws ConfigurationException {
         template.setTemplate(myEditor.getDocument().getText());
     }
 
+    @Override
     public void reset() {
       WriteCommandAction.writeCommandAction(null).run(() -> {
         myEditor.getDocument().setText(template.getTemplate());
       });
     }
 
+    @Override
     public void disposeUIResources() {
         EditorFactory.getInstance().releaseEditor(myEditor);
     }

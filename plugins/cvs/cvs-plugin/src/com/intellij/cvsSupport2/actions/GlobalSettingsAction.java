@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class GlobalSettingsAction extends CvsGlobalAction {
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     new ConfigureCvsGlobalSettingsDialog(e.getProject()).show();
   }

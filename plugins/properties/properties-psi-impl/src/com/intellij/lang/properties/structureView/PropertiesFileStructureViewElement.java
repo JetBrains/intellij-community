@@ -39,6 +39,7 @@ public class PropertiesFileStructureViewElement extends PsiTreeElementBase<Prope
     super(propertiesFile);
   }
 
+  @Override
   @NotNull
   public Collection<StructureViewTreeElement> getChildrenBase() {
     List<? extends IProperty> properties = getElement().getProperties();
@@ -62,21 +63,26 @@ public class PropertiesFileStructureViewElement extends PsiTreeElementBase<Prope
     return new PsiFile[] {getValue()};
   }
 
+  @Override
   public String getPresentableText() {
     return getElement().getName();
   }
 
+  @Override
   @NotNull
   public ItemPresentation getPresentation() {
     return new ItemPresentation() {
+      @Override
       public String getPresentableText() {
         return PropertiesFileStructureViewElement.this.getPresentableText();
       }
 
+      @Override
       public String getLocationString() {
         return null;
       }
 
+      @Override
       public Icon getIcon(boolean open) {
         return getElement().getIcon(0);
       }

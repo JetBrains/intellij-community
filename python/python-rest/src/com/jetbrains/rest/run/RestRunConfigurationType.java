@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.rest.run;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -26,6 +24,7 @@ public class RestRunConfigurationType implements ConfigurationType {
 
   private final String myId = "docs";
 
+  @Override
   public String getDisplayName() {
     return RestBundle.message("runcfg.docutils.display_name");
   }
@@ -34,19 +33,23 @@ public class RestRunConfigurationType implements ConfigurationType {
     return ConfigurationTypeUtil.findConfigurationType(RestRunConfigurationType.class);
   }
 
+  @Override
   public String getConfigurationTypeDescription() {
     return RestBundle.message("runcfg.docutils.description");
   }
 
+  @Override
   public Icon getIcon() {
     return RestFileType.INSTANCE.getIcon();
   }
 
+  @Override
   @NotNull
   public String getId() {
     return myId;
   }
 
+  @Override
   public ConfigurationFactory[] getConfigurationFactories() {
     return new ConfigurationFactory[] {DOCUTILS_FACTORY, SPHINX_FACTORY};
   }
@@ -59,6 +62,7 @@ public class RestRunConfigurationType implements ConfigurationType {
       myName = name;
     }
 
+    @Override
     public String getName() {
       return myName;
     }
@@ -69,6 +73,7 @@ public class RestRunConfigurationType implements ConfigurationType {
       super(type, "Docutils task");
     }
 
+    @Override
     @NotNull
     public RunConfiguration createTemplateConfiguration(Project project) {
       return new DocutilsRunConfiguration(project, this);
@@ -80,6 +85,7 @@ public class RestRunConfigurationType implements ConfigurationType {
       super(type, "Sphinx task");
     }
 
+    @Override
     @NotNull
     public RunConfiguration createTemplateConfiguration(Project project) {
       return new SphinxRunConfiguration(project, this);

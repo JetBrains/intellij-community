@@ -27,6 +27,7 @@ public class RegExFormatter extends DefaultFormatter {
         setOverwriteMode(false);
     }
 
+    @Override
     public Object stringToValue(String string) throws ParseException {
         try {
             return Pattern.compile(string);
@@ -35,6 +36,7 @@ public class RegExFormatter extends DefaultFormatter {
         }
     }
 
+    @Override
     public String valueToString(Object value) throws ParseException {
         if (value == null) {
             return "";

@@ -36,6 +36,7 @@ public class TransferListenerAdapter implements TransferListener {
     myIndicator = indicator;
   }
 
+  @Override
   public void transferInitiated(TransferEvent event) {
     checkCanceled();
   }
@@ -49,6 +50,7 @@ public class TransferListenerAdapter implements TransferListener {
     }
   }
 
+  @Override
   public void transferStarted(TransferEvent event) {
     checkCanceled();
 
@@ -59,6 +61,7 @@ public class TransferListenerAdapter implements TransferListener {
     updateProgress(resourceName, data);
   }
 
+  @Override
   public void transferProgress(TransferEvent event, byte[] bytes, int i) {
     checkCanceled();
 
@@ -68,6 +71,7 @@ public class TransferListenerAdapter implements TransferListener {
     updateProgress(resourceName, data);
   }
 
+  @Override
   public void transferCompleted(TransferEvent event) {
     try {
       MavenServerDownloadListener listener = Maven2ServerGlobals.getDownloadListener();
@@ -85,6 +89,7 @@ public class TransferListenerAdapter implements TransferListener {
     updateProgress(resourceName, data);
   }
 
+  @Override
   public void transferError(TransferEvent event) {
     checkCanceled();
 
@@ -96,6 +101,7 @@ public class TransferListenerAdapter implements TransferListener {
     }
   }
 
+  @Override
   public void debug(String s) {
     checkCanceled();
   }

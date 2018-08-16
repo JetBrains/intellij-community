@@ -335,11 +335,11 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     Rectangle r = new Rectangle(x, y, width, height);
 
     try {
+      checkFocus();
       if (!DarculaUIUtil.isTableCellEditor(c)) {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
 
-        checkFocus();
         JBInsets.removeFrom(r, JBUI.insets(1));
         g2.translate(r.x, r.y);
 
@@ -362,7 +362,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
           g2.fill(border);
         }
       } else {
-        paintCellEditorBorder(g2, c, r);
+        paintCellEditorBorder(g2, c, r, hasFocus);
       }
     } finally {
       g2.dispose();

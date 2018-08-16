@@ -43,10 +43,12 @@ public class UnmarkAddedAction extends AnAction{
     myVisibility.addCondition(ActionOnSelectedElement.FILES_ARE_LOCALLY_ADDED);
   }
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     myVisibility.applyToEvent(e);
   }
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     VcsContext context = CvsContextWrapper.createCachedInstance(e);
     final VirtualFile[] selectedFiles = context.getSelectedFiles();

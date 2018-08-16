@@ -30,6 +30,7 @@ class NewArrayInstanceEvaluator implements Evaluator {
     myInitializerEvaluator = initializerEvaluator;
   }
 
+  @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
 //    throw new EvaluateException("Creating new array instances is not supported yet", true);
     DebugProcessImpl debugProcess = context.getDebugProcess();

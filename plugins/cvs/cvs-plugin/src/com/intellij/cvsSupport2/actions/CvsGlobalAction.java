@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class CvsGlobalAction extends AnAction implements DumbAware {
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     final CvsContext cvsContext = CvsContextWrapper.createInstance(e);
     final Presentation presentation = e.getPresentation();

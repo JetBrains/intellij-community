@@ -79,27 +79,32 @@ public class GitUnstashDialog extends DialogWrapper {
     myStashList.setModel(new DefaultListModel());
     refreshStashList();
     myGitRootComboBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         refreshStashList();
         updateDialogState();
       }
     });
     myStashList.addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(final ListSelectionEvent e) {
         updateDialogState();
       }
     });
     myBranchTextField.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
+      @Override
+      protected void textChanged(@NotNull final DocumentEvent e) {
         updateDialogState();
       }
     });
     myPopStashCheckBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         updateDialogState();
       }
     });
     myClearButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         if (Messages.YES == Messages.showYesNoDialog(GitUnstashDialog.this.getContentPane(),
                                                      GitBundle.message("git.unstash.clear.confirmation.message"),
@@ -126,6 +131,7 @@ public class GitUnstashDialog extends DialogWrapper {
       }
     });
     myDropButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         final StashInfo stash = getSelectedStash();
         if (Messages.YES == Messages.showYesNoDialog(GitUnstashDialog.this.getContentPane(),
@@ -156,6 +162,7 @@ public class GitUnstashDialog extends DialogWrapper {
       }
     });
     myViewButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         final VirtualFile root = getGitRoot();
         String resolvedStash;
@@ -280,6 +287,7 @@ public class GitUnstashDialog extends DialogWrapper {
     return (StashInfo)myStashList.getSelectedValue();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myPanel;
   }
@@ -329,7 +337,7 @@ public class GitUnstashDialog extends DialogWrapper {
       myRoot = root;
       myStashInfo = stashInfo;
     }
-    
+
     private static Params makeParams(Project project, StashInfo stashInfo) {
       Params params = new Params(project);
       params.setErrorNotificationTitle("Unstashed with conflicts");

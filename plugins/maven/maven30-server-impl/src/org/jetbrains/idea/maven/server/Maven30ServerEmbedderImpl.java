@@ -448,6 +448,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       new OperatingSystemProfileActivator()};
   }
 
+  @Override
   @SuppressWarnings({"unchecked"})
   public <T> T getComponent(Class<T> clazz, String roleHint) {
     try {
@@ -458,6 +459,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     }
   }
 
+  @Override
   @SuppressWarnings({"unchecked"})
   public <T> T getComponent(Class<T> clazz) {
     try {
@@ -531,6 +533,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     }
   }
 
+  @Override
   public void customizeComponents() throws RemoteException {
     // replace some plexus components
     myContainer.addComponent(getComponent(ArtifactFactory.class, "ide"), ArtifactFactory.ROLE);
@@ -594,6 +597,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     return MavenEffectivePomDumper.evaluateEffectivePom(this, file, activeProfiles, inactiveProfiles);
   }
 
+  @Override
   public void executeWithMavenSession(MavenExecutionRequest request, Runnable runnable) {
     DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
     RepositorySystemSession repositorySession = maven.newRepositorySession(request);
@@ -1102,6 +1106,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     return artifact;
   }
 
+  @Override
   @NotNull
   protected List<ArtifactRepository> convertRepositories(List<MavenRemoteRepository> repositories) throws RemoteException {
     List<ArtifactRepository> result = new ArrayList<ArtifactRepository>();
@@ -1207,10 +1212,12 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     myContainer.dispose();
   }
 
+  @Override
   public void clearCaches() throws RemoteException {
     // do nothing
   }
 
+  @Override
   public void clearCachesFor(final MavenId projectId) throws RemoteException {
     // do nothing
   }
