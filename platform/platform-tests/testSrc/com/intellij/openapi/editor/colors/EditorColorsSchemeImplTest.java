@@ -325,10 +325,28 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
       }
     }
     finally {
-      TextAttributesKey.removeTextAttributesKey("A");
-      TextAttributesKey.removeTextAttributesKey("B");
-      TextAttributesKey.removeTextAttributesKey("C");
-      TextAttributesKey.removeTextAttributesKey("D");
+      TextAttributesKey.removeTextAttributesKey(keyA.getExternalName());
+      TextAttributesKey.removeTextAttributesKey(keyB.getExternalName());
+      TextAttributesKey.removeTextAttributesKey(keyC.getExternalName());
+      TextAttributesKey.removeTextAttributesKey(keyD.getExternalName());
+    }
+  }
+
+  public void testMustNotBePossibleToRegisterTextAttributeKeysWithDifferentFallBacks() {
+    TextAttributesKey keyB = TextAttributesKey.createTextAttributesKey("B");
+    TextAttributesKey keyD = TextAttributesKey.createTextAttributesKey("D");
+    TextAttributesKey keyC = TextAttributesKey.createTextAttributesKey("C", keyD);
+    try {
+      keyC = TextAttributesKey.createTextAttributesKey(keyC.getExternalName(), keyB);
+      fail("Must fail");
+    }
+    catch (IllegalStateException e) {
+      assertTrue(e.getMessage().contains("already registered"));
+    }
+    finally {
+      TextAttributesKey.removeTextAttributesKey(keyB.getExternalName());
+      TextAttributesKey.removeTextAttributesKey(keyC.getExternalName());
+      TextAttributesKey.removeTextAttributesKey(keyD.getExternalName());
     }
   }
 
