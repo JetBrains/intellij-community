@@ -21,51 +21,69 @@ object GuiTestOptions {
 
   const val RESUME_LABEL: String = "idea.gui.test.resume.label"
   const val RESUME_TEST: String = "idea.gui.test.resume.testname"
-
   const val FILTER_KEY = "idea.gui.test.filter"
+
   private const val NO_NEED_TO_FILTER_TESTS: String = "NO_NEED_TO_FILTER_TESTS"
 
-  fun getConfigPath(): String = getSystemProperty("idea.config.path", getConfigDefaultPath())
-  fun getSystemPath(): String = getSystemProperty("idea.system.path", getSystemDefaultPath())
-  fun isDebug(): Boolean = getSystemProperty("idea.debug.mode", false)
-  fun suspendDebug(): String = if (isDebug()) "y" else "n"
-  fun isInternal(): Boolean = getSystemProperty("idea.is.internal", true)
-  fun useAppleScreenMenuBar(): Boolean = getSystemProperty("apple.laf.useScreenMenuBar", false)
-
-  fun getDebugPort(): Int = getSystemProperty("idea.gui.test.debug.port", 5009)
-  fun getBootClasspath(): String = getSystemProperty("idea.gui.test.bootclasspath", "../out/classes/production/intellij.platform.boot")
-  fun getEncoding(): String = getSystemProperty("idea.gui.test.encoding", "UTF-8")
-  fun getXmxSize(): Int = getSystemProperty("idea.gui.test.xmx", 512)
+  val configPath: String
+    get() = getSystemProperty("idea.config.path", configDefaultPath)
+  val systemPath: String
+    get() = getSystemProperty("idea.system.path", systemDefaultPath)
+  val isDebug: Boolean
+    get() = getSystemProperty("idea.debug.mode", false)
+  val suspendDebug: String
+    get() = if (isDebug) "y" else "n"
+  val isInternal: Boolean
+    get() = getSystemProperty("idea.is.internal", true)
+  val useAppleScreenMenuBar: Boolean
+    get() = getSystemProperty("apple.laf.useScreenMenuBar", false)
+  val debugPort: Int
+    get() = getSystemProperty("idea.gui.test.debug.port", 5009)
+  val bootClasspath: String
+    get() = getSystemProperty("idea.gui.test.bootclasspath", "../out/classes/production/intellij.platform.boot")
+  val encoding: String
+    get() = getSystemProperty("idea.gui.test.encoding", "UTF-8")
+  val xmxSize: Int
+    get() = getSystemProperty("idea.gui.test.xmx", 512)
   //used for restarted and resumed test to qualify from what point to start
-  fun getResumeInfo(): String = getSystemProperty(RESUME_LABEL, "DEFAULT")
-  fun getResumeTestName(): String = getSystemProperty(RESUME_TEST, "undefined")
+  val resumeInfo: String
+    get() = getSystemProperty(RESUME_LABEL, "DEFAULT")
+  val resumeTestName: String
+    get() = getSystemProperty(RESUME_TEST, "undefined")
 
 
-  fun shouldTestsBeFiltered(): Boolean = (getFilteredListOfTests() != NO_NEED_TO_FILTER_TESTS)
+  val shouldTestsBeFiltered: Boolean
+    get() = (filteredListOfTests != NO_NEED_TO_FILTER_TESTS)
   //system property to set what tests should be run. -Didea.gui.test.filter=ShortClassName1,ShortClassName2
-  fun getFilteredListOfTests(): String = getSystemProperty(FILTER_KEY, NO_NEED_TO_FILTER_TESTS)
+  val filteredListOfTests: String
+    get() = getSystemProperty(FILTER_KEY, NO_NEED_TO_FILTER_TESTS)
 
-  fun getScreenRecorderJarDirPath(): String? = System.getProperty("idea.gui.test.screenrecorder.jar.dir.path")
-  fun getTestsToRecord(): List<String> = System.getProperty("idea.gui.test.screenrecorder.tests_to_record")?.split(";") ?: emptyList()
-  fun getVideoDuration(): Long = getSystemProperty("idea.gui.test.screenrecorder.video_duration_in_minutes", 3)
+  val screenRecorderJarDirPath: String?
+    get() = System.getProperty("idea.gui.test.screenrecorder.jar.dir.path")
+  val testsToRecord: List<String>
+    get() = System.getProperty("idea.gui.test.screenrecorder.tests_to_record")?.split(";") ?: emptyList()
+  val videoDuration: Long
+    get() = getSystemProperty("idea.gui.test.screenrecorder.video_duration_in_minutes", 3)
 
-  private fun getConfigDefaultPath(): String {
-    return try {
-      "${PathManager.getHomePath()}/config"
+  private val configDefaultPath: String
+    get() {
+      return try {
+        "${PathManager.getHomePath()}/config"
+      }
+      catch (e: RuntimeException) {
+        "../config"
+      }
     }
-    catch(e: RuntimeException) {
-      "../config"
-    }
-  }
 
-  private fun getSystemDefaultPath(): String {
-    return try {
-      "${PathManager.getHomePath()}/system"
+  private val systemDefaultPath: String
+    get() {
+      return try {
+        "${PathManager.getHomePath()}/system"
+      }
+      catch (e: RuntimeException) {
+        "../system"
+      }
     }
-    catch(e: RuntimeException) {
-      "../system"
-    }
-  }
 
   private inline fun <reified ReturnType> getSystemProperty(key: String, defaultValue: ReturnType): ReturnType {
     val value = System.getProperty(key) ?: return defaultValue

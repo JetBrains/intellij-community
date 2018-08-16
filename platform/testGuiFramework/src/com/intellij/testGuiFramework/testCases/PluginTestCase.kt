@@ -44,8 +44,8 @@ open class PluginTestCase : GuiTestCase() {
   }
 
   fun installPluginAndRestart(installPluginsFunction: () -> Unit) {
-    if (guiTestRule.getTestName() == GuiTestOptions.getResumeTestName() &&
-        GuiTestOptions.getResumeInfo() == PLUGINS_INSTALLED) {
+    if (guiTestRule.getTestName() == GuiTestOptions.resumeTestName &&
+        GuiTestOptions.resumeInfo == PLUGINS_INSTALLED) {
     }
     else {
       //if plugins are not installed yet

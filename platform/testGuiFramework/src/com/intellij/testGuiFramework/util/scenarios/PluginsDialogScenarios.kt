@@ -46,8 +46,8 @@ fun PluginsDialogScenarios.uninstallPlugin(pluginName: String) {
 
 fun PluginsDialogScenarios.actionAndRestart(actionFunction: () -> Unit) {
   val PLUGINS_INSTALLED = "PLUGINS_INSTALLED"
-  if (testCase.guiTestRule.getTestName() == GuiTestOptions.getResumeTestName() &&
-      GuiTestOptions.getResumeInfo() == PLUGINS_INSTALLED) {
+  if (testCase.guiTestRule.getTestName() == GuiTestOptions.resumeTestName &&
+      GuiTestOptions.resumeInfo == PLUGINS_INSTALLED) {
     testCase.logInfo("Restart succeeded")
   }
   else {
