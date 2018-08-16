@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.ipnb.protocol;
 
+import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -7,6 +8,8 @@ import org.jetbrains.annotations.Nullable;
  * @author vlan
  */
 public class IpnbConnectionListenerBase implements IpnbConnectionListener {
+  Ref<Boolean> connectionOpened = null;
+
   @Override
   public void onOpen(@NotNull IpnbConnection connection) {
   }

@@ -44,6 +44,11 @@ public class IpnbDebugAction extends AnAction {
         catch (ExecutionException e) {
         }
       }
+
+      // init extension on Kernel side
+
+
+      IpnbRunCellBaseAction.runCell(component, false);
     }
   }
 }

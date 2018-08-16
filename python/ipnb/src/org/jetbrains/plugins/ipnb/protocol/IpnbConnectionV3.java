@@ -13,8 +13,8 @@ import java.net.URISyntaxException;
 import java.util.UUID;
 
 public class IpnbConnectionV3 extends IpnbConnection {
-  private WebSocketClient myChannelsClient;
-  private Thread myChannelsThread;
+  protected WebSocketClient myChannelsClient;
+  protected Thread myChannelsThread;
 
   public IpnbConnectionV3(@NotNull String uri,
                           @NotNull IpnbConnectionListener listener,

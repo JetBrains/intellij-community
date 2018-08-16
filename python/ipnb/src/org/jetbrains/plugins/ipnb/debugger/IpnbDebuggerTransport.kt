@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.ipnb.debugger
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Ref
 import com.jetbrains.python.debugger.pydev.ProtocolFrame
 import com.jetbrains.python.debugger.pydev.transport.DebuggerTransport
 import org.jetbrains.plugins.ipnb.configuration.IpnbConnectionManager
@@ -17,23 +18,28 @@ class IpnbDebuggerTransport(val project: Project, private val codePanel: IpnbCod
   init {
     val connectionManager = IpnbConnectionManager.getInstance(project)
     if (!connectionManager.hasConnection(connectionId)) {
-      connectionManager.startConnection(codePanel, connectionId, object : IpnbConnectionListenerBase() {
-        override fun onOpen(connection: IpnbConnection) {
-          debugConnection = connection
-        }
+      connectionManager.startConnection(codePanel, connectionId, this)
+    }
+  }
 
-        override fun onOutput(connection: IpnbConnection, parentMessageId: String) {
+  fun createConnection(connectionOpened: Ref<Boolean>): IpnbConnectionListenerBase {
+    return object : IpnbConnectionListenerBase() {
+      override fun onOpen(connection: IpnbConnection) {
+        connectionOpened.set(true)
+        debugConnection = connection
+      }
 
-        }
+      override fun onOutput(connection: IpnbConnection, parentMessageId: String) {
 
-        override fun onPayload(payload: String?, parentMessageId: String) {
+      }
 
-        }
+      override fun onPayload(payload: String?, parentMessageId: String) {
 
-        override fun onFinished(connection: IpnbConnection, parentMessageId: String) {
+      }
 
-        }
-      })
+      override fun onFinished(connection: IpnbConnection, parentMessageId: String) {
+
+      }
     }
   }
 

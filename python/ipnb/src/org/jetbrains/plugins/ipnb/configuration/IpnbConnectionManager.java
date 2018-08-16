@@ -114,7 +114,7 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
   }
 
   public void startConnection(@NotNull final IpnbCodePanel codePanel, @NotNull final String filePath,
-                              @Nullable IpnbConnectionListenerBase additionalListener) {
+                              @Nullable IpnbDebuggerTransport debuggerTransport) {
     final List<RunContentDescriptor> descriptors = ExecutionManagerImpl.getInstance(myProject).getRunningDescriptors(
       settings -> settings.getConfiguration() instanceof IpnbRunConfiguration
     );
@@ -128,7 +128,7 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
       if (descriptors.size() == 1) {
         final RunContentDescriptor descriptor = descriptors.get(0);
         final Pair<String, String> urlToken = getUrlTokenByDescriptor(descriptor);
-        startConnection(codePanel, filePath, urlToken.getFirst(), urlToken.getSecond(), additionalListener);
+        startConnection(codePanel, filePath, urlToken.getFirst(), urlToken.getSecond(), debuggerTransport);
       }
       else {
         selectRunningInstance(codePanel, filePath, descriptors);
@@ -214,74 +214,67 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
   }
 
   public void startConnection(@Nullable final IpnbCodePanel codePanel, @NotNull final String path, @NotNull final String urlString,
-                              @Nullable final String token, @Nullable IpnbConnectionListenerBase additionalListener) {
+                              @Nullable final String token, @Nullable IpnbDebuggerTransport debuggerTransport) {
     if (codePanel == null) return;
     final VirtualFile file = codePanel.getFileEditor().getVirtualFile();
     String pathToFile = getRelativePathToFile(file);
     if (pathToFile == null) return;
     final boolean format = IpnbParser.isIpythonNewFormat(file);
     IpnbUtils
-      .runCancellableProcessUnderProgress(myProject, () -> setupConnection(codePanel, path, urlString, token, format, additionalListener),
+      .runCancellableProcessUnderProgress(myProject, () -> setupConnection(codePanel, path, urlString, token, format, debuggerTransport),
                                           "Connecting to Jupyter Notebook Server");
   }
 
   @NotNull
   private IpnbConnectionListenerBase createConnectionListener(@Nullable IpnbCodePanel codePanel, Ref<Boolean> connectionOpened,
-                                                              @Nullable IpnbConnectionListenerBase additionalListener) {
-    return new IpnbConnectionListenerBase() {
-      @Override
-      public void onOpen(@NotNull IpnbConnection connection) {
-        connectionOpened.set(true);
-        if (codePanel == null) return;
-        final String messageId = connection.execute(codePanel.getCell().getSourceAsString());
-        myUpdateMap.put(messageId, codePanel);
-        if (additionalListener != null) {
-          additionalListener.onOpen(connection);
+                                                              @Nullable IpnbDebuggerTransport debuggerTransport) {
+    if (debuggerTransport != null) {
+      return debuggerTransport.createConnection(connectionOpened);
+    }
+    else {
+      return new IpnbConnectionListenerBase() {
+        @Override
+        public void onOpen(@NotNull IpnbConnection connection) {
+          connectionOpened.set(true);
+          if (codePanel == null) return;
+          final String messageId = connection.execute(codePanel.getCell().getSourceAsString());
+          myUpdateMap.put(messageId, codePanel);
         }
-      }
 
-      @Override
-      public void onOutput(@NotNull IpnbConnection connection,
-                           @NotNull String parentMessageId) {
-        if (!myUpdateMap.containsKey(parentMessageId)) return;
-        final IpnbCodePanel cell = myUpdateMap.get(parentMessageId);
-        cell.getCell().setPromptNumber(connection.getExecCount());
-        cell.updatePanel(null, connection.getOutput());
-        if (additionalListener != null) {
-          additionalListener.onOutput(connection, parentMessageId);
+        @Override
+        public void onOutput(@NotNull IpnbConnection connection,
+                             @NotNull String parentMessageId) {
+          if (!myUpdateMap.containsKey(parentMessageId)) return;
+          final IpnbCodePanel cell = myUpdateMap.get(parentMessageId);
+          cell.getCell().setPromptNumber(connection.getExecCount());
+          cell.updatePanel(null, connection.getOutput());
         }
-      }
 
-      @Override
-      public void onPayload(@Nullable String payload, @NotNull String parentMessageId) {
-        if (!myUpdateMap.containsKey(parentMessageId)) return;
-        final IpnbCodePanel cell = myUpdateMap.remove(parentMessageId);
-        if (payload != null) {
-          cell.updatePanel(payload, null);
+        @Override
+        public void onPayload(@Nullable String payload, @NotNull String parentMessageId) {
+          if (!myUpdateMap.containsKey(parentMessageId)) return;
+          final IpnbCodePanel cell = myUpdateMap.remove(parentMessageId);
+          if (payload != null) {
+            cell.updatePanel(payload, null);
+          }
         }
-        if (additionalListener != null) {
-          additionalListener.onPayload(payload, parentMessageId);
-        }
-      }
 
-      @Override
-      public void onFinished(@NotNull IpnbConnection connection, @NotNull String parentMessageId) {
-        if (!myUpdateMap.containsKey(parentMessageId)) return;
-        final IpnbCodePanel cell = myUpdateMap.remove(parentMessageId);
-        cell.getCell().setPromptNumber(connection.getExecCount());
-        cell.finishExecution();
-        if (additionalListener != null) {
-          additionalListener.onFinished(connection, parentMessageId);
+        @Override
+        public void onFinished(@NotNull IpnbConnection connection, @NotNull String parentMessageId) {
+          if (!myUpdateMap.containsKey(parentMessageId)) return;
+          final IpnbCodePanel cell = myUpdateMap.remove(parentMessageId);
+          cell.getCell().setPromptNumber(connection.getExecCount());
+          cell.finishExecution();
         }
-      }
-    };
+      };
+    }
   }
 
   private boolean setupConnection(@NotNull IpnbCodePanel codePanel, @NotNull String path, @NotNull String urlString,
-                                  String token, boolean isNewFormat, @Nullable IpnbConnectionListenerBase additionalListener) {
+                                  String token, boolean isNewFormat, @Nullable IpnbDebuggerTransport debuggerTransport) {
     try {
       Ref<Boolean> connectionOpened = new Ref<>(false);
-      final IpnbConnectionListenerBase listener = createConnectionListener(codePanel, connectionOpened, additionalListener);
+      final IpnbConnectionListenerBase listener = createConnectionListener(codePanel, connectionOpened, debuggerTransport);
       final VirtualFile file = codePanel.getFileEditor().getVirtualFile();
       final String pathToFile = getRelativePathToFile(file);
       if (pathToFile == null) return false;
@@ -316,7 +309,7 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
           }
         });
         if (myToken != null) {
-          return setupConnection(codePanel, path, urlString, token, isNewFormat, additionalListener);
+          return setupConnection(codePanel, path, urlString, token, isNewFormat, debuggerTransport);
         }
       }
       final String message = e.getMessage();
