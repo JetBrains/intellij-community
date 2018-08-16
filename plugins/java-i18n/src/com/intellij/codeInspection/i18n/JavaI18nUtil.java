@@ -14,9 +14,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashSet;
@@ -24,8 +26,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 
+import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * @author max
@@ -34,7 +40,33 @@ public class JavaI18nUtil extends I18nUtil {
   public static final PropertyCreationHandler DEFAULT_PROPERTY_CREATION_HANDLER =
     (project, propertiesFiles, key, value, parameters) -> createProperty(project, propertiesFiles, key, value, true);
 
+
+  private static Set<String> myClasses;
+
+  public static final Pattern PATTERN = Pattern.compile("\\[Loaded ([^ ]+) from .+]"); // parses output of -XX:+TraceClassLoading option
+
+  static {
+    try {
+      myClasses = FileUtil.loadLines(System.getProperty("loadedClasses")).stream().map(s -> {
+        Matcher m = PATTERN.matcher(s);
+        return m.find()? m.group(1) : null;
+      }).collect(Collectors.toSet());
+    }
+    catch (IOException e) {
+      myClasses = null;
+      e.printStackTrace();
+    }
+  }
+
   private JavaI18nUtil() {
+  }
+
+  public static boolean isUsefulClass(PsiLiteralExpression expression) {
+    if (myClasses != null) {
+      PsiClass c = PsiUtil.getTopLevelClass(expression);
+      return c == null || myClasses.contains(c.getQualifiedName());
+    }
+    return true;
   }
 
   @Nullable
