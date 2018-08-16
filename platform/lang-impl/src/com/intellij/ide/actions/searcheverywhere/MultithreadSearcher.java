@@ -23,17 +23,9 @@ class MultithreadSearcher {
 
   private static final Logger LOG = Logger.getInstance(MultithreadSearcher.class);
 
-  @NotNull
-  //private final Listener myEDTWrappedListener;
-
-
   private final Listener myListener;
   private final Executor myNotificationExecutor;
 
-  /**
-   * @param listener listener which will be notified when results list is changed or search is finished.
-   *                 Searcher guarantees that this listener will be notified only in EDT
-   */
   public MultithreadSearcher(@NotNull Listener listener, Executor notificationExecutor) {
     myListener = listener;
     myNotificationExecutor = notificationExecutor;
@@ -43,17 +35,15 @@ class MultithreadSearcher {
     this(listener, Runnable::run);
   }
 
-  public ProgressIndicator search(Collection<SearchEverywhereContributor<?>> contributors,
-                                  String pattern,
+  public ProgressIndicator search(Map<SearchEverywhereContributor<?>, Integer> contributorsAndLimits, String pattern,
                                   boolean useNonProjectItems,
-                                  Function<SearchEverywhereContributor<?>, SearchEverywhereContributorFilter<?>> filterSupplier,
-                                  int limit) {
-    ResultsAccumulator accumulator = new ResultsAccumulator(contributors, limit, myListener, myNotificationExecutor);
+                                  Function<SearchEverywhereContributor<?>, SearchEverywhereContributorFilter<?>> filterSupplier) {
+    ResultsAccumulator accumulator = new ResultsAccumulator(contributorsAndLimits, myListener, myNotificationExecutor);
     ProgressIndicator indicator = new ProgressIndicatorBase();
     Phaser phaser = new Phaser();
 
     Runnable finisherTask = createFinisherTask(phaser, accumulator);
-    for (SearchEverywhereContributor<?> contributor : contributors) {
+    for (SearchEverywhereContributor<?> contributor : contributorsAndLimits.keySet()) {
       SearchEverywhereContributorFilter<?> filter = filterSupplier.apply(contributor);
       Runnable task = createSearchTask(pattern, useNonProjectItems, accumulator, indicator, phaser, contributor, filter);
       ApplicationManager.getApplication().executeOnPooledThread(task);
@@ -188,11 +178,11 @@ class MultithreadSearcher {
     private static final long NOTIFICATION_THROTTLING_TIME = 200;
 
     private final Map<SearchEverywhereContributor<?>,Collection<ElementInfo>> sections;
+    private final Map<SearchEverywhereContributor<?>, Integer> sectionsLimits;
     private final Map<SearchEverywhereContributor<?>, Condition> conditionsMap;
     private final Map<SearchEverywhereContributor<?>, Boolean> hasMoreMap = new ConcurrentHashMap<>();
     private final Set<SearchEverywhereContributor<?>> finishedContributorsSet = ContainerUtil.newConcurrentSet();
     private final Lock lock = new ReentrantLock();
-    private final int groupElementsLimit;
     private final Listener myListener;
 
     private volatile boolean mySearchFinished = false;
@@ -200,13 +190,12 @@ class MultithreadSearcher {
 
     private final BlockingQueue<Event> updateEventQueue = new LinkedBlockingQueue<>();
 
-    ResultsAccumulator(Collection<SearchEverywhereContributor<?>> contributors, int groupElementsLimit,
-                       Listener listener, Executor notificationExecutor) {
-      this.groupElementsLimit = groupElementsLimit;
+    ResultsAccumulator(Map<SearchEverywhereContributor<?>, Integer> contributorsAndLimits, Listener listener, Executor notificationExecutor) {
+      sectionsLimits = contributorsAndLimits;
       myListener = listener;
       myNotificationExecutor = notificationExecutor;
-      sections = contributors.stream().collect(Collectors.toMap(Function.identity(), c -> new ArrayList<>(groupElementsLimit)));
-      conditionsMap = contributors.stream().collect(Collectors.toMap(Function.identity(), c -> lock.newCondition()));
+      sections = contributorsAndLimits.entrySet().stream().collect(Collectors.toMap(entry -> entry.getKey(), entry -> new ArrayList<>(entry.getValue())));
+      conditionsMap = contributorsAndLimits.keySet().stream().collect(Collectors.toMap(Function.identity(), c -> lock.newCondition()));
 
       //todo throttling
       ApplicationManager.getApplication().executeOnPooledThread(createNotifierTask());
@@ -221,10 +210,11 @@ class MultithreadSearcher {
       ElementInfo newElementInfo = new ElementInfo(element, priority, contributor);
       Condition condition = conditionsMap.get(contributor);
       Collection<ElementInfo> section = sections.get(contributor);
+      int limit = sectionsLimits.get(contributor);
 
       lock.lock();
       try {
-        while (section.size() >= groupElementsLimit && !mySearchFinished) {
+        while (section.size() >= limit && !mySearchFinished) {
           condition.await();
         }
 
@@ -251,7 +241,7 @@ class MultithreadSearcher {
             listCondition.signal();
           });
 
-        if (section.size() >= groupElementsLimit) {
+        if (section.size() >= limit) {
           stopSearchIfNeeded();
         }
         return true;
@@ -289,8 +279,7 @@ class MultithreadSearcher {
         return true;
       }
 
-      Collection<ElementInfo> list = sections.get(contributor);
-      return list != null && list.size() >= groupElementsLimit;
+      return sections.get(contributor).size() >= sectionsLimits.get(contributor);
     }
 
     private Collection<Pair<SearchEverywhereContributor<?>, ElementInfo>> findSameElements(Object element, EqualityPolicy<Object> policy) {
