@@ -4,6 +4,7 @@ package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
@@ -21,9 +22,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
+import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.ui.AddDeleteListPanel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
@@ -614,19 +618,35 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
       return false;
     }
 
-    if (isParameterOfMethod(expression, "error", "debug", "info", "trace", "equals", "startsWith", "endsWith", "log", "allocateTempFile", "getProperty")) {
+    if (isParameterOfMethod(expression, "error", "debug", "info", "trace", "warn", "assertTrue", "assertEquals", "equals", "startsWith", "endsWith", "log", "allocateTempFile", "getProperty")) {
       return false;
     }
 
-    if (isQualifierFor(expression, "equals", "length")) {
+    if (isQualifierFor(expression, "equals", "length", "equalsIgnoreCase")) {
       return false;
     }
 
-    if (isValueOfParameterSubstring(expression, "debugName", "fileName", "componentName")) {
+    if (isValueOfParameterSubstring(expression, "debugName", "fileName", "componentName", "path", "fieldName", "pathName", "methodName", "className", "actionGroup")) {
       return false;
     }
 
-    if (isValueOfParameter(expression, "id", "url")) {
+    if (isValueOfParameter(expression, "id", "url", "key")) {
+      return false;
+    }
+
+    if (isAnnotationArgument(expression)) {
+      return false;
+    }
+
+    if (isArgOfAnyExceptionConstructor(expression)) {
+      return false;
+    }
+
+    if (isAllUppercaseWithUnderscore(expression)) {
+      return false;
+    }
+
+    if (isArgOfClassConstructor(expression, "TreeRunnable")) {
       return false;
     }
 
@@ -934,6 +954,78 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
       }
     }
     return false;
+  }
+
+  private static boolean isAnnotationArgument(final PsiLiteralExpression expression) {
+    return PsiTreeUtil.getParentOfType(expression, PsiAnnotation.class) != null;
+  }
+
+  private static boolean isArgOfAnyExceptionConstructor(PsiExpression expression) {
+    final PsiElement parent = PsiTreeUtil.getParentOfType(expression, PsiExpressionList.class, PsiClass.class);
+    if (!(parent instanceof PsiExpressionList)) {
+      return false;
+    }
+    final PsiElement grandparent = parent.getParent();
+    if (!(grandparent instanceof PsiNewExpression)) {
+      return false;
+    }
+    final PsiJavaCodeReferenceElement reference =
+      ((PsiNewExpression)grandparent).getClassReference();
+    if (reference == null) {
+      return false;
+    }
+    final PsiElement referent = reference.resolve();
+    if (!(referent instanceof PsiClass)) {
+      return false;
+    }
+    final PsiClass aClass = (PsiClass)referent;
+
+    if (ExceptionUtil.isUncheckedException(aClass) || InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_LANG_EXCEPTION)) {
+      return true;
+    }
+
+    return false;
+  }
+
+
+  private static boolean isArgOfClassConstructor(PsiExpression expression, String ... classNames) {
+    final PsiElement parent = PsiTreeUtil.getParentOfType(expression, PsiExpressionList.class, PsiClass.class);
+    if (!(parent instanceof PsiExpressionList)) {
+      return false;
+    }
+    final PsiElement grandparent = parent.getParent();
+    if (!(grandparent instanceof PsiNewExpression)) {
+      return false;
+    }
+    final PsiJavaCodeReferenceElement reference =
+      ((PsiNewExpression)grandparent).getClassReference();
+    if (reference == null) {
+      return false;
+    }
+    final PsiElement referent = reference.resolve();
+    if (!(referent instanceof PsiClass)) {
+      return false;
+    }
+    final PsiClass aClass = (PsiClass)referent;
+
+    for (String className: classNames) {
+      if (className.equals(aClass.getName())) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private static boolean isAllUppercaseWithUnderscore(final PsiLiteralExpression expression) {
+    String text = expression.getText();
+    for (int i = 0; i<text.length(); i++) {
+      char ch = text.charAt(i);
+      if (!Character.isUpperCase(ch) && ('_' != ch)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private static boolean isArgOfJUnitAssertion(PsiExpression expression) {
