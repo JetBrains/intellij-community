@@ -25,7 +25,19 @@ public class YAMLDuplicatedKeysInspection extends LocalInspectionTool {
     return new YamlPsiElementVisitor() {
       @Override
       public void visitMapping(@NotNull YAMLMapping mapping) {
+
         FileViewProvider provider = mapping.getContainingFile().getViewProvider();
+
+        // the check below disables duplicate inspection for template language files
+        // because of likely false positives. The example:
+        //
+        // # data language: YAML
+        // # base language: Go Template
+        // {{ if .Values.variant1Enabled }}
+        // name: variant1   # NOT DUPLICATE!!!
+        // {{ else }}
+        // name: variant2   # NOT DUPLICATE!!!
+        // {{ end }}
         if (provider.getLanguages().size() > 1) {
           return;
         }
