@@ -4,19 +4,24 @@ package com.intellij.openapi.editor.colors;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.VolatileNullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.JBIterable;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 
 /**
@@ -27,7 +32,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
   private static final Logger LOG = Logger.getInstance(TextAttributesKey.class);
   private static final TextAttributes NULL_ATTRIBUTES = new TextAttributes();
 
-  private static final Map<String, TextAttributesKey> ourRegistry = ConcurrentFactoryMap.createMap(TextAttributesKey::new);
+  private static final ConcurrentMap<String, TextAttributesKey> ourRegistry = new ConcurrentHashMap<>();
 
   private static final NullableLazyValue<TextAttributeKeyDefaultsProvider> ourDefaultsProvider =
     new VolatileNullableLazyValue<TextAttributeKeyDefaultsProvider>() {
@@ -39,25 +44,37 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
     };
 
   private final String myExternalName;
-  private TextAttributes myDefaultAttributes = NULL_ATTRIBUTES;
-  private TextAttributesKey myFallbackAttributeKey;
+  private final TextAttributes myDefaultAttributes;
+  private final TextAttributesKey myFallbackAttributeKey;
 
-  private TextAttributesKey(String externalName) {
+  private TextAttributesKey(@NotNull String externalName, TextAttributes defaultAttributes, TextAttributesKey fallbackAttributeKey) {
     myExternalName = externalName;
+
+    myDefaultAttributes = defaultAttributes;
+    myFallbackAttributeKey = fallbackAttributeKey;
+
+    if (fallbackAttributeKey != null) {
+      JBIterable<TextAttributesKey> it = JBIterable.generate(myFallbackAttributeKey, o -> o == this ? null : o.myFallbackAttributeKey);
+      if (it.find(o -> o == this) == this) {
+        LOG.error("Cycle detected: " + StringUtil.join(it, "->"));
+      }
+    }
   }
 
   //read external only
   public TextAttributesKey(@NotNull Element element) {
-    this(JDOMExternalizerUtil.readField(element, "myExternalName"));
+    String name = JDOMExternalizerUtil.readField(element, "myExternalName");
+
     Element myDefaultAttributesElement = JDOMExternalizerUtil.readOption(element, "myDefaultAttributes");
-    if (myDefaultAttributesElement != null) {
-      myDefaultAttributes = new TextAttributes(myDefaultAttributesElement);
-    }
+    TextAttributes defaultAttributes = myDefaultAttributesElement == null ? null : new TextAttributes(myDefaultAttributesElement);
+    myExternalName = name;
+    myDefaultAttributes = defaultAttributes;
+    myFallbackAttributeKey = null;
   }
 
   @NotNull
   public static TextAttributesKey find(@NotNull @NonNls String externalName) {
-    return ourRegistry.get(externalName);
+    return ourRegistry.computeIfAbsent(externalName, name -> new TextAttributesKey(name, null, null));
   }
 
   @Override
@@ -65,6 +82,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
     return myExternalName;
   }
 
+  @NotNull
   public String getExternalName() {
     return myExternalName;
   }
@@ -89,7 +107,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
   public void writeExternal(Element element) {
     JDOMExternalizerUtil.writeField(element, "myExternalName", myExternalName);
 
-    if (myDefaultAttributes != NULL_ATTRIBUTES) {
+    if (myDefaultAttributes != null) {
       Element option = JDOMExternalizerUtil.writeOption(element, "myDefaultAttributes");
       myDefaultAttributes.writeExternal(option);
     }
@@ -112,21 +130,26 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
     return myExternalName.hashCode();
   }
 
+  // can't use RecursionManager unfortunately because quite a few crazy tests would start screaming about prevented recursive access
+  private static final ThreadLocal<Set<String>> CALLED_RECURSIVELY = ThreadLocal.withInitial(()->new THashSet<>());
   /**
    * Returns the default text attributes associated with the key.
    *
    * @return the text attributes.
    */
   public TextAttributes getDefaultAttributes() {
-    if (myDefaultAttributes == NULL_ATTRIBUTES) {
-      myDefaultAttributes = null;
+    if (myDefaultAttributes == null) {
       final TextAttributeKeyDefaultsProvider provider = ourDefaultsProvider.getValue();
       if (provider != null) {
-        myDefaultAttributes = provider.getDefaultAttributes(this);
+        Set<String> called = CALLED_RECURSIVELY.get();
+        if (!called.add(myExternalName)) return null;
+        try {
+          return ObjectUtils.notNull(provider.getDefaultAttributes(this), NULL_ATTRIBUTES);
+        }
+        finally {
+          called.remove(myExternalName);
+        }
       }
-    }
-    else if (myDefaultAttributes == null) {
-      myDefaultAttributes = NULL_ATTRIBUTES;
     }
     return myDefaultAttributes;
   }
@@ -143,11 +166,22 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
   @NotNull
   @Deprecated
   public static TextAttributesKey createTextAttributesKey(@NonNls @NotNull String externalName, TextAttributes defaultAttributes) {
-    TextAttributesKey key = find(externalName);
-    if (key.myDefaultAttributes == null || key.myDefaultAttributes == NULL_ATTRIBUTES) {
-      key.myDefaultAttributes = defaultAttributes;
+    TextAttributesKey result = ourRegistry.get(externalName);
+    TextAttributesKey fallbackAttributeKey;
+    if (result == null) {
+      fallbackAttributeKey = null;
     }
-    return key;
+    else {
+      if (Comparing.equal(result.getDefaultAttributes(), defaultAttributes)) {
+        return result;
+      }
+      // ouch. Someone's re-creating already existing key with different attributes.
+      // Have to remove the old one from the map, create the new one with correct attributes, re-insert to the map
+      fallbackAttributeKey = result.getFallbackAttributeKey();
+      ourRegistry.remove(externalName, result);
+    }
+    TextAttributesKey newKey = new TextAttributesKey(externalName, defaultAttributes, fallbackAttributeKey);
+    return ConcurrencyUtil.cacheOrGet(ourRegistry, externalName, newKey);
   }
 
   /**
@@ -183,9 +217,22 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
    */
   @NotNull
   public static TextAttributesKey createTextAttributesKey(@NonNls @NotNull String externalName, TextAttributesKey fallbackAttributeKey) {
-    TextAttributesKey key = find(externalName);
-    key.setFallbackAttributeKey(fallbackAttributeKey);
-    return key;
+    TextAttributesKey result = ourRegistry.get(externalName);
+    TextAttributes defaultAttributes;
+    if (result == null) {
+      defaultAttributes = null;
+    }
+    else {
+      if (Comparing.equal(result.getFallbackAttributeKey(), fallbackAttributeKey)) {
+        return result;
+      }
+      // ouch. Someone's re-creating already existing key with different attributes.
+      // Have to remove the old one from the map, create the new one with correct attributes, re-insert to the map
+      defaultAttributes = result.getDefaultAttributes();
+      ourRegistry.remove(externalName, result);
+    }
+    TextAttributesKey newKey = new TextAttributesKey(externalName, defaultAttributes, fallbackAttributeKey);
+    return ConcurrencyUtil.cacheOrGet(ourRegistry, externalName, newKey);
   }
 
   @Nullable
@@ -193,19 +240,15 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
     return myFallbackAttributeKey;
   }
 
+  /**
+   * @deprecated Use {@link #createTextAttributesKey(String, TextAttributesKey)} instead
+   */
+  @Deprecated
   public void setFallbackAttributeKey(@Nullable TextAttributesKey fallbackAttributeKey) {
-    myFallbackAttributeKey = fallbackAttributeKey;
-    if (fallbackAttributeKey != null) {
-      JBIterable<TextAttributesKey> it = JBIterable.generate(myFallbackAttributeKey, o -> o == this ? null : o.myFallbackAttributeKey);
-      if (it.find(o -> o == this) == this) {
-        String cycle = StringUtil.join(it.map(TextAttributesKey::getExternalName), "->");
-        LOG.error("Cycle detected: " + cycle);
-      }
-    }
   }
 
   @TestOnly
-  public static void removeTextAttributesKey(@NonNls @NotNull String externalName) {
+  static void removeTextAttributesKey(@NonNls @NotNull String externalName) {
     ourRegistry.remove(externalName);
   }
 
@@ -213,6 +256,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
     return key.getExternalName().startsWith(TEMP_PREFIX);
   }
 
+  @FunctionalInterface
   public interface TextAttributeKeyDefaultsProvider {
     TextAttributes getDefaultAttributes(@NotNull TextAttributesKey key);
   }

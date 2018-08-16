@@ -89,18 +89,7 @@ class MavenArtifactsBuilder {
       version: artifactData.coordinates.version
     )
     artifactData.dependencies.each { dep ->
-      def dependency = new Dependency(
-        groupId: dep.coordinates.groupId,
-        artifactId: dep.coordinates.artifactId,
-        version: dep.coordinates.version
-      )
-      if (dep.scope == DependencyScope.RUNTIME) {
-        dependency.scope = "runtime"
-      }
-      if (!dep.includeTransitiveDeps) {
-        dependency.addExclusion(new Exclusion(groupId: "*", artifactId: "*"))
-      }
-      pomModel.addDependency(dependency)
+      pomModel.addDependency(createDependencyTag(dep))
     }
 
     File file = new File(pomXmlPath)
@@ -108,6 +97,21 @@ class MavenArtifactsBuilder {
     file.withWriter {
       new MavenXpp3Writer().write(it, pomModel)
     }
+  }
+
+  private static Dependency createDependencyTag(MavenArtifactDependency dep) {
+    def dependency = new Dependency(
+      groupId: dep.coordinates.groupId,
+      artifactId: dep.coordinates.artifactId,
+      version: dep.coordinates.version
+    )
+    if (dep.scope == DependencyScope.RUNTIME) {
+      dependency.scope = "runtime"
+    }
+    if (!dep.includeTransitiveDeps) {
+      dependency.addExclusion(new Exclusion(groupId: "*", artifactId: "*"))
+    }
+    dependency
   }
 
   static MavenCoordinates generateMavenCoordinates(String moduleName, BuildMessages messages, String version) {
@@ -217,8 +221,7 @@ class MavenArtifactsBuilder {
         }
         else {
           libraryDescriptors.each {
-            dependencies << new MavenArtifactDependency(new MavenCoordinates(it.groupId, it.artifactId, it.version),
-                                                        it.includeTransitiveDependencies, scope)
+            dependencies << createArtifactDependencyByLibrary(it, scope)
           }
         }
       }
@@ -231,6 +234,15 @@ class MavenArtifactsBuilder {
     def artifactData = new MavenArtifactData(generateMavenCoordinates(module.name, buildContext.messages, buildContext.buildNumber), dependencies)
     results[module] = artifactData
     return artifactData
+  }
+
+  private static MavenArtifactDependency createArtifactDependencyByLibrary(JpsMavenRepositoryLibraryDescriptor descriptor, DependencyScope scope) {
+    new MavenArtifactDependency(new MavenCoordinates(descriptor.groupId, descriptor.artifactId, descriptor.version),
+                                descriptor.includeTransitiveDependencies, scope)
+  }
+
+  static Dependency createDependencyTagByLibrary(JpsMavenRepositoryLibraryDescriptor descriptor) {
+    createDependencyTag(createArtifactDependencyByLibrary(descriptor, DependencyScope.COMPILE))
   }
 
   private List<JpsMavenRepositoryLibraryDescriptor> getMavenLibraryDescriptors(JpsLibrary library) {
