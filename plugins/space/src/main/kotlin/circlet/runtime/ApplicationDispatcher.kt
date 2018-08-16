@@ -22,22 +22,22 @@ class ApplicationDispatcher(private val application: Application) : Dispatcher {
     override val coroutineContext: CoroutineContext
         get() = contextWithErrorToWarningLog
 
-    override fun dispatch(runnable: () -> Unit) {
-        application.invokeLater(runnable)
+    override fun dispatch(fn: () -> Unit) {
+        application.invokeLater(fn)
     }
 
-    override fun dispatch(delay: Int, r: () -> Unit): Cancellable {
+    override fun dispatch(delay: Int, fn: () -> Unit): Cancellable {
         val invoke = java.lang.Runnable {
-            application.invokeLater(r)
+            application.invokeLater(fn)
         }
         val disposable = executor.schedule(invoke, delay.toLong(), TimeUnit.MILLISECONDS)
 
         return TaskCancellable(disposable)
     }
 
-    override fun dispatchInterval(delay: Int, interval: Int, r: () -> Unit): Cancellable {
+    override fun dispatchInterval(delay: Int, interval: Int, fn: () -> Unit): Cancellable {
         val invoke = java.lang.Runnable {
-            application.invokeLater(r)
+            application.invokeLater(fn)
         }
         val disposable = executor.scheduleAtFixedRate(invoke, delay.toLong(), interval.toLong(), TimeUnit.MILLISECONDS)
 
