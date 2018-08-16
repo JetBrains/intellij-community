@@ -22,7 +22,8 @@ import java.beans.PropertyChangeSupport;
 
 @State(
   name = "GeneralSettings",
-  storages = @Storage("ide.general.xml")
+  storages = @Storage("ide.general.xml"),
+  reportStatistic = true
 )
 public class GeneralSettings implements PersistentStateComponent<GeneralSettings> {
   public static final int OPEN_PROJECT_ASK = -1;
