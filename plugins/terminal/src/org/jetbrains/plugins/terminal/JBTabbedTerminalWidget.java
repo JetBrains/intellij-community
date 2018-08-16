@@ -257,10 +257,12 @@ public class JBTabbedTerminalWidget extends AbstractTabbedTerminalWidget<JBTabIn
         .setObject(new TerminalSessionVirtualFileImpl(tabInfo, terminal, mySettingsProvider));
     }
 
+    @Override
     public String getTitleAt(int i) {
       return getTabAt(i).getText();
     }
 
+    @Override
     public void removeAll() {
       myTabs.removeAllTabs();
     }

@@ -51,6 +51,7 @@ class ExtractInterfaceDialog extends JavaExtractSuperBaseDialog {
 
   private static List<MemberInfo> collectMembers(PsiClass c) {
     return MemberInfo.extractClassMembers(c, new MemberInfoBase.Filter<PsiMember>() {
+      @Override
       public boolean includeMember(PsiMember element) {
         if (element instanceof PsiMethod) {
           if (PsiUtil.isLanguageLevel9OrHigher(element)) {
@@ -72,6 +73,7 @@ class ExtractInterfaceDialog extends JavaExtractSuperBaseDialog {
     }, true);
   }
 
+  @Override
   protected String getClassNameLabelText() {
     return isExtractSuperclass()
            ? RefactoringBundle.message("interface.name.prompt")
@@ -85,6 +87,7 @@ class ExtractInterfaceDialog extends JavaExtractSuperBaseDialog {
            : RefactoringBundle.message("package.for.original.class");
   }
 
+  @Override
   protected String getEntityName() {
     return RefactoringBundle.message("extractSuperInterface.interface");
   }
@@ -94,12 +97,14 @@ class ExtractInterfaceDialog extends JavaExtractSuperBaseDialog {
     return RefactoringBundle.message("extract.interface.from");
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
     final MemberSelectionPanel memberSelectionPanel = new MemberSelectionPanel(RefactoringBundle.message("members.to.form.interface"),
                                                                                myMemberInfos, RefactoringBundle.message("make.abstract"));
     memberSelectionPanel.getTable()
       .setMemberInfoModel(new DelegatingMemberInfoModel<PsiMember, MemberInfo>(memberSelectionPanel.getTable().getMemberInfoModel()) {
+        @Override
         public Boolean isFixedAbstract(MemberInfo member) {
           return Boolean.TRUE;
         }

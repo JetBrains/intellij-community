@@ -45,9 +45,10 @@ import java.util.List;
 
 public class XsltVariableContext implements VariableContext<XsltVariable> {
     public static final XsltVariableContext INSTANCE = new XsltVariableContext();
-    
+
     private final ResolveCache.Resolver RESOLVER = (psiReference, incompleteCode) -> resolveInner((XPathVariableReference)psiReference);
 
+    @Override
     @NotNull
     public XsltVariable[] getVariablesInScope(XPathElement element) {
         final XmlTag context = getContextTagImpl(element);
@@ -58,6 +59,7 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
         return processor.getResult();
     }
 
+    @Override
     public XPathVariable resolve(final XPathVariableReference reference) {
         return (XPathVariable) ResolveCache.getInstance(reference.getProject()).resolveWithCaching(reference, RESOLVER, false, false);
     }
@@ -99,6 +101,7 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
         return PsiTreeUtil.getContextOfType(element, XmlTag.class, true);
     }
 
+    @Override
     @NotNull
     public IntentionAction[] getUnresolvedVariableFixes(XPathVariableReference reference) {
         return new IntentionAction[] {
@@ -107,6 +110,7 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
         };
     }
 
+    @Override
     public boolean isReferenceTo(PsiElement element, XPathVariableReference reference) {
         if (element instanceof XsltParameter) {
             final XsltTemplate template = XsltCodeInsightUtil.getTemplate(element, false);
@@ -121,6 +125,7 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
         return false;
     }
 
+    @Override
     public boolean canResolve() {
         return true;
     }
@@ -130,22 +135,26 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
             super(context);
         }
 
+        @Override
         protected boolean followImport() {
             return true;
         }
 
+        @Override
         protected final void processTemplate(XmlTag tag) {
             // not interested
         }
 
         protected abstract void processVarOrParamImpl(XmlTag tag);
 
+        @Override
         protected final void processVarOrParam(XmlTag tag) {
             if (tag != myRoot) {
                 processVarOrParamImpl(tag);
             }
         }
 
+        @Override
         protected abstract boolean shouldContinue();
     }
 
@@ -160,12 +169,14 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
             return myNames.toArray(new XsltVariable[0]);
         }
 
+        @Override
         protected void processVarOrParamImpl(XmlTag tag) {
             if (XsltSupport.isVariableOrParam(tag)) {
                 myNames.add(XsltElementFactory.getInstance().wrapElement(tag, XsltVariable.class));
             }
         }
 
+        @Override
         protected boolean shouldContinue() {
             return true;
         }
@@ -180,14 +191,17 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
             myName = name;
         }
 
+        @Override
         public PsiElement getResult() {
             return myResult;
         }
 
+        @Override
         protected boolean shouldContinue() {
             return myResult == null;
         }
 
+        @Override
         protected void processVarOrParamImpl(XmlTag tag) {
             if (XsltSupport.isVariableOrParam(tag)) {
                 final String name = tag.getAttributeValue("name");

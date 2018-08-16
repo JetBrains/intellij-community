@@ -65,6 +65,7 @@ class EDTGuard implements InvocationHandler {
     myPausedRef = ref;
   }
 
+  @Override
   @Nullable
   public Object invoke(Object proxy, @NotNull Method method, Object[] args) throws Throwable {
     if (SwingUtilities.isEventDispatchThread()) {

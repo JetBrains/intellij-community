@@ -93,7 +93,7 @@ public class ConsentsTest extends TestCase{
     assertFalse("The storage should contain non-empty confirmed consents", StringUtil.isEmpty(storage.myConfirmed));
 
     options.applyServerUpdates(JSON_MINOR_UPGRADE_CONSENTS_DATA);
-    
+
     final Pair<List<Consent>, Boolean> afterUpdate = options.getConsents();
     assertFalse("Consents should NOT require confirmation", afterUpdate.second);
     assertEquals(2, afterUpdate.first.size());
@@ -235,7 +235,7 @@ public class ConsentsTest extends TestCase{
       changedByUser.add(consent.derive(!consent.isAccepted()));
     }
     options.setConsents(changedByUser);
-    
+
     final Pair<List<Consent>, Boolean> afterConfirm = options.getConsents();
     assertFalse("Consents should NOT require confirmation", afterConfirm.second);
     assertEquals(2, afterConfirm.first.size());
@@ -289,24 +289,29 @@ public class ConsentsTest extends TestCase{
       myBundled = bundled;
     }
 
+    @Override
     public void writeDefaultConsents(@NotNull String data) {
       myDefaults = data;
     }
 
+    @Override
     @NotNull
     public String readDefaultConsents() {
       return myDefaults;
     }
 
+    @Override
     @NotNull
     public String readBundledConsents() {
       return myBundled;
     }
 
+    @Override
     public void writeConfirmedConsents(@NotNull String data) {
       myConfirmed = data;
     }
 
+    @Override
     @NotNull
     public String readConfirmedConsents() {
       return myConfirmed;

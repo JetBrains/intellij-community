@@ -73,7 +73,7 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
   public ConvertSchemaSettingsImpl(Project project, @NotNull SchemaType inputType, VirtualFile firstFile) {
     myProject = project;
     myInputType = inputType;
-    
+
     final FileType type;
     switch (inputType) {
       case RNG:
@@ -136,7 +136,7 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
     final JTextField tf = myOutputDestination.getTextField();
     tf.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         myPropertyChangeSupport.firePropertyChange(OUTPUT_PATH, null, getOutputDestination());
       }
     });
@@ -199,7 +199,7 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
   public int getLineLength() {
     return parseInt(myLineLength.getText());
   }
-  
+
   @Override
   public String getOutputDestination() {
     return myOutputDestination.getText();

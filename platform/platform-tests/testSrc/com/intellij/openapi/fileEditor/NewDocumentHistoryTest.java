@@ -2,12 +2,9 @@
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.PlatformTestUtil;
 
@@ -20,17 +17,13 @@ public class NewDocumentHistoryTest extends HeavyFileEditorManagerTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myHistory = new IdeDocumentHistoryImpl(getProject(), EditorFactory.getInstance(),
-                                           myManager, VirtualFileManager.getInstance(), CommandProcessor.getInstance(), ToolWindowManager
-                                             .getInstance(getProject()));
-    myHistory.projectOpened();
+    myHistory = new IdeDocumentHistoryImpl(getProject(), myManager);
   }
 
   @Override
   protected void tearDown() throws Exception {
     try {
-      myHistory.projectClosed();
-      myHistory.disposeComponent();
+      Disposer.dispose(myHistory);
     }
     finally {
       myHistory = null;

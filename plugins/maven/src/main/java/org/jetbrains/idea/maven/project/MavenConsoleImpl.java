@@ -107,14 +107,17 @@ public class MavenConsoleImpl extends MavenConsole {
     return builder;
   }
 
+  @Override
   public boolean canPause() {
     return myConsoleView.canPause();
   }
 
+  @Override
   public boolean isOutputPaused() {
     return myConsoleView.isOutputPaused();
   }
 
+  @Override
   public void setOutputPaused(boolean outputPaused) {
     myConsoleView.setOutputPaused(outputPaused);
   }
@@ -123,6 +126,7 @@ public class MavenConsoleImpl extends MavenConsole {
     return myParametersAndSettings;
   }
 
+  @Override
   public void attachToProcess(ProcessHandler processHandler) {
     myConsoleView.attachToProcess(processHandler);
     processHandler.addProcessListener(new ProcessAdapter() {
@@ -133,6 +137,7 @@ public class MavenConsoleImpl extends MavenConsole {
     });
   }
 
+  @Override
   protected void doPrint(String text, OutputType type) {
     ensureAttachedToToolWindow();
 

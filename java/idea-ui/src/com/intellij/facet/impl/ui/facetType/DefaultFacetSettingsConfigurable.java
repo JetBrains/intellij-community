@@ -44,6 +44,7 @@ public class DefaultFacetSettingsConfigurable<C extends FacetConfiguration> impl
     myConfiguration = configuration;
   }
 
+  @Override
   public String getDisplayName() {
     return ProjectBundle.message("facet.defaults.display.name");
   }
@@ -53,14 +54,17 @@ public class DefaultFacetSettingsConfigurable<C extends FacetConfiguration> impl
     return myDelegate.getHelpTopic();
   }
 
+  @Override
   public JComponent createComponent() {
     return myDelegate.createComponent();
   }
 
+  @Override
   public boolean isModified() {
     return myDelegate.isModified();
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     if (myDelegate.isModified()) {
       myDelegate.apply();
@@ -68,10 +72,12 @@ public class DefaultFacetSettingsConfigurable<C extends FacetConfiguration> impl
     }
   }
 
+  @Override
   public void reset() {
     myDelegate.reset();
   }
 
+  @Override
   public void disposeUIResources() {
     myDelegate.disposeUIResources();
   }

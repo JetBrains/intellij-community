@@ -31,6 +31,7 @@ public abstract class AntDomPropertyDefiningTask extends AntDomPropertyDefiningE
   @NameValue
   public abstract GenericAttributeValue<String> getPropertyName();
 
+  @Override
   protected List<GenericAttributeValue<String>> getPropertyDefiningAttributes() {
     return Collections.singletonList(getPropertyName());
   }

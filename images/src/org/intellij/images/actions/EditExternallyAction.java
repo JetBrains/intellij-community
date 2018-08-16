@@ -47,6 +47,7 @@ import java.util.Map;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public final class EditExternallyAction extends AnAction {
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
@@ -100,6 +101,7 @@ public final class EditExternallyAction extends AnAction {
     }
   }
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
 

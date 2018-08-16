@@ -42,6 +42,7 @@ public class ReplaceInstanceVariableIncrementDecrement extends FixableUsageInfo 
     this.reference = PsiTreeUtil.getParentOfType(reference, PsiUnaryExpression.class);
   }
 
+  @Override
   public void fixUsage() throws IncorrectOperationException {
 
     final PsiReferenceExpression lhs = (PsiReferenceExpression)reference.getOperand();
@@ -53,7 +54,7 @@ public class ReplaceInstanceVariableIncrementDecrement extends FixableUsageInfo 
       newExpression = (qualifier != null ? qualifier.getText() + "." : "") + delegateName + "." + fieldName + operator;
     } else {
       final String strippedOperator = getStrippedOperator(operator);
-      newExpression = (qualifier != null ? qualifier.getText() + "." : "") + delegateName + 
+      newExpression = (qualifier != null ? qualifier.getText() + "." : "") + delegateName +
                       '.' + callSetter(delegateName + '.' + callGetter() + strippedOperator + "1");
     }
     MutationUtils.replaceExpression(newExpression, reference);

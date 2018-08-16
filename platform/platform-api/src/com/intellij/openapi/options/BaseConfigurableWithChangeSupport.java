@@ -23,6 +23,7 @@ import javax.swing.event.ChangeListener;
 public abstract class BaseConfigurableWithChangeSupport extends BaseConfigurable {
   private final EventDispatcher<ChangeListener> myDispatcher = EventDispatcher.create(ChangeListener.class);
 
+  @Override
   public void setModified(boolean modified) {
     fireStateChanged();
     super.setModified(modified);

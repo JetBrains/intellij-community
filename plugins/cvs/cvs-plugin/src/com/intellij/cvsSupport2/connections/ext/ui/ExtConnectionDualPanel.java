@@ -54,6 +54,7 @@ public class ExtConnectionDualPanel {
     myPanel.add(myDualPanel, BorderLayout.CENTER);
 
     myUseInternalImplementationCheckBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         updatePage();
         notifyListeners();

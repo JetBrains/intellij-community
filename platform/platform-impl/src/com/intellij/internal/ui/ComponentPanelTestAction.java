@@ -29,9 +29,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.Arrays;
+import java.util.HashSet;
 
 public class ComponentPanelTestAction extends DumbAwareAction {
   private enum Placement {
@@ -69,6 +70,10 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
   @SuppressWarnings({"MethodMayBeStatic", "UseOfSystemOutOrSystemErr"})
   private static class ComponentPanelTest extends DialogWrapper {
+
+    private static final HashSet<String> ALLOWED_VALUES = new HashSet<>(Arrays.asList("one", "two", "three", "four", "five", "six",
+              "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "abracadabra"));
+
     private final Alarm myAlarm = new Alarm(getDisposable());
     private ProgressTimerRequest progressTimerRequest;
 
@@ -88,7 +93,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       pane.addTab("Component Grid", createComponentGridPanel());
       pane.addTab("Progress Grid", createProgressGridPanel());
 
-      for (int i = 1; i <= 20; i++) {
+      for (int i = 1; i <= 5; i++) {
         String title = "Blank " + i;
         JLabel label = new JLabel(title);
         pane.addTab(title, JBUI.Panels.simplePanel(label));
@@ -128,27 +133,26 @@ public class ComponentPanelTestAction extends DumbAwareAction {
     }
 
     private JComponent createComponentPanel() {
-      JPanel panel = new JPanel();
-      panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-      panel.setBorder(JBUI.Borders.emptyTop(5));
+      JPanel topPanel = new JPanel(new GridBagLayout());
+      GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 1.0, 0, GridBagConstraints.LINE_START, GridBagConstraints.HORIZONTAL, JBUI.insets(5, 0), 0, 0);
 
       JTextField text1 = new JTextField();
       Dimension d = text1.getPreferredSize();
       text1.setPreferredSize(new Dimension(JBUI.scale(100), d.height));
 
-      panel.add(UI.PanelFactory.panel(text1).
+      topPanel.add(UI.PanelFactory.panel(text1).
         withLabel("&Textfield:").
         withComment("Textfield description").
-        moveCommentRight().createPanel());
+        moveCommentRight().createPanel(), gc);
 
       JTextField text2 = new JTextField();
-      panel.add(UI.PanelFactory.panel(text2).
-        withLabel("&Path:").createPanel());
+      gc.gridy++;
+      topPanel.add(UI.PanelFactory.panel(text2).withLabel("&Path:").createPanel(), gc);
 
       ComponentPanel cp = ComponentPanel.getComponentPanel(text2);
       text1.getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
-        protected void textChanged(DocumentEvent e) {
+        protected void textChanged(@NotNull DocumentEvent e) {
           if (cp != null) {
             cp.setCommentText(text1.getText());
           }
@@ -157,28 +161,32 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
       JCheckBox cb1 = new JCheckBox("Scroll tab layout");
       cb1.addActionListener(e -> pane.setTabLayoutPolicy(cb1.isSelected() ? JTabbedPane.SCROLL_TAB_LAYOUT : JTabbedPane.WRAP_TAB_LAYOUT));
-      panel.add(UI.PanelFactory.panel(cb1).
+      gc.gridy++;
+      topPanel.add(UI.PanelFactory.panel(cb1).
         withComment("Set tabbed pane tabs layout property to SCROLL_TAB_LAYOUT").
-        createPanel());
+        createPanel(), gc);
 
       JCheckBox cb2 = new JCheckBox("Full border");
       cb2.addActionListener(e -> pane.putClientProperty("JTabbedPane.hasFullBorder", Boolean.valueOf(cb2.isSelected())));
-      panel.add(UI.PanelFactory.panel(cb2).
-        withTooltip("Enable full border around the tabbed pane").createPanel());
+      gc.gridy++;
+      topPanel.add(UI.PanelFactory.panel(cb2).
+        withTooltip("Enable full border around the tabbed pane").createPanel(), gc);
 
-      panel.add(UI.PanelFactory.panel(new JButton("Abracadabra")).
-        withComment("Abradabra comment").resizeX(false).createPanel());
+      gc.gridy++;
+      topPanel.add(UI.PanelFactory.panel(new JButton("Abracadabra")).
+        withComment("Abradabra comment").resizeX(false).createPanel(), gc);
 
       String[] items = new String[]{ "One", "Two", "Three", "Four", "Five", "Six" };
-      panel.add(UI.PanelFactory.panel(new JComboBox<>(items)).
-        withComment("Combobox comment").createPanel());
+      gc.gridy++;
+      topPanel.add(UI.PanelFactory.panel(new JComboBox<>(items)).
+        withComment("Combobox comment").createPanel(), gc);
 
       String[] columns = { "First column", "Second column" };
       String[][] data = {{"one", "1"}, {"two", "2"}, {"three", "3"}, {"four", "4"}, {"five", "5"},
         {"six", "6"}, {"seven", "7"}, {"eight", "8"}, {"nine", "9"}, {"ten", "10"}, {"eleven", "11"},
         {"twelve", "12"}, {"thirteen", "13"}, {"fourteen", "14"}, {"fifteen", "15"}, {"sixteen", "16"}};
 
-      JBTable table = new JBTable(new AbstractTableModel() {
+      JBTable table = new JBTable(new DefaultTableModel() {
         @Override
         public String getColumnName(int column) { return columns[column]; }
         @Override
@@ -186,22 +194,41 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         @Override
         public int getColumnCount() { return columns.length; }
         @Override
-        public Object getValueAt(int row, int col) { return data[row][col]; }
+        public Object getValueAt(int row, int col) { return col == 0 ? data[row][col] : Integer.valueOf(data[row][col]); }
         @Override
-        public boolean isCellEditable(int row, int column) { return false; }
+        public boolean isCellEditable(int row, int column) { return true; }
         @Override
-        public void setValueAt(Object value, int row, int col) {}
+        public void setValueAt(Object value, int row, int col) {
+          if (col == 0 && ALLOWED_VALUES.contains(value.toString()) || col == 1) {
+            data[row][col] = value.toString();
+            fireTableCellUpdated(row, col);
+          }
+        }
       });
 
+      JTextField cellEditor = new JTextField();
+      cellEditor.getDocument().addDocumentListener(new DocumentAdapter() {
+        @Override
+        protected void textChanged(@NotNull DocumentEvent e) {
+          Object op = ALLOWED_VALUES.contains(cellEditor.getText()) ? null : "error";
+          cellEditor.putClientProperty("JComponent.outline", op);
+        }
+      });
+
+      table.getColumnModel().getColumn(0).setCellEditor(new DefaultCellEditor(cellEditor));
+
+      JComboBox<Integer> rightEditor = new ComboBox<>(Arrays.stream(data).map(i -> Integer.valueOf(i[1])).toArray(Integer[]::new));
+      table.getColumnModel().getColumn(1).setCellEditor(new DefaultCellEditor(rightEditor));
+
       JBScrollPane pane = new JBScrollPane(table);
-      pane.setPreferredSize(JBUI.size(200, 100));
+      pane.setPreferredSize(JBUI.size(400, 300));
       pane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.ALL);
 
-      panel.add(UI.PanelFactory.panel(pane).
-        withLabel("Table label:").moveLabelOnTop().withComment("Table comment").createPanel());
+      BorderLayoutPanel mainPanel = JBUI.Panels.simplePanel(UI.PanelFactory.panel(pane).
+        withLabel("Table label:").moveLabelOnTop().withComment("Table comment").resizeY(true).createPanel());
+      mainPanel.addToTop(topPanel);
 
-      panel.add(new Box.Filler(JBUI.size(100,20), JBUI.size(200,30), JBUI.size(Integer.MAX_VALUE, Integer.MAX_VALUE)));
-      return panel;
+      return mainPanel;
     }
 
     private JComponent createComponentGridPanel() {

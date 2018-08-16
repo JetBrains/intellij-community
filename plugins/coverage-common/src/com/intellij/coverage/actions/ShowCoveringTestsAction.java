@@ -62,6 +62,7 @@ public class ShowCoveringTestsAction extends AnAction {
     myLineData = lineData;
   }
 
+  @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     final DataContext context = e.getDataContext();
     final Project project = e.getProject();

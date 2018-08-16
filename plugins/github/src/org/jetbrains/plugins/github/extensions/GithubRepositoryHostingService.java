@@ -26,6 +26,8 @@ import org.jetbrains.plugins.github.util.GithubAccountsMigrationHelper;
 import org.jetbrains.plugins.github.util.GithubGitHelper;
 import org.jetbrains.plugins.github.util.GithubUtil;
 
+import java.awt.*;
+import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -72,9 +74,9 @@ public class GithubRepositoryHostingService extends GitRepositoryHostingService 
       }
 
       @Override
-      public boolean enable() {
-        if (!GithubAccountsMigrationHelper.getInstance().migrate(project)) return false;
-        if (!myAuthenticationManager.ensureHasAccounts(project)) return false;
+      public boolean enable(@Nullable Component parentComponent) {
+        if (!GithubAccountsMigrationHelper.getInstance().migrate(project, parentComponent)) return false;
+        if (!myAuthenticationManager.ensureHasAccounts(project, parentComponent)) return false;
         boolean atLeastOneHasToken = false;
         for (GithubAccount account : myAuthenticationManager.getAccounts()) {
           GithubApiRequestExecutor executor = myExecutorManager.getExecutor(account, project);

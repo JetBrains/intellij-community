@@ -38,6 +38,7 @@ public class SingleRowLayout extends TabLayout {
   private final SingleRowLayoutStrategy myRight;
 
   public final MoreTabsIcon myMoreIcon = new MoreTabsIcon() {
+    @Override
     @Nullable
     protected Rectangle getIconRec() {
       return myLastSingRowLayout != null ? myLastSingRowLayout.moreRect : null;
@@ -369,6 +370,7 @@ public class SingleRowLayout extends TabLayout {
 
     private GhostComponent(final RowDropPolicy before, final RowDropPolicy after) {
       addMouseListener(new MouseAdapter() {
+        @Override
         public void mousePressed(final MouseEvent e) {
           if (JBTabsImpl.isSelectionClick(e, true) && myInfo != null) {
             myRowDropPolicy = before;

@@ -22,6 +22,7 @@ public final class LwIntroIntProperty extends LwIntrospectedProperty {
     super(name, Integer.class.getName());
   }
 
+  @Override
   public Object read(final Element element) throws Exception{
     return new Integer(LwXmlReader.getRequiredInt(element, "value"));
   }

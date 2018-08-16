@@ -370,7 +370,7 @@ public class QuickDocOnMouseOverManager {
 
   private class MyEditorMouseListener implements EditorMouseMotionListener, EditorMouseListener {
     @Override
-    public void mouseExited(EditorMouseEvent e) {
+    public void mouseExited(@NotNull EditorMouseEvent e) {
       processMouseExited();
     }
 
@@ -392,7 +392,7 @@ public class QuickDocOnMouseOverManager {
 
   private class MyCaretListener implements CaretListener {
     @Override
-    public void caretPositionChanged(CaretEvent e) {
+    public void caretPositionChanged(@NotNull CaretEvent e) {
       Editor editor = getEditor();
       if (editor == null || editor == e.getEditor()) {
         allowUpdateFromContext(e.getEditor().getProject(), true);
@@ -403,7 +403,7 @@ public class QuickDocOnMouseOverManager {
 
   private class MyDocumentListener implements DocumentListener {
     @Override
-    public void documentChanged(DocumentEvent e) {
+    public void documentChanged(@NotNull DocumentEvent e) {
       Editor editor = getEditor();
       if (editor == null || editor.getDocument() == e.getDocument()) {
         closeQuickDocIfPossible();

@@ -51,6 +51,7 @@ import org.fest.swing.edt.GuiQuery;
 import org.fest.swing.edt.GuiTask;
 import org.fest.swing.exception.ComponentLookupException;
 import org.fest.swing.exception.WaitTimedOutError;
+import org.fest.swing.fixture.ContainerFixture;
 import org.fest.swing.timing.Condition;
 import org.fest.swing.timing.Timeout;
 import org.jetbrains.annotations.Contract;
@@ -81,7 +82,7 @@ import static org.fest.util.Strings.quote;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 
-public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameImpl> {
+public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameImpl> implements ContainerFixture<IdeFrameImpl> {
   @NotNull private final File myProjectPath;
 
   private MainToolbarFixture myToolbar;

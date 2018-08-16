@@ -41,7 +41,8 @@ public final class FileObject extends AbstractFileObject {
 
 	// Implemented ============================================================
 
-	public boolean isDirectory() {
+	@Override
+        public boolean isDirectory() {
 		return false;
 	}
 }

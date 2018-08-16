@@ -26,6 +26,7 @@ public class XPathLocationPathImpl extends XPathElementImpl implements XPathLoca
         super(node);
     }
 
+    @Override
     @NotNull
     public XPathType getType() {
       final XPathStep step = getFirstStep();
@@ -39,16 +40,19 @@ public class XPathLocationPathImpl extends XPathElementImpl implements XPathLoca
                 XPathType.NODESET : XPath2Type.SEQUENCE;
     }
 
+    @Override
     @Nullable
     public XPathStep getFirstStep() {
       return findChildByClass(XPathStep.class);
     }
 
+    @Override
     public boolean isAbsolute() {
         final XPathStep pathExpression = getFirstStep();
         return pathExpression != null && pathExpression.isAbsolute();
     }
 
+  @Override
   public void accept(XPathElementVisitor visitor) {
     visitor.visitXPathLocationPath(this);
   }

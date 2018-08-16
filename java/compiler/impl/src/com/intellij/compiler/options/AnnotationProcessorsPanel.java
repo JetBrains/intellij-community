@@ -50,8 +50,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -254,6 +254,7 @@ public class AnnotationProcessorsPanel extends JPanel {
       removeNodes(Collections.singleton(nodePath));
     }
 
+    @Override
     public void removeNodes(Collection<TreePath> paths) {
       final List<ProcessorConfigProfile> toRemove = new SmartList<>();
       for (TreePath path : paths) {

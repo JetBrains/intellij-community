@@ -27,11 +27,13 @@ import org.jetbrains.annotations.NotNull;
 
 public class MergeIfOrIntention extends Intention {
 
+  @Override
   @NotNull
   public PsiElementPredicate getElementPredicate() {
     return new MergeIfOrPredicate();
   }
 
+  @Override
   public void processIntention(@NotNull PsiElement element) {
     final PsiJavaToken token = (PsiJavaToken)element;
     if (MergeIfOrPredicate.isMergableExplicitIf(token)) {

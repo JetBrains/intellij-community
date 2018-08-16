@@ -39,30 +39,37 @@ public class SimpleMakeStaticDialog extends AbstractMakeStaticDialog {
     init();
   }
 
+  @Override
   protected boolean validateData() {
     return true;
   }
 
+  @Override
   public boolean isMakeClassParameter() {
     return false;
   }
 
+  @Override
   public String getClassParameterName() {
     return null;
   }
 
+  @Override
   public VariableData[] getVariableData() {
     return null;
   }
 
+  @Override
   public boolean isReplaceUsages() {
     return myCbReplaceUsages.isSelected();
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.MAKE_METHOD_STATIC_SIMPLE);
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
@@ -83,6 +90,7 @@ public class SimpleMakeStaticDialog extends AbstractMakeStaticDialog {
     return panel;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return null;
   }

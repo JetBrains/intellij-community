@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.crlf;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -17,6 +18,7 @@ import java.util.List;
 import static java.util.Arrays.asList;
 
 public class GitCrlfProblemsDetectorTest extends GitSingleRepoTest {
+  @Override
   public void setUp() throws Exception {
     try {
       super.setUp();

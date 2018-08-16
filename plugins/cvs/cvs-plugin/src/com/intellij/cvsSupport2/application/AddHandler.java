@@ -102,14 +102,17 @@ class AddHandler {
   private CvsContext createDataContext(final Collection<VirtualFile> files) {
     final Iterator<VirtualFile> first = files.iterator();
     return new CvsContextAdapter() {
+      @Override
       public Project getProject() {
         return myProject;
       }
 
+      @Override
       public VirtualFile getSelectedFile() {
         return first.hasNext() ? first.next() : null;
       }
 
+      @Override
       @NotNull
       public VirtualFile[] getSelectedFiles() {
         return VfsUtil.toVirtualFileArray(files);

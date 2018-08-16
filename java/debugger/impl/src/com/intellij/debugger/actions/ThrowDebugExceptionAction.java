@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ThrowDebugExceptionAction extends AnAction implements DumbAware {
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
     try{
       throw new DebugException();

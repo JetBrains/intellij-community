@@ -62,6 +62,7 @@ public class CollectFUStatisticsAction extends GotoActionBase {
     popup.setShowListForEmptyPattern(true);
 
     popup.invoke(new ChooseByNamePopupComponent.Callback() {
+      @Override
       public void onClose() {
         if (CollectFUStatisticsAction.this.getClass().equals(myInAction)) myInAction = null;
       }

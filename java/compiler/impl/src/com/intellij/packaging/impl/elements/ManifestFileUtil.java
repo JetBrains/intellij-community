@@ -311,6 +311,7 @@ public class ManifestFileUtil {
 
   public static void setupMainClassField(final Project project, final TextFieldWithBrowseButton field) {
     field.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final PsiClass selected = selectMainClass(project, field.getText());
         if (selected != null) {
@@ -321,6 +322,7 @@ public class ManifestFileUtil {
   }
 
   private static class MainClassFilter implements ClassFilter {
+    @Override
     public boolean isAccepted(final PsiClass aClass) {
       return ReadAction
         .compute(() -> PsiMethodUtil.MAIN_CLASS.value(aClass) && PsiMethodUtil.hasMainMethod(aClass));

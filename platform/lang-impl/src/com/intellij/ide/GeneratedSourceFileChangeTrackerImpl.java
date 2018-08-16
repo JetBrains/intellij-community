@@ -61,7 +61,7 @@ public class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceFileCha
     };
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         if (myProject.isDisposed()) return;
         VirtualFile file = myDocumentManager.getFile(e.getDocument());
         ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(myProject);

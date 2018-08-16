@@ -93,14 +93,17 @@ public abstract class ElementPresentation {
       super(new Noun(-1));
     }
 
+    @Override
     public String getComment() {
       return "";
     }
 
+    @Override
     public String getName() {
       return "INVALID";
     }
 
+    @Override
     public String getQualifiedName() {
       return getName();
     }
@@ -114,16 +117,19 @@ public abstract class ElementPresentation {
       myPsiDirectory = psiDirectory;
     }
 
+    @Override
     public String getQualifiedName() {
       VirtualFile virtualFile = myPsiDirectory.getVirtualFile();
       if (validNotNull(virtualFile)) return virtualFile.getPresentableUrl();
       return myPsiDirectory.getName();
     }
 
+    @Override
     public String getName() {
       return myPsiDirectory.getName();
     }
 
+    @Override
     public String getComment() {
       PsiDirectory parentDirectory = myPsiDirectory.getParentDirectory();
       if (parentDirectory == null) return "";
@@ -139,16 +145,19 @@ public abstract class ElementPresentation {
       myFile = file;
     }
 
+    @Override
     public String getQualifiedName() {
       VirtualFile virtualFile = myFile.getVirtualFile();
       if (validNotNull(virtualFile)) return virtualFile.getPresentableUrl();
       return myFile.getName();
     }
 
+    @Override
     public String getName() {
       return myFile.getName();
     }
 
+    @Override
     public String getComment() {
       PsiDirectory directory = myFile.getContainingDirectory();
       if (directory == null) return "";
@@ -164,16 +173,19 @@ public abstract class ElementPresentation {
       myPsiPackage = psiPackage;
     }
 
+    @Override
     public String getQualifiedName() {
       String qualifiedName = myPsiPackage.getQualifiedName();
       if (qualifiedName.length() == 0) return PsiBundle.message("default.package.presentation");
       return qualifiedName;
     }
 
+    @Override
     public String getName() {
       return getQualifiedName();
     }
 
+    @Override
     public String getComment() {
       return "";
     }
@@ -187,16 +199,19 @@ public abstract class ElementPresentation {
       myPsiAnonymousClass = psiAnonymousClass;
     }
 
+    @Override
     public String getQualifiedName() {
       PsiClass psiClass = PsiTreeUtil.getParentOfType(myPsiAnonymousClass, PsiClass.class);
       if (psiClass != null) return PsiBundle.message("anonymous.class.context.display", forElement(psiClass).getQualifiedName());
       return PsiBundle.message("anonymous.class.display");
     }
 
+    @Override
     public String getName() {
       return getQualifiedName();
     }
 
+    @Override
     public String getComment() {
       return "";
     }
@@ -211,14 +226,17 @@ public abstract class ElementPresentation {
       myPsiClass = psiClass;
     }
 
+    @Override
     public String getQualifiedName() {
       return myPsiClass.getQualifiedName();
     }
 
+    @Override
     public String getName() {
       return myPsiClass.getName();
     }
 
+    @Override
     public String getComment() {
       PsiFile file = myPsiClass.getContainingFile();
       PsiDirectory dir = file.getContainingDirectory();
@@ -243,14 +261,17 @@ public abstract class ElementPresentation {
       myPsiMethod = psiMethod;
     }
 
+    @Override
     public String getQualifiedName() {
       return PsiFormatUtil.formatMethod(myPsiMethod, PsiSubstitutor.EMPTY, FQ_OPTIONS, PsiFormatUtil.SHOW_TYPE);
     }
 
+    @Override
     public String getName() {
       return PsiFormatUtil.formatMethod(myPsiMethod, PsiSubstitutor.EMPTY, NAME_OPTIONS, PsiFormatUtil.SHOW_TYPE);
     }
 
+    @Override
     public String getComment() {
       PsiClass containingClass = myPsiMethod.getContainingClass();
       if (containingClass == null) return "";
@@ -266,6 +287,7 @@ public abstract class ElementPresentation {
       myPsiField = psiField;
     }
 
+    @Override
     public String getQualifiedName() {
       PsiClass psiClass = myPsiField.getContainingClass();
       String name = myPsiField.getName();
@@ -273,6 +295,7 @@ public abstract class ElementPresentation {
       else return name;
     }
 
+    @Override
     public String getName() {
       PsiClass psiClass = myPsiField.getContainingClass();
       String name = myPsiField.getName();
@@ -280,6 +303,7 @@ public abstract class ElementPresentation {
       return forElement(psiClass).getName() + "." + name;
     }
 
+    @Override
     public String getComment() {
       PsiClass psiClass = myPsiField.getContainingClass();
       if (psiClass == null) return "";
@@ -295,16 +319,19 @@ public abstract class ElementPresentation {
       myPsiElement = psiElement;
     }
 
+    @Override
     public String getQualifiedName() {
       PsiFile containingFile = myPsiElement.getContainingFile();
       if (containingFile != null) return PsiBundle.message("code.from.context.display", forElement(containingFile).getQualifiedName());
       return PsiBundle.message("code.display");
     }
 
+    @Override
     public String getName() {
       return getQualifiedName();
     }
 
+    @Override
     public String getComment() {
       return "";
     }
@@ -318,14 +345,17 @@ public abstract class ElementPresentation {
       myXmlTag = xmlTag;
     }
 
+    @Override
     public String getQualifiedName() {
       return "<" + myXmlTag.getLocalName() + ">";
     }
 
+    @Override
     public String getName() {
       return getQualifiedName();
     }
 
+    @Override
     public String getComment() {
       return "";
     }
@@ -339,6 +369,7 @@ public abstract class ElementPresentation {
       myFile = file;
     }
 
+    @Override
     public String getComment() {
       String name = myFile.getName();
       if (!myFile.isValid()) return name;
@@ -347,10 +378,12 @@ public abstract class ElementPresentation {
       return parent.getPresentableUrl();
     }
 
+    @Override
     public String getName() {
       return myFile.getName();
     }
 
+    @Override
     public String getQualifiedName() {
       if (!myFile.isValid()) return myFile.getName();
       return myFile.getPresentableUrl();

@@ -43,6 +43,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
     validator.add(this);
   }
 
+  @Override
   @NotNull
   public JComponent createComponent() {
     if (myComponent == null) {
@@ -51,6 +52,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
     return myComponent;
   }
 
+  @Override
   public String getDisplayName() {
     return "HTTP Proxies Configuration";
   }
@@ -71,7 +73,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
     } else {
       group = new ProxyGroup(getNewName(), template.getPatterns(), template.getProperties());
     }
-    
+
     addNode(createNodeForObject(group), myRoot);
     selectNodeInTree(group);
   }
@@ -95,7 +97,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
     final Ref<String> errorMessageRef = new Ref<>();
     final Set<String> checkSet = new HashSet<>();
     final AmbiguousPatternsFinder ambiguousPatternsFinder = new AmbiguousPatternsFinder();
-    
+
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       final MyNode node = (MyNode) myRoot.getChildAt(i);
       final GroupConfigurable groupConfigurable = (GroupConfigurable) node.getConfigurable();
@@ -131,12 +133,14 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
     return true;
   }
 
+  @Override
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {
     ArrayList<AnAction> result = new ArrayList<>();
     result.add(new DumbAwareAction("Add", "Add", IconUtil.getAddIcon()) {
         {
             registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
         }
+        @Override
         public void actionPerformed(@NotNull AnActionEvent event) {
           addGroup(null);
         }
@@ -153,6 +157,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
       }
       return false;
     })) {
+      @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
         final TreePath path = myTree.getSelectionPath();
         final MyNode node = (MyNode)path.getLastPathComponent();
@@ -173,6 +178,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
         {
             registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_MASK)), myTree);
         }
+        @Override
         public void actionPerformed(@NotNull AnActionEvent event) {
           // apply - for update of editable object
           try {
@@ -186,6 +192,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
           }
         }
 
+        @Override
         public void update(@NotNull AnActionEvent event) {
             super.update(event);
             event.getPresentation().setEnabled(getSelectedObject() != null);
@@ -194,6 +201,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
     return result;
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     final List<ProxyGroup> groups = new ArrayList<>(myRoot.getChildCount());
 
@@ -207,10 +215,11 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
     myManager.updateUserServerFile(groups);
   }
 
+  @Override
   public void reset() {
     super.reset();
     myManager.updateFromFile();
-    
+
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       final MyNode node = (MyNode) myRoot.getChildAt(i);
       final GroupConfigurable groupConfigurable = (GroupConfigurable) node.getConfigurable();
@@ -261,6 +270,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
       return instance;
     }
 
+    @Override
     public int compare(final MyNode node1, final MyNode node2) {
       if ((node1.getConfigurable() instanceof GroupConfigurable) && (node2.getConfigurable() instanceof GroupConfigurable)) {
         final ProxyGroup group1 = ((GroupConfigurable) node1.getConfigurable()).getEditableObject();

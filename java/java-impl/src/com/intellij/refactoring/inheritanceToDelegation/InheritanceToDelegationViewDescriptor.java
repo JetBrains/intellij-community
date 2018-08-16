@@ -32,11 +32,13 @@ public class InheritanceToDelegationViewDescriptor extends UsageViewDescriptorAd
     myClass = aClass;
   }
 
+  @Override
   @NotNull
   public PsiElement[] getElements() {
     return new PsiElement[] { myClass };
   }
 
+  @Override
   public String getProcessedElementsHeader() {
     return RefactoringBundle.message("replace.inheritance.with.delegation.elements.header");
   }

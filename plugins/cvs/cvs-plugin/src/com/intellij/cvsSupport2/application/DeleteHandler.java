@@ -57,10 +57,12 @@ class DeleteHandler {
     }
 
     final CvsContext context = new CvsContextAdapter() {
+      @Override
       public Project getProject() {
         return myProject;
       }
 
+      @Override
       public Collection<String> getDeletedFileNames() {
         return myDeletedFiles;
       }

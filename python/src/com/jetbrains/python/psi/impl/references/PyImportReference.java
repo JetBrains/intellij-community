@@ -298,6 +298,7 @@ public class PyImportReference extends PyReferenceImpl {
 
     private static final String IMPORT_KWD = " import ";
 
+    @Override
     public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
       final Editor editor = context.getEditor();
       final Document document = editor.getDocument();

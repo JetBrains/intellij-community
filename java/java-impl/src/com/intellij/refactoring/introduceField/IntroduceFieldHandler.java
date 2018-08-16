@@ -43,10 +43,12 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     super(false);
   }
 
+  @Override
   protected String getRefactoringName() {
     return REFACTORING_NAME;
   }
 
+  @Override
   protected boolean validClass(PsiClass parentClass, Editor editor) {
     if (parentClass.isInterface()) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("cannot.introduce.field.in.interface"));
@@ -58,10 +60,12 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     }
   }
 
+  @Override
   protected String getHelpID() {
     return HelpID.INTRODUCE_FIELD;
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -69,6 +73,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     ElementToWorkOn.processElementToWorkOn(editor, file, REFACTORING_NAME, HelpID.INTRODUCE_FIELD, project, getElementProcessor(project, editor));
   }
 
+  @Override
   protected Settings showRefactoringDialog(Project project, Editor editor, PsiClass parentClass, PsiExpression expr,
                                            PsiType type,
                                            PsiExpression[] occurrences, PsiElement anchorElement, PsiElement anchorElementIfAll) {
@@ -173,11 +178,13 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     return !NotInSuperCallOccurrenceFilter.INSTANCE.isOK(occurrence) || !NotInThisCallFilter.INSTANCE.isOK(occurrence);
   }
 
+  @Override
   protected OccurrenceManager createOccurrenceManager(final PsiExpression selectedExpr, final PsiClass parentClass) {
     final OccurrenceFilter occurrenceFilter = isInSuperOrThis(selectedExpr) ? null : MY_OCCURRENCE_FILTER;
     return new ExpressionOccurrenceManager(selectedExpr, parentClass, occurrenceFilter, true);
   }
 
+  @Override
   protected boolean invokeImpl(final Project project, PsiLocalVariable localVariable, final Editor editor) {
     final PsiElement parent = localVariable.getParent();
     if (!(parent instanceof PsiDeclarationStatement)) {
@@ -208,6 +215,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
   }
 
   private static class MyOccurrenceFilter implements OccurrenceFilter {
+    @Override
     public boolean isOK(PsiExpression occurrence) {
       return !isInSuperOrThis(occurrence);
     }

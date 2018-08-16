@@ -52,6 +52,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
     this(parent == null ? null : parent.myProject, parent);
   }
 
+  @Override
   public PresentableNodeDescriptor getChildToHighlightAt(int index) {
     return getChildAt(index);
   }
@@ -64,6 +65,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
     return getName();
   }
 
+  @Override
   public int getWeight() {
     return 10;
   }
@@ -85,6 +87,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
     return getElement();
   }
 
+  @Override
   protected void update(PresentationData presentation) {
     Object newElement = updateElement();
     if (getElement() != newElement) {
@@ -199,6 +202,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
   protected void doUpdate() {
   }
 
+  @Override
   public Object getElement() {
     return this;
   }
@@ -263,6 +267,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
     return list.toArray(new ColoredFragment[0]);
   }
 
+  @Override
   @NotNull
   public Object[] getEqualityObjects() {
     return NONE;

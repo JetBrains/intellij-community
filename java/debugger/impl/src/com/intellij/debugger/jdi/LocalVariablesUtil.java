@@ -385,6 +385,7 @@ public class LocalVariablesUtil {
       }
     }
 
+    @Override
     public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
       if (shouldVisit(statement)) {
         myIndexStack.push(myCurrentSlotIndex);

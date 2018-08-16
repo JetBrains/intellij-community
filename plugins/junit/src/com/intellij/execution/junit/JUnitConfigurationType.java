@@ -31,6 +31,7 @@ public class JUnitConfigurationType implements ConfigurationType {
   /**reflection*/
   public JUnitConfigurationType() {
     myFactory = new ConfigurationFactoryEx(this) {
+      @Override
       @NotNull
       public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
         return new JUnitConfiguration("", project, this);
@@ -43,22 +44,27 @@ public class JUnitConfigurationType implements ConfigurationType {
     };
   }
 
+  @Override
   public String getDisplayName() {
     return ExecutionBundle.message("junit.configuration.display.name");
   }
 
+  @Override
   public String getConfigurationTypeDescription() {
     return ExecutionBundle.message("junit.configuration.description");
   }
 
+  @Override
   public Icon getIcon() {
     return AllIcons.RunConfigurations.Junit;
   }
 
+  @Override
   public ConfigurationFactory[] getConfigurationFactories() {
     return new ConfigurationFactory[]{myFactory};
   }
 
+  @Override
   @NotNull
   public String getId() {
     return "JUnit";

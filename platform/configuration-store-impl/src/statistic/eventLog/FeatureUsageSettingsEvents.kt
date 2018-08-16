@@ -81,7 +81,7 @@ open class FeatureUsageSettingsEventPrinter {
   }
 
   protected open fun logConfig(groupId: String, eventId: String, data: Map<String, Any>) {
-    FeatureUsageLogger.log(groupId, eventId, data)
+    FeatureUsageLogger.logState(groupId, eventId, data)
   }
 
   internal fun toHash(projectName: String?): String? {

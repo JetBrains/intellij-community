@@ -26,6 +26,7 @@ public class RemoteDebugProcessHandler extends ProcessHandler{
   public void startNotify() {
     final DebugProcessListener listener = new DebugProcessAdapterImpl() {
       //executed in manager thread
+      @Override
       public void processDetached(DebugProcessImpl process, boolean closedByUser) {
         if (!myAutoRestart || closedByUser || myClosedByUser.get()) {
           process.removeDebugProcessListener(this);

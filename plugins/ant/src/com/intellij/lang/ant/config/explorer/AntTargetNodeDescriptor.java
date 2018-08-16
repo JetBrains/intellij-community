@@ -56,6 +56,7 @@ final class AntTargetNodeDescriptor extends AntNodeDescriptor {
     myHighlightedText = new CompositeAppearance();
   }
 
+  @Override
   public Object getElement() {
     return myTarget;
   }
@@ -64,6 +65,7 @@ final class AntTargetNodeDescriptor extends AntNodeDescriptor {
     return myTarget;
   }
 
+  @Override
   public boolean update() {
     final CompositeAppearance oldText = myHighlightedText;
     final boolean isMeta = myTarget instanceof MetaTarget;
@@ -134,10 +136,12 @@ final class AntTargetNodeDescriptor extends AntNodeDescriptor {
     return myHighlightedText;
   }
 
+  @Override
   public boolean isAutoExpand() {
     return false;
   }
 
+  @Override
   public void customize(@NotNull SimpleColoredComponent component) {
     getHighlightedText().customize(component);
     component.setIcon(getIcon());

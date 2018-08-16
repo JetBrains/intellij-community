@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,12 +16,12 @@ import com.intellij.uiDesigner.propertyInspector.renderers.StringRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.uiDesigner.snapShooter.SnapshotContext;
-import java.util.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.Locale;
 
 /**
@@ -65,11 +51,13 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
     myRenderer = new StringRenderer();
   }
 
+  @Override
   @NotNull
   public PropertyRenderer<StringDescriptor> getRenderer() {
     return myRenderer;
   }
 
+  @Override
   public PropertyEditor<StringDescriptor> getEditor() {
     if (myEditor == null) {
       myEditor = new StringEditor(myProject, this);
@@ -130,6 +118,7 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
    *
    * @return instance of {@link StringDescriptor}
    */
+  @Override
   public StringDescriptor getValue(final RadComponent component) {
     // 1. resource bundle
     {
@@ -180,6 +169,7 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
     return result;
   }
 
+  @Override
   protected void setValueImpl(final RadComponent component, final StringDescriptor value) throws Exception {
     // 1. Put value into map
     if(value == null || (value.getBundleName() == null && !value.isNoI18n())) {
@@ -279,6 +269,7 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
     }
   }
 
+  @Override
   public void write(@NotNull final StringDescriptor value, final XmlWriter writer) {
     writer.writeStringDescriptor(value,
                                  UIFormXmlConstants.ATTRIBUTE_VALUE,

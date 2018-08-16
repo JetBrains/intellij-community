@@ -280,8 +280,8 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     setSerializedPassword(element.getAttributeValue(PASSWORD));
     setPrivateKeyFile(StringUtil.nullize(element.getAttributeValue(PRIVATE_KEY_FILE)));
     setSerializedPassphrase(element.getAttributeValue(PASSPHRASE));
-    boolean useKeyPair = StringUtil.parseBoolean(element.getAttributeValue(USE_KEY_PAIR), false);
-    boolean useAuthAgent = StringUtil.parseBoolean(element.getAttributeValue(USE_AUTH_AGENT), false);
+    boolean useKeyPair = Boolean.parseBoolean(element.getAttributeValue(USE_KEY_PAIR));
+    boolean useAuthAgent = Boolean.parseBoolean(element.getAttributeValue(USE_AUTH_AGENT));
     if (useKeyPair) {
       myAuthType = AuthType.KEY_PAIR;
     }
@@ -317,7 +317,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
       }
     }
 
-    boolean isAnonymous = StringUtil.parseBoolean(element.getAttributeValue(ANONYMOUS), false);
+    boolean isAnonymous = Boolean.parseBoolean(element.getAttributeValue(ANONYMOUS));
     if (isAnonymous) {
       setSerializedUserName("anonymous");
       setSerializedPassword("user@example.com");

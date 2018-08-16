@@ -68,10 +68,12 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
     contentPanel.add(myMainForm.getMainPanel(), BorderLayout.NORTH);
   }
 
+  @Override
   public JPanel getMainComponent() {
     return myMainForm.getMainPanel();
   }
 
+  @Override
   @NotNull
   public XDebuggerEditorBase getInputEditor() {
     return myExpressionEditor;

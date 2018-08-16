@@ -102,6 +102,7 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
         myArgFileFilter);
     }
 
+    @Override
     @NotNull
     protected OSProcessHandler startProcess() throws ExecutionException {
       OSProcessHandler handler = JavaCommandLineStateUtil.startProcess(createCommandLine());

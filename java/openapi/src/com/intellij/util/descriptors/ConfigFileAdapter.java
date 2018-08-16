@@ -23,14 +23,17 @@ public abstract class ConfigFileAdapter implements ConfigFileListener {
   protected void configChanged(ConfigFile configFile) {
   }
 
+  @Override
   public void configFileAdded(ConfigFile configFile) {
     configChanged(configFile);
   }
 
+  @Override
   public void configFileRemoved(ConfigFile configFile) {
     configChanged(configFile);
   }
 
+  @Override
   public void configFileChanged(ConfigFile configFile) {
     configChanged(configFile);
   }

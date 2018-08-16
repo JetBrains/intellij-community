@@ -26,6 +26,13 @@ class Test {
   final String myFoo11 = "";
   final String myFoo12;
   final String myFoo13 = null;
+  final Runnable myFoo14 = new Runnable() {
+    {foo();}
+    Object foo() {
+      return null;
+    }
+    public void run() {}
+  };
 
   /**
    * {@link #myFoo6}

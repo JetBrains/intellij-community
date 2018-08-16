@@ -31,6 +31,7 @@ public class AssociationsGroup extends ActionGroup {
         getTemplatePresentation().setIcon(XpathIcons.Association);
     }
 
+    @Override
     @NotNull
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
         if (!isEnabled(e)) return AnAction.EMPTY_ARRAY;
@@ -58,6 +59,7 @@ public class AssociationsGroup extends ActionGroup {
         return children;
     }
 
+    @Override
     public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setVisible(isVisible(e));
         e.getPresentation().setEnabled(isEnabled(e));

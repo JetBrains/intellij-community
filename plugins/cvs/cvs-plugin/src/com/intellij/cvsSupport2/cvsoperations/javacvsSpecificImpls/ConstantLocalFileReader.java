@@ -15,9 +15,9 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.javacvsSpecificImpls;
 
-import org.netbeans.lib.cvsclient.file.*;
 import org.netbeans.lib.cvsclient.IConnectionStreams;
-import java.io.IOException;
+import org.netbeans.lib.cvsclient.file.*;
+
 import java.util.Collection;
 
 /**
@@ -33,19 +33,24 @@ public class ConstantLocalFileReader implements ILocalFileReader{
     myFileExists = fileExists;
   }
 
+  @Override
   public boolean exists(AbstractFileObject fileObject, ICvsFileSystem cvsFileSystem) {
     return myFileExists;
   }
 
+  @Override
   public void transmitBinaryFile(FileObject fileObject, IConnectionStreams connectionStreams, ICvsFileSystem cvsFileSystem) {
   }
 
+  @Override
   public void transmitTextFile(FileObject fileObject, IConnectionStreams connectionStreams, ICvsFileSystem cvsFileSystem) {
   }
 
+  @Override
   public void listFilesAndDirectories(DirectoryObject directoryObject, Collection<String> fileNames, Collection<String> directoryNames, ICvsFileSystem cvsFileSystem) {
   }
 
+  @Override
   public boolean isWritable(FileObject fileObject, ICvsFileSystem cvsFileSystem) {
     return false;
   }

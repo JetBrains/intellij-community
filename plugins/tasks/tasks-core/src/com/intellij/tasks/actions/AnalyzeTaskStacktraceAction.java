@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class AnalyzeTaskStacktraceAction extends BaseTaskAction {
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final LocalTask activeTask = getActiveTask(e);
     final Project project = getProject(e);

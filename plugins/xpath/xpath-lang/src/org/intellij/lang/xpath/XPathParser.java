@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public class XPathParser implements PsiParser {
   private static final boolean DBG_MODE = Boolean.getBoolean(XPathParser.class.getName() + ".debug") || ApplicationManager.getApplication().isUnitTestMode();
 
+  @Override
   @NotNull
   public ASTNode parse(IElementType root, PsiBuilder builder) {
     builder.setDebugMode(DBG_MODE);

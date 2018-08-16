@@ -452,6 +452,7 @@ public class AttachToProcessAction extends AnAction {
       super(group, isFirstInGroup, group.getGroupName(), host, project, dataHolder);
     }
 
+    @Override
     public boolean hasSubStep() {
       return true;
     }
@@ -462,6 +463,7 @@ public class AttachToProcessAction extends AnAction {
       return myGroup.getItemDisplayText(project, myInfo, myDataHolder);
     }
 
+    @Override
     @Nullable
     public String getTooltipText(@NotNull Project project)  {
       return myGroup.getItemDescription(project, myInfo, myDataHolder);
@@ -535,15 +537,18 @@ public class AttachToProcessAction extends AnAction {
       return myHost;
     }
 
+    @Override
     public boolean hasSubStep() {
       return !mySubItems.isEmpty();
     }
 
+    @Override
     @Nullable
     public String getTooltipText(@NotNull Project project)  {
       return myGroup.getItemDescription(project, myInfo, myDataHolder);
     }
 
+    @Override
     @NotNull
     public String getText(@NotNull Project project) {
       String shortenedText = StringUtil.shortenTextWithEllipsis(myGroup.getItemDisplayText(project, myInfo, myDataHolder), 200, 0);
@@ -555,6 +560,7 @@ public class AttachToProcessAction extends AnAction {
       return myDebuggers;
     }
 
+    @Override
     @NotNull
     public List<AttachToProcessItem> getSubItems() {
       return mySubItems;

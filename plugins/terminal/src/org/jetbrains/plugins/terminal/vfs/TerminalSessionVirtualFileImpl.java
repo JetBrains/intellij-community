@@ -48,6 +48,7 @@ public class TerminalSessionVirtualFileImpl extends LightVirtualFile {
     return myTerminal;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return myTabInfo.getText();

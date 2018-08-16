@@ -1787,7 +1787,7 @@ public class UsageViewImpl implements UsageViewEx {
     private MyPanel(@NotNull JTree tree) {
       mySupport = new OccurenceNavigatorSupport(tree) {
         @Override
-        protected Navigatable createDescriptorForNode(DefaultMutableTreeNode node) {
+        protected Navigatable createDescriptorForNode(@NotNull DefaultMutableTreeNode node) {
           if (node.getChildCount() > 0) return null;
           if (node instanceof Node && ((Node)node).isExcluded()) return null;
           return getNavigatableForNode(node, !myPresentation.isReplaceMode());
@@ -2147,8 +2147,8 @@ public class UsageViewImpl implements UsageViewEx {
     UsageNode usageNode = myUsageNodes.get(toDelete);
     if (usageNode == null) return null;
 
-    DefaultMutableTreeNode node = myRootPanel.mySupport.findNode(myTree, usageNode, true, null);
-    if (node == null) node = myRootPanel.mySupport.findNode(myTree, usageNode, false, null); // last node
+    DefaultMutableTreeNode node = myRootPanel.mySupport.findNextNodeAfter(myTree, usageNode, true);
+    if (node == null) node = myRootPanel.mySupport.findNextNodeAfter(myTree, usageNode, false); // last node
 
     return node == null ? null : node.getUserObject() instanceof Usage ? (Usage)node.getUserObject() : null;
   }

@@ -56,11 +56,13 @@ public class RemoveMiddlemanDialog extends RefactoringDialog {
     init();
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "RefactorJ.RemoveMiddleman";
   }
 
 
+  @Override
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 5, 0));
@@ -92,6 +94,7 @@ public class RemoveMiddlemanDialog extends RefactoringDialog {
     return panel;
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     fieldNameLabel.setEditable(false);
     final JPanel sourceClassPanel = new JPanel(new BorderLayout());
@@ -100,10 +103,12 @@ public class RemoveMiddlemanDialog extends RefactoringDialog {
     return sourceClassPanel;
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.RemoveMiddleman);
   }
 
+  @Override
   protected void doAction() {
     invokeRefactoring(new RemoveMiddlemanProcessor(myField, delegateMethods));
   }

@@ -125,6 +125,7 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
     return ArrayUtil.toStringArray(result);
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
 
@@ -149,6 +150,7 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
     return filters.isEmpty() ? null : ArrayUtil.toStringArray(filters);
   }
 
+  @Override
   public void writeExternal(final Element element) throws WriteExternalException {
     super.writeExternal(element);
     if (mySuiteToMerge != null) {
@@ -170,6 +172,7 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
     }
   }
 
+  @Override
   @Nullable
   public ProjectData getCoverageData(final CoverageDataManager coverageDataManager) {
     final ProjectData data = getCoverageData();
@@ -199,6 +202,7 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
     return map;
   }
 
+  @Override
   @NotNull
   public CoverageEngine getCoverageEngine() {
     return myCoverageEngine;

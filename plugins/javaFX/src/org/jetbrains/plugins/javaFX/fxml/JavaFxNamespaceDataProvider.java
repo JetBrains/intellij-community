@@ -14,6 +14,7 @@ public class JavaFxNamespaceDataProvider implements XmlFileNSInfoProvider, MetaD
 
   private static final String[][] NAMESPACES = {{"", JAVAFX_NAMESPACE}};
 
+  @Override
   public String[][] getDefaultNamespaces(@NotNull XmlFile file) {
     return JavaFxFileTypeFactory.isFxml(file) ? NAMESPACES : null;
   }

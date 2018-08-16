@@ -36,6 +36,7 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
 
     if (myContentManager != null) {
       myContentManager.addContentManagerListener(new ContentManagerAdapter(){
+        @Override
         public void contentRemoved(ContentManagerEvent event) {
           if (event.getContent().getComponent() == PanelWithActionsAndCloseButton.this) {
             Disposer.dispose(PanelWithActionsAndCloseButton.this);
@@ -74,6 +75,7 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
     }
   }
 
+  @Override
   public Object getData(@NotNull String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)){
       return myHelpId;
@@ -92,6 +94,7 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
       e.getPresentation().setVisible(myCloseEnabled);
     }
 
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       if (myContentManager != null) {
         Content content = myContentManager.getContent(PanelWithActionsAndCloseButton.this);

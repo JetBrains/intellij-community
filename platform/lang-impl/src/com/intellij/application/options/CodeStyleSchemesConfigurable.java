@@ -22,7 +22,6 @@ import com.intellij.application.options.codeStyle.CodeStyleSchemesModelListener;
 import com.intellij.application.options.codeStyle.CodeStyleSchemesPanel;
 import com.intellij.application.options.codeStyle.group.CodeStyleGroupProvider;
 import com.intellij.application.options.codeStyle.group.CodeStyleGroupProviderFactory;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -30,12 +29,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.Abstract
   implements OptionsContainingConfigurable, Configurable.NoMargin, Configurable.NoScroll, Configurable.VariableProjectAppLevel {
@@ -185,8 +188,10 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
     myPanels = new ArrayList<>();
     Set<CodeStyleGroupProvider> addedGroupProviders = ContainerUtil.newHashSet();
 
-    final List<CodeStyleSettingsProvider> providers =
-      Arrays.asList(Extensions.getExtensions(CodeStyleSettingsProvider.EXTENSION_POINT_NAME));
+    final List<CodeStyleSettingsProvider> providers = ContainerUtil.newArrayList();
+    providers.addAll(CodeStyleSettingsProvider.EXTENSION_POINT_NAME.getExtensionList());
+    providers.addAll(LanguageCodeStyleSettingsProvider.getSettingsPagesProviders());
+
     providers.sort((p1, p2) -> {
       if (!p1.getPriority().equals(p2.getPriority())) {
         return p1.getPriority().compareTo(p2.getPriority());

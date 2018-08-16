@@ -29,6 +29,7 @@ public class InnerClassConstructor extends InnerClassMethod {
     LOG.assertTrue(method.isConstructor());
   }
 
+  @Override
   public void createMethod(PsiClass innerClass) throws IncorrectOperationException {
     final PsiElementFactory factory = JavaPsiFacade.getInstance(innerClass.getProject()).getElementFactory();
     final PsiMethod constructor = factory.createConstructor();

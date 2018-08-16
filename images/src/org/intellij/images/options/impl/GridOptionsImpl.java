@@ -38,18 +38,22 @@ final class GridOptionsImpl implements GridOptions, JDOMExternalizable {
     this.propertyChangeSupport = propertyChangeSupport;
   }
 
+  @Override
   public boolean isShowDefault() {
     return showDefault;
   }
 
+  @Override
   public int getLineZoomFactor() {
     return lineMinZoomFactor;
   }
 
+  @Override
   public int getLineSpan() {
     return lineSpan;
   }
 
+  @Override
   public Color getLineColor() {
     return lineColor;
   }
@@ -89,6 +93,7 @@ final class GridOptionsImpl implements GridOptions, JDOMExternalizable {
     }
   }
 
+  @Override
   public void inject(GridOptions options) {
     setShowDefault(options.isShowDefault());
     setLineMinZoomFactor(options.getLineZoomFactor());
@@ -96,6 +101,7 @@ final class GridOptionsImpl implements GridOptions, JDOMExternalizable {
     setLineColor(options.getLineColor());
   }
 
+  @Override
   public boolean setOption(String name, Object value) {
     if (ATTR_SHOW_DEFAULT.equals(name)) {
       setShowDefault((Boolean)value);
@@ -115,6 +121,7 @@ final class GridOptionsImpl implements GridOptions, JDOMExternalizable {
     return true;
   }
 
+  @Override
   public void readExternal(Element element) {
     showDefault = JDOMExternalizer.readBoolean(element, ATTR_SHOW_DEFAULT);
     lineMinZoomFactor = JDOMExternalizer.readInteger(element, ATTR_LINE_ZOOM_FACTOR, DEFAULT_LINE_ZOOM_FACTOR);
@@ -122,6 +129,7 @@ final class GridOptionsImpl implements GridOptions, JDOMExternalizable {
     lineColor = JDOMExternalizerEx.readColor(element, ATTR_LINE_COLOR, DEFAULT_LINE_COLOR);
   }
 
+  @Override
   public void writeExternal(Element element) {
     JdomKt.addOptionTag(element, ATTR_SHOW_DEFAULT, Boolean.toString(showDefault), "setting");
     JdomKt.addOptionTag(element, ATTR_LINE_ZOOM_FACTOR, Integer.toString(lineMinZoomFactor), "setting");

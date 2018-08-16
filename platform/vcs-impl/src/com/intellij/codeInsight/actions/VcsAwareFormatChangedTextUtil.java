@@ -72,7 +72,7 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
   @Override
   public <T extends PsiElement> List<T> getChangedElements(@NotNull Project project,
                                                            @NotNull Change[] changes,
-                                                           @NotNull Convertor<VirtualFile, List<T>> elementsConvertor) {
+                                                           @NotNull Convertor<? super VirtualFile, ? extends List<T>> elementsConvertor) {
     List<T> result = ContainerUtil.newSmartList();
     for (Change change : changes) {
       if (change.getType() == Change.Type.DELETED) continue;
@@ -112,7 +112,7 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
     BitSet changedLines = new BitSet();
     for (Range range : ranges) {
       if (range.getType() == Range.DELETED) {
-        changedLines.set(range.getLine1() - 1, range.getLine1() + 1);
+        changedLines.set(Math.max(0, range.getLine1() - 1), range.getLine1() + 1);
       }
       else {
         changedLines.set(range.getLine1(), range.getLine2());

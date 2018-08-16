@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.intention.impl.config;
 
@@ -57,6 +57,7 @@ public class IntentionDescriptionPanel {
   public IntentionDescriptionPanel() {
     myDescriptionBrowser.addHyperlinkListener(
       new HyperlinkListener() {
+        @Override
         public void hyperlinkUpdate(HyperlinkEvent e) {
           if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
             BrowserUtil.browse(e.getURL());
@@ -241,4 +242,4 @@ public class IntentionDescriptionPanel {
     myAfterPanel.setMaximumSize(newd);
     myAfterPanel.setMinimumSize(newd);
   }
-}  
+}

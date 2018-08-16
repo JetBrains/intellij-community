@@ -33,12 +33,14 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
     super(project, null, true, true, rerunAction);
   }
 
+  @Override
   protected void fillRightToolbarGroup(DefaultActionGroup group) {
     super.fillRightToolbarGroup(group);
     group.addSeparator();
     group.add(new CompilerPropertiesAction());
   }
 
+  @Override
   protected void addExtraPopupMenuActions(DefaultActionGroup group) {
     group.addSeparator();
     group.add(new ExcludeFromCompileAction(myProject, this));
@@ -52,11 +54,13 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
     }
   }
 
+  @Override
   protected boolean shouldShowFirstErrorInEditor() {
     return CompilerWorkspaceConfiguration.getInstance(myProject).AUTO_SHOW_ERRORS_IN_EDITOR;
   }
 
   private class SuppressJavacWarningsAction extends AnAction {
+    @Override
     public void actionPerformed(@NotNull final AnActionEvent e) {
       final NavigatableMessageElement messageElement = (NavigatableMessageElement)getSelectedErrorTreeElement();
       final String[] text = messageElement.getText();

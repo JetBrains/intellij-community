@@ -3,6 +3,7 @@
 package com.intellij.openapi.options.binding;
 
 import com.intellij.ui.DocumentAdapter;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -44,7 +45,7 @@ public abstract class ValueAccessor<V> {
       public void addChangeListener(final Runnable listener) {
         from.getDocument().addDocumentListener(new DocumentAdapter() {
           @Override
-          protected void textChanged(DocumentEvent e) {
+          protected void textChanged(@NotNull DocumentEvent e) {
             listener.run();
           }
         });

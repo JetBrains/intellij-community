@@ -55,6 +55,7 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
     assert myEmbedderJdk.getProject() == null;
   }
 
+  @Override
   public JComponent createComponent() {
     final JPanel panel = mySettingsForm.getAdditionalSettingsPanel();
     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -91,12 +92,14 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
     return mySettingsForm.createComponent();
   }
 
+  @Override
   public void disposeUIResources() {
     for (final UnnamedConfigurable additionalConfigurable : myAdditionalConfigurables) {
       additionalConfigurable.disposeUIResources();
     }
   }
 
+  @Override
   public boolean isModified() {
     for (final UnnamedConfigurable additionalConfigurable : myAdditionalConfigurables) {
       if (additionalConfigurable.isModified()) {
@@ -115,6 +118,7 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
     return mySettingsForm.isModified(myImportingSettings, myProject);
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     mySettingsForm.getData(myImportingSettings);
     ExternalProjectsManagerImpl.getInstance(myProject).setStoreExternally(mySettingsForm.isStoreExternally());
@@ -130,6 +134,7 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
     }
   }
 
+  @Override
   public void reset() {
     mySettingsForm.setData(myImportingSettings, myProject);
 
@@ -141,6 +146,7 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
     }
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return ProjectBundle.message("maven.tab.importing");
@@ -153,6 +159,7 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
     return "reference.settings.project.maven.importing";
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();

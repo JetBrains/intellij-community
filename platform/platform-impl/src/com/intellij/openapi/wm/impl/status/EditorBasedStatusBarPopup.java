@@ -110,7 +110,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
     registerCustomListeners();
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         Document document = e.getDocument();
         updateForDocument(document);
       }

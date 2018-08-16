@@ -248,6 +248,7 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
   public void match(Match match) {
   }
 
+  @Override
   @SuppressWarnings("UnusedDeclaration")
   public void embedding(String mimeType, byte[] data) {
     outCommand("embedding\n");

@@ -60,6 +60,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
     myIndex = index;
   }
 
+  @Override
   @NotNull
   public Pair<VisiblePack, CommitCountStage> filter(@NotNull DataPack dataPack,
                                                     @NotNull PermanentGraph.SortType sortType,

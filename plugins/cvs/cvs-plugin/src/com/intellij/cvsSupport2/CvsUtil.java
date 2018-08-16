@@ -168,6 +168,7 @@ public class CvsUtil {
 
   private static FileCondition fileIsUnderCvsCondition() {
     return new FileCondition() {
+      @Override
       public boolean verify(File file) {
         return fileIsUnderCvs(file);
       }
@@ -187,6 +188,7 @@ public class CvsUtil {
 
   public static boolean filesHaveParentUnderCvs(File[] files) {
     return allSatisfy(files, new FileCondition() {
+      @Override
       public boolean verify(File file) {
         return fileHasParentUnderCvs(file);
       }
@@ -420,6 +422,7 @@ public class CvsUtil {
 
   public static boolean filesExistInCvs(File[] files) {
     return allSatisfy(files, new FileCondition() {
+      @Override
       public boolean verify(File file) {
         return fileIsUnderCvs(file) && !fileIsLocallyAdded(file);
       }
@@ -428,6 +431,7 @@ public class CvsUtil {
 
   public static boolean filesAreNotDeleted(File[] files) {
     return allSatisfy(files, new FileCondition() {
+      @Override
       public boolean verify(File file) {
         return fileIsUnderCvs(file)
                && !fileIsLocallyAdded(file)
@@ -734,6 +738,7 @@ public class CvsUtil {
       myCondition = condition;
     }
 
+    @Override
     public boolean verify(File file) {
       return !myCondition.verify(file);
     }

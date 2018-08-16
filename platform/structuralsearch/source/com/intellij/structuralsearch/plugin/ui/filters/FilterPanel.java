@@ -121,6 +121,7 @@ public class FilterPanel implements FilterTable {
     myFilterPanel.setBorder(BorderFactory.createCompoundBorder(JBUI.Borders.empty(3, 0), myFilterPanel.getBorder()));
   }
 
+  @Override
   public void addFilter(FilterAction filter) {
     filter.getTemplatePresentation().setEnabledAndVisible(false);
     final JBTable table = myFilterTable.getTable();
@@ -171,6 +172,7 @@ public class FilterPanel implements FilterTable {
     }
   }
 
+  @Override
   public final void removeFilter(FilterAction filter) {
     final int index = myTableModel.indexOf(filter);
     if (index >= 0) myTableModel.removeRow(index);
@@ -184,11 +186,13 @@ public class FilterPanel implements FilterTable {
     return myConstraint;
   }
 
+  @Override
   @NotNull
   public StructuralSearchProfile getProfile() {
     return myProfile;
   }
 
+  @Override
   @NotNull
   public Project getProject() {
     return myProject;

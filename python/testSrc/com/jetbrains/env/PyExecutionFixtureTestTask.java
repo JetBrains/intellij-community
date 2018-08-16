@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env;
 
 import com.google.common.collect.Lists;
@@ -102,10 +103,12 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
     return myFixture.getProject();
   }
 
+  @Override
   public void useNormalTimeout() {
     myTimeout = NORMAL_TIMEOUT;
   }
 
+  @Override
   public void useLongTimeout() {
     myTimeout = LONG_TIMEOUT;
   }

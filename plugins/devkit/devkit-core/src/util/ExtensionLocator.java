@@ -69,6 +69,7 @@ public abstract class ExtensionLocator {
       myPsiClass = psiClass;
     }
 
+    @Override
     @NotNull
     public List<ExtensionCandidate> findCandidates() {
       return findCandidatesByClassName(ClassUtil.getJVMClassName(myPsiClass), myPsiClass.getProject());

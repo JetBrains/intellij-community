@@ -56,6 +56,7 @@ public class ChangesBrowserGenericNode extends ChangesBrowserNode<Object> implem
     return FileUtil.toSystemDependentName(myFilePath.getPath());
   }
 
+  @Override
   public int getSortWeight() {
     return GENERIC_FILE_PATH_SORT_WEIGHT;
   }

@@ -28,10 +28,12 @@ public class CoverageViewTreeStructure extends AbstractTreeStructure {
   }
 
 
+  @Override
   public Object getRootElement() {
     return myRootNode;
   }
 
+  @Override
   public Object[] getChildElements(final Object element) {
     return getChildren(element, myData, myStateBean);
   }
@@ -52,24 +54,28 @@ public class CoverageViewTreeStructure extends AbstractTreeStructure {
     return null;
   }
 
- 
+
+  @Override
   public Object getParentElement(final Object element) {
     final PsiElement psiElement = (PsiElement)element;
     return myCoverageViewExtension.getParentElement(psiElement);
   }
 
+  @Override
   @NotNull
   public CoverageViewDescriptor createDescriptor(final Object element, final NodeDescriptor parentDescriptor) {
     return new CoverageViewDescriptor(myProject, parentDescriptor, element);
   }
 
+  @Override
   public void commit() {
   }
 
+  @Override
   public boolean hasSomethingToCommit() {
     return false;
   }
-  
+
   public boolean supportFlattenPackages() {
     return myCoverageViewExtension.supportFlattenPackages();
   }

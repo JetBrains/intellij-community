@@ -88,14 +88,17 @@ public abstract class OldChangesBrowserBase extends JPanel implements TypeSafeDa
       ChangesBrowser.MyUseCase.LOCAL_CHANGES.equals(useCase) ? RemoteRevisionsCache.getInstance(myProject).getChangesNodeDecorator() : null;
 
     myViewer = new ChangesTreeList<Change>(myProject, changes, capableOfExcludingChanges, highlightProblems, inclusionListener, decorator) {
+      @Override
       protected DefaultTreeModel buildTreeModel(final List<Change> changes, ChangeNodeDecorator changeNodeDecorator) {
         return OldChangesBrowserBase.this.buildTreeModel(changes, changeNodeDecorator, isShowFlatten());
       }
 
+      @Override
       protected List<Change> getSelectedObjects(final ChangesBrowserNode<?> node) {
         return OldChangesBrowserBase.this.getSelectedObjects(node);
       }
 
+      @Override
       @Nullable
       protected Change getLeadSelectedObject(final ChangesBrowserNode<?> node) {
         return OldChangesBrowserBase.this.getLeadSelectedObject(node);
@@ -137,6 +140,7 @@ public abstract class OldChangesBrowserBase extends JPanel implements TypeSafeDa
     return null;
   }
 
+  @Override
   public void dispose() {
   }
 
@@ -153,6 +157,7 @@ public abstract class OldChangesBrowserBase extends JPanel implements TypeSafeDa
     return myViewerScrollPane;
   }
 
+  @Override
   public void calcData(DataKey key, DataSink sink) {
     if (key == VcsDataKeys.CHANGES) {
       List<Change> list = getSelectedChanges();
@@ -203,6 +208,7 @@ public abstract class OldChangesBrowserBase extends JPanel implements TypeSafeDa
       super(VcsBundle.message("commit.dialog.include.action.name"));
     }
 
+    @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       Change change = e.getData(VcsDataKeys.CURRENT_CHANGE);
       if (change == null) return false;
@@ -210,6 +216,7 @@ public abstract class OldChangesBrowserBase extends JPanel implements TypeSafeDa
       return myViewer.isIncluded(change);
     }
 
+    @Override
     public void setSelected(AnActionEvent e, boolean state) {
       Change change = e.getData(VcsDataKeys.CURRENT_CHANGE);
       if (change == null) return;
@@ -313,10 +320,12 @@ public abstract class OldChangesBrowserBase extends JPanel implements TypeSafeDa
 
   protected void buildToolBar(final DefaultActionGroup toolBarGroup) {
     myDiffAction = new DumbAwareAction() {
+      @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(canShowDiff() || e.getInputEvent() instanceof KeyEvent);
       }
 
+      @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         showDiff();
       }

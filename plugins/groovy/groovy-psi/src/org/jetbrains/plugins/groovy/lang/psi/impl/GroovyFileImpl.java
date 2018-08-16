@@ -368,6 +368,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
     return !isScript() || PsiTreeUtil.getParentOfType(place, GrTypeDefinition.class, GrVariableDeclaration.class) != null;
   }
 
+  @Override
   protected GroovyFileImports getImports() {
     return GroovyImports.getImports(this);
   }

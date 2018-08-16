@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.server.embedder;
 
-import com.intellij.openapi.util.ShutDownTracker;
 import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.apache.lucene.document.Document;
@@ -65,7 +64,7 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
     myUpdater = myEmbedder.getComponent(IndexUpdater.class);
     myArtifactContextProducer = myEmbedder.getComponent(ArtifactContextProducer.class);
 
-    ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
+    MavenServerUtil.registerShutdownTask(new Runnable() {
       @Override
       public void run() {
         release();
@@ -73,6 +72,7 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
     });
   }
 
+  @Override
   public int createIndex(@NotNull String indexId,
                          @NotNull String repositoryId,
                          @Nullable File file,
@@ -96,6 +96,7 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
     }
   }
 
+  @Override
   public void releaseIndex(int id) throws MavenServerIndexerException {
     try {
       myIndexer.removeIndexingContext(getIndex(id), false);
@@ -132,10 +133,12 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
     return index.getRepository() != null;
   }
 
+  @Override
   public int getIndexCount() {
     return myIndexer.getIndexingContexts().size();
   }
 
+  @Override
   public void updateIndex(int id, MavenServerSettings settings, MavenServerProgressIndicator indicator) throws
                                                                                                         MavenServerIndexerException,
                                                                                                         MavenServerProcessCanceledException,
@@ -204,6 +207,7 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
     }
   }
 
+  @Override
   public void processArtifacts(int indexId, MavenServerIndicesProcessor processor) throws MavenServerIndexerException {
     try {
       final int CHUNK_SIZE = 10000;
@@ -244,6 +248,7 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
     }
   }
 
+  @Override
   public IndexedMavenId addArtifact(int indexId, File artifactFile) throws MavenServerIndexerException {
     try {
       IndexingContext index = getIndex(indexId);
@@ -269,6 +274,7 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
     m.invoke(index);
   }
 
+  @Override
   public Set<MavenArtifactInfo> search(int indexId, Query query, int maxResult) throws MavenServerIndexerException {
     try {
       IndexingContext index = getIndex(indexId);
@@ -302,6 +308,7 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
     }
   }
 
+  @Override
   public Collection<MavenArchetype> getArchetypes() throws RemoteException {
     Set<MavenArchetype> result = new THashSet<MavenArchetype>();
     doCollectArchetypes("internal-catalog", result);
@@ -322,6 +329,7 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
     }
   }
 
+  @Override
   public void release() {
     try {
       myEmbedder.release();
@@ -338,6 +346,7 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
       p = indicator;
     }
 
+    @Override
     public void scanningStarted(IndexingContext ctx) {
       try {
         if (p.isCanceled()) throw new MavenProcessCanceledRuntimeException();
@@ -347,6 +356,7 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
       }
     }
 
+    @Override
     public void scanningFinished(IndexingContext ctx, ScanningResult result) {
       try {
         if (p.isCanceled()) throw new MavenProcessCanceledRuntimeException();
@@ -356,9 +366,11 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
       }
     }
 
+    @Override
     public void artifactError(ArtifactContext ac, Exception e) {
     }
 
+    @Override
     public void artifactDiscovered(ArtifactContext ac) {
       try {
         if (p.isCanceled()) throw new MavenProcessCanceledRuntimeException();

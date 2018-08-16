@@ -33,6 +33,7 @@ public class CvsRevisionSelector implements RevisionSelector {
     myProject = project;
   }
 
+  @Override
   @Nullable public VcsRevisionNumber selectNumber(VirtualFile file) {
     final SelectFileVersionDialog selector = new SelectFileVersionDialog(
       VcsContextFactory.SERVICE.getInstance().createFilePathOn(file),

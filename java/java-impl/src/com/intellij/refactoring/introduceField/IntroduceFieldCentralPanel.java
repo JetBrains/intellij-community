@@ -96,7 +96,7 @@ public abstract class IntroduceFieldCentralPanel {
         super.visitReferenceExpression(expression);
         if (expression.getQualifierExpression() == null) {
           final PsiElement resolve = expression.resolve();
-          if (resolve == null || 
+          if (resolve == null ||
               resolve instanceof PsiVariable && !PsiTreeUtil.isAncestor(initializer, resolve, true)) {
             if (resolve instanceof PsiField) {
               if (!((PsiField)resolve).hasInitializer()) {
@@ -184,6 +184,7 @@ public abstract class IntroduceFieldCentralPanel {
   protected JComponent createCenterPanel() {
 
     ItemListener itemListener = new ItemListener() {
+      @Override
       public void itemStateChanged(ItemEvent e) {
         if (myCbReplaceAll != null && myAllowInitInMethod) {
           updateInitializerSelection();
@@ -194,6 +195,7 @@ public abstract class IntroduceFieldCentralPanel {
       }
     };
     ItemListener finalUpdater = new ItemListener() {
+      @Override
       public void itemStateChanged(ItemEvent e) {
         updateCbFinal();
       }
@@ -243,6 +245,7 @@ public abstract class IntroduceFieldCentralPanel {
         updateCbDeleteVariable();
         myCbReplaceAll.addItemListener(
                 new ItemListener() {
+                  @Override
                   public void itemStateChanged(ItemEvent e) {
                     updateCbDeleteVariable();
                   }

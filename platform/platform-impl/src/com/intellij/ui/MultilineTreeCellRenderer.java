@@ -9,6 +9,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
@@ -450,6 +451,13 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
     });
 
     return scrollpane;
+  }
+
+  @NotNull
+  public String getText() {
+    StringBuilder sb = new StringBuilder();
+    myWraps.forEach(o -> sb.append(o.toString() + "\n"));
+    return sb.toString();
   }
 
   private static void resetHeightCache(final JTree tree,

@@ -16,12 +16,12 @@
 package org.intellij.lang.xpath.psi;
 
 import com.intellij.psi.PsiReference;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 public interface XPathVariableReference extends XPathExpression, QNameElement, PsiReference {
     @NotNull
     String getReferencedName();
 
+    @Override
     XPathVariable resolve();
 }

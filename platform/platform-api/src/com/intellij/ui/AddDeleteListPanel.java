@@ -98,14 +98,17 @@ public abstract class AddDeleteListPanel<T> extends PanelWithButtons implements 
     return items.toArray();
   }
 
+  @Override
   protected String getLabelText() {
     return myTitle;
   }
 
+  @Override
   protected JButton[] createButtons() {
     return new JButton[]{new JButton(CommonBundle.message("button.add")), new JButton(CommonBundle.message("button.delete"))};
   }
 
+  @Override
   protected JComponent createMainComponent() {
     if (!myListModel.isEmpty()) myList.setSelectedIndex(0);
     return ScrollPaneFactory.createScrollPane(myList);

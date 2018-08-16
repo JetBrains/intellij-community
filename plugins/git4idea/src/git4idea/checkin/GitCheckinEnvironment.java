@@ -129,12 +129,14 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return true;
   }
 
+  @Override
   @Nullable
   public RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel,
                                                              PairConsumer<Object, Object> additionalDataConsumer) {
     return new GitCheckinOptions(myProject, panel);
   }
 
+  @Override
   @Nullable
   public String getDefaultMessageFor(FilePath[] filesToCheckin) {
     LinkedHashSet<String> messages = newLinkedHashSet();
@@ -172,14 +174,17 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return FileUtil.loadFile(messageFile, encoding);
   }
 
+  @Override
   public String getHelpId() {
     return null;
   }
 
+  @Override
   public String getCheckinOperationName() {
     return GitBundle.getString("commit.action.name");
   }
 
+  @Override
   public List<VcsException> commit(@NotNull List<Change> changes,
                                    @NotNull String message,
                                    @NotNull NullableFunction<Object, Object> parametersHolder, Set<String> feedback) {
@@ -331,7 +336,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       finally {
         // Stage back the changes unstaged before commit
         if (!excludedStagedChanges.isEmpty()) {
-          restoreExcluded(myProject, root, excludedStagedChanges, exceptions);
+          restoreExcluded(myProject, root, excludedStagedChanges);
         }
       }
     }
@@ -687,13 +692,14 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   private static void restoreExcluded(@NotNull Project project,
                                       @NotNull VirtualFile root,
-                                      @NotNull Collection<CommitChange> changes,
-                                      @NotNull List<VcsException> exceptions) throws VcsException {
+                                      @NotNull Collection<CommitChange> changes) {
+    List<VcsException> restoreExceptions = new ArrayList<>();
+
     Set<FilePath> toAdd = new HashSet<>();
     Set<FilePath> toRemove = new HashSet<>();
 
     for (CommitChange change : changes) {
-      if (addAsCaseOnlyRename(project, root, change)) continue;
+      if (addAsCaseOnlyRename(project, root, change, restoreExceptions)) continue;
 
       addIfNotNull(toAdd, change.afterPath);
       addIfNotNull(toRemove, change.beforePath);
@@ -701,10 +707,15 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     toRemove.removeAll(toAdd);
 
     LOG.debug(String.format("Restoring staged changes after commit: added: %s, removed: %s", toAdd, toRemove));
-    updateIndex(project, root, toAdd, toRemove, exceptions);
+    updateIndex(project, root, toAdd, toRemove, restoreExceptions);
+
+    for (VcsException e : restoreExceptions) {
+      LOG.warn(e);
+    }
   }
 
-  private static boolean addAsCaseOnlyRename(@NotNull Project project, @NotNull VirtualFile root, @NotNull CommitChange change) {
+  private static boolean addAsCaseOnlyRename(@NotNull Project project, @NotNull VirtualFile root, @NotNull CommitChange change,
+                                             @NotNull List<VcsException> exceptions) {
     try {
       if (!isCaseOnlyRename(change)) return false;
 
@@ -718,12 +729,13 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       return true;
     }
     catch (VcsException e) {
-      LOG.warn(e);
+      exceptions.add(e);
       return false;
     }
   }
 
 
+  @Override
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
     return commit(changes, preparedComment, FunctionUtil.nullConstant(), null);
   }
@@ -960,6 +972,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
   }
 
+  @Override
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {
     ArrayList<VcsException> rc = new ArrayList<>();
     Map<VirtualFile, List<FilePath>> sortedFiles;
@@ -1014,6 +1027,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
   }
 
+  @Override
   public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
     ArrayList<VcsException> rc = new ArrayList<>();
     Map<VirtualFile, List<VirtualFile>> sortedFiles;

@@ -22,6 +22,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 
 class MultiplyByPowerOfTwoPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (element instanceof PsiBinaryExpression) {
       final PsiBinaryExpression expression = (PsiBinaryExpression)element;

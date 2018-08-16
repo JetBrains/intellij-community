@@ -116,7 +116,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
 
   @Override
   public void initComponent() {
-    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
     connection.subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
       @Override
       public void processStartScheduled(@NotNull String executorId, @NotNull ExecutionEnvironment environment) {
@@ -147,7 +147,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
       }
     });
 
-    for (Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensions()) {
+    for (Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensionList()) {
       try {
         initExecutor(executor);
       }
@@ -207,7 +207,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
             return false;
           }
         }
-        final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(myExecutor.getId(), configuration);
+        final ProgramRunner runner = ProgramRunner.getRunner(myExecutor.getId(), configuration);
         if (runner == null
             || !ExecutionTargetManager.canRun(runnerAndConfigurationSettings, pair.getTarget())
             || isStarting(project, myExecutor.getId(), runner.getRunnerId())) {

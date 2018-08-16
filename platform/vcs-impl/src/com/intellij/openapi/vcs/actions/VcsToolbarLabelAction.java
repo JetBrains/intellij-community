@@ -35,8 +35,9 @@ public class VcsToolbarLabelAction extends DumbAwareAction implements CustomComp
     //do nothing
   }
 
+  @NotNull
   @Override
-  public JComponent createCustomComponent(Presentation presentation) {
+  public JComponent createCustomComponent(@NotNull Presentation presentation) {
     return new VcsToolbarLabel()
       .withFont(JBUI.Fonts.toolbarFont())
       .withBorder(JBUI.Borders.empty(0, 6, 0, 5));

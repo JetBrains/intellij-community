@@ -40,10 +40,12 @@ public class ExpressionChildrenRenderer extends TypeRenderer implements Children
 
   private NodeRenderer myPredictedRenderer;
 
+  @Override
   public String getUniqueId() {
     return UNIQUE_ID;
   }
 
+  @Override
   public ExpressionChildrenRenderer clone() {
     ExpressionChildrenRenderer clone = (ExpressionChildrenRenderer)super.clone();
     clone.myChildrenExpandable = createCachedEvaluator();
@@ -53,6 +55,7 @@ public class ExpressionChildrenRenderer extends TypeRenderer implements Children
     return clone;
   }
 
+  @Override
   public void buildChildren(final Value value, final ChildrenBuilder builder, final EvaluationContext evaluationContext) {
     final NodeManager nodeManager = builder.getNodeManager();
 
@@ -92,6 +95,7 @@ public class ExpressionChildrenRenderer extends TypeRenderer implements Children
     return value;
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
     DefaultJDOMExternalizer.readExternal(this, element);
@@ -107,6 +111,7 @@ public class ExpressionChildrenRenderer extends TypeRenderer implements Children
     }
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
     DefaultJDOMExternalizer.writeExternal(this, element);
@@ -114,6 +119,7 @@ public class ExpressionChildrenRenderer extends TypeRenderer implements Children
     DebuggerUtils.getInstance().writeTextWithImports(element, "CHILDREN_EXPRESSION", getChildrenExpression());
   }
 
+  @Override
   public PsiExpression getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
     Value expressionValue = getLastChildrenValue(node.getParent().getDescriptor());
     if (expressionValue == null) {
@@ -141,6 +147,7 @@ public class ExpressionChildrenRenderer extends TypeRenderer implements Children
     return renderer;
   }
 
+  @Override
   public boolean isExpandable(Value value, final EvaluationContext context, NodeDescriptor parentDescriptor) {
     final EvaluationContext evaluationContext = context.createEvaluationContext(value);
 
@@ -182,6 +189,7 @@ public class ExpressionChildrenRenderer extends TypeRenderer implements Children
     myChildrenExpandable.setReferenceExpression(childrenExpandable);
   }
 
+  @Override
   public void setClassName(String name) {
     super.setClassName(name);
     myChildrenExpression.clear();

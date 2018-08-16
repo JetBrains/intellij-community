@@ -27,12 +27,14 @@ public class PsiReferenceListSpinAllocator {
   }
 
   private static class Creator implements SpinAllocator.ICreator<List<PsiReference>> {
+    @Override
     public List<PsiReference> createInstance() {
       return new ArrayList<>();
     }
   }
 
   private static class Disposer implements SpinAllocator.IDisposer<List<PsiReference>> {
+    @Override
     public void disposeInstance(final List<PsiReference> instance) {
       instance.clear();
     }

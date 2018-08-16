@@ -53,10 +53,12 @@ public class TargetChooserDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
     myTree = initTree();
     myTree.addKeyListener(new KeyAdapter() {
+      @Override
       public void keyPressed(KeyEvent e) {
         if (KeyEvent.VK_ENTER == e.getKeyCode()) {
           doOKAction();
@@ -82,6 +84,7 @@ public class TargetChooserDialog extends DialogWrapper {
     @NonNls final DefaultMutableTreeNode root = new DefaultMutableTreeNode("Root");
     final Tree tree = new Tree(root);
     tree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
       public void valueChanged(TreeSelectionEvent e) {
         final TreePath selectionPath = tree.getSelectionPath();
         if (selectionPath != null) {
@@ -130,6 +133,7 @@ public class TargetChooserDialog extends DialogWrapper {
     return tree;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myTree;
   }
@@ -178,6 +182,7 @@ public class TargetChooserDialog extends DialogWrapper {
   }
 
   private static class MyTreeCellRenderer extends ColoredTreeCellRenderer {
+    @Override
     public void customizeCellRenderer(JTree tree,
                                       Object value,
                                       boolean selected,

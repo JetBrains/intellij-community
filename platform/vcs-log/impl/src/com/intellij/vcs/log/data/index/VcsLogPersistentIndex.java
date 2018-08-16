@@ -218,6 +218,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     }
   }
 
+  @Override
   public void markCorrupted() {
     if (myIndexStorage != null) myIndexStorage.commits.markCorrupted();
   }
@@ -249,6 +250,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
            (!myCommitsToIndex.containsKey(root) && myNumberOfTasks.get(root).get() == 0);
   }
 
+  @Override
   public boolean isIndexingEnabled(@NotNull VirtualFile root) {
     if (myIndexStorage == null) return false;
     return myRoots.contains(root) && !(myBigRepositoriesList.isBig(root));

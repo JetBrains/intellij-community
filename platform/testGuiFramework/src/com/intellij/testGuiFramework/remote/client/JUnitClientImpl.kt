@@ -18,7 +18,6 @@ package com.intellij.testGuiFramework.remote.client
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.testGuiFramework.remote.transport.MessageType
 import com.intellij.testGuiFramework.remote.transport.TransportMessage
-import java.io.IOException
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import java.net.InetAddress
@@ -26,10 +25,7 @@ import java.net.InetSocketAddress
 import java.net.Socket
 import java.net.SocketException
 import java.util.*
-import java.util.concurrent.BlockingQueue
-import java.util.concurrent.Executors
-import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.*
 
 /**
  * @author Sergey Karashevich
@@ -39,7 +35,6 @@ class JUnitClientImpl(host: String, val port: Int, initHandlers: Array<ClientHan
   private val LOG = Logger.getInstance("#com.intellij.testGuiFramework.remote.client.JUnitClientImpl")
   private val RECEIVE_THREAD = "JUnit Client Receive Thread"
   private val SEND_THREAD = "JUnit Client Send Thread"
-  private val KEEP_ALIVE_THREAD = "JUnit Keep Alive Thread"
 
   private val connection: Socket
   private val clientConnectionTimeout = 60000 //in ms
@@ -47,11 +42,9 @@ class JUnitClientImpl(host: String, val port: Int, initHandlers: Array<ClientHan
   private val clientSendThread: ClientSendThread
   private val poolOfMessages: BlockingQueue<TransportMessage> = LinkedBlockingQueue()
 
-  private val objectInputStream: ObjectInputStream
-  private val objectOutputStream: ObjectOutputStream
   private val handlers: ArrayList<ClientHandler> = ArrayList()
 
-  private val keepAliveThread: KeepAliveThread
+  private val keepAliveExecutor: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
 
   init {
     if (initHandlers != null) handlers.addAll(initHandlers)
@@ -61,16 +54,13 @@ class JUnitClientImpl(host: String, val port: Int, initHandlers: Array<ClientHan
     connection.connect(InetSocketAddress(InetAddress.getByName(host), port), clientConnectionTimeout)
     LOG.info("Client connected to Server($host, $port) successfully")
 
-    objectOutputStream = ObjectOutputStream(connection.getOutputStream())
-    clientSendThread = ClientSendThread(connection, objectOutputStream)
+    clientSendThread = ClientSendThread()
     clientSendThread.start()
 
-    objectInputStream = ObjectInputStream(connection.getInputStream())
-    clientReceiveThread = ClientReceiveThread(connection, objectInputStream)
+    clientReceiveThread = ClientReceiveThread()
     clientReceiveThread.start()
 
-    keepAliveThread = KeepAliveThread(connection)
-    keepAliveThread.start()
+    startKeepAlive()
   }
 
   override fun addHandler(handler: ClientHandler) {
@@ -92,85 +82,68 @@ class JUnitClientImpl(host: String, val port: Int, initHandlers: Array<ClientHan
   override fun stopClient() {
     val clientPort = connection.port
     LOG.info("Stopping client on port: $clientPort ...")
+    clientSendThread.interrupt()
+    clientReceiveThread.interrupt()
     poolOfMessages.clear()
     handlers.clear()
     connection.close()
-    keepAliveThread.cancel()
+    keepAliveExecutor.shutdownNow()
 
     LOG.info("Stopped client on port: $clientPort")
   }
 
-  inner class ClientReceiveThread(private val connection: Socket, private val objectInputStream: ObjectInputStream) : Thread(
-    RECEIVE_THREAD) {
+  private fun startKeepAlive() =
+    keepAliveExecutor.scheduleWithFixedDelay(
+      {
+        if (!connection.isClosed) {
+          send(TransportMessage(MessageType.KEEP_ALIVE))
+        }
+        else {
+          throw SocketException("Connection is broken")
+        }
+      }, 0L, 5, TimeUnit.SECONDS)
+
+  private inner class ClientReceiveThread: Thread(RECEIVE_THREAD) {
     override fun run() {
       LOG.info("Starting Client Receive Thread")
-      try {
-        while (connection.isConnected) {
-          val obj = objectInputStream.readObject()
-          LOG.info("Received message: $obj")
-          obj as TransportMessage
-          handlers
-            .filter { it.accept(obj) }
-            .forEach { it.handle(obj) }
-        }
-      }
-      catch (e: Exception) {
-        LOG.info("Transport receiving message exception", e)
-      }
-      finally {
+      ObjectInputStream(connection.getInputStream()).use { inputStream ->
         try {
-          objectInputStream.close()
-        } catch (e: IOException) {
-          // ignore
+          while (!connection.isClosed) {
+            val obj = inputStream.readObject()
+            LOG.info("Received message: $obj")
+            obj as TransportMessage
+            handlers.filter { it.accept(obj) }.forEach { it.handle(obj) }
+          }
+        }
+        catch (e: Exception) {
+          when (e) {
+            is InterruptedException -> { /* ignore */ }
+            else -> LOG.info("Transport receiving message exception", e)
+          }
         }
       }
     }
   }
 
-  inner class ClientSendThread(private val connection: Socket, private val objectOutputStream: ObjectOutputStream) : Thread(SEND_THREAD) {
+  private inner class ClientSendThread: Thread(SEND_THREAD) {
 
     override fun run() {
-      try {
-        LOG.info("Starting Client Send Thread")
-        while (connection.isConnected) {
-          val transportMessage = poolOfMessages.take()
-          LOG.info("Sending message: $transportMessage")
-          objectOutputStream.writeObject(transportMessage)
-        }
-      }
-      catch (e: InterruptedException) {
-        Thread.currentThread().interrupt()
-      }
-      catch (e: SocketException) {
-        // ignore
-      }
-      finally {
+      LOG.info("Starting Client Send Thread")
+      ObjectOutputStream(connection.getOutputStream()).use { outputStream ->
         try {
-          objectOutputStream.close()
-        } catch (e: IOException) {
-          // ignore
+          while (!connection.isClosed) {
+            val transportMessage = poolOfMessages.take()
+            LOG.info("Sending message: $transportMessage")
+            outputStream.writeObject(transportMessage)
+          }
+        }
+        catch (e: Exception) {
+          when (e) {
+            is InterruptedException -> { /* ignore */ }
+            else -> LOG.info(e)
+          }
         }
       }
     }
   }
-
-  inner class KeepAliveThread(private val connection: Socket) : Thread(KEEP_ALIVE_THREAD) {
-    private val myExecutor = Executors.newSingleThreadScheduledExecutor()
-    override fun run() {
-      myExecutor.scheduleWithFixedDelay(
-        {
-          if (connection.isConnected) {
-            send(TransportMessage(MessageType.KEEP_ALIVE))
-          }
-          else {
-            throw SocketException("Connection is broken")
-          }
-        }, 0L, 5, TimeUnit.SECONDS)
-    }
-
-    fun cancel() {
-      myExecutor.shutdownNow()
-    }
-  }
-
 }

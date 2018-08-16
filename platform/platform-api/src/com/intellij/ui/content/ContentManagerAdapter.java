@@ -16,11 +16,15 @@
 package com.intellij.ui.content;
 
 public class ContentManagerAdapter implements ContentManagerListener {
+  @Override
   public void contentAdded(ContentManagerEvent event) {}
 
+  @Override
   public void contentRemoved(ContentManagerEvent event) {}
 
+  @Override
   public void contentRemoveQuery(ContentManagerEvent event) {}
 
+  @Override
   public void selectionChanged(ContentManagerEvent event) {}
 }

@@ -29,10 +29,12 @@ public class ReturnStatementReturnValue implements ReturnValue {
 
   private ReturnStatementReturnValue() {}
 
+  @Override
   public boolean isEquivalent(ReturnValue other) {
     return other instanceof ReturnStatementReturnValue;
   }
 
+  @Override
   @Nullable
   public PsiStatement createReplacement(@NotNull final PsiMethod extractedMethod, @NotNull final PsiMethodCallExpression methodCallExpression,@Nullable PsiType returnType) throws IncorrectOperationException {
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(methodCallExpression.getProject()).getElementFactory();

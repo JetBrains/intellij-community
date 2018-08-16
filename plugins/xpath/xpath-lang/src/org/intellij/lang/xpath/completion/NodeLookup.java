@@ -29,6 +29,7 @@ public class NodeLookup extends AbstractLookup implements Lookup, Iconable {
         this.principalType = principalType;
     }
 
+    @Override
     public Icon getIcon(int flags) {
         return principalType == XPathNodeTest.PrincipalType.ATTRIBUTE ? PlatformIcons.ANNOTATION_TYPE_ICON : PlatformIcons.XML_TAG_ICON;
     }

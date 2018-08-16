@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.componentTree;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
@@ -71,6 +57,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder {
   }
 
 
+  @Override
   public void dispose() {
     myEditor.removeHierarchyChangeListener(myHierarchyChangeListener);
     if (myTreeSelectionListener != null) {
@@ -85,6 +72,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder {
     return (ComponentTreeStructure)getTreeStructure();
   }
 
+  @Override
   protected boolean isAutoExpandNode(final NodeDescriptor descriptor){
     return getComponentTreeStructure().isAutoExpandNode(descriptor);
   }
@@ -109,6 +97,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder {
     FormEditingUtil.iterate(
       rootContainer,
       new FormEditingUtil.ComponentVisitor<RadComponent>() {
+        @Override
         public boolean visit(final RadComponent component) {
           if(component.isSelected()){
             selection.add(component);
@@ -135,6 +124,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder {
     myEditor.fireSelectedComponentChanged();
   }
 
+  @Override
   @NotNull
   protected ProgressIndicator createProgressIndicator() {
     return new StatusBarProgress();
@@ -157,6 +147,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder {
       return -1;
     }
 
+    @Override
     public int compare(final NodeDescriptor descriptor1, final NodeDescriptor descriptor2) {
       if (descriptor1 instanceof ComponentPtrDescriptor && descriptor2 instanceof ComponentPtrDescriptor) {
         final RadComponent component1 = ((ComponentPtrDescriptor)descriptor1).getComponent();
@@ -182,6 +173,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder {
    * Synchronizes tree with GuiEditor
    */
   private final class MyHierarchyChangeListener implements HierarchyChangeListener{
+    @Override
     public void hierarchyChanged(){
       if (myInsideChange>0) {
         return;
@@ -208,6 +200,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder {
       super(editor);
     }
 
+    @Override
     protected void selectionChanged(final RadComponent component, final boolean ignored) {
       updateSelection();
     }
@@ -235,6 +228,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder {
    * Synchronizes GuiEditor with the tree
    */
   private final class MyTreeSelectionListener implements TreeSelectionListener {
+    @Override
     public void valueChanged(final TreeSelectionEvent e) {
       if (myInsideChange>0) {
         return;

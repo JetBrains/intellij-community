@@ -17,11 +17,11 @@ package com.intellij.lang.properties;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.project.Project;
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,11 +32,13 @@ public class RemovePropertyLocalFix implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.RemovePropertyLocalFix");
   public static final RemovePropertyLocalFix INSTANCE = new RemovePropertyLocalFix();
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return PropertiesBundle.message("remove.property.quick.fix.name");
   }
 
+  @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
     Property property = PsiTreeUtil.getParentOfType(element, Property.class, false);

@@ -48,6 +48,7 @@ public class ArtifactModelImpl extends ArtifactModelBase implements ModifiableAr
     });
   }
 
+  @Override
   protected List<? extends Artifact> getArtifactsList() {
     final List<ArtifactImpl> list = new ArrayList<>();
     for (ArtifactImpl artifact : myOriginalArtifacts) {
@@ -62,11 +63,13 @@ public class ArtifactModelImpl extends ArtifactModelBase implements ModifiableAr
     return list;
   }
 
+  @Override
   @NotNull
   public ModifiableArtifact addArtifact(@NotNull final String name, @NotNull ArtifactType artifactType) {
     return addArtifact(name, artifactType, artifactType.createRootElement(name));
   }
 
+  @Override
   @NotNull
   public ModifiableArtifact addArtifact(@NotNull String name, @NotNull ArtifactType artifactType, CompositePackagingElement<?> rootElement) {
     return addArtifact(name, artifactType, rootElement, null);
@@ -99,14 +102,17 @@ public class ArtifactModelImpl extends ArtifactModelBase implements ModifiableAr
     }
   }
 
+  @Override
   public void addListener(@NotNull ArtifactListener listener) {
     myDispatcher.addListener(listener);
   }
 
+  @Override
   public void removeListener(@NotNull ArtifactListener listener) {
     myDispatcher.addListener(listener);
   }
 
+  @Override
   public void removeArtifact(@NotNull Artifact artifact) {
     final ArtifactImpl artifactImpl = (ArtifactImpl)artifact;
     ArtifactImpl original = myModifiable2Original.remove(artifactImpl);
@@ -122,6 +128,7 @@ public class ArtifactModelImpl extends ArtifactModelBase implements ModifiableAr
     myDispatcher.getMulticaster().artifactRemoved(original);
   }
 
+  @Override
   @NotNull
   public ModifiableArtifact getOrCreateModifiableArtifact(@NotNull Artifact artifact) {
     final ArtifactImpl artifactImpl = (ArtifactImpl)artifact;
@@ -140,12 +147,14 @@ public class ArtifactModelImpl extends ArtifactModelBase implements ModifiableAr
     return modifiableCopy;
   }
 
+  @Override
   @NotNull
   public Artifact getOriginalArtifact(@NotNull Artifact artifact) {
     final ArtifactImpl original = myModifiable2Original.get(artifact);
     return original != null ? original : artifact;
   }
 
+  @Override
   @NotNull
   public ArtifactImpl getArtifactByOriginal(@NotNull Artifact artifact) {
     final ArtifactImpl artifactImpl = (ArtifactImpl)artifact;
@@ -153,14 +162,17 @@ public class ArtifactModelImpl extends ArtifactModelBase implements ModifiableAr
     return copy != null ? copy : artifactImpl;
   }
 
+  @Override
   public boolean isModified() {
     return !myOriginalArtifacts.equals(myArtifactManager.getArtifactsList()) || !myArtifact2ModifiableCopy.isEmpty();
   }
 
+  @Override
   public void commit() {
     myArtifactManager.commit(this);
   }
 
+  @Override
   public void dispose() {
     List<Artifact> artifacts = new ArrayList<>();
     for (ArtifactImpl artifact : myModifiable2Original.keySet()) {
@@ -171,6 +183,7 @@ public class ArtifactModelImpl extends ArtifactModelBase implements ModifiableAr
     ((ArtifactPointerManagerImpl)ArtifactPointerManager.getInstance(myArtifactManager.getProject())).disposePointers(artifacts);
   }
 
+  @Override
   @Nullable
   public ArtifactImpl getModifiableCopy(Artifact artifact) {
     //noinspection SuspiciousMethodCalls

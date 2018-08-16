@@ -36,6 +36,7 @@ public interface XLocalAttachGroup extends XAttachProcessPresentationGroup {
   /**
    * @deprecated use {@link #compare(Object, Object)} (will be removed in 2018.2)
    */
+  @Override
   @Deprecated
   default int compare(@NotNull Project project, @NotNull ProcessInfo a, @NotNull ProcessInfo b, @NotNull UserDataHolder dataHolder) {
     return compare(a, b);

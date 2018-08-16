@@ -21,10 +21,12 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class SimpleTreeStructure extends AbstractTreeStructure {
 
+  @Override
   public Object[] getChildElements(Object element) {
     return ((SimpleNode) element).getChildren();
   }
 
+  @Override
   public Object getParentElement(Object element) {
     return ((SimpleNode) element).getParent();
   }
@@ -34,14 +36,17 @@ public abstract class SimpleTreeStructure extends AbstractTreeStructure {
     return ((SimpleNode)element).isAlwaysLeaf();
   }
 
+  @Override
   @NotNull
   public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
     return (NodeDescriptor) element;
   }
 
+  @Override
   public void commit() {
   }
 
+  @Override
   public boolean hasSomethingToCommit() {
     return false;
   }
@@ -70,6 +75,7 @@ public abstract class SimpleTreeStructure extends AbstractTreeStructure {
       myRoot = root;
     }
 
+    @Override
     public Object getRootElement() {
       return myRoot;
     }

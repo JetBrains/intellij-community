@@ -101,6 +101,7 @@ public class JavaFxRootTagDescriptor extends JavaFxClassTagDescriptorBase {
       return null;
     }
 
+    @Override
     protected boolean isConstant(PsiField field) {
       return false;
     }

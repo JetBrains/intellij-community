@@ -16,7 +16,10 @@
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.patterns.*;
+import com.intellij.patterns.PlatformPatterns;
+import com.intellij.patterns.StandardPatterns;
+import com.intellij.patterns.XmlAttributeValuePattern;
+import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
@@ -114,7 +117,7 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
                                         new ImportReferenceProvider());
 
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().and(attributeValueInFxml),
-                                        new JavaFxColorReferenceProvider()); 
+                                        new JavaFxColorReferenceProvider());
 
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue()
                                           .withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.FX_VALUE)
@@ -131,7 +134,7 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
     @NotNull
     @Override
     public PsiReference[] getReferencesByElement(@NotNull PsiElement element) {
-      String name = element instanceof XmlAttributeValue ? ((XmlAttributeValue)element).getValue() 
+      String name = element instanceof XmlAttributeValue ? ((XmlAttributeValue)element).getValue()
                                                          : ((XmlTag)element).getName();
       return getReferencesByString(name, element, 1);
     }
@@ -203,11 +206,13 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
         return null;
       }
 
+      @Override
       @NotNull
       public String getCanonicalText() {
         return myReference.getCanonicalText();
       }
 
+      @Override
       public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
         String oldText = getOldName();
         final TextRange range = getRangeInElement();
@@ -216,6 +221,7 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
         return setNewName(newText);
       }
 
+      @Override
       public PsiElement bindToElement(@NotNull PsiElement element)
         throws IncorrectOperationException {
         String oldText = getOldName();
@@ -242,15 +248,18 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
         return myPosition instanceof XmlTag ? ((XmlTag)myPosition).getName() : ((XmlAttributeValue)myPosition).getValue();
       }
 
+      @Override
       public boolean isReferenceTo(@NotNull PsiElement element) {
         return myReference.isReferenceTo(element) || getReferencedClass() == element;
       }
 
+      @Override
       @NotNull
       public Object[] getVariants() {
         return myReference.getVariants();
       }
 
+      @Override
       public boolean isSoft() {
         return true;
       }

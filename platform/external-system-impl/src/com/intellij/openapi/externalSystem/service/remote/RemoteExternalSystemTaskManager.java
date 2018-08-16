@@ -95,5 +95,6 @@ public interface RemoteExternalSystemTaskManager<S extends ExternalSystemExecuti
     executeTasks(id, taskNames, projectPath, settings, Collections.emptyList(), Collections.emptyList(), jvmAgentSetup);
   }
 
+  @Override
   boolean cancelTask(@NotNull ExternalSystemTaskId id) throws RemoteException, ExternalSystemException;
 }

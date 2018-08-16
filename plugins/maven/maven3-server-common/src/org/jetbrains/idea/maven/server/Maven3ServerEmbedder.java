@@ -18,7 +18,6 @@ package org.jetbrains.idea.maven.server;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.Function;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.execution.ParametersListUtil;
 import org.apache.log4j.BasicConfigurator;
@@ -142,7 +141,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
 
     String savedLocalRepository = modelInterpolator.getLocalRepository();
     modelInterpolator.setLocalRepository(request.getLocalRepositoryPath().getAbsolutePath());
-    List<ProjectBuildingResult> buildingResults = new SmartList<ProjectBuildingResult>();
+    List<ProjectBuildingResult> buildingResults = new ArrayList<ProjectBuildingResult>();
 
     final ProjectBuildingRequest projectBuildingRequest = request.getProjectBuildingRequest();
     projectBuildingRequest.setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL);

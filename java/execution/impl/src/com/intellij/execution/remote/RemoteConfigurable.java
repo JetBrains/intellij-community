@@ -200,7 +200,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
 
     DocumentListener textUpdateListener = new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         updateArgsText(ddl.getChosenItem());
       }
     };

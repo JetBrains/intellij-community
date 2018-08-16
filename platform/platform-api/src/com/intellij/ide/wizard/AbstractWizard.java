@@ -62,6 +62,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   private JBCardLayout.SwipeDirection myTransitionDirection = JBCardLayout.SwipeDirection.AUTO;
   private final Map<Component, String> myComponentToIdMap = new HashMap<>();
   private final StepListener myStepListener = new StepListener() {
+    @Override
     public void stateChanged() {
       updateStep();
     }
@@ -94,6 +95,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     if (rootPane != null) {        // it will be null in headless mode, i.e. tests
       rootPane.registerKeyboardAction(
         new ActionListener() {
+          @Override
           public void actionPerformed(final ActionEvent e) {
             helpAction();
           }
@@ -104,6 +106,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
       rootPane.registerKeyboardAction(
         new ActionListener() {
+          @Override
           public void actionPerformed(final ActionEvent e) {
             helpAction();
           }
@@ -114,6 +117,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     }
   }
 
+  @Override
   protected JComponent createSouthPanel() {
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
@@ -180,11 +184,13 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
     myPreviousButton.setEnabled(false);
     myPreviousButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         doPreviousAction();
       }
     });
     myNextButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         if (isLastStep()) {
           // Commit data of current step and perform OK action
@@ -209,12 +215,14 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
     myCancelButton.addActionListener(
       new ActionListener() {
+        @Override
         public void actionPerformed(final ActionEvent e) {
           doCancelAction();
         }
       }
     );
     myHelpButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         helpAction();
       }
@@ -291,6 +299,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     }
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
     panel.add(myContentPanel, BorderLayout.CENTER);
@@ -327,6 +336,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     }
   }
 
+  @Override
   protected void init() {
     super.init();
     updateStep();
@@ -446,7 +456,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     if (mySteps.isEmpty()) {
       return;
     }
-    
+
     final Step step = mySteps.get(myCurrentStep);
     LOG.assertTrue(step != null);
     step._init();

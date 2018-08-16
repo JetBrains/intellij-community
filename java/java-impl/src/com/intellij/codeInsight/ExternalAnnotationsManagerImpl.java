@@ -16,12 +16,11 @@ import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -50,10 +49,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.OptionsMessageDialog;
@@ -77,8 +73,10 @@ import java.util.Set;
  */
 public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsManager {
   private static final Logger LOG = Logger.getInstance(ExternalAnnotationsManagerImpl.class);
+  public static final long ANNOTATION_EDITED_TIMEOUT_MILLIS = 100;
 
   private final MessageBus myBus;
+  private final Alarm myAnnotationDocumentEdited;
 
   public ExternalAnnotationsManagerImpl(@NotNull final Project project, final PsiManager psiManager) {
     super(psiManager);
@@ -91,6 +89,8 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     });
 
     VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(), project);
+    myAnnotationDocumentEdited = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new MyDocumentListener(), project);
   }
 
   private void notifyAfterAnnotationChanging(@NotNull PsiModifierListOwner owner, @NotNull String annotationFQName, boolean successful) {
@@ -845,6 +845,20 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     @Override
     public void fileCopied(@NotNull VirtualFileCopyEvent event) {
       processEvent(event);
+    }
+  }
+
+  private class MyDocumentListener implements DocumentListener {
+
+    final FileDocumentManager myFileDocumentManager = FileDocumentManager.getInstance();
+
+    @Override
+    public void documentChanged(DocumentEvent event) {
+      final VirtualFile file = myFileDocumentManager.getFile(event.getDocument());
+      if (file != null && ANNOTATIONS_XML.equals(file.getName()) && isUnderAnnotationRoot(file)) {
+        myAnnotationDocumentEdited.cancelAllRequests();
+        myAnnotationDocumentEdited.addRequest(() -> dropCache(), ANNOTATION_EDITED_TIMEOUT_MILLIS);
+      }
     }
   }
 }

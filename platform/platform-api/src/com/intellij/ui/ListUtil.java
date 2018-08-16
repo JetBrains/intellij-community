@@ -36,6 +36,7 @@ public class ListUtil {
     final MouseMotionAdapter listener = new MouseMotionAdapter() {
       boolean myIsEngaged = false;
 
+      @Override
       public void mouseMoved(MouseEvent e) {
         Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
         if (myIsEngaged && !UIUtil.isSelectionButtonDown(e) && !(focusOwner instanceof JRootPane)) {
@@ -222,6 +223,7 @@ public class ListUtil {
 
   public static Updatable addMoveUpListener(JButton button, final JList list) {
     button.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         moveSelectedItemsUp(list);
         list.requestFocusInWindow();
@@ -233,6 +235,7 @@ public class ListUtil {
 
   public static Updatable addMoveDownListener(JButton button, final JList list) {
     button.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         moveSelectedItemsDown(list);
         list.requestFocusInWindow();
@@ -247,6 +250,7 @@ public class ListUtil {
 
   public static Updatable addRemoveListener(final JButton button, final JList list, final RemoveNotification<String> notification) {
     button.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final List<String> items = removeSelectedItems(list);
         if (notification != null)
@@ -259,10 +263,12 @@ public class ListUtil {
         super(button);
       }
 
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         setButtonEnabled(canRemoveSelectedItems(list));
       }
 
+      @Override
       protected void update() {
         valueChanged(null);
       }
@@ -287,10 +293,12 @@ public class ListUtil {
         super(button);
       }
 
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         setButtonEnabled((list.getSelectedIndex() != -1));
       }
 
+      @Override
       public void update() {
         valueChanged(null);
       }
@@ -322,40 +330,48 @@ public class ListUtil {
   }
 
   private static final ListModelExtension DEFAULT_MODEL = new ListModelExtension<DefaultListModel>() {
+    @Override
     public Object get(DefaultListModel model, int index) {
       return model.get(index);
     }
 
+    @Override
     public void remove(DefaultListModel model, int index) {
       model.remove(index);
     }
   };
 
   private static final ListModelExtension COLLECTION_MODEL = new ListModelExtension<CollectionListModel>() {
+    @Override
     public Object get(CollectionListModel model, int index) {
       return model.getElementAt(index);
     }
 
+    @Override
     public void remove(CollectionListModel model, int index) {
       model.remove(index);
     }
   };
 
   private static final ListModelExtension SORTED_MODEL = new ListModelExtension<SortedListModel>() {
+    @Override
     public Object get(SortedListModel model, int index) {
       return model.get(index);
     }
 
+    @Override
     public void remove(SortedListModel model, int index) {
       model.remove(index);
     }
   };
 
   private static final ListModelExtension FILTERED_MODEL = new ListModelExtension<FilteringListModel>() {
+    @Override
     public Object get(FilteringListModel model, int index) {
       return model.getElementAt(index);
     }
 
+    @Override
     public void remove(FilteringListModel model, int index) {
       model.remove(index);
     }

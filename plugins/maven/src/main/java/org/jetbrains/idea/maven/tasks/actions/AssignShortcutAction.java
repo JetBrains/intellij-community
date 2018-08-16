@@ -47,6 +47,7 @@ public class AssignShortcutAction extends MavenAction {
     return projectsManager != null && projectsManager.isIgnored(project);
   }
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext context = e.getDataContext();
     String actionId = getGoalActionId(context);

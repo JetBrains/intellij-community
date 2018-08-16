@@ -30,7 +30,7 @@ public class BraceHighlighter implements StartupActivity {
 
     eventMulticaster.addCaretListener(new CaretListener() {
       @Override
-      public void caretPositionChanged(CaretEvent e) {
+      public void caretPositionChanged(@NotNull CaretEvent e) {
         myAlarm.cancelAllRequests();
         Editor editor = e.getEditor();
         final SelectionModel selectionModel = editor.getSelectionModel();
@@ -70,7 +70,7 @@ public class BraceHighlighter implements StartupActivity {
 
     DocumentListener documentListener = new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         myAlarm.cancelAllRequests();
         Editor[] editors = EditorFactory.getInstance().getEditors(e.getDocument(), project);
         for (Editor editor : editors) {

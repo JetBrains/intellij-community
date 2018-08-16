@@ -36,6 +36,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 public class EditSourceAction extends DebuggerAction{
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
 
@@ -89,6 +90,7 @@ public class EditSourceAction extends DebuggerAction{
     return ReadAction.compute(() -> SourcePositionProvider.getSourcePosition(nodeDescriptor1, project, context));
   }
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
 

@@ -163,7 +163,7 @@ public abstract class CompletionPhase implements Disposable {
       };
       final DocumentListener documentListener = new DocumentListener() {
         @Override
-        public void beforeDocumentChange(DocumentEvent e) {
+        public void beforeDocumentChange(@NotNull DocumentEvent e) {
           CompletionServiceImpl.setCompletionPhase(NoCompletion);
         }
       };
@@ -175,7 +175,7 @@ public abstract class CompletionPhase implements Disposable {
       };
       final CaretListener caretListener = new CaretListener() {
         @Override
-        public void caretPositionChanged(CaretEvent e) {
+        public void caretPositionChanged(@NotNull CaretEvent e) {
           CompletionServiceImpl.setCompletionPhase(NoCompletion);
         }
       };

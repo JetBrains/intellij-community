@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import junit.framework.AssertionFailedError
@@ -23,16 +21,17 @@ class LibraryLicensesTester(private val project: JpsProject, private val license
     }
 
     val librariesWithLicenses = licenses.flatMapTo(HashSet()) { it.libraryNames }
-    libraries.entries.forEach {
-      val libName = LibraryLicensesListGenerator.getLibraryName(it.key)
-      if (libName !in librariesWithLicenses) {
-        collector.addError(AssertionFailedError("""
-          |License isn't specified for '$libName' library (used in module '${it.value.name}')
-          |If a library is packaged into IDEA installation information about its license must be added into one of *LibraryLicenses.groovy files
-          |If a library is used in tests only change its scope to 'Test'
-          |If a library is used for compilation only change its scope to 'Provided'
-""".trimMargin()))
-      }
+    for ((jpsLibrary, jpsModule) in libraries) {
+      LibraryLicensesListGenerator.getLibraryNames(jpsLibrary)
+        .filter { it !in librariesWithLicenses }
+        .forEach {
+          collector.addError(AssertionFailedError("""
+              |License isn't specified for '$it' library (used in module '${jpsModule.name}' in ${jpsModule.contentRootsList.urls})
+              |If a library is packaged into IDEA installation information about its license must be added into one of *LibraryLicenses.groovy files
+              |If a library is used in tests only change its scope to 'Test'
+              |If a library is used for compilation only change its scope to 'Provided'
+    """.trimMargin()))
+        }
     }
   }
 }

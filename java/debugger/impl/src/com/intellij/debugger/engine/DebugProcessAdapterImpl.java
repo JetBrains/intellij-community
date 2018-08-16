@@ -20,21 +20,25 @@ package com.intellij.debugger.engine;
  */
 public class DebugProcessAdapterImpl implements DebugProcessListener {
   //executed in manager thread
+  @Override
   public final void paused(SuspendContext suspendContext) {
     paused(((SuspendContextImpl)suspendContext));
   }
 
   //executed in manager thread
+  @Override
   public final void resumed(SuspendContext suspendContext) {
     resumed(((SuspendContextImpl)suspendContext));
   }
 
   //executed in manager thread
+  @Override
   public final void processDetached(DebugProcess process, boolean closedByUser) {
     processDetached(((DebugProcessImpl)process), closedByUser);
   }
 
   //executed in manager thread
+  @Override
   public final void processAttached(DebugProcess process) {
     processAttached(((DebugProcessImpl)process));
   }

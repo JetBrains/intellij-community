@@ -32,6 +32,7 @@ public class SMTRunnerUIActionsHandler extends TestResultsViewer.SMEventsAdapter
     myConsoleProperties = consoleProperties;
   }
 
+  @Override
   public void onTestingFinished(final TestResultsViewer sender) {
     // select first defect at the end (my be TRACK_RUNNING_TEST was enabled and affects on the fly selection)
     final SMTestProxy testsRootNode = sender.getTestsRootNode();

@@ -406,18 +406,18 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
   }
 
   private fun installUpdateListeners(info: SingleConfigurationConfigurable<RunConfiguration>) {
-    val changed = booleanArrayOf(false)
+    var changed = false
     info.editor.addSettingsEditorListener { editor ->
       update()
       val configuration = info.configuration
       if (configuration is LocatableConfiguration) {
-        if (configuration.isGeneratedName && !changed[0]) {
+        if (configuration.isGeneratedName && !changed) {
           try {
             val snapshot = editor.snapshot.configuration as LocatableConfiguration
             val generatedName = snapshot.suggestedName()
             if (generatedName != null && generatedName.isNotEmpty()) {
               info.nameText = generatedName
-              changed[0] = false
+              changed = false
             }
           }
           catch (ignore: ConfigurationException) {
@@ -429,13 +429,13 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
 
     info.addNameListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
-        changed[0] = true
+        changed = true
         update()
       }
     })
 
     info.addSharedListener {
-      changed[0] = true
+      changed = true
       update()
     }
   }
@@ -670,7 +670,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
       var configurationBean: RunConfigurationBean? = null
       var settings: RunnerAndConfigurationSettings? = null
       if (userObject is SingleConfigurationConfigurable<*>) {
-        settings = userObject.settings as RunnerAndConfigurationSettings
+        settings = userObject.settings
         applyConfiguration(typeNode, userObject)
         configurationBean = RunConfigurationBean(userObject)
       }
@@ -780,7 +780,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
           if (userObject.isModified) {
             return true
           }
-          settings = userObject.settings as RunnerAndConfigurationSettings
+          settings = userObject.settings
         }
         else if (userObject is RunnerAndConfigurationSettings) {
           settings = userObject
@@ -965,10 +965,25 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
         node = node.parent as DefaultMutableTreeNode
       }
     }
-    val settings = runManager.createConfiguration(createUniqueName(typeNode, null, CONFIGURATION, TEMPORARY_CONFIGURATION), factory)
+    val settings = runManager.createConfiguration("", factory)
+    val configuration = settings.configuration
+    val suggestedName = suggestName(configuration)
+    val name = createUniqueName(typeNode, suggestedName, CONFIGURATION, TEMPORARY_CONFIGURATION)
+    configuration.name = name
+    (configuration as? LocatableConfigurationBase)?.setNameChangedByUser(false)
     @Suppress("UNCHECKED_CAST")
-    (factory as? ConfigurationFactoryEx<RunConfiguration>)?.onNewConfigurationCreated(settings.configuration)
+    (factory as? ConfigurationFactoryEx<RunConfiguration>)?.onNewConfigurationCreated(configuration)
     return createNewConfiguration(settings, node, selectedNode)
+  }
+
+  private fun suggestName(configuration: RunConfiguration): String? {
+    if (configuration is LocatableConfiguration) {
+      val name = configuration.suggestedName()
+      if (name != null && name.isNotEmpty()) {
+        return name
+      }
+    }
+    return null
   }
 
   private inner class MyToolbarAddAction : AnAction(ExecutionBundle.message("add.new.run.configuration.action2.name"),
@@ -1006,7 +1021,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
 
     private fun getTypesToShow(showApplicableTypesOnly: Boolean, allTypes: List<ConfigurationType>): List<ConfigurationType> {
       if (showApplicableTypesOnly) {
-        val applicableTypes = allTypes.filter { it.configurationFactories.any { it.isApplicable(project) } }
+        val applicableTypes = allTypes.filter { configurationType -> configurationType.configurationFactories.any { it.isApplicable(project) } }
         if (applicableTypes.size < (allTypes.size - 3)) {
           return applicableTypes
         }
@@ -1158,13 +1173,12 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-      val configuration = selectedConfiguration
-      LOG.assertTrue(configuration != null)
+      val configuration = selectedConfiguration!!
       try {
         val typeNode = selectedConfigurationTypeNode!!
-        val settings = configuration!!.snapshot
+        val settings = configuration.createSnapshot(true)
         val copyName = createUniqueName(typeNode, configuration.nameText, CONFIGURATION, TEMPORARY_CONFIGURATION)
-        settings!!.name = copyName
+        settings.name = copyName
         val factory = settings.factory
         @Suppress("UNCHECKED_CAST")
         (factory as? ConfigurationFactoryEx<RunConfiguration>)?.onConfigurationCopied(settings.configuration)
@@ -1173,8 +1187,8 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
         configurable.nameTextField.selectionStart = 0
         configurable.nameTextField.selectionEnd = copyName.length
       }
-      catch (e1: ConfigurationException) {
-        Messages.showErrorDialog(toolbarDecorator!!.actionsPanel, e1.message, e1.title)
+      catch (e: ConfigurationException) {
+        Messages.showErrorDialog(toolbarDecorator!!.actionsPanel, e.message, e.title)
       }
     }
 
@@ -1200,16 +1214,10 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
 
     override fun update(e: AnActionEvent) {
       val configuration = selectedConfiguration
-      val presentation = e.presentation
-      val enabled: Boolean
-      if (configuration == null) {
-        enabled = false
+      e.presentation.isEnabledAndVisible = when (configuration) {
+        null -> false
+        else -> configuration.settings.isTemporary
       }
-      else {
-        val settings = configuration.settings
-        enabled = settings != null && settings.isTemporary
-      }
-      presentation.isEnabledAndVisible = enabled
     }
   }
 
@@ -1606,7 +1614,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
 
 private fun canRunConfiguration(configuration: SingleConfigurationConfigurable<RunConfiguration>?, executor: Executor): Boolean {
   return try {
-    configuration != null && RunManagerImpl.canRunConfiguration(configuration.snapshot!!, executor)
+    configuration != null && RunManagerImpl.canRunConfiguration(configuration.createSnapshot(false), executor)
   }
   catch (e: ConfigurationException) {
     false
@@ -1647,7 +1655,7 @@ private fun getSettings(treeNode: DefaultMutableTreeNode?): RunnerAndConfigurati
 
   val settings: RunnerAndConfigurationSettings? = null
   return when {
-    treeNode.userObject is SingleConfigurationConfigurable<*> -> (treeNode.userObject as SingleConfigurationConfigurable<*>).settings as RunnerAndConfigurationSettings
+    treeNode.userObject is SingleConfigurationConfigurable<*> -> (treeNode.userObject as SingleConfigurationConfigurable<*>).settings
     treeNode.userObject is RunnerAndConfigurationSettings -> treeNode.userObject as RunnerAndConfigurationSettings
     else -> settings
   }

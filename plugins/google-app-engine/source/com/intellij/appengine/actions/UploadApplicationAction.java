@@ -77,6 +77,7 @@ public class UploadApplicationAction extends AnAction {
     return ContainerUtil.getFirstItem(configurations);
   }
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     RunnerAndConfigurationSettings configurationToRun = getConfigurationToRun(project);

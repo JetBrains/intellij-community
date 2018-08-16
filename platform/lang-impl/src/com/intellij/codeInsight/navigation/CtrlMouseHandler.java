@@ -158,7 +158,7 @@ public class CtrlMouseHandler {
 
   private final EditorMouseListener myEditorMouseAdapter = new EditorMouseListener() {
     @Override
-    public void mouseReleased(EditorMouseEvent e) {
+    public void mouseReleased(@NotNull EditorMouseEvent e) {
       disposeHighlighter();
       cancelPreviousTooltip();
     }
@@ -223,7 +223,7 @@ public class CtrlMouseHandler {
         eventMulticaster.addEditorMouseMotionListener(myEditorMouseMotionListener, project);
         eventMulticaster.addCaretListener(new CaretListener() {
           @Override
-          public void caretPositionChanged(CaretEvent e) {
+          public void caretPositionChanged(@NotNull CaretEvent e) {
             if (myHint != null) {
               myDocumentationManager.updateToolwindowContext();
             }

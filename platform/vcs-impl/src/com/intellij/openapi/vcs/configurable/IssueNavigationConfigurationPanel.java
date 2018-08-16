@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -51,11 +37,13 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
   private ListTableModel<IssueNavigationLink> myModel;
 
   private final ColumnInfo<IssueNavigationLink, String> ISSUE_COLUMN = new ColumnInfo<IssueNavigationLink, String>(VcsBundle.message("issue.link.issue.column")) {
+    @Override
     public String valueOf(IssueNavigationLink issueNavigationLink) {
       return issueNavigationLink.getIssueRegexp();
     }
   };
   private final ColumnInfo<IssueNavigationLink, String> LINK_COLUMN = new ColumnInfo<IssueNavigationLink, String>(VcsBundle.message("issue.link.link.column")) {
+    @Override
     public String valueOf(IssueNavigationLink issueNavigationLink) {
       return issueNavigationLink.getLinkRegexp();
     }
@@ -144,16 +132,19 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
         .disableUpDownActions().createPanel(), BorderLayout.CENTER);
   }
 
+  @Override
   public void apply() {
     IssueNavigationConfiguration configuration = IssueNavigationConfiguration.getInstance(myProject);
     configuration.setLinks(myLinks);
   }
 
+  @Override
   public boolean isModified() {
     IssueNavigationConfiguration configuration = IssueNavigationConfiguration.getInstance(myProject);
     return !myLinks.equals(configuration.getLinks());
   }
 
+  @Override
   public void reset() {
     IssueNavigationConfiguration configuration = IssueNavigationConfiguration.getInstance(myProject);
     myLinks = new ArrayList<>();
@@ -167,6 +158,7 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
     myLinkTable.setModel(myModel);
   }
 
+    @Override
     @Nls
   public String getDisplayName() {
     return "Issue Navigation";
@@ -177,11 +169,13 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
     return "project.propVCSSupport.Issue.Navigation";
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();
   }
 
+  @Override
   public JComponent createComponent() {
     return this;
   }

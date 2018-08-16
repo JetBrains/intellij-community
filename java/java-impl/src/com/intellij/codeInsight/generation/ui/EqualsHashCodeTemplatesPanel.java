@@ -104,6 +104,7 @@ public class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<Te
     myManager = manager;
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return "Templates";

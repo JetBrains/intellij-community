@@ -51,6 +51,7 @@ public class DeploymentUtilImpl extends DeploymentUtil {
                               FileUtil.toSystemDependentName(toFile.getPath()));
   }
 
+  @Override
   @Nullable
   public String getConfigFileErrorMessage(final ConfigFile configFile) {
     if (configFile.getVirtualFile() == null) {

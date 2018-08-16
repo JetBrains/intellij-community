@@ -67,6 +67,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
     myContext = context;
   }
 
+  @Override
   public void resolveProblem(@NotNull CommonProblemDescriptor descriptor) {
     RefEntity entity = myProblemElements.removeValue(descriptor);
     if (entity != null) {
@@ -74,10 +75,12 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
     }
   }
 
+  @Override
   public boolean isProblemResolved(@Nullable CommonProblemDescriptor descriptor) {
     return myResolvedElements.containsValue(descriptor);
   }
 
+  @Override
   public boolean isProblemResolved(@Nullable RefEntity entity) {
     return myResolvedElements.containsKey(entity);
   }
@@ -94,6 +97,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
     return myResolvedElements.getOrDefault(entity, CommonProblemDescriptor.EMPTY_ARRAY);
   }
 
+  @Override
   public void suppressProblem(@NotNull CommonProblemDescriptor descriptor) {
     mySuppressedElements.put(myProblemElements.removeValue(descriptor), descriptor);
   }
@@ -510,7 +514,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
       @NotNull
       @Override
       protected ArrayFactory<CommonProblemDescriptor> arrayFactory() {
-        return CommonProblemDescriptor[]::new;
+        return CommonProblemDescriptor.ARRAY_FACTORY;
       }
     };
   }

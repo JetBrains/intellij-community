@@ -127,24 +127,24 @@ public class PositionPanel extends EditorBasedWidget
   }
 
   @Override
-  public void caretPositionChanged(final CaretEvent e) {
+  public void caretPositionChanged(@NotNull final CaretEvent e) {
     Editor editor = e.getEditor();
     // When multiple carets exist in editor, we don't show information about caret positions
     if (editor.getCaretModel().getCaretCount() == 1 && isFocusedEditor(editor)) updatePosition(editor);
   }
 
   @Override
-  public void caretAdded(CaretEvent e) {
+  public void caretAdded(@NotNull CaretEvent e) {
     updatePosition(e.getEditor());
   }
 
   @Override
-  public void caretRemoved(CaretEvent e) {
+  public void caretRemoved(@NotNull CaretEvent e) {
     updatePosition(e.getEditor());
   }
 
   @Override
-  public void documentChanged(DocumentEvent event) {
+  public void documentChanged(@NotNull DocumentEvent event) {
     Document document = event.getDocument();
     if (document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate()) return;
     onDocumentUpdate(document);

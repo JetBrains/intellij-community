@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class StandardVcsGroup extends DefaultActionGroup implements DumbAware {
   public abstract AbstractVcs getVcs(Project project);
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
 

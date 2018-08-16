@@ -22,7 +22,10 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
@@ -87,11 +90,13 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
             AllIcons.Actions.EditSource);
     }
 
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       final Navigatable[] navigatableArray = e.getData(CommonDataKeys.NAVIGATABLE_ARRAY);
       OpenSourceUtil.navigate(navigatableArray);
     }
 
+    @Override
     public void update(@NotNull final AnActionEvent e) {
       final Navigatable[] navigatableArray = e.getData(CommonDataKeys.NAVIGATABLE_ARRAY);
       e.getPresentation().setEnabled(navigatableArray != null && navigatableArray.length > 0);
@@ -103,6 +108,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
       super(CvsBundle.message("operation.name.check.out"), null, AllIcons.Actions.CheckOut);
     }
 
+    @Override
     public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
       presentation.setEnabled(canPerformCheckout());
@@ -113,6 +119,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
       return (currentSelection.length == 1) && currentSelection[0].canBeCheckedOut();
     }
 
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       CvsElement[] cvsElements = myTree.getCurrentSelection();
 
@@ -127,6 +134,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
         false, CvsConfiguration.getInstance(myProject).MAKE_NEW_FILES_READONLY, VcsConfiguration.getInstance(myProject).getCheckoutOption());
 
       CvsContextAdapter context = new CvsContextAdapter() {
+        @Override
         public Project getProject() {
           return myProject;
         }
@@ -143,6 +151,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
             CvsBundle.message("operation.name.show.file.history.description"), AllIcons.Vcs.History);
     }
 
+    @Override
     public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
       presentation.setVisible(true);
@@ -150,6 +159,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
       presentation.setEnabled(cvsLightFile != null && cvsLightFile.getCvsFile() != null);
     }
 
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       final CvsElement[] currentSelection = myTree.getCurrentSelection();
       if (currentSelection.length != 1) return;
@@ -170,6 +180,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
       super(CvsBundle.message("operation.name.annotate"), null, AllIcons.Actions.Annotate);
     }
 
+    @Override
     public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
       presentation.setVisible(true);
@@ -182,6 +193,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
       }
     }
 
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       VcsVirtualFile vcsVirtualFile = (VcsVirtualFile)getCvsVirtualFile();
       try {
@@ -201,6 +213,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
       super(VcsBundle.message("browse.changes.action"), "", AllIcons.Actions.ShowChangesOnly);
     }
 
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       CvsElement[] currentSelection = myTree.getCurrentSelection();
       assert currentSelection.length == 1;
@@ -211,12 +224,14 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
                                                                   VcsBundle.message("browse.changes.scope", moduleName), BrowserPanel.this);
     }
 
+    @Override
     public void update(@NotNull final AnActionEvent e) {
       CvsElement[] currentSelection = myTree.getCurrentSelection();
       e.getPresentation().setEnabled(currentSelection.length == 1);
     }
   }
 
+  @Override
   public Object getData(@NotNull String dataId) {
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       VirtualFile cvsVirtualFile = getCvsVirtualFile();
@@ -248,6 +263,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
     return new CvsLightweightFile(currentSelection[0].getCvsLightFile(), null);
   }
 
+  @Override
   public void deactivated() {
     myTree.deactivated();
   }

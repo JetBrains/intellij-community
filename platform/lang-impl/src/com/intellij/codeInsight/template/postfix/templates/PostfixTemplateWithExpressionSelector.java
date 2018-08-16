@@ -90,6 +90,7 @@ public abstract class PostfixTemplateWithExpressionSelector extends PostfixTempl
     IntroduceTargetChooser.showChooser(
       editor, expressions,
       new Pass<PsiElement>() {
+        @Override
         public void pass(@NotNull final PsiElement e) {
           prepareAndExpandForChooseExpression(e, editor);
         }

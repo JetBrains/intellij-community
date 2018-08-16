@@ -62,7 +62,7 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
 
     myEditorCaretListener = new CaretListener() {
       @Override
-      public void caretPositionChanged(CaretEvent e) {
+      public void caretPositionChanged(@NotNull CaretEvent e) {
         if (e.getEditor().equals(myEditor)) {
           for (FileEditorPositionListener listener : myListeners) {
             listener.onCurrentElementChanged();

@@ -34,6 +34,7 @@ public class ClearTextAction extends AnAction implements DumbAware {
     setEnabledInModalContext(true);
   }
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
     if (component instanceof JTextComponent) {
@@ -43,6 +44,7 @@ public class ClearTextAction extends AnAction implements DumbAware {
   }
 
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
     if (component instanceof JTextComponent) {

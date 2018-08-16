@@ -721,20 +721,18 @@ public class ArrayUtil extends ArrayUtilRt {
 
   @Contract(pure=true)
   public static int indexOf(@NotNull long[] ints, long value) {
-    return ArrayUtilRt.indexOf(ints, value);
-  }
-  @Contract(pure=true)
-  public static int indexOf(@NotNull int[] ints, int value) {
-    return ArrayUtilRt.indexOf(ints, value);
-  }
-  @Contract(pure=true)
-  public static int indexOf(@NotNull short[] ints, short value) {
-    return ArrayUtilRt.indexOf(ints, value);
+    for (int i = 0; i < ints.length; i++) {
+      if (ints[i] == value) return i;
+    }
+    return -1;
   }
 
   @Contract(pure=true)
-  public static int indexOf(@NotNull byte[] ints, byte value, int start, int end) {
-    return ArrayUtilRt.indexOf(ints, value, start, end);
+  public static int indexOf(@NotNull int[] ints, int value) {
+    for (int i = 0; i < ints.length; i++) {
+      if (ints[i] == value) return i;
+    }
+    return -1;
   }
 
   @Contract(pure=true)
@@ -805,8 +803,8 @@ public class ArrayUtil extends ArrayUtilRt {
   }
 
   @Contract(pure = true)
-  public static boolean contains(@Nullable final String s, @NotNull String... strings) {
-    return ArrayUtilRt.contains(s, strings);
+  public static boolean contains(@Nullable String s, @NotNull String... strings) {
+    return indexOf(strings, s) >= 0;
   }
 
   @NotNull

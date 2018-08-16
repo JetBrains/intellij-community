@@ -27,6 +27,7 @@ class ConfigureAssociationsAction extends AnAction {
         super("Configure...");
     }
 
+    @Override
     public void actionPerformed(@NotNull final AnActionEvent e) {
         final Project project = e.getProject();
         if (project == null) return;
