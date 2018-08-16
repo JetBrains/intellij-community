@@ -357,7 +357,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     return info != null ? info.getComponent() : null;
   }
 
-  public void insertTab(@NotNull VirtualFile file, final Icon icon, final JComponent comp, final String tooltip, final int indexToInsert) {
+  public void insertTab(@NotNull VirtualFile file, final Icon icon, final JComponent comp, final String tooltip, final int indexToInsert, @NotNull Disposable editorDisposable) {
     TabInfo tab = myTabs.findInfo(file);
     if (tab != null) {
       return;
@@ -373,7 +373,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     tab.setTestableUi(new MyQueryable(tab));
 
     final DefaultActionGroup tabActions = new DefaultActionGroup();
-    tabActions.add(new CloseTab(comp, file));
+    tabActions.add(new CloseTab(comp, file, editorDisposable));
 
     tab.setTabLabelActions(tabActions, ActionPlaces.EDITOR_TAB);
     myTabs.addTabSilently(tab, indexToInsert);
@@ -441,12 +441,12 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
   }
 
-  private final class CloseTab extends AnAction implements DumbAware {
+  public final class CloseTab extends AnAction implements DumbAware {
     private final VirtualFile myFile;
 
-    CloseTab(@NotNull JComponent c, @NotNull VirtualFile file) {
+    CloseTab(@NotNull JComponent c, @NotNull VirtualFile file, @NotNull Disposable editorDisposable) {
       myFile = file;
-      new ShadowAction(this, ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE), c, myTabs);
+      new ShadowAction(this, ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE), c, editorDisposable);
     }
 
     @Override
