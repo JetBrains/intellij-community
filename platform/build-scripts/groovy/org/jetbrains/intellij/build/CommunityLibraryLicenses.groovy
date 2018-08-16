@@ -49,7 +49,6 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "Android DEX library", libraryName: "dexlib2", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Gradle model", libraryName: "android-gradle-model", version: "0.4-SNAPSHOT", license: "Apache 2.0",
                        url: "https://android.googlesource.com/platform/tools/build/+/master/gradle-model/"),
-    new LibraryLicense(name: "Android Jimfs library", libraryName: "jimfs", license: "Apache 2.0", url: "https://github.com/google/jimfs"),
     new LibraryLicense(name: "Android Layout Library", libraryName: "layoutlib", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android libwebp library", libraryName: "libwebp.jar", license: "Apache 2.0",
                        url: "https://github.com/webmproject/libwebp"),
