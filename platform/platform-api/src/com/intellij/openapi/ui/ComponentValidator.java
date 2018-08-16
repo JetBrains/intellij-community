@@ -150,7 +150,9 @@ public class ComponentValidator {
 
           popupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(tipComponent, null).
             setBorderColor(validationInfo.warning ? WARNING_BORDER_COLOR : ERROR_BORDER_COLOR).
-                                         setShowShadow(false);
+            setCancelOnClickOutside(false).
+            setCancelOnMouseOutCallback(e -> e.getID() == MouseEvent.MOUSE_PRESSED && !withinComponent(e)).
+            setShowShadow(false);
 
           getFocusable(validationInfo.component).ifPresent(fc -> {
             if (fc.hasFocus()) {
@@ -162,8 +164,22 @@ public class ComponentValidator {
     }
   }
 
+  private boolean withinComponent(@NotNull MouseEvent e) {
+    if (validationInfo != null && validationInfo.component != null) {
+      Rectangle screenBounds = new Rectangle(validationInfo.component.getLocationOnScreen(), validationInfo.component.getSize());
+      return screenBounds.contains(e.getLocationOnScreen());
+    }
+    else {
+      return false;
+    }
+  }
+
   private void showPopup() {
-    if (popupBuilder != null && validationInfo != null && validationInfo.component != null && validationInfo.component.isEnabled()) {
+    if ((popup == null || !popup.isVisible()) &&
+        popupBuilder != null &&
+        validationInfo != null &&
+        validationInfo.component != null &&
+        validationInfo.component.isEnabled()) {
       popup = popupBuilder.createPopup();
 
       Insets i = validationInfo.component.getInsets();

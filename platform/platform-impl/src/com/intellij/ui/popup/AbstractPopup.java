@@ -53,8 +53,7 @@ import java.util.stream.Collectors;
 
 import static java.awt.AWTEvent.MOUSE_EVENT_MASK;
 import static java.awt.AWTEvent.MOUSE_MOTION_EVENT_MASK;
-import static java.awt.event.MouseEvent.MOUSE_ENTERED;
-import static java.awt.event.MouseEvent.MOUSE_MOVED;
+import static java.awt.event.MouseEvent.*;
 import static java.awt.event.WindowEvent.WINDOW_ACTIVATED;
 import static java.awt.event.WindowEvent.WINDOW_GAINED_FOCUS;
 
@@ -1511,6 +1510,7 @@ public class AbstractPopup implements JBPopup {
           }
           break;
         case MOUSE_MOVED:
+        case MOUSE_PRESSED:
           if (myCancelOnMouseOutCallback != null && myEverEntered && !withinPopup(event)) {
             if (myCancelOnMouseOutCallback.check((MouseEvent)event)) {
               cancel();
