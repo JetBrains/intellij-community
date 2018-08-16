@@ -192,7 +192,7 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://opensource.org/licenses/BSD-3-Clause"),
     new LibraryLicense(name: "HttpComponents HttpClient", libraryName: "http-client", version: "4.5.5", license: "Apache 2.0",
                        url: "http://hc.apache.org/httpcomponents-client-ga/index.html"),
-    new LibraryLicense(name: "HttpComponents HttpClient Fluent API", libraryName: "org.apache.httpcomponents:fluent-hc", version: "4.5.2",
+    new LibraryLicense(name: "HttpComponents HttpClient Fluent API", libraryName: "fluent-hc", version: "4.5.2",
                        license: "Apache 2.0", url: "http://hc.apache.org/httpcomponents-client-ga/index.html"),
     new LibraryLicense(name: "ImageIO", libraryName: "imageio-tiff", version: "3.2.1", license: "BSD",
                        url: "https://github.com/haraldk/TwelveMonkeys", licenseUrl: "https://github.com/haraldk/TwelveMonkeys#license"),
