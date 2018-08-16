@@ -92,6 +92,9 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
       for (final CodeStyleSettingsProvider provider : codeStyleSettingsProviders) {
         addCustomSettings(provider.createCustomSettings(this));
       }
+      for (CodeStyleSettingsProvider provider : LanguageCodeStyleSettingsProvider.getSettingsPagesProviders()) {
+        addCustomSettings(provider.createCustomSettings(this));
+      }
     }
   }
 
