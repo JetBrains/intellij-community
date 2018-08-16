@@ -89,7 +89,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     });
 
     VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(), project);
-    myAnnotationDocumentEdited = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
+    myAnnotationDocumentEdited = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new MyDocumentListener(), project);
   }
 
