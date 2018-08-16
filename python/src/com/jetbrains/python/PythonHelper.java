@@ -48,6 +48,7 @@ public enum PythonHelper implements HelperPackage {
 
   CONSOLE("pydev", "pydevconsole", HelperDependency.THRIFTPY),
   PROFILER("profiler", "run_profiler", HelperDependency.THRIFTPY),
+  LOAD_PSTAT("profiler", "load_pstat", HelperDependency.THRIFTPY),
 
   LOAD_ENTRY_POINT("pycharm", "pycharm_load_entry_point"),
 
