@@ -9,6 +9,7 @@ import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -23,6 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
@@ -64,16 +66,22 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
 
     final ContentManager contentManager = hierarchyBrowserManager.getContentManager();
     final Content selectedContent = contentManager.getSelectedContent();
+
+    JComponent browserComponent = hierarchyBrowser.getComponent();
+    if (!DumbService.isDumbAware(hierarchyBrowser)) {
+      browserComponent = DumbService.getInstance(project).wrapGently(browserComponent, project);
+    }
+
     if (selectedContent != null && !selectedContent.isPinned()) {
       content = selectedContent;
       final Component component = content.getComponent();
       if (component instanceof Disposable) {
         Disposer.dispose((Disposable)component);
       }
-      content.setComponent(hierarchyBrowser.getComponent());
+      content.setComponent(browserComponent);
     }
     else {
-      content = ContentFactory.SERVICE.getInstance().createContent(hierarchyBrowser.getComponent(), null, true);
+      content = ContentFactory.SERVICE.getInstance().createContent(browserComponent, null, true);
       contentManager.addContent(content);
     }
     content.setHelpId(HierarchyBrowserBaseEx.HELP_ID);

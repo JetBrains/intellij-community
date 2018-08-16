@@ -16,6 +16,8 @@
 
 package com.intellij.openapi.project;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,17 +27,31 @@ import java.awt.*;
 /**
  * @author peter
  */
-public class DumbUnawareHider extends JBPanelWithEmptyText {
+public class DumbUnawareHider extends JBPanelWithEmptyText implements Disposable {
+
+  private final JComponent myDumbUnawareContent;
 
   public DumbUnawareHider(@NotNull JComponent dumbUnawareContent) {
     super(new BorderLayout());
+    this.myDumbUnawareContent = dumbUnawareContent;
     getEmptyText().setText("This view is not available until indices are built");
     add(dumbUnawareContent, BorderLayout.CENTER);
+  }
+
+  public JComponent getContent() {
+    return myDumbUnawareContent;
   }
 
   public void setContentVisible(boolean show) {
     for (int i = 0, count = getComponentCount(); i < count; i++) {
       getComponent(i).setVisible(show);
+    }
+  }
+
+  @Override
+  public void dispose() {
+    if (myDumbUnawareContent instanceof Disposable) {
+      Disposer.dispose((Disposable) myDumbUnawareContent);
     }
   }
 }
