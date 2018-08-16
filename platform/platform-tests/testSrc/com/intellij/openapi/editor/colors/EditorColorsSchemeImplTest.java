@@ -310,15 +310,19 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     TextAttributesKey keyB = TextAttributesKey.createTextAttributesKey("B", keyC);
     TextAttributesKey keyA = TextAttributesKey.createTextAttributesKey("A", keyB);
     try {
-      keyD.setFallbackAttributeKey(keyB);
-      editorColorsScheme.getAttributes(keyA);
+      keyD = TextAttributesKey.createTextAttributesKey("D", keyB);
+      fail("Must fail");
     }
-    catch (StackOverflowError e) {
-      fail("Stack overflow detected!");
-    }
-    catch (Throwable e) {
+    catch (IllegalArgumentException e) {
       String s = e.getMessage();
       assertTrue(s.contains("B->C->D"));
+
+      try {
+        editorColorsScheme.getAttributes(keyA);
+      }
+      catch (StackOverflowError ignored) {
+        fail("Stack overflow detected!");
+      }
     }
     finally {
       TextAttributesKey.removeTextAttributesKey("A");
