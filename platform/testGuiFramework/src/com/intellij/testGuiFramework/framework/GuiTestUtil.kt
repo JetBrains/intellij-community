@@ -19,7 +19,6 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil.toCanonicalPath
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.FileUtilRt.toSystemDependentName
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtil.isNotEmpty
@@ -345,12 +344,14 @@ object GuiTestUtil {
 
   }
 
-  fun createTempProjectCreationDir(): File {
+  private fun createTempProjectCreationDir(): File {
     try {
       // The temporary location might contain symlinks, such as /var@ -> /private/var on MacOS.
       // EditorFixture seems to require a canonical path when opening the file.
-      val tempDir = FileUtilRt.createTempDirectory("guiTest", null)
-      return tempDir.canonicalFile
+      return File(
+        System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir")),
+        "guiTest"
+      ).canonicalFile
     }
     catch (ex: IOException) {
       // For now, keep the original behavior and point inside the source tree.
