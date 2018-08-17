@@ -29,6 +29,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -552,17 +553,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
 
   @NotNull
   public IdeFrameFixture waitForBackgroundTasksToFinish() {
-    pause(new Condition("Background tasks to finish") {
-                  @Override
-                  public boolean test() {
-                    ProgressManager progressManager = ProgressManager.getInstance();
-                    return !progressManager.hasModalProgressIndicator() &&
-                           !progressManager.hasProgressIndicator() &&
-                           !progressManager.hasUnsafeProgressIndicator();
-                  }
-                }
-      , Timeouts.INSTANCE.getMinutes15());
-    robot().waitForIdle();
+    DumbService.getInstance(getProject()).waitForSmartMode();
     return this;
   }
 
