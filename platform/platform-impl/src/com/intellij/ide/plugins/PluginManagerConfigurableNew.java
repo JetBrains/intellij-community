@@ -587,7 +587,7 @@ public class PluginManagerConfigurableNew
       new PluginsGroupComponentWithProgress(new PluginsGridLayout(), EventHandler.EMPTY, myNameListener, mySearchListener,
                                             descriptor -> new GridCellPluginComponent(myPluginsModel, descriptor, myTagBuilder));
     panel.getEmptyText().setText("Trending plugins are not loaded.")
-      .appendSecondaryText("Check the interner connection.", StatusText.DEFAULT_ATTRIBUTES, null);
+      .appendSecondaryText("Check the internet connection.", StatusText.DEFAULT_ATTRIBUTES, null);
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       List<PluginsGroup> groups = new ArrayList<>();
