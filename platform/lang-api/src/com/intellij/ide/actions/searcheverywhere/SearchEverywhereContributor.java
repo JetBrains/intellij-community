@@ -39,6 +39,10 @@ public interface SearchEverywhereContributor<F> {
   default void fetchElements(String pattern, boolean everywhere, SearchEverywhereContributorFilter<F> filter,
                      ProgressIndicator progressIndicator, Function<Object, Boolean> consumer) {}
 
+  default int getElementPriority(Object element, String searchPattern) {
+    return 0;
+  }
+
   ContributorSearchResult<Object> search(String pattern, boolean everywhere, SearchEverywhereContributorFilter<F> filter,
                                          ProgressIndicator progressIndicator, int elementsLimit);
 

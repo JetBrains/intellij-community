@@ -112,7 +112,7 @@ class MultithreadSearcher {
                                         //int priority = myContributor.getPriority(element);
                                         //EqualityPolicy<Object> eqPolicy = myContributor.getEqualityPolicy();
 
-                                        int priority = 0;
+                                        int priority = myContributor.getElementPriority(element, myPattern);
                                         EqualityPolicy<Object> eqPolicy = (EqualityPolicy<Object>) EqualityPolicy.CANONICAL;
                                         boolean added = myAccumulator.addElement(element, myContributor, priority, eqPolicy);
                                         if (!added) {
