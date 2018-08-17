@@ -25,7 +25,7 @@ import org.jetbrains.uast.psi.UElementWithLocation
 class JavaUCallExpression(
   override val psi: PsiMethodCallExpression,
   givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), UCallExpressionEx, UElementWithLocation {
+) : JavaAbstractUExpression(givenParent), UCallExpressionEx, UElementWithLocation, UMultiResolvable {
   override val kind: UastCallKind
     get() = UastCallKind.METHOD_CALL
 
@@ -64,6 +64,8 @@ class JavaUCallExpression(
     get() = psi.methodExpression.referenceName
 
   override fun resolve(): PsiMethod? = psi.resolveMethod()
+  override fun multiResolve(incompleteCode: Boolean): Iterable<ResolveResult> = psi.methodExpression.multiResolve(
+    incompleteCode).asIterable()
 
   override fun getStartOffset(): Int =
     psi.methodExpression.referenceNameElement?.textOffset ?: psi.methodExpression.textOffset
@@ -113,7 +115,7 @@ class JavaUCallExpression(
 class JavaConstructorUCallExpression(
   override val psi: PsiNewExpression,
   givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), UCallExpressionEx {
+) : JavaAbstractUExpression(givenParent), UCallExpressionEx, UMultiResolvable {
   override val kind: UastCallKind by lz {
     when {
       psi.arrayInitializer != null -> UastCallKind.NEW_ARRAY_WITH_INITIALIZER
@@ -170,12 +172,14 @@ class JavaConstructorUCallExpression(
     get() = null
 
   override fun resolve(): PsiMethod? = psi.resolveMethod()
+  override fun multiResolve(incompleteCode: Boolean): Iterable<ResolveResult> =
+    psi.classReference?.multiResolve(incompleteCode)?.asIterable() ?: emptyList()
 }
 
 class JavaArrayInitializerUCallExpression(
   override val psi: PsiArrayInitializerExpression,
   givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), UCallExpressionEx {
+) : JavaAbstractUExpression(givenParent), UCallExpressionEx, UMultiResolvable {
   override val methodIdentifier: UIdentifier?
     get() = null
 
@@ -203,6 +207,7 @@ class JavaArrayInitializerUCallExpression(
     get() = UastCallKind.NESTED_ARRAY_INITIALIZER
 
   override fun resolve(): Nothing? = null
+  override fun multiResolve(incompleteCode: Boolean): Iterable<ResolveResult> = emptyList()
 
   override val receiver: UExpression?
     get() = null
@@ -214,7 +219,7 @@ class JavaArrayInitializerUCallExpression(
 class JavaAnnotationArrayInitializerUCallExpression(
   override val psi: PsiArrayInitializerMemberValue,
   givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), UCallExpressionEx {
+) : JavaAbstractUExpression(givenParent), UCallExpressionEx, UMultiResolvable {
 
   override fun getArgumentForParameter(i: Int): UExpression? = valueArguments.getOrNull(i)
 
@@ -248,6 +253,7 @@ class JavaAnnotationArrayInitializerUCallExpression(
     get() = null
 
   override fun resolve(): Nothing? = null
+  override fun multiResolve(incompleteCode: Boolean): Iterable<ResolveResult> = emptyList()
 
   override val receiver: UExpression?
     get() = null
