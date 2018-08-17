@@ -10,7 +10,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.net.HttpConfigurable;
 import git4idea.config.GitVcsApplicationSettings;
-import git4idea.config.GitVcsSettings;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +49,7 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
   public static GitHandlerAuthenticationManager prepare(@NotNull Project project, @NotNull GitLineHandler handler) throws IOException {
     GitHandlerAuthenticationManager manager = new GitHandlerAuthenticationManager(project, handler);
     manager.prepareHttpAuth();
-    if (GitVcsSettings.getInstance(project).isIdeaSsh()) {
+    if (GitVcsApplicationSettings.getInstance().isUseIdeaSsh()) {
       manager.prepareSshAuth();
     }
     else if (GitVcsApplicationSettings.getInstance().isOverrideSshAskPass()) {
