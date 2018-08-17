@@ -4,10 +4,12 @@ package org.jetbrains.idea.devkit.actions
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.fileTemplates.FileTemplateUtil
 import com.intellij.ide.ui.UIThemeProvider
+import com.intellij.json.psi.JsonElementGenerator
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
@@ -27,8 +29,9 @@ import org.jetbrains.idea.devkit.util.PsiUtil
 import java.util.*
 import javax.swing.JComponent
 
+//TODO better undo support
 class NewThemeAction: AnAction() {
-  val THEME_JSON_TEMPLATE = "ThemeJson.json"
+  private val THEME_JSON_TEMPLATE = "ThemeJson.json"
   private val THEME_PROVIDER_EP_NAME = UIThemeProvider.EP_NAME.name
 
 
@@ -44,6 +47,8 @@ class NewThemeAction: AnAction() {
 
     if (dialog.exitCode == DialogWrapper.OK_EXIT_CODE) {
       val file = createThemeJson(dialog.name.text, dialog.isDark.isSelected, project, dir)
+      view.selectElement(file)
+      FileEditorManager.getInstance(project).openFile(file.virtualFile, true)
       registerTheme(dir, file, module)
     }
   }
@@ -57,7 +62,7 @@ class NewThemeAction: AnAction() {
     val fileName = getThemeJsonFileName(themeName)
     val template = FileTemplateManager.getInstance(project).getJ2eeTemplate(THEME_JSON_TEMPLATE)
     val props = Properties()
-    props.setProperty("NAME", themeName) //TODO escape for JSON
+    props.setProperty("NAME", JsonElementGenerator(project).createStringLiteral(themeName).text)
     props.setProperty("IS_DARK", isDark.toString())
 
     val created = FileTemplateUtil.createFromTemplate(template, fileName, props, dir)
