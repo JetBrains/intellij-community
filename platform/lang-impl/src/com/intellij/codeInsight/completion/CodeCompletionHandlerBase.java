@@ -32,6 +32,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiDocumentManager;
@@ -405,7 +406,8 @@ public class CodeCompletionHandlerBase {
     }
     finally {
       if (context != null && context.getLaterRunnable() != null) {
-        TransactionGuard.getInstance().submitTransactionAndWait(context.getLaterRunnable());
+        // TODO use meaningful disposable object
+        TransactionGuard.getInstance().submitTransactionLater(Disposer.newDisposable(), context.getLaterRunnable());
       }
     }
   }
