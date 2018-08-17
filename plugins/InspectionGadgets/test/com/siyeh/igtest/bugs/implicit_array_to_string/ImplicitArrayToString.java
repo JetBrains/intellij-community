@@ -59,4 +59,8 @@ public class ImplicitArrayToString {
     void inParentheses(int[] is) {
         String s = "foo" + (<warning descr="Implicit call to 'toString()' on array 'is'">is</warning>);
     }
+
+    void parentheses(int[] is) {
+        System.out.println((<warning descr="Implicit call to 'toString()' on array 'is'">is</warning>));
+    }
 }

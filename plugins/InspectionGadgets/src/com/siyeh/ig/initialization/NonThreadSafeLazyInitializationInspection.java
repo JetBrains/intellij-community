@@ -233,7 +233,7 @@ public class NonThreadSafeLazyInitializationInspection extends BaseInspection {
     public void visitAssignmentExpression(
       @NotNull PsiAssignmentExpression expression) {
       super.visitAssignmentExpression(expression);
-      final PsiExpression lhs = expression.getLExpression();
+      final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLExpression());
       if (!(lhs instanceof PsiReferenceExpression)) {
         return;
       }
@@ -260,7 +260,7 @@ public class NonThreadSafeLazyInitializationInspection extends BaseInspection {
       }
       final PsiIfStatement ifStatement = (PsiIfStatement)parent;
       final PsiExpression condition = ifStatement.getCondition();
-      if (condition == null|| !ComparisonUtils.isNullComparison(condition, field, true)) {
+      if (!ComparisonUtils.isNullComparison(condition, field, true)) {
         return;
       }
       registerError(lhs, ifStatement, field);
