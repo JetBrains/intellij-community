@@ -27,6 +27,9 @@ public interface PyStringLiteralExpression extends PyLiteralExpression, StringLi
   @NotNull
   List<ASTNode> getStringNodes();
 
+  @NotNull
+  List<PyRichStringNode> getGluedStringNodes();
+
   int valueOffsetToTextOffset(int valueOffset);
 
   /**

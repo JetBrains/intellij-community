@@ -37,6 +37,7 @@ import com.jetbrains.python.lexer.PythonHighlightingLexer;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import one.util.streamex.StreamEx;
 import org.intellij.lang.regexp.DefaultRegExpPropertiesProvider;
 import org.intellij.lang.regexp.RegExpLanguageHost;
 import org.intellij.lang.regexp.psi.*;
@@ -257,6 +258,14 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   @NotNull
   public List<ASTNode> getStringNodes() {
     return Arrays.asList(getNode().getChildren(PyTokenTypes.STRING_NODES));
+  }
+
+  @NotNull
+  @Override
+  public List<PyRichStringNode> getGluedStringNodes() {
+    return StreamEx.of(getStringNodes())
+      .select(PyRichStringNode.class)
+      .toList();
   }
 
   @NotNull
