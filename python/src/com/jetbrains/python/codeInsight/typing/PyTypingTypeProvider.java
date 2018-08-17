@@ -312,8 +312,9 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final PyElementGenerator generator = PyElementGenerator.getInstance(referenceExpression.getProject());
 
       parameters.add(PyCallableParameterImpl.nonPsi("name", builtinCache.getStringType(languageLevel)));
-      parameters.add(PyCallableParameterImpl.positionalNonPsi("constraints", builtinCache.getTypeType()));
-      parameters.add(PyCallableParameterImpl.nonPsi("bound", builtinCache.getTypeType(), generator.createEllipsis()));
+      final PyType typeOrForwardReference = PyUnionType.union(builtinCache.getTypeType(), builtinCache.getStrType());
+      parameters.add(PyCallableParameterImpl.positionalNonPsi("constraints", typeOrForwardReference));
+      parameters.add(PyCallableParameterImpl.nonPsi("bound", typeOrForwardReference, generator.createEllipsis()));
 
       final PyClassType boolType = builtinCache.getBoolType();
       final PyExpression falseValue = generator.createExpressionFromText(languageLevel, "False");
