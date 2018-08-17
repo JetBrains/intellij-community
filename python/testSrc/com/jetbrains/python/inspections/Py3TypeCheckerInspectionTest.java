@@ -81,7 +81,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testStrFormatPy3() {
     doTest();
   }
-  
+
   // PY-18762
   public void testHomogeneousTuples() {
     doTest();
@@ -341,7 +341,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON37, () -> super.doMultiFileTest());
   }
 
-  // PY-28127
+  // PY-28127 PY-31424
   public void testInitializingTypeVar() {
     doTest();
   }
