@@ -31,7 +31,7 @@ abstract class AbstractGithubUrlGroupingAction(text: String?, description: Strin
     e.presentation.isEnabledAndVisible = isEnabledAndVisible(e)
   }
 
-  private fun isEnabledAndVisible(e: AnActionEvent): Boolean {
+  protected open fun isEnabledAndVisible(e: AnActionEvent): Boolean {
     val project = e.getData(CommonDataKeys.PROJECT)
     if (project == null || project.isDefault) return false
 
