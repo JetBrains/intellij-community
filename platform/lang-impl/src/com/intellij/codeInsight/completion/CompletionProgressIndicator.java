@@ -492,7 +492,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     Disposer.dispose(myQueue);
     LookupManager.getInstance(getProject()).removePropertyChangeListener(myLookupManagerListener);
 
-    CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+    CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCurrentCompletionProgressIndicator();
     LOG.assertTrue(currentCompletion == this, currentCompletion + "!=" + this);
 
     CompletionServiceImpl
@@ -531,7 +531,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       return;
     }
 
-    CompletionProgressIndicator currentCompletion = ((CompletionServiceImpl)completionService).getCurrentCompletion();
+    CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCurrentCompletionProgressIndicator();
     if (currentCompletion != null) {
       currentCompletion.finishCompletionProcess(true);
       CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass());
@@ -588,7 +588,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       if (myCount == 0) {
         myLookup.hideLookup(false);
         if (!isAutopopupCompletion()) {
-          final CompletionProgressIndicator current = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+          final CompletionProgressIndicator current = CompletionServiceImpl.getCurrentCompletionProgressIndicator();
           LOG.assertTrue(current == null, current + "!=" + this);
 
           handleEmptyLookup(!((CompletionPhase.BgCalculation)phase).modifiersChanged);
@@ -718,7 +718,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     cancel();
 
-    final CompletionProgressIndicator current = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+    final CompletionProgressIndicator current = CompletionServiceImpl.getCurrentCompletionProgressIndicator();
     if (this != current) {
       LOG.error(current + "!=" + this);
     }
