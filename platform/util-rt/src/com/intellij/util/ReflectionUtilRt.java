@@ -1,8 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
-import com.intellij.openapi.util.Condition;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,14 +17,15 @@ public class ReflectionUtilRt {
     return result;
   }
 
-  private static void collectFields(@NotNull Class clazz, @NotNull List<Field> result) {
+  private static void collectFields(Class clazz, List<Field> result) {
     result.addAll(Arrays.asList(clazz.getDeclaredFields()));
-    final Class superClass = clazz.getSuperclass();
+
+    Class superClass = clazz.getSuperclass();
     if (superClass != null) {
       collectFields(superClass, result);
     }
-    final Class[] interfaces = clazz.getInterfaces();
-    for (Class each : interfaces) {
+
+    for (Class each : clazz.getInterfaces()) {
       collectFields(each, result);
     }
   }
@@ -34,50 +33,39 @@ public class ReflectionUtilRt {
   public static <T> T getField(@NotNull Class objectClass,
                                @Nullable Object object,
                                @Nullable("null means any type") Class<T> fieldType,
-                               @NotNull @NonNls String fieldName) {
-    try {
-      final Field field = findAssignableField(objectClass, fieldType, fieldName);
-      @SuppressWarnings("unchecked") T t = (T)field.get(object);
-      return t;
-    }
-    catch (NoSuchFieldException e) {
-      return null;
-    }
-    catch (IllegalAccessException e) {
-      return null;
-    }
-  }
-
-  @NotNull
-  private static Field findAssignableField(@NotNull Class<?> clazz,
-                                          @Nullable("null means any type") final Class<?> fieldType,
-                                          @NotNull final String fieldName) throws NoSuchFieldException {
-    Field result = processFields(clazz, new Condition<Field>() {
-      public boolean value(Field field) {
-        return fieldName.equals(field.getName()) && (fieldType == null || fieldType.isAssignableFrom(field.getType()));
+                               @NotNull String fieldName) {
+    Field field = findField(objectClass, fieldName, fieldType);
+    if (field != null) {
+      try {
+        @SuppressWarnings("unchecked") T t = (T)field.get(object);
+        return t;
       }
-    });
-    if (result != null) return result;
-    throw new NoSuchFieldException("Class: " + clazz + " fieldName: " + fieldName + " fieldType: " + fieldType);
+      catch (IllegalAccessException ignored) { }
+    }
+
+    return null;
   }
 
-  private static Field processFields(@NotNull Class clazz, @NotNull Condition<Field> checker) {
+  @Nullable
+  private static Field findField(Class clazz, String fieldName, @Nullable Class<?> fieldType) {
     for (Field field : clazz.getDeclaredFields()) {
-      if (checker.value(field)) {
+      if (fieldName.equals(field.getName()) && (fieldType == null || fieldType.isAssignableFrom(field.getType()))) {
         field.setAccessible(true);
         return field;
       }
     }
-    final Class superClass = clazz.getSuperclass();
+
+    Class superClass = clazz.getSuperclass();
     if (superClass != null) {
-      Field result = processFields(superClass, checker);
+      Field result = findField(superClass, fieldName, fieldType);
       if (result != null) return result;
     }
-    final Class[] interfaces = clazz.getInterfaces();
-    for (Class each : interfaces) {
-      Field result = processFields(each, checker);
+
+    for (Class each : clazz.getInterfaces()) {
+      Field result = findField(each, fieldName, fieldType);
       if (result != null) return result;
     }
+
     return null;
   }
 }

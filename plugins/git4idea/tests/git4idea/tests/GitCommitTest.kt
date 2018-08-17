@@ -570,6 +570,94 @@ abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRep
     }
   }
 
+  fun `test commit with excluded added-deleted file`() {
+    `assume version where git reset returns 0 exit code on success `()
+
+    tac("a.txt", "file content")
+    overwrite("a.txt", "new content")
+
+    touch("b.txt", "file content")
+    git("add b.txt")
+    rm("b.txt")
+
+    val changes = assertChanges {
+      modified("a.txt")
+    }
+
+    commit(changes)
+
+    assertNoChanges()
+    assertMessage("comment", repo.message("HEAD"))
+    repo.assertCommitted {
+      modified("a.txt")
+    }
+  }
+
+  fun `test commit with excluded deleted-added file`() {
+    `assume version where git reset returns 0 exit code on success `()
+
+    tac("a.txt", "file content")
+    tac("b.txt", "file content")
+
+    overwrite("a.txt", "new content")
+
+    rm("b.txt")
+    git("add -A b.txt")
+    touch("b.txt", "new content")
+
+    val changes = assertChanges {
+      modified("a.txt")
+      deleted("b.txt")
+    }
+
+    commit(listOf(changes[0]))
+
+    assertChanges {
+      deleted("b.txt")
+    }
+    assertMessage("comment", repo.message("HEAD"))
+    repo.assertCommitted {
+      modified("a.txt")
+    }
+  }
+
+  fun `test commit with deleted-added file`() {
+    `assume version where git reset returns 0 exit code on success `()
+
+    tac("a.txt", "file content")
+    tac("b.txt", "file content")
+
+    overwrite("a.txt", "new content")
+
+    rm("b.txt")
+    git("add -A b.txt")
+    touch("b.txt", "new content")
+
+    val changes = assertChanges {
+      modified("a.txt")
+      deleted("b.txt")
+    }
+
+    commit(changes)
+
+    assertNoChanges()
+    assertMessage("comment", repo.message("HEAD"))
+
+    // bad case, but committing "deletion" seems logical (as it is shown in commit dialog)
+    if (Registry.`is`("git.force.commit.using.staging.area")) {
+      repo.assertCommitted {
+        modified("a.txt")
+        deleted("b.txt")
+      }
+    }
+    else {
+      repo.assertCommitted {
+        modified("a.txt")
+        modified("b.txt")
+      }
+    }
+  }
+
   fun `test commit during unresolved merge conflict`() {
     `assume version where git reset returns 0 exit code on success `()
     assumeTrue(Registry.`is`("git.force.commit.using.staging.area")) // "--only" shows dialog in this case

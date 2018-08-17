@@ -110,9 +110,7 @@ public class IntentionDescriptionPanel {
     JComponent owner;
     if (pluginId == null) {
       ApplicationInfo info = ApplicationInfo.getInstance();
-      String label = XmlStringUtil.wrapInHtml(
-        info.getShortCompanyName() + " " +
-        info.getVersionName());
+      String label = XmlStringUtil.wrapInHtml(info.getVersionName());
       owner = new JLabel(label);
     }
     else {

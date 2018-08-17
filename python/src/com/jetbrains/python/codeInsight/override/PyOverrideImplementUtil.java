@@ -112,19 +112,7 @@ public class PyOverrideImplementUtil {
       return;
     }
 
-    final MemberChooser<PyMethodMember> chooser =
-      new MemberChooser<PyMethodMember>(elements.toArray(new PyMethodMember[0]), false, true, project) {
-        @Override
-        protected SpeedSearchComparator getSpeedSearchComparator() {
-          return new SpeedSearchComparator(false) {
-            @Nullable
-            @Override
-            public Iterable<TextRange> matchingFragments(@NotNull String pattern, @NotNull String text) {
-              return super.matchingFragments(PyMethodMember.trimUnderscores(pattern), text);
-            }
-          };
-        }
-      };
+    final MemberChooser<PyMethodMember> chooser = new MemberChooser<>(elements.toArray(new PyMethodMember[0]), false, true, project);
     chooser.setTitle(implement ? "Select Methods to Implement" : "Select Methods to Override");
     chooser.setCopyJavadocVisible(false);
     chooser.show();

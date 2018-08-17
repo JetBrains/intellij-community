@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -44,8 +45,9 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
         if(nullCheckParameter.myNull) {
           holder.registerProblem(nullArg, InspectionsBundle.message("inspection.redundant.null.check.always.fail.message", explanation));
         } else {
-          holder.registerProblem(nullArg, InspectionsBundle.message("inspection.redundant.null.check.message", explanation),
-                                 new RemoveNullCheckFix());
+          PsiReferenceExpression comparedToNull = ExpressionUtils.getReferenceExpressionFromNullComparison(nullArg, false);
+          LocalQuickFix fix = comparedToNull == null ? new RemoveNullCheckFix() : new RemoveExcessiveNullComparisonFix();
+          holder.registerProblem(nullArg, InspectionsBundle.message("inspection.redundant.null.check.message", explanation), fix);
         }
       }
     };
@@ -56,11 +58,11 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
     if (arg == null || ExpressionUtils.isNullLiteral(arg)) return null;
     if (arg instanceof PsiNewExpression) return "newly created object";
     if (arg instanceof PsiLiteralExpression) return "literal";
-    if (arg.getType() instanceof PsiPrimitiveType) return "a value of primitive type";
+    if (arg.getType() instanceof PsiPrimitiveType) return "a value of primitive type '" + arg.getType().getCanonicalText() + "'";
     if (arg instanceof PsiPolyadicExpression && ((PsiPolyadicExpression)arg).getOperationTokenType() == JavaTokenType.PLUS) {
       return "concatenation";
     }
-    if (arg instanceof PsiThisExpression) return "this object";
+    if (arg instanceof PsiThisExpression) return "'this' object";
     return null;
   }
 
@@ -105,6 +107,24 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
         }
       }
       return new NullCheckParameter(nullIndex, isNull, returnsParameter);
+    }
+  }
+
+  public static class RemoveExcessiveNullComparisonFix implements LocalQuickFix {
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return InspectionsBundle.message("inspection.redundant.null.check.fix.notnull.family.name");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiExpression arg = ObjectUtils.tryCast(descriptor.getStartElement(), PsiExpression.class);
+      if (arg == null) return;
+      PsiReferenceExpression comparedToNull = ExpressionUtils.getReferenceExpressionFromNullComparison(arg, false);
+      if (comparedToNull == null) return;
+      new CommentTracker().replaceAndRestoreComments(arg, comparedToNull);
     }
   }
 

@@ -73,8 +73,11 @@ public class DebugProcessEvents extends DebugProcessImpl {
     super.commitVM(vm);
     if(vm != null) {
       vmAttached();
-      myEventThread = new DebuggerEventThread();
-      ApplicationManager.getApplication().executeOnPooledThread(ConcurrencyUtil.underThreadNameRunnable("DebugProcessEvents", myEventThread));
+      if (vm.canBeModified()) {
+        myEventThread = new DebuggerEventThread();
+        ApplicationManager.getApplication().executeOnPooledThread(
+          ConcurrencyUtil.underThreadNameRunnable("DebugProcessEvents", myEventThread));
+      }
     }
   }
 
@@ -323,25 +326,27 @@ public class DebugProcessEvents extends DebugProcessImpl {
     LOG.assertTrue(!isAttached());
     if (myState.compareAndSet(State.INITIAL, State.ATTACHED)) {
       final VirtualMachineProxyImpl machineProxy = getVirtualMachineProxy();
-      final EventRequestManager requestManager = machineProxy.eventRequestManager();
+      if (machineProxy.canBeModified()) {
+        final EventRequestManager requestManager = machineProxy.eventRequestManager();
 
-      if (machineProxy.canGetMethodReturnValues()) {
-        myReturnValueWatcher = new MethodReturnValueWatcher(requestManager, this);
+        if (machineProxy.canGetMethodReturnValues()) {
+          myReturnValueWatcher = new MethodReturnValueWatcher(requestManager, this);
+        }
+
+        enableNonSuspendingRequest(requestManager.createThreadStartRequest(),
+                                   event -> {
+                                     ThreadReference thread = ((ThreadStartEvent)event).thread();
+                                     getVirtualMachineProxy().threadStarted(thread);
+                                     myDebugProcessDispatcher.getMulticaster().threadStarted(this, thread);
+                                   });
+
+        enableNonSuspendingRequest(requestManager.createThreadDeathRequest(),
+                                   event -> {
+                                     ThreadReference thread = ((ThreadDeathEvent)event).thread();
+                                     getVirtualMachineProxy().threadStopped(thread);
+                                     myDebugProcessDispatcher.getMulticaster().threadStopped(this, thread);
+                                   });
       }
-
-      enableNonSuspendingRequest(requestManager.createThreadStartRequest(),
-                                 event -> {
-                                   ThreadReference thread = ((ThreadStartEvent)event).thread();
-                                   getVirtualMachineProxy().threadStarted(thread);
-                                   myDebugProcessDispatcher.getMulticaster().threadStarted(this, thread);
-                                 });
-
-      enableNonSuspendingRequest(requestManager.createThreadDeathRequest(),
-                                 event -> {
-                                   ThreadReference thread = ((ThreadDeathEvent)event).thread();
-                                   getVirtualMachineProxy().threadStopped(thread);
-                                   myDebugProcessDispatcher.getMulticaster().threadStopped(this, thread);
-                                 });
 
       // fill position managers
       ((DebuggerManagerImpl)DebuggerManager.getInstance(getProject())).getCustomPositionManagerFactories()
@@ -374,6 +379,10 @@ public class DebugProcessEvents extends DebugProcessImpl {
       final String transportName = DebuggerBundle.getTransportName(getConnection());
       showStatusText(DebuggerBundle.message("status.connected", addressDisplayName, transportName));
       LOG.debug("leave: processVMStartEvent()");
+
+      if (!machineProxy.canBeModified()) {
+        myDebugProcessDispatcher.getMulticaster().paused(getSuspendManager().pushSuspendContext(EventRequest.SUSPEND_ALL, 0));
+      }
     }
   }
 
