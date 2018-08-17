@@ -56,7 +56,7 @@ public class MavenRunAnythingProvider extends RunAnythingProviderBase<String> {
       return emptyList();
     }
 
-    List<MavenProject> mavenProjects = projectsManager.getProjects();
+    List<MavenProject> mavenProjects = projectsManager.getRootProjects();
     boolean onlyOneMavenProject = mavenProjects.size() == 1;
 
     List<String> values = new ArrayList<>();
@@ -124,7 +124,7 @@ public class MavenRunAnythingProvider extends RunAnythingProviderBase<String> {
   @NotNull
   @Override
   public String getHelpCommand() {
-    return "maven";
+    return "mvn";
   }
 
   @Nullable
@@ -159,15 +159,15 @@ public class MavenRunAnythingProvider extends RunAnythingProviderBase<String> {
       Project project = fetchProject(dataContext);
       MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
       if (projectsManager.isMavenizedProject()) {
-        if (projectsManager.getProjects().size() > 1) {
-          return "maven <moduleName> <goal...>";
+        if (projectsManager.getRootProjects().size() > 1) {
+          return "mvn <moduleName> <goal...>";
         }
         else {
-          return "maven <goal...>";
+          return "mvn <goal...>";
         }
       }
     }
-    return "maven <moduleName?> <goal...>";
+    return "mvn <moduleName?> <goal...>";
   }
 
   @Override
@@ -178,7 +178,7 @@ public class MavenRunAnythingProvider extends RunAnythingProviderBase<String> {
       return;
     }
 
-    List<MavenProject> mavenProjects = projectsManager.getProjects();
+    List<MavenProject> mavenProjects = projectsManager.getRootProjects();
     boolean onlyOneMavenProject = mavenProjects.size() == 1;
 
     List<String> goals = new ArrayList<>(ParametersListUtil.parse(trimStart(value, getHelpCommand()).trim()));

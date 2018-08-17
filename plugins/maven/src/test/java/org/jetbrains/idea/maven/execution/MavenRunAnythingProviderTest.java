@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.execution;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenConstants;
 
@@ -33,7 +34,7 @@ public class MavenRunAnythingProviderTest extends MavenImportingTestCase {
   }
 
   public void testRegularProject() {
-    assertEmpty(myProvider.getValues(myDataContext, "maven"));
+    assertEmpty(myProvider.getValues(myDataContext, "mvn"));
   }
 
   public void testSingleMavenProject() {
@@ -41,10 +42,10 @@ public class MavenRunAnythingProviderTest extends MavenImportingTestCase {
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    Collection<String> values = myProvider.getValues(myDataContext, "maven");
+    Collection<String> values = myProvider.getValues(myDataContext, "mvn");
     assertEquals(40, values.size());
 
-    Map<String, List<String>> groupedValues = values.stream().map(value -> trimStart(value, "maven ")).collect(
+    Map<String, List<String>> groupedValues = values.stream().map(value -> trimStart(value, "mvn ")).collect(
       groupingBy(value -> value.contains(":") ? substringBefore(value, ":") : "")
     );
     assertSameElements(groupedValues.keySet(), "", "clean", "compiler", "surefire", "resources", "jar", "install", "deploy", "site");
@@ -56,51 +57,51 @@ public class MavenRunAnythingProviderTest extends MavenImportingTestCase {
   }
 
   public void testMavenProjectWithModules() {
-    createModulePom("m1", "<groupId>test</groupId>" +
-                          "<artifactId>m1</artifactId>" +
-                          "<version>1</version>" +
-                          "<build>" +
-                          "  <plugins>" +
-                          "    <plugin>" +
-                          "      <groupId>org.apache.maven.plugins</groupId>" +
-                          "      <artifactId>maven-war-plugin</artifactId>" +
-                          "      <version>3.2.2</version>" +
-                          "    </plugin>" +
-                          "  </plugins>" +
-                          "</build>");
+    VirtualFile m1 =
+      createModulePom("m1", "<groupId>test</groupId>" +
+                            "<artifactId>m1</artifactId>" +
+                            "<version>1</version>" +
+                            "<build>" +
+                            "  <plugins>" +
+                            "    <plugin>" +
+                            "      <groupId>org.apache.maven.plugins</groupId>" +
+                            "      <artifactId>maven-war-plugin</artifactId>" +
+                            "      <version>3.2.2</version>" +
+                            "    </plugin>" +
+                            "  </plugins>" +
+                            "</build>");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<modules>" +
-                  "  <module>m1</module>" +
-                  "</modules>");
+    VirtualFile m2 =
+      createModulePom("m2", "<groupId>test</groupId>" +
+                            "<artifactId>m2</artifactId>" +
+                            "<version>1</version>");
+    importProjects(m1, m2);
     resolvePlugins();
 
-    Collection<String> values = myProvider.getValues(myDataContext, "maven");
-    assertSameElements(values, "maven project", "maven m1");
+    Collection<String> values = myProvider.getValues(myDataContext, "mvn");
+    assertSameElements(values, "mvn m1", "mvn m2");
 
-    values = myProvider.getValues(myDataContext, "maven something");
-    assertSameElements(values, "maven project", "maven m1");
-
-
-    Collection<String> projectValues = myProvider.getValues(myDataContext, "maven project");
-    assertTrue(projectValues.stream().allMatch(value -> value.startsWith("maven project") || value.equals("maven m1")));
-
-    projectValues = myProvider.getValues(myDataContext, "maven project ");
-    assertTrue(projectValues.stream().allMatch(value -> value.startsWith("maven project")));
+    values = myProvider.getValues(myDataContext, "mvn something");
+    assertSameElements(values, "mvn m1", "mvn m2");
 
 
-    Collection<String> moduleValues = myProvider.getValues(myDataContext, "maven m1");
-    assertTrue(moduleValues.stream().allMatch(value -> value.startsWith("maven m1") || value.equals("maven project")));
+    Collection<String> moduleValues = myProvider.getValues(myDataContext, "mvn m1");
+    assertTrue(moduleValues.stream().allMatch(value -> value.startsWith("mvn m1") || value.equals("mvn m2")));
 
-    moduleValues = myProvider.getValues(myDataContext, "maven m1 ");
-    assertTrue(moduleValues.stream().allMatch(value -> value.startsWith("maven m1")));
+    moduleValues = myProvider.getValues(myDataContext, "mvn m1 ");
+    assertTrue(moduleValues.stream().allMatch(value -> value.startsWith("mvn m1")));
+
+
+    Collection<String> projectValues = myProvider.getValues(myDataContext, "mvn m2");
+    assertTrue(projectValues.stream().allMatch(value -> value.startsWith("mvn m2") || value.equals("mvn m1")));
+
+    projectValues = myProvider.getValues(myDataContext, "mvn m2 ");
+    assertTrue(projectValues.stream().allMatch(value -> value.startsWith("mvn m2")));
 
 
     assertNotEquals(new HashSet<>(projectValues), new HashSet<>(moduleValues));
 
-    assertContain((List<String>)moduleValues, "maven m1 war:help", "maven m1 war:inplace", "maven m1 war:exploded", "maven m1 war:war");
-    assertDoNotContain((List<String>)projectValues, "maven project war:war");
+    assertContain((List<String>)moduleValues, "mvn m1 war:help", "mvn m1 war:inplace", "mvn m1 war:exploded", "mvn m1 war:war");
+    assertDoNotContain((List<String>)projectValues, "mvn m2 war:war");
   }
 }
