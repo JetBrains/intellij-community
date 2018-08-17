@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.io.FileTooBigException
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
@@ -420,8 +421,13 @@ open class MultipleFileMergeDialog(
         MergeUtil.putRevisionInfos(request, mergeData)
       }
       catch (e: InvalidDiffRequestException) {
-        LOG.error(e)
-        Messages.showErrorDialog(contentPanel, "Can't show merge dialog")
+        if (e.cause is FileTooBigException) {
+          Messages.showErrorDialog(contentPanel, "File is too big to be loaded.", "Can't Show Merge Dialog")
+        }
+        else {
+          LOG.error(e)
+          Messages.showErrorDialog(contentPanel, e.message, "Can't Show Merge Dialog")
+        }
         break
       }
 
