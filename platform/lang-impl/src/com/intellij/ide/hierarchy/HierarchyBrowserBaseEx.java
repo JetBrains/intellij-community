@@ -320,10 +320,10 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     myAlarm.addRequest(() -> setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR)), 100);
   }
 
-  public final void changeView(@NotNull final String typeName) {
+  public void changeView(@NotNull final String typeName) {
     changeView(typeName, true);
   }
-  public final void changeView(@NotNull final String typeName, boolean requestFocus) {
+  public void changeView(@NotNull final String typeName, boolean requestFocus) {
     setCurrentViewType(typeName);
 
     final PsiElement element = mySmartPsiElementPointer.getElement();
