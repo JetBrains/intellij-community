@@ -116,5 +116,10 @@ interface UCallExpression : UExpression, UResolvable {
 }
 
 interface UCallExpressionEx : UCallExpression {
-  fun getArgumentForParameter(i: Int): UExpression?
+  fun getArgumentForParameter(i: Int): UExpression? =
+    (this as UCallExpressionExMultiResolve).getArgumentForParameter(i, false, false)
+}
+
+interface UCallExpressionExMultiResolve : UCallExpressionEx {
+  fun getArgumentForParameter(i: Int, multiResolve: Boolean, incompleteCode: Boolean): UExpression?
 }
