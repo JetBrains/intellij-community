@@ -52,7 +52,6 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
   @NotNull private final String myName;
   @NotNull private final Consumer<? super Result> myResultHandler;
   @NotNull private final Object LOCK = new Object();
-  private final boolean myCancelRunning;
 
   @NotNull private List<Request> myAwaitingRequests;
   @Nullable private SingleTask myRunningTask;
@@ -62,12 +61,10 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
   public SingleTaskController(@NotNull Project project,
                               @NotNull String name,
                               @NotNull Consumer<? super Result> handler,
-                              boolean cancelRunning,
                               @NotNull Disposable parent) {
     myName = name;
     myResultHandler = handler;
     myAwaitingRequests = ContainerUtil.newLinkedList();
-    myCancelRunning = cancelRunning;
 
     Disposer.register(parent, this);
     VcsLogUtil.registerWithParentAndProject(parent, project, () -> closeQueue());
@@ -83,7 +80,7 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
       if (myIsClosed) return;
       myAwaitingRequests.addAll(Arrays.asList(requests));
       debug("Added requests: " + Arrays.toString(requests));
-      if (myRunningTask != null && myCancelRunning) {
+      if (myRunningTask != null && cancelRunningTasks(requests)) {
         cancelTask(myRunningTask);
       }
       if (myRunningTask == null) {
@@ -91,6 +88,10 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
         debug("Started a new bg task " + myRunningTask);
       }
     }
+  }
+
+  protected boolean cancelRunningTasks(@NotNull Request[] requests) {
+    return false;
   }
 
   private void debug(@NotNull String message) {
