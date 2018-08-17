@@ -83,6 +83,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -855,6 +856,14 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   public static String processIOException(@NotNull IOException e, @Nullable String address) {
     if (e instanceof UnknownHostException) {
       return DebuggerBundle.message("error.unknown.host") + (address != null ? " (" + address + ")" : "") + ":\n" + e.getLocalizedMessage();
+    }
+
+    // Failed SA attach
+    Throwable cause = e.getCause();
+    if (cause instanceof InvocationTargetException) {
+      if (cause.getCause() != null) {
+        return cause.getCause().getLocalizedMessage();
+      }
     }
 
     String message;
