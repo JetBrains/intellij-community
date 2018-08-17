@@ -693,7 +693,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     if (expression instanceof PsiBinaryExpression) {
       PsiExpression left = ((PsiBinaryExpression)expression).getLOperand();
       PsiExpression right = ((PsiBinaryExpression)expression).getROperand();
-      return right != null && (TypeUtils.isJavaLangString(left.getType()) || TypeUtils.isJavaLangString(right.getType()));
+      return right != null && (TypeUtils.isJavaLangString(left.getType()) && TypeUtils.isJavaLangString(right.getType()));
     }
     return false;
   }

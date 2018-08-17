@@ -35,6 +35,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
+import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -859,7 +860,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
 
     if (isEffectivelyNaN(dfaLeft) || isEffectivelyNaN(dfaRight)) {
-      applyEquivalenceRelation(dfaRelation, dfaLeft, dfaRight);
+      applyEquivalenceRelation(relationType, dfaLeft, dfaRight);
       return relationType == RelationType.NE;
     }
     if ((canBeNaN(dfaLeft) && !isNull(dfaRight)) || (canBeNaN(dfaRight) && !isNull(dfaLeft))) {
@@ -869,11 +870,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         return !dfaRelation.isNonEquality();
       }
 
-      applyEquivalenceRelation(dfaRelation, dfaLeft, dfaRight);
+      applyEquivalenceRelation(relationType, dfaLeft, dfaRight);
       return true;
     }
 
-    return applyEquivalenceRelation(dfaRelation, dfaLeft, dfaRight);
+    return applyEquivalenceRelation(relationType, dfaLeft, dfaRight);
   }
 
   private void updateVarStateOnComparison(@NotNull DfaVariableValue dfaVar, DfaValue value) {
@@ -897,9 +898,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
   }
 
-  private boolean applyEquivalenceRelation(@NotNull DfaRelationValue dfaRelation, DfaValue dfaLeft, DfaValue dfaRight) {
-    boolean isNegated = dfaRelation.isNonEquality();
-    if (!isNegated && !dfaRelation.isEquality()) {
+  private boolean applyEquivalenceRelation(RelationType type, DfaValue dfaLeft, DfaValue dfaRight) {
+    boolean isNegated = type == RelationType.NE || type == RelationType.GT || type == RelationType.LT;
+    if (!isNegated && type != RelationType.EQ) {
       return true;
     }
 
@@ -920,11 +921,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
     }
 
-    if (dfaRelation.getRelation() == RelationType.LT) {
+    if (type == RelationType.LT) {
       if (!applyLessThanRelation(dfaLeft, dfaRight)) return false;
-    } else if (dfaRelation.getRelation() == RelationType.GT) {
+    } else if (type == RelationType.GT) {
       if (!applyLessThanRelation(dfaRight, dfaLeft)) return false;
     } else {
+      if (!isNegated && !applyDependentFieldsEquivalence(dfaLeft, dfaRight)) {
+        return false;
+      }
       if (!applyRelation(dfaLeft, dfaRight, isNegated)) return false;
     }
     if (!checkCompareWithBooleanLiteral(dfaLeft, dfaRight, isNegated)) {
@@ -936,6 +940,33 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
 
     return true;
+  }
+
+  @NotNull
+  private EntryStream<? extends DfaValue, ? extends DfaValue> getDependentPairs(DfaValue left, DfaValue right) {
+    if (left instanceof DfaVariableValue) {
+      List<DfaVariableValue> leftVars = ((DfaVariableValue)left).getDependentVariables();
+      if (right instanceof DfaVariableValue) {
+        List<DfaVariableValue> rightVars = ((DfaVariableValue)right).getDependentVariables();
+        return StreamEx.of(leftVars).mapToEntry(leftVar -> StreamEx.of(rightVars)
+          .findFirst(rightVar -> leftVar.getSource().equals(rightVar.getSource())).orElse(null))
+          .nonNullValues()
+          .filterKeyValue((leftVar, rightVar) -> getEqClassIndex(leftVar) != -1 || getEqClassIndex(rightVar) != -1);
+      }
+      if (right instanceof DfaConstValue) {
+        return StreamEx.of(leftVars).filter(leftVar -> leftVar.getSource() instanceof SpecialField)
+          .mapToEntry(leftVar -> ((SpecialField)leftVar.getSource()).createValue(myFactory, right));
+      }
+    }
+    if (left instanceof DfaConstValue && right instanceof DfaVariableValue) {
+      return getDependentPairs(right, left);
+    }
+    return EntryStream.empty();
+  }
+
+  private boolean applyDependentFieldsEquivalence(@NotNull DfaValue left, @NotNull DfaValue right) {
+    return getDependentPairs(left, right)
+      .allMatch(pair -> applyCondition(myFactory.createCondition(pair.getKey(), RelationType.EQ, pair.getValue())));
   }
 
   private boolean applyBoxedRelation(@NotNull DfaVariableValue dfaLeft, DfaValue dfaRight, boolean negated) {
