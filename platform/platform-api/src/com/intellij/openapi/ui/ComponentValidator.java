@@ -165,7 +165,7 @@ public class ComponentValidator {
   }
 
   private boolean withinComponent(@NotNull MouseEvent e) {
-    if (validationInfo != null && validationInfo.component != null) {
+    if (validationInfo != null && validationInfo.component != null && validationInfo.component.isShowing()) {
       Rectangle screenBounds = new Rectangle(validationInfo.component.getLocationOnScreen(), validationInfo.component.getSize());
       return screenBounds.contains(e.getLocationOnScreen());
     }
