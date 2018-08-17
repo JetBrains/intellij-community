@@ -15,6 +15,7 @@
  */
 package com.intellij.testGuiFramework.cellReader
 
+import com.intellij.ide.util.treeView.NodeRenderer
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.findAllWithBFS
 import com.intellij.ui.MultilineTreeCellRenderer
@@ -95,7 +96,8 @@ class ExtendedJComboboxCellReader : BasicJComboBoxCellReader(), JComboBoxCellRea
 private fun getValueWithCellRenderer(cellRendererComponent: Component): String? {
   val result = when (cellRendererComponent) {
     is JLabel -> cellRendererComponent.text
-    is SimpleColoredComponent -> cellRendererComponent.getText()
+    is NodeRenderer -> cellRendererComponent.getFirstText() //should stands before SimpleColoredComponent because it is more specific
+    is SimpleColoredComponent -> cellRendererComponent.getFullText()
     is MultilineTreeCellRenderer -> cellRendererComponent.text
     else -> cellRendererComponent.findText()
   }
@@ -103,8 +105,12 @@ private fun getValueWithCellRenderer(cellRendererComponent: Component): String? 
 }
 
 
-private fun SimpleColoredComponent.getText(): String?
+private fun SimpleColoredComponent.getFullText(): String?
   = this.iterator().asSequence().joinToString()
+
+private fun SimpleColoredComponent.getFirstText(): String?
+  = this.iterator().next()
+
 
 private fun Component.findText(): String? {
   try {
@@ -118,8 +124,8 @@ private fun Component.findText(): String? {
     )
     resultList.addAll(
       findAllWithBFS(container, SimpleColoredComponent::class.java)
-        .filter { !it.getText().isNullOrEmpty() }
-        .map { it.getText()!! }
+        .filter { !it.getFullText().isNullOrEmpty() }
+        .map { it.getFullText()!! }
     )
     return resultList.firstOrNull { !it.isEmpty() }
   }
