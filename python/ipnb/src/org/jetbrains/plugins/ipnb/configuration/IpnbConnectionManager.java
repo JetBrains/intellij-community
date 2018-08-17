@@ -80,6 +80,10 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
   }
 
   public void executeCellAddConnection(@NotNull final IpnbCodePanel codePanel, @Nullable String connectionId) {
+    executeCode(codePanel, connectionId, codePanel.getCell().getSourceAsString());
+  }
+
+  public void executeCode(@NotNull final IpnbCodePanel codePanel, @Nullable String connectionId, @NotNull String code) {
     final IpnbFileEditor fileEditor = codePanel.getFileEditor();
     final VirtualFile virtualFile = fileEditor.getVirtualFile();
     String path;
@@ -99,7 +103,7 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
         startConnection(codePanel, path, null);
       }
       else {
-        final String messageId = connection.execute(codePanel.getCell().getSourceAsString());
+        final String messageId = connection.execute(code);
         myUpdateMap.put(messageId, codePanel);
       }
     }
@@ -107,10 +111,6 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
 
   public boolean hasConnection(String path) {
     return myKernels.containsKey(path);
-  }
-
-  public IpnbConnection getConnection(String path) {
-    return myKernels.get(path);
   }
 
   public void startConnection(@NotNull final IpnbCodePanel codePanel, @NotNull final String filePath,
@@ -213,6 +213,10 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
     return null;
   }
 
+  public Map<String, IpnbCodePanel> getUpdateMap() {
+    return myUpdateMap;
+  }
+
   public void startConnection(@Nullable final IpnbCodePanel codePanel, @NotNull final String path, @NotNull final String urlString,
                               @Nullable final String token, @Nullable IpnbDebuggerTransport debuggerTransport) {
     if (codePanel == null) return;
@@ -229,7 +233,7 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
   private IpnbConnectionListenerBase createConnectionListener(@Nullable IpnbCodePanel codePanel, Ref<Boolean> connectionOpened,
                                                               @Nullable IpnbDebuggerTransport debuggerTransport) {
     if (debuggerTransport != null) {
-      return debuggerTransport.createConnection(connectionOpened);
+      return debuggerTransport.createListener(connectionOpened);
     }
     else {
       return new IpnbConnectionListenerBase() {
@@ -278,7 +282,7 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
       final VirtualFile file = codePanel.getFileEditor().getVirtualFile();
       final String pathToFile = getRelativePathToFile(file);
       if (pathToFile == null) return false;
-      final IpnbConnection connection = getConnection(urlString, listener, pathToFile, token, isNewFormat);
+      final IpnbConnection connection = getConnection(urlString, listener, pathToFile, token, isNewFormat, path, debuggerTransport);
       int countAttempt = 0;
       while (!connectionOpened.get() && countAttempt < MAX_ATTEMPTS) {
         countAttempt += 1;
@@ -329,14 +333,20 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
 
   @NotNull
   private IpnbConnection getConnection(@NotNull String urlString, @NotNull IpnbConnectionListenerBase listener, @NotNull String pathToFile,
-                                       String token, boolean isNewFormat) throws IOException, URISyntaxException {
-    if (pathToFile.startsWith(IpnbDebuggerTransport.DEBUG_CONNECTION_PREFIX)) {
-      return new IpnbDebugConnection(urlString, listener, token, myProject, pathToFile);
+                                       String token,
+                                       boolean isNewFormat,
+                                       @NotNull String path,
+                                       @Nullable IpnbDebuggerTransport debuggerTransport) throws IOException, URISyntaxException {
+    if (debuggerTransport != null) {
+      final String connectionId = path.substring(IpnbDebuggerTransport.DEBUG_CONNECTION_PREFIX.length());
+      final IpnbConnection connection = myKernels.get(connectionId);
+      return new IpnbDebugConnection(urlString, listener, token, myProject, pathToFile, connection.getKernelId(),
+                                     connection.getSessionId());
     }
     if (!isNewFormat) {
       return new IpnbConnection(urlString, listener, token, myProject, pathToFile);
     }
-    return new IpnbConnectionV3(urlString, listener, token, myProject, pathToFile);
+    return new IpnbConnectionV3(urlString, listener, token, myProject, pathToFile, null, null);
   }
 
   @Nullable

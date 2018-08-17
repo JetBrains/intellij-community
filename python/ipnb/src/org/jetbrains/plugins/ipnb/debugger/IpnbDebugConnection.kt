@@ -11,7 +11,9 @@ class IpnbDebugConnection(uri: String,
                           listener: IpnbConnectionListener,
                           token: String?,
                           project: Project,
-                          pathToFile: String) : IpnbConnectionV3(uri, listener, token, project, pathToFile) {
+                          pathToFile: String,
+                          kernelId: String?,
+                          sessionId: String?) : IpnbConnectionV3(uri, listener, token, project, pathToFile, kernelId, sessionId) {
 
   @Throws(URISyntaxException::class)
   override fun initializeClients() {

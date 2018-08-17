@@ -19,8 +19,9 @@ public class IpnbConnectionV3 extends IpnbConnection {
   public IpnbConnectionV3(@NotNull String uri,
                           @NotNull IpnbConnectionListener listener,
                           @Nullable final String token,
-                          @NotNull Project project, String pathToFile) throws IOException, URISyntaxException {
-    super(uri, listener, token, project, pathToFile);
+                          @NotNull Project project, String pathToFile, String kernelId, String sessionId)
+    throws IOException, URISyntaxException {
+    super(uri, listener, token, project, pathToFile, kernelId, sessionId);
   }
 
   @Override

@@ -11,9 +11,8 @@ import org.jetbrains.plugins.ipnb.protocol.IpnbConnection
 import org.jetbrains.plugins.ipnb.protocol.IpnbConnectionListenerBase
 import java.util.concurrent.TimeUnit
 
-class IpnbDebuggerTransport(val project: Project, private val codePanel: IpnbCodePanel) : DebuggerTransport {
+class IpnbDebuggerTransport(val project: Project, codePanel: IpnbCodePanel, val connectionId: String) : DebuggerTransport {
   private var debugConnection: IpnbConnection? = null
-  var connectionId: String = IpnbDebuggerTransport.DEBUG_CONNECTION_PREFIX
 
   init {
     val connectionManager = IpnbConnectionManager.getInstance(project)
@@ -22,7 +21,7 @@ class IpnbDebuggerTransport(val project: Project, private val codePanel: IpnbCod
     }
   }
 
-  fun createConnection(connectionOpened: Ref<Boolean>): IpnbConnectionListenerBase {
+  fun createListener(connectionOpened: Ref<Boolean>): IpnbConnectionListenerBase {
     return object : IpnbConnectionListenerBase() {
       override fun onOpen(connection: IpnbConnection) {
         connectionOpened.set(true)
@@ -30,7 +29,11 @@ class IpnbDebuggerTransport(val project: Project, private val codePanel: IpnbCod
       }
 
       override fun onOutput(connection: IpnbConnection, parentMessageId: String) {
-
+        val connectionManager = IpnbConnectionManager.getInstance(project)
+        if (!connectionManager.updateMap.containsKey(parentMessageId)) return
+        val cell = connectionManager.updateMap.get(parentMessageId)
+        cell?.cell?.promptNumber = connection.execCount
+        cell?.updatePanel(null, connection.output)
       }
 
       override fun onPayload(payload: String?, parentMessageId: String) {

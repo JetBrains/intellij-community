@@ -4,9 +4,11 @@ package org.jetbrains.plugins.ipnb.protocol
 import org.java_websocket.drafts.Draft
 import java.net.URI
 
-class IpnbDebugWebSocketClient(serverUri: URI, draft: Draft, val connection: IpnbConnection) : IpnbWebSocketClient(serverUri, draft,
-                                                                                                                   connection) {
+class IpnbDebugWebSocketClient(serverUri: URI, draft: Draft, connection: IpnbConnection) : IpnbWebSocketClient(serverUri, draft,
+                                                                                                               connection) {
   override fun onMessage(message: String?) {
-    super.onMessage(message)
+    if (message != null) {
+      super.onMessage(message)
+    }
   }
 }

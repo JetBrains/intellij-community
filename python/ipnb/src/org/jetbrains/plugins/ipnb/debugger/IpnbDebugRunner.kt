@@ -19,7 +19,7 @@ class IpnbDebugRunner {
   companion object {
 
     @Throws(ExecutionException::class)
-    fun connectToDebugger(project: Project, codePanel: IpnbCodePanel): XDebugSession {
+    fun connectToDebugger(project: Project, codePanel: IpnbCodePanel, connectionId: String): XDebugSession {
 
       return XDebuggerManager.getInstance(project).startSessionAndShowTab(
         "Jupyter Notebook Debugger",
@@ -32,7 +32,7 @@ class IpnbDebugRunner {
 
             val ipnbDebugProcess = IpnbDebugProcess(
               session, PyDebugProcess.DebuggerFactory { process ->
-              IpnbRemoteDebugger(process, IpnbDebuggerTransport(project, codePanel), codePanel)
+              IpnbRemoteDebugger(process, IpnbDebuggerTransport(project, codePanel, connectionId), codePanel)
             }, debugConsoleView, consoleDebugProcessHandler)
 
             val communication = PyDebugRunner.initDebugConsoleView(project, ipnbDebugProcess, debugConsoleView,

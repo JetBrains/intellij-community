@@ -10,6 +10,7 @@ import com.intellij.xdebugger.XDebugSession;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.configuration.IpnbConnectionManager;
 import org.jetbrains.plugins.ipnb.debugger.IpnbDebugRunner;
+import org.jetbrains.plugins.ipnb.debugger.IpnbDebuggerTransport;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbEditablePanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
@@ -37,9 +38,12 @@ public class IpnbDebugAction extends AnAction {
       if (project == null) return;
       final IpnbConnectionManager connectionManager = IpnbConnectionManager.getInstance(project);
 
-      if (mySession == null || !connectionManager.hasConnection("Debug")) {
+      final String filePath = codePanel.getFileEditor().getVirtualFile().getPath();
+      final String debugConnectionPath = IpnbDebuggerTransport.DEBUG_CONNECTION_PREFIX + filePath;
+
+      if (!connectionManager.hasConnection(debugConnectionPath)) {
         try {
-          mySession = IpnbDebugRunner.Companion.connectToDebugger(project, codePanel);
+          mySession = IpnbDebugRunner.Companion.connectToDebugger(project, codePanel, debugConnectionPath);
         }
         catch (ExecutionException e) {
         }
@@ -47,8 +51,19 @@ public class IpnbDebugAction extends AnAction {
 
       // init extension on Kernel side
 
+      //try to execute something
 
-      IpnbRunCellBaseAction.runCell(component, false);
+      final IpnbEditablePanel cell2 = component.getSelectedCellPanel();
+      if (cell2 == null) return;
+      cell2.onFinishExecutionAction(null);
+      cell2.runCell(false);
+      if (cell2 instanceof IpnbCodePanel) {
+        final IpnbCodePanel cell3 = (IpnbCodePanel)cell2;
+        cell3.updateCellSource();
+        cell3.updatePrompt();
+        connectionManager.executeCode(cell3, debugConnectionPath, "print('Hello debugger!')");
+        cell3.setEditing(false);
+      }
     }
   }
 }

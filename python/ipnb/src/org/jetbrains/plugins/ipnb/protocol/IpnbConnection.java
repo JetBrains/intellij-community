@@ -82,6 +82,12 @@ public class IpnbConnection {
 
   public IpnbConnection(@NotNull String uri, @NotNull IpnbConnectionListener listener,
                         @Nullable final String token, @NotNull Project project, @NotNull String pathToFile) throws IOException, URISyntaxException {
+    this(uri, listener, token, project, pathToFile, null, null);
+  }
+
+  public IpnbConnection(@NotNull String uri, @NotNull IpnbConnectionListener listener,
+                        @Nullable final String token, @NotNull Project project, @NotNull String pathToFile,
+                        @Nullable String kernelId, @Nullable String sessionId) throws IOException, URISyntaxException {
     myURI = new URI(uri);
     myListener = listener;
     myToken = token;
@@ -97,14 +103,19 @@ public class IpnbConnection {
       mySessionId = myHeaders.get(SM.COOKIE);
     }
     else {
-      initXSRF(myURI.toString());
       if (myToken != null) {
         myHeaders.put(HttpHeaders.AUTHORIZATION, "token " + myToken);
       }
-      myKernelId = startKernel();
-      mySessionId = UUID.randomUUID().toString();
+      if (kernelId != null && sessionId != null) {
+        myKernelId = kernelId;
+        mySessionId = sessionId;
+      }
+      else {
+        myKernelId = startKernel();
+        mySessionId = UUID.randomUUID().toString();
+      }
     }
-    
+
     initializeClients();
   }
 
@@ -426,6 +437,11 @@ public class IpnbConnection {
   @NotNull
   public String getKernelId() {
     return myKernelId;
+  }
+
+  @NotNull
+  public String getSessionId() {
+    return mySessionId;
   }
 
   @NotNull
