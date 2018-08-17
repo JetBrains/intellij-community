@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
@@ -36,19 +37,35 @@ public interface SearchEverywhereContributor<F> {
     return false;
   }
 
-  default void fetchElements(String pattern, boolean everywhere, SearchEverywhereContributorFilter<F> filter,
-                     ProgressIndicator progressIndicator, Function<Object, Boolean> consumer) {}
-
   default int getElementPriority(Object element, String searchPattern) {
     return 0;
   }
 
-  ContributorSearchResult<Object> search(String pattern, boolean everywhere, SearchEverywhereContributorFilter<F> filter,
-                                         ProgressIndicator progressIndicator, int elementsLimit);
+  void fetchElements(String pattern, boolean everywhere, SearchEverywhereContributorFilter<F> filter,
+                     ProgressIndicator progressIndicator, Function<Object, Boolean> consumer);
+
+  default ContributorSearchResult<Object> search(String pattern, boolean everywhere, SearchEverywhereContributorFilter<F> filter,
+                                         ProgressIndicator progressIndicator, int elementsLimit) {
+    ContributorSearchResult.Builder<Object> builder = ContributorSearchResult.builder();
+    fetchElements(pattern, everywhere, filter, progressIndicator, element -> {
+      if (elementsLimit < 0 || builder.itemsCount() < elementsLimit) {
+        builder.addItem(element);
+        return true;
+      }
+      else {
+        builder.setHasMore(true);
+        return false;
+      }
+    });
+
+    return builder.build();
+  }
 
   default List<Object> search(String pattern, boolean everywhere, SearchEverywhereContributorFilter<F> filter,
                               ProgressIndicator progressIndicator) {
-    return search(pattern, everywhere, filter, progressIndicator, -1).getItems();
+    List<Object> res = new ArrayList<>();
+    fetchElements(pattern, everywhere, filter, progressIndicator, o -> res.add(o));
+    return res;
   }
 
   boolean processSelectedItem(Object selected, int modifiers, String searchText);

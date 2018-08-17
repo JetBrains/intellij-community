@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -50,7 +51,8 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
   }
 
   @Override
-  public ContributorSearchResult<Object> search(String pattern, boolean everywhere, SearchEverywhereContributorFilter<FileType> filter, ProgressIndicator progressIndicator, int elementsLimit) {
+  public void fetchElements(String pattern, boolean everywhere, SearchEverywhereContributorFilter<FileType> filter,
+                            ProgressIndicator progressIndicator, Function<Object, Boolean> consumer) {
     String searchString = filterControlSymbols(pattern);
     MinusculeMatcher matcher = NameUtil.buildMatcher("*" + searchString).build();
     List<VirtualFile> opened = Arrays.asList(FileEditorManager.getInstance(myProject).getSelectedFiles());
@@ -65,15 +67,17 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
           stream = stream.filter(file -> matcher.matches(file.getName()));
         }
         res.addAll(stream.filter(vf -> !opened.contains(vf) && vf.isValid())
-                         .distinct()
-                         .map(vf -> psiManager.findFile(vf))
-                         .collect(Collectors.toList())
+                     .distinct()
+                     .map(vf -> psiManager.findFile(vf))
+                     .collect(Collectors.toList())
         );
       }
     );
 
-    return elementsLimit > 0 && res.size() > elementsLimit
-           ? new ContributorSearchResult<>(res.subList(0, elementsLimit), true)
-           : new ContributorSearchResult<>(res);
+    for (Object element : res) {
+      if (!consumer.apply(element)) {
+        return;
+      }
+    }
   }
 }

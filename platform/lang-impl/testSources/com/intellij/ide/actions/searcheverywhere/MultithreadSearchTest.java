@@ -224,15 +224,6 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
       }
 
       @Override
-      public ContributorSearchResult<Object> search(String pattern,
-                                                    boolean everywhere,
-                                                    SearchEverywhereContributorFilter<Object> filter,
-                                                    ProgressIndicator progressIndicator,
-                                                    int elementsLimit) {
-        return ContributorSearchResult.empty();
-      }
-
-      @Override
       public boolean processSelectedItem(Object selected, int modifiers, String searchText) {
         return false;
       }
