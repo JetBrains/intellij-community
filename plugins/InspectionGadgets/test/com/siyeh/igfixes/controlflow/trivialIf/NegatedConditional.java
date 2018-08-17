@@ -8,7 +8,7 @@ class NegatedConditional {
 
     final NegatedConditional that = (NegatedConditional)object;
 
-    <caret>if (text != null ? !text.equals(that.text) : that.text != null) return false;
+    <caret>if (text != null ? !text.equals(that.text) : that.text != null) return false; //comment
 
     return true;
   }
