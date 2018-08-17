@@ -23,6 +23,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -35,7 +36,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
-import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -943,30 +943,29 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @NotNull
-  private EntryStream<? extends DfaValue, ? extends DfaValue> getDependentPairs(DfaValue left, DfaValue right) {
+  private List<Couple<DfaValue>> getDependentPairs(DfaValue left, DfaValue right) {
+    StreamEx<Couple<DfaValue>> stream = StreamEx.empty();
     if (left instanceof DfaVariableValue) {
-      List<DfaVariableValue> leftVars = ((DfaVariableValue)left).getDependentVariables();
-      if (right instanceof DfaVariableValue) {
-        List<DfaVariableValue> rightVars = ((DfaVariableValue)right).getDependentVariables();
-        return StreamEx.of(leftVars).mapToEntry(leftVar -> StreamEx.of(rightVars)
-          .findFirst(rightVar -> leftVar.getSource().equals(rightVar.getSource())).orElse(null))
-          .nonNullValues()
-          .filterKeyValue((leftVar, rightVar) -> getEqClassIndex(leftVar) != -1 || getEqClassIndex(rightVar) != -1);
-      }
-      if (right instanceof DfaConstValue) {
-        return StreamEx.of(leftVars).filter(leftVar -> leftVar.getSource() instanceof SpecialField)
-          .mapToEntry(leftVar -> ((SpecialField)leftVar.getSource()).createValue(myFactory, right));
-      }
+      stream = stream.append(StreamEx.of(new ArrayList<>(((DfaVariableValue)left).getDependentVariables()))
+        .filter(leftVar -> leftVar.getQualifier() == left && leftVar.getSource() instanceof SpecialField)
+        .map(leftVar -> Couple.of(leftVar, ((SpecialField)leftVar.getSource()).createValue(myFactory, right))));
     }
-    if (left instanceof DfaConstValue && right instanceof DfaVariableValue) {
-      return getDependentPairs(right, left);
+    if (right instanceof DfaVariableValue) {
+      stream = stream.append(StreamEx.of(new ArrayList<>(((DfaVariableValue)right).getDependentVariables()))
+        .filter(rightVar -> rightVar.getQualifier() == right && rightVar.getSource() instanceof SpecialField)
+        .map(rightVar -> Couple.of(((SpecialField)rightVar.getSource()).createValue(myFactory, left), rightVar)));
     }
-    return EntryStream.empty();
+    return stream.distinct().toList();
   }
 
   private boolean applyDependentFieldsEquivalence(@NotNull DfaValue left, @NotNull DfaValue right) {
-    return getDependentPairs(left, right)
-      .allMatch(pair -> applyCondition(myFactory.createCondition(pair.getKey(), RelationType.EQ, pair.getValue())));
+    List<Couple<DfaValue>> pairs = getDependentPairs(left, right);
+    for (Couple<DfaValue> pair : pairs) {
+      if (!applyCondition(myFactory.createCondition(pair.getFirst(), RelationType.EQ, pair.getSecond()))) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private boolean applyBoxedRelation(@NotNull DfaVariableValue dfaLeft, DfaValue dfaRight, boolean negated) {
