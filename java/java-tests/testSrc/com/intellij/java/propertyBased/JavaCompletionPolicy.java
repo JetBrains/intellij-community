@@ -65,7 +65,12 @@ class JavaCompletionPolicy extends CompletionPolicy {
   @Override
   protected boolean shouldSuggestReferenceText(@NotNull PsiReference ref, @NotNull PsiElement target) {
     PsiElement refElement = ref.getElement();
-    if (refElement instanceof PsiJavaCodeReferenceElement && 
+    if (refElement.getContainingFile().getLanguage().getID().equals("GWT JavaScript")) {
+      // for GWT class members refs like "MyClass::mmm(I)(1)", lookup items are only a subset of possible reference texts
+      return false;
+    }
+
+    if (refElement instanceof PsiJavaCodeReferenceElement &&
         !shouldSuggestJavaTarget((PsiJavaCodeReferenceElement)refElement, target)) {
       return false;
     }
