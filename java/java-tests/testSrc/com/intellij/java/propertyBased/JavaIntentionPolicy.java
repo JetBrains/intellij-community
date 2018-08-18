@@ -138,8 +138,6 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
   protected boolean shouldSkipIntention(@NotNull String actionText) {
     return actionText.equals("Add clarifying parentheses") ||
            actionText.equals("Remove unnecessary parentheses") ||
-           // TODO: fix and remove exception after merging dfa_refactoring branch
-           actionText.matches("Replace with '(true|false|null)'") ||
            actionText.matches("Simplify '\\(+(true|false)\\)+' to \\1") ||
            // Parenthesizing sub-expression causes cutting the action name at different position, so name changes significantly
            actionText.matches("Compute constant value of '.+'") ||
@@ -153,7 +151,8 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
   protected boolean shouldSkipByFamilyName(@NotNull String familyName) {
     return // if((a && b)) -- extract "a" doesn't work, seems legit, remove parentheses first
       familyName.equals("Extract If Condition") ||
-      // TODO: sometimes DFA warning issued for parenthesized expression: fix and remove exception after merging dfa_refactoring branch
+      // Cutting the message at different points is possible like
+      // "Simplify 'foo || bar || baz || ...' to false" and "Simplify 'foo || (bar) || baz ...' to false"
       familyName.equals("Simplify boolean expression");
   }
 
