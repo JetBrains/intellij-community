@@ -7,11 +7,15 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconPathPatcher;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;
@@ -39,6 +43,7 @@ public class UITheme {
   private Map<String, Object> background;
   private ClassLoader providerClassLoader = getClass().getClassLoader();
   private String editorSchemeName;
+  private SVGLoader.SvgColorPatcher colorPatcher;
 
   private UITheme() {
   }
@@ -85,8 +90,67 @@ public class UITheme {
           return theme.providerClassLoader;
         }
       };
+      Object palette = theme.icons.get("ColorPalette");
+      if (palette instanceof Map) {
+        Map colors = (Map)palette;
+        Map<String, String> newPalette = new HashMap<>();
+        for (Object o : colors.keySet()) {
+          String key = toColorString(o.toString());
+          Object v = colors.get(o.toString());
+          if (v instanceof String) {
+            String value = (String)v;
+            if (ColorUtil.fromHex(key, null) != null && ColorUtil.fromHex(value, null) != null) {
+              newPalette.put(key, value);
+            }
+          }
+        }
+
+        theme.colorPatcher = new SVGLoader.SvgColorPatcher() {
+          @Override
+          public void patchColors(Element svg) {
+            String fill = svg.getAttribute("fill");
+            if (fill != null) {
+              String newFill = newPalette.get(StringUtil.toLowerCase(fill));
+              if (newFill != null) {
+                svg.setAttribute("fill", newFill);
+              }
+            }
+            NodeList nodes = svg.getChildNodes();
+            int length = nodes.getLength();
+            for (int i = 0; i < length; i++) {
+              Node item = nodes.item(i);
+              if (item instanceof Element) {
+                patchColors((Element)item);
+              }
+            }
+
+          }
+        };
+      }
     }
     return theme;
+  }
+
+  private static String toColorString(String fillValue) {
+    String color = colorPalette.get(fillValue);
+    if (color != null) {
+      return StringUtil.toLowerCase(color);
+    }
+    return StringUtil.toLowerCase(fillValue);
+  }
+
+  private static final Map<String, String> colorPalette = new HashMap<>();
+  static {
+    colorPalette.put("Action.Red", "#DB5860");
+    colorPalette.put("Action.Red.Dark", "#C75450");
+    colorPalette.put("Action.Yellow", "#EDA200");
+    colorPalette.put("Action.Yellow.Dark", "#F0A732");
+    colorPalette.put("Action.Green", "#59A869");
+    colorPalette.put("Action.Green.Dark", "#499C54");
+    colorPalette.put("Action.Blue", "#389FD6");
+    colorPalette.put("Action.Blue.Dark", "#3592C4");
+    colorPalette.put("Action.Grey", "#6E6E6E");
+    colorPalette.put("Action.Grey.Dark", "#AFB1B3");
   }
 
   public String getId() {
