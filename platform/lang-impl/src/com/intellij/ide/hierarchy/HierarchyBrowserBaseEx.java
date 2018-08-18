@@ -34,7 +34,6 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -205,14 +204,18 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   @NotNull
   protected abstract String getBrowserDataKey();
 
+  @Nullable
+  protected Color getFileColorForNode(Object node)
+  {
+    if (node instanceof HierarchyNodeDescriptor) {
+      PsiFile containingFile = ((HierarchyNodeDescriptor) node).getContainingFile();
+      return ProjectViewTree.getColorForElement(containingFile);
+    }
+    return null;
+  }
+
   protected final JTree createTree(boolean dndAware) {
     final Tree tree;
-    final NullableFunction<Object, PsiElement> toPsiConverter = o -> {
-      if (o instanceof HierarchyNodeDescriptor) {
-        return ((HierarchyNodeDescriptor)o).getContainingFile();
-      }
-      return null;
-    };
 
     if (dndAware) {
       //noinspection Duplicates
@@ -231,7 +234,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
         @Override
         public Color getFileColorFor(Object object) {
-          return ProjectViewTree.getColorForElement(toPsiConverter.fun(object));
+          return getFileColorForNode(object);
         }
       };
 
@@ -294,7 +297,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
         @Override
         public Color getFileColorFor(Object object) {
-          return ProjectViewTree.getColorForElement(toPsiConverter.fun(object));
+          return getFileColorForNode(object);
         }
       };
     }
