@@ -3,7 +3,6 @@ package org.jetbrains.yaml.inspections;
 
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
@@ -26,22 +25,6 @@ public class YAMLDuplicatedKeysInspection extends LocalInspectionTool {
       @Override
       public void visitMapping(@NotNull YAMLMapping mapping) {
 
-        FileViewProvider provider = mapping.getContainingFile().getViewProvider();
-
-        // the check below disables duplicate inspection for template language files
-        // because of likely false positives. The example:
-        //
-        // # data language: YAML
-        // # base language: Go Template
-        // {{ if .Values.variant1Enabled }}
-        // name: variant1   # NOT DUPLICATE!!!
-        // {{ else }}
-        // name: variant2   # NOT DUPLICATE!!!
-        // {{ end }}
-        if (provider.getLanguages().size() > 1) {
-          return;
-        }
-
         MultiMap<String, YAMLKeyValue> occurrences = new MultiMap<>();
 
         for (YAMLKeyValue keyValue : mapping.getKeyValues()) {
@@ -59,7 +42,7 @@ public class YAMLDuplicatedKeysInspection extends LocalInspectionTool {
           if (entry.getValue().size() > 1) {
             entry.getValue().forEach((duplicatedKey) -> {
               assert duplicatedKey.getKey() != null;
-              assert duplicatedKey.getParentMapping() != null : "This key is get from mapping";
+              assert duplicatedKey.getParentMapping() != null : "This key is gotten from mapping";
 
               holder.registerProblem(duplicatedKey.getKey(),
                                      YAMLBundle.message("YAMLDuplicatedKeysInspection.duplicated.key", entry.getKey()),
