@@ -830,6 +830,38 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertTrue(findResult.isStringFound());
   }
 
+  public void testRegExpInString2() throws Exception {
+    FindModel findModel = FindManagerTestUtils.configureFindModel("\\b");
+    String text = "\"abc def\"";
+
+    findModel.setSearchContext(FindModel.SearchContext.IN_STRING_LITERALS);
+    findModel.setRegularExpressions(true);
+    LightVirtualFile file = new LightVirtualFile("A.java", text);
+
+    FindResult findResult = myFindManager.findString(text, 0, findModel, file);
+    assertTrue(findResult.isStringFound());
+    assertEquals(1, findResult.getStartOffset());
+
+    findResult = myFindManager.findString(text, findResult.getStartOffset() + 1, findModel, file);
+    assertTrue(findResult.isStringFound());
+    assertEquals(4, findResult.getStartOffset());
+
+    findResult = myFindManager.findString(text, findResult.getStartOffset() + 1, findModel, file);
+    assertTrue(findResult.isStringFound());
+    assertEquals(5, findResult.getStartOffset());
+
+    findResult = myFindManager.findString(text, findResult.getStartOffset() + 1, findModel, file);
+    assertTrue(findResult.isStringFound());
+    assertEquals(8, findResult.getStartOffset());
+
+    findResult = myFindManager.findString(text, findResult.getStartOffset() + 1, findModel, file);
+    assertTrue(!findResult.isStringFound());
+
+    createFile(myModule, "A.java", text);
+    List<UsageInfo> usagesInProject = findInProject(findModel);
+    assertEquals(4, usagesInProject.size());
+  }
+
   public void testFindExceptComments() {
     FindModel findModel = FindManagerTestUtils.configureFindModel("done");
 
