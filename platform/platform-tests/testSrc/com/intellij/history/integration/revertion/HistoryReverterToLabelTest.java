@@ -45,7 +45,7 @@ public class HistoryReverterToLabelTest extends IntegrationTestCase {
 
   public void testPutLabelAndRevertInstantly() throws Exception {
     VirtualFile f = createChildData(myRoot, "foo.txt");
-    setBinaryContent(f, new byte[]{123});
+    setBinaryContent(f, new byte[]{123}, -1, 4000, this);
     final Label testLabel = LocalHistory.getInstance().putSystemLabel(myProject, "testLabel");
     revertToLabel(testLabel, myRoot);
     f = myRoot.findChild("foo.txt");
@@ -55,7 +55,7 @@ public class HistoryReverterToLabelTest extends IntegrationTestCase {
 
   public void testFileDeletion() throws Exception {
     VirtualFile f = createChildData(myRoot, "foo.txt");
-    setBinaryContent(f, new byte[]{123});
+    setBinaryContent(f, new byte[]{123}, -1, 4000, this);
     final Label testLabel = LocalHistory.getInstance().putSystemLabel(myProject, "testLabel");
     delete(f);
     revertToLabel(testLabel, myRoot);
@@ -67,7 +67,7 @@ public class HistoryReverterToLabelTest extends IntegrationTestCase {
   public void testFileDeletionWithContent() throws Exception {
     VirtualFile f = createChildData(myRoot, "foo.txt");
     final Label testLabel = LocalHistory.getInstance().putSystemLabel(myProject, "testLabel");
-    setBinaryContent(f, new byte[]{123});
+    setBinaryContent(f, new byte[]{123}, -1, 4000, this);
     delete(f);
     revertToLabel(testLabel, myRoot);
     f = myRoot.findChild("foo.txt");
@@ -78,7 +78,8 @@ public class HistoryReverterToLabelTest extends IntegrationTestCase {
   public void testParentAndChildRename() throws Exception {
     VirtualFile dir = createChildDirectory(myRoot, "dir");
     VirtualFile f = createChildData(dir, "foo.txt");
-    setBinaryContent(f, new byte[]{123});
+    int modificationStamp = -1;
+    setBinaryContent(f, new byte[]{123}, modificationStamp, 4000, this);
     final LocalHistory localHistory = LocalHistory.getInstance();
     final Label testLabel1 = localHistory.putSystemLabel(myProject, "testLabel");
     rename(dir, "dir2");
@@ -109,10 +110,12 @@ public class HistoryReverterToLabelTest extends IntegrationTestCase {
 
   public void testRevertContentChange() throws Exception {
     VirtualFile f = createChildData(myRoot, "foo.txt");
-    setBinaryContent(f, new byte[]{1});
+    int modificationStamp1 = -1;
+    setBinaryContent(f, new byte[]{1}, modificationStamp1, 1000, this);
     final Label testLabel = LocalHistory.getInstance().putSystemLabel(myProject, "testLabel");
-    setBinaryContent(f, new byte[]{2});
-    setBinaryContent(f, new byte[]{3});
+    int modificationStamp = -1;
+    setBinaryContent(f, new byte[]{2}, modificationStamp, 2000, this);
+    setBinaryContent(f, new byte[]{3}, modificationStamp, 3000, this);
     revertToLabel(testLabel, myRoot);
     f = myRoot.findChild("foo.txt");
     assertNotNull(f);
@@ -121,12 +124,14 @@ public class HistoryReverterToLabelTest extends IntegrationTestCase {
 
   public void testRevertContentChangeOnlyForFile() throws Exception {
     VirtualFile f = createChildData(myRoot, "foo.txt");
-    setBinaryContent(f, new byte[]{1});
+    int modificationStamp1 = -1;
+    setBinaryContent(f, new byte[]{1}, modificationStamp1, 1000, this);
     VirtualFile f2 = createChildData(myRoot, "foo2.txt");
-    setBinaryContent(f, new byte[]{1});
+    setBinaryContent(f, new byte[]{1}, modificationStamp1, 1000, this);
     final Label testLabel = LocalHistory.getInstance().putSystemLabel(myProject, "testLabel");
-    setBinaryContent(f, new byte[]{2});
-    setBinaryContent(f2, new byte[]{3});
+    int modificationStamp = -1;
+    setBinaryContent(f, new byte[]{2}, modificationStamp, 2000, this);
+    setBinaryContent(f2, new byte[]{3}, modificationStamp, 3000, this);
     revertToLabel(testLabel, f);
     f = myRoot.findChild("foo.txt");
     assertNotNull(f);
