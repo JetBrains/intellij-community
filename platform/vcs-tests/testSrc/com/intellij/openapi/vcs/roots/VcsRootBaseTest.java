@@ -6,9 +6,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
-import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsRootChecker;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
@@ -16,6 +13,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.vcs.test.VcsPlatformTest;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,15 +33,14 @@ public abstract class VcsRootBaseTest extends VcsPlatformTest {
   protected VirtualFile myRepository;
 
   protected MockRootChecker myRootChecker;
-  protected RootModelImpl myRootModel;
+  protected Module myRootModule;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
 
     cd(projectRoot);
-    Module module = doCreateRealModuleIn("foo", myProject, EmptyModuleType.getInstance());
-    myRootModel = ((ModuleRootManagerImpl)ModuleRootManager.getInstance(module)).getRootModel();
+    myRootModule = doCreateRealModuleIn("foo", myProject, EmptyModuleType.getInstance());
     mkdir("repository");
     projectRoot.refresh(false, true);
     myRepository = projectRoot.findChild("repository");
@@ -88,7 +85,7 @@ public abstract class VcsRootBaseTest extends VcsPlatformTest {
         for (String root : contentRoots) {
           VirtualFile f = projectRoot.findFileByRelativePath(root);
           if (f != null) {
-            myRootModel.addContentEntry(f);
+            PsiTestUtil.addContentRoot(myRootModule, f);
           }
         }
       });
