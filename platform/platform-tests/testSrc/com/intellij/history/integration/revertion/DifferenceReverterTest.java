@@ -35,7 +35,7 @@ public class DifferenceReverterTest extends IntegrationTestCase {
 
   public void testFileDeletion() throws Exception {
     VirtualFile f = createChildData(myRoot, "foo.txt");
-    setBinaryContent(f, new byte[]{123});
+    setBinaryContent(f, new byte[]{123}, -1, 4000, this);
     delete(f);
 
     revertLastChange();
@@ -49,7 +49,8 @@ public class DifferenceReverterTest extends IntegrationTestCase {
     VirtualFile dir = createChildDirectory(myRoot, "dir");
     VirtualFile subdir = createChildDirectory(dir, "subdir");
     VirtualFile f = createChildData(subdir, "foo.txt");
-    setBinaryContent(f, new byte[]{123});
+    int modificationStamp = -1;
+    setBinaryContent(f, new byte[]{123}, modificationStamp, 4000, this);
 
     delete(dir);
 
@@ -94,7 +95,8 @@ public class DifferenceReverterTest extends IntegrationTestCase {
 
   public void testRename() throws Exception {
     VirtualFile f = createChildData(myRoot, "foo.txt");
-    setBinaryContent(f, new byte[]{123});
+    int modificationStamp = -1;
+    setBinaryContent(f, new byte[]{123}, modificationStamp, 4000, this);
     rename(f, "bar.txt");
 
     revertLastChange();
@@ -110,7 +112,8 @@ public class DifferenceReverterTest extends IntegrationTestCase {
     VirtualFile dir2 = createChildDirectory(myRoot, "dir2");
 
     VirtualFile f = createChildData(dir1, "foo.txt");
-    setBinaryContent(f, new byte[]{123});
+    int modificationStamp = -1;
+    setBinaryContent(f, new byte[]{123}, modificationStamp, 4000, this);
 
     move(f, dir2);
 
@@ -125,7 +128,8 @@ public class DifferenceReverterTest extends IntegrationTestCase {
   public void testParentRename() throws Exception {
     VirtualFile dir = createChildDirectory(myRoot, "dir");
     VirtualFile f = createChildData(dir, "foo.txt");
-    setBinaryContent(f, new byte[]{123});
+    int modificationStamp = -1;
+    setBinaryContent(f, new byte[]{123}, modificationStamp, 4000, this);
 
     rename(dir, "dir2");
 
@@ -141,7 +145,8 @@ public class DifferenceReverterTest extends IntegrationTestCase {
   public void testParentAndChildRename() throws Exception {
     VirtualFile dir = createChildDirectory(myRoot, "dir");
     VirtualFile f = createChildData(dir, "foo.txt");
-    setBinaryContent(f, new byte[]{123});
+    int modificationStamp = -1;
+    setBinaryContent(f, new byte[]{123}, modificationStamp, 4000, this);
 
     getVcs().beginChangeSet();
     rename(dir, "dir2");
@@ -161,8 +166,10 @@ public class DifferenceReverterTest extends IntegrationTestCase {
 
   public void testRevertContentChange() throws Exception {
     VirtualFile f = createChildData(myRoot, "foo.txt");
-    setBinaryContent(f, new byte[]{1});
-    setBinaryContent(f, new byte[]{2});
+    int modificationStamp1 = -1;
+    setBinaryContent(f, new byte[]{1}, modificationStamp1, 1000, this);
+    int modificationStamp = -1;
+    setBinaryContent(f, new byte[]{2}, modificationStamp, 2000, this);
 
     revertLastChange();
 
@@ -173,11 +180,13 @@ public class DifferenceReverterTest extends IntegrationTestCase {
 
   public void testContentChangeWhenDirectoryExists() throws Exception {
     VirtualFile f = createChildData(myRoot, "foo.txt");
-    setBinaryContent(f, new byte[]{1});
+    int modificationStamp1 = -1;
+    setBinaryContent(f, new byte[]{1}, modificationStamp1, 1000, this);
 
     getVcs().beginChangeSet();
     rename(f, "bar.txt");
-    setBinaryContent(f, new byte[]{2});
+    int modificationStamp = -1;
+    setBinaryContent(f, new byte[]{2}, modificationStamp, 2000, this);
     getVcs().endChangeSet(null);
 
     createChildDirectory(myRoot, "foo.txt");
@@ -248,8 +257,10 @@ public class DifferenceReverterTest extends IntegrationTestCase {
     VirtualFile dir = createChildDirectory(myRoot, "dir");
     VirtualFile f = createChildData(dir, "foo.txt");
 
-    setBinaryContent(f, new byte[]{1});
-    setBinaryContent(f, new byte[]{2});
+    int modificationStamp1 = -1;
+    setBinaryContent(f, new byte[]{1}, modificationStamp1, 1000, this);
+    int modificationStamp = -1;
+    setBinaryContent(f, new byte[]{2}, modificationStamp, 2000, this);
 
     delete(dir);
 
