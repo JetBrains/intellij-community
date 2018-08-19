@@ -93,6 +93,12 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
     }
   }
 
+  public void executeCode(@NotNull final IpnbCodePanel codePanel, @NotNull String connectionId, @NotNull String code) {
+    IpnbConnection connection = myKernels.get(connectionId);
+    final String messageId = connection.execute(code);
+    myUpdateMap.put(messageId, codePanel);
+  }
+
   public boolean hasConnection(String path) {
     return myKernels.containsKey(path);
   }
@@ -347,7 +353,7 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
     }
   }
 
-  private static void showMessage(@NotNull final IpnbFileEditor fileEditor,
+  public static void showMessage(@NotNull final IpnbFileEditor fileEditor,
                                   @NotNull final String message,
                                   @Nullable final HyperlinkAdapter listener, MessageType messageType) {
     ApplicationManager.getApplication().invokeLater(() -> {

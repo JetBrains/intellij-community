@@ -11,12 +11,13 @@ import com.jetbrains.python.console.PythonDebugLanguageConsoleView
 import com.jetbrains.python.debugger.PyDebugRunner
 import com.jetbrains.python.run.PythonCommandLineState
 import icons.PythonIcons
+import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodePanel
 
 class IpnbDebugRunner : PyDebugRunner() {
   companion object {
 
     @Throws(ExecutionException::class)
-    fun createDebugSession(project: Project): XDebugSession {
+    fun createDebugSession(project: Project, connectionId: String, codePanel: IpnbCodePanel): XDebugSession {
       val serverSocket = PythonCommandLineState.createServerSocket()
 
       return XDebuggerManager.getInstance(project).startSessionAndShowTab(
@@ -28,7 +29,7 @@ class IpnbDebugRunner : PyDebugRunner() {
           val ipnbDebugProcess = IpnbDebugProcess(session, serverSocket, debugConsoleView,
                                                   ipnbDebugProcessHandler)
 
-          ipnbDebugProcess.connect()
+          ipnbDebugProcess.connect(connectionId, codePanel)
 
           return ipnbDebugProcess
         }
