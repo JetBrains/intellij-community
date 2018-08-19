@@ -54,13 +54,36 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
 
   public CodeStyleSchemesConfigurable(Project project) {
     myProject = project;
+    myModel = new CodeStyleSchemesModel(project);
   }
 
   @Override
   public JComponent createComponent() {
-    myModel = ensureModel();
-
+    initSchemesPanel(myModel);
     return myPanels == null || myPanels.isEmpty() ? null : myPanels.get(0).createComponent();
+  }
+
+  private void initSchemesPanel(@NotNull final CodeStyleSchemesModel model) {
+    myRootSchemesPanel = new CodeStyleSchemesPanel(model, 0);
+
+    model.addListener(new CodeStyleSchemesModelListener() {
+      @Override
+      public void currentSchemeChanged(final Object source) {
+        if (source != myRootSchemesPanel) {
+          myRootSchemesPanel.onSelectedSchemeChanged();
+        }
+      }
+
+      @Override
+      public void schemeListChanged() {
+        myRootSchemesPanel.resetSchemesCombo();
+      }
+
+      @Override
+      public void schemeChanged(final CodeStyleScheme scheme) {
+        if (scheme == model.getSelectedScheme()) myRootSchemesPanel.onSelectedSchemeChanged();
+      }
+    });
   }
 
   @Override
