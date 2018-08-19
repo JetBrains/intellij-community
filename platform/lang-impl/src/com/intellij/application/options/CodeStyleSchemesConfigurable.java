@@ -44,17 +44,37 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
   private boolean myInitResetInvoked = false;
   private boolean myRevertCompleted = false;
 
-  private final Project myProject;
-
   public CodeStyleSchemesConfigurable(Project project) {
-    myProject = project;
+    myModel = new CodeStyleSchemesModel(project);
   }
 
   @Override
   public JComponent createComponent() {
-    myModel = ensureModel();
-
+    initSchemesPanel(myModel);
     return myPanels == null || myPanels.isEmpty() ? null : myPanels.get(0).createComponent();
+  }
+
+  private void initSchemesPanel(@NotNull final CodeStyleSchemesModel model) {
+    myRootSchemesPanel = new CodeStyleSchemesPanel(model, 0);
+
+    model.addListener(new CodeStyleSettingsListener(){
+      @Override
+      public void currentSchemeChanged(final Object source) {
+        if (source != myRootSchemesPanel) {
+          myRootSchemesPanel.onSelectedSchemeChanged();
+        }
+      }
+
+      @Override
+      public void schemeListChanged() {
+        myRootSchemesPanel.resetSchemesCombo();
+      }
+
+      @Override
+      public void schemeChanged(final CodeStyleScheme scheme) {
+        if (scheme == model.getSelectedScheme()) myRootSchemesPanel.onSelectedSchemeChanged();
+      }
+    });
   }
 
   @Override
@@ -182,7 +202,7 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
 
     for (final CodeStyleSettingsProvider provider : providers) {
       if (provider.hasSettingsPage()) {
-        CodeStyleConfigurableWrapper e = ConfigurableFactory.Companion.getInstance().createCodeStyleConfigurable(provider, ensureModel(), this);
+        CodeStyleConfigurableWrapper e = ConfigurableFactory.Companion.getInstance().createCodeStyleConfigurable(provider, myModel, this);
         myPanels.add(e);
       }
     }
@@ -199,30 +219,8 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
     myRevertCompleted = false;
   }
 
-  CodeStyleSchemesModel ensureModel() {
-    if (myModel == null) {
-      myModel = new CodeStyleSchemesModel(myProject);
-      myRootSchemesPanel = new CodeStyleSchemesPanel(myModel, 0);
-
-      myModel.addListener(new CodeStyleSettingsListener(){
-        @Override
-        public void currentSchemeChanged(final Object source) {
-          if (source != myRootSchemesPanel) {
-            myRootSchemesPanel.onSelectedSchemeChanged();
-          }
-        }
-
-        @Override
-        public void schemeListChanged() {
-          myRootSchemesPanel.resetSchemesCombo();
-        }
-
-        @Override
-        public void schemeChanged(final CodeStyleScheme scheme) {
-          if (scheme == myModel.getSelectedScheme()) myRootSchemesPanel.onSelectedSchemeChanged();
-        }
-      });
-    }
+  @NotNull
+  CodeStyleSchemesModel getModel() {
     return myModel;
   }
 
