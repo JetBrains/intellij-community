@@ -565,6 +565,14 @@ public class IpnbConnection {
     return Message.create(header, parentHeader, metadata, content);
   }
 
+  public void sendOpenComm() {
+
+  }
+
+  public void sendCommMsg(String msg) {
+
+  }
+
   @SuppressWarnings("UnusedDeclaration")
   private static class Kernel {
     @NotNull private String id;

@@ -109,6 +109,20 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
     }
   }
 
+  public void executeCommOpen(@Nullable String connectionId) {
+    IpnbConnection connection = myKernels.get(connectionId);
+    if (connection != null) {
+      connection.sendOpenComm();
+    }
+  }
+
+  public void executeCommMessage(@Nullable String connectionId, String message) {
+    IpnbConnection connection = myKernels.get(connectionId);
+    if (connection != null) {
+      connection.sendCommMsg(message);
+    }
+  }
+
   public boolean hasConnection(String path) {
     return myKernels.containsKey(path);
   }

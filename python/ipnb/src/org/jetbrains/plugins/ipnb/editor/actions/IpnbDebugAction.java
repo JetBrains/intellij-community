@@ -47,23 +47,24 @@ public class IpnbDebugAction extends AnAction {
         }
         catch (ExecutionException e) {
         }
+        connectionManager.executeCommOpen(debugConnectionPath);
       }
 
       // init extension on Kernel side
 
-      //try to execute something
+      connectionManager.executeCommMessage(debugConnectionPath, "my_message");
 
-      final IpnbEditablePanel cell2 = component.getSelectedCellPanel();
-      if (cell2 == null) return;
-      cell2.onFinishExecutionAction(null);
-      cell2.runCell(false);
-      if (cell2 instanceof IpnbCodePanel) {
-        final IpnbCodePanel cell3 = (IpnbCodePanel)cell2;
-        cell3.updateCellSource();
-        cell3.updatePrompt();
-        connectionManager.executeCode(cell3, debugConnectionPath, "print('Hello debugger!')");
-        cell3.setEditing(false);
-      }
+      //final IpnbEditablePanel cell2 = component.getSelectedCellPanel();
+      //if (cell2 == null) return;
+      //cell2.onFinishExecutionAction(null);
+      //cell2.runCell(false);
+      //if (cell2 instanceof IpnbCodePanel) {
+      //  final IpnbCodePanel cell3 = (IpnbCodePanel)cell2;
+      //  cell3.updateCellSource();
+      //  cell3.updatePrompt();
+      //  connectionManager.executeCode(cell3, debugConnectionPath, "print('Hello debugger!')");
+      //  cell3.setEditing(false);
+      //}
     }
   }
 }
