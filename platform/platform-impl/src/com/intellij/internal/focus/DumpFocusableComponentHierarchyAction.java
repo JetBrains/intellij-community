@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -48,15 +49,15 @@ public class DumpFocusableComponentHierarchyAction extends AnAction implements D
 
     dump.add("Children count in focused component: " + (focusedComponent == null ? "null" : ((JComponent)focusedComponent).getComponentCount()));
 
+    int FONT_HEIGHT = 30;
+
     JPanel jPanel = new JPanel(new BorderLayout()) {
       @Override
       protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        int FONT_HEIGHT = 30;
-
         g.setColor(JBColor.BLACK);
-        g.fillRect(0, 0, activeWindow.getBounds().width, activeWindow.getBounds().height);
+        g.fillRect(0, 0, getBounds().width, getBounds().height);
         g.setColor(JBColor.WHITE);
 
         for (int i = dump.size() - 1; i >= 0; i --) {
@@ -65,21 +66,26 @@ public class DumpFocusableComponentHierarchyAction extends AnAction implements D
       }
     };
 
-    jPanel.setPreferredSize(visibleFrame.getSize());
+    jPanel.setPreferredSize(new Dimension(visibleFrame.getWidth(), dump.size() * FONT_HEIGHT + 200));
 
-    Popup popup = PopupFactory.getSharedInstance().getPopup(visibleFrame, jPanel, visibleFrame.getX(), visibleFrame.getY());
+    JScrollPane scrollPane = new JBScrollPane(jPanel);
+    scrollPane.setPreferredSize(visibleFrame.getSize());
+
+    Popup popup = PopupFactory.getSharedInstance().getPopup(visibleFrame, scrollPane, visibleFrame.getX(), visibleFrame.getY());
     popup.show();
 
-    jPanel.add(new JButton(new AbstractAction("Close and copy into the clipboard") {
+    JButton closeButton = new JButton(new AbstractAction("Close and copy into the clipboard") {
       @Override
       public void actionPerformed(ActionEvent e) {
         StringBuilder dumpAsString = new StringBuilder();
-        for (int i = dump.size() - 1; i >= 0; i --) {
+        for (int i = dump.size() - 1; i >= 0; i--) {
           dumpAsString.append(dump.get(i)).append("\n");
         }
         Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(dumpAsString.toString()), null);
         popup.hide();
       }
-    }), BorderLayout.SOUTH);
+    });
+
+    jPanel.add(closeButton, BorderLayout.SOUTH);
   }
 }
