@@ -34,7 +34,7 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
   private static final String SHORT_NAME = "JavadocReference";
 
   @SuppressWarnings("WeakerAccess")
-  public boolean REPORT_INACCESSIBLE;
+  public boolean REPORT_INACCESSIBLE = true;
 
   @Nullable
   @Override

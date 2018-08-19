@@ -228,7 +228,7 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
     stringPath
       .list2tree()
       .forEach {
-        path = ExtendedJTreePathFinder(tree).findMatchingPathByPredicate(predicate, *it.toTypedArray())
+        path = ExtendedJTreePathFinder(tree).findMatchingPathByPredicate(predicate, it)
         expandPath(tree, path)
       }
     return path

@@ -33,8 +33,6 @@
       <option name="IGNORED_DELETED_LINES_BORDER_COLOR" value="9f9f9f"/>
       <option name="CONSOLE_BACKGROUND_KEY" value="ffffff" />
       <option name="DIFF_SEPARATORS_BACKGROUND" value="D9D9D9"/>
-      <option name="DIFF_SEPARATORS_TOP_BORDER" value="C8C8C8"/>
-      <option name="DIFF_SEPARATORS_BOTTOM_BORDER"/>
 
       <option name="FILESTATUS_ADDED" value="0a7700"/>
       <option name="FILESTATUS_DELETED" value="616161"/>
@@ -1184,9 +1182,7 @@
       <option name="SELECTION_FOREGROUND" value="" />
       <option name="TEARLINE_COLOR" value="555555" />
       <option name="WHITESPACES" value="505050" />
-      <option name="DIFF_SEPARATORS_TOP_BORDER" value="1E1E1E"/>
-      <option name="DIFF_SEPARATORS_BACKGROUND" value="232323"/>
-      <option name="DIFF_SEPARATORS_BOTTOM_BORDER" value="222222"/>
+      <option name="DIFF_SEPARATORS_BACKGROUND" value="212121"/>
       <option name="VISUAL_INDENT_GUIDE" value="3c3c3c"/>
       <option name="FOLDED_TEXT_BORDER_COLOR" value="43474a"/>
 

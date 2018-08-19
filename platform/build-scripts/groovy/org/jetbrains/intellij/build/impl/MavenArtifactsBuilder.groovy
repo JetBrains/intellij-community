@@ -216,7 +216,10 @@ class MavenArtifactsBuilder {
         def library = (dependency as JpsLibraryDependency).library
         def libraryDescriptors = getMavenLibraryDescriptors(library)
         if (libraryDescriptors.isEmpty()) {
-          buildContext.messages.debug(" module '$module.name' depends on non-maven library ${LibraryLicensesListGenerator.getLibraryName(library)}")
+          List<String> names = LibraryLicensesListGenerator.getLibraryNames(library)
+          for (n in names) {
+            buildContext.messages.debug(" module '$module.name' depends on non-maven library $n")
+          }
           mavenizable = false
         }
         else {

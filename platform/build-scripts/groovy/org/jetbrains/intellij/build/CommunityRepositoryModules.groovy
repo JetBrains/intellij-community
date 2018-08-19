@@ -153,8 +153,8 @@ class CommunityRepositoryModules {
       withResource("maven3-server-common/lib", "lib/maven3-server-lib")
       withResource("maven2-server-impl/lib/maven2", "lib/maven2")
       withModuleLibrary("JAXB", "intellij.maven.server.m2.impl", "maven2-server-lib")
+      withModuleLibrary("javax-activation", "intellij.maven.server.m2.impl", "maven2-server-lib")
       [
-        "activation-1.1.jar",
         "archetype-common-2.0-alpha-4-SNAPSHOT.jar",
         "commons-beanutils.jar",
         "maven-dependency-tree-1.2.jar",

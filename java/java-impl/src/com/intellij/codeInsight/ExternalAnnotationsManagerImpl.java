@@ -49,7 +49,10 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.OptionsMessageDialog;
@@ -73,10 +76,8 @@ import java.util.Set;
  */
 public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsManager {
   private static final Logger LOG = Logger.getInstance(ExternalAnnotationsManagerImpl.class);
-  public static final long ANNOTATION_EDITED_TIMEOUT_MILLIS = 100;
 
   private final MessageBus myBus;
-  private final Alarm myAnnotationDocumentEdited;
 
   public ExternalAnnotationsManagerImpl(@NotNull final Project project, final PsiManager psiManager) {
     super(psiManager);
@@ -89,7 +90,6 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     });
 
     VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(), project);
-    myAnnotationDocumentEdited = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new MyDocumentListener(), project);
   }
 
@@ -853,11 +853,10 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     final FileDocumentManager myFileDocumentManager = FileDocumentManager.getInstance();
 
     @Override
-    public void documentChanged(DocumentEvent event) {
+    public void documentChanged(@NotNull DocumentEvent event) {
       final VirtualFile file = myFileDocumentManager.getFile(event.getDocument());
       if (file != null && ANNOTATIONS_XML.equals(file.getName()) && isUnderAnnotationRoot(file)) {
-        myAnnotationDocumentEdited.cancelAllRequests();
-        myAnnotationDocumentEdited.addRequest(() -> dropCache(), ANNOTATION_EDITED_TIMEOUT_MILLIS);
+        dropCache();
       }
     }
   }

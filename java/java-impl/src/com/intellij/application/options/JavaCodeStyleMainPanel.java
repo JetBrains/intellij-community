@@ -25,7 +25,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
  */
 public class JavaCodeStyleMainPanel extends TabbedLanguageCodeStylePanel {
 
-  protected JavaCodeStyleMainPanel(CodeStyleSettings currentSettings, CodeStyleSettings settings) {
+  public JavaCodeStyleMainPanel(CodeStyleSettings currentSettings, CodeStyleSettings settings) {
     super(JavaLanguage.INSTANCE, currentSettings, settings);
   }
 

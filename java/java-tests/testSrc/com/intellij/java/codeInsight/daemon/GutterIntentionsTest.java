@@ -5,11 +5,12 @@ import com.intellij.codeInsight.daemon.impl.IntentionsUI;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.CachedIntentions;
-import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 import java.util.List;
+
+import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
 /**
  * @author Dmitry Avdeev
@@ -33,7 +34,7 @@ public class GutterIntentionsTest extends LightCodeInsightFixtureTestCase {
     assertSize(1, myFixture.findGuttersAtCaret());
 
     ShowIntentionsPass.IntentionsInfo intentions = ShowIntentionsPass.getActionsToShow(getEditor(), getFile());
-    assertTrue(intentions.guttersToShow.size() > 1);
+    assertThat(intentions.guttersToShow.size()).isGreaterThan(1);
   }
 
   public void testRunLineMarker() {
@@ -44,7 +45,6 @@ public class GutterIntentionsTest extends LightCodeInsightFixtureTestCase {
                                                "}");
     myFixture.doHighlighting();
     CachedIntentions intentions = IntentionsUI.getInstance(getProject()).getCachedIntentions(getEditor(), getFile());
-    List<IntentionActionWithTextCaching> actions = intentions.getAllActions();
-    assertTrue(actions.get(0).getText().startsWith("Run "));
+    assertThat(intentions.getAllActions().get(0).getText()).startsWith("Run ");
   }
 }

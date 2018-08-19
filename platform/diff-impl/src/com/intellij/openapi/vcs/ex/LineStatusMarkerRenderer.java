@@ -233,11 +233,14 @@ public abstract class LineStatusMarkerRenderer {
 
     List<List<ChangedLines>> blocks = createMerger(editor).run(ranges, g.getClipBounds());
     for (List<ChangedLines> block: blocks) {
-      paintChangedLines(g, editor, block, framingBorder);
+      paintChangedLines((Graphics2D)g, editor, block, framingBorder);
     }
   }
 
-  private static void paintChangedLines(@NotNull Graphics g, @NotNull Editor editor, @NotNull List<ChangedLines> block, int framingBorder) {
+  private static void paintChangedLines(@NotNull Graphics2D g,
+                                        @NotNull Editor editor,
+                                        @NotNull List<ChangedLines> block,
+                                        int framingBorder) {
     EditorImpl editorImpl = (EditorImpl)editor;
 
     Color borderColor = getGutterBorderColor(editor);
@@ -311,7 +314,7 @@ public abstract class LineStatusMarkerRenderer {
                                 int framingBorder) {
     List<List<ChangedLines>> blocks = new VisibleRangeMerger(editor).run(Collections.singletonList(range), g.getClipBounds());
     for (List<ChangedLines> block: blocks) {
-      paintChangedLines(g, editor, block, framingBorder);
+      paintChangedLines((Graphics2D)g, editor, block, framingBorder);
     }
   }
 
@@ -319,10 +322,10 @@ public abstract class LineStatusMarkerRenderer {
     Rectangle area = getMarkerArea(editor, line1, line2);
     Color borderColor = getGutterBorderColor(editor);
     if (area.height != 0) {
-      paintRect(g, color, borderColor, area.x, area.y, area.x + area.width, area.y + area.height);
+      paintRect((Graphics2D)g, color, borderColor, area.x, area.y, area.x + area.width, area.y + area.height);
     }
     else {
-      paintTriangle(g, color, borderColor, area.x, area.x + area.width, area.y);
+      paintTriangle((Graphics2D)g, color, borderColor, area.x, area.x + area.width, area.y);
     }
   }
 
@@ -349,21 +352,23 @@ public abstract class LineStatusMarkerRenderer {
     return e.getX() > gutter.getLineMarkerFreePaintersAreaOffset();
   }
 
-  private static void paintRect(@NotNull Graphics g, @Nullable Color color, @Nullable Color borderColor, int x1, int y1, int x2, int y2) {
+  private static void paintRect(@NotNull Graphics2D g, @Nullable Color color, @Nullable Color borderColor, int x1, int y1, int x2, int y2) {
     if (color != null) {
       g.setColor(color);
       g.fillRect(x1, y1, x2 - x1, y2 - y1);
     }
     if (borderColor != null) {
-      ((Graphics2D)g).setStroke(new BasicStroke(JBUI.scale(1)));
+      Stroke oldStroke = g.getStroke();
+      g.setStroke(new BasicStroke(JBUI.scale(1)));
       g.setColor(borderColor);
       UIUtil.drawLine(g, x1, y1, x2 - 1, y1);
       UIUtil.drawLine(g, x1, y1, x1, y2 - 1);
       UIUtil.drawLine(g, x1, y2 - 1, x2 - 1, y2 - 1);
+      g.setStroke(oldStroke);
     }
   }
 
-  private static void paintTriangle(@NotNull Graphics g, @Nullable Color color, @Nullable Color borderColor, int x1, int x2, int y) {
+  private static void paintTriangle(@NotNull Graphics2D g, @Nullable Color color, @Nullable Color borderColor, int x1, int x2, int y) {
     int size = JBUI.scale(4);
 
     final int[] xPoints = new int[]{x1, x1, x2};
@@ -374,9 +379,11 @@ public abstract class LineStatusMarkerRenderer {
       g.fillPolygon(xPoints, yPoints, xPoints.length);
     }
     if (borderColor != null) {
-      ((Graphics2D)g).setStroke(new BasicStroke(JBUI.scale(1)));
+      Stroke oldStroke = g.getStroke();
+      g.setStroke(new BasicStroke(JBUI.scale(1)));
       g.setColor(borderColor);
       g.drawPolygon(xPoints, yPoints, xPoints.length);
+      g.setStroke(oldStroke);
     }
   }
 

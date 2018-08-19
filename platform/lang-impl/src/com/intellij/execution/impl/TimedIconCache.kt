@@ -17,6 +17,7 @@ import kotlin.concurrent.write
 
 class TimedIconCache {
   private val idToIcon = THashMap<String, Icon>()
+  private val idToInvalid = THashMap<String, Boolean>()
   private val iconCheckTimes = ObjectLongHashMap<String>()
   private val iconCalcTime = ObjectLongHashMap<String>()
 
@@ -35,7 +36,6 @@ class TimedIconCache {
       idToIcon.get(id)?.let {
         return it
       }
-
       val icon = IconDeferrer.getInstance().deferAutoUpdatable(settings.configuration.icon, project.hashCode() xor settings.hashCode()) {
         if (project.isDisposed) {
           return@deferAutoUpdatable null
@@ -47,13 +47,13 @@ class TimedIconCache {
 
         val startTime = System.currentTimeMillis()
 
-        val icon = calcIcon(settings, project)
+        val icon2Valid = calcIcon(settings, project)
 
         lock.write {
           iconCalcTime.put(id, System.currentTimeMillis() - startTime)
+          idToInvalid.set(id, icon2Valid.second)
         }
-
-        icon
+        icon2Valid.first
       }
 
       set(id, icon)
@@ -61,16 +61,22 @@ class TimedIconCache {
     }
   }
 
-  private fun calcIcon(settings: RunnerAndConfigurationSettings, project: Project): Icon {
+  fun isInvalid(id: String) : Boolean {
+    idToInvalid.get(id)?.let {return it}
+    return false
+  }
+
+  private fun calcIcon(settings: RunnerAndConfigurationSettings, project: Project): Pair<Icon, Boolean> {
     try {
       settings.checkSettings()
-      return ProgramRunnerUtil.getConfigurationIcon(settings, false)
+      return ProgramRunnerUtil.getConfigurationIcon(settings, false).to(false)
     }
     catch (e: IndexNotReadyException) {
-      return ProgramRunnerUtil.getConfigurationIcon(settings, false)
+      return ProgramRunnerUtil.getConfigurationIcon(settings, false).to(false)
     }
     catch (ignored: RuntimeConfigurationException) {
-      return ProgramRunnerUtil.getConfigurationIcon(settings, !DumbService.isDumb(project))
+      val invalid = !DumbService.isDumb(project)
+      return ProgramRunnerUtil.getConfigurationIcon(settings, invalid).to(invalid)
     }
   }
 

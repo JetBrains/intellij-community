@@ -852,6 +852,10 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     return icon
   }
 
+  fun isInvalidInCache(settings: RunnerAndConfigurationSettings): Boolean {
+    return iconCache.isInvalid(settings.uniqueID)
+  }
+
   fun getConfigurationById(id: String): RunnerAndConfigurationSettings? = lock.read { idToSettings.get(id) }
 
   override fun findConfigurationByName(name: String?): RunnerAndConfigurationSettings? {

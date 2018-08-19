@@ -11,6 +11,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testGuiFramework.launcher.GuiTestOptions;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.text.StringTokenizer;
@@ -116,7 +117,7 @@ public class IdeTestApplication {
       ourInstance = new IdeTestApplication();
       if (isDefaultConfig) recreateDirectory(configDirPath);
 
-      File newProjectsRootDirPath = GuiTestUtil.INSTANCE.getProjectCreationDirPath();
+      File newProjectsRootDirPath = GuiTestOptions.INSTANCE.getProjectDirPath();
       recreateDirectory(newProjectsRootDirPath);
 
       ClassLoader ideClassLoader = ourInstance.getIdeClassLoader();

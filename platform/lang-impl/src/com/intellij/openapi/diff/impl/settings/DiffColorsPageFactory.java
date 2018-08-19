@@ -74,8 +74,6 @@ public class DiffColorsPageFactory implements ColorAndFontPanelFactory, ColorAnd
     List<ColorDescriptor> descriptors = new ArrayList<>();
 
     descriptors.add(new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.vcs.diff.separator.background"), DiffLineSeparatorRenderer.BACKGROUND, ColorDescriptor.Kind.BACKGROUND));
-    descriptors.add(new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.vcs.diff.separator.top_border"), DiffLineSeparatorRenderer.TOP_BORDER, ColorDescriptor.Kind.BACKGROUND));
-    descriptors.add(new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.vcs.diff.separator.bottom_border"), DiffLineSeparatorRenderer.BOTTOM_BORDER, ColorDescriptor.Kind.BACKGROUND));
 
     return ArrayUtil.toObjectArray(descriptors, ColorDescriptor.class);
   }

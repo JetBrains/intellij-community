@@ -82,7 +82,7 @@ public class GitSSHGUIHandler {
     }
     if (myIgnoreAuthenticationRequest) return null;
     return CredentialPromptDialog.askPassword(myProject, GitBundle.getString("ssh.ask.passphrase.title"),
-                                              "Password for the SSH key \"" + PathUtil.getFileName(keyPath) + "\":",
+                                              GitBundle.message("ssh.ask.passphrase.message", PathUtil.getFileName(keyPath)),
                                               newAttributes, resetPassword, error);
   }
 
@@ -256,7 +256,7 @@ public class GitSSHGUIHandler {
       myPrompt = prompt;
       myEcho = echo;
       myUserName = userName;
-      setTitle(GitBundle.message("ssh.keyboard.interactive.title", name));
+      setTitle(GitBundle.message("ssh.keyboard.interactive.title") + ": " + name);
       init();
       setResizable(true);
       setModal(true);

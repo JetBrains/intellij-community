@@ -310,21 +310,43 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     TextAttributesKey keyB = TextAttributesKey.createTextAttributesKey("B", keyC);
     TextAttributesKey keyA = TextAttributesKey.createTextAttributesKey("A", keyB);
     try {
-      keyD.setFallbackAttributeKey(keyB);
-      editorColorsScheme.getAttributes(keyA);
+      keyD = TextAttributesKey.createTextAttributesKey("D", keyB);
+      fail("Must fail");
     }
-    catch (StackOverflowError e) {
-      fail("Stack overflow detected!");
-    }
-    catch (Throwable e) {
+    catch (IllegalArgumentException e) {
       String s = e.getMessage();
       assertTrue(s.contains("B->C->D"));
+
+      try {
+        editorColorsScheme.getAttributes(keyA);
+      }
+      catch (StackOverflowError ignored) {
+        fail("Stack overflow detected!");
+      }
     }
     finally {
-      TextAttributesKey.removeTextAttributesKey("A");
-      TextAttributesKey.removeTextAttributesKey("B");
-      TextAttributesKey.removeTextAttributesKey("C");
-      TextAttributesKey.removeTextAttributesKey("D");
+      TextAttributesKey.removeTextAttributesKey(keyA.getExternalName());
+      TextAttributesKey.removeTextAttributesKey(keyB.getExternalName());
+      TextAttributesKey.removeTextAttributesKey(keyC.getExternalName());
+      TextAttributesKey.removeTextAttributesKey(keyD.getExternalName());
+    }
+  }
+
+  public void testMustNotBePossibleToRegisterTextAttributeKeysWithDifferentFallBacks() {
+    TextAttributesKey keyB = TextAttributesKey.createTextAttributesKey("B");
+    TextAttributesKey keyD = TextAttributesKey.createTextAttributesKey("D");
+    TextAttributesKey keyC = TextAttributesKey.createTextAttributesKey("C", keyD);
+    try {
+      keyC = TextAttributesKey.createTextAttributesKey(keyC.getExternalName(), keyB);
+      fail("Must fail");
+    }
+    catch (IllegalStateException e) {
+      assertTrue(e.getMessage().contains("already registered"));
+    }
+    finally {
+      TextAttributesKey.removeTextAttributesKey(keyB.getExternalName());
+      TextAttributesKey.removeTextAttributesKey(keyC.getExternalName());
+      TextAttributesKey.removeTextAttributesKey(keyD.getExternalName());
     }
   }
 

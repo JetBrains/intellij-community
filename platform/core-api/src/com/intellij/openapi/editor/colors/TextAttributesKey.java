@@ -55,8 +55,8 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
 
     if (fallbackAttributeKey != null) {
       JBIterable<TextAttributesKey> it = JBIterable.generate(myFallbackAttributeKey, o -> o == this ? null : o.myFallbackAttributeKey);
-      if (it.find(o -> o == this) == this) {
-        LOG.error("Cycle detected: " + StringUtil.join(it, "->"));
+      if (equals(it.find(o -> equals(o)))) {
+        throw new IllegalArgumentException("Can't use this fallback key: "+fallbackAttributeKey+": Cycle detected: " + StringUtil.join(it, "->"));
       }
     }
   }
@@ -217,19 +217,23 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
    */
   @NotNull
   public static TextAttributesKey createTextAttributesKey(@NonNls @NotNull String externalName, TextAttributesKey fallbackAttributeKey) {
-    TextAttributesKey result = ourRegistry.get(externalName);
+    TextAttributesKey existing = ourRegistry.get(externalName);
     TextAttributes defaultAttributes;
-    if (result == null) {
+    if (existing == null) {
       defaultAttributes = null;
     }
     else {
-      if (Comparing.equal(result.getFallbackAttributeKey(), fallbackAttributeKey)) {
-        return result;
+      if (Comparing.equal(existing.getFallbackAttributeKey(), fallbackAttributeKey)) {
+        return existing;
       }
       // ouch. Someone's re-creating already existing key with different attributes.
       // Have to remove the old one from the map, create the new one with correct attributes, re-insert to the map
-      defaultAttributes = result.getDefaultAttributes();
-      ourRegistry.remove(externalName, result);
+      if (existing.getFallbackAttributeKey() != null) {
+        throw new IllegalStateException("TextAttributeKey(name:'" + externalName +"', fallbackAttributeKey:'"+fallbackAttributeKey+"') "+
+                                        " was already registered with the other fallback attribute key: "+existing.getFallbackAttributeKey());
+      }
+      defaultAttributes = existing.getDefaultAttributes();
+      ourRegistry.remove(externalName, existing);
     }
     TextAttributesKey newKey = new TextAttributesKey(externalName, defaultAttributes, fallbackAttributeKey);
     return ConcurrencyUtil.cacheOrGet(ourRegistry, externalName, newKey);

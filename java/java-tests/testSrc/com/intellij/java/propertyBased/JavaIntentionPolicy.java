@@ -143,7 +143,7 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
            actionText.matches("Simplify '\\(+(true|false)\\)+' to \\1") ||
            // Parenthesizing sub-expression causes cutting the action name at different position, so name changes significantly
            actionText.matches("Compute constant value of '.+'") ||
-           actionText.matches("Replace '-\\(+(.+)\\)' with constant value '-\\1'") ||
+           actionText.matches("Replace '-\\(+(.+)\\)+' with constant value '-\\1'") ||
            // TODO: Remove when IDEA-195235 is fixed
            actionText.matches("Suppress .+ in injection") ||
            super.shouldSkipIntention(actionText);

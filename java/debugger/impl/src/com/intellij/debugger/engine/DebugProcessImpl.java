@@ -95,6 +95,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   @NonNls private static final String SHMEM_ATTACHING_CONNECTOR_NAME = "com.sun.jdi.SharedMemoryAttach";
   @NonNls private static final String SOCKET_LISTENING_CONNECTOR_NAME = "com.sun.jdi.SocketListen";
   @NonNls private static final String SHMEM_LISTENING_CONNECTOR_NAME = "com.sun.jdi.SharedMemoryListen";
+  @NonNls static final String SAPID_ATTACHING_CONNECTOR_NAME = "sun.jvm.hotspot.jdi.SAPIDAttachingConnector";
 
   private final Project myProject;
   private final RequestManagerImpl myRequestManager;
@@ -440,7 +441,27 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
 
       final String address = myConnection.getAddress();
-      if (myConnection.isServerMode()) {
+
+      if (myConnection instanceof PidRemoteConnection) {
+        String pid = ((PidRemoteConnection)myConnection).getPid();
+        if (StringUtil.isEmpty(pid)) {
+          throw new CantRunException(DebuggerBundle.message("error.no.pid"));
+        }
+        AttachingConnector connector = (AttachingConnector)findConnector(SAPID_ATTACHING_CONNECTOR_NAME);
+        myArguments = connector.defaultArguments();
+        Connector.Argument pidArg = myArguments.get("pid");
+        if (pidArg != null) {
+          pidArg.setValue(pid);
+        }
+        myDebugProcessDispatcher.getMulticaster().connectorIsReady();
+        try {
+          return connector.attach(myArguments);
+        }
+        catch (IllegalArgumentException e) {
+          throw new CantRunException(e.getLocalizedMessage());
+        }
+      }
+      else if (myConnection.isServerMode()) {
         ListeningConnector connector = (ListeningConnector)findConnector(myConnection.isUseSockets(), true);
         myArguments = connector.defaultArguments();
         if (myArguments == null) {
@@ -567,7 +588,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   @NotNull
-  private static Connector findConnector(String connectorName) throws ExecutionException {
+  static Connector findConnector(String connectorName) throws ExecutionException {
     VirtualMachineManager virtualMachineManager;
     try {
       virtualMachineManager = Bootstrap.virtualMachineManager();
@@ -1449,7 +1470,13 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     @Override
     protected void action() {
       if (isAttached()) {
-        final VirtualMachineProxyImpl virtualMachineProxy = getVirtualMachineProxy();
+        VirtualMachineProxyImpl virtualMachineProxy = getVirtualMachineProxy();
+
+        if (!virtualMachineProxy.canBeModified()) {
+          closeProcess(false);
+          return;
+        }
+
         if (myIsTerminateTargetVM) {
           virtualMachineProxy.exit(-1);
         }

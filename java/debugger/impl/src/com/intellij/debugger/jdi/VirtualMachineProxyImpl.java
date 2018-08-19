@@ -221,6 +221,9 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   public void suspend() {
+    if (!canBeModified()) {
+      return;
+    }
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myPausePressedCount++;
     myVirtualMachine.suspend();
@@ -228,6 +231,9 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   public void resume() {
+    if (!canBeModified()) {
+      return;
+    }
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if (myPausePressedCount > 0) {
       myPausePressedCount--;
@@ -554,6 +560,10 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   };
   public boolean canGetInstanceInfo() {
     return myCanGetInstanceInfo.isAvailable();
+  }
+
+  public boolean canBeModified() {
+    return myVirtualMachine.canBeModified();
   }
 
   @Override

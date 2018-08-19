@@ -154,6 +154,12 @@ public class IntroduceFieldInSameClassTest extends LightCodeInsightTestCase {
     }
   }
 
+  public void testAcceptIntroduceFieldFromExprInThisCall() {
+    configureByFile("beforeAcceptIntroduceFieldFromExprInThisCall.java");
+    performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, true);
+    checkResultByFile("afterAcceptIntroduceFieldFromExprInThisCall.java");
+  }
+
   public void testInConstructorEnclosingAnonymous() {
     configureByFile("beforeEnclosingAnonymous.java");
     performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR, false);
