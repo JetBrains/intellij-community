@@ -220,7 +220,7 @@ public class PaymentManager {
 
     private double payCredits(List<CashOutDebitInfo> freeDebits, UserCashOut userCashOut, Session ses) {
         double unpaidAmount = 0;
-        for (CashOutDebitInfo info: freeDebits) {
+        for (CashOutDebitInfo info : freeDebits) {
             try {
                 String trackId = "Tr" + info.credit.getId();
                 PayConRequest creditRequest = PayConPaymentSystem.getInstance().createReversalRequest(userCashOut.getPlayer().getCurrency().getId(), trackId, -info.credit.getAmount(), new Long(info.debit.getExternalId()));
@@ -266,7 +266,7 @@ public class PaymentManager {
     private double createCredits(double amount, Player player, List<CashOutDebitInfo> freeDebits, UserCashOut userCashOut, Session ses) {
         double checkAmount = amount;
         int i = 0;
-        for (CashOutDebitInfo debitInfo: freeDebits) {
+        for (CashOutDebitInfo debitInfo : freeDebits) {
             Transaction credit = new Transaction();
             if (checkAmount > debitInfo.remainder) {
                 credit.setAmount(-debitInfo.remainder);
@@ -311,10 +311,10 @@ public class PaymentManager {
         //query.setInteger("status", TransactionStatus.COMPLETED.getId());
         List<Transaction> transactions = query.list();
         List<CashOutDebitInfo> freeDebits = new ArrayList<CashOutDebitInfo>();
-        for (Transaction transaction: transactions) {
+        for (Transaction transaction : transactions) {
             Set<Transaction> credits = transaction.getCreditTransactions();
             double sum = 0;
-            for (Transaction credit: credits) {
+            for (Transaction credit : credits) {
                 sum += credit.getAmount();
             }
             CashOutDebitInfo info = new CashOutDebitInfo();

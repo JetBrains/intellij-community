@@ -51,12 +51,15 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
     configurations.clear();
     historyConfigurations.clear();
     readConfigurations(state, configurations, historyConfigurations);
+    historyConfigurations.forEach(c -> c.getMatchOptions().initScope(myProject));
   }
 
-  public void addHistoryConfiguration(Configuration configuration) {
+  public void addHistoryConfiguration(@NotNull Configuration configuration) {
     configuration = configuration.copy();
-    historyConfigurations.remove(configuration); // move to most recent
     configuration.setCreated(System.currentTimeMillis());
+    configuration.setName(configuration.getMatchOptions().getSearchPattern());
+    final Configuration old = findConfigurationByName(historyConfigurations, configuration.getName());
+    if (old != null) historyConfigurations.remove(old); // move to most recent
     historyConfigurations.add(0, configuration);
     while (historyConfigurations.size() > MAX_RECENT_SIZE) {
       historyConfigurations.remove(historyConfigurations.size() - 1);
@@ -71,10 +74,15 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
     configurations.remove(configuration);
   }
 
-  public static void writeConfigurations(@NotNull Element element,
+  public static void writeConfigurations(@NotNull Element element, @NotNull Collection<Configuration> configurations) {
+    writeConfigurations(element, configurations, Collections.emptyList());
+  }
+
+  private static void writeConfigurations(@NotNull Element element,
                                          @NotNull Collection<Configuration> configurations,
                                          @NotNull Collection<Configuration> historyConfigurations) {
     for (final Configuration configuration : configurations) {
+      configuration.getMatchOptions().setScope(null);
       saveConfiguration(element, configuration);
     }
 
@@ -91,7 +99,11 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
     return infoElement;
   }
 
-  public static void readConfigurations(@NotNull Element element,
+  public static void readConfigurations(@NotNull Element element, @NotNull Collection<Configuration> configurations) {
+    readConfigurations(element, configurations, new SmartList<>());
+  }
+
+  private static void readConfigurations(@NotNull Element element,
                                         @NotNull Collection<Configuration> configurations,
                                         @NotNull Collection<Configuration> historyConfigurations) {
     for (final Element pattern : element.getChildren()) {

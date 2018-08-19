@@ -76,6 +76,7 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
 
   public static class JUnitConverterQuickFix implements LocalQuickFix {
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return QUICKFIX_NAME;
@@ -86,6 +87,7 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
       return false;
     }
 
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiClass psiClass = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiClass.class);
       if (psiClass == null || !TestNGUtil.checkTestNGInClasspath(psiClass)) return;
@@ -238,6 +240,7 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
 
     private static PsiMethodCallExpression[] getTestCaseCalls(PsiMethod method) {
       PsiElement[] methodCalls = PsiTreeUtil.collectElements(method, new PsiElementFilter() {
+        @Override
         public boolean isAccepted(PsiElement element) {
           if (!(element instanceof PsiMethodCallExpression)) return false;
           final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element;

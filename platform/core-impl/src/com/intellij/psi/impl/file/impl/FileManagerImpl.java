@@ -268,13 +268,11 @@ public class FileManagerImpl implements FileManager {
   }
 
   /** Left for plugin compatibility */
-  @SuppressWarnings("unused")
   @Deprecated
   public void markInitialized() {
   }
 
   /** Left for plugin compatibility */
-  @SuppressWarnings("unused")
   @Deprecated
   public boolean isInitialized() {
     return true;

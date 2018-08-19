@@ -68,6 +68,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     if (configuration != null) {
       emptyText.appendText(" Click ");
       emptyText.appendText("Edit", SimpleTextAttributes.LINK_ATTRIBUTES, new ActionListener() {
+        @Override
         public void actionPerformed(final ActionEvent e) {
           final RunnerAndConfigurationSettings configurationSettings = RunManager.getInstance(project).findSettings(configuration);
           if (configurationSettings != null) {
@@ -105,6 +106,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     ScrollingUtil.installActions(myTable);
 
     myTable.registerKeyboardAction(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         if (myBuilder == null) return;
         myBuilder.buildRoot();
@@ -115,6 +117,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     myTable.getInputMap(WHEN_FOCUSED).put(
       KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK), ACTION_DRILL_DOWN);
     myTable.getActionMap().put(ACTION_DRILL_DOWN, new AbstractAction() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         drillDown(structure);
       }
@@ -123,6 +126,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
       KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK), ACTION_GO_UP);
     myTable.getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0), ACTION_GO_UP);
     myTable.getActionMap().put(ACTION_GO_UP, new AbstractAction() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         goUp();
       }
@@ -233,7 +237,8 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     myBuilder.select(file);
   }
 
-  public Object getData(@NonNls String dataId) {
+  @Override
+  public Object getData(@NotNull @NonNls String dataId) {
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       return getSelectedValue();
     }
@@ -298,12 +303,12 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       goUp();
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(!topElementIsSelected(myTreeStructure));
     }
   }

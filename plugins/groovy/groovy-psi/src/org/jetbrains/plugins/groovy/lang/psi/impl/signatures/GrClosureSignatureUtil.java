@@ -20,6 +20,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrMultiSignature;
@@ -597,7 +598,13 @@ public class GrClosureSignatureUtil {
     final GrClosureSignature signature;
     final PsiParameter[] parameters;
     final PsiElement element = resolveResult.getElement();
-    final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+    PsiSubstitutor substitutor;
+    if (resolveResult instanceof GroovyMethodResult) {
+      substitutor = ((GroovyMethodResult)resolveResult).getSubstitutor(false);
+    }
+    else {
+      substitutor = resolveResult.getSubstitutor();
+    }
     if (element instanceof PsiMethod) {
       signature = createSignature((PsiMethod)element, substitutor, eraseArgs);
       parameters = ((PsiMethod)element).getParameterList().getParameters();

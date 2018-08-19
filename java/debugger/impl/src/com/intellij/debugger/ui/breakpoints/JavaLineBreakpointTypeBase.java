@@ -2,7 +2,6 @@
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -28,7 +27,6 @@ import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
 import org.jetbrains.java.debugger.breakpoints.JavaBreakpointFiltersPanel;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
 
-import javax.swing.*;
 import java.util.List;
 
 /**
@@ -67,12 +65,6 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
     else {
       return super.getDisplayText(breakpoint);
     }
-  }
-
-  @Nullable
-  @Override
-  public Icon getPendingIcon() {
-    return AllIcons.Debugger.Db_pending_breakpoint;
   }
 
   protected static boolean canPutAtElement(@NotNull final VirtualFile file,

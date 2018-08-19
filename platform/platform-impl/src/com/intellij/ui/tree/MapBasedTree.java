@@ -100,7 +100,7 @@ public final class MapBasedTree<K, N> {
   }
 
   public boolean updateRoot(Pair<N, Boolean> pair) {
-    N node = pair == null ? null : pair.first;
+    N node = Pair.getFirst(pair);
     if (root == null ? node == null : root.node == node) return false;
 
     if (root != null) {

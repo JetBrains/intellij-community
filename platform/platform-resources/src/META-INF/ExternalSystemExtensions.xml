@@ -51,13 +51,13 @@
     <externalSystemConfigurationHandler implementation="com.intellij.profile.codeInspection.InspectionsProfileConfigurationHandler"/>
     <externalSystemConfigurationHandler
         implementation="com.intellij.openapi.externalSystem.service.project.settings.DetectionExcludesConfigImporter"/>
+    <externalSystemConfigurationHandler implementation="com.intellij.openapi.externalSystem.service.project.settings.ArtifactsImporter"/>
+    <externalSystem.beforeRunTaskImporter implementation="com.intellij.openapi.externalSystem.service.project.settings.BuildArtifactsTaskImporter"/>
 
     <configuration.ModuleStructureExtension
         implementation="com.intellij.openapi.externalSystem.service.project.manage.ExternalModuleStructureExtension"/>
 
     <!--Tool window services-->
-    <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.task.ToolWindowModuleService"/>
-    <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.task.ToolWindowTaskService"/>
     <externalSystemViewContributor id="default" order="last"
                                    implementation="com.intellij.openapi.externalSystem.view.ExternalSystemViewDefaultContributor"/>
 

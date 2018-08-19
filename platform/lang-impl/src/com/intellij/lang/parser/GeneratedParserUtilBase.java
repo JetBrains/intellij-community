@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.lang.parser;
 
@@ -956,7 +942,7 @@ public class GeneratedParserUtilBase {
 
     public static void initState(ErrorState state, PsiBuilder builder, IElementType root, TokenSet[] extendsSets) {
       state.extendsSets = extendsSets;
-      PsiFile file = builder.getUserDataUnprotected(FileContextUtil.CONTAINING_FILE_KEY);
+      PsiFile file = builder.getUserData(FileContextUtil.CONTAINING_FILE_KEY);
       state.completionState = file == null? null: file.getUserData(COMPLETION_STATE_KEY);
       Language language = file == null? root.getLanguage() : file.getLanguage();
       state.caseSensitive = language.isCaseSensitive();
@@ -973,7 +959,7 @@ public class GeneratedParserUtilBase {
       int count = 0;
       loop: for (Variant variant : list) {
         if (position == variant.position) {
-          String text = variant.object.toString();
+          String text = String.valueOf(variant.object);
           long hash = StringHash.calc(text);
           for (int i=0; i<count; i++) {
             if (hashes[i] == hash) continue loop;
@@ -1098,26 +1084,6 @@ public class GeneratedParserUtilBase {
     public String toString() {
       return "<" + position + ", " + object + ">";
     }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      Variant variant = (Variant)o;
-
-      if (position != variant.position) return false;
-      if (!this.object.equals(variant.object)) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = position;
-      result = 31 * result + object.hashCode();
-      return result;
-    }
   }
 
   private static class Hooks<T> {
@@ -1196,7 +1162,7 @@ public class GeneratedParserUtilBase {
         }
         if (tokenType == lBrace) {
           Pair<PsiBuilder.Marker, Integer> prev = siblings.peek();
-          parens.addFirst(Pair.create(builder.mark(), prev == null ? null : prev.first));
+          parens.addFirst(Pair.create(builder.mark(), Pair.getFirst(prev)));
         }
         checkSiblings(chunkType, parens, siblings);
         state.tokenAdvancer.parse(builder, level);

@@ -53,7 +53,6 @@ import com.intellij.ui.ColoredSideBorder;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Function;
-import com.intellij.util.ImageLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -96,6 +95,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     mySubCoverageActive = subCoverageActive;
   }
 
+  @Override
   public void paint(Editor editor, Graphics g, Rectangle r) {
     final TextAttributes color = editor.getColorsScheme().getAttributes(myKey);
     Color bgColor = color.getBackgroundColor();
@@ -113,7 +113,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     g.fillRect(r.x, r.y, r.width, r.height);
     final LineData lineData = getLineData(editor.xyToLogicalPosition(new Point(0, r.y)).line);
     if (lineData != null && lineData.isCoveredByOneTest()) {
-      g.drawImage( ImageLoader.loadFromResource("/gutter/unique.png"), r.x, r.y, 8, 8, editor.getComponent());
+      AllIcons.Gutter.Unique.paintIcon(editor.getComponent(), g, r.x, r.y);
     }
   }
 
@@ -147,7 +147,8 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     return CodeInsightColors.LINE_NONE_COVERAGE;
   }
 
-  public boolean canDoAction(final MouseEvent e) {
+  @Override
+  public boolean canDoAction(@NotNull final MouseEvent e) {
     Component component = e.getComponent();
     if (component instanceof EditorGutterComponentEx) {
       EditorGutterComponentEx gutter = (EditorGutterComponentEx)component;
@@ -156,7 +157,8 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     return false;
   }
 
-  public void doAction(final Editor editor, final MouseEvent e) {
+  @Override
+  public void doAction(@NotNull final Editor editor, @NotNull final MouseEvent e) {
     e.consume();
     final JComponent comp = (JComponent)e.getComponent();
     final JRootPane rootPane = comp.getRootPane();
@@ -219,7 +221,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
 
     final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     assert psiFile != null;
-    
+
     final int lineStartOffset = document.getLineStartOffset(lineNumber);
     final int lineEndOffset = document.getLineEndOffset(lineNumber);
 
@@ -279,6 +281,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     return myLines != null ? myLines.get(myNewToOldConverter != null ? myNewToOldConverter.fun(lineNumber).intValue() : lineNumber) : null;
   }
 
+  @Override
   public Color getErrorStripeColor(final Editor editor) {
     return editor.getColorsScheme().getAttributes(myKey).getErrorStripeColor();
   }
@@ -297,13 +300,14 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
       getTemplatePresentation().setText("Previous Coverage Mark");
     }
 
+    @Override
     protected int next(final int idx, int size) {
       if (idx <= 0) return size - 1;
       return idx - 1;
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       super.update(e);
       final String nextChange = getNextChange();
       if (nextChange != null) {
@@ -320,13 +324,14 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
       getTemplatePresentation().setText("Next Coverage Mark");
     }
 
+    @Override
     protected int next(final int idx, int size) {
       if (idx == size - 1) return 0;
       return idx + 1;
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       super.update(e);
       final String nextChange = getNextChange();
       if (nextChange != null) {
@@ -344,7 +349,8 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
       myLineNumber = lineNumber;
     }
 
-    public void actionPerformed(final AnActionEvent e) {
+    @Override
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       final Integer lineNumber = getLineEntry();
       if (lineNumber != null) {
         moveToLine(lineNumber.intValue(), myEditor);
@@ -386,7 +392,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
         final LineData lineData = getLineData(entry);
         if (lineData != null) {
           switch (lineData.getStatus()) {
-            case LineCoverage.NONE: 
+            case LineCoverage.NONE:
               return "Uncovered";
             case LineCoverage.PARTIAL:
               return "Partial Covered";
@@ -399,7 +405,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       e.getPresentation().setEnabled(getLineEntry() != null);
     }
   }
@@ -415,12 +421,12 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setVisible(getLineData(myLineNumber) != null);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final GeneralColorsPage colorsPage = new GeneralColorsPage();
       String fullDisplayName = "Editor | " + ApplicationBundle.message("title.colors.and.fonts") + " | " + colorsPage.getDisplayName();
       final ColorAndFontOptions colorAndFontOptions = new ColorAndFontOptions(){

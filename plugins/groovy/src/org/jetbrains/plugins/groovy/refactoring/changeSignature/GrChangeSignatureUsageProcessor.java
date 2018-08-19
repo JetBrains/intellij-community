@@ -739,7 +739,9 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       (GrTryCatchStatement)GroovyPsiElementFactory.getInstance(element.getProject()).createStatementFromText("try{} catch (Exception e){}");
     final GrStatement statement = PsiTreeUtil.getParentOfType(element, GrStatement.class);
     assert statement != null;
-    tryCatch.getTryBlock().addStatementBefore(statement, null);
+    final GrOpenBlock block = tryCatch.getTryBlock();
+    assert block != null;
+    block.addStatementBefore(statement, null);
     tryCatch = (GrTryCatchStatement)statement.replace(tryCatch);
     tryCatch.getCatchClauses()[0].delete();
     fixCatchBlock(tryCatch, exceptions);

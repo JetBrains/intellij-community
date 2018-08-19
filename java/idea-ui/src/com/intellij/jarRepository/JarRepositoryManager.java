@@ -175,20 +175,6 @@ public class JarRepositoryManager {
     return loadDependenciesImpl(project, libraryProps, loadSources, loadJavadoc, copyTo, repositories, true);
   }
 
-  
-  /**
-   * Warning! Suitable to be used from non-AWT thread only. When called from UI thread, may lead to a deadlock
-   * Use loadDependenciesModal() or loadDependenciesAsync() instead
-   */
-  @Deprecated
-  public static Collection<OrderRoot> loadDependencies(@NotNull Project project,
-                                                       @NotNull RepositoryLibraryProperties libraryProps,
-                                                       boolean loadSources,
-                                                       boolean loadJavadoc,
-                                                       @Nullable String copyTo,
-                                                       @Nullable Collection<RemoteRepositoryDescription> repositories) {
-    return loadDependenciesImpl(project, libraryProps, loadSources, loadJavadoc, copyTo, repositories, false);
-  }
 
   private static Collection<OrderRoot> loadDependenciesImpl(@NotNull Project project,
                                                             @NotNull RepositoryLibraryProperties libraryProps,
@@ -246,7 +232,7 @@ public class JarRepositoryManager {
       kinds, repos, copyTo
     );
   }
-  
+
   public static Promise<List<OrderRoot>> loadDependenciesAsync(@NotNull Project project,
                                                                JpsMavenRepositoryLibraryDescriptor desc,
                                                                final Set<ArtifactKind> artifactKinds,
@@ -313,6 +299,7 @@ public class JarRepositoryManager {
     }
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Maven", false) {
 
+      @Override
       public void run(@NotNull ProgressIndicator indicator) {
         final List<Pair<RepositoryArtifactDescription, RemoteRepositoryDescription>> resultList = new ArrayList<>();
         try {
@@ -350,6 +337,7 @@ public class JarRepositoryManager {
   public static void searchRepositories(final Project project, final Collection<String> serviceUrls, final Processor<? super Collection<RemoteRepositoryDescription>> resultProcessor) {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Maven", false) {
 
+      @Override
       public void run(@NotNull ProgressIndicator indicator) {
         final Ref<List<RemoteRepositoryDescription>> result = Ref.create(Collections.emptyList());
         try {
@@ -380,7 +368,7 @@ public class JarRepositoryManager {
   @Nullable
   private static <T> T submitModalJob(@Nullable final Project project, final String title, final Function<ProgressIndicator, T> job){
     final Ref<T> result = Ref.create(null);
-    new Task.Modal(project, title, true) { 
+    new Task.Modal(project, title, true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {

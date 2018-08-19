@@ -19,7 +19,7 @@ package com.intellij.uiDesigner.lw;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import org.jdom.Element;
 
-import java.awt.FlowLayout;
+import java.awt.*;
 
 /**
  * @author yole
@@ -30,6 +30,7 @@ public class FlowLayoutSerializer extends LayoutSerializer {
   private FlowLayoutSerializer() {
   }
 
+  @Override
   void readLayout(Element element, LwContainer container) {
     final int hGap = LwXmlReader.getOptionalInt(element, UIFormXmlConstants.ATTRIBUTE_HGAP, 5);
     final int vGap = LwXmlReader.getOptionalInt(element, UIFormXmlConstants.ATTRIBUTE_VGAP, 5);
@@ -37,6 +38,7 @@ public class FlowLayoutSerializer extends LayoutSerializer {
     container.setLayout(new FlowLayout(flowAlign, hGap, vGap));
   }
 
+  @Override
   void readChildConstraints(final Element constraintsElement, final LwComponent component) {
   }
 }

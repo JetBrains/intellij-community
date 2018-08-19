@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,6 +36,7 @@ public class SvnChangelistListener implements ChangeListListener {
     };
   }
 
+  @Override
   public void changesRemoved(final Collection<Change> changes, final ChangeList fromList) {
     if (LocalChangeList.DEFAULT_NAME.equals(fromList.getName())) {
       return;
@@ -43,6 +44,7 @@ public class SvnChangelistListener implements ChangeListListener {
     removeFromChangeList(changes);
   }
 
+  @Override
   public void changesAdded(Collection<Change> changes, ChangeList toList) {
     if (toList == null || LocalChangeList.DEFAULT_NAME.equals(toList.getName())) {
       return;
@@ -50,6 +52,7 @@ public class SvnChangelistListener implements ChangeListListener {
     addToChangeList(toList.getName(), changes);
   }
 
+  @Override
   public void changeListRemoved(final ChangeList list) {
     removeFromChangeList(list.getChanges());
   }
@@ -59,6 +62,7 @@ public class SvnChangelistListener implements ChangeListListener {
     return ContainerUtil.findAll(ChangesUtil.getPaths(changes), myUnderSvnCondition);
   }
 
+  @Override
   public void changeListRenamed(final ChangeList list, final String oldName) {
     if (Comparing.equal(list.getName(), oldName)) {
       return;
@@ -70,6 +74,7 @@ public class SvnChangelistListener implements ChangeListListener {
     addToChangeList(list.getName(), list.getChanges());
   }
 
+  @Override
   public void changesMoved(final Collection<Change> changes, final ChangeList fromList, final ChangeList toList) {
     if (fromList.getName().equals(toList.getName())) {
       return;

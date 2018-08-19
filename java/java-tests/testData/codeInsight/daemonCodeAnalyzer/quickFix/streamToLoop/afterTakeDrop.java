@@ -26,8 +26,8 @@ public class Test {
       List<String> xyz = new ArrayList<>();
       boolean dropping = true;
       OUTER:
-      for (String s: data) {
-          for (String s1: Arrays.asList(s, s + s)) {
+      for (String s : data) {
+          for (String s1 : Arrays.asList(s, s + s)) {
               if (s1.isEmpty()) {
                   break OUTER;
               }

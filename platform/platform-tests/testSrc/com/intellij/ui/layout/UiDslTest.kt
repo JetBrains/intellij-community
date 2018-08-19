@@ -89,6 +89,11 @@ class UiDslTest {
     doTest { withVerticalButtons() }
   }
 
+  @Test
+  fun `do not add visual paddings for titled border`() {
+    doTest { commentAndPanel() }
+  }
+
   private fun doTest(panelCreator: () -> JPanel) {
     invokeAndWaitIfNeed {
       val panel = panelCreator()

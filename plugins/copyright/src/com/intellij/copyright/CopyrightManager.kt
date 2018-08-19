@@ -3,6 +3,7 @@ package com.intellij.copyright
 
 import com.intellij.configurationStore.*
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.PersistentStateComponent
@@ -227,9 +228,9 @@ private class CopyrightManagerPostStartupActivity : StartupActivity {
           return
         }
 
-        ApplicationManager.getApplication().invokeLater(Runnable {
+        AppUIExecutor.onUiThread(ModalityState.NON_MODAL).later().withDocumentsCommitted(project).submit {
           if (!virtualFile.isValid) {
-            return@Runnable
+            return@submit
           }
 
           val file = PsiManager.getInstance(project).findFile(virtualFile)
@@ -238,7 +239,7 @@ private class CopyrightManagerPostStartupActivity : StartupActivity {
               UpdateCopyrightProcessor(project, module, file).run()
             }
           }
-        }, ModalityState.NON_MODAL, project.disposed)
+        }
       }
     }, project)
   }

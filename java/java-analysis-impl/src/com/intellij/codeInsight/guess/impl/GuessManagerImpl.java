@@ -30,6 +30,8 @@ import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.BitUtil;
@@ -348,9 +350,7 @@ public class GuessManagerImpl extends GuessManager {
 
     List<PsiType> result = null;
     if (!ControlFlowAnalyzer.inlinerMayInferPreciseType(place)) {
-      GuessTypeVisitor visitor = new GuessTypeVisitor(place);
-      getTopmostBlock(place).accept(visitor);
-
+      GuessTypeVisitor visitor = tryGuessingTypeWithoutDfa(place);
       if (!visitor.isDfaNeeded()) {
         result = visitor.mySpecificType == null ?
                  Collections.emptyList() : Collections.singletonList(tryGenerify(expr, visitor.mySpecificType));
@@ -363,6 +363,27 @@ public class GuessManagerImpl extends GuessManager {
       return Collections.emptyList();
     }
     return result;
+  }
+
+  @NotNull
+  private static GuessTypeVisitor tryGuessingTypeWithoutDfa(PsiExpression place) {
+    List<PsiElement> exprsAndVars = getPotentiallyAffectingElements(place);
+    GuessTypeVisitor visitor = new GuessTypeVisitor(place);
+    for (PsiElement e : exprsAndVars) {
+      e.accept(visitor);
+      if (e == place || visitor.isDfaNeeded()) {
+        break;
+      }
+    }
+    return visitor;
+  }
+
+  private static List<PsiElement> getPotentiallyAffectingElements(PsiExpression place) {
+    PsiElement topmostBlock = getTopmostBlock(place);
+    return CachedValuesManager.getCachedValue(topmostBlock, () -> {
+      List<PsiElement> list = SyntaxTraverser.psiTraverser(topmostBlock).filter(e -> e instanceof PsiExpression || e instanceof PsiLocalVariable).toList();
+      return new CachedValueProvider.Result<>(list, topmostBlock);
+    });
   }
 
   @NotNull
@@ -393,16 +414,14 @@ public class GuessManagerImpl extends GuessManager {
     return GenericsUtil.getExpectedGenericType(expression, psiClass, (PsiClassType)expressionType);
   }
 
-  static class GuessTypeVisitor extends JavaRecursiveElementWalkingVisitor {
+  static class GuessTypeVisitor extends JavaElementVisitor {
     private final @NotNull PsiExpression myPlace;
     PsiType mySpecificType;
     private boolean myNeedDfa;
     private boolean myDeclared;
-    private final int myStart;
 
     GuessTypeVisitor(@NotNull PsiExpression place) {
       myPlace = place;
-      myStart = place.getTextRange().getStartOffset();
     }
 
     private void handleAssignment(@Nullable PsiExpression expression) {
@@ -418,7 +437,6 @@ public class GuessManagerImpl extends GuessManager {
       }
       else if (!mySpecificType.equals(rawType)) {
         myNeedDfa = true;
-        stopWalking();
       }
     }
 
@@ -441,9 +459,9 @@ public class GuessManagerImpl extends GuessManager {
 
     @Override
     public void visitTypeCastExpression(PsiTypeCastExpression expression) {
-      if (ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY.equals(expression.getOperand(), myPlace)) {
+      PsiExpression operand = expression.getOperand();
+      if (operand != null && ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY.equals(operand, myPlace)) {
         myNeedDfa = true;
-        stopWalking();
       }
       super.visitTypeCastExpression(expression);
     }
@@ -452,17 +470,8 @@ public class GuessManagerImpl extends GuessManager {
     public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
       if (ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY.equals(expression.getOperand(), myPlace)) {
         myNeedDfa = true;
-        stopWalking();
       }
       super.visitInstanceOfExpression(expression);
-    }
-
-    @Override
-    public void visitElement(PsiElement element) {
-      if (element.getTextRange().getStartOffset() > myStart) {
-        stopWalking();
-      }
-      super.visitElement(element);
     }
 
     public boolean isDfaNeeded() {
@@ -555,11 +564,11 @@ public class GuessManagerImpl extends GuessManager {
 
     @Override
     public DfaInstructionState[] visitPush(PushInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-      if (myForPlace == instruction.getPlace()) {
+      if (myForPlace == instruction.getExpression()) {
         addToResult(((ExpressionTypeMemoryState)memState).getStates());
       }
       DfaInstructionState[] states = super.visitPush(instruction, runner, memState);
-      if (myForPlace == instruction.getPlace()) {
+      if (myForPlace == instruction.getExpression()) {
         addConstraints(states);
       }
       return states;
@@ -568,7 +577,7 @@ public class GuessManagerImpl extends GuessManager {
     private void addConstraints(DfaInstructionState[] states) {
       for (DfaInstructionState state : states) {
         DfaMemoryState memoryState = state.getMemoryState();
-        if (myConstraint == TypeConstraint.EMPTY) return;
+        if (myConstraint == TypeConstraint.empty()) return;
         TypeConstraint constraint = memoryState.getValueFact(memoryState.peek(), DfaFactType.TYPE_CONSTRAINT);
         if (constraint == null) {
           constraint = myInitial;
@@ -576,7 +585,7 @@ public class GuessManagerImpl extends GuessManager {
         if (constraint != null) {
           myConstraint = myConstraint == null ? constraint : myConstraint.union(constraint);
           if (myConstraint == null) {
-            myConstraint = TypeConstraint.EMPTY;
+            myConstraint = TypeConstraint.empty();
             return;
           }
         }

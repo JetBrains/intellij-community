@@ -7,6 +7,7 @@ import com.intellij.lang.IdeLanguageCustomization;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -22,16 +23,13 @@ import java.util.Set;
 /**
  * Base class and extension point for common code style settings for a specific language.
  */
-public abstract class LanguageCodeStyleSettingsProvider {
+public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   public static final ExtensionPointName<LanguageCodeStyleSettingsProvider> EP_NAME =
     ExtensionPointName.create("com.intellij.langCodeStyleSettingsProvider");
 
   public enum SettingsType {
     BLANK_LINES_SETTINGS, SPACING_SETTINGS, WRAPPING_AND_BRACES_SETTINGS, INDENT_SETTINGS, COMMENTER_SETTINGS, LANGUAGE_SPECIFIC
   }
-
-  @NotNull
-  public abstract Language getLanguage();
 
   @Nullable
   public abstract String getCodeSample(@NotNull SettingsType settingsType);
@@ -125,6 +123,9 @@ public abstract class LanguageCodeStyleSettingsProvider {
     return provider != null ? provider.getRightMargin(settingsType) : -1;
   }
 
+  @NotNull
+  @Override
+  public abstract Language getLanguage();
 
   @Nullable
   public static Language getLanguage(String langName) {
@@ -158,7 +159,7 @@ public abstract class LanguageCodeStyleSettingsProvider {
    * @return Alternative UI name defined by provider.getLanguageName() method or (if the method returns null)
    *         language's own display name.
    */
-  @Nullable
+  @NotNull
   public static String getLanguageName(Language lang) {
     final LanguageCodeStyleSettingsProvider provider = forLanguage(lang);
     String providerLangName = provider != null ? provider.getLanguageName() : null;
@@ -274,12 +275,13 @@ public abstract class LanguageCodeStyleSettingsProvider {
   }
 
   /**
-   * Returns code documentation comment settings for the PSI file.
-   * @param file The file to return current document settings for.
-   * @return Documentation comment settings.
+   * Returns a wrapper around language's own code documentation comment settings from the given {@code rootSettings}.
+   * @param rootSettings Root code style setting to retrieve doc comment settings from.
+   * @return {@code DocCommentSettings} wrapper object object which allows to retrieve and modify language's own
+   *         settings related to doc comment. The object is used then by common platform doc comment handling algorithms.
    */
   @NotNull
-  public DocCommentSettings getDocCommentSettings(@NotNull PsiFile file) {
+  public DocCommentSettings getDocCommentSettings(@NotNull CodeStyleSettings rootSettings) {
     return DocCommentSettings.DEFAULTS;
   }
 
@@ -289,4 +291,28 @@ public abstract class LanguageCodeStyleSettingsProvider {
     return null;
   }
 
+  @NotNull
+  @Override
+  public Configurable createSettingsPage(CodeStyleSettings settings, CodeStyleSettings modelSettings) {
+    throw new RuntimeException(
+      this.getClass().getCanonicalName() + " for language #" + getLanguage().getID() + " doesn't implement createSettingsPage()");
+  }
+
+
+  /**
+   * @return A list of providers implementing {@link #createSettingsPage(CodeStyleSettings, CodeStyleSettings)}
+   */
+  public static List<LanguageCodeStyleSettingsProvider> getSettingsPagesProviders() {
+    List<LanguageCodeStyleSettingsProvider> settingsPagesProviders = ContainerUtil.newArrayList();
+    for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(EP_NAME)) {
+      try {
+        provider.getClass().getDeclaredMethod("createSettingsPage", CodeStyleSettings.class, CodeStyleSettings.class);
+        settingsPagesProviders.add(provider);
+      }
+      catch (NoSuchMethodException e) {
+        // Do not add the provider.
+      }
+    }
+    return settingsPagesProviders;
+  }
 }

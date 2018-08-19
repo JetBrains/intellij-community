@@ -2,10 +2,10 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.dnd.DnDAware;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
@@ -29,8 +29,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -120,7 +120,7 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (DATA_KEY.is(dataId)) {
       return this;
     }
@@ -141,7 +141,8 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
     }
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       VirtualFile file = getIfSingle(getNavigatableFiles());
-      return file != null && !file.isDirectory() ? new OpenFileDescriptor(myProject, file, 0) : null;
+      return file != null && !file.isDirectory() ? PsiNavigationSupport.getInstance()
+                                                                       .createNavigatable(myProject, file, 0) : null;
     }
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       return ChangesUtil.getNavigatableArray(myProject, getNavigatableFiles());
@@ -326,7 +327,7 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
 
   @Nullable
   public List<Change> getAllChangesFromSameChangelist(@NotNull Change change) {
-    DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(getRoot(), change);
+    DefaultMutableTreeNode node = findNodeInTree(change);
     while (node != null) {
       if (node instanceof ChangesBrowserChangeListNode) {
         return ((ChangesBrowserChangeListNode)node).getAllChangesUnder();
@@ -388,6 +389,20 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   @Override
   public void dropSelectionButUnderPoint(final Point point) {
     TreeUtil.dropSelectionButUnderPoint(this, point);
+  }
+
+  @Nullable
+  public DefaultMutableTreeNode findNodeInTree(Object userObject) {
+    if (userObject instanceof ChangeListChange) {
+      return TreeUtil.findNode(getRoot(), node -> ChangeListChange.HASHING_STRATEGY.equals(node.getUserObject(), userObject));
+    }
+    return TreeUtil.findNodeWithObject(getRoot(), userObject);
+  }
+
+  @Nullable
+  public TreePath findNodePathInTree(Object userObject) {
+    DefaultMutableTreeNode node = findNodeInTree(userObject);
+    return node != null ? TreeUtil.getPathFromRoot(node) : null;
   }
 
   private static class DistinctChangePredicate implements Predicate<Change> {

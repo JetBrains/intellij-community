@@ -6,6 +6,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -37,7 +38,6 @@ import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
-import com.intellij.ui.mac.touchbar.TouchBar;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.GraphicsUtil;
@@ -72,9 +72,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   private final List<Runnable> myDisposeActions = new ArrayList<>();
   private Project myProject;
   private ActionCallback myTypeAheadCallback;
-
-  private TouchBar myTouchBar;
-  private List<JButton> myTouchBarButtons;
 
   protected DialogWrapperPeerImpl(@NotNull DialogWrapper wrapper, @Nullable Project project, boolean canBeParent, @NotNull DialogWrapper.IdeModalityType ideModalityType) {
     boolean headless = isHeadlessEnv();
@@ -253,8 +250,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
           myDialog.remove(myDialog.getRootPane());
         }
       });
-
-      TouchBarsManager.closeTouchBar(myTouchBar, true);
     };
 
     UIUtil.invokeLaterIfNeeded(disposer);
@@ -395,7 +390,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     final AnCancelAction anCancelAction = new AnCancelAction();
     final JRootPane rootPane = getRootPane();
-    UIUtil.decorateFrame(rootPane);
+    UIUtil.decorateWindowHeader(rootPane);
     anCancelAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, rootPane);
     myDisposeActions.add(() -> anCancelAction.unregisterCustomShortcutSet(rootPane));
 
@@ -427,8 +422,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     myDialog.getWindow().setAutoRequestFocus(true);
 
-    if (myTouchBarButtons != null && myProject != null)
-      myTouchBar = TouchBarsManager.showDlgButtonsBar(myTouchBarButtons, myProject);
+    final Disposable tb = TouchBarsManager.showDialogWrapperButtons(myDialog.getContentPane());
+    if (tb != null)
+      myDisposeActions.add(() -> Disposer.dispose(tb));
 
     try {
       myDialog.show();
@@ -460,7 +456,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   private class AnCancelAction extends AnAction implements DumbAware {
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
       e.getPresentation().setEnabled(false);
       if (focusOwner instanceof JComponent && SpeedSearchBase.hasActiveSpeedSearch((JComponent)focusOwner)) {
@@ -497,7 +493,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myWrapper.doCancelAction(e.getInputEvent());
     }
   }
@@ -578,7 +574,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     }
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       final DialogWrapper wrapper = myDialogWrapper.get();
       if (wrapper instanceof DataProvider) {
         return ((DataProvider)wrapper).getData(dataId);
@@ -837,7 +833,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
       @Override
       public void windowActivated(final WindowEvent e) {
-        SwingUtilities.invokeLater(() -> {
           final DialogWrapper wrapper = getActiveWrapper();
           if (wrapper == null && !myFocusedCallback.isProcessed()) {
             myFocusedCallback.setRejected();
@@ -860,7 +855,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
           setupSelectionOnPreferredComponent(toFocus);
 
           if (toFocus != null) {
-            if (isShowing() && isActive()) {
+            if (isShowing()) {
              toFocus.requestFocus();
               notifyFocused(wrapper);
             }
@@ -872,7 +867,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
           if (myTypeAheadCallback != null) {
             myTypeAheadCallback.setDone();
           }
-        });
       }
 
       private void notifyFocused(DialogWrapper wrapper) {
@@ -970,7 +964,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
 
       @Override
-      public Object getData(@NonNls String dataId) {
+      public Object getData(@NotNull @NonNls String dataId) {
         final DialogWrapper wrapper = myDialogWrapper.get();
         return wrapper != null && PlatformDataKeys.UI_DISPOSABLE.is(dataId) ? wrapper.getDisposable() : null;
       }
@@ -1004,12 +998,5 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
   public void setAutoRequestFocus(boolean b) {
     UIUtil.setAutoRequestFocus((JDialog)myDialog, b);
-  }
-
-  @Override
-  public void setTouchBarButtons(List<JButton> buttons) {
-    if (!TouchBarsManager.isTouchBarAvailable())
-      return;
-    myTouchBarButtons = buttons;
   }
 }

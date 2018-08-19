@@ -35,7 +35,7 @@ public class SelectFromListDialog extends DialogWrapper {
   private final DefaultListModel myModel = new DefaultListModel();
   private final JList myList = new JBList(myModel);
   private final JPanel myMainPanel = new JPanel(new BorderLayout());
-  
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.SelectFromListDialog");
 
   public SelectFromListDialog(Project project,
@@ -53,6 +53,7 @@ public class SelectFromListDialog extends DialogWrapper {
     }
 
     myList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         setOKActionEnabled(myList.getSelectedValues().length > 0);
       }
@@ -61,6 +62,7 @@ public class SelectFromListDialog extends DialogWrapper {
     myList.setSelectedIndex(0);
 
     myList.setCellRenderer(new ColoredListCellRenderer(){
+      @Override
       protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
         append(myToStringAspect.getToStirng(value),
                new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, list.getForeground()));
@@ -71,11 +73,12 @@ public class SelectFromListDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     myMainPanel.add(ScrollPaneFactory.createScrollPane(myList), BorderLayout.CENTER);
     return myMainPanel;
   }
-  
+
   public void addToDialog(JComponent userComponent, @NotNull String borderLayoutConstraints) {
     LOG.assertTrue(!borderLayoutConstraints.equals(BorderLayout.CENTER), "Can't add any component to center");
     myMainPanel.add(userComponent, borderLayoutConstraints);
@@ -97,6 +100,7 @@ public class SelectFromListDialog extends DialogWrapper {
     return myList.getSelectedValues();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myList;
   }

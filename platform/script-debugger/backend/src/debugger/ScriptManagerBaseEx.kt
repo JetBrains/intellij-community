@@ -23,7 +23,7 @@ import java.util.concurrent.ConcurrentMap
 abstract class ScriptManagerBaseEx<SCRIPT : ScriptBase> : ScriptManagerBase<SCRIPT>() {
   protected val idToScript: ConcurrentMap<String, SCRIPT> = ContainerUtil.newConcurrentMap<String, SCRIPT>()
 
-  override final fun forEachScript(scriptProcessor: (Script) -> Boolean) {
+  final override fun forEachScript(scriptProcessor: (Script) -> Boolean) {
     for (script in idToScript.values) {
       if (!scriptProcessor(script)) {
         return
@@ -31,22 +31,19 @@ abstract class ScriptManagerBaseEx<SCRIPT : ScriptBase> : ScriptManagerBase<SCRI
     }
   }
 
-  override final fun findScriptById(id: String): SCRIPT? = idToScript[id]
+  final override fun findScriptById(id: String): SCRIPT? = idToScript[id]
 
   fun clear(listener: DebugEventListener) {
     idToScript.clear()
     listener.scriptsCleared()
   }
 
-  override final fun findScriptByUrl(rawUrl: String): SCRIPT? = findScriptByUrl(rawUrlToOurUrl(rawUrl))
+  final override fun findScriptByUrl(rawUrl: String): SCRIPT? = findScriptByUrl(rawUrlToOurUrl(rawUrl))
 
-  override final fun findScriptByUrl(url: Url): SCRIPT? {
-    for (script in idToScript.values) {
-      if (url.equalsIgnoreParameters(script.url)) {
-        return script
-      }
-    }
-    return null
+  final override fun findScriptByUrl(url: Url): SCRIPT? {
+    return idToScript.values.find { url == it.url }
+           // TODO Searching ignoring parameters may be fragile, because parameters define script e.g. in webpack. Consider dropping it.
+           ?: idToScript.values.find { url.equalsIgnoreParameters(it.url) }
   }
 
   open fun rawUrlToOurUrl(rawUrl: String): Url = Urls.parseEncoded(rawUrl)!!

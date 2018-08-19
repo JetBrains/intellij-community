@@ -11,6 +11,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class EnterBetweenBracesNoCommitDelegate extends EnterBetweenBracesDelegate {
+  @Override
   public boolean bracesAreInTheSameElement(@NotNull PsiFile file, @NotNull Editor editor, int lBraceOffset, int rBraceOffset) {
     final HighlighterIterator it = createBeforeIterator((EditorEx)editor, lBraceOffset + 1);
     while(!it.atEnd() && it.getStart() < rBraceOffset) {
@@ -22,6 +23,7 @@ public abstract class EnterBetweenBracesNoCommitDelegate extends EnterBetweenBra
     return true;
   }
 
+  @Override
   public boolean isInComment(@NotNull PsiFile file, @NotNull Editor editor, int offset) {
     final HighlighterIterator it = createBeforeIterator((EditorEx)editor, offset);
     return !it.atEnd() && isCommentType(it.getTokenType());
@@ -29,6 +31,7 @@ public abstract class EnterBetweenBracesNoCommitDelegate extends EnterBetweenBra
 
   public abstract boolean isCommentType(IElementType type);
 
+  @Override
   protected void formatAtOffset(@NotNull PsiFile file, @NotNull Editor editor, int offset, Language language) {
     EnterHandler.adjustLineIndentNoCommit(language,
                                           editor.getDocument(),

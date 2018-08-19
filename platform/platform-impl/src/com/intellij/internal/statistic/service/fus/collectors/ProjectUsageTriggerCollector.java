@@ -8,17 +8,22 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.Set;
-// see example:
-// class MyProjectActionUsageTriggerCollector: ProjectUsageTriggerCollector() {
-//  override fun getGroupId(): String = MY_GROUP_ID
-//
-//  companion object {
-//    fun trigger(project: Project, featureId: String) {
-//      FUSProjectUsageTrigger.getInstance(project).trigger(MyProjectActionUsageTriggerCollector::class.java, featureId)
-//    }}}
-//
-//  and invoke it:  MyProjectActionUsageTriggerCollector.trigger(project, "my.action.performed")
 
+/**
+ * See example:
+ * <pre>{@code
+ * class MyProjectActionUsageTriggerCollector: ProjectUsageTriggerCollector() {
+ *   override fun getGroupId(): String = MY_GROUP_ID
+
+ *   companion object {
+ *     fun trigger(project: Project, featureId: String) {
+ *       FUSProjectUsageTrigger.getInstance(project).trigger(MyProjectActionUsageTriggerCollector::class.java, featureId)
+ *     }
+ *   }
+ * }
+ * }</pre>
+ * and invoke it: {@code MyProjectActionUsageTriggerCollector.trigger(project, "my.action.performed")}
+ */
 public abstract class ProjectUsageTriggerCollector extends ProjectUsagesCollector implements FUStatisticsDifferenceSender {
   @NotNull
   @Override

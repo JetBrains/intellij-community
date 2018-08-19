@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.parser;
 
 import com.intellij.lang.ASTNode;
@@ -12,6 +13,8 @@ import org.jetbrains.yaml.YAMLBundle;
 import org.jetbrains.yaml.YAMLElementTypes;
 import org.jetbrains.yaml.YAMLTokenTypes;
 
+import java.util.List;
+
 /**
  * @author oleg
  */
@@ -25,6 +28,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
 
   private final Stack<TokenSet> myStopTokensStack = new Stack<>();
 
+  @Override
   @NotNull
   public ASTNode parse(@NotNull final IElementType root, @NotNull final PsiBuilder builder) {
     myBuilder = builder;
@@ -37,13 +41,19 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
   }
 
   private void parseFile() {
+    PsiBuilder.Marker marker = mark();
     passJunk();
-    parseDocument();
-    passJunk();
-    while (!myBuilder.eof()) {
+    if (myBuilder.getTokenType() != DOCUMENT_MARKER) {
+      dropEolMarker();
+      marker.rollbackTo();
+    }
+    else {
+      marker.drop();
+    }
+    do {
       parseDocument();
       passJunk();
-    }
+    } while (!myBuilder.eof());
     dropEolMarker();
   }
 
@@ -52,20 +62,28 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
     if (myBuilder.getTokenType() == DOCUMENT_MARKER) {
       advanceLexer();
     }
-    parseBlockNode(0, false);
+    parseBlockNode(myIndent, false);
     dropEolMarker();
     marker.done(YAMLElementTypes.DOCUMENT);
   }
 
   private void parseBlockNode(int indent, boolean insideSequence) {
-    passJunk();
+    // Preserve most test and current behaviour for most general cases without comments
+    if (getTokenType() == EOL) {
+      advanceLexer();
+      if (getTokenType() == INDENT) {
+        advanceLexer();
+      }
+    }
 
     final PsiBuilder.Marker marker = mark();
+    passJunk();
+
     PsiBuilder.Marker endOfNodeMarker = null;
     IElementType nodeType = null;
 
 
-    // It looks like tag for a block node should be located on a separate line 
+    // It looks like tag for a block node should be located on a separate line
     if (getTokenType() == YAMLTokenTypes.TAG && myBuilder.lookAhead(1) == YAMLTokenTypes.EOL) {
       advanceLexer();
     }
@@ -83,7 +101,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
       }
 
       numberOfItems++;
-      final IElementType parsedTokenType = parseSingleStatement(eolSeen ? myIndent : indent);
+      final IElementType parsedTokenType = parseSingleStatement(eolSeen ? myIndent : indent, indent);
       if (nodeType == null) {
         if (parsedTokenType == YAMLElementTypes.SEQUENCE_ITEM) {
           nodeType = YAMLElementTypes.SEQUENCE;
@@ -109,11 +127,48 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
     else {
       rollBackToEol();
     }
+
+    includeBlockEmptyTail(indent);
+
     if (nodeType != null) {
       marker.done(nodeType);
+      marker.setCustomEdgeTokenBinders(
+        (tokens, atStreamEdge, getter) -> findLeftRange(tokens),
+        (tokens, atStreamEdge, getter) -> tokens.size());
     }
     else {
       marker.drop();
+    }
+  }
+
+  private void includeBlockEmptyTail(int indent) {
+    if (indent == 0) {
+      // top-level block with zero indent
+      while (isJunk()) {
+        if (getTokenType() == EOL) {
+          if (!YAMLElementTypes.BLANK_ELEMENTS.contains(myBuilder.lookAhead(1))) {
+            // do not include last \n into block
+            break;
+          }
+        }
+        advanceLexer();
+        dropEolMarker();
+      }
+    }
+    else {
+      PsiBuilder.Marker endOfBlock = mark();
+      while (isJunk()) {
+        if (getTokenType() == INDENT && getCurrentTokenLength() >= indent) {
+            dropEolMarker();
+            endOfBlock.drop();
+            advanceLexer();
+            endOfBlock = mark();
+        } else {
+          advanceLexer();
+          dropEolMarker();
+        }
+      }
+      endOfBlock.rollbackTo();
     }
   }
 
@@ -144,7 +199,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
   }
 
   @Nullable
-  private IElementType parseSingleStatement(int indent) {
+  private IElementType parseSingleStatement(int indent, int minIndent) {
     if (eof()) {
       return null;
     }
@@ -170,7 +225,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
       nodeType = parseScalarKeyValue(indent);
     }
     else if (YAMLElementTypes.SCALAR_VALUES.contains(getTokenType())) {
-      nodeType = parseScalarValue(indent);
+      nodeType = parseScalarValue(minIndent);
     }
     else if (tokenType == STAR) {
       advanceLexer(); // symbol *
@@ -360,8 +415,6 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
       myStopTokensStack.add(TokenSet.create(COLON));
       eolSeen = false;
 
-      passJunk();
-
       parseBlockNode(indent + indentAddition, false);
 
       myStopTokensStack.pop();
@@ -388,6 +441,9 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
     int indentAddition = getShorthandIndentAddition();
     advanceLexer();
 
+    assert getTokenType() == COLON : "Expected colon";
+    advanceLexer();
+
     final PsiBuilder.Marker rollbackMarker = mark();
 
     passJunk();
@@ -396,7 +452,8 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
       rollbackMarker.rollbackTo();
     }
     else {
-      rollbackMarker.drop();
+      dropEolMarker();
+      rollbackMarker.rollbackTo();
       parseBlockNode(indent + indentAddition, false);
     }
 
@@ -410,7 +467,6 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
     int indentAddition = getShorthandIndentAddition();
     advanceLexer();
     eolSeen = false;
-    passJunk();
 
     parseBlockNode(indent + indentAddition, true);
     rollBackToEol();
@@ -428,7 +484,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
         advanceLexer();
         break;
       }
-      parseSingleStatement(0);
+      parseSingleStatement(0, 0);
     }
 
     myStopTokensStack.pop();
@@ -453,7 +509,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
       }
 
       final PsiBuilder.Marker marker = mark();
-      final IElementType parsedElement = parseSingleStatement(0);
+      final IElementType parsedElement = parseSingleStatement(0, 0);
       if (parsedElement != null) {
         marker.done(YAMLElementTypes.SEQUENCE_ITEM);
       }
@@ -535,5 +591,10 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
   private boolean isJunk() {
     final IElementType type = getTokenType();
     return type == INDENT || type == EOL;
+  }
+
+  private static int findLeftRange(@NotNull List<IElementType> tokens) {
+    int i = tokens.indexOf(COMMENT);
+    return i != -1 ? i : tokens.size();
   }
 }

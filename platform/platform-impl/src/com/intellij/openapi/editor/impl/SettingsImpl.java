@@ -349,17 +349,6 @@ public class SettingsImpl implements EditorSettings {
    * @deprecated use {@link com.intellij.openapi.editor.EditorKind}
    */
   @Deprecated
-  public void setSoftWrapAppliancePlace(SoftWrapAppliancePlaces softWrapAppliancePlace) {
-    if (softWrapAppliancePlace != mySoftWrapAppliancePlace) {
-      mySoftWrapAppliancePlace = softWrapAppliancePlace;
-      fireEditorRefresh();
-    }
-  }
-
-  /**
-   * @deprecated use {@link com.intellij.openapi.editor.EditorKind}
-   */
-  @Deprecated
   public SoftWrapAppliancePlaces getSoftWrapAppliancePlace() {
     return mySoftWrapAppliancePlace;
   }
@@ -386,30 +375,32 @@ public class SettingsImpl implements EditorSettings {
   @Override
   public int getTabSize(Project project) {
     if (myTabSize != null) return myTabSize.intValue();
-    if (myCachedTabSize != null) return myCachedTabSize.intValue();
-    int tabSize;
-    try {
-      if (project == null || project.isDisposed()) {
-        tabSize = CodeStyle.getDefaultSettings().getTabSize(null);
-      }
-      else  {
-        PsiFile file = getPsiFile(project);
-        if (myEditor != null && myEditor.isViewer()) {
-          FileType fileType = file != null ? file.getFileType() : null;
-          tabSize = CodeStyle.getSettings(project).getIndentOptions(fileType).TAB_SIZE;
-        } else {
-          tabSize = file != null ?
-                    CodeStyle.getIndentOptions(file).TAB_SIZE :
-                    CodeStyle.getSettings(project).getTabSize(null);
+    if (myCachedTabSize == null) {
+      int tabSize;
+      try {
+        if (project == null || project.isDisposed()) {
+          tabSize = CodeStyle.getDefaultSettings().getTabSize(null);
+        }
+        else {
+          PsiFile file = getPsiFile(project);
+          if (myEditor != null && myEditor.isViewer()) {
+            FileType fileType = file != null ? file.getFileType() : null;
+            tabSize = CodeStyle.getSettings(project).getIndentOptions(fileType).TAB_SIZE;
+          }
+          else {
+            tabSize = file != null ?
+                      CodeStyle.getIndentOptions(file).TAB_SIZE :
+                      CodeStyle.getSettings(project).getTabSize(null);
+          }
         }
       }
+      catch (Exception e) {
+        LOG.error("Error determining tab size", e);
+        tabSize = new CommonCodeStyleSettings.IndentOptions().TAB_SIZE;
+      }
+      myCachedTabSize = Integer.valueOf(Math.max(1, tabSize));
     }
-    catch (Exception e) {
-      LOG.error("Error determining tab size", e);
-      tabSize = new CommonCodeStyleSettings.IndentOptions().TAB_SIZE;
-    }
-    myCachedTabSize = Integer.valueOf(Math.max(1, tabSize));
-    return tabSize;
+    return myCachedTabSize;
   }
 
   @Nullable

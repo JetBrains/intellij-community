@@ -105,6 +105,7 @@ public class EqualsBetweenInconvertibleTypesInspection extends BaseInspection {
       deepCheck(lhsType, rhsType, expression.getOperationSign(), new HashMap<>());
     }
 
+    @Override
     void checkTypes(@NotNull PsiReferenceExpression expression, @NotNull PsiType leftType, @NotNull PsiType rightType) {
       PsiElement name = expression.getReferenceNameElement();
       if (name == null) {

@@ -16,10 +16,17 @@
 package com.intellij.testFramework.propertyBased;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author peter
@@ -37,13 +44,32 @@ public class IntentionPolicy {
    * </li> 
    */
   public boolean mayInvokeIntention(@NotNull IntentionAction action) {
-    return action.startInWriteAction() && !shouldSkipIntention(action.getText());
+    if (!action.startInWriteAction() || shouldSkipIntention(action.getText())) {
+      return false;
+    }
+    IntentionAction original = action;
+    while (original instanceof IntentionActionDelegate) {
+      original = ((IntentionActionDelegate)original).getDelegate();
+    }
+    String familyName;
+    if (original instanceof QuickFixWrapper) {
+      LocalQuickFix fix = ((QuickFixWrapper)original).getFix();
+      familyName = fix.getFamilyName();
+    }
+    else {
+      familyName = original.getFamilyName();
+    }
+    return !shouldSkipByFamilyName(familyName);
   }
 
   protected boolean shouldSkipIntention(@NotNull String actionText) {
     return actionText.startsWith("Typo: Change to...") || // doesn't change file text (starts live template);
            actionText.startsWith("Optimize imports") || // https://youtrack.jetbrains.com/issue/IDEA-173801
            actionText.startsWith("Convert to project line separators"); // changes VFS, not document
+  }
+
+  protected boolean shouldSkipByFamilyName(@NotNull String familyName) {
+    return false;
   }
 
   /**
@@ -62,4 +88,28 @@ public class IntentionPolicy {
   public boolean trackComment(PsiComment comment) {
     return true;
   }
+
+  /**
+   * Return list of elements which could be wrapped with {@linkplain #getWrapPrefix() wrap prefix} and
+   * {@linkplain #getWrapSuffix()} wrap suffix} without changing the available intentions.
+   *
+   * @param currentElement an element caret is positioned at
+   * @return list of elements which could be wrapped. One of them will be selected and wrapped and it will be checked that no intentions
+   * changed. Returns an empty list by default which means that no wrapping should be performed
+   */
+  @NotNull
+  public List<PsiElement> getElementsToWrap(@NotNull PsiElement currentElement) {
+    return Collections.emptyList();
+  }
+
+  /**
+   * @return a wrap prefix for {@link #getElementsToWrap(PsiElement)}.
+   */
+  @NotNull
+  public String getWrapPrefix() { return "";}
+
+  /**
+   * @return a wrap suffix for {@link #getElementsToWrap(PsiElement)}.
+   */
+  public String getWrapSuffix() { return "";}
 }

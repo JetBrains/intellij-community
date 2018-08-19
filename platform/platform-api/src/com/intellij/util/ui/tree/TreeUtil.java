@@ -120,7 +120,7 @@ public final class TreeUtil {
   /**
    * Expands specified paths.
    * @param tree JTree to apply expansion status to
-   * @param paths to expand. See {@link #collectExpandedPaths(javax.swing.JTree, java.util.List)}
+   * @param paths to expand. See {@link #collectExpandedPaths(JTree, TreePath)}
    */
   public static void restoreExpandedPaths(@NotNull final JTree tree, @NotNull final List<TreePath> paths){
     for(int i = paths.size() - 1; i >= 0; i--){
@@ -744,14 +744,6 @@ public final class TreeUtil {
     ((DefaultTreeModel)tree.getModel()).removeNodeFromParent(treeNode);
     ((DefaultTreeModel)tree.getModel()).insertNodeInto(treeNode, parent, idx + direction);
     selectNode(tree, treeNode);
-  }
-
-  /**
-   * @deprecated use {@link #listChildren(TreeNode)} instead
-   */
-  @NotNull
-  public static ArrayList<TreeNode> childrenToArray(@NotNull TreeNode node) {
-    return (ArrayList<TreeNode>)listChildren(node);
   }
 
   @NotNull

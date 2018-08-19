@@ -16,18 +16,15 @@
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.Location;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.psi.util.PsiModificationTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * A parser for location URLs reported by test runners.
@@ -62,28 +59,13 @@ public interface SMTestLocator {
     return Collections.emptyList();
   }
 
-  /** @deprecated consoles should provide specific locators; the implementation is trivial (to be removed in IDEA 18) */
-  class Composite implements SMTestLocator, DumbAware {
-    private final Map<String, ? extends SMTestLocator> myLocators;
-
-    public Composite(@NotNull Pair<String, ? extends SMTestLocator> first, @NotNull Pair<String, ? extends SMTestLocator>... rest) {
-      myLocators = ContainerUtil.newHashMap(first, rest);
-    }
-
-    public Composite(@NotNull Map<String, ? extends SMTestLocator> locators) {
-      myLocators = ContainerUtil.newHashMap(locators);
-    }
-
-    @NotNull
-    @Override
-    public List<Location> getLocation(@NotNull String protocol, @NotNull String path, @NotNull Project project, @NotNull GlobalSearchScope scope) {
-      SMTestLocator locator = myLocators.get(protocol);
-
-      if (locator != null && (!DumbService.isDumb(project) || DumbService.isDumbAware(locator))) {
-        return locator.getLocation(protocol, path, project, scope);
-      }
-
-      return Collections.emptyList();
-    }
+  /**
+   * @param project Project instance
+   * @return ModificationTracker instance used to cache result of {{@link #getLocation(String, String, Project, GlobalSearchScope)}};
+   *         To disable caching, override and return {@link ModificationTracker#EVER_CHANGED}.
+   */
+  @NotNull
+  default ModificationTracker getLocationCacheModificationTracker(@NotNull Project project) {
+    return PsiModificationTracker.SERVICE.getInstance(project); // invalidates cache on entering/exiting dumb mode
   }
 }

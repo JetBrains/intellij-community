@@ -31,6 +31,8 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +45,13 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
     IElementType elementType = element.getElementType();
     if ((elementType == JavaElementType.JAVA_CODE_REFERENCE || elementType == JavaElementType.REFERENCE_EXPRESSION) && !isAnnotated(element)) {
       IElementType parentType = element.getTreeParent().getElementType();
+      if (elementType == JavaElementType.REFERENCE_EXPRESSION) {
+        PsiReferenceExpression ref = (PsiReferenceExpression)element.getPsi();
+        if (ImportUtils.isAlreadyStaticallyImported(ref)) {
+          deQualifyImpl((PsiQualifiedReferenceElement)element);
+          return element;
+        }
+      }
       if (elementType == JavaElementType.JAVA_CODE_REFERENCE || incompleteCode ||
           parentType == JavaElementType.REFERENCE_EXPRESSION || parentType == JavaElementType.METHOD_REF_EXPRESSION) {
         PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)element.getPsi();
@@ -239,7 +248,7 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
         return reference;
       }
 
-      if (!JavaCodeStyleSettings.getInstance(reference.getContainingFile()).INSERT_INNER_CLASS_IMPORTS) {
+        if (!JavaCodeStyleSettings.getInstance(reference.getContainingFile()).isInsertInnerClassImportsFor(refClass.getName())) {
         final PsiElement qualifier = reference.getQualifier();
         if (qualifier instanceof PsiQualifiedReferenceElement) {
           return getClassReferenceToShorten(parentClass, addImports, (PsiQualifiedReferenceElement)qualifier);
@@ -283,18 +292,20 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
   private static ASTNode replaceReferenceWithShort(PsiQualifiedReferenceElement reference) {
     ASTNode node = reference.getNode();
     assert node != null;
-    deQualifyImpl((CompositeElement)node);
+    deQualifyImpl(reference);
     return node;
   }
 
-  private static void deQualifyImpl(@NotNull CompositeElement reference) {
-    ASTNode qualifier = reference.findChildByRole(ChildRole.QUALIFIER);
+  private static void deQualifyImpl(PsiQualifiedReferenceElement reference) {
+    PsiElement qualifier = reference.getQualifier();
     if (qualifier != null) {
-      ASTNode firstChildNode = qualifier.getFirstChildNode();
+      ASTNode qNode = qualifier.getNode();
+      if (qNode == null) return;
+      ASTNode firstChildNode = qNode.getFirstChildNode();
       boolean markToReformatBefore = firstChildNode instanceof TreeElement && CodeEditUtil.isMarkedToReformatBefore((TreeElement)firstChildNode);
-      reference.deleteChildInternal(qualifier);
+      new CommentTracker().deleteAndRestoreComments(qualifier);
       if (markToReformatBefore) {
-        firstChildNode = reference.getFirstChildNode();
+        firstChildNode = reference.getNode().getFirstChildNode();
         if (firstChildNode != null) {
           CodeEditUtil.markToReformatBefore(firstChildNode, true);
         }

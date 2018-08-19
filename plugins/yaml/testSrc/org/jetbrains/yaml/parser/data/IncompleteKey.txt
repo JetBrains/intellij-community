@@ -2,12 +2,14 @@ YAML file
   YAML document
     YAML mapping
       YAML key value
-        PsiElement(scalar key)('logging:')
+        PsiElement(scalar key)('logging')
+        PsiElement(:)(':')
         PsiElement(Eol)('\n')
         PsiElement(indent)('  ')
         YAML mapping
           YAML key value
-            PsiElement(scalar key)('config:')
+            PsiElement(scalar key)('config')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML plain scalar text
               PsiElement(text)('bla')

@@ -46,6 +46,7 @@ import javax.swing.JEditorPane
 import javax.swing.JTextArea
 import javax.swing.SwingUtilities
 import javax.swing.border.LineBorder
+import javax.swing.border.TitledBorder
 
 /** Debug color for component bounds outline.
  */
@@ -211,7 +212,7 @@ internal open class SwingComponentWrapper(private val c: JComponent) : Component
     }
 
     val border = component.border ?: return null
-    if (border is LineBorder) {
+    if (border is LineBorder || border is TitledBorder) {
       return null
     }
 

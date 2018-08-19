@@ -68,7 +68,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
   private Balloon myReplacementBalloon;
 
   @Override
-  public void selectionChanged(SelectionEvent e) {
+  public void selectionChanged(@NotNull SelectionEvent e) {
     updateInSelectionHighlighters();
   }
 

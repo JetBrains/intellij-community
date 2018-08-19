@@ -24,13 +24,15 @@ class GrMethodReferenceExpressionImpl(node: ASTNode) : GrReferenceExpressionImpl
     return TypeInferenceHelper.getCurrentContext().resolve(this, incomplete, GrMethodReferenceResolver)
   }
 
+  override fun getSameNameVariants(): Array<out GroovyResolveResult> = multiResolve(true)
+
   override fun getType(): PsiType? = TypeInferenceHelper.getCurrentContext().getExpressionType(this, ::getTypeFromCalculators)
 
   override fun getNominalType(): PsiType? = type
 
   override fun hasMemberPointer(): Boolean = true
 
-  override fun handleElementRename(newElementName: String?): PsiElement {
+  override fun handleElementRename(newElementName: String): PsiElement {
     if (referenceName == CONSTRUCTOR_REFERENCE_NAME && resolvesToConstructors()) {
       return this // don't update reference name
     }

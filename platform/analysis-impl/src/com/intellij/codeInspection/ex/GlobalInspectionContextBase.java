@@ -130,11 +130,6 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   }
 
   @Override
-  public boolean isSuppressed(@NotNull RefEntity entity, @NotNull String id) {
-    return entity instanceof RefElementImpl && ((RefElementImpl)entity).isSuppressed(id);
-  }
-
-  @Override
   public boolean shouldCheck(@NotNull RefEntity entity, @NotNull GlobalInspectionTool tool) {
     return !(entity instanceof RefElementImpl) || isToCheckMember((RefElementImpl)entity, tool);
   }

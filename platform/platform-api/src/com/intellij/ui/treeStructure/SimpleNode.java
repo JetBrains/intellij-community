@@ -52,6 +52,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
     this(parent == null ? null : parent.myProject, parent);
   }
 
+  @Override
   public PresentableNodeDescriptor getChildToHighlightAt(int index) {
     return getChildAt(index);
   }
@@ -64,6 +65,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
     return getName();
   }
 
+  @Override
   public int getWeight() {
     return 10;
   }
@@ -85,6 +87,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
     return getElement();
   }
 
+  @Override
   protected void update(PresentationData presentation) {
     Object newElement = updateElement();
     if (getElement() != newElement) {
@@ -125,6 +128,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
    * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
    * or update presentation dynamically by defining {@link #update(com.intellij.ide.projectView.PresentationData)}
    */
+  @Deprecated
   public final void setNodeText(String text, String tooltip, boolean hasError) {
     clearColoredText();
     SimpleTextAttributes attributes = hasError ? getErrorAttributes() : getPlainAttributes();
@@ -135,6 +139,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
    * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
    * or update presentation dynamically by defining {@link #update(com.intellij.ide.projectView.PresentationData)}
    */
+  @Deprecated
   public final void setPlainText(String aText) {
     clearColoredText();
     addPlainText(aText);
@@ -144,6 +149,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
    * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
    * or update presentation dynamically by defining {@link #update(com.intellij.ide.projectView.PresentationData)}
    */
+  @Deprecated
   public final void addPlainText(String aText) {
     getTemplatePresentation().addText(new ColoredFragment(aText, getPlainAttributes()));
   }
@@ -152,6 +158,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
    * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
    * or update presentation dynamically by defining {@link #update(com.intellij.ide.projectView.PresentationData)}
    */
+  @Deprecated
   public final void addErrorText(String aText, String errorTooltipText) {
     getTemplatePresentation().addText(new ColoredFragment(aText, errorTooltipText, getErrorAttributes()));
   }
@@ -160,6 +167,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
    * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
    * or update presentation dynamically by defining {@link #update(com.intellij.ide.projectView.PresentationData)}
    */
+  @Deprecated
   public final void clearColoredText() {
     getTemplatePresentation().clearText();
   }
@@ -168,6 +176,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
    * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
    * or update presentation dynamically by defining {@link #update(com.intellij.ide.projectView.PresentationData)}
    */
+  @Deprecated
   public final void addColoredFragment(String aText, SimpleTextAttributes aAttributes) {
     addColoredFragment(aText, null, aAttributes);
   }
@@ -176,6 +185,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
    * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
    * or update presentation dynamically by defining {@link #update(com.intellij.ide.projectView.PresentationData)}
    */
+  @Deprecated
   public final void addColoredFragment(String aText, String toolTip, SimpleTextAttributes aAttributes) {
     getTemplatePresentation().addText(new ColoredFragment(aText, toolTip, aAttributes));
   }
@@ -184,6 +194,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
    * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
    * or update presentation dynamically by defining {@link #update(com.intellij.ide.projectView.PresentationData)}
    */
+  @Deprecated
   public final void addColoredFragment(ColoredFragment fragment) {
     getTemplatePresentation().addText(new ColoredFragment(fragment.getText(), fragment.getAttributes()));
   }
@@ -191,6 +202,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
   protected void doUpdate() {
   }
 
+  @Override
   public Object getElement() {
     return this;
   }
@@ -241,6 +253,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
    * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
    * or update presentation dynamically by defining {@link #update(com.intellij.ide.projectView.PresentationData)}
    */
+  @Deprecated
   public void setUniformIcon(Icon aIcon) {
     setIcon(aIcon);
   }
@@ -248,11 +261,13 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
   /**
    * @deprecated never called by Tree classes
    */
+  @Deprecated
   public final ColoredFragment[] getColoredText() {
     final List<ColoredFragment> list = getTemplatePresentation().getColoredText();
     return list.toArray(new ColoredFragment[0]);
   }
 
+  @Override
   @NotNull
   public Object[] getEqualityObjects() {
     return NONE;

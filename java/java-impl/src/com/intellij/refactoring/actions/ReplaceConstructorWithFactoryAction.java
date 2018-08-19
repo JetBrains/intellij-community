@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
  * @author dsl
  */
 public class ReplaceConstructorWithFactoryAction extends BaseRefactoringAction {
+  @Override
   protected boolean isAvailableInEditorOnly() {
     return false;
   }
@@ -55,6 +56,7 @@ public class ReplaceConstructorWithFactoryAction extends BaseRefactoringAction {
     return element instanceof PsiClass && !((PsiClass)element).isEnum();
   }
 
+  @Override
   protected RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     return new ReplaceConstructorWithFactoryHandler();
   }

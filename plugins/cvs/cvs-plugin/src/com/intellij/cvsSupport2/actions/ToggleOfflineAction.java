@@ -27,9 +27,11 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 public class ToggleOfflineAction extends ToggleAction implements DumbAware {
 
+  @Override
   public boolean isSelected(AnActionEvent e) {
     CvsContext cvsContext = CvsContextWrapper.createInstance(e);
     if (!cvsContext.cvsIsActive()) return false;
@@ -43,6 +45,7 @@ public class ToggleOfflineAction extends ToggleAction implements DumbAware {
     return settings.isOffline();
   }
 
+  @Override
   public void setSelected(AnActionEvent e, boolean state) {
     CvsContext cvsContext = CvsContextWrapper.createInstance(e);
     final CvsEntriesManager entriesManager = CvsEntriesManager.getInstance();
@@ -65,7 +68,7 @@ public class ToggleOfflineAction extends ToggleAction implements DumbAware {
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     super.update(e);
     CvsContext cvsContext = CvsContextWrapper.createInstance(e);
     final VirtualFile[] files = cvsContext.getSelectedFiles();

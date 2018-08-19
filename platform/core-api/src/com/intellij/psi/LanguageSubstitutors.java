@@ -19,7 +19,7 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -107,7 +107,7 @@ public final class LanguageSubstitutors extends LanguageExtension<LanguageSubsti
   private static void requestReparsing(@NotNull VirtualFile file, @NotNull Language prevLang, @NotNull Language substitutedLang) {
     ourReparsingRequests.put(file, new SubstitutionInfo(prevLang, substitutedLang));
     if (REQUESTS_DRAIN_NEEDED.compareAndSet(true, false)) {
-      ApplicationManager.getApplication().invokeLater(() -> {
+      TransactionGuard.getInstance().submitTransactionLater(ApplicationManager.getApplication(), () -> {
         REQUESTS_DRAIN_NEEDED.set(true);
         List<Map.Entry<VirtualFile, SubstitutionInfo>> set = ContainerUtil.newArrayList(ourReparsingRequests.entrySet());
         List<VirtualFile> files = ContainerUtil.newArrayListWithCapacity(set.size());
@@ -125,7 +125,7 @@ public final class LanguageSubstitutors extends LanguageExtension<LanguageSubsti
         if (files.size() > 0) {
           FileContentUtilCore.reparseFiles(files);
         }
-      }, ModalityState.defaultModalityState());
+      });
     }
   }
 

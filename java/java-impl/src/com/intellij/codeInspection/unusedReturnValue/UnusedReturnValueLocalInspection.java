@@ -52,6 +52,7 @@ public class UnusedReturnValueLocalInspection extends AbstractBaseJavaLocalInspe
         method.hasModifierProperty(PsiModifier.NATIVE) ||
         MethodUtils.hasSuper(method) ||
         RefUtil.isImplicitRead(method) ||
+        UnusedReturnValue.canIgnoreReturnValue(method) ||
         UnusedDeclarationInspectionBase.isDeclaredAsEntryPoint(method)) return null;
 
     final boolean[] atLeastOneUsageExists = new boolean[]{false};

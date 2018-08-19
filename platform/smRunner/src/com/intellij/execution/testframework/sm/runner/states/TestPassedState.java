@@ -26,26 +26,32 @@ public class TestPassedState extends AbstractState {
   private TestPassedState() {
   }
 
+  @Override
   public boolean isInProgress() {
     return false;
   }
 
+  @Override
   public boolean isDefect() {
     return false;
   }
 
+  @Override
   public boolean wasLaunched() {
     return true;
   }
 
+  @Override
   public boolean isFinal() {
     return true;
   }
 
+  @Override
   public boolean wasTerminated() {
     return false;
   }
 
+  @Override
   public Magnitude getMagnitude() {
     return Magnitude.PASSED_INDEX;
   }

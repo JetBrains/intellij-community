@@ -22,13 +22,6 @@ public class TestSuiteStack {
   private final Stack<SMTestProxy> myStack = new Stack<>();
   private final String myTestFrameworkName;
 
-  /**
-   * @deprecated use {@link #TestSuiteStack(String)} instead, to be removed in IDEA 16
-   */
-  public TestSuiteStack() {
-    this("<unspecified>");
-  }
-
   public TestSuiteStack(@NotNull String testFrameworkName) {
     myTestFrameworkName = testFrameworkName;
   }

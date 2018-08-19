@@ -32,13 +32,16 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
+import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 
 public class CodeCompletionPanel {
   JPanel myPanel;
@@ -65,7 +68,9 @@ public class CodeCompletionPanel {
   private JPanel myCbOnCodeCompletionPanel;
   private JPanel myCbOnSmartTypeCompletionPanel;
 
-  public CodeCompletionPanel() {
+  private JPanel myAddonPanel;
+
+  public CodeCompletionPanel(List<JComponent> addons) {
     ChangeListener updateCaseCheckboxes = __ -> {
       myFirstLetterOnly.setEnabled(myCbMatchCase.isSelected());
       myAllLetters.setEnabled(myCbMatchCase.isSelected());
@@ -112,6 +117,16 @@ public class CodeCompletionPanel {
     hideOption(myCbOnCodeCompletionPanel, OptionId.AUTOCOMPLETE_ON_BASIC_CODE_COMPLETION);
     if(!myCbOnSmartTypeCompletionPanel.isVisible() && !myCbOnCodeCompletionPanel.isVisible())
       myAutoInsertLabel.setVisible(false);
+
+    for (JComponent c : addons) {
+      myAddonPanel
+          .add(c, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
+              GridBagConstraints.NONE, JBUI.insetsBottom(15), 0, 0));
+    }
+
+    if (addons.isEmpty()) {
+      myAddonPanel.setVisible(false);
+    }
 
     reset();
   }

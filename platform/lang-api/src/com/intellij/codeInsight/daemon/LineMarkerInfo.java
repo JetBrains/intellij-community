@@ -85,6 +85,7 @@ public class LineMarkerInfo<T extends PsiElement> {
   /**
    * @deprecated use {@link LineMarkerInfo#LineMarkerInfo(PsiElement, TextRange, Icon, int, Function, GutterIconNavigationHandler, GutterIconRenderer.Alignment)} instead
    */
+  @Deprecated
   public LineMarkerInfo(@NotNull T element,
                         int startOffset,
                         Icon icon,
@@ -98,6 +99,7 @@ public class LineMarkerInfo<T extends PsiElement> {
   /**
    * @deprecated use {@link LineMarkerInfo#LineMarkerInfo(PsiElement, TextRange, Icon, int, Function, GutterIconNavigationHandler, GutterIconRenderer.Alignment)} instead
    */
+  @Deprecated
   public LineMarkerInfo(@NotNull T element,
                         int startOffset,
                         Icon icon,

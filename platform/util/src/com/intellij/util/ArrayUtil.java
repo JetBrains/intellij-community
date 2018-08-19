@@ -724,37 +724,19 @@ public class ArrayUtil extends ArrayUtilRt {
     for (int i = 0; i < ints.length; i++) {
       if (ints[i] == value) return i;
     }
-
     return -1;
   }
+
   @Contract(pure=true)
   public static int indexOf(@NotNull int[] ints, int value) {
     for (int i = 0; i < ints.length; i++) {
       if (ints[i] == value) return i;
     }
-
-    return -1;
-  }
-  @Contract(pure=true)
-  public static int indexOf(@NotNull short[] ints, short value) {
-    for (int i = 0; i < ints.length; i++) {
-      if (ints[i] == value) return i;
-    }
-
     return -1;
   }
 
   @Contract(pure=true)
-  public static int indexOf(@NotNull byte[] ints, byte value, int start, int end) {
-    for (int i = start; i < end; i++) {
-      if (ints[i] == value) return i;
-    }
-
-    return -1;
-  }
-
-  @Contract(pure=true)
-  public static <T> int lastIndexOf(@NotNull final T[] src, final T obj) {
+  public static <T> int lastIndexOf(@NotNull final T[] src, @Nullable final T obj) {
     for (int i = src.length - 1; i >= 0; i--) {
       final T o = src[i];
       if (o == null) {
@@ -776,6 +758,17 @@ public class ArrayUtil extends ArrayUtilRt {
     for (int i = src.length - 1; i >= 0; i--) {
       final int o = src[i];
       if (o == obj) {
+          return i;
+      }
+    }
+    return -1;
+  }
+
+  @Contract(pure=true)
+  public static int lastIndexOfNot(@NotNull final int[] src, final int obj) {
+    for (int i = src.length - 1; i >= 0; i--) {
+      final int o = src[i];
+      if (o != obj) {
           return i;
       }
     }
@@ -809,20 +802,9 @@ public class ArrayUtil extends ArrayUtilRt {
     return indexOf(objects, o) >= 0;
   }
 
-  @Contract(pure=true)
-  public static boolean contains(@Nullable final String s, @NotNull String... strings) {
-    if (s == null) {
-      for (String str : strings) {
-        if (str == null) return true;
-      }
-    }
-    else {
-      for (String str : strings) {
-        if (s.equals(str)) return true;
-      }
-    }
-
-    return false;
+  @Contract(pure = true)
+  public static boolean contains(@Nullable String s, @NotNull String... strings) {
+    return indexOf(strings, s) >= 0;
   }
 
   @NotNull
@@ -888,27 +870,28 @@ public class ArrayUtil extends ArrayUtilRt {
   }
 
   @Nullable
-  @Contract("null -> null; !null -> !null")
+  @Contract(value = "null -> null; !null -> !null", pure = true)
   public static <T> T[] copyOf(@Nullable T[] original) {
     if (original == null) return null;
     return Arrays.copyOf(original, original.length);
   }
 
   @Nullable
-  @Contract("null -> null; !null -> !null")
+  @Contract(value = "null -> null; !null -> !null", pure = true)
   public static boolean[] copyOf(@Nullable boolean[] original) {
     if (original == null) return null;
     return original.length == 0 ? EMPTY_BOOLEAN_ARRAY : Arrays.copyOf(original, original.length);
   }
 
   @Nullable
-  @Contract("null -> null; !null -> !null")
+  @Contract(value = "null -> null; !null -> !null", pure = true)
   public static int[] copyOf(@Nullable int[] original) {
     if (original == null) return null;
     return original.length == 0 ? EMPTY_INT_ARRAY : Arrays.copyOf(original, original.length);
   }
 
   @NotNull
+  @Contract(pure = true)
   public static <T> T[] stripTrailingNulls(@NotNull T[] array) {
     return array.length != 0 && array[array.length-1] == null ? Arrays.copyOf(array, trailingNullsIndex(array)) : array;
   }
@@ -951,11 +934,57 @@ public class ArrayUtil extends ArrayUtilRt {
     return middlePartLength == 0 ? 0 : total / middlePartLength;
   }
 
+  @Contract(pure = true)
   public static int min(int[] values) {
     int min = Integer.MAX_VALUE;
     for (int value : values) {
       if (value < min) min = value;
     }
     return min;
+  }
+
+  @Contract(pure = true)
+  public static int[] mergeSortedArrays(int[] a1, int[] a2, boolean mergeEqualItems) {
+    int newSize = a1.length + a2.length;
+    if (newSize == 0) return EMPTY_INT_ARRAY;
+    int[] r = new int[newSize];
+    int o = 0;
+    int index1 = 0;
+    int index2 = 0;
+    while (index1 < a1.length || index2 < a2.length) {
+      int e;
+      if (index1 >= a1.length) {
+        e = a2[index2++];
+      }
+      else if (index2 >= a2.length) {
+        e = a1[index1++];
+      }
+      else {
+        int element1 = a1[index1];
+        int element2 = a2[index2];
+        if (element1 == element2) {
+          index1++;
+          index2++;
+          if (mergeEqualItems) {
+            e = element1;
+          }
+          else {
+            r[o++] = element1;
+            e = element2;
+          }
+        }
+        else if (element1 < element2) {
+          e = element1;
+          index1++;
+        }
+        else {
+          e = element2;
+          index2++;
+        }
+      }
+      r[o++] = e;
+    }
+
+    return o == newSize ? r : Arrays.copyOf(r, o);
   }
 }

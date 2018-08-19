@@ -144,7 +144,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   /**
    * @deprecated use {@link CodeInsightWorkspaceSettings#optimizeImportsOnTheFly}
    */
-  public boolean OPTIMIZE_IMPORTS_ON_THE_FLY;
+  @SuppressWarnings("MissingDeprecatedAnnotation") public boolean OPTIMIZE_IMPORTS_ON_THE_FLY;
 
   public boolean ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
   public boolean ADD_MEMBER_IMPORTS_ON_THE_FLY = true;

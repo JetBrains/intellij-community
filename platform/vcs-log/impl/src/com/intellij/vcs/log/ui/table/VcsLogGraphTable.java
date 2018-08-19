@@ -435,7 +435,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
       return this;
     }
@@ -909,8 +909,12 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   private class MyProgressListener implements VcsLogProgress.ProgressListener {
     @Override
-    public void progressStarted() {
+    public void progressStarted(@NotNull Collection<VcsLogProgress.ProgressKey> keys) {
       getEmptyText().setText(LOADING_COMMITS_TEXT);
+    }
+
+    @Override
+    public void progressChanged(@NotNull Collection<VcsLogProgress.ProgressKey> keys) {
     }
 
     @Override

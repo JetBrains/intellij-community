@@ -14,6 +14,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,7 +41,7 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
     myDefaultResolveScopesCache = ConcurrentFactoryMap.createMap(
       key -> {
         GlobalSearchScope scope = null;
-        for (ResolveScopeProvider resolveScopeProvider : ResolveScopeProvider.EP_NAME.getExtensions()) {
+        for (ResolveScopeProvider resolveScopeProvider : ResolveScopeProvider.EP_NAME.getExtensionList()) {
           scope = resolveScopeProvider.getResolveScope(key, myProject);
           if (scope != null) break;
         }
@@ -86,42 +87,42 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
   public GlobalSearchScope getResolveScope(@NotNull PsiElement element) {
     ProgressIndicatorProvider.checkCanceled();
 
-    VirtualFile vFile;
-    final PsiFile contextFile;
     if (element instanceof PsiDirectory) {
-      vFile = ((PsiDirectory)element).getVirtualFile();
-      contextFile = null;
+      return getResolveScopeFromProviders(((PsiDirectory)element).getVirtualFile());
     }
-    else {
-      final PsiFile containingFile = element.getContainingFile();
-      if (containingFile instanceof PsiCodeFragment) {
-        final GlobalSearchScope forcedScope = ((PsiCodeFragment)containingFile).getForcedResolveScope();
-        if (forcedScope != null) {
-          return forcedScope;
-        }
-      }
 
-      if (containingFile != null) {
-        PsiElement context = containingFile.getContext();
-        if (context != null) {
-          return getResolveScope(context);
-        }
+    PsiFile containingFile = element.getContainingFile();
+    if (containingFile instanceof PsiCodeFragment) {
+      GlobalSearchScope forcedScope = ((PsiCodeFragment)containingFile).getForcedResolveScope();
+      if (forcedScope != null) {
+        return forcedScope;
       }
-
-      contextFile = containingFile;
-      if (containingFile == null) {
-        return GlobalSearchScope.allScope(myProject);
-      }
-      if (contextFile instanceof FileResolveScopeProvider) {
-        return ((FileResolveScopeProvider) contextFile).getFileResolveScope();
-      }
-      vFile = contextFile.getOriginalFile().getVirtualFile();
     }
-    if (vFile == null || contextFile == null) {
+
+    if (containingFile != null) {
+      PsiElement context = containingFile.getContext();
+      if (context != null) {
+        return withFile(containingFile, getResolveScope(context));
+      }
+    }
+
+    if (containingFile == null) {
       return GlobalSearchScope.allScope(myProject);
     }
-
+    if (containingFile instanceof FileResolveScopeProvider) {
+      return ((FileResolveScopeProvider)containingFile).getFileResolveScope();
+    }
+    VirtualFile vFile = containingFile.getOriginalFile().getVirtualFile();
+    if (vFile == null) {
+      return withFile(containingFile, GlobalSearchScope.allScope(myProject));
+    }
     return getResolveScopeFromProviders(vFile);
+  }
+
+  private GlobalSearchScope withFile(PsiFile containingFile, GlobalSearchScope scope) {
+    return PsiSearchScopeUtil.isInScope(scope, containingFile)
+           ? scope
+           : scope.uniteWith(GlobalSearchScope.fileScope(myProject, containingFile.getViewProvider().getVirtualFile()));
   }
 
 

@@ -11,7 +11,6 @@ import com.intellij.util.containers.WeakInterner;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.TObjectHashingStrategy;
 import gnu.trove.TObjectIntHashMap;
-import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +38,7 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
     }
   });
 
-  protected final AtomicClearableLazyValue<LevelAndCount[]> myProblemLevels = new AtomicClearableLazyValue<LevelAndCount[]>() {
+  final AtomicClearableLazyValue<LevelAndCount[]> myProblemLevels = new AtomicClearableLazyValue<LevelAndCount[]>() {
     @NotNull
     @Override
     protected LevelAndCount[] compute() {
@@ -47,12 +46,9 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
       visitProblemSeverities(counter);
       LevelAndCount[] arr = new LevelAndCount[counter.size()];
       final int[] i = {0};
-      counter.forEachEntry(new TObjectIntProcedure<HighlightDisplayLevel>() {
-        @Override
-        public boolean execute(HighlightDisplayLevel l, int c) {
-          arr[i[0]++] = new LevelAndCount(l, c);
-          return true;
-        }
+      counter.forEachEntry((l, c) -> {
+        arr[i[0]++] = new LevelAndCount(l, c);
+        return true;
       });
       Arrays.sort(arr, Comparator.<LevelAndCount, HighlightSeverity>comparing(levelAndCount -> levelAndCount.getLevel().getSeverity())
         .reversed());
@@ -75,14 +71,14 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
   }
 
   @NotNull
-  public LevelAndCount[] getProblemLevels() {
+  LevelAndCount[] getProblemLevels() {
     if (!isProblemCountCacheValid()) {
       dropProblemCountCaches();
     }
     return myProblemLevels.getValue();
   }
 
-  private void dropProblemCountCaches() {
+  void dropProblemCountCaches() {
     InspectionTreeNode current = this;
     while (current != null) {
       current.myProblemLevels.drop();
@@ -146,6 +142,7 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
       InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();
       child.excludeElement();
     }
+    dropProblemCountCaches();
   }
 
   public void amnestyElement() {
@@ -154,6 +151,7 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
       InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();
       child.amnestyElement();
     }
+    dropProblemCountCaches();
   }
 
   public InspectionTreeNode insertByOrder(InspectionTreeNode child, boolean allowDuplication) {

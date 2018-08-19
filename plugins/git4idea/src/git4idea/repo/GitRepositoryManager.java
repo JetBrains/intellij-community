@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ui.VirtualFileHierarchicalComparator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitVcsSettings;
@@ -46,16 +45,6 @@ public class GitRepositoryManager extends AbstractRepositoryManager<GitRepositor
 
   @NotNull private final GitVcsSettings mySettings;
   @Nullable private volatile GitRebaseSpec myOngoingRebaseSpec;
-
-  /**
-   * @deprecated To remove in IDEA 2017. Use {@link #GitRepositoryManager(Project, VcsRepositoryManager)}.
-   */
-  @SuppressWarnings("UnusedParameters")
-  @Deprecated
-  public GitRepositoryManager(@NotNull Project project, @NotNull GitPlatformFacade platformFacade,
-                              @NotNull VcsRepositoryManager vcsRepositoryManager) {
-    this(project, vcsRepositoryManager);
-  }
 
   public GitRepositoryManager(@NotNull Project project, @NotNull VcsRepositoryManager vcsRepositoryManager) {
     super(vcsRepositoryManager, GitVcs.getInstance(project), GitUtil.DOT_GIT);

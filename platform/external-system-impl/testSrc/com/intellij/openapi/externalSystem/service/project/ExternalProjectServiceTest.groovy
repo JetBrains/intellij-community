@@ -34,8 +34,7 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.util.ArrayUtil
 
-import static com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType.SOURCE
-import static com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType.TEST
+import static com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType.*
 import static com.intellij.openapi.externalSystem.test.ExternalSystemTestCase.collectRootsInside
 
 class ExternalProjectServiceTest extends AbstractExternalSystemTest {

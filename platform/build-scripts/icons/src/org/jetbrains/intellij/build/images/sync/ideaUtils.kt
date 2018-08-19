@@ -29,7 +29,7 @@ internal fun vcsRoots(project: File): List<File> {
       }
   }
   else {
-    log("No git repos found. Using $project")
+    log("${vcsXml.absolutePath} not found. Using $project")
     listOf(project)
   }
 }

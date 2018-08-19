@@ -52,7 +52,7 @@ public class MetaRegistry extends MetaDataRegistrar {
     CachedValue<PsiMetaData> value =
       CachedValuesManager.getManager(element.getProject()).createCachedValue(() -> {
         data.init(element);
-        return new CachedValueProvider.Result<>(data, data.getDependences());
+        return new CachedValueProvider.Result<>(data, data.getDependencies());
       });
     element.putUserData(META_DATA_KEY, value);
   }
@@ -81,7 +81,7 @@ public class MetaRegistry extends MetaDataRegistrar {
                 throw new RuntimeException("failed to instantiate " + binding.myDataClass, e);
               }
               data.init(element);
-              Object[] dependences = data.getDependences();
+              Object[] dependences = data.getDependencies();
               for (Object dependence : dependences) {
                 if (dependence == null) {
                   LOG.error(data + "(" + binding.myDataClass + ") provided null dependency");
@@ -118,7 +118,8 @@ public class MetaRegistry extends MetaDataRegistrar {
    * @see com.intellij.psi.meta.MetaDataContributor
    * @deprecated
    */
-  public static <T extends PsiMetaData> void addMetadataBinding(ElementFilter filter,
+  @Deprecated
+  static <T extends PsiMetaData> void addMetadataBinding(ElementFilter filter,
                                                                 Class<T> aMetadataClass,
                                                                 Disposable parentDisposable) {
     final MyBinding binding = new MyBinding(filter, aMetadataClass);
@@ -135,6 +136,7 @@ public class MetaRegistry extends MetaDataRegistrar {
    * @see com.intellij.psi.meta.MetaDataContributor
    * @deprecated
    */
+  @Deprecated
   public static <T extends PsiMetaData> void addMetadataBinding(ElementFilter filter, Class<T> aMetadataClass) {
     addBinding(new MyBinding(filter, aMetadataClass));
   }

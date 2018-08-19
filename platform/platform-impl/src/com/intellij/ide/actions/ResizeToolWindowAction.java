@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -45,7 +46,7 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
   }
 
   @Override
-  public final void update(AnActionEvent e) {
+  public final void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) {
       setDisabled(e);
@@ -116,7 +117,7 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
   protected abstract void update(AnActionEvent event, ToolWindow window, ToolWindowManager mgr);
 
   @Override
-  public final void actionPerformed(AnActionEvent e) {
+  public final void actionPerformed(@NotNull AnActionEvent e) {
     actionPerformed(e, myLastWindow, myLastManager);
   }
 
@@ -293,18 +294,22 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
 
   private class DefaultToolWindowScrollable implements ToolWindowScrollable {
 
+    @Override
     public boolean isHorizontalScrollingNeeded() {
       return true;
     }
 
+    @Override
     public int getNextHorizontalScroll() {
       return getReferenceSize().width * Registry.intValue("ide.windowSystem.hScrollChars");
     }
 
+    @Override
     public boolean isVerticalScrollingNeeded() {
       return true;
     }
 
+    @Override
     public int getNextVerticalScroll() {
       return getReferenceSize().height * Registry.intValue("ide.windowSystem.vScrollChars");
     }

@@ -29,6 +29,7 @@ import org.jetbrains.yaml.YAMLTokenTypes;
   private IElementType valueTokenType = null;
   private int previousState = YYINITIAL;
   private int previousAnchorState = YYINITIAL;
+  private int nextState = YYINITIAL;
 
   protected int yycolumn = 0;
 
@@ -114,7 +115,9 @@ import org.jetbrains.yaml.YAMLTokenTypes;
   // The compact notation may be used when the entry is itself a nested block collection.
   // In this case, both the “-” indicator and the following spaces are considered to be part of the indentation of the nested collection.
   // See 8.2.1. Block Sequences http://www.yaml.org/spec/1.2/spec.html#id2797382
-  private IElementType getScalarKeyAndUpdateIndent() {
+  private IElementType getScalarKey(int nextState) {
+    this.nextState = nextState;
+    yyBegin(KEY_MODE);
     currentLineIndent = yycolumn;
     return SCALAR_KEY;
   }
@@ -154,8 +157,9 @@ COMMENT =                       "#"{LINE}
 
 ID =                            [^\n\-\ {}\[\]#][^\n{}\[\]>:#]*
 
-KEY_flow = {NS_PLAIN_ONE_LINE_flow} {WHITE_SPACE_CHAR}* ":"
-KEY_block = {NS_PLAIN_ONE_LINE_block} {WHITE_SPACE_CHAR}* ":"
+KEY_flow = {NS_PLAIN_ONE_LINE_flow}
+KEY_block = {NS_PLAIN_ONE_LINE_block}
+KEY_SUFIX = {WHITE_SPACE_CHAR}* ":"
 
 INJECTION =                     ("{{" {ID} "}"{0,2}) | ("%{" [^}\n]* "}"?)
 
@@ -198,7 +202,7 @@ C_B_BLOCK_HEADER = ( [:digit:]* ( "-" | "+" )? ) | ( ( "-" | "+" )? [:digit:]* )
 ///////////////////////////// STATES DECLARATIONS //////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-%xstate BRACES, VALUE, VALUE_OR_KEY, VALUE_BRACE, INDENT_VALUE, BS_HEADER_TAIL, ANCHOR_MODE, ALIAS_MODE
+%xstate BRACES, VALUE, VALUE_OR_KEY, VALUE_BRACE, INDENT_VALUE, BS_HEADER_TAIL, ANCHOR_MODE, ALIAS_MODE, KEY_MODE
 
 %%
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -261,6 +265,12 @@ C_B_BLOCK_HEADER = ( [:digit:]* ( "-" | "+" )? ) | ( ( "-" | "+" )? [:digit:]* )
                                 }
 }
 
+<KEY_MODE> {
+":"                             {   yyBegin(nextState);
+                                    return COLON;
+                                }
+}
+
 <ANCHOR_MODE> {
 {NS_ANCHOR_NAME}                {   yyBegin(previousAnchorState);
                                     return ANCHOR;
@@ -270,33 +280,36 @@ C_B_BLOCK_HEADER = ( [:digit:]* ( "-" | "+" )? ) | ( ( "-" | "+" )? [:digit:]* )
 <YYINITIAL, BRACES, VALUE_OR_KEY> {
 
 
-{STRING_SINGLE_LINE} ":" {
-  return getScalarKeyAndUpdateIndent();
-}
-
-{DSTRING_SINGLE_LINE} ":" {
-  return getScalarKeyAndUpdateIndent();
-}
-
+{STRING_SINGLE_LINE} | {DSTRING_SINGLE_LINE} / {KEY_SUFIX}
+                                {   return getScalarKey(yystate()); }
 
 }
 
 <BRACES> {
-{KEY_flow} / !(!{ANY_CHAR}|{NS_PLAIN_SAFE_flow}) {
-  yyBegin(VALUE_BRACE);
-  return SCALAR_KEY;
+//look ahead: {NS_PLAIN_SAFE_flow} symbol
+{KEY_flow} / {KEY_SUFIX} {NS_PLAIN_SAFE_flow} {
+  yyBegin(VALUE);
+  return TEXT;
 }
-
+//look ahead: different from {NS_PLAIN_SAFE_flow} symbol or EOF
+{KEY_flow} / {KEY_SUFIX} {
+  return getScalarKey(VALUE_BRACE);
+}
 }
 
 <YYINITIAL, VALUE_OR_KEY> {
-{KEY_block} / !(!{ANY_CHAR}|{NS_PLAIN_SAFE_block}) {
+//look ahead: {NS_PLAIN_SAFE_block} symbol
+{KEY_block} / {KEY_SUFIX} {NS_PLAIN_SAFE_block} {
   yyBegin(VALUE);
-  return getScalarKeyAndUpdateIndent();
+  return TEXT;
+}
+//look ahead: different from {NS_PLAIN_SAFE_block} symbol or EOF
+{KEY_block} / {KEY_SUFIX} {
+  return getScalarKey(VALUE);
 }
 }
 
-<YYINITIAL, BRACES, VALUE, VALUE_BRACE, VALUE_OR_KEY, BS_HEADER_TAIL> {
+<YYINITIAL, BRACES, VALUE, VALUE_BRACE, VALUE_OR_KEY, BS_HEADER_TAIL, KEY_MODE> {
 
 {WHITE_SPACE}                   { return getWhitespaceTypeAndUpdateIndent(); }
 
@@ -439,27 +452,4 @@ C_B_BLOCK_HEADER = ( [:digit:]* ( "-" | "+" )? ) | ( ( "-" | "+" )? [:digit:]* )
                                                 return valueTokenType;
                                             }
                                         }
-}
-
-// Rules for matching EOLs
-<BRACES> {
-
-{KEY_flow} {
-  if (zzMarkedPos == zzEndRead){
-    return SCALAR_KEY;
-  }
-  yyBegin(VALUE);
-  return tokenOrForbidden(TEXT);
-}
-
-}
-
-<YYINITIAL, VALUE_OR_KEY> {
-{KEY_block} {
-  if (zzMarkedPos == zzEndRead){
-    return SCALAR_KEY;
-  }
-  yyBegin(VALUE);
-  return tokenOrForbidden(TEXT);
-}
 }

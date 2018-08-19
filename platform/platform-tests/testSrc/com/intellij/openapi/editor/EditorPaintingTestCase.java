@@ -105,6 +105,7 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     return new File(PathManagerEx.findFileUnderCommunityHome(directory), fileName);
   }
 
+  @Override
   @NotNull
   protected String getTestDataPath() {
     return TEST_DATA_PATH;

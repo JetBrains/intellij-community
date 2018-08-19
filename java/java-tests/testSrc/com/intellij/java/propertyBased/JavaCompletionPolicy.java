@@ -17,6 +17,7 @@ package com.intellij.java.propertyBased;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -39,14 +40,21 @@ class JavaCompletionPolicy extends CompletionPolicy {
     return super.getExpectedVariant(editor, file, leaf, ref);
   }
 
-  // a language where there are bugs in completion which maintainers of this Java-specific tests can't or don't want to fix
+  // a language where there are bugs in completion which maintainers of this Java-specific test can't or don't want to fix
   private static boolean isBuggyInjection(@NotNull PsiFile file) {
     return Arrays.asList("XML", "HTML", "PointcutExpression").contains(file.getLanguage().getID());
   }
 
   @Override
   protected boolean isAfterError(@NotNull PsiFile file, @NotNull PsiElement leaf) {
-    return super.isAfterError(file, leaf) || isAdoptedOrphanPsiAfterClassEnd(leaf) || isInsideAnnotationWithErrors(leaf);
+    return super.isAfterError(file, leaf) ||
+           isAdoptedOrphanPsiAfterClassEnd(leaf) ||
+           isInsideAnnotationWithErrors(leaf) ||
+           isUnexpectedStatementInSwitchBody(leaf);
+  }
+
+  private static boolean isUnexpectedStatementInSwitchBody(@NotNull PsiElement leaf) {
+    return PsiJavaPatterns.psiElement().withParents(PsiReturnStatement.class, PsiCodeBlock.class, PsiSwitchStatement.class).accepts(leaf);
   }
 
   private static boolean isInsideAnnotationWithErrors(PsiElement leaf) {
@@ -57,7 +65,12 @@ class JavaCompletionPolicy extends CompletionPolicy {
   @Override
   protected boolean shouldSuggestReferenceText(@NotNull PsiReference ref, @NotNull PsiElement target) {
     PsiElement refElement = ref.getElement();
-    if (refElement instanceof PsiJavaCodeReferenceElement && 
+    if (refElement.getContainingFile().getLanguage().getID().equals("GWT JavaScript")) {
+      // for GWT class members refs like "MyClass::mmm(I)(1)", lookup items are only a subset of possible reference texts
+      return false;
+    }
+
+    if (refElement instanceof PsiJavaCodeReferenceElement &&
         !shouldSuggestJavaTarget((PsiJavaCodeReferenceElement)refElement, target)) {
       return false;
     }

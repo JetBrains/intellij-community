@@ -38,7 +38,7 @@ class GrReferenceResolveRunner(val place: GrReferenceExpression, val processor: 
     else {
       val state = initialState.put(ClassHint.RESOLVE_CONTEXT, qualifier)
       if (place.dotTokenType === GroovyTokenTypes.mSPREAD_DOT) {
-        return qualifier.type.processSpread(processor, state, place)
+        return qualifier.type.processSpread(processor, state, place, place.parent !is GrMethodCall)
       }
       else {
         if (ResolveUtil.isClassReference(place)) return false
@@ -80,7 +80,7 @@ class GrReferenceResolveRunner(val place: GrReferenceExpression, val processor: 
     else {
       if (!qualifierType.processReceiverType(processor, state, place)) return false
       if (place.parent !is GrMethodCall && isInheritor(qualifierType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
-        return qualifierType.processSpread(processor, state, place)
+        return qualifierType.processSpread(processor, state, place, true)
       }
     }
     return true
@@ -159,7 +159,7 @@ private fun GrReferenceExpression.doResolveStatic(): GroovyResolveResult? {
   val qualifier = qualifier
 
   if (qualifier == null) {
-    val localVariable = resolveToLocalVariable(name).singleOrNull()
+    val localVariable = resolveToLocalVariable(name)
     if (localVariable != null) {
       return localVariable
     }
@@ -167,7 +167,7 @@ private fun GrReferenceExpression.doResolveStatic(): GroovyResolveResult? {
 
   if (parent !is GrMethodCall) {
     if (qualifier == null || qualifier.isThisExpression()) {
-      val field = resolveToField(name).singleOrNull()
+      val field = resolveToField(name)
       if (field != null && checkCurrentClass(field.element, this)) {
         return field
       }
@@ -193,7 +193,7 @@ private fun GrReferenceExpression.doResolveStatic(): GroovyResolveResult? {
  * @receiver call site
  * @return empty collection or a collection with 1 local variable result
  */
-private fun PsiElement.resolveToLocalVariable(name: String): Collection<ElementResolveResult<GrVariable>> {
+private fun PsiElement.resolveToLocalVariable(name: String): ElementResolveResult<GrVariable>? {
   return treeWalkUpAndGet(LocalVariableProcessor(name))
 }
 
@@ -204,7 +204,7 @@ private fun PsiElement.resolveToLocalVariable(name: String): Collection<ElementR
  * @receiver call site
  * @return empty collection or a collection with 1 code field result
  */
-private fun PsiElement.resolveToField(name: String): Collection<ElementResolveResult<GrField>> {
+private fun PsiElement.resolveToField(name: String): ElementResolveResult<GrField>? {
   return treeWalkUpAndGet(CodeFieldProcessor(name, this))
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.dom.impl.ActionOrGroupResolveConverter;
 
 /**
  * @since 15
@@ -28,4 +29,27 @@ public interface ActionOrGroup extends DomElement {
   @Stubbed
   @Required(value = false)
   GenericAttributeValue<String> getId();
+
+  @NotNull
+  @Stubbed
+  @Required(value = false)
+  GenericAttributeValue<String> getIcon();
+
+  @NotNull
+  @Stubbed
+  GenericAttributeValue<Boolean> getPopup();
+
+  @NotNull
+  @Stubbed
+  @Required(value = false)
+  GenericAttributeValue<String> getText();
+
+  @NotNull
+  @Stubbed
+  @Required(value = false)
+  GenericAttributeValue<String> getDescription();
+
+  @NotNull
+  @Convert(ActionOrGroupResolveConverter.OnlyActions.class)
+  GenericAttributeValue<ActionOrGroup> getUseShortcutOf();
 }

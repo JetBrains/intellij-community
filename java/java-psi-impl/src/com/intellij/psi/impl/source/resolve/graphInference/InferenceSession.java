@@ -1027,6 +1027,7 @@ public class InferenceSession {
 
   protected void resolveBounds(final Collection<InferenceVariable> inferenceVariables,
                              @NotNull PsiSubstitutor substitutor) {
+    final UniqueNameGenerator uniqueNameGenerator = new UniqueNameGenerator();
     final Collection<InferenceVariable> allVars = new ArrayList<>(inferenceVariables);
     while (!allVars.isEmpty()) {
       final List<InferenceVariable> vars = InferenceVariablesOrder.resolveOrder(allVars, this);
@@ -1054,7 +1055,7 @@ public class InferenceSession {
         }
       }
 
-      if (!initFreshVariables(substitutor, unresolved)) {
+      if (!initFreshVariables(substitutor, unresolved, uniqueNameGenerator)) {
         return;
       }
 
@@ -1091,11 +1092,10 @@ public class InferenceSession {
     }
   }
 
-  private boolean initFreshVariables(PsiSubstitutor substitutor, List<InferenceVariable> vars) {
+  private boolean initFreshVariables(PsiSubstitutor substitutor, List<InferenceVariable> vars, UniqueNameGenerator nameGenerator) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getManager().getProject());
     PsiSubstitutor ySubstitutor = PsiSubstitutor.EMPTY;
     final PsiTypeParameter[] yVars = new PsiTypeParameter[vars.size()];
-    UniqueNameGenerator nameGenerator = new UniqueNameGenerator();
     for (int i = 0; i < vars.size(); i++) {
       InferenceVariable var = vars.get(i);
       final PsiTypeParameter parameter = var.getParameter();
@@ -1968,14 +1968,16 @@ public class InferenceSession {
           for (PsiClass gClass : tSupers) {
             final PsiSubstitutor sSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(gClass, (PsiClassType)sBound);
             final PsiSubstitutor tSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(gClass, (PsiClassType)tBound);
+            boolean found = false;
             for (PsiTypeParameter typeParameter : gClass.getTypeParameters()) {
               final PsiType sType = sSubstitutor.substituteWithBoundsPromotion(typeParameter);
               final PsiType tType = tSubstitutor.substituteWithBoundsPromotion(typeParameter);
               final Pair<PsiType, PsiType> typePair = Pair.create(sType, tType);
               if (!processor.process(typePair)) {
-                return gClass;
+                found = true;
               }
             }
+            if (found) return gClass;
           }
         }
       }

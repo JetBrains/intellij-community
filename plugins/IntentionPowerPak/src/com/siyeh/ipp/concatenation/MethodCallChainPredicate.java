@@ -17,16 +17,18 @@ package com.siyeh.ipp.concatenation;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.Nullable;
 
 class MethodCallChainPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (getCallChainRoot(element) == null) {
       return false;
     }
-    final PsiElement parent = element.getParent();
+    final PsiElement parent = PsiUtil.skipParenthesizedExprUp(element.getParent());
     if (parent instanceof PsiExpressionStatement) {
       return true;
     }
@@ -64,7 +66,7 @@ class MethodCallChainPredicate implements PsiElementPredicate {
     while (true) {
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-      final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
+      final PsiExpression qualifierExpression = PsiUtil.skipParenthesizedExprDown(methodExpression.getQualifierExpression());
       PsiClassType expressionType = getQualifierExpressionType(qualifierExpression);
       if (!first) {
         if (expressionType == null) {

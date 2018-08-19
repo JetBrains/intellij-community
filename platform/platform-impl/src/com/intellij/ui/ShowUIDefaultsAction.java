@@ -28,6 +28,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -47,7 +48,12 @@ import java.util.stream.Collectors;
  */
 public class ShowUIDefaultsAction extends AnAction implements DumbAware {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    final Project project = getEventProject(e);
+    perform(project);
+  }
+
+  public void perform(Project project) {
     final UIDefaults defaults = UIManager.getDefaults();
     Enumeration keys = defaults.keys();
     final Object[][] data = new Object[defaults.size()][2];
@@ -61,7 +67,6 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
 
     Arrays.sort(data, (o1, o2) -> StringUtil.naturalCompare(o1[0 ].toString(), o2[0].toString()));
 
-    final Project project = getEventProject(e);
     new DialogWrapper(project) {
       {
         setTitle("Edit LaF Defaults");
@@ -92,7 +97,8 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
             return column == 1 && (value instanceof Color ||
                                    value instanceof Integer ||
                                    value instanceof Border ||
-                                   value instanceof UIUtil.GrayFilter);
+                                   value instanceof UIUtil.GrayFilter ||
+                                   value instanceof Font);
           }
         }) {
           @Override
@@ -132,6 +138,13 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                 UIUtil.GrayFilter f = (UIUtil.GrayFilter)value;
                 String oldFilter = String.format("%d,%d,%d", f.getBrightness(), f.getContrast(), f.getAlpha());
                 UIUtil.GrayFilter newValue = editGrayFilter(key.toString(), oldFilter);
+                if (newValue != null) {
+                  UIManager.getDefaults().remove(key);
+                  UIManager.getDefaults().put(key, newValue);
+                  setValueAt(newValue, row, column);
+                }
+              } else if (value instanceof Font) {
+                Font newValue = editFontSize(key.toString(), (Font)value);
                 if (newValue != null) {
                   UIManager.getDefaults().remove(key);
                   UIManager.getDefaults().put(key, newValue);
@@ -192,7 +205,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
 
       private @Nullable Integer editNumber(String key, String value) {
         String newValue = Messages.showInputDialog(getRootPane(), "Enter new value for " + key, "Number Editor", null, value,
-                                   new InputValidator() {
+                                                   new InputValidator() {
                                      @Override
                                      public boolean checkInput(String inputString) {
                                        try {
@@ -282,6 +295,35 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
         }
       }
 
+      @Nullable
+      private Font editFontSize(String key, Font font) {
+        String newValue = Messages.showInputDialog(getRootPane(),
+                                                   "Enter new font size for " + key,
+                                                   "Font Size Editor", null, Integer.toString(font.getSize()),
+                                                   new InputValidator() {
+                                                     @Override
+                                                     public boolean checkInput(String inputString) {
+                                                       return parseFontSize(font, inputString) != null;
+                                                     }
+
+                                                     @Override
+                                                     public boolean canClose(String inputString) {
+                                                       return checkInput(inputString);
+                                                     }
+                                                   });
+
+        return newValue != null ? parseFontSize(font, newValue) : null;
+      }
+
+      @Nullable
+      private Font parseFontSize(Font font, String value) {
+        try {
+          int newSize = Integer.parseInt(value);
+          return (newSize > 0) ? font.deriveFont((float)newSize) : null;
+        } catch (NumberFormatException nex) {
+          return null;
+        }
+      }
     }.show();
   }
 

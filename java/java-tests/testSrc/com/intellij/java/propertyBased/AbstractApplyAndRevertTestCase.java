@@ -1,10 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.propertyBased;
 
-import com.intellij.application.UtilKt;
+import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.compiler.CompilerTestUtil;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.compiler.CompilerMessage;
@@ -26,13 +26,13 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.CompilerTester;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.TestDataProvider;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.containers.ContainerUtil;
-import kotlin.Unit;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jetCheck.Generator;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -40,14 +40,20 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
   protected CompilerTester myCompilerTester;
   protected Project myProject;
 
+  private String oldMacroValue;
+
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     return myProject == null ? null : new TestDataProvider(myProject).getData(dataId);
   }
 
   private Generator<VirtualFile> javaFiles() {
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myProject);
     List<VirtualFile> allFiles = new ArrayList<>(FilenameIndex.getAllFilesByExt(myProject, "java", projectScope));
+    if (allFiles.isEmpty()) {
+      throw new IllegalStateException("No java files in project???");
+    }
+    ContainerUtil.sort(allFiles, Comparator.comparing(VirtualFile::getPath));
     return Generator.sampledFrom(allFiles);
   }
 
@@ -55,24 +61,18 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
     return javaFiles().map(vf -> (PsiJavaFile)PsiManager.getInstance(myProject).findFile(vf));
   }
 
-  @Override
-  protected boolean shouldRunTest() {
-    if (UsefulTestCase.IS_UNDER_TEAMCITY) {
-      return false;
-    }
-    return super.shouldRunTest();
-  }
-
   protected abstract String getTestDataPath();
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
-    PathMacros.getInstance().setMacro("MAVEN_REPOSITORY", getDefaultMavenRepositoryPath());
+
+    PathMacros pathMacros = PathMacros.getInstance();
+    oldMacroValue = pathMacros.getValue(PathMacrosImpl.MAVEN_REPOSITORY);
+    pathMacros.setMacro(PathMacrosImpl.MAVEN_REPOSITORY, getDefaultMavenRepositoryPath());
+
     WriteAction.run(() -> ProjectJdkTable.getInstance().addJdk(JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk(), getTestRootDisposable()));
-    UtilKt.runInAllowSaveMode(() -> {
-      ApplicationManager.getApplication().saveAll();
-      return Unit.INSTANCE;
-    });
+    CompilerTestUtil.saveApplicationSettings();
 
     myProject = ProjectUtil.openOrImport(getTestDataPath(), null, false);
 
@@ -98,15 +98,18 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
     return (root != null ? new File(root, ".m2/repository") : new File(".m2/repository")).getAbsolutePath();
   }
 
+  @Override
   public void tearDown() throws Exception {
     try {
+      PathMacros.getInstance().setMacro(PathMacrosImpl.MAVEN_REPOSITORY, oldMacroValue);
+
       if (myCompilerTester != null) {
         myCompilerTester.tearDown();
       }
-   
+
       ProjectManager.getInstance().closeProject(myProject);
       WriteAction.run(() -> Disposer.dispose(myProject));
-      
+
       myProject = null;
       InspectionProfileImpl.INIT_INSPECTIONS = false;
     }

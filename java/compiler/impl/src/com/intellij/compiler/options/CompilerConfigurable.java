@@ -39,6 +39,7 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent, Conf
     myCompilerUIConfigurable = new CompilerUIConfigurable(myProject);
   }
 
+  @Override
   public String getDisplayName() {
     return CompilerBundle.message("compiler.configurable.display.name");
   }
@@ -48,31 +49,38 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent, Conf
     return "project.propCompiler";
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();
   }
 
+  @Override
   public JComponent createComponent() {
     return myCompilerUIConfigurable.createComponent();
   }
 
+  @Override
   public boolean hasOwnContent() {
     return true;
   }
 
+  @Override
   public boolean isModified() {
     return myCompilerUIConfigurable.isModified();
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     myCompilerUIConfigurable.apply();
   }
 
+  @Override
   public void reset() {
     myCompilerUIConfigurable.reset();
   }
 
+  @Override
   public void disposeUIResources() {
     myCompilerUIConfigurable.disposeUIResources();
   }

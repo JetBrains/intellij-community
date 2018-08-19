@@ -42,6 +42,13 @@ public abstract class RequestBuilder {
   @NotNull
   public abstract RequestBuilder untrustedCertificateStrategy(@NotNull UntrustedCertificateStrategy strategy);
 
+  /**
+   * Whether to analyze response status code and throw an exception if it's an "error" code.
+   * Defaults to true.
+   */
+  @NotNull
+  public abstract RequestBuilder throwStatusCodeException(boolean shouldThrow);
+
   public abstract <T> T connect(@NotNull HttpRequests.RequestProcessor<T> processor) throws IOException;
 
   public int tryConnect() throws IOException {

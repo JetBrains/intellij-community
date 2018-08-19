@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.UnusedImportProvider;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
-import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.InspectionProfile;
@@ -258,22 +257,21 @@ class PostHighlightingVisitor {
       return highlightInfo;
     }
 
-    boolean referenced = myRefCountHolder.isReferencedForRead(variable);
-    if (!referenced && !UnusedSymbolUtil.isImplicitRead(myProject, variable, progress)) {
+    if (!myRefCountHolder.isReferencedForRead(variable) && !UnusedSymbolUtil.isImplicitRead(myProject, variable, progress)) {
       String message = JavaErrorMessages.message("local.variable.is.not.used.for.reading", identifier.getText());
       HighlightInfo highlightInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
       QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createRemoveUnusedVariableFix(variable), myDeadCodeKey);
       return highlightInfo;
     }
 
-    if (!variable.hasInitializer()) {
-      referenced = myRefCountHolder.isReferencedForWrite(variable);
-      if (!referenced && !UnusedSymbolUtil.isImplicitWrite(myProject, variable, progress)) {
-        String message = JavaErrorMessages.message("local.variable.is.not.assigned", identifier.getText());
-        final HighlightInfo unusedSymbolInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
-        QuickFixAction.registerQuickFixAction(unusedSymbolInfo, new EmptyIntentionAction(UnusedSymbolLocalInspectionBase.DISPLAY_NAME), myDeadCodeKey);
-        return unusedSymbolInfo;
-      }
+    if (!variable.hasInitializer() &&
+        !myRefCountHolder.isReferencedForWrite(variable) &&
+        !UnusedSymbolUtil.isImplicitWrite(myProject, variable, progress)) {
+      String message = JavaErrorMessages.message("local.variable.is.not.assigned", identifier.getText());
+      final HighlightInfo unusedSymbolInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
+      QuickFixAction
+        .registerQuickFixAction(unusedSymbolInfo, QuickFixFactory.getInstance().createAddVariableInitializerFix(variable), myDeadCodeKey);
+      return unusedSymbolInfo;
     }
 
     return null;

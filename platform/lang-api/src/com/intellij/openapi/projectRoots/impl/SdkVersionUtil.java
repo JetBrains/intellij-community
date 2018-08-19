@@ -18,6 +18,7 @@ public class SdkVersionUtil {
   private SdkVersionUtil() { }
 
   /** @deprecated use {@link #getJdkVersionInfo(String)} (to be removed in IDEA 2019) */
+  @Deprecated
   @Nullable
   public static String detectJdkVersion(@NotNull String homePath) {
     return JdkVersionDetector.getInstance().detectJdkVersion(homePath, ACTION_RUNNER);

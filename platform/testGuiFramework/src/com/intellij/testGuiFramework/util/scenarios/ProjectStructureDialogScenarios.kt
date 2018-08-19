@@ -4,14 +4,9 @@ package com.intellij.testGuiFramework.util.scenarios
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.impl.GuiTestCase
 import com.intellij.testGuiFramework.impl.waitAMoment
-import com.intellij.testGuiFramework.util.logTestStep
-import com.intellij.testGuiFramework.util.logUIStep
-import com.intellij.testGuiFramework.util.plus
+import com.intellij.testGuiFramework.util.*
 import com.intellij.testGuiFramework.utils.TestUtilsClass
 import com.intellij.testGuiFramework.utils.TestUtilsClassCompanion
-import com.intellij.testGuiFramework.util.Modifier
-import com.intellij.testGuiFramework.util.Key
-import java.awt.Dialog
 
 class ProjectStructureDialogScenarios(testCase: GuiTestCase) : TestUtilsClass(testCase) {
   companion object : TestUtilsClassCompanion<ProjectStructureDialogScenarios>(
@@ -26,6 +21,11 @@ fun ProjectStructureDialogScenarios.openProjectStructureAndCheck(actions: GuiTes
     val projectStructureTitle = ProjectStructureDialogModel.Constants.projectStructureTitle
     logTestStep("Check structure of the project")
     ideFrame {
+      projectView {
+        this.activate()
+        click()
+        shortcut(Key.HOME)
+      }
       val numberOfAttempts = 5
       var isCorrectDialogOpen = false
       for (currentAttempt in 0..numberOfAttempts) {

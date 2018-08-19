@@ -22,6 +22,7 @@ import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.VoidDataExternalizer;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
+import com.intellij.vcs.log.util.StorageId;
 import gnu.trove.THashMap;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -30,15 +31,13 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Map;
 
-import static com.intellij.vcs.log.data.index.VcsLogPersistentIndex.getVersion;
-
-public class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Void> {
+public class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Void, VcsFullCommitDetails> {
   public static final String TRIGRAMS = "trigrams";
 
-  public VcsLogMessagesTrigramIndex(@NotNull String logId,
+  public VcsLogMessagesTrigramIndex(@NotNull StorageId storageId,
                                     @NotNull FatalErrorHandler fatalErrorHandler,
                                     @NotNull Disposable disposableParent) throws IOException {
-    super(logId, TRIGRAMS, getVersion(), new TrigramMessageIndexer(), VoidDataExternalizer.INSTANCE, false,
+    super(storageId, TRIGRAMS, new TrigramMessageIndexer(), VoidDataExternalizer.INSTANCE,
           fatalErrorHandler, disposableParent);
   }
 

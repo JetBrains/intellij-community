@@ -69,11 +69,6 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
     }.show();
   }
 
-  @Override
-  public JButton createConfigureAnnotationsBtn() {
-    return createConfigureAnnotationsButton();
-  }
-
   public static JButton createConfigureAnnotationsButton() {
     final JButton configureAnnotations = new JButton("Annotations...");
     configureAnnotations.addActionListener(new ActionListener() {

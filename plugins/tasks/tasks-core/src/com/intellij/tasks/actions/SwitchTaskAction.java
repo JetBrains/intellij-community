@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.tasks.actions;
 
@@ -57,7 +43,9 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
-  public JComponent createCustomComponent(final Presentation presentation) {
+  @NotNull
+  @Override
+  public JComponent createCustomComponent(@NotNull final Presentation presentation) {
     return new ComboBoxButton(presentation) {
       @Override
       protected JBPopup createPopup(Runnable onDispose) {
@@ -73,7 +61,7 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null || project.isDefault() || project.isDisposed()) {
@@ -111,7 +99,7 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     assert project != null;
@@ -181,18 +169,21 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
     popup.setAdText("Press SHIFT to merge with current context");
 
     popup.registerAction("shiftPressed", KeyStroke.getKeyStroke("shift pressed SHIFT"), new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         shiftPressed.set(true);
         popup.setCaption("Merge with Current Context");
       }
     });
     popup.registerAction("shiftReleased", KeyStroke.getKeyStroke("released SHIFT"), new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         shiftPressed.set(false);
         popup.setCaption("Switch to Task");
       }
     });
     popup.registerAction("invoke", KeyStroke.getKeyStroke("shift ENTER"), new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         popup.handleSelect(true);
       }
@@ -206,20 +197,21 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
     final LocalTask task = tasks.get(0).getTask();
     if (tasks.size() == 1 && task != null) {
       group.add(new DumbAwareAction("&Switch to") {
-        public void actionPerformed(AnActionEvent e) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
           manager.activateTask(task, !shiftPressed.get());
         }
       });
       group.add(new DumbAwareAction("&Edit") {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           EditTaskDialog.editTask((LocalTaskImpl)task, project);
         }
       });
     }
     final AnAction remove = new DumbAwareAction("&Remove") {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         for (TaskListItem item : tasks) {
           LocalTask itemTask = item.getTask();
           if (itemTask != null) {

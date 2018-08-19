@@ -69,7 +69,7 @@ public class PsiEnumConstantInitializerImpl extends PsiClassImpl implements PsiE
 
   private PsiClass getBaseClass() {
     PsiElement parent = getParent();
-    LOG.assertTrue(parent instanceof PsiEnumConstant);
+    LOG.assertTrue(parent instanceof PsiEnumConstant, parent);
     PsiClass containingClass = ((PsiEnumConstant)parent).getContainingClass();
     LOG.assertTrue(containingClass != null);
     return containingClass;

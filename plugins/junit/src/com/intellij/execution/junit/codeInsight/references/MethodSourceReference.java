@@ -43,7 +43,7 @@ public class MethodSourceReference extends PsiReferenceBase<PsiLiteral> {
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     String methodName = getValue();
     String className = StringUtil.getPackageName(methodName, '#');
     boolean selfClassReference = className.isEmpty() ||
@@ -51,6 +51,7 @@ public class MethodSourceReference extends PsiReferenceBase<PsiLiteral> {
     return super.handleElementRename(selfClassReference ? newElementName : className + '#' + newElementName);
   }
 
+  @Override
   @Nullable
   public PsiElement resolve() {
     PsiClass cls = PsiTreeUtil.getParentOfType(getElement(), PsiClass.class);
@@ -73,6 +74,7 @@ public class MethodSourceReference extends PsiReferenceBase<PsiLiteral> {
     return null;
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     final List<Object> list = new ArrayList<>();

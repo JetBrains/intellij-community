@@ -10,7 +10,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -71,7 +71,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 @State(name = "FileTypeManager", storages = @Storage("filetypes.xml"), additionalExportFile = FileTypeManagerImpl.FILE_SPEC )
-public class FileTypeManagerImpl extends FileTypeManagerEx implements PersistentStateComponent<Element>, Disposable, ApplicationComponent {
+public class FileTypeManagerImpl extends FileTypeManagerEx implements PersistentStateComponent<Element>, Disposable, BaseComponent {
   private static final Logger LOG = Logger.getInstance(FileTypeManagerImpl.class);
 
   // You must update all existing default configurations accordingly
@@ -83,7 +83,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   static final Key<FileType> DETECTED_FROM_CONTENT_FILE_TYPE_KEY = Key.create("DETECTED_FROM_CONTENT_FILE_TYPE_KEY");
 
   // must be sorted
+  @SuppressWarnings("SpellCheckingInspection")
   private static final String DEFAULT_IGNORED = "*.hprof;*.pyc;*.pyo;*.rbc;*.yarb;*~;.DS_Store;.git;.hg;.svn;CVS;__pycache__;_svn;vssver.scc;vssver2.scc;";
+
   static {
     List<String> strings = StringUtil.split(DEFAULT_IGNORED, ";");
     for (int i = 0; i < strings.size(); i++) {
@@ -303,11 +305,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       registerFileTypeWithoutNotification(pair.fileType, pair.matchers, true);
     }
 
-    if (PlatformUtils.isDataGrip() || PlatformUtils.isCidr()) {
-      // build scripts are correct, but it is required to run from sources
-      return;
-    }
-
     try {
       URL defaultFileTypesUrl = FileTypeManagerImpl.class.getResource("/defaultFileTypes.xml");
       if (defaultFileTypesUrl != null) {
@@ -394,7 +391,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     RE_DETECT_ASYNC = enable;
   }
 
-  private void reDetect(@NotNull Collection<VirtualFile> files) {
+  private void reDetect(@NotNull Collection<? extends VirtualFile> files) {
     List<VirtualFile> changed = new ArrayList<>();
     List<VirtualFile> crashed = new ArrayList<>();
     for (VirtualFile file : files) {
@@ -486,9 +483,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         registerReDetectedMappings(pair);
       }
     }
-    // Resolve unresolved mappings initialized before certain plugin initialized.
-    for (StandardFileType pair : myStandardFileTypes.values()) {
-      bindUnresolvedMappings(pair.fileType);
+
+    // resolve unresolved mappings initialized before certain plugin initialized
+    if (!myUnresolvedMappings.isEmpty()) {
+      for (StandardFileType pair : myStandardFileTypes.values()) {
+        bindUnresolvedMappings(pair.fileType);
+      }
     }
 
     boolean isAtLeastOneStandardFileTypeHasBeenRead = false;
@@ -650,23 +650,15 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private volatile FileAttribute autoDetectedAttribute;
   // read auto-detection flags from the persistent FS file attributes. If file attributes are absent, return 0 for flags
   // returns three bits value for AUTO_DETECTED_AS_TEXT_MASK, AUTO_DETECTED_AS_BINARY_MASK and AUTO_DETECT_WAS_RUN_MASK bits
-  // protected for Upsource
-  protected byte readFlagsFromCache(@NotNull VirtualFile file) {
-    DataInputStream stream = autoDetectedAttribute.readAttribute(file);
+  private byte readFlagsFromCache(@NotNull VirtualFile file) {
     boolean wasAutoDetectRun = false;
     byte status = 0;
-    try {
-      try {
-        status = stream == null ? 0 : stream.readByte();
-        wasAutoDetectRun = stream != null;
-      }
-      finally {
-        if (stream != null) {
-          stream.close();
-        }
-      }
+    try (DataInputStream stream = autoDetectedAttribute.readAttribute(file)) {
+      status = stream == null ? 0 : stream.readByte();
+      wasAutoDetectRun = stream != null;
     }
     catch (IOException ignored) {
+
     }
     status = BitUtil.set(status, AUTO_DETECT_WAS_RUN_MASK, wasAutoDetectRun);
 
@@ -675,8 +667,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   // store auto-detection flags to the persistent FS file attributes
   // writes AUTO_DETECTED_AS_TEXT_MASK, AUTO_DETECTED_AS_BINARY_MASK bits only
-  // protected for Upsource
-  protected void writeFlagsToCache(@NotNull VirtualFile file, int flags) {
+  private void writeFlagsToCache(@NotNull VirtualFile file, int flags) {
     try (DataOutputStream stream = autoDetectedAttribute.writeAttribute(file)) {
       stream.writeByte(flags & (AUTO_DETECTED_AS_TEXT_MASK | AUTO_DETECTED_AS_BINARY_MASK));
     }
@@ -706,13 +697,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return BitUtil.isSet(flags, AUTO_DETECTED_AS_TEXT_MASK) ? PlainTextFileType.INSTANCE :
            BitUtil.isSet(flags, AUTO_DETECTED_AS_BINARY_MASK) ? UnknownFileType.INSTANCE :
            null;
-  }
-
-  @NotNull
-  @Override
-  @Deprecated
-  public FileType detectFileTypeFromContent(@NotNull VirtualFile file) {
-    return file.getFileType();
   }
 
   private void cacheAutoDetectedFileType(@NotNull VirtualFile file, @NotNull FileType fileType) {
@@ -790,9 +774,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @NotNull
   private FileType detectFromContentAndCache(@NotNull final VirtualFile file) throws IOException {
     long start = System.currentTimeMillis();
-    FileType fileType = UnknownFileType.INSTANCE;
-    InputStream inputStream = ((FileSystemInterface)file.getFileSystem()).getInputStream(file);
-    try {
+    FileType fileType;
+    try (InputStream inputStream = ((FileSystemInterface)file.getFileSystem()).getInputStream(file)) {
       if (toLog()) {
         log("F: detectFromContentAndCache(" + file.getName() + "):" + " inputStream=" + streamInfo(inputStream));
       }
@@ -804,26 +787,20 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
                       : new byte[Math.min(fileLength, FileUtilRt.getUserContentLoadLimit())];
 
       int n = readSafely(inputStream, buffer, 0, buffer.length);
-      if (n<=0) return UnknownFileType.INSTANCE;
+      if (n <= 0) return UnknownFileType.INSTANCE;
 
-      fileType = ReadAction.compute(() -> detect(file, buffer, n));
-    }
-    finally {
-      try {
-        if (toLog()) {
-          try (InputStream newStream = ((FileSystemInterface)file.getFileSystem()).getInputStream(file)) {
-            byte[] buffer = new byte[50];
-            int n = newStream.read(buffer, 0, buffer.length);
-            log("F: detectFromContentAndCache(" + file.getName() + "): result: " + fileType.getName() +
-                "; stream: " + streamInfo(inputStream) +
-                "; newStream: " + streamInfo(newStream) +
-                "; read: " + n +
-                "; buffer: " + Arrays.toString(buffer));
-          }
+      fileType = detect(file, buffer, n);
+
+      if (toLog()) {
+        try (InputStream newStream = ((FileSystemInterface)file.getFileSystem()).getInputStream(file)) {
+          byte[] buffer2 = new byte[50];
+          int n2 = newStream.read(buffer2, 0, buffer2.length);
+          log("F: detectFromContentAndCache(" + file.getName() + "): result: " + fileType.getName() +
+              "; stream: " + streamInfo(inputStream) +
+              "; newStream: " + streamInfo(newStream) +
+              "; read: " + n2 +
+              "; buffer: " + Arrays.toString(buffer2));
         }
-      }
-      finally {
-        inputStream.close();
       }
     }
 
@@ -1240,6 +1217,15 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
     }
 
+    // https://youtrack.jetbrains.com/issue/IDEA-138366
+    for (Map.Entry<FileNameMatcher, Pair<FileType, Boolean>> entry : myRemovedMappings.entrySet()) {
+      Pair<FileType, Boolean> value = entry.getValue();
+      Element content = AbstractFileType.writeRemovedMapping(value.first, entry.getKey(), true, value.second);
+      if (content != null) {
+        map.addContent(content);
+      }
+    }
+
     if (!myUnresolvedMappings.isEmpty()) {
       FileNameMatcher[] unresolvedMappingKeys = myUnresolvedMappings.keySet().toArray(new FileNameMatcher[0]);
       Arrays.sort(unresolvedMappingKeys, Comparator.comparing(FileNameMatcher::getPresentableString));
@@ -1267,10 +1253,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     Set<FileNameMatcher> defaultAssociations = new THashSet<>(myInitialAssociations.getAssociations(type));
 
     for (FileNameMatcher matcher : associations) {
-      if (defaultAssociations.contains(matcher)) {
-        defaultAssociations.remove(matcher);
-      }
-      else if (shouldSave(type)) {
+      boolean isDefaultAssociationContains = defaultAssociations.remove(matcher);
+      if (!isDefaultAssociationContains && shouldSave(type)) {
         Element content = AbstractFileType.writeMapping(type.getName(), matcher, specifyTypeName);
         if (content != null) {
           map.addContent(content);
@@ -1317,7 +1301,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   /**
    * Registers a standard file type. Doesn't notifyListeners any change events.
    */
-  private void registerFileTypeWithoutNotification(@NotNull FileType fileType, @NotNull List<FileNameMatcher> matchers, boolean addScheme) {
+  private void registerFileTypeWithoutNotification(@NotNull FileType fileType, @NotNull List<? extends FileNameMatcher> matchers, boolean addScheme) {
     if (addScheme) {
       mySchemeManager.addScheme(fileType);
     }
@@ -1454,7 +1438,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return myPatternsTable;
   }
 
-  void setPatternsTable(@NotNull Set<FileType> fileTypes, @NotNull FileTypeAssocTable<FileType> assocTable) {
+  void setPatternsTable(@NotNull Set<? extends FileType> fileTypes, @NotNull FileTypeAssocTable<FileType> assocTable) {
     fireBeforeFileTypesChanged();
     for (FileType existing : getRegisteredFileTypes()) {
       if (!fileTypes.contains(existing)) {

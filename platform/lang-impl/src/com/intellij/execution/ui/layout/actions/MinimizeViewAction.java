@@ -28,7 +28,7 @@ public class MinimizeViewAction extends BaseViewAction {
   @Override
   protected void update(final AnActionEvent e, final ViewContext context, final Content[] content) {
     setEnabled(e, isEnabled(context, content, e.getPlace()));
-    e.getPresentation().setIcon(ViewContext.TAB_TOOLBAR_PLACE.equals(e.getPlace()) ? AllIcons.Actions.Move_to_button_top : AllIcons.Actions.Move_to_button);
+    e.getPresentation().setIcon(AllIcons.Actions.Move_to_button);
   }
 
   @Override

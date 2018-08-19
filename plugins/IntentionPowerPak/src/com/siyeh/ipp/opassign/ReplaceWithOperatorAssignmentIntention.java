@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ReplaceWithOperatorAssignmentIntention extends MutablyNamedIntention {
 
+  @Override
   public String getTextForElement(PsiElement element) {
     final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)element;
     final PsiExpression rhs = assignmentExpression.getRExpression();
@@ -37,11 +38,13 @@ public class ReplaceWithOperatorAssignmentIntention extends MutablyNamedIntentio
     return IntentionPowerPackBundle.message("replace.assignment.with.operator.assignment.intention.name", operator);
   }
 
+  @Override
   @NotNull
   public PsiElementPredicate getElementPredicate() {
     return new ReplaceableWithOperatorAssignmentPredicate();
   }
 
+  @Override
   public void processIntention(@NotNull PsiElement element){
     final PsiAssignmentExpression expression = (PsiAssignmentExpression)element;
     final PsiExpression rhs = expression.getRExpression();

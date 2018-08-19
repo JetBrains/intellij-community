@@ -28,6 +28,7 @@ public final class JavadocConfigurable implements Configurable {
     return sdk != null && sdk.getRootProvider().getFiles(JavadocOrderRootType.getInstance()).length > 0;
   }
 
+  @Override
   public JComponent createComponent() {
     myPanel = new JavadocGenerationPanel();
     myPanel.myLinkToJdkDocs.setEnabled(sdkHasJavadocUrls(myProject));
@@ -78,6 +79,7 @@ public final class JavadocConfigurable implements Configurable {
     myPanel.myLinkToJdkDocs.setSelected(configuration.OPTION_LINK_TO_JDK_DOCS);
   }
 
+  @Override
   public boolean isModified() {
     boolean isModified;
 
@@ -102,10 +104,12 @@ public final class JavadocConfigurable implements Configurable {
     return isModified;
   }
 
+  @Override
   public final void apply() {
     applyTo(myConfiguration);
   }
 
+  @Override
   public void reset() {
     loadFrom(myConfiguration);
   }
@@ -120,6 +124,7 @@ public final class JavadocConfigurable implements Configurable {
     return string1.equals(string2);
   }
 
+  @Override
   public void disposeUIResources() {
     myPanel = null;
   }
@@ -142,6 +147,7 @@ public final class JavadocConfigurable implements Configurable {
     return directory.replace('/', File.separatorChar);
   }
 
+  @Override
   public String getDisplayName() {
     return null;
   }

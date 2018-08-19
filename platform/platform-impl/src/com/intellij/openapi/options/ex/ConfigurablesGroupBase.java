@@ -29,7 +29,7 @@ import java.util.List;
  * @author nik
  */
 @Deprecated
-public abstract class ConfigurablesGroupBase implements ConfigurableGroup {
+abstract class ConfigurablesGroupBase implements ConfigurableGroup {
   private Configurable[] myChildren;
   private final ComponentManager myComponentManager;
   private final ExtensionPointName<ConfigurableEP<Configurable>> myConfigurablesExtensionPoint;
@@ -57,8 +57,4 @@ public abstract class ConfigurablesGroupBase implements ConfigurableGroup {
   @Nullable
   protected abstract ConfigurableFilter getConfigurableFilter();
 
-  @Override
-  public String getShortName() {
-    return null;
-  }
 }

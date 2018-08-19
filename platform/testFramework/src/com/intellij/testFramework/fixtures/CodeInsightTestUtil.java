@@ -26,7 +26,6 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.navigation.GotoImplementationHandler;
 import com.intellij.codeInsight.navigation.GotoTargetHandler;
 import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.codeInsight.template.impl.TemplateState;
@@ -103,7 +102,8 @@ public class CodeInsightTestUtil {
     List<IntentionAction> availableIntentions = fixture.getAvailableIntentions();
     final IntentionAction intentionAction = findIntentionByText(availableIntentions, action);
     if (intentionAction == null) {
-      Assert.fail("Action not found: " + action + " in place: " + fixture.getElementAtCaret() + " among " + availableIntentions);
+      PsiElement element = fixture.getFile().findElementAt(fixture.getCaretOffset());
+      Assert.fail("Action not found: " + action + " in place: " + element + " among " + availableIntentions);
     }
     fixture.launchAction(intentionAction);
     fixture.checkResultByFile(after, false);
@@ -191,9 +191,9 @@ public class CodeInsightTestUtil {
   @TestOnly
   public static void doInlineRename(VariableInplaceRenameHandler handler, final String newName, @NotNull Editor editor, PsiElement elementAtCaret) {
     Project project = editor.getProject();
-    TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(project);
+    Disposable disposable = Disposer.newDisposable();
     try {
-      templateManager.setTemplateTesting(true);
+      TemplateManagerImpl.setTemplateTesting(project, disposable);
       handler.doRename(elementAtCaret, editor, DataManager.getInstance().getDataContext(editor.getComponent()));
       if (editor instanceof EditorWindow) {
         editor = ((EditorWindow)editor).getDelegate();
@@ -211,7 +211,7 @@ public class CodeInsightTestUtil {
       state.gotoEnd(false);
     }
     finally {
-      templateManager.setTemplateTesting(false);
+      Disposer.dispose(disposable);
     }
   }
 

@@ -53,6 +53,10 @@ public class JsonSchemaPatternComparator {
   private static ThreeState comparePatterns(@NotNull final UserDefinedJsonSchemaConfiguration.Item leftItem,
                                             @NotNull final UserDefinedJsonSchemaConfiguration.Item rightItem) {
     if (leftItem.getPath().equals(rightItem.getPath())) return ThreeState.YES;
+    if (leftItem.getPath().indexOf(File.separatorChar) >= 0 || rightItem.getPath().indexOf(File.separatorChar) >= 0) {
+      // todo: better heuristic
+      return ThreeState.NO;
+    }
     final BeforeAfter<String> left = getBeforeAfterAroundWildCards(leftItem.getPath());
     final BeforeAfter<String> right = getBeforeAfterAroundWildCards(rightItem.getPath());
     if (left == null || right == null) {

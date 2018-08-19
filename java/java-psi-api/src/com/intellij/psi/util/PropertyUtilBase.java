@@ -12,7 +12,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -542,12 +541,6 @@ public class PropertyUtilBase {
     Objects.requireNonNull(setMethod.getBody()).replace(body);
     setMethod = (PsiMethod)CodeStyleManager.getInstance(project).reformat(setMethod);
     return setMethod;
-  }
-
-  /** @deprecated use {@link NullableNotNullManager#copyNullableOrNotNullAnnotation(PsiModifierListOwner, PsiModifierListOwner)} (to be removed in IDEA 17) */
-  public static void annotateWithNullableStuff(@NotNull PsiModifierListOwner field,
-                                               @NotNull PsiModifierListOwner listOwner) throws IncorrectOperationException {
-    NullableNotNullManager.getInstance(field.getProject()).copyNullableOrNotNullAnnotation(field, listOwner);
   }
 
   @Nullable

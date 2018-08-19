@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.io.Decompressor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,18 +92,14 @@ public class ZipUtil {
                            @Nullable ContentProcessor contentProcessor,
                            boolean unwrapSingleTopLevelFolder) throws IOException {
     File unzipToDir = getUnzipToDir(progress, targetDir, unwrapSingleTopLevelFolder);
-    ZipFile zipFile = new ZipFile(zipArchive, ZipFile.OPEN_READ);
-    try {
+    try (ZipFile zipFile = new ZipFile(zipArchive, ZipFile.OPEN_READ)) {
       Enumeration<? extends ZipEntry> entries = zipFile.entries();
       while (entries.hasMoreElements()) {
         ZipEntry entry = entries.nextElement();
-        InputStream entryContentStream = zipFile.getInputStream(entry);
-        unzipEntryToDir(progress, entry, entryContentStream, unzipToDir, pathConvertor, contentProcessor);
-        entryContentStream.close();
+        try (InputStream entryContentStream = zipFile.getInputStream(entry)) {
+          unzipEntryToDir(progress, entry, entryContentStream, unzipToDir, pathConvertor, contentProcessor);
+        }
       }
-    }
-    finally {
-      zipFile.close();
     }
     doUnwrapSingleTopLevelFolder(unwrapSingleTopLevelFolder, unzipToDir, targetDir);
   }
@@ -154,7 +151,7 @@ public class ZipUtil {
         return;
       }
     }
-    File child = com.intellij.util.io.ZipUtil.newFileForEntry(extractToDir, relativeExtractPath);
+    File child = Decompressor.entryFile(extractToDir, relativeExtractPath);
     File dir = zipEntry.isDirectory() ? child : child.getParentFile();
     if (!dir.exists() && !dir.mkdirs()) {
       throw new IOException("Unable to create dir: '" + dir + "'!");

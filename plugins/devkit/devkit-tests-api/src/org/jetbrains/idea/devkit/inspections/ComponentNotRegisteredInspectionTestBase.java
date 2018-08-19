@@ -17,7 +17,6 @@ public abstract class ComponentNotRegisteredInspectionTestBase extends PluginMod
 
     myFixture.addClass("package com.intellij.openapi.actionSystem; public class AnAction {}");
     myFixture.addClass("package com.intellij.openapi.components; public interface BaseComponent {}");
-    myFixture.addClass("package com.intellij.openapi.components; public interface ApplicationComponent extends BaseComponent {}");
 
     myFixture.enableInspections(new ComponentNotRegisteredInspection());
   }

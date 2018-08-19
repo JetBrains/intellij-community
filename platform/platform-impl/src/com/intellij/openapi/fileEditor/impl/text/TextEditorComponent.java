@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.openapi.Disposable;
@@ -237,7 +237,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
   }
 
   @Override
-  public Object getData(final String dataId) {
+  public Object getData(@NotNull final String dataId) {
     final Editor e = validateCurrentEditor();
     if (e == null || e.isDisposed()) return null;
 
@@ -274,7 +274,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
     }
 
     @Override
-    public void documentChanged(DocumentEvent e) {
+    public void documentChanged(@NotNull DocumentEvent e) {
       if (!myUpdateScheduled) {
         // document's timestamp is changed later on undo or PSI changes
         ApplicationManager.getApplication().invokeLater(myUpdateRunnable);

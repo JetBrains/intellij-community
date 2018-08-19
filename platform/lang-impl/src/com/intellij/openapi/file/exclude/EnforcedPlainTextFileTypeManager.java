@@ -25,6 +25,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.FileContentUtilCore;
@@ -60,10 +61,8 @@ public class EnforcedPlainTextFileTypeManager implements ProjectManagerListener 
         }
       }
     }
-    if (!myPlainTextFileSets.isEmpty()) {
-      for (Collection<VirtualFile> projectSet : myPlainTextFileSets.values()) {
-        if (projectSet != null && projectSet.contains(file)) return true;
-      }
+    for (Collection<VirtualFile> projectSet : myPlainTextFileSets.values()) {
+      if (projectSet != null && projectSet.contains(file)) return true;
     }
     return false;
   }
@@ -93,8 +92,9 @@ public class EnforcedPlainTextFileTypeManager implements ProjectManagerListener 
   private void setPlainTextStatus(@NotNull final Project project, final boolean isAdded, @NotNull final VirtualFile... files) {
     ApplicationManager.getApplication().runWriteAction(() -> {
       ProjectPlainTextFileTypeManager projectManager = ProjectPlainTextFileTypeManager.getInstance(project);
+      ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
       for (VirtualFile file : files) {
-        if (projectManager.isInContent(file) || projectManager.isInLibrarySource(file)) {
+        if (fileIndex.isInContent(file) || fileIndex.isInLibrarySource(file) || fileIndex.isExcluded(file)) {
           ensureProjectFileSetAdded(project, projectManager);
           if (isAdded ?
               projectManager.addFile(file) :

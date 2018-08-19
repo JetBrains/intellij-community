@@ -18,8 +18,8 @@ package com.intellij.java.codeInsight.intention;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
 public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestCase {
@@ -62,6 +62,16 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
     doTest("Add import for 'foo.Class1.Inner1'");
   }
 
+  public void testPredefinedAlwaysUseOnDemandImport() {
+    JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
+    settings.PACKAGES_TO_USE_IMPORT_ON_DEMAND.addEntry(new PackageEntry(true, "java.lang.Math", true));
+    doTest("Add static import for 'java.lang.Math.abs'");
+  }
+
+  public void testSingleStaticReferencesUntilCollapsedToDiamond() {
+    doTest("Add static import for 'java.lang.Math.max'");
+  }
+
  public void testDisabledInsideParameterizedReference() {
     myFixture.addClass("package foo; " +
                        "public class Class1 {" +
@@ -99,15 +109,9 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
     myFixture.addClass("package foo; class Foo {public static void foo(int i){}}");
     myFixture.addClass("package foo; class Bar {public static void foo(String s){}}");
 
-    JavaCodeStyleSettings settings = CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings().getCustomSettings(JavaCodeStyleSettings.class);
-    int old = settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND;
+    JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
     settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 1;
-    try {
-      doTest("Add static import for 'foo.Foo.foo'");
-    }
-    finally {
-      settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = old;
-    }
+    doTest("Add static import for 'foo.Foo.foo'");
   }
 
   public void testConflictingNamesInScope() {

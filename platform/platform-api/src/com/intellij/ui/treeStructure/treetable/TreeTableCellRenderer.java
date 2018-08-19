@@ -46,6 +46,7 @@ public class TreeTableCellRenderer implements TableCellRenderer, ClientPropertyH
     myTree = tree;
   }
 
+  @Override
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     int modelRow  = table.convertRowIndexToModel(row);
     final boolean lineHasFocus = table.hasFocus();
@@ -88,6 +89,7 @@ public class TreeTableCellRenderer implements TableCellRenderer, ClientPropertyH
     myDefaultBorder = border;
   }
 
+  @Override
   public void putClientProperty(String key, Object value) {
     myTree.putClientProperty(key, value);
   }
@@ -107,16 +109,16 @@ public class TreeTableCellRenderer implements TableCellRenderer, ClientPropertyH
   /**
    * This component has two purposes:
    * <ul>
-   * <li>from a UI perspective, it is a {@link JPanel} that contains a single {@link myTree} element,
+   * <li>from a UI perspective, it is a {@link JPanel} that contains a single {@link #myTree} element,
    * so that it renders the active row in the table tree, including indentation, icons, etc. when painted.</li>
-   * <li>from an accessibility perspective, it exposes the accessibility context of the {@link myComponent} it wraps, so
+   * <li>from an accessibility perspective, it exposes the accessibility context of the {@link #myComponent} it wraps, so
    * that screen readers see the accessible components corresponding to each tree node in the tree.</li>
    * </ul>
    * See the {@link TreeTableCellRenderer#getTableCellRendererComponent(JTable, Object, boolean, boolean, int, int)} method:
    * <ul>
-   * <li>returning {@link myTree} would allow for the painting behavior of cells to be correct, but would be incorrect from an
+   * <li>returning {@link #myTree} would allow for the painting behavior of cells to be correct, but would be incorrect from an
    * accessibility point of view, as each cell would be exposed as a "tree" component.</li>
-   * <li>returning {@link myComponent} would be correct from an accessibility point of view, as each cell would expose
+   * <li>returning {@link #myComponent} would be correct from an accessibility point of view, as each cell would expose
    * the tree node they contain, but would not work from a rendering perspective, because we would miss the
    * indentation markers, styles, etc. that is handled by {@link TreeTableTree} when rendering tree nodes.</li>
    * </ul>

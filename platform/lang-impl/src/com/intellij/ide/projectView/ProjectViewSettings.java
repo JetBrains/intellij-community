@@ -77,8 +77,8 @@ public interface ProjectViewSettings extends ViewSettings {
 
     @Override
     public boolean isShowExcludedFiles() {
-      ProjectViewSettings settings = getProjectViewSettings();
-      return settings != null && settings.isUseFileNestingRules();
+      ProjectView view = getProjectView();
+      return view != null && view.isShowExcludedFiles(getPaneID(view));
     }
 
     @Override
@@ -142,6 +142,12 @@ public interface ProjectViewSettings extends ViewSettings {
       if (helper == null || !helper.supportsHideEmptyMiddlePackages()) return false;
       ProjectView view = getProjectView();
       return view != null && view.isHideEmptyMiddlePackages(getPaneID(view));
+    }
+
+    @Override
+    public boolean isCompactDirectories() {
+      ProjectView view = getProjectView();
+      return view != null && view.isCompactDirectories(getPaneID(view));
     }
 
     @Override

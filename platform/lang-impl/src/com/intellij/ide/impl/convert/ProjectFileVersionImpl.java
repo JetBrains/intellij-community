@@ -3,9 +3,9 @@
 package com.intellij.ide.impl.convert;
 
 import com.intellij.conversion.ConversionService;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 @State(name = ProjectFileVersionImpl.COMPONENT_NAME)
-public class ProjectFileVersionImpl extends ProjectFileVersion implements ProjectComponent, PersistentStateComponent<ProjectFileVersionState> {
+public class ProjectFileVersionImpl extends ProjectFileVersion implements Disposable, PersistentStateComponent<ProjectFileVersionState> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.impl.convert.ProjectFileVersionImpl");
   @NonNls public static final String COMPONENT_NAME = "ProjectFileVersion";
   private final Project myProject;
@@ -30,14 +30,7 @@ public class ProjectFileVersionImpl extends ProjectFileVersion implements Projec
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return COMPONENT_NAME;
-  }
-
-  @Override
-  public void disposeComponent() {
+  public void dispose() {
     if (myProject.isDefault() || ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }

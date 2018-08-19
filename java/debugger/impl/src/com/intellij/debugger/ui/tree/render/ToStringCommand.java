@@ -15,10 +15,10 @@
  */
 package com.intellij.debugger.ui.tree.render;
 
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.SuspendContext;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.managerThread.SuspendContextCommand;
 import com.sun.jdi.Value;
 
@@ -33,17 +33,19 @@ public abstract class ToStringCommand implements SuspendContextCommand {
     myValue = value;
   }
 
+  @Override
   public void action() {
     if(myIsEvaluated) return;
     try {
       final String valueAsString = DebuggerUtils.getValueAsString(myEvaluationContext, myValue);
       evaluationResult(valueAsString);
-    } 
+    }
     catch(final EvaluateException ex) {
       evaluationError(ex.getMessage());
     }
   }
 
+  @Override
   public void commandCancelled() {
   }
 
@@ -51,6 +53,7 @@ public abstract class ToStringCommand implements SuspendContextCommand {
     myIsEvaluated = true;
   }
 
+  @Override
   public SuspendContext getSuspendContext() {
     return myEvaluationContext.getSuspendContext();
   }

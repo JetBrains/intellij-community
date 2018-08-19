@@ -29,6 +29,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ChangeModifierFix;
+import com.siyeh.ig.performance.ClassInitializerMayBeStaticInspection;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,8 +70,10 @@ public class ClassInitializerInspection extends BaseInspection {
   @NotNull
   @Override
   protected InspectionGadgetsFix[] buildFixes(Object... infos) {
-    final PsiClass aClass = (PsiClass)infos[0];
-    if (PsiUtil.isInnerClass(aClass)) {
+    PsiClassInitializer classInitializer = (PsiClassInitializer)infos[0];
+    final PsiClass aClass = classInitializer.getContainingClass();
+    assert aClass != null;
+    if (PsiUtil.isInnerClass(aClass) || ClassInitializerMayBeStaticInspection.dependsOnInstanceMembers(classInitializer)) {
       return new InspectionGadgetsFix[] {new MoveToConstructorFix()};
     }
     return new InspectionGadgetsFix[] {
@@ -164,7 +167,7 @@ public class ClassInitializerInspection extends BaseInspection {
       if (onlyWarnWhenConstructor && aClass.getConstructors().length == 0) {
         return;
       }
-      registerClassInitializerError(initializer, aClass);
+      registerClassInitializerError(initializer, initializer);
     }
   }
 }

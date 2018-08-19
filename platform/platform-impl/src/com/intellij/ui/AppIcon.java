@@ -42,7 +42,6 @@ import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.ByteOrder;
@@ -426,16 +425,15 @@ public abstract class AppIcon {
       return true;
     }
 
-    private static void writeTransparentIco(BufferedImage src, OutputStream os)
+    private static byte[] writeTransparentIco(BufferedImage src)
       throws ImageWriteException, IOException {
 
       LOG.assertTrue(BufferedImage.TYPE_INT_ARGB == src.getType() || BufferedImage.TYPE_4BYTE_ABGR == src.getType());
 
       int bitCount = 32;
 
-      BinaryOutputStream bos = new BinaryOutputStream(os, ByteOrder.LITTLE_ENDIAN);
-
-      try {
+      try (ByteArrayOutputStream os = new ByteArrayOutputStream();
+           BinaryOutputStream bos = new BinaryOutputStream(os, ByteOrder.LITTLE_ENDIAN)) {
         int scanline_size = (bitCount * src.getWidth() + 7) / 8;
         if ((scanline_size % 4) != 0)
           scanline_size += 4 - (scanline_size % 4); // pad scanline to 4 byte size.
@@ -521,11 +519,7 @@ public abstract class AppIcon {
           for (int x = 0; x < t_row_padding; x++)
             bos.write(0);
         }
-      }
-      finally {
-        try {
-          bos.close();
-        } catch (IOException ignored) { }
+        return os.toByteArray();
       }
     }
 
@@ -569,9 +563,8 @@ public abstract class AppIcon {
           g.setColor(Color.white);
           g.drawString(text, size / 2 - textWidth / 2, size / 2 - fontMetrics.getHeight() / 2 + fontMetrics.getAscent());
 
-          ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-          writeTransparentIco(image, bytes);
-          icon = Win7TaskBar.createIcon(bytes.toByteArray());
+          byte[] bytes = writeTransparentIco(image);
+          icon = Win7TaskBar.createIcon(bytes);
         }
         catch (Throwable e) {
           LOG.error(e);
@@ -601,9 +594,8 @@ public abstract class AppIcon {
           if (myOkIcon == null) {
             try {
               BufferedImage image = ImageIO.read(getClass().getResource("/mac/appIconOk512.png"));
-              ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-              writeTransparentIco(image, bytes);
-              myOkIcon = Win7TaskBar.createIcon(bytes.toByteArray());
+              byte[] bytes = writeTransparentIco(image);
+              myOkIcon = Win7TaskBar.createIcon(bytes);
             }
             catch (Throwable e) {
               LOG.error(e);

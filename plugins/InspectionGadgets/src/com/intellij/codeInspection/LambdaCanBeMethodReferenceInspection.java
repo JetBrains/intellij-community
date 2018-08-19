@@ -20,7 +20,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -137,7 +136,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
 
         final PsiExpression[] dims = ((PsiNewExpression)callExpression).getArrayDimensions();
         if (dims.length == 1 && parameters.length == 1){
-          if (!resolvesToParameter(dims[0], parameters[0])) {
+          if (!ExpressionUtils.isReferenceTo(dims[0], parameters[0])) {
             return null;
           }
         }
@@ -209,7 +208,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
     }
 
     for (int i = 0; i < expressions.length; i++) {
-      if (!resolvesToParameter(expressions[i], parameters[i + offset])) {
+      if (!ExpressionUtils.isReferenceTo(expressions[i], parameters[i + offset])) {
         return false;
       }
     }
@@ -235,17 +234,12 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
       return true;
     }
 
-    return resolvesToParameter(qualifier, parameters[0]);
-  }
-
-  @Contract("null, _ -> false")
-  private static boolean resolvesToParameter(PsiExpression expression, PsiVariable parameter) {
-    return expression instanceof PsiReferenceExpression && ((PsiReferenceExpression)expression).resolve() == parameter;
+    return ExpressionUtils.isReferenceTo(qualifier, parameters[0]);
   }
 
   @Nullable
   static MethodReferenceCandidate extractMethodReferenceCandidateExpression(PsiElement body) {
-    final PsiExpression expression = LambdaUtil.extractSingleExpressionFromBody(body);
+    final PsiExpression expression = PsiUtil.skipParenthesizedExprDown(LambdaUtil.extractSingleExpressionFromBody(body));
     if (expression == null) {
       return null;
     }
@@ -330,7 +324,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
     }
     final Condition<PsiElement> callExpressionCondition = Conditions.instanceOf(PsiCallExpression.class, PsiArrayAccessExpression.class);
     final Condition<PsiElement> nonFinalFieldRefCondition = expression -> {
-      if (expression instanceof PsiReferenceExpression) {
+      if (expression instanceof PsiReferenceExpression && !(expression.getParent() instanceof PsiCallExpression)) {
         PsiElement element = ((PsiReferenceExpression)expression).resolve();
         if (element instanceof PsiField && !((PsiField)element).hasModifierProperty(PsiModifier.FINAL)) {
           return true;
@@ -379,6 +373,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
   }
 
   private static boolean isSoleParameter(@NotNull PsiVariable[] parameters, @Nullable PsiExpression expression) {
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
     return parameters.length == 1 &&
            expression instanceof PsiReferenceExpression &&
            parameters[0] == ((PsiReferenceExpression)expression).resolve();

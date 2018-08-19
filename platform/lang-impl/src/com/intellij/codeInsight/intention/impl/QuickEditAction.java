@@ -101,7 +101,7 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       DocumentWindow documentWindow = InjectedLanguageUtil.getDocumentWindow(injectedFile);
       if (documentWindow != null) {
-        handler.navigate(documentWindow.hostToInjectedUnescaped(offset));
+        handler.navigate(InjectedLanguageUtil.hostToInjectedUnescaped(documentWindow, offset));
       }
     }
     return handler;
@@ -134,9 +134,8 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
     TextRange hostRange = TextRange.create(hostRanges[0].getStartOffset(),
                                            hostRanges[hostRanges.length - 1].getEndOffset());
     for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
-      if (editor.getDocument() != documentWindow.getDelegate()) continue;
       QuickEditHandler handler = editor.getUserData(QUICK_EDIT_HANDLER);
-      if (handler != null && handler.changesRange(hostRange)) return handler;
+      if (handler != null && handler.tryReuse(injectedFile, hostRange)) return handler;
     }
     return null;
   }

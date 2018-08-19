@@ -41,7 +41,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   @NonNls private static final String FIND_PREFIX = "find";
   @NonNls private static final String CREATE_PREFIX = "create";
   @NonNls private static final String SET_PREFIX = "set";
-  
+
   @NonNls private static final String[] ourPrepositions = {
     "as", "at", "by", "down", "for", "from", "in", "into", "of", "on", "onto", "out", "over",
     "per", "to", "up", "upon", "via", "with"};
@@ -632,7 +632,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
               final PsiExpression qualifierExpression = methodExpr.getQualifierExpression();
               if (qualifierExpression instanceof PsiReferenceExpression &&
                   ((PsiReferenceExpression)qualifierExpression).resolve() instanceof PsiVariable) {
-                String name = qualifierExpression.getText() + StringUtil.capitalize(propertyName);
+                String name = ((PsiReferenceExpression)qualifierExpression).getReferenceName() + StringUtil.capitalize(propertyName);
                 return new NamesByExprInfo(propertyName, name);
               }
               return new NamesByExprInfo(propertyName);
@@ -831,7 +831,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
         }
       }
     }
-     //skip places where name for this local variable is calculated, otherwise grab the name 
+     //skip places where name for this local variable is calculated, otherwise grab the name
     else if (expr.getParent() instanceof PsiLocalVariable && variableKind != VariableKind.LOCAL_VARIABLE) {
       PsiVariable variable = (PsiVariable)expr.getParent();
       String variableName = variable.getName();
@@ -1040,7 +1040,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     if (allowShadowing && existingVariable instanceof PsiField && PsiTreeUtil.getNonStrictParentOfType(place, PsiMethod.class) != null) {
       return false;
     }
-    
+
     return true;
   }
 
@@ -1167,6 +1167,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     return type == null ? Collections.emptyList() : doSuggestNamesByType(type, kind, false);
   }
 
+  @Override
   @NotNull
   public SuggestedNameInfo suggestNames(@NotNull Collection<String> semanticNames, @NotNull VariableKind kind, @Nullable PsiType type) {
     final Iterable<String> allSemanticNames = ContainerUtil.concat(

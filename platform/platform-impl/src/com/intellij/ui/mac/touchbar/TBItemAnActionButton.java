@@ -1,24 +1,31 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.mac.foundation.ID;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.List;
 
 import static java.awt.event.ComponentEvent.COMPONENT_FIRST;
 
-public class TBItemAnActionButton extends TBItemButton {
-  private static final boolean LOG_ICON_ERRORS = System.getProperty("touchbar.log.icon.errors", "false").equals("true");
+class TBItemAnActionButton extends TBItemButton {
+  private static final int ourRunConfigurationPopoverWidth = 143;
 
   public static final int SHOWMODE_IMAGE_ONLY = 0;
   public static final int SHOWMODE_TEXT_ONLY = 1;
@@ -27,51 +34,78 @@ public class TBItemAnActionButton extends TBItemButton {
 
   private static final Logger LOG = Logger.getInstance(TBItemAnActionButton.class);
 
-  private final AnAction myAnAction;
-  private final String myActionId;
+  private @NotNull AnAction myAnAction;
+  private @Nullable String myActionId;
 
+  private int myShowMode = SHOWMODE_IMAGE_ONLY_IF_PRESENTED;
   private boolean myAutoVisibility = true;
-  private final boolean myHiddenWhenDisabled;
-  private final int myShowMode;
+  private boolean myHiddenWhenDisabled = false;
 
-  private Component myComponent;
+  private @Nullable Component myComponent;
+  private @Nullable List<TBItemAnActionButton> myLinkedButtons;
 
-  TBItemAnActionButton(@NotNull String uid, @NotNull AnAction action, boolean hiddenWhenDisabled, int showMode, ModalityState modality) {
-    super(uid);
-    myAnAction = action;
-    myActionId = ActionManager.getInstance().getId(myAnAction);
-    myAction = () -> {
-      if (modality != null)
-        ApplicationManager.getApplication().invokeLater(() -> _performAction(), modality);
-      else
-        ApplicationManager.getApplication().invokeLater(() -> _performAction());
-    };
+  TBItemAnActionButton(@NotNull String uid, @Nullable ItemListener listener, @NotNull AnAction action) {
+    super(uid, listener);
+    setAnAction(action);
+    setModality(null);
 
-    myAutoVisibility = true;
-    myHiddenWhenDisabled = hiddenWhenDisabled;
-    myIsVisible = false;
-    myShowMode = showMode;
+    if (action instanceof Toggleable) {
+      myFlags |= NSTLibrary.BUTTON_FLAG_TOGGLE;
+    }
   }
 
-  void setComponent(Component component/*for DataCtx*/) { myComponent = component; }
+  @Override
+  public String toString() { return String.format("%s [%s]", myActionId, myUid); }
 
-  void updateAnAction(Presentation presentation) {
+  TBItemAnActionButton setComponent(Component component/*for DataCtx*/) { myComponent = component; return this; }
+  TBItemAnActionButton setModality(ModalityState modality) { setAction(this::_performAction, true, modality); return this; }
+  TBItemAnActionButton setShowMode(int showMode) { myShowMode = showMode; return this; }
+
+  void setLinkedButtons(@Nullable List<TBItemAnActionButton> linkedButtons) { myLinkedButtons = linkedButtons; }
+
+  @NotNull Presentation updateAnAction(boolean forceUseCached) {
+    final Presentation presentation = myAnAction.getTemplatePresentation().clone();
+
+    if (ApplicationManager.getApplication() == null) {
+      if (myComponent instanceof JButton) {
+        presentation.setEnabled(myComponent.isEnabled());
+        presentation.setText(DialogWrapper.extractMnemonic(((JButton)myComponent).getText()).second);
+      }
+      return presentation;
+    }
+
     final DataContext dctx = DataManager.getInstance().getDataContext(_getComponent());
+    final ActionManager am = ActionManagerEx.getInstanceEx();
     final AnActionEvent e = new AnActionEvent(
       null,
       dctx,
       ActionPlaces.TOUCHBAR_GENERAL,
       presentation,
-      ActionManagerEx.getInstanceEx(),
+      am,
       0
     );
-    myAnAction.update(e);
+
+    try {
+      ActionUtil.performFastUpdate(false, myAnAction, e, forceUseCached);
+    } catch (IndexNotReadyException e1) {
+      presentation.setEnabled(false);
+      presentation.setVisible(false);
+    }
+
+    return presentation;
   }
 
   boolean isAutoVisibility() { return myAutoVisibility; }
-  public void setAutoVisibility(boolean autoVisibility) { myAutoVisibility = autoVisibility; }
+  void setAutoVisibility(boolean autoVisibility) { myAutoVisibility = autoVisibility; }
 
-  AnAction getAnAction() { return myAnAction; }
+  void setHiddenWhenDisabled(boolean hiddenWhenDisabled) { myHiddenWhenDisabled = hiddenWhenDisabled; }
+
+  @NotNull AnAction getAnAction() { return myAnAction; }
+  void setAnAction(@NotNull AnAction newAction) {
+    // can be safely replaced without setAction (because _performAction will use updated reference to AnAction)
+    myAnAction = newAction;
+    myActionId = ApplicationManager.getApplication() == null ? newAction.toString() : ActionManager.getInstance().getId(newAction);
+  }
 
   // returns true when visibility changed
   boolean updateVisibility(Presentation presentation) { // called from EDT
@@ -79,11 +113,14 @@ public class TBItemAnActionButton extends TBItemButton {
       return false;
 
     final boolean isVisible = presentation.isVisible() && (presentation.isEnabled() || !myHiddenWhenDisabled);
-    final boolean visibilityChanged = isVisible != myIsVisible;
+    boolean visibilityChanged = isVisible != myIsVisible;
     if (visibilityChanged) {
       myIsVisible = isVisible;
-      // LOG.info(String.format("[%s:%s] visibility changed: now is %s", myUid, myActionId, isVisible ? "visible" : "hidden"));
+      // System.out.println(String.format("%s: visibility changed, now is [%s]", toString(), isVisible ? "visible" : "hidden"));
     }
+    if ("RunConfiguration".equals(myActionId))
+      visibilityChanged = visibilityChanged || _setLinkedVisibility(presentation.getIcon() != AllIcons.General.Add);
+
     return visibilityChanged;
   }
   void updateView(Presentation presentation) { // called from EDT
@@ -99,14 +136,24 @@ public class TBItemAnActionButton extends TBItemButton {
         if (icon == null)
           icon = IconLoader.getDisabledIcon(presentation.getIcon());
       }
-      if (icon == null && LOG_ICON_ERRORS)
-        LOG.error("can't get icon, action " + myActionId + ", presentation = " + _printPresentation(presentation));
+      // if (icon == null) System.out.println("WARN: can't obtain icon, action " + myActionId + ", presentation = " + _printPresentation(presentation));
     }
 
     boolean isSelected = false;
-    if (myAnAction instanceof ToggleAction) {
+    if (myAnAction instanceof Toggleable) {
       final Object selectedProp = presentation.getClientProperty(Toggleable.SELECTED_PROPERTY);
       isSelected = selectedProp != null && selectedProp == Boolean.TRUE;
+      if (myNativePeer != ID.NIL && myActionId != null && myActionId.startsWith("Console.Jdbc.Execute")) // permanent update of toggleable-buttons of DataGrip
+        myUpdateOptions |= NSTLibrary.BUTTON_UPDATE_FLAGS;
+    }
+    if ("RunConfiguration".equals(myActionId)) {
+      if (presentation.getIcon() != AllIcons.General.Add) {
+        setHasArrowIcon(true);
+        setLayout(ourRunConfigurationPopoverWidth, 0, 5, 8);
+      } else {
+        setHasArrowIcon(false);
+        setLayout(0, 0, 5, 8);
+      }
     }
 
     final boolean hideText = myShowMode == SHOWMODE_IMAGE_ONLY || (myShowMode == SHOWMODE_IMAGE_ONLY_IF_PRESENTED && icon != null);
@@ -115,7 +162,26 @@ public class TBItemAnActionButton extends TBItemButton {
     update(icon, text, isSelected, !presentation.isEnabled());
   }
 
+  private boolean _setLinkedVisibility(boolean visible) {
+    if (myLinkedButtons == null)
+      return false;
+    boolean visibilityChanged = false;
+    for (TBItemAnActionButton butt: myLinkedButtons) {
+      if (butt.myAutoVisibility != visible)
+        visibilityChanged = true;
+      butt.setAutoVisibility(visible);
+      butt.myIsVisible = visible;
+    }
+    return visibilityChanged;
+  }
+
   private void _performAction() {
+    if (ApplicationManager.getApplication() == null) {
+      if (myComponent instanceof JButton)
+        ((JButton)myComponent).doClick();
+      return;
+    }
+
     final ActionManagerEx actionManagerEx = ActionManagerEx.getInstanceEx();
     final Component src = _getComponent();
     if (src == null) // KeyEvent can't have null source object
@@ -130,6 +196,8 @@ public class TBItemAnActionButton extends TBItemButton {
   private static Component _getCurrentFocusComponent() {
     final KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
     Component focusOwner = focusManager.getFocusOwner();
+    if (focusOwner == null)
+      focusOwner = focusManager.getPermanentFocusOwner();
     if (focusOwner == null) {
       // LOG.info(String.format("WARNING: [%s:%s] _getCurrentFocusContext: null focus-owner, use focused window", myUid, myActionId));
       return focusManager.getFocusedWindow();

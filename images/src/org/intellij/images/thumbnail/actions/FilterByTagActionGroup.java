@@ -37,7 +37,8 @@ public final class FilterByTagActionGroup extends ActionGroup implements PopupAc
         setPopup(true);
     }
 
-    public void update(final AnActionEvent e) {
+    @Override
+    public void update(@NotNull final AnActionEvent e) {
         Project project = e.getProject();
         if (project == null) {
             e.getPresentation().setEnabledAndVisible(false);
@@ -66,7 +67,7 @@ public final class FilterByTagActionGroup extends ActionGroup implements PopupAc
           .collect(Collectors.toList());
         group.add(new AnAction("All") {
             @Override
-            public void actionPerformed(AnActionEvent e) {
+            public void actionPerformed(@NotNull AnActionEvent e) {
                 for (MyToggleAction tagAction : tagActions) {
                     tagAction.setSelected(e, false);
                 }

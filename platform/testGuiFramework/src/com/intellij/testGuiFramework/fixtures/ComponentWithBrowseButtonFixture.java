@@ -15,11 +15,20 @@
  */
 package com.intellij.testGuiFramework.fixtures;
 
+import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.FixedSizeButton;
+import com.intellij.ui.components.fields.ExtendableTextComponent;
+import com.intellij.ui.components.fields.ExtendableTextField;
 import org.fest.swing.core.Robot;
+import org.fest.swing.exception.ComponentLookupException;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import javax.swing.plaf.TextUI;
+import java.awt.*;
+import java.util.Optional;
+import java.util.function.Predicate;
 
 public class ComponentWithBrowseButtonFixture extends JComponentFixture<ComponentWithBrowseButtonFixture, ComponentWithBrowseButton> {
 
@@ -30,5 +39,33 @@ public class ComponentWithBrowseButtonFixture extends JComponentFixture<Componen
   public void clickButton() {
     FixedSizeButton button = target().getButton();
     robot().click(button);
+  }
+
+  public void clickAnyExtensionButton() {
+    clickExtensionButton(extension -> true);
+  }
+
+  public void clickExtensionButton(@NotNull final Predicate<ExtendableTextComponent.Extension> extensionFilter) {
+    robot().click(target(), getExtensionIconLocation(extensionFilter));
+  }
+
+  private Point getExtensionIconLocation(@NotNull final Predicate<ExtendableTextComponent.Extension> extensionFilter) {
+    final JComponent component = target().getChildComponent();
+    if (!(component instanceof ExtendableTextField)) {
+      throw new ComponentLookupException("Child component is not an instance of ExtendableTextField");
+    }
+    final ExtendableTextField extendableTextField = (ExtendableTextField) component;
+
+    final Optional<ExtendableTextComponent.Extension> extension =
+      extendableTextField.getExtensions().stream().filter(extensionFilter).findFirst();
+    if (!extension.isPresent()) {
+      throw new ComponentLookupException("Unable to find extension");
+    }
+
+    final TextUI textUI = extendableTextField.getUI();
+    if (!(textUI instanceof TextFieldWithPopupHandlerUI)) {
+      throw new ComponentLookupException("Unable to find extension button");
+    }
+    return ((TextFieldWithPopupHandlerUI) textUI).getExtensionIconLocation(extension.get().toString());
   }
 }

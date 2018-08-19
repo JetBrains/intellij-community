@@ -8,6 +8,12 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <!-- YAML -->
+    <additionalTextAttributes scheme="Default" file="colorSchemes/YAMLDefault.xml"/>
+    <additionalTextAttributes scheme="Darcula" file="colorSchemes/YAMLDarcula.xml"/>
+
+    <lang.formatter language="yaml" implementationClass="org.jetbrains.yaml.formatter.YAMLFormattingModelBuilder"/>
+    <enterHandlerDelegate implementation="org.jetbrains.yaml.formatter.YAMLEnterAtIndentHandler" order="first"/>
+    <copyPastePreProcessor implementation="org.jetbrains.yaml.formatter.YAMLCopyPasteProcessor"/>
     <lang.parserDefinition language="yaml" implementationClass="org.jetbrains.yaml.YAMLParserDefinition"/>
     <lang.commenter language="yaml" implementationClass="org.jetbrains.yaml.YAMLCommenter"/>
     <lang.syntaxHighlighterFactory language="yaml" implementationClass="org.jetbrains.yaml.YAMLSyntaxHighlighterFactory"/>
@@ -20,10 +26,18 @@
     <lang.psiStructureViewFactory language="yaml" implementationClass="org.jetbrains.yaml.structureView.YAMLStructureViewFactory"/>
     <langCodeStyleSettingsProvider implementation="org.jetbrains.yaml.YAMLLanguageCodeStyleSettingsProvider"/>
     <codeStyleSettingsProvider implementation="org.jetbrains.yaml.YAMLCodeStyleSettingsProvider"/>
-    
+    <qualifiedNameProvider implementation="org.jetbrains.yaml.navigation.YAMLQualifiedNameProvider"/>
+    <pom.declarationSearcher implementation="org.jetbrains.yaml.navigation.YAMLScalarKeyDeclarationSearcher"/>
+    <fileBasedIndex implementation="org.jetbrains.yaml.navigation.YAMLKeysIndex"/>
+    <searchEverywhereContributor implementation="org.jetbrains.yaml.navigation.YAMLKeysSearchEverywhereContributor$Factory"/>
+
     <psi.treeChangePreprocessor implementation="org.jetbrains.yaml.psi.YAMLPsiManager"/>
 
     <projectService serviceImplementation="org.jetbrains.yaml.YAMLElementGenerator"/>
+
+    <completion.contributor order="first" language="yaml"
+                            implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaCompletionContributor"/>
+    <lang.documentationProvider language="yaml" implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaDocumentationProvider" order="first"/>
 
     <lang.elementManipulator forClass="org.jetbrains.yaml.psi.impl.YAMLScalarImpl"
                              implementationClass="org.jetbrains.yaml.psi.impl.YAMLScalarElementManipulator"/>
@@ -43,9 +57,31 @@
                      key="inspections.recursive.alias.name" level="ERROR"
                      groupKey="inspections.group.name" enabledByDefault="true"
                      implementationClass="org.jetbrains.yaml.inspections.YAMLRecursiveAliasInspection"/>
+    <localInspection language="yaml" bundle="messages.YAMLBundle"
+                     shortName="YAMLDuplicatedKeys" level="ERROR"
+                     key="inspections.duplicated.keys.name"
+                     groupKey="inspections.group.name" enabledByDefault="true"
+                     implementationClass="org.jetbrains.yaml.inspections.YAMLDuplicatedKeysInspection"/>
+    <localInspection language="yaml" bundle="messages.YAMLBundle"
+                     shortName="YAMLUnusedAnchor"
+                     key="inspections.unused.anchor.name" level="WARNING"
+                     groupKey="inspections.group.name" enabledByDefault="true"
+                     implementationClass="org.jetbrains.yaml.inspections.YAMLUnusedAnchorInspection"/>
 
+    <localInspection language="yaml" bundle="messages.YAMLBundle"
+                     shortName="YAMLSchemaValidation"
+                     key="inspections.schema.validation.name"
+                     groupKey="inspections.group.name"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaHighlightingInspection"/>
   </extensions>
-  
+
+  <extensions defaultExtensionNs="com.intellij.json">
+    <jsonLikePsiWalkerFactory implementation="org.jetbrains.yaml.schema.YamlJsonLikePsiWalkerFactory"/>
+    <jsonSchemaEnabler implementation="org.jetbrains.yaml.schema.YamlJsonEnabler" />
+  </extensions>
+
   <extensions defaultExtensionNs="com.intellij.spellchecker">
     <support language="yaml" implementationClass="org.jetbrains.yaml.YAMLSpellcheckerStrategy"/>
   </extensions>

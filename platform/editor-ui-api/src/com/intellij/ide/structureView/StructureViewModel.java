@@ -17,6 +17,7 @@ package com.intellij.ide.structureView;
 
 import com.intellij.ide.util.treeView.smartTree.TreeModel;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  * Defines the model for the data displayed in the standard structure view or file structure
  * popup component. The model of the standard structure view is represented as a tree of elements.
  *
- * @see TreeBasedStructureViewBuilder#createStructureViewModel()
+ * @see TreeBasedStructureViewBuilder#createStructureViewModel(Editor)
  * @see TextEditorBasedStructureViewModel
  */
 public interface StructureViewModel extends TreeModel, Disposable {
@@ -80,6 +81,7 @@ public interface StructureViewModel extends TreeModel, Disposable {
   /**
    * Disposes of the model.
    */
+  @Override
   void dispose();
 
   boolean shouldEnterElement(Object element);

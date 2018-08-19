@@ -36,6 +36,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.ui.Refreshable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -64,7 +65,8 @@ public abstract class AbstractAction extends AnAction implements DumbAware {
 
   protected void beforeActionPerformed(VcsContext context) {}
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     actionPerformed(CvsContextWrapper.createCachedInstance(e));
   }
 
@@ -190,6 +192,7 @@ public abstract class AbstractAction extends AnAction implements DumbAware {
       myExecutor = executor;
     }
 
+    @Override
     public void executeInProgressAfterAction(ModalityContext modalityContext) {
       startAction(myContext);
       FileSetToBeUpdated files = myHandler.getFiles();
@@ -197,12 +200,14 @@ public abstract class AbstractAction extends AnAction implements DumbAware {
       files.refreshFilesAsync(() -> endAction());
     }
 
+    @Override
     public void executionFinished(boolean successfully) {
       CvsTabbedWindow tabbedWindow = myExecutor.openTabbedWindow(myHandler);
       onActionPerformed(myContext, tabbedWindow, successfully, myHandler);
     }
 
 
+    @Override
     public void executionFinishedSuccessfully() {
     }
   }

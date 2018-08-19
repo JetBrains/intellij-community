@@ -50,6 +50,7 @@ public class FunctionalExpressionUtils {
       return ref != null &&
              method != null &&
              MethodUtils.methodMatches(method, className, returnType, methodName, parameterTypes) &&
+             method.getContainingClass() != null &&
              ref.isReferenceTo(method.getContainingClass());
     }
     if (expression instanceof PsiLambdaExpression) {
@@ -105,5 +106,23 @@ public class FunctionalExpressionUtils {
       return classRef == null ? null : ObjectUtils.tryCast(classRef.resolve(), PsiClass.class);
     }
     return null;
+  }
+
+  /**
+   * Returns the type of functional expression (not {@link PsiLambdaExpressionType} or {@link PsiMethodReferenceType},
+   * but actual functional interface type).
+   *
+   * @param expression expression to find the type of.
+   * @return type of functional expression.
+   */
+  public static PsiType getFunctionalExpressionType(PsiExpression expression) {
+    PsiType argumentType;
+    if (expression instanceof PsiFunctionalExpression) {
+      argumentType = ((PsiFunctionalExpression)expression).getFunctionalInterfaceType();
+    }
+    else {
+      argumentType = expression.getType();
+    }
+    return argumentType;
   }
 }

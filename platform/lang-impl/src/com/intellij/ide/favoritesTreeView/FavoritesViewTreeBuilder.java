@@ -135,13 +135,12 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
     updateFromRootCB();
   }
 
-  @Override
   @NotNull
   public ActionCallback updateFromRootCB() {
     getStructure().rootsChanged();
     if (isDisposed()) return ActionCallback.DONE;
     getUpdater().cancelAllRequests();
-    return super.updateFromRootCB();
+    return queueUpdate();
   }
 
   @NotNull

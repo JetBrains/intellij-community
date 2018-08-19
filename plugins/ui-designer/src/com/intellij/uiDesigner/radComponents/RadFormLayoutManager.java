@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.radComponents;
 
@@ -62,7 +48,8 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
 
   @NonNls private static final String ENCODED_FORMSPEC_GROW = "d:grow";
   private static final Size DEFAULT_NOGROW_SIZE = new BoundedSize(Sizes.DEFAULT, new ConstantSize(4, ConstantSize.PIXEL), null);
-                                                                                                                                  
+
+  @Override
   @Nullable public String getName() {
     return UIFormXmlConstants.LAYOUT_FORM;
   }
@@ -685,7 +672,7 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
     resizeSameGroupCells(cell, formLayout, newSpec, isRow);
   }
 
-  // Explicitly resize all cells in the group to desired size to make sure that the resize operation is effective (IDEADEV-10202) 
+  // Explicitly resize all cells in the group to desired size to make sure that the resize operation is effective (IDEADEV-10202)
   private static void resizeSameGroupCells(final int cell, final FormLayout formLayout, final FormSpec newSpec, final boolean isRow) {
     int[][] groups = isRow ? formLayout.getRowGroups() : formLayout.getColumnGroups();
     for(int[] group: groups) {
@@ -789,6 +776,7 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
     gc.setRowSpan(cc.gridHeight);
   }
 
+  @Override
   public int getAlignment(RadComponent component, boolean horizontal) {
     CellConstraints cc = (CellConstraints) component.getCustomLayoutConstraints();
     CellConstraints.Alignment al = horizontal ? cc.hAlign : cc.vAlign;
@@ -812,6 +800,7 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
     return Utils.alignFromConstraints(component.getConstraints(), horizontal);
   }
 
+  @Override
   public void setAlignment(RadComponent component, boolean horizontal, int alignment) {
     CellConstraints cc = (CellConstraints) component.getCustomLayoutConstraints();
     if (horizontal) {
@@ -823,6 +812,7 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
     updateConstraints(component);
   }
 
+  @Override
   public void resetAlignment(RadComponent component, boolean horizontal) {
     CellConstraints cc = (CellConstraints) component.getCustomLayoutConstraints();
     if (horizontal) {
@@ -834,6 +824,7 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
     updateConstraints(component);
   }
 
+  @Override
   public boolean isAlignmentModified(RadComponent component, boolean horizontal) {
     CellConstraints cc = (CellConstraints) component.getCustomLayoutConstraints();
     CellConstraints.Alignment al = horizontal ? cc.hAlign : cc.vAlign;
@@ -847,6 +838,7 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
     super.updateConstraints(component);
   }
 
+  @Override
   public int getMinCellCount() {
     return 0;
   }
@@ -947,6 +939,7 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
       super(null, "Insets");
     }
 
+    @Override
     public Insets getValue(final RadComponent component) {
       if (component.getCustomLayoutConstraints() instanceof CellConstraints) {
         final CellConstraints cellConstraints = (CellConstraints)component.getCustomLayoutConstraints();
@@ -955,6 +948,7 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
       return new Insets(0, 0, 0, 0);
     }
 
+    @Override
     protected void setValueImpl(final RadComponent component, final Insets value) throws Exception {
       if (component.getCustomLayoutConstraints() instanceof CellConstraints) {
         final CellConstraints cellConstraints = (CellConstraints)component.getCustomLayoutConstraints();

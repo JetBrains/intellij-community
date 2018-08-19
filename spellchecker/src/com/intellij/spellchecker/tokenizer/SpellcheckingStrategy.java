@@ -15,7 +15,10 @@ import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.spellchecker.SpellCheckerManager.DictionaryLevel;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
-import com.intellij.spellchecker.quickfixes.*;
+import com.intellij.spellchecker.quickfixes.ChangeTo;
+import com.intellij.spellchecker.quickfixes.RenameTo;
+import com.intellij.spellchecker.quickfixes.SaveTo;
+import com.intellij.spellchecker.quickfixes.SpellCheckerQuickFix;
 import com.intellij.spellchecker.settings.SpellCheckerSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +52,7 @@ public class SpellcheckingStrategy {
     if (element instanceof PsiLanguageInjectionHost && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)element)) {
       return EMPTY_TOKENIZER;
     }
-    if (element instanceof PsiNameIdentifierOwner) return new PsiIdentifierOwnerTokenizer();
+    if (element instanceof PsiNameIdentifierOwner) return PsiIdentifierOwnerTokenizer.INSTANCE;
     if (element instanceof PsiComment) {
       if (SuppressionUtil.isSuppressionComment(element)) {
         return EMPTY_TOKENIZER;
@@ -88,6 +91,7 @@ public class SpellcheckingStrategy {
   /**
    * @deprecated will be removed in 2018.X, use @link {@link SpellcheckingStrategy#getDefaultRegularFixes(boolean, String, PsiElement)} instead
    */
+  @Deprecated
   public static SpellCheckerQuickFix[] getDefaultRegularFixes(boolean useRename, String wordWithTypo) {
     return getDefaultRegularFixes(useRename, wordWithTypo, null);
   }
@@ -106,6 +110,7 @@ public class SpellcheckingStrategy {
   }
 
   protected static class XmlAttributeValueTokenizer extends Tokenizer<XmlAttributeValue> {
+    @Override
     public void tokenize(@NotNull final XmlAttributeValue element, final TokenConsumer consumer) {
       if (element instanceof PsiLanguageInjectionHost && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)element)) return;
 

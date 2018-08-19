@@ -83,6 +83,7 @@ class JreComboboxEditor extends BasicComboBoxEditor {
     return getEditorComponent().getEmptyText();
   }
 
+  @Override
   public JBTextField getEditorComponent() {
     return (JBTextField)super.getEditorComponent();
   }

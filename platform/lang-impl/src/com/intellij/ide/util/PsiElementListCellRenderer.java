@@ -33,12 +33,10 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.IconUtil;
@@ -89,27 +87,12 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     return accessibleContext;
   }
 
+  @Nullable
   protected static Color getBackgroundColor(@Nullable Object value) {
-    if (value instanceof PsiElement) {
-      PsiElement psiElement = (PsiElement)value;
-      Project project = psiElement.getProject();
-
-      VirtualFile file = null;
-      PsiFile psiFile = psiElement.getContainingFile();
-
-      if (psiFile != null) {
-        file = psiFile.getVirtualFile();
-      }
-      else if (psiElement instanceof PsiDirectory) {
-        file = ((PsiDirectory)psiElement).getVirtualFile();
-      }
-      Color fileBgColor = file != null ? getFileBackgroundColor(project, file) : null;
-      if (fileBgColor != null) {
-        return fileBgColor;
-      }
-    }
-
-    return UIUtil.getListBackground();
+    PsiElement psiElement = NavigationItemListCellRenderer.getPsiElement(value);
+    VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiElement);
+    Color fileColor = virtualFile == null ? null : getFileBackgroundColor(psiElement.getProject(), virtualFile);
+    return fileColor != null ? fileColor : UIUtil.getListBackground();
   }
 
   public static class ItemMatchers {
@@ -136,31 +119,26 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       Color bgColor = UIUtil.getListBackground();
       Color color = list.getForeground();
       setPaintFocusBorder(hasFocus && UIUtil.isToUseDottedCellBorder() && myFocusBorderEnabled);
+
+      PsiElement target = NavigationItemListCellRenderer.getPsiElement(value);
+      VirtualFile vFile = PsiUtilCore.getVirtualFile(target);
+      boolean isProblemFile = false;
+      if (vFile != null) {
+        Project project = target.getProject();
+        isProblemFile = WolfTheProblemSolver.getInstance(project).isProblemFile(vFile);
+        FileStatus status = FileStatusManager.getInstance(project).getStatus(vFile);
+        color = status.getColor();
+
+        Color fileBgColor = getFileBackgroundColor(project, vFile);
+        bgColor = fileBgColor == null ? bgColor : fileBgColor;
+      }
+
       if (value instanceof PsiElement) {
         T element = (T)value;
-        String name = element.isValid() ? getElementText(element) : "INVALID";
-        PsiFile psiFile = element.isValid() ? element.getContainingFile() : null;
-        boolean isProblemFile = false;
-
-        if (psiFile != null) {
-          VirtualFile vFile = psiFile.getVirtualFile();
-          if (vFile != null) {
-            Project project = psiFile.getProject();
-            if (WolfTheProblemSolver.getInstance(project).isProblemFile(vFile)) {
-              isProblemFile = true;
-            }
-            FileStatus status = FileStatusManager.getInstance(project).getStatus(vFile);
-            color = status.getColor();
-
-            Color fileBgColor = getFileBackgroundColor(project, vFile);
-            bgColor = fileBgColor == null ? bgColor : fileBgColor;
-          }
-        }
+        String name = ((PsiElement)value).isValid() ? getElementText(element) : "INVALID";
 
         TextAttributes attributes = element.isValid() ? getNavigationItemAttributes(value) : null;
-
         SimpleTextAttributes nameAttributes = attributes != null ? SimpleTextAttributes.fromTextAttributes(attributes) : null;
-
         if (nameAttributes == null) nameAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color);
 
         if (name == null) {
@@ -322,6 +300,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   /**
    * @deprecated use {@link #installSpeedSearch(IPopupChooserBuilder)} instead
    */
+  @Deprecated
   public void installSpeedSearch(PopupChooserBuilder<?> builder) {
     installSpeedSearch((IPopupChooserBuilder)builder);
   }
@@ -329,6 +308,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   /**
    * @deprecated use {@link #installSpeedSearch(IPopupChooserBuilder, boolean)} instead
    */
+  @Deprecated
   public void installSpeedSearch(PopupChooserBuilder<?> builder, boolean includeContainerText) {
     installSpeedSearch((IPopupChooserBuilder)builder, includeContainerText);
   }
@@ -350,24 +330,5 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
         return o.toString();
       }
     });
-  }
-
-  /**
-   * Use {@link #installSpeedSearch(IPopupChooserBuilder)} instead
-   */
-  @Deprecated
-  public void installSpeedSearch(JList list) {
-    new ListSpeedSearch(list) {
-      @Override
-      protected String getElementText(Object o) {
-        if (o instanceof PsiElement) {
-          final String elementText = PsiElementListCellRenderer.this.getElementText((T)o);
-          return elementText + " " + getContainerText((T)o, elementText);
-        }
-        else {
-          return o.toString();
-        }
-      }
-    };
   }
 }

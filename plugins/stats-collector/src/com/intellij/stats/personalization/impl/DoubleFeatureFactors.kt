@@ -41,7 +41,7 @@ class DoubleFeatureReader(factor: DailyAggregatedDoubleFactor)
 
 class DoubleFeatureUpdater(factor: MutableDoubleFactor) : UserFactorUpdaterBase(factor) {
     fun update(value: Any?) {
-        if (value == null) {
+        if (value == null || "null" == value) {
             factor.incrementOnToday(FeatureUtils.UNDEFINED)
         } else {
             val doubleValue = value.asDouble()

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -80,25 +66,30 @@ public class ArrayRenderer extends NodeRendererImpl{
   private boolean myForced = false;
 
   public ArrayRenderer() {
-    myProperties.setEnabled(true);
+    super(DEFAULT_NAME, true);
   }
 
+  @Override
   public String getUniqueId() {
     return UNIQUE_ID;
   }
 
+  @Override
   public @NonNls String getName() {
     return "Array";
   }
 
+  @Override
   public void setName(String text) {
     LOG.assertTrue(false);
   }
 
+  @Override
   public ArrayRenderer clone() {
     return (ArrayRenderer)super.clone();
   }
 
+  @Override
   public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
     return ClassRenderer.calcLabel(descriptor);
   }
@@ -107,6 +98,7 @@ public class ArrayRenderer extends NodeRendererImpl{
     myForced = forced;
   }
 
+  @Override
   public void buildChildren(Value value, ChildrenBuilder builder, EvaluationContext evaluationContext) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     NodeManagerImpl nodeManager = (NodeManagerImpl)builder.getNodeManager();
@@ -176,16 +168,19 @@ public class ArrayRenderer extends NodeRendererImpl{
     }
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
     DefaultJDOMExternalizer.readExternal(this, element);
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
 
+  @Override
   public PsiExpression getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) {
     LOG.assertTrue(node.getDescriptor() instanceof ArrayElementDescriptorImpl, node.getDescriptor().getClass().getName());
     ArrayElementDescriptorImpl descriptor = (ArrayElementDescriptorImpl)node.getDescriptor();
@@ -201,10 +196,12 @@ public class ArrayRenderer extends NodeRendererImpl{
     }
   }
 
+  @Override
   public boolean isExpandable(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
     return value instanceof ArrayReference && ((ArrayReference)value).length() > 0;
   }
 
+  @Override
   public boolean isApplicable(Type type) {
     return type instanceof ArrayType;
   }

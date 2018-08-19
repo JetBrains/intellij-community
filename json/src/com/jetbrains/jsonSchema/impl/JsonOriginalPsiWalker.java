@@ -5,11 +5,13 @@ import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.json.JsonDialectUtil;
 import com.intellij.json.JsonElementTypes;
 import com.intellij.json.psi.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ThreeState;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
@@ -36,14 +38,14 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
   }
 
   @Override
-  public boolean isName(PsiElement element) {
+  public ThreeState isName(PsiElement element) {
     final PsiElement parent = element.getParent();
     if (parent instanceof JsonObject) {
-      return true;
+      return ThreeState.YES;
     } else if (parent instanceof JsonProperty) {
-      return PsiTreeUtil.isAncestor(((JsonProperty)parent).getNameElement(), element, false);
+      return PsiTreeUtil.isAncestor(((JsonProperty)parent).getNameElement(), element, false) ? ThreeState.YES : ThreeState.NO;
     }
-    return false;
+    return ThreeState.NO;
   }
 
   @Override
@@ -138,8 +140,8 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
   }
 
   @Override
-  public Set<String> getPropertyNamesOfParentObject(@NotNull PsiElement element) {
-    final JsonObject object = PsiTreeUtil.getParentOfType(element, JsonObject.class);
+  public Set<String> getPropertyNamesOfParentObject(@NotNull PsiElement originalPosition, PsiElement computedPosition) {
+    final JsonObject object = PsiTreeUtil.getParentOfType(originalPosition, JsonObject.class);
     if (object != null) {
       return object.getPropertyList().stream()
         .filter(p -> !isNameQuoted() || p.getNameElement() instanceof JsonStringLiteral)
@@ -164,5 +166,52 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
   @Override
   public JsonValueAdapter createValueAdapter(@NotNull PsiElement element) {
     return element instanceof JsonValue ? JsonJsonPropertyAdapter.createAdapterByType((JsonValue)element) : null;
+  }
+
+  @Override
+  public QuickFixAdapter getQuickFixAdapter(Project project) {
+    return new QuickFixAdapter() {
+      private final JsonElementGenerator myGenerator = new JsonElementGenerator(project);
+      @Nullable
+      @Override
+      public PsiElement getPropertyValue(PsiElement property) {
+        assert property instanceof JsonProperty;
+        return ((JsonProperty)property).getValue();
+      }
+
+      @NotNull
+      @Override
+      public String getPropertyName(PsiElement property) {
+        assert property instanceof JsonProperty;
+        return ((JsonProperty)property).getName();
+      }
+
+      @NotNull
+      @Override
+      public PsiElement createProperty(@NotNull String name, @NotNull String value) {
+        return myGenerator.createProperty(name, value);
+      }
+
+      @Override
+      public boolean ensureComma(PsiElement backward, PsiElement self, PsiElement newElement) {
+        if (backward instanceof JsonProperty) {
+          self.addAfter(myGenerator.createComma(), backward);
+          return true;
+        }
+        return false;
+      }
+
+      @Override
+      public void removeIfComma(PsiElement forward) {
+        if (forward instanceof LeafPsiElement && ((LeafPsiElement)forward).getElementType() == JsonElementTypes.COMMA) {
+          forward.delete();
+        }
+      }
+
+      @Override
+      public boolean fixWhitespaceBefore() {
+        return true;
+      }
+    };
   }
 }

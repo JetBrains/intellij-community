@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.Comparing;
@@ -26,6 +26,7 @@ import static org.junit.Assert.*;
  * @author Eugene Zhuravlev
  * @since Dec 22, 2006
  */
+@SuppressWarnings("ResultOfMethodCallIgnored")
 public class StringUtilTest {
   @Test
   public void testTrimLeadingChar() {
@@ -491,36 +492,27 @@ public class StringUtilTest {
   public void testFormatFileSize() {
     assertEquals("0 B", StringUtil.formatFileSize(0));
     assertEquals("1 B", StringUtil.formatFileSize(1));
-    assertEquals("2 GB", StringUtil.formatFileSize(Integer.MAX_VALUE));
-    assertEquals("8 EB", StringUtil.formatFileSize(Long.MAX_VALUE));
+    assertEquals("2.15 GB", StringUtil.formatFileSize(Integer.MAX_VALUE));
+    assertEquals("9.22 EB", StringUtil.formatFileSize(Long.MAX_VALUE));
 
-    assertEquals("58.69 KB", StringUtil.formatFileSize(60100));
+    assertEquals("60.1 kB", StringUtil.formatFileSize(60_100));
 
-    assertEquals("1.21 KB", StringUtil.formatFileSize(1234));
-    assertEquals("12.06 KB", StringUtil.formatFileSize(12345));
-    assertEquals("120.56 KB", StringUtil.formatFileSize(123456));
-    assertEquals("1.18 MB", StringUtil.formatFileSize(1234567));
-    assertEquals("11.77 MB", StringUtil.formatFileSize(12345678));
-    assertEquals("117.74 MB", StringUtil.formatFileSize(123456789));
-    assertEquals("1.15 GB", StringUtil.formatFileSize(1234567890));
-  }
+    assertEquals("1.23 kB", StringUtil.formatFileSize(1_234));
+    assertEquals("12.35 kB", StringUtil.formatFileSize(12_345));
+    assertEquals("123.46 kB", StringUtil.formatFileSize(123_456));
+    assertEquals("1.23 MB", StringUtil.formatFileSize(1234_567));
+    assertEquals("12.35 MB", StringUtil.formatFileSize(1_2345_678));
+    assertEquals("123.46 MB", StringUtil.formatFileSize(123_456_789));
+    assertEquals("1.23 GB", StringUtil.formatFileSize(1_234_567_890));
 
-  @Test
-  public void testFormatNumber() {
-    assertEquals("0", StringUtil.formatNumber(0));
-    assertEquals("1", StringUtil.formatNumber(1));
-    assertEquals("2.15G", StringUtil.formatNumber(Integer.MAX_VALUE));
-    assertEquals("9.22E", StringUtil.formatNumber(Long.MAX_VALUE));
-
-    assertEquals("60.10K", StringUtil.formatNumber(60100));
-
-    assertEquals("1.23K", StringUtil.formatNumber(1234));
-    assertEquals("12.35K", StringUtil.formatNumber(12345));
-    assertEquals("123.46K", StringUtil.formatNumber(123456));
-    assertEquals("1.23M", StringUtil.formatNumber(1234567));
-    assertEquals("12.35M", StringUtil.formatNumber(12345678));
-    assertEquals("123.46M", StringUtil.formatNumber(123456789));
-    assertEquals("1.23G", StringUtil.formatNumber(1234567890));
+    assertEquals("999 B", StringUtil.formatFileSize(999));
+    assertEquals("1 kB", StringUtil.formatFileSize(1000));
+    assertEquals("999.99 kB", StringUtil.formatFileSize(999_994));
+    assertEquals("1 MB", StringUtil.formatFileSize(999_995));
+    assertEquals("999.99 MB", StringUtil.formatFileSize(999_994_999));
+    assertEquals("1 GB", StringUtil.formatFileSize(999_995_000));
+    assertEquals("999.99 GB", StringUtil.formatFileSize(999_994_999_999L));
+    assertEquals("1 TB", StringUtil.formatFileSize(999_995_000_000L));
   }
 
   @Test
@@ -618,6 +610,8 @@ public class StringUtilTest {
     assertEquals(4, StringUtil.countChars("abcddddefghd", 'd', 4, false));
     assertEquals(3, StringUtil.countChars("abcddddefghd", 'd', 4, true));
     assertEquals(2, StringUtil.countChars("abcddddefghd", 'd', 4, 6, false));
+    assertEquals(3, StringUtil.countChars("aaabcddddefghdaaaa", 'a', -20, 20, true));
+    assertEquals(4, StringUtil.countChars("aaabcddddefghdaaaa", 'a', 20, -20, true));
   }
 
   @Test
@@ -681,5 +675,55 @@ public class StringUtilTest {
     assertFalse(StringUtil.isShortNameOf("a.b.c", "d"));
     assertFalse(StringUtil.isShortNameOf("x.y.zzz", "zz"));
     assertFalse(StringUtil.isShortNameOf("x", "a.b.x"));
+  }
+
+  @Test
+  public void startsWith() {
+    assertTrue(StringUtil.startsWith("abcdefgh", 5, "fgh"));
+    assertTrue(StringUtil.startsWith("abcdefgh", 2, "cde"));
+    assertTrue(StringUtil.startsWith("abcdefgh", 0, "abc"));
+    assertTrue(StringUtil.startsWith("abcdefgh", 0, "abcdefgh"));
+    assertFalse(StringUtil.startsWith("abcdefgh", 5, "cde"));
+
+    assertTrue(StringUtil.startsWith("abcdefgh", 0, ""));
+    assertTrue(StringUtil.startsWith("abcdefgh", 4, ""));
+    assertTrue(StringUtil.startsWith("abcdefgh", 7, ""));
+    assertTrue(StringUtil.startsWith("abcdefgh", 8, ""));
+
+    assertTrue(StringUtil.startsWith("", 0, ""));
+
+    assertFalse(StringUtil.startsWith("ab", 0, "abcdefgh"));
+    assertFalse(StringUtil.startsWith("ab", 1, "abcdefgh"));
+    assertFalse(StringUtil.startsWith("ab", 2, "abcdefgh"));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void startsWithNegativeIndex() {
+    StringUtil.startsWith("abcdefgh", -1, "");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void startsWithIndexGreaterThanLength() {
+    StringUtil.startsWith("abcdefgh", 9, "");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void startsWithEmptyStringNegativeIndex() {
+    StringUtil.startsWith("", -1, "");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void startsWithEmptyStringIndexGreaterThanLength() {
+    StringUtil.startsWith("", 1, "");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void startsWithLongerSuffixNegativeIndex() {
+    StringUtil.startsWith("ab", -1, "abcdefgh");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void startsWithLongerSuffixIndexGreaterThanLength() {
+    StringUtil.startsWith("ab", 3, "abcdefgh");
   }
 }

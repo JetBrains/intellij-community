@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.ui;
 
 import com.intellij.openapi.application.ModalityState;
@@ -29,7 +27,7 @@ import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParameterListOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
@@ -65,10 +63,10 @@ public class MethodOrClosureScopeChooser {
    * @param callback is invoked if any scope was chosen. The first arg is this scope and the second arg is a psielement to search for (super method of chosen method or
    *                 variable if the scope is a closure)
    */
-  public static JBPopup create(List<? extends GrParametersOwner> scopes,
+  public static JBPopup create(List<? extends GrParameterListOwner> scopes,
                                final Editor editor,
                                final JBPopupOwner popupRef,
-                               final PairFunction<GrParametersOwner, PsiElement, Object> callback) {
+                               final PairFunction<GrParameterListOwner, PsiElement, Object> callback) {
     final JPanel panel = new JPanel(new BorderLayout());
     final JCheckBox superMethod = new JCheckBox(USE_SUPER_METHOD_OF, true);
     superMethod.setMnemonic('U');
@@ -109,7 +107,7 @@ public class MethodOrClosureScopeChooser {
     list.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(final ListSelectionEvent e) {
-        final GrParametersOwner selectedMethod = (GrParametersOwner)list.getSelectedValue();
+        final GrParameterListOwner selectedMethod = (GrParameterListOwner)list.getSelectedValue();
         if (selectedMethod == null) return;
         dropHighlighters(highlighters);
         updateView(selectedMethod, editor, attributes, highlighters, superMethod);
@@ -121,10 +119,10 @@ public class MethodOrClosureScopeChooser {
     panel.add(scrollPane, BorderLayout.CENTER);
 
     final List<Pair<ActionListener, KeyStroke>> keyboardActions = Collections.singletonList(
-      Pair.<ActionListener, KeyStroke>create(new ActionListener() {
+      Pair.create(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          final GrParametersOwner ToSearchIn = (GrParametersOwner)list.getSelectedValue();
+          final GrParameterListOwner ToSearchIn = (GrParameterListOwner)list.getSelectedValue();
           final JBPopup popup = popupRef.get();
           if (popup != null && popup.isVisible()) {
             popup.cancel();
@@ -158,7 +156,7 @@ public class MethodOrClosureScopeChooser {
   }
 
 
-  public static void updateView(GrParametersOwner selectedMethod,
+  public static void updateView(GrParameterListOwner selectedMethod,
                                 Editor editor,
                                 TextAttributes attributes,
                                 List<RangeHighlighter> highlighters,
@@ -180,7 +178,7 @@ public class MethodOrClosureScopeChooser {
   }
 
   @Nullable
-  public static GrVariable findVariableToUse(@NotNull GrParametersOwner owner) {
+  public static GrVariable findVariableToUse(@NotNull GrParameterListOwner owner) {
     final PsiElement parent = owner.getParent();
     if (parent instanceof GrVariable) return (GrVariable)parent;
     if (parent instanceof GrAssignmentExpression &&

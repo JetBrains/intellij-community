@@ -17,6 +17,7 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.util.SmartFMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -145,7 +146,8 @@ public final class Presentation implements Cloneable {
                 myMnemonic = Character.toUpperCase(ch);  // mnemonics are case insensitive
                 myDisplayedMnemonicIndex = i - 1 - backShift;
               }
-            } else if (myMnemonic == 0) {
+            }
+            else {
               backShift++;
             }
           }
@@ -316,6 +318,16 @@ public final class Presentation implements Cloneable {
     setHoveredIcon(presentation.getHoveredIcon());
     setVisible(presentation.isVisible());
     setEnabled(presentation.isEnabled());
+  }
+
+  @Nullable
+  public <T> T getClientProperty(@NotNull Key<T> key) {
+    //noinspection unchecked
+    return (T)myUserMap.get(key.toString());
+  }
+
+  public <T> void putClientProperty(@NotNull Key<T> key, @Nullable T value) {
+    putClientProperty(key.toString(), value);
   }
 
   @Nullable

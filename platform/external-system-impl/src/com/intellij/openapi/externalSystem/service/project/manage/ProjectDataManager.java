@@ -30,6 +30,7 @@ import java.util.Collection;
 /**
  * @deprecated use {@link com.intellij.openapi.externalSystem.service.project.ProjectDataManager} instead
  */
+@Deprecated
 public class ProjectDataManager extends ProjectDataManagerImpl {
 
   public static ProjectDataManager getInstance() {

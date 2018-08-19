@@ -165,6 +165,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable {
   /**
    * @deprecated use {@link #checkBox(String, Getter, Setter)} instead
    */
+  @Deprecated
   protected void checkBox(@NonNls String fieldName, String title) {
     myFields.add(new CheckboxField(fieldName, title));
   }

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 
@@ -16,7 +14,7 @@ import java.util.*;
 
 /**
  * An in-house and immutable version of {@code com.google.common.collect.FluentIterable}
- * with some insights from Clojure. Added bonus is that the JBIterator instances are preserved 
+ * with some insights from Clojure. Added bonus is that the JBIterator instances are preserved
  * during most transformations, a feature employed by {@link JBTreeTraverser}.
  *
  * <p/>
@@ -99,6 +97,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   private static final class Multi<E> extends JBIterable<E> {
     Multi(Iterable<? extends E> iterable) { super(iterable);}
 
+    @Override
     public Iterator<E> iterator() {
       return JBIterator.from(((Iterable<E>)content).iterator());
     }
@@ -841,10 +840,19 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * @see JBIterable#collect(Collection)
    */
   @NotNull
-  public final JBIterable<E> sorted(@NotNull Comparator<E> comparator) {
+  public final JBIterable<E> sort(@NotNull Comparator<? super E> comparator) {
     ArrayList<E> list = addAllTo(ContainerUtilRt.<E>newArrayList());
     Collections.sort(list, comparator);
     return from(list);
+  }
+
+  /**
+   * @deprecated use {@link #sort(Comparator)} instead
+   */
+  @Deprecated
+  @NotNull
+  public final JBIterable<E> sorted(@NotNull Comparator<E> comparator) {
+    return sort(comparator);
   }
 
   /**
@@ -932,6 +940,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
       return (T)((Stateful)o).clone();
     }
 
+    @Override
     public Self clone() {
       try {
         return (Self)super.clone();

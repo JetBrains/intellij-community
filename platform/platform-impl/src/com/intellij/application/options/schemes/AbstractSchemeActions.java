@@ -117,7 +117,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       T currentScheme = getCurrentScheme();
       if (currentScheme != null && !getModel().isProjectScheme(currentScheme)) {
         copyToProject(currentScheme);
@@ -125,7 +125,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Presentation p = e.getPresentation();
       T currentScheme = getCurrentScheme();
       p.setEnabledAndVisible(currentScheme != null && !getModel().isProjectScheme(currentScheme));
@@ -140,7 +140,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       T currentScheme = getCurrentScheme();
       if (currentScheme != null && getModel().isProjectScheme(currentScheme)) {
         copyToIDE(currentScheme);
@@ -148,7 +148,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Presentation p = e.getPresentation();
       T currentScheme = getCurrentScheme();
       p.setEnabledAndVisible(currentScheme != null && getModel().isProjectScheme(currentScheme));
@@ -162,7 +162,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       T currentScheme = getCurrentScheme();
       if (currentScheme != null) {
         mySchemesPanel.cancelEdit();
@@ -171,7 +171,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Presentation p = e.getPresentation();
       T scheme = getCurrentScheme();
       if(scheme != null && mySchemesPanel.getModel().canResetScheme(scheme)) {
@@ -191,7 +191,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       T currentScheme = getCurrentScheme();
       if (currentScheme != null) {
         mySchemesPanel.editNewSchemeName(
@@ -202,7 +202,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Presentation p = e.getPresentation();
       T scheme = getCurrentScheme();
       p.setEnabledAndVisible(scheme != null && mySchemesPanel.getModel().canDuplicateScheme(scheme));
@@ -216,13 +216,13 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       mySchemesPanel.editCurrentSchemeName(
         (currentScheme, newName) -> renameScheme(currentScheme, newName));
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Presentation p = e.getPresentation();
       T scheme = getCurrentScheme();
       p.setEnabledAndVisible(scheme != null && mySchemesPanel.getModel().canRenameScheme(scheme));
@@ -235,7 +235,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       T currentScheme = getCurrentScheme();
       if (currentScheme != null) {
         mySchemesPanel.cancelEdit();
@@ -244,7 +244,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Presentation p = e.getPresentation();
       T scheme = getCurrentScheme();
       boolean isEnabled = scheme != null && mySchemesPanel.getModel().canDeleteScheme(scheme);
@@ -304,7 +304,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       mySchemesPanel.cancelEdit();
       importScheme(myImporterName);
     }
@@ -319,7 +319,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       T currentScheme = getCurrentScheme();
       if (currentScheme != null) {
         mySchemesPanel.cancelEdit();
@@ -400,16 +400,12 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
           try {
             Object finalConfig = config;
             WriteAction.run(() -> {
-              OutputStream outputStream = targetFile.getOutputStream(this);
-              try {
+              try (OutputStream outputStream = targetFile.getOutputStream(this)) {
                 if (exporter instanceof ConfigurableSchemeExporter) {
                   //noinspection unchecked
                   ((ConfigurableSchemeExporter)exporter).exportScheme(scheme, outputStream, finalConfig);
                 }
                 exporter.exportScheme(scheme, outputStream);
-              }
-              finally {
-                outputStream.close();
               }
             });
             message = ApplicationBundle

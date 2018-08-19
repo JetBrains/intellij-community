@@ -40,6 +40,7 @@ import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.OptionsDialog;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -67,7 +68,8 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
     final CvsActionVisibility visibility = getVisibility();
     visibility.addCondition(FILES_ARENT_UNDER_CVS);
   }
-  public void update(AnActionEvent e) {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     if (!e.getPresentation().isVisible()) return;
     final Project project = CvsContextWrapper.createInstance(e).getProject();
@@ -75,10 +77,12 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
     adjustName(CvsVcs2.getInstance(project).getAddOptions().getValue(), e);
   }
 
+  @Override
   protected String getTitle(VcsContext context) {
     return myTitle;
   }
 
+  @Override
   protected CvsHandler getCvsHandler(CvsContext context) {
     final Project project = context.getProject();
     final boolean showDialog = myOptions.isToBeShown(project) || OptionsDialog.shiftIsPressed(context.getModifiers());
@@ -126,7 +130,7 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
         dirtyScopeManager.dirDirtyRecursively(file);
       }
       else {
-        dirtyScopeManager.fileDirty(file);        
+        dirtyScopeManager.fileDirty(file);
       }
     }
   }

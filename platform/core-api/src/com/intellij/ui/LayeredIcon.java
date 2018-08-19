@@ -16,6 +16,8 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.IconLoader.DarkIconProvider;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI.CachingScalableJBIcon;
 import org.intellij.lang.annotations.MagicConstant;
@@ -28,7 +30,7 @@ import java.util.Arrays;
 import static com.intellij.util.ui.JBUI.ScaleType.OBJ_SCALE;
 import static com.intellij.util.ui.JBUI.ScaleType.USR_SCALE;
 
-public class LayeredIcon extends CachingScalableJBIcon<LayeredIcon> {
+public class LayeredIcon extends CachingScalableJBIcon<LayeredIcon> implements DarkIconProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.LayeredIcon");
   private final Icon[] myIcons;
   private Icon[] myScaledIcons;
@@ -100,7 +102,6 @@ public class LayeredIcon extends CachingScalableJBIcon<LayeredIcon> {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof LayeredIcon)) return false;
-    if (!super.equals(o)) return false;
 
     final LayeredIcon icon = (LayeredIcon)o;
 
@@ -280,6 +281,15 @@ public class LayeredIcon extends CachingScalableJBIcon<LayeredIcon> {
       myXShift = -minX;
       myYShift = -minY;
     }
+  }
+
+  @Override
+  public Icon getDarkIcon(boolean isDark) {
+    LayeredIcon newIcon = copy();
+    for (int i=0; i<newIcon.myIcons.length; i++) {
+      newIcon.myIcons[i] = IconLoader.getDarkIcon(newIcon.myIcons[i], isDark);
+    }
+    return newIcon;
   }
 
   public static Icon create(final Icon backgroundIcon, final Icon foregroundIcon) {

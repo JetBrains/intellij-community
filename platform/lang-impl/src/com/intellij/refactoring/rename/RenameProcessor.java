@@ -136,7 +136,8 @@ public class RenameProcessor extends BaseRefactoringProcessor {
         .conflictsDetected("refactoring.rename", conflictData);
 
       if (ApplicationManager.getApplication().isUnitTestMode()) {
-        throw new ConflictsInTestsException(conflicts.values());
+        if (!ConflictsInTestsException.isTestIgnore()) throw new ConflictsInTestsException(conflicts.values());
+        return true;
       }
       ConflictsDialog conflictsDialog = prepareConflictsDialog(conflicts, refUsages.get());
       if (!conflictsDialog.showAndGet()) {
@@ -344,7 +345,10 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
     final MultiMap<PsiElement, UsageInfo> classified = classifyUsages(myAllRenames.keySet(), usages);
     for (final PsiElement element : myAllRenames.keySet()) {
-      LOG.assertTrue(element.isValid());
+      if (!element.isValid()) {
+        LOG.error(new PsiInvalidElementAccessException(element));
+        continue;
+      }
       String newName = myAllRenames.get(element);
 
       final RefactoringElementListener elementListener = getTransaction().getElementListener(element);

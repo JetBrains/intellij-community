@@ -52,7 +52,6 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
@@ -64,11 +63,10 @@ import static com.jetbrains.python.psi.PyUtil.as;
 public class PyDocumentationBuilder {
   private final PsiElement myElement;
   private final PsiElement myOriginalElement;
-  private final ChainIterable<String> myProlog;      // sequence for reassignment info, etc
-  private final ChainIterable<String> myBody;        // sequence for doc string
-  private final ChainIterable<String> myContent;
+  private final ChainIterable<String> myProlog;      // definition header
+  private final ChainIterable<String> myBody;        // definition main part
+  private final ChainIterable<String> myContent;     // sequence for doc string
   private final ChainIterable<String> mySections;
-  private final ChainIterable<String> myEpilog;      // sequence for doc "copied from" notices and such
 
   private final Map<String, ChainIterable<String>> mySectionsMap = FactoryMap.createMap(item -> new ChainIterable<>(), LinkedHashMap::new);
   private final TypeEvalContext myContext;
@@ -82,7 +80,6 @@ public class PyDocumentationBuilder {
     myBody = new ChainIterable<>();
     myContent = new ChainIterable<>();
     mySections = new ChainIterable<>();
-    myEpilog = new ChainIterable<>();
     myContext = TypeEvalContext.userInitiated(myElement.getProject(), myElement.getContainingFile());
   }
 
@@ -141,15 +138,7 @@ public class PyDocumentationBuilder {
       mySections.addItem(DocumentationMarkup.SECTIONS_END);
     }
 
-    final String url = PythonDocumentationProvider.getUrlFor(myElement, myOriginalElement, false);
-    if (url != null) {
-      myEpilog.addItem(BR);
-      myEpilog.addWith(TagBold, $("External documentation:"));
-      myEpilog.addItem(BR);
-      myEpilog.addItem("<a href=\"").addItem(url).addItem("\">").addItem(url).addItem("</a>");
-    }
-
-    if (myBody.isEmpty() && myContent.isEmpty() && myEpilog.isEmpty()) {
+    if (myBody.isEmpty() && myContent.isEmpty()) {
       return null; // got nothing substantial to say!
     }
     else {
@@ -170,29 +159,19 @@ public class PyDocumentationBuilder {
               .add(myContent)
               .addItem(DocumentationMarkup.CONTENT_END);
       }
-      result.add(mySections).add(myEpilog); // pre-assemble; then add stuff to individual cats as needed
+      result.add(mySections); // pre-assemble; then add stuff to individual cats as needed
       return wrapInTag("html", wrapInTag("body", result)).toString();
     }
   }
 
-  private void buildForKeyword(@NotNull final String name) {
+  private void buildForKeyword(@NotNull String name) {
     try {
-      final FileReader reader = new FileReader(PythonHelpersLocator.getHelperPath("/tools/python_keywords/" + name));
-      try {
+      try (FileReader reader = new FileReader(PythonHelpersLocator.getHelperPath("/tools/python_keywords/" + name))) {
         final String text = FileUtil.loadTextAndClose(reader);
-        myEpilog.addItem(StringUtil.convertLineSeparators(text, "\n"));
-      }
-      catch (IOException ignored) {
-      }
-      finally {
-        try {
-          reader.close();
-        }
-        catch (IOException ignored) {
-        }
+        myContent.addItem(StringUtil.convertLineSeparators(text, "\n"));
       }
     }
-    catch (FileNotFoundException ignored) {
+    catch (IOException ignored) {
     }
   }
 
@@ -317,11 +296,7 @@ public class PyDocumentationBuilder {
   }
 
   private void buildFromDocstring(@NotNull final PyDocStringOwner elementDefinition, boolean isProperty) {
-    PyClass pyClass = null;
     PyStringLiteralExpression docStringExpression = getEffectiveDocStringExpression(elementDefinition);
-    if (docStringExpression != null && !isProperty) {
-      myContent.add(formatDocString(myElement, docStringExpression.getStringValue()));
-    }
 
     if (PyUtil.isTopLevel(elementDefinition)) {
       final PsiFile containing = elementDefinition.getContainingFile();
@@ -334,29 +309,33 @@ public class PyDocumentationBuilder {
     }
 
     if (elementDefinition instanceof PyClass) {
-      pyClass = (PyClass)elementDefinition;
+      final PyClass pyClass = (PyClass)elementDefinition;
       myBody.add(PythonDocumentationProvider.describeDecorators(pyClass, WRAP_IN_ITALIC, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, BR, BR));
       myBody
         .add(PythonDocumentationProvider.describeClass(pyClass, WRAP_IN_BOLD, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, false, true, myContext));
+      if (docStringExpression == null) {
+        final PyFunction constructor = pyClass.findMethodByName(PyNames.INIT, false, myContext);
+        if (constructor != null) {
+          docStringExpression = constructor.getDocStringExpression();
+        }
+      }
     }
     else if (elementDefinition instanceof PyFunction) {
       final PyFunction pyFunction = (PyFunction)elementDefinition;
-      if (!isProperty) {
-        pyClass = pyFunction.getContainingClass();
-        if (pyClass != null) {
-          final String link = getLinkToClass(pyClass, true);
-          if (link != null) {
-            myProlog.addItem(link);
-          }
+      final PyClass pyClass = pyFunction.getContainingClass();
+      if (!isProperty && pyClass != null) {
+        final String link = getLinkToClass(pyClass, true);
+        if (link != null) {
+          myProlog.addItem(link);
         }
       }
       myBody.add(PythonDocumentationProvider.describeDecorators(pyFunction, WRAP_IN_ITALIC, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, BR, BR));
       myBody.add(PythonDocumentationProvider.describeFunction(pyFunction, myOriginalElement, myContext, false));
-      if (docStringExpression == null && !isProperty) {
+      if (docStringExpression == null && pyClass != null && !isProperty) {
         docStringExpression = addInheritedDocString(pyFunction, pyClass);
       }
       if (docStringExpression != null) {
-        formatParametersAndReturnValue(docStringExpression, pyFunction);
+        addFunctionSpecificSections(docStringExpression, pyFunction);
       }
     }
     else if (elementDefinition instanceof PyFile) {
@@ -375,9 +354,13 @@ public class PyDocumentationBuilder {
       }
       myBody.add(PythonDocumentationProvider.describeTarget(target, myContext));
     }
+
+    if (docStringExpression != null && !isProperty) {
+      myContent.add(formatDocString(myElement, docStringExpression.getStringValue()));
+    }
   }
 
-  private void formatParametersAndReturnValue(@NotNull PyStringLiteralExpression docstring, @NotNull PyFunction function) {
+  private void addFunctionSpecificSections(@NotNull PyStringLiteralExpression docstring, @NotNull PyFunction function) {
     final StructuredDocString structured = DocStringUtil.parseDocString(docstring);
 
     final List<PyCallableParameter> parameters = function.getParameters(myContext);
@@ -387,7 +370,7 @@ public class PyDocumentationBuilder {
                                      .filter(name -> structured.getParamDescription(name) != null)
                                      .map(name -> {
                                        final String description = structured.getParamDescription(name);
-                                       return "<p>" + name + " &ndash; " + description + "</p>";
+                                       return "<p><code>" + name + "</code> &ndash; " + description + "</p>";
                                      })
                                      .joining();
 
@@ -403,7 +386,7 @@ public class PyDocumentationBuilder {
     final String keywordArgsList = StreamEx.of(allKeywordArgs)
                                            .map(name -> {
                                              final String description = structured.getKeywordArgumentDescription(name);
-                                             return "<p>" + name + " &ndash; " + StringUtil.notNullize(description) + "</p>";
+                                             return "<p><code>" + name + "</code> &ndash; " + StringUtil.notNullize(description) + "</p>";
                                            })
                                            .joining();
     if (!keywordArgsList.isEmpty()) {
@@ -418,7 +401,7 @@ public class PyDocumentationBuilder {
     final String exceptionList = StreamEx.of(structured.getRaisedExceptions())
                                    .map(name -> {
                                      final String description = structured.getRaisedExceptionDescription(name);
-                                     return "<p>" + name + (StringUtil.isNotEmpty(description) ? " &ndash; " + description : "") + "</p>";
+                                     return "<p><code>" + name + "</code>" +(StringUtil.isNotEmpty(description) ? " &ndash; " + description : "") + "</p>";
                                    })
                                    .joining();
 
@@ -444,6 +427,13 @@ public class PyDocumentationBuilder {
         }
       }
     }
+    // Reference expression can be passed as the target element in Python console
+    if (myElement instanceof PyReferenceExpression) {
+      final PsiElement resolved = resolveWithoutImplicits((PyReferenceExpression)myElement);
+      if (resolved != null) {
+        return resolved;
+      }
+    }
     return myElement;
   }
 
@@ -455,9 +445,9 @@ public class PyDocumentationBuilder {
   }
 
   @Nullable
-  private PyStringLiteralExpression addInheritedDocString(@NotNull final PyFunction pyFunction, @Nullable final PyClass pyClass) {
+  private PyStringLiteralExpression addInheritedDocString(@NotNull PyFunction pyFunction, @NotNull PyClass pyClass) {
     final String methodName = pyFunction.getName();
-    if (pyClass == null || methodName == null) {
+    if (methodName == null) {
       return null;
     }
     final boolean isConstructor = PyNames.INIT.equals(methodName);
@@ -470,26 +460,22 @@ public class PyDocumentationBuilder {
       PyStringLiteralExpression docstringElement = null;
       PyFunction inherited = null;
       boolean isFromClass = false;
-      if (isConstructor) docstringElement = getEffectiveDocStringExpression(ancestor);
-      if (docstringElement != null) {
-        isFromClass = true;
+      if (isConstructor) {
+        docstringElement = getEffectiveDocStringExpression(ancestor);
+        isFromClass = docstringElement != null;
       }
-      else {
+      if (!isFromClass) {
         inherited = ancestor.findMethodByName(methodName, false, null);
-      }
-      if (inherited != null) {
-        docstringElement = getEffectiveDocStringExpression(inherited);
-      }
-      if (docstringElement != null) {
-        final String inheritedDoc = docstringElement.getStringValue();
-        if (inheritedDoc.length() > 1) {
-          final String ancestorLink = isFromClass ? getLinkToClass(ancestor, false) : getLinkToFunction(inherited, false);
-          if (ancestorLink != null) {
-            mySectionsMap.get(PyBundle.message("QDOC.documentation.is.copied.from")).addWith(TagCode, $(ancestorLink));
-          }
-          myContent.add(formatDocString(pyFunction, inheritedDoc));
-          return docstringElement;
+        if (inherited != null) {
+          docstringElement = getEffectiveDocStringExpression(inherited);
         }
+      }
+      if (docstringElement != null && !docstringElement.getStringValue().isEmpty()) {
+        final String ancestorLink = isFromClass ? getLinkToClass(ancestor, false) : getLinkToFunction(inherited, false);
+        if (ancestorLink != null) {
+          mySectionsMap.get(PyBundle.message("QDOC.documentation.is.copied.from")).addWith(TagCode, $(ancestorLink));
+        }
+        return docstringElement;
       }
     }
 
@@ -511,7 +497,7 @@ public class PyDocumentationBuilder {
       if (predefinedMethod != null) {
         final PyStringLiteralExpression predefinedDocstring = getEffectiveDocStringExpression(predefinedMethod);
         final String predefinedDoc = predefinedDocstring != null ? predefinedDocstring.getStringValue() : null;
-        if (predefinedDoc != null && predefinedDoc.length() > 1) { // only a real-looking doc string counts
+        if (predefinedDoc != null && !predefinedDoc.isEmpty()) {
           mySectionsMap.get(PyBundle.message("QDOC.documentation.is.copied.from")).addItem("built-in description");
           myContent.add(formatDocString(fun, predefinedDoc));
         }

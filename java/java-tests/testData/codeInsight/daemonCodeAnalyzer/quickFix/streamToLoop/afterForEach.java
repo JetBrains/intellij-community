@@ -5,7 +5,7 @@ import java.util.List;
 
 public class Main {
   private static void test(List<String> list) {
-      for (String x: list) {
+      for (String x : list) {
           if (x != null) {
               System.out.println(x);
           }

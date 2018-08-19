@@ -50,6 +50,7 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
       myCache = new ExceptionInfoCache(scope);
     }
 
+    @Override
     public Result applyFilter(final String line, final int textEndOffset) {
       return null;
     }

@@ -38,8 +38,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
-import java.util.HashMap;
-import java.util.HashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.file.AbstractFileObject;
 import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
@@ -49,6 +48,8 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.io.File;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 /**
@@ -67,6 +68,7 @@ public class ImportTree extends NodeRenderer {
     myWizard = wizard;
   }
 
+  @Override
   public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     if (customize(tree, value, selected, expanded, leaf, row, hasFocus)) return;
     super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
@@ -98,13 +100,15 @@ public class ImportTree extends NodeRenderer {
 
   public AnAction createExcludeAction() {
     return new AnAction(CvsBundle.message("import.wizard.exclude.from.import.action.name"), null, PlatformIcons.DELETE_ICON) {
-      public void update(AnActionEvent e) {
+      @Override
+      public void update(@NotNull AnActionEvent e) {
         final VirtualFile[] selectedFiles = myFileSystemTree.getSelectedFiles();
         final Presentation presentation = e.getPresentation();
         presentation.setEnabled(isAtLeastOneFileIncluded(selectedFiles));
       }
 
-      public void actionPerformed(AnActionEvent e) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
         final VirtualFile[] selectedFiles = myFileSystemTree.getSelectedFiles();
         for (VirtualFile selectedFile : selectedFiles) {
           exclude(selectedFile);
@@ -127,13 +131,15 @@ public class ImportTree extends NodeRenderer {
 
   public AnAction createIncludeAction() {
     return new AnAction(CvsBundle.message("import.wizard.include.to.import.action.name"), null, IconUtil.getAddIcon()) {
-      public void update(AnActionEvent e) {
+      @Override
+      public void update(@NotNull AnActionEvent e) {
         final VirtualFile[] selectedFiles = myFileSystemTree.getSelectedFiles();
         final Presentation presentation = e.getPresentation();
         presentation.setEnabled(isAtLeastOneFileExcluded(selectedFiles));
       }
 
-      public void actionPerformed(AnActionEvent e) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
         final VirtualFile[] selectedFiles = myFileSystemTree.getSelectedFiles();
         for (VirtualFile selectedFile : selectedFiles) {
           include(selectedFile);
@@ -232,6 +238,7 @@ public class ImportTree extends NodeRenderer {
     return new IIgnoreFileFilter() {
       private final Map<File, IgnoredFilesInfo> myParentToIgnoresMap = new HashMap<>();
 
+      @Override
       public boolean shouldBeIgnored(AbstractFileObject abstractFileObject, ICvsFileSystem cvsFileSystem) {
         final File file = cvsFileSystem.getLocalFileSystem().getFile(abstractFileObject);
         if (file.isDirectory() && file.getName().equals(CvsUtil.CVS)) return true;

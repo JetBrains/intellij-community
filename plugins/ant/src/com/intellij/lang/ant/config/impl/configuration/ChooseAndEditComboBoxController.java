@@ -15,16 +15,16 @@
  */
 package com.intellij.lang.ant.config.impl.configuration;
 
-import com.intellij.ui.SortedComboBoxModel;
 import com.intellij.ui.ComboboxWithBrowseButton;
+import com.intellij.ui.SortedComboBoxModel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
-import java.util.HashMap;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -39,6 +39,7 @@ public abstract class ChooseAndEditComboBoxController<Item, Ref> {
     myCombobox = combobox;
     myToString = toRef;
     myCombobox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         resetList(openConfigureDialog(myItems.get(getSelectedString()), getCombobox()));
       }

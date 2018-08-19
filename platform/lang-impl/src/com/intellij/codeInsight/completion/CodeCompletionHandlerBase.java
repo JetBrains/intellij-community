@@ -175,7 +175,7 @@ public class CodeCompletionHandlerBase {
     if (autopopup) {
       CommandProcessor.getInstance().runUndoTransparentAction(initCmd);
     } else {
-      CommandProcessor.getInstance().executeCommand(project, initCmd, null, null);
+      CommandProcessor.getInstance().executeCommand(project, initCmd, null, null, editor.getDocument());
     }
   }
 
@@ -306,7 +306,7 @@ public class CodeCompletionHandlerBase {
   }
 
   private AutoCompletionDecision shouldAutoComplete(CompletionProgressIndicator indicator,
-                                                    List<LookupElement> items, 
+                                                    List<LookupElement> items,
                                                     CompletionParameters parameters) {
     if (!invokedExplicitly) {
       return AutoCompletionDecision.SHOW_LOOKUP;
@@ -352,7 +352,7 @@ public class CodeCompletionHandlerBase {
     final List<LookupElement> items = indicator.getLookup().getItems();
     CompletionParameters parameters = Objects.requireNonNull(indicator.getParameters());
     if (items.isEmpty()) {
-      LookupManager.getInstance(indicator.getProject()).hideActiveLookup();
+      LookupManager.hideActiveLookup(indicator.getProject());
 
       Caret nextCaret = getNextCaretToProcess(indicator.getEditor());
       if (nextCaret != null) {
@@ -391,7 +391,7 @@ public class CodeCompletionHandlerBase {
           CompletionServiceImpl.setCompletionPhase(hasModifiers? new CompletionPhase.InsertedSingleItem(indicator, restorePrefix) : CompletionPhase.NoCompletion);
         }
       } else if (decision == AutoCompletionDecision.CLOSE_LOOKUP) {
-        LookupManager.getInstance(indicator.getProject()).hideActiveLookup();
+        LookupManager.hideActiveLookup(indicator.getProject());
       }
     }
     catch (Throwable e) {
@@ -488,7 +488,23 @@ public class CodeCompletionHandlerBase {
     if (context.shouldAddCompletionChar()) {
       WriteAction.run(() -> addCompletionChar(context, item, editor, completionChar));
     }
+    checkPsiTextConcistency(indicator);
+
     return context;
+  }
+
+  private static void checkPsiTextConcistency(CompletionProcessEx indicator) {
+    PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(InjectedLanguageUtil.getTopLevelEditor(indicator.getEditor()), indicator.getProject());
+    if (psiFile != null) {
+      if (Registry.is("ide.check.stub.text.consistency") ||
+          ApplicationManager.getApplication().isUnitTestMode() && !ApplicationInfoImpl.isInStressTest()) {
+        StubTextInconsistencyException.checkStubTextConsistency(psiFile);
+        if (PsiDocumentManager.getInstance(psiFile.getProject()).hasUncommitedDocuments()) {
+          PsiDocumentManager.getInstance(psiFile.getProject()).commitAllDocuments();
+          StubTextInconsistencyException.checkStubTextConsistency(psiFile);
+        }
+      }
+    }
   }
 
   public static void afterItemInsertion(final CompletionProgressIndicator indicator, final Runnable laterRunnable) {
@@ -549,13 +565,6 @@ public class CodeCompletionHandlerBase {
       }
       finally {
         context.stopWatching();
-      }
-
-      if (psiFile.isValid()) {
-        if (Registry.is("ide.check.stub.text.consistency") ||
-            ApplicationManager.getApplication().isUnitTestMode() && !ApplicationInfoImpl.isInStressTest()) {
-          StubTextInconsistencyException.checkStubTextConsistency(psiFile);
-        }
       }
 
       EditorModificationUtil.scrollToCaret(editor);

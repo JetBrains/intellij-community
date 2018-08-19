@@ -57,6 +57,7 @@ public class NamedArgumentDescriptorImpl extends NamedArgumentDescriptorBase {
     mySubstitutor = substitutor;
   }
 
+  @Override
   @Nullable
   public PsiElement getNavigationElement() {
     return myNavigationElement;

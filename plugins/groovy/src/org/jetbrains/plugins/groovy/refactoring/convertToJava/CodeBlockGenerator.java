@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,6 +13,7 @@ import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnI
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrExpressionList;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
@@ -410,7 +397,7 @@ public class CodeBlockGenerator extends Generator {
     ExpressionContext forContext = context.extend();
     if (clause instanceof GrForInClause) {
       final GrExpression expression = ((GrForInClause)clause).getIteratedExpression();
-      final GrVariable declaredVariable = clause.getDeclaredVariable();
+      final GrVariable declaredVariable = ((GrForInClause)clause).getDeclaredVariable();
       LOG.assertTrue(declaredVariable != null);
 
       writeVariableWithoutSemicolonAndInitializer(builder, declaredVariable, context);
@@ -424,7 +411,7 @@ public class CodeBlockGenerator extends Generator {
       final GrTraditionalForClause cl = (GrTraditionalForClause)clause;
       final GrCondition initialization = cl.getInitialization();
       final GrExpression condition = cl.getCondition();
-      final GrExpression update = cl.getUpdate();
+      final GrExpressionList update = cl.getUpdate();
 
       if (initialization instanceof GrParameter) {
         StringBuilder partBuilder = new StringBuilder();
@@ -464,7 +451,7 @@ public class CodeBlockGenerator extends Generator {
     }
   }
 
-  private static void genForPart(StringBuilder builder, GrExpression part, final ExpressionContext context) {
+  private static void genForPart(StringBuilder builder, GroovyPsiElement part, final ExpressionContext context) {
     genForPart(builder, part, new ExpressionGenerator(new StringBuilder(), context));
   }
 
@@ -514,11 +501,16 @@ public class CodeBlockGenerator extends Generator {
 
   @Override
   public void visitTryStatement(@NotNull GrTryCatchStatement tryCatchStatement) {
+    builder.append("try");
     final GrOpenBlock tryBlock = tryCatchStatement.getTryBlock();
+    if (tryBlock == null) {
+      builder.append("{}");
+    }
+    else {
+      tryBlock.accept(this);
+    }
     final GrCatchClause[] catchClauses = tryCatchStatement.getCatchClauses();
     final GrFinallyClause finallyClause = tryCatchStatement.getFinallyClause();
-    builder.append("try");
-    tryBlock.accept(this);
     for (GrCatchClause catchClause : catchClauses) {
       catchClause.accept(this);
     }

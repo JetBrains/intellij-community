@@ -2,7 +2,8 @@ YAML file
   YAML document
     YAML mapping
       YAML key value
-        PsiElement(scalar key)('Stack:')
+        PsiElement(scalar key)('Stack')
+        PsiElement(:)(':')
         PsiElement(Eol)('\n')
         PsiElement(indent)('  ')
         YAML sequence
@@ -11,21 +12,24 @@ YAML file
             PsiWhiteSpace(' ')
             YAML mapping
               YAML key value
-                PsiElement(scalar key)('file:')
+                PsiElement(scalar key)('file')
+                PsiElement(:)(':')
                 PsiWhiteSpace(' ')
                 YAML plain scalar text
                   PsiElement(text)('TopClass.py')
               PsiElement(Eol)('\n')
               PsiElement(indent)('    ')
               YAML key value
-                PsiElement(scalar key)('line:')
+                PsiElement(scalar key)('line')
+                PsiElement(:)(':')
                 PsiWhiteSpace(' ')
                 YAML plain scalar text
                   PsiElement(text)('23')
               PsiElement(Eol)('\n')
               PsiElement(indent)('    ')
               YAML key value
-                PsiElement(scalar key)('code:')
+                PsiElement(scalar key)('code')
+                PsiElement(:)(':')
                 PsiWhiteSpace(' ')
                 YAML scalar list
                   PsiElement(scalar list)('|')
@@ -39,21 +43,24 @@ YAML file
             PsiWhiteSpace(' ')
             YAML mapping
               YAML key value
-                PsiElement(scalar key)('file:')
+                PsiElement(scalar key)('file')
+                PsiElement(:)(':')
                 PsiWhiteSpace(' ')
                 YAML plain scalar text
                   PsiElement(text)('MoreClass.py')
               PsiElement(Eol)('\n')
               PsiElement(indent)('    ')
               YAML key value
-                PsiElement(scalar key)('line:')
+                PsiElement(scalar key)('line')
+                PsiElement(:)(':')
                 PsiWhiteSpace(' ')
                 YAML plain scalar text
                   PsiElement(text)('58')
               PsiElement(Eol)('\n')
               PsiElement(indent)('    ')
               YAML key value
-                PsiElement(scalar key)('code:')
+                PsiElement(scalar key)('code')
+                PsiElement(:)(':')
                 PsiWhiteSpace(' ')
                 YAML scalar list
                   PsiElement(scalar list)('|-')

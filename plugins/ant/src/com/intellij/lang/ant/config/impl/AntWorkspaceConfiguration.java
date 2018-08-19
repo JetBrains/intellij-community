@@ -34,18 +34,14 @@ public class AntWorkspaceConfiguration implements PersistentStateComponent<Eleme
     myProject = project;
   }
 
+  @Override
   public Element getState() {
-    try {
-      final Element e = new Element("state");
-      writeExternal(e);
-      return e;
-    }
-    catch (WriteExternalException e1) {
-      LOG.error(e1);
-      return null;
-    }
+    final Element e = new Element("state");
+    writeExternal(e);
+    return e;
   }
 
+  @Override
   public void loadState(@NotNull Element state) {
     try {
       readExternal(state);

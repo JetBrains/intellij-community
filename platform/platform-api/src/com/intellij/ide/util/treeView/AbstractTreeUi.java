@@ -2867,7 +2867,7 @@ public class AbstractTreeUi {
     if (!canInitiateNewActivity()) return false;
     if (!getBuilder().isSmartExpand()) return false;
 
-    boolean smartExpand = !myNotForSmartExpand.contains(node) && canSmartExpand;
+    boolean smartExpand = canSmartExpand && !myNotForSmartExpand.contains(node);
     return smartExpand && validateAutoExpand(true, getElementFor(node));
   }
 
@@ -4082,7 +4082,7 @@ public class AbstractTreeUi {
         int row = getRowIfUnderSelection(element);
         if (row == -1) row = myTree.getRowForPath(new TreePath(node.getPath()));
         int top = row - 2;
-        int bottom = row - 2;
+        int bottom = row + 2;
         if (canBeCentered && Registry.is("ide.tree.autoscrollToVCenter")) {
           int count = TreeUtil.getVisibleRowCount(myTree) - 1;
           top = count > 0 ? row - count / 2 : row;

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -36,23 +22,28 @@ public class PyStarImportElementElementType extends PyStubElementType<PyStarImpo
     super("STAR_IMPORT_ELEMENT");
   }
 
+  @Override
   @NotNull
   public PsiElement createElement(@NotNull final ASTNode node) {
     return new PyStarImportElementImpl(node);
   }
 
+  @Override
   public PyStarImportElement createPsi(@NotNull final PyStarImportElementStub stub) {
     return new PyStarImportElementImpl(stub);
   }
 
+  @Override
   @NotNull
   public PyStarImportElementStub createStub(@NotNull final PyStarImportElement psi, final StubElement parentStub) {
     return new PyStarImportElementStubImpl(parentStub);
   }
 
+  @Override
   public void serialize(@NotNull final PyStarImportElementStub stub, @NotNull final StubOutputStream dataStream) throws IOException {
   }
 
+  @Override
   @NotNull
   public PyStarImportElementStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     return new PyStarImportElementStubImpl(parentStub);

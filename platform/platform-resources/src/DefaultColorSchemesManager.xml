@@ -33,8 +33,6 @@
       <option name="IGNORED_DELETED_LINES_BORDER_COLOR" value="9f9f9f"/>
       <option name="CONSOLE_BACKGROUND_KEY" value="ffffff" />
       <option name="DIFF_SEPARATORS_BACKGROUND" value="D9D9D9"/>
-      <option name="DIFF_SEPARATORS_TOP_BORDER" value="C8C8C8"/>
-      <option name="DIFF_SEPARATORS_BOTTOM_BORDER"/>
 
       <option name="FILESTATUS_ADDED" value="0a7700"/>
       <option name="FILESTATUS_DELETED" value="616161"/>
@@ -75,7 +73,7 @@
       </option>
       <option name="DEBUGGER_INLINED_VALUES_EXECUTION_LINE">
         <value>
-          <option name="FOREGROUND" value="ff56" deuteranopia="cccccc" protanopia="cccccc"/>
+          <option name="FOREGROUND" value="a9b7d6" deuteranopia="cccccc" protanopia="cccccc"/>
           <option name="FONT_TYPE" value="2" />
           <option name="EFFECT_TYPE" value="0" />
         </value>
@@ -305,6 +303,13 @@
           <option name="EFFECT_COLOR" value="ff0000" deuteranopia="e56000" protanopia="e56000"/>
           <option name="EFFECT_TYPE" value="2"/>
           <option name="FONT_TYPE" deuteranopia="bold" protanopia="bold"/>
+          <option name="ERROR_STRIPE_COLOR" value="cf5b56" deuteranopia="d95716" protanopia="d95716"/>
+        </value>
+      </option>
+      <option name="FILESTATUS_ERRORS">
+        <value>
+          <option name="EFFECT_TYPE" value="2"/>
+          <option name="EFFECT_COLOR" value="ff0000" deuteranopia="e56000" protanopia="e56000"/>
           <option name="ERROR_STRIPE_COLOR" value="cf5b56" deuteranopia="d95716" protanopia="d95716"/>
         </value>
       </option>
@@ -810,6 +815,21 @@
           <option name="FONT_TYPE" deuteranopia="bold" protanopia="bold"/>
         </value>
       </option>
+      <option name="LOG_DEBUG_OUTPUT">
+        <value>
+          <option name="FOREGROUND" value="00cccc"/>
+        </value>
+      </option>
+      <option name="LOG_VERBOSE_OUTPUT">
+        <value>
+          <option name="FOREGROUND" value="0000ee"/>
+        </value>
+      </option>
+      <option name="LOG_INFO_OUTPUT">
+        <value>
+          <option name="FOREGROUND" value="00cd00"/>
+        </value>
+      </option>
       <option name="LOG_WARNING_OUTPUT">
         <value>
           <option name="FOREGROUND" value="a66f00" deuteranopia="a89c11" protanopia="a89c11"/>
@@ -1162,9 +1182,7 @@
       <option name="SELECTION_FOREGROUND" value="" />
       <option name="TEARLINE_COLOR" value="555555" />
       <option name="WHITESPACES" value="505050" />
-      <option name="DIFF_SEPARATORS_TOP_BORDER" value="1E1E1E"/>
-      <option name="DIFF_SEPARATORS_BACKGROUND" value="232323"/>
-      <option name="DIFF_SEPARATORS_BOTTOM_BORDER" value="222222"/>
+      <option name="DIFF_SEPARATORS_BACKGROUND" value="212121"/>
       <option name="VISUAL_INDENT_GUIDE" value="3c3c3c"/>
       <option name="FOLDED_TEXT_BORDER_COLOR" value="43474a"/>
 
@@ -1395,14 +1413,14 @@
       </option>
       <option name="DEBUGGER_INLINED_VALUES">
         <value>
-          <option name="FOREGROUND" value="3d8065" deuteranopia="737373" protanopia="737373"/>
+          <option name="FOREGROUND" value="666d75" deuteranopia="737373" protanopia="737373"/>
           <option name="FONT_TYPE" value="2" />
           <option name="EFFECT_TYPE" value="0" />
         </value>
       </option>
       <option name="DEBUGGER_INLINED_VALUES_EXECUTION_LINE">
         <value>
-          <option name="FOREGROUND" value="ffeb09" />
+          <option name="FOREGROUND" value="7b94b3" />
           <option name="FONT_TYPE" value="2" />
           <option name="EFFECT_TYPE" value="0" />
         </value>
@@ -1624,6 +1642,13 @@
           <option name="ERROR_STRIPE_COLOR" value="9e2927" deuteranopia="ff8f40" protanopia="ff8f40"/>
         </value>
       </option>
+      <option name="FILESTATUS_ERRORS">
+        <value>
+          <option name="EFFECT_TYPE" value="2"/>
+          <option name="EFFECT_COLOR" value="bc3f3c" deuteranopia="e57132" protanopia="e57132"/>
+          <option name="ERROR_STRIPE_COLOR" value="9e2927" deuteranopia="ff8f40" protanopia="ff8f40"/>
+        </value>
+      </option>
       <option name="RUNTIME_ERROR">
         <value>
           <option name="EFFECT_COLOR" value="f49810"/>
@@ -1835,6 +1860,21 @@
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR" value="ff0000"/>
           <option name="EFFECT_TYPE" value="0"/>
+        </value>
+      </option>
+      <option name="LOG_DEBUG_OUTPUT">
+        <value>
+          <option name="FOREGROUND" value="299999"/>
+        </value>
+      </option>
+      <option name="LOG_VERBOSE_OUTPUT">
+        <value>
+          <option name="FOREGROUND" value="5394ec"/>
+        </value>
+      </option>
+      <option name="LOG_INFO_OUTPUT">
+        <value>
+          <option name="FOREGROUND" value="abc023"/>
         </value>
       </option>
       <option name="LOG_WARNING_OUTPUT">

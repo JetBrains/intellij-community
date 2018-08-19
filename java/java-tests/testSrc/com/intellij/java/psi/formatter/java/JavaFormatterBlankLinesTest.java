@@ -488,4 +488,17 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
+
+  public void testOneLineEnumWithJavadoc() {
+    doTextTest(
+      "/**\n" +
+      " *\n" +
+      " */\n" +
+      "enum Enum {A, B, C}",
+      "/**\n" +
+      " *\n" +
+      " */\n" +
+      "enum Enum {A, B, C}"
+    );
+  }
 }

@@ -1,0 +1,9 @@
+{
+  "name": ${NAME},
+  "dark": ${IS_DARK},
+  "author": "",
+
+  "ui": {
+
+  }
+}

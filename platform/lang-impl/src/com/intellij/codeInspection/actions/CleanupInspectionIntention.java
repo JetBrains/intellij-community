@@ -19,9 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 
 public class CleanupInspectionIntention implements IntentionAction, HighPriorityAction {
@@ -67,43 +65,10 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
     }
   }
 
-  /**
-   * @deprecated Use {@link CleanupInspectionUtil} instead
-   */
-  @Deprecated
-  public static AbstractPerformFixesTask applyFixes(@NotNull Project project,
-                                                    @NotNull String presentationText,
-                                                    @NotNull List<ProblemDescriptor> descriptions,
-                                                    @Nullable Class quickfixClass,
-                                                             boolean startInWriteAction) {
-    return CleanupInspectionUtil.getInstance()
-        .applyFixes(project, presentationText, descriptions, quickfixClass, startInWriteAction);
-  }
-
-  /**
-   * @deprecated Use {@link CleanupInspectionUtil} instead
-   */
-  @Deprecated
-  public static AbstractPerformFixesTask applyFixesNoSort(@NotNull Project project,
-                                                          @NotNull String presentationText,
-                                                          @NotNull List<ProblemDescriptor> descriptions,
-                                                          @Nullable Class quickfixClass,
-                                                                    boolean startInWriteAction) {
-    return CleanupInspectionUtil.getInstance()
-        .applyFixesNoSort(project, presentationText, descriptions, quickfixClass, startInWriteAction);
-  }
-
-  /**
-   * @deprecated Use {@link CleanupInspectionUtil} instead
-   */
-  @Deprecated
-  public static void sortDescriptions(@NotNull List<ProblemDescriptor> descriptions) {
-    Collections.sort(descriptions, CommonProblemDescriptor.DESCRIPTOR_COMPARATOR);
-  }
-
   @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     return myQuickfix.getClass() != EmptyIntentionAction.class &&
+           (myQuickfix.startInWriteAction() || myQuickfix instanceof BatchQuickFix) &&
            editor != null &&
            !(myToolWrapper instanceof LocalInspectionToolWrapper && ((LocalInspectionToolWrapper)myToolWrapper).isUnfair());
   }

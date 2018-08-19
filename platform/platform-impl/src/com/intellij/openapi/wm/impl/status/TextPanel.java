@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.icons.AllIcons;
@@ -161,6 +147,7 @@ public class TextPanel extends JComponent implements Accessible {
     return myText;
   }
 
+  @Override
   public Dimension getPreferredSize() {
     if (myExplicitSize != null) {
       return myExplicitSize;
@@ -200,19 +187,21 @@ public class TextPanel extends JComponent implements Accessible {
     @Override
     protected void paintComponent(@NotNull final Graphics g) {
       super.paintComponent(g);
-      if (shouldPaintIconAndArrows() && getText() != null) {
+      if (getText() != null) {
         Rectangle r = getBounds();
         Insets insets = getInsets();
-        Icon arrows = AllIcons.Ide.Statusbar_arrows;
-        arrows.paintIcon(this, g, r.width - insets.right - arrows.getIconWidth() - 2,
-                         r.height / 2 - arrows.getIconHeight() / 2);
+        if (shouldPaintArrows()) {
+          Icon arrows = AllIcons.Ide.Statusbar_arrows;
+          arrows.paintIcon(this, g, r.width - insets.right - arrows.getIconWidth() - 2,
+                           r.height / 2 - arrows.getIconHeight() / 2);
+        }
         if (myIcon != null) {
           myIcon.paintIcon(this, g, insets.left - GAP - myIcon.getIconWidth(), r.height / 2 - myIcon.getIconHeight() / 2);
         }
       }
     }
 
-    protected boolean shouldPaintIconAndArrows() {
+    protected boolean shouldPaintArrows() {
       return true;
     }
 
@@ -229,7 +218,10 @@ public class TextPanel extends JComponent implements Accessible {
     @Override
     public Dimension getPreferredSize() {
       final Dimension preferredSize = super.getPreferredSize();
-      int deltaWidth = AllIcons.Ide.Statusbar_arrows.getIconWidth();
+      int deltaWidth = 0;
+      if (shouldPaintArrows()) {
+        deltaWidth += AllIcons.Ide.Statusbar_arrows.getIconWidth();
+      }
       if (myIcon != null) {
         deltaWidth += myIcon.getIconWidth();
       }
@@ -239,9 +231,12 @@ public class TextPanel extends JComponent implements Accessible {
     public void setIcon(@Nullable Icon icon) {
       myIcon = icon;
     }
+
+    public boolean hasIcon() { return myIcon != null; }
   }
 
   public static class ExtraSize extends TextPanel {
+    @Override
     public Dimension getPreferredSize() {
       Dimension size = super.getPreferredSize();
       return new Dimension(size.width + 3, size.height);

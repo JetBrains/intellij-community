@@ -16,19 +16,17 @@
 package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.execution.rmi.RemoteUtil;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
-import com.intellij.openapi.externalSystem.model.DataNode;
-import com.intellij.openapi.externalSystem.model.ExternalSystemException;
-import com.intellij.openapi.externalSystem.model.Key;
-import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.*;
 import com.intellij.openapi.externalSystem.model.project.LibraryData;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
-import com.intellij.openapi.externalSystem.service.ParametersEnhancer;
+import com.intellij.openapi.externalSystem.model.task.TaskData;
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
@@ -38,7 +36,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.libraries.Library;
@@ -54,7 +51,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.containers.*;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -64,13 +60,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.net.URL;
 import java.util.*;
 import java.util.Queue;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static com.intellij.util.PlatformUtils.*;
 
@@ -79,11 +70,8 @@ import static com.intellij.util.PlatformUtils.*;
  * @since 4/1/13 1:31 PM
  */
 public class ExternalSystemApiUtil {
-  private static final String LAST_USED_PROJECT_PATH_PREFIX = "LAST_EXTERNAL_PROJECT_PATH_";
 
   @NotNull public static final String PATH_SEPARATOR = "/";
-
-  @NotNull private static final Pattern ARTIFACT_PATTERN = Pattern.compile("(?:.*/)?(.+?)(?:-([\\d+](?:\\.[\\d]+)*))?(?:\\.[^.]+?)?");
 
   @NotNull public static final Comparator<Object> ORDER_AWARE_COMPARATOR = new Comparator<Object>() {
 
@@ -177,24 +165,12 @@ public class ExternalSystemApiUtil {
     return library.getName() != null && StringUtil.startsWithIgnoreCase(library.getName(), externalSystemId.getId() + ": ");
   }
 
-  /**
-   * @deprecated to be removed in 2018.2
-   */
-  @Nullable
-  public static ArtifactInfo parseArtifactInfo(@NotNull String fileName) {
-    Matcher matcher = ARTIFACT_PATTERN.matcher(fileName);
-    if (!matcher.matches()) {
-      return null;
-    }
-    return new ArtifactInfo(matcher.group(1), null, matcher.group(2));
-  }
-
   public static void orderAwareSort(@NotNull List<?> data) {
     Collections.sort(data, ORDER_AWARE_COMPARATOR);
   }
 
   /**
-   * @param path    target path
+   * @param path target path
    * @return absolute path that points to the same location as the given one and that uses only slashes
    */
   @NotNull
@@ -327,7 +303,7 @@ public class ExternalSystemApiUtil {
   }
 
   public static void visit(@Nullable DataNode node, @NotNull Consumer<DataNode<?>> consumer) {
-    if(node == null) return;
+    if (node == null) return;
 
     Stack<DataNode> toProcess = ContainerUtil.newStack(node);
     while (!toProcess.isEmpty()) {
@@ -404,65 +380,6 @@ public class ExternalSystemApiUtil {
     return null;
   }
 
-  /**
-   * @deprecated to be removed in 2018.2
-   */
-  public static void commitChangedModels(boolean synchronous, Project project, List<Library.ModifiableModel> models) {
-    final List<Library.ModifiableModel> changedModels = ContainerUtil.findAll(models, model -> model.isChanged());
-    if (!changedModels.isEmpty()) {
-      executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
-        @Override
-        public void execute() {
-          for (Library.ModifiableModel modifiableModel : changedModels) {
-            modifiableModel.commit();
-          }
-        }
-      });
-    }
-  }
-
-  /**
-   * @deprecated to be removed in 2018.2
-   */
-  public static void disposeModels(@NotNull Collection<ModifiableRootModel> models) {
-    for (ModifiableRootModel model : models) {
-      if (!model.isDisposed()) {
-        model.dispose();
-      }
-    }
-  }
-
-  /**
-   * @deprecated to be removed in 2018.2
-   */
-  public static void commitModels(boolean synchronous, Project project, List<ModifiableRootModel> models) {
-    final List<ModifiableRootModel> changedModels = ContainerUtilRt.newArrayList();
-    for (ModifiableRootModel modifiableRootModel : models) {
-      if (modifiableRootModel.isDisposed()) {
-        continue;
-      }
-      if (modifiableRootModel.isChanged()) {
-        changedModels.add(modifiableRootModel);
-      } else {
-        modifiableRootModel.dispose();
-      }
-    }
-    // Commit only if there are changes. #executeProjectChangeAction acquires a write lock
-    if (!changedModels.isEmpty()) {
-      executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
-        @Override
-        public void execute() {
-          for (ModifiableRootModel modifiableRootModel : changedModels) {
-            // double check
-            if (!modifiableRootModel.isDisposed()) {
-              modifiableRootModel.commit();
-            }
-          }
-        }
-      });
-    }
-  }
-
   public static void executeProjectChangeAction(@NotNull final DisposeAwareProjectChange task) {
     executeProjectChangeAction(true, task);
   }
@@ -478,7 +395,7 @@ public class ExternalSystemApiUtil {
       task.run();
       return;
     }
-    
+
     if (synchronous) {
       app.invokeAndWait(task);
     }
@@ -503,11 +420,11 @@ public class ExternalSystemApiUtil {
   }
 
   /**
-  * Adds runnable to Event Dispatch Queue
-  * if we aren't in UnitTest of Headless environment mode
-  *
-  * @param runnable Runnable
-  */
+   * Adds runnable to Event Dispatch Queue
+   * if we aren't in UnitTest of Headless environment mode
+   *
+   * @param runnable Runnable
+   */
   public static void addToInvokeLater(final Runnable runnable) {
     final Application application = ApplicationManager.getApplication();
     final boolean unitTestMode = application.isUnitTestMode();
@@ -525,9 +442,9 @@ public class ExternalSystemApiUtil {
   /**
    * Configures given classpath to reference target i18n bundle file(s).
    *
-   * @param classPath     process classpath
-   * @param bundlePath    path to the target bundle file
-   * @param contextClass  class from the same content root as the target bundle file
+   * @param classPath    process classpath
+   * @param bundlePath   path to the target bundle file
+   * @param contextClass class from the same content root as the target bundle file
    */
   public static void addBundle(@NotNull PathsList classPath, @NotNull String bundlePath, @NotNull Class<?> contextClass) {
     String pathToUse = bundlePath.replace('.', '/');
@@ -556,10 +473,10 @@ public class ExternalSystemApiUtil {
    * This might be necessary in a situation when project-level setting is changed (e.g. project name). We don't want to rename
    * ide project if it doesn't completely corresponds to the given ide project then.
    *
-   * @param ideProject       target ide project
-   * @param projectData      target external project
-   * @return                 {@code true} if given ide project has 1-1 mapping to the given external project;
-   *                         {@code false} otherwise
+   * @param ideProject  target ide project
+   * @param projectData target external project
+   * @return {@code true} if given ide project has 1-1 mapping to the given external project;
+   * {@code false} otherwise
    */
   public static boolean isOneToOneMapping(@NotNull Project ideProject, @NotNull ProjectData projectData) {
     String linkedExternalProjectPath = null;
@@ -596,15 +513,6 @@ public class ExternalSystemApiUtil {
     return true;
   }
 
-  /**
-   * @deprecated to be removed in 2018.2
-   */
-  public static void storeLastUsedExternalProjectPath(@Nullable String path, @NotNull ProjectSystemId externalSystemId) {
-    if (path != null) {
-      PropertiesComponent.getInstance().setValue(LAST_USED_PROJECT_PATH_PREFIX + externalSystemId.getReadableName(), path);
-    }
-  }
-
   @NotNull
   public static String getProjectRepresentationName(@NotNull String targetProjectPath, @Nullable String rootProjectPath) {
     if (rootProjectPath == null) {
@@ -636,18 +544,17 @@ public class ExternalSystemApiUtil {
    * <p/>
    * This method tries to find root project's config path assuming that given path points to a sub-project's config path.
    *
-   * @param externalProjectPath  external sub-project's config path
-   * @param externalSystemId     target external system
-   * @param project              target ide project
-   * @return                     root external project's path if given path is considered to point to a known sub-project's config;
-   *                             {@code null} if it's not possible to find a root project's config path on the basis of the
-   *                             given path
+   * @param externalProjectPath external sub-project's config path
+   * @param externalSystemId    target external system
+   * @param project             target ide project
+   * @return root external project's path if given path is considered to point to a known sub-project's config;
+   * {@code null} if it's not possible to find a root project's config path on the basis of the
+   * given path
    */
   @Nullable
   public static String getRootProjectPath(@NotNull String externalProjectPath,
                                           @NotNull ProjectSystemId externalSystemId,
-                                          @NotNull Project project)
-  {
+                                          @NotNull Project project) {
     ExternalSystemManager<?, ?, ?, ?, ?> manager = getManager(externalSystemId);
     if (manager == null) {
       return null;
@@ -661,7 +568,7 @@ public class ExternalSystemApiUtil {
   /**
    * {@link RemoteUtil#unwrap(Throwable) unwraps} given exception if possible and builds error message for it.
    *
-   * @param e  exception to process
+   * @param e exception to process
    * @return error message for the given exception
    */
   @SuppressWarnings({"ThrowableResultOfMethodCallIgnored", "IOResourceOpenedButNotSafelyClosed"})
@@ -692,8 +599,7 @@ public class ExternalSystemApiUtil {
   @SuppressWarnings("unchecked")
   @NotNull
   public static AbstractExternalSystemSettings getSettings(@NotNull Project project, @NotNull ProjectSystemId externalSystemId)
-    throws IllegalArgumentException
-  {
+    throws IllegalArgumentException {
     ExternalSystemManager<?, ?, ?, ?, ?> manager = getManager(externalSystemId);
     if (manager == null) {
       throw new IllegalArgumentException(String.format(
@@ -707,8 +613,7 @@ public class ExternalSystemApiUtil {
   @SuppressWarnings("unchecked")
   public static <S extends AbstractExternalSystemLocalSettings> S getLocalSettings(@NotNull Project project,
                                                                                    @NotNull ProjectSystemId externalSystemId)
-    throws IllegalArgumentException
-  {
+    throws IllegalArgumentException {
     ExternalSystemManager<?, ?, ?, ?, ?> manager = getManager(externalSystemId);
     if (manager == null) {
       throw new IllegalArgumentException(String.format(
@@ -721,10 +626,9 @@ public class ExternalSystemApiUtil {
 
   @SuppressWarnings("unchecked")
   public static <S extends ExternalSystemExecutionSettings> S getExecutionSettings(@NotNull Project project,
-                                                                            @NotNull String linkedProjectPath,
-                                                                            @NotNull ProjectSystemId externalSystemId)
-    throws IllegalArgumentException
-  {
+                                                                                   @NotNull String linkedProjectPath,
+                                                                                   @NotNull ProjectSystemId externalSystemId)
+    throws IllegalArgumentException {
     ExternalSystemManager<?, ?, ?, ?, ?> manager = getManager(externalSystemId);
     if (manager == null) {
       throw new IllegalArgumentException(String.format(
@@ -744,122 +648,66 @@ public class ExternalSystemApiUtil {
    * <p/>
    * This method allows to check whether the ide is configured to use 'out of process' or 'in process' mode for the system.
    *
-   * @param externalSystemId     target external system
-   *
-   * @return   {@code true} if the ide is configured to work with external system api from the ide process;
-   *           {@code false} otherwise
+   * @param externalSystemId target external system
+   * @return {@code true} if the ide is configured to work with external system api from the ide process;
+   * {@code false} otherwise
    */
   public static boolean isInProcessMode(ProjectSystemId externalSystemId) {
     return Registry.is(externalSystemId.getId() + ExternalSystemConstants.USE_IN_PROCESS_COMMUNICATION_REGISTRY_KEY_SUFFIX, false);
-  }
-
-  /**
-   * There is a possible case that methods of particular object should be executed with classpath different from the one implied
-   * by the current class' class loader. External system offers {@link ParametersEnhancer#enhanceLocalProcessing(List)} method
-   * for defining that custom classpath.
-   * <p/>
-   * It's also possible that particular implementation of {@link ParametersEnhancer} is compiled using dependency to classes
-   * which are provided by the {@link ParametersEnhancer#enhanceLocalProcessing(List) expanded classpath}. E.g. a class
-   * {@code 'A'} might use method of class {@code 'B'} and 'A' is located at the current (system/plugin) classpath but
-   * {@code 'B'} is not. We need to reload {@code 'A'} using its expanded classpath then, i.e. create new class loaded
-   * with that expanded classpath and load {@code 'A'} by it.
-   * <p/>
-   * This method allows to do that.
-   *
-   * @deprecated to be removed in 2018.2
-   *
-   * @param clazz  custom classpath-aware class which instance should be created (is assumed to have a no-args constructor)
-   * @param <T>    target type
-   * @return       newly created instance of the given class loaded by custom classpath-aware loader
-   * @throws IllegalAccessException     as defined by reflection processing
-   * @throws InstantiationException     as defined by reflection processing
-   * @throws NoSuchMethodException      as defined by reflection processing
-   * @throws InvocationTargetException  as defined by reflection processing
-   * @throws ClassNotFoundException     as defined by reflection processing
-   */
-  @NotNull
-  public static <T extends ParametersEnhancer> T reloadIfNecessary(@NotNull final Class<T> clazz)
-    throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException, ClassNotFoundException
-  {
-    T instance = clazz.newInstance();
-    List<URL> urls = ContainerUtilRt.newArrayList();
-    instance.enhanceLocalProcessing(urls);
-    if (urls.isEmpty()) {
-      return instance;
-    }
-
-    final ClassLoader baseLoader = clazz.getClassLoader();
-    Method method = baseLoader.getClass().getMethod("getUrls");
-    if (method != null) {
-      //noinspection unchecked
-      urls.addAll((Collection<URL>)method.invoke(baseLoader));
-    }
-    UrlClassLoader loader = new UrlClassLoader(UrlClassLoader.build().urls(urls).parent(baseLoader.getParent())) {
-      @Override
-      protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-        if (name.equals(clazz.getName())) {
-          return super.loadClass(name, resolve);
-        }
-        else {
-          try {
-            return baseLoader.loadClass(name);
-          }
-          catch (ClassNotFoundException e) {
-            return super.loadClass(name, resolve);
-          }
-        }
-      }
-    };
-    //noinspection unchecked
-    return (T)loader.loadClass(clazz.getName()).newInstance();
   }
 
   public static ProjectModelExternalSource toExternalSource(@NotNull ProjectSystemId systemId) {
     return ExternalProjectSystemRegistry.getInstance().getSourceById(systemId.getId());
   }
 
-  @Contract(value = "_, null -> false", pure=true)
+  @Contract(value = "_, null -> false", pure = true)
   public static boolean isExternalSystemAwareModule(@NotNull ProjectSystemId systemId, @Nullable Module module) {
-    return module != null && !module.isDisposed() && systemId.getId().equals(ExternalSystemModulePropertyManager.getInstance(module).getExternalSystemId());
+    return module != null &&
+           !module.isDisposed() &&
+           systemId.getId().equals(ExternalSystemModulePropertyManager.getInstance(module).getExternalSystemId());
   }
 
-  @Contract(value = "_, null -> false", pure=true)
+  @Contract(value = "_, null -> false", pure = true)
   public static boolean isExternalSystemAwareModule(@NotNull String systemId, @Nullable Module module) {
-    return module != null && !module.isDisposed() && systemId.equals(ExternalSystemModulePropertyManager.getInstance(module).getExternalSystemId());
+    return module != null &&
+           !module.isDisposed() &&
+           systemId.equals(ExternalSystemModulePropertyManager.getInstance(module).getExternalSystemId());
   }
 
   @Nullable
-  @Contract(pure=true)
+  @Contract(pure = true)
   public static String getExternalProjectPath(@Nullable Module module) {
     return module != null && !module.isDisposed() ? ExternalSystemModulePropertyManager.getInstance(module).getLinkedProjectPath() : null;
   }
 
   @Nullable
-  @Contract(pure=true)
+  @Contract(pure = true)
   public static String getExternalRootProjectPath(@Nullable Module module) {
     return module != null && !module.isDisposed() ? ExternalSystemModulePropertyManager.getInstance(module).getRootProjectPath() : null;
   }
 
   @Nullable
-  @Contract(pure=true)
+  @Contract(pure = true)
   public static String getExternalProjectId(@Nullable Module module) {
     return module != null && !module.isDisposed() ? ExternalSystemModulePropertyManager.getInstance(module).getLinkedProjectId() : null;
   }
 
   @Nullable
-  @Contract(pure=true)
+  @Contract(pure = true)
   public static String getExternalProjectGroup(@Nullable Module module) {
     return module != null && !module.isDisposed() ? ExternalSystemModulePropertyManager.getInstance(module).getExternalModuleGroup() : null;
   }
 
   @Nullable
-  @Contract(pure=true)
+  @Contract(pure = true)
   public static String getExternalProjectVersion(@Nullable Module module) {
-    return module != null && !module.isDisposed() ? ExternalSystemModulePropertyManager.getInstance(module).getExternalModuleVersion() : null;
+    return module != null && !module.isDisposed()
+           ? ExternalSystemModulePropertyManager.getInstance(module).getExternalModuleVersion()
+           : null;
   }
 
   @Nullable
-  @Contract(pure=true)
+  @Contract(pure = true)
   public static String getExternalModuleType(@Nullable Module module) {
     return module != null && !module.isDisposed() ? ExternalSystemModulePropertyManager.getInstance(module).getExternalModuleType() : null;
   }
@@ -869,6 +717,33 @@ public class ExternalSystemApiUtil {
                                @NotNull ExternalSystemSettingsListener listener) {
     //noinspection unchecked
     getSettings(project, systemId).subscribe(listener);
+  }
+
+  @NotNull
+  public Collection<TaskData> findProjectTasks(@NotNull Project project,
+                                               @NotNull ProjectSystemId systemId,
+                                               @NotNull String projectPath) {
+    AbstractExternalSystemSettings settings = getSettings(project, systemId);
+    ExternalProjectSettings linkedProjectSettings = settings.getLinkedProjectSettings(projectPath);
+    if (linkedProjectSettings == null) return Collections.emptyList();
+
+    ExternalProjectInfo projectInfo = ProjectDataManager.getInstance().getExternalProjectsData(project, systemId).stream()
+      .filter(info -> FileUtil.pathsEqual(linkedProjectSettings.getExternalProjectPath(), info.getExternalProjectPath()))
+      .findFirst().orElse(null);
+
+    if (projectInfo == null) return Collections.emptyList();
+    DataNode<ProjectData> projectStructure = projectInfo.getExternalProjectStructure();
+    if (projectStructure == null) return Collections.emptyList();
+
+    List<TaskData> tasks = ContainerUtil.newSmartList();
+
+    DataNode<ModuleData> moduleDataNode = findAll(projectStructure, ProjectKeys.MODULE).stream()
+      .filter(moduleNode -> FileUtil.pathsEqual(projectPath, moduleNode.getData().getLinkedExternalProjectPath()))
+      .findFirst().orElse(null);
+    if (moduleDataNode == null) return Collections.emptyList();
+
+    findAll(moduleDataNode, ProjectKeys.TASK).stream().map(DataNode::getData).forEach(tasks::add);
+    return tasks;
   }
 
   /**

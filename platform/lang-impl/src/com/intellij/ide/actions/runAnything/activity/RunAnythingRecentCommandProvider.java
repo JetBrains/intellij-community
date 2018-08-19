@@ -13,7 +13,7 @@ public class RunAnythingRecentCommandProvider extends RunAnythingCommandProvider
 
   @NotNull
   @Override
-  public Collection<String> getValues(@NotNull DataContext dataContext) {
+  public Collection<String> getValues(@NotNull DataContext dataContext, @NotNull String pattern) {
     return RunAnythingCache.getInstance(fetchProject(dataContext)).getState().getCommands();
   }
 }

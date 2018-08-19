@@ -57,6 +57,10 @@ public class ShowContainerInfoHandler implements CodeInsightActionHandler {
         Disposer.dispose(model);
       }
       while(true) {
+        while(container != null && DeclarationRangeUtil.getPossibleDeclarationAtRange(container) == null) {
+          container = container.getParent();
+          if (container instanceof PsiFile) return;
+        }
         if (container == null || container instanceof PsiFile) {
           return;
         }
@@ -70,10 +74,6 @@ public class ShowContainerInfoHandler implements CodeInsightActionHandler {
         }
 
         container = container.getParent();
-        while(container != null && DeclarationRangeUtil.getPossibleDeclarationAtRange(container) == null) {
-          container = container.getParent();
-          if (container instanceof PsiFile) return;
-        }
       }
     }
     if (container == null) {

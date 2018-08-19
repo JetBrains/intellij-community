@@ -8,13 +8,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The application wide settings for the git
  */
-@State(
-  name = "Git.Application.Settings",
-  storages = {
-    @Storage(value = "git.xml", roamingType = RoamingType.PER_OS),
-    @Storage(value = "vcs.xml", deprecated = true)
-  }
-)
+@State(name = "Git.Application.Settings", storages = @Storage(value = "git.xml", roamingType = RoamingType.PER_OS))
 public class GitVcsApplicationSettings implements PersistentStateComponent<GitVcsApplicationSettings.State> {
   private State myState = new State();
 
@@ -29,6 +23,10 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
   public static class State {
     public String myPathToGit = null;
     public SshExecutable SSH_EXECUTABLE = null;
+    public boolean OVERRIDE_SSH_ASK_PASS = true;
+
+    public boolean ANNOTATE_IGNORE_SPACES = true;
+    public AnnotateDetectMovementsOption ANNOTATE_DETECT_INNER_MOVEMENTS = AnnotateDetectMovementsOption.NONE;
   }
 
   public static GitVcsApplicationSettings getInstance() {
@@ -72,5 +70,37 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
   @Nullable
   SshExecutable getIdeaSsh() {
     return myState.SSH_EXECUTABLE;
+  }
+
+  public boolean isOverrideSshAskPass() {
+    return myState.OVERRIDE_SSH_ASK_PASS;
+  }
+
+  public void setOverrideSshAskPass(boolean value) {
+    myState.OVERRIDE_SSH_ASK_PASS = value;
+  }
+
+
+  public boolean isIgnoreWhitespaces() {
+    return myState.ANNOTATE_IGNORE_SPACES;
+  }
+
+  public void setIgnoreWhitespaces(boolean value) {
+    myState.ANNOTATE_IGNORE_SPACES = value;
+  }
+
+  @NotNull
+  public AnnotateDetectMovementsOption getAnnotateDetectMovementsOption() {
+    return myState.ANNOTATE_DETECT_INNER_MOVEMENTS;
+  }
+
+  public void setAnnotateDetectMovementsOption(@NotNull AnnotateDetectMovementsOption value) {
+    myState.ANNOTATE_DETECT_INNER_MOVEMENTS = value;
+  }
+
+  public enum AnnotateDetectMovementsOption {
+    NONE,
+    INNER,
+    OUTER
   }
 }

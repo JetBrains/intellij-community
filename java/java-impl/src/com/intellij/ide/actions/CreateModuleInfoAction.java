@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -21,6 +21,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -30,7 +31,6 @@ import java.util.Map;
 
 import static com.intellij.ide.fileTemplates.JavaTemplateUtil.INTERNAL_MODULE_INFO_TEMPLATE_NAME;
 import static com.intellij.psi.PsiJavaModule.MODULE_INFO_CLASS;
-import static java.util.Collections.singleton;
 
 public class CreateModuleInfoAction extends CreateFromTemplateActionBase {
   public CreateModuleInfoAction() {
@@ -62,7 +62,7 @@ public class CreateModuleInfoAction extends CreateFromTemplateActionBase {
       VirtualFile vDir = psiDir.getVirtualFile();
       ProjectFileIndex index = ProjectRootManager.getInstance(psiDir.getProject()).getFileIndex();
       if (vDir.equals(index.getSourceRootForFile(vDir)) &&
-          index.isUnderSourceRootOfType(vDir, singleton(JavaSourceRootType.SOURCE))) {
+          index.isUnderSourceRootOfType(vDir, ContainerUtil.set(JavaSourceRootType.SOURCE, JavaSourceRootType.TEST_SOURCE))) {
         return psiDir;
       }
     }

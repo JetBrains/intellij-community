@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.actions;
 
-import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.designSurface.InsertComponentProcessor;
@@ -54,19 +40,23 @@ class PaletteListPopupStep implements ListPopupStep<ComponentItem>, SpeedSearchF
     myTitle = title;
   }
 
+  @Override
   @NotNull
   public List<ComponentItem> getValues() {
     return myItems;
   }
 
+  @Override
   public boolean isSelectable(final ComponentItem value) {
     return true;
   }
 
+  @Override
   public Icon getIconFor(final ComponentItem aValue) {
     return aValue.getSmallIcon();
   }
 
+  @Override
   @NotNull
   public String getTextFor(final ComponentItem value) {
     if (value.isAnyComponent()) {
@@ -75,10 +65,12 @@ class PaletteListPopupStep implements ListPopupStep<ComponentItem>, SpeedSearchF
     return value.getClassShortName();
   }
 
+  @Override
   public ListSeparator getSeparatorAbove(final ComponentItem value) {
     return null;
   }
 
+  @Override
   public int getDefaultOptionIndex() {
     if (myInitialSelection != null) {
       int index = myItems.indexOf(myInitialSelection);
@@ -89,50 +81,62 @@ class PaletteListPopupStep implements ListPopupStep<ComponentItem>, SpeedSearchF
     return 0;
   }
 
+  @Override
   public String getTitle() {
     return myTitle;
   }
 
+  @Override
   public PopupStep onChosen(final ComponentItem selectedValue, final boolean finalChoice) {
     myFinalRunnable = () -> myRunnable.process(selectedValue);
     return PopupStep.FINAL_CHOICE;
   }
 
+  @Override
   public Runnable getFinalRunnable() {
     return myFinalRunnable;
   }
 
+  @Override
   public boolean hasSubstep(final ComponentItem selectedValue) {
     return false;
   }
 
+  @Override
   public void canceled() {
   }
 
+  @Override
   public boolean isMnemonicsNavigationEnabled() {
     return false;
   }
 
+  @Override
   public MnemonicNavigationFilter<ComponentItem> getMnemonicNavigationFilter() {
     return null;
   }
 
+  @Override
   public boolean isSpeedSearchEnabled() {
     return true;
   }
 
+  @Override
   public boolean isAutoSelectionEnabled() {
     return false;
   }
 
+  @Override
   public SpeedSearchFilter<ComponentItem> getSpeedSearchFilter() {
     return this;
   }
 
+  @Override
   public boolean canBeHidden(final ComponentItem value) {
     return true;
   }
 
+  @Override
   public String getIndexedString(final ComponentItem value) {
     if (value.isAnyComponent()) {
       return "";

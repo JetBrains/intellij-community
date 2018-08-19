@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io.socketConnection.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -128,6 +129,7 @@ public class ResponseProcessor<R extends AbstractResponse> {
     synchronized (myLock) {
       final long time = System.currentTimeMillis();
       myTimeoutHandlers.retainEntries(new TIntObjectProcedure<TimeoutHandler>() {
+        @Override
         public boolean execute(int a, TimeoutHandler b) {
           if (time > b.myLastTime) {
             timedOut.add(b);

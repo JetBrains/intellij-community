@@ -162,6 +162,12 @@
   <action id="NextTab">
     <keyboard-shortcut first-keystroke="control RIGHT"/>
   </action>
+  <action id="Diff.PrevChange">
+    <keyboard-shortcut first-keystroke="control LEFT"/>
+  </action>
+  <action id="Diff.NextChange">
+    <keyboard-shortcut first-keystroke="control RIGHT"/>
+  </action>
   <action id="ShowContent">
     <keyboard-shortcut first-keystroke="control DOWN"/>
   </action>
@@ -409,4 +415,8 @@
   </action>
   <action id="Vcs.MoveChangedLinesToChangelist"/>
   <action id="ChangesView.Move"/>
+
+  <action id="XDebugger.AttachToProcess">
+    <keyboard-shortcut first-keystroke="alt shift F5"/>
+  </action>
 </keymap>

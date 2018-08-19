@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.javaDoc
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
@@ -96,7 +94,6 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
   }
 
   //<editor-fold desc="Helpers">
-
   private val key = lazy { HighlightDisplayKey.find(JavadocHtmlLintInspection.SHORT_NAME) }
 
   private val lintOptions = "${DocLint.XMSGS_CUSTOM_PREFIX}html/private,accessibility/private"
@@ -138,7 +135,7 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
   private fun findJdk(file: VirtualFile, project: Project): Sdk {
     val rootManager = ProjectRootManager.getInstance(project)
 
-    val module = rootManager.fileIndex.getModuleForFile(file)
+    val module = runReadAction { rootManager.fileIndex.getModuleForFile(file) }
     if (module != null) {
       val sdk = ModuleRootManager.getInstance(module).sdk
       if (isJdk8(sdk)) return sdk!!
@@ -194,6 +191,5 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
 
   private fun registerFix(annotation: Annotation) =
     annotation.registerFix(EmptyIntentionAction(InspectionsBundle.message("inspection.javadoc.lint.display.name")), null, key.value)
-
   //</editor-fold>
 }

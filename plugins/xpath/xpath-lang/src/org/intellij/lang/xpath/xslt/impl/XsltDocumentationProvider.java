@@ -59,6 +59,7 @@ public class XsltDocumentationProvider implements DocumentationProvider {
     private SoftReference<Templates> myTemplates;
     private SoftReference<Document> myDocument;
 
+    @Override
     @Nullable
     public List<String> getUrlFor(PsiElement psiElement, PsiElement psiElement1) {
         if (psiElement instanceof XsltElement) return null;
@@ -93,6 +94,7 @@ public class XsltDocumentationProvider implements DocumentationProvider {
         return null;
     }
 
+    @Override
     @Nullable
     public String generateDoc(PsiElement psiElement, PsiElement psiElement1) {
         if (psiElement instanceof DocElement) {
@@ -191,6 +193,7 @@ public class XsltDocumentationProvider implements DocumentationProvider {
         return new StreamSource(resource.openStream(), resource.toExternalForm());
     }
 
+    @Override
     @Nullable
     public PsiElement getDocumentationElementForLookupItem(PsiManager mgr, Object object, PsiElement psiElement) {
         if (object instanceof String) {
@@ -217,6 +220,7 @@ public class XsltDocumentationProvider implements DocumentationProvider {
         return null;
     }
 
+    @Override
     @Nullable
     public PsiElement getDocumentationElementForLink(PsiManager mgr, String string, PsiElement psiElement) {
         final String[] strings = string.split("\\$");
@@ -226,6 +230,7 @@ public class XsltDocumentationProvider implements DocumentationProvider {
         return null;
     }
 
+    @Override
     @Nullable
     public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
         return null;
@@ -247,10 +252,12 @@ public class XsltDocumentationProvider implements DocumentationProvider {
             return myCategory;
         }
 
+        @Override
         public PsiElement setName(@NotNull @NonNls String name) throws IncorrectOperationException {
             throw new IncorrectOperationException("Unsupported");
         }
 
+        @Override
         public String getName() {
             return myName;
         }
@@ -259,6 +266,7 @@ public class XsltDocumentationProvider implements DocumentationProvider {
             return "DocElement";
         }
 
+        @Override
         public PsiElement copy() {
             return this;
         }
@@ -268,6 +276,7 @@ public class XsltDocumentationProvider implements DocumentationProvider {
             return myElement != null && myElement.isValid();
         }
 
+        @Override
         @Nullable
         public PsiFile getContainingFile() {
             if (!isValid()) {

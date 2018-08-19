@@ -156,6 +156,7 @@ public class DuplocatorHashCallback implements FragmentsCollector {
     final TObjectIntHashMap<PsiFragment[]> duplicateList = new TObjectIntHashMap<>();
 
     myDuplicates.forEachEntry(new TIntObjectProcedure<List<List<PsiFragment>>>() {
+      @Override
       public boolean execute(final int hash, final List<List<PsiFragment>> listList) {
         for (List<PsiFragment> list : listList) {
           final int len = list.size();
@@ -200,22 +201,27 @@ public class DuplocatorHashCallback implements FragmentsCollector {
     return new DupInfo() {
       private final TIntObjectHashMap<GroupNodeDescription> myPattern2Description = new TIntObjectHashMap<>();
 
+      @Override
       public int getPatterns() {
         return duplicates.length;
       }
 
+      @Override
       public int getPatternCost(int number) {
         return ((PsiFragment[])duplicates[number])[0].getCost();
       }
 
+      @Override
       public int getPatternDensity(int number) {
         return ((PsiFragment[])duplicates[number]).length;
       }
 
+      @Override
       public PsiFragment[] getFragmentOccurences(int pattern) {
         return (PsiFragment[])duplicates[pattern];
       }
 
+      @Override
       public UsageInfo[] getUsageOccurences(int pattern) {
         PsiFragment[] occs = getFragmentOccurences(pattern);
         UsageInfo[] infos = new UsageInfo[occs.length];
@@ -227,6 +233,7 @@ public class DuplocatorHashCallback implements FragmentsCollector {
         return infos;
       }
 
+      @Override
       public int getFileCount(final int pattern) {
         if (myPattern2Description.containsKey(pattern)) {
           return myPattern2Description.get(pattern).getFilesCount();
@@ -252,6 +259,7 @@ public class DuplocatorHashCallback implements FragmentsCollector {
         return description;
       }
 
+      @Override
       @Nullable
       public String getTitle(int pattern) {
         if (getFileCount(pattern) == 1) {
@@ -264,6 +272,7 @@ public class DuplocatorHashCallback implements FragmentsCollector {
       }
 
 
+      @Override
       @Nullable
       public String getComment(int pattern) {
         if (getFileCount(pattern) == 1) {
@@ -275,6 +284,7 @@ public class DuplocatorHashCallback implements FragmentsCollector {
         return null;
       }
 
+      @Override
       public int getHash(final int i) {
         return duplicateList.get((PsiFragment[])duplicates[i]);
       }

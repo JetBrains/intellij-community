@@ -48,12 +48,6 @@ abstract class GroovyFormatterTestCase extends LightCodeInsightFixtureTestCase {
     groovySettings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    setSettingsBack()
-    super.tearDown()
-  }
-  
   protected CommonCodeStyleSettings getGroovySettings() {
     return myTempSettings.getCommonSettings(GroovyLanguage.INSTANCE)
   }
@@ -65,7 +59,7 @@ abstract class GroovyFormatterTestCase extends LightCodeInsightFixtureTestCase {
   protected void setSettings(Project project) {
     assertNull(myTempSettings)
     CodeStyleSettings settings = CodeStyle.getSettings(project)
-    myTempSettings = settings.clone()
+    myTempSettings = settings
 
     CommonCodeStyleSettings.IndentOptions gr = myTempSettings.getIndentOptions(GroovyFileType.GROOVY_FILE_TYPE)
     assertNotSame(gr, settings.OTHER_INDENT_OPTIONS)
@@ -73,18 +67,6 @@ abstract class GroovyFormatterTestCase extends LightCodeInsightFixtureTestCase {
     gr.CONTINUATION_INDENT_SIZE = 4
     gr.TAB_SIZE = 2
     myTempSettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 3
-
-    CodeStyle.setTemporarySettings(project, myTempSettings)
-  }
-
-  protected void setSettingsBack() {
-    myTempSettings.getIndentOptions(GroovyFileType.GROOVY_FILE_TYPE).INDENT_SIZE = 200
-    myTempSettings.getIndentOptions(GroovyFileType.GROOVY_FILE_TYPE).CONTINUATION_INDENT_SIZE = 200
-    myTempSettings.getIndentOptions(GroovyFileType.GROOVY_FILE_TYPE).TAB_SIZE = 200
-
-    myTempSettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 5
-    CodeStyle.dropTemporarySettings(getProject())
-    myTempSettings = null
   }
 
   protected void checkFormatting(String fileText, String expected) {

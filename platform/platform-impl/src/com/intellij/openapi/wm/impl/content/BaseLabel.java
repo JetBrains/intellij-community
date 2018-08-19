@@ -76,6 +76,7 @@ public class BaseLabel extends JLabel {
     myPassiveFg = passiveFg;
   }
 
+  @Override
   protected void paintComponent(final Graphics g) {
     final Color fore = myUi.myWindow.isActive() ? myActiveFg : myPassiveFg;
     setForeground(fore);

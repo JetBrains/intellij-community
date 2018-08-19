@@ -172,6 +172,19 @@ fun cellPanel(): JPanel {
   }
 }
 
+fun commentAndPanel(): JPanel {
+  return panel {
+    row("Repository:") {
+      cell {
+        checkBox("Auto Sync", comment = "Use File -> Settings Repository... to configure")
+      }
+    }
+    row {
+      panel("Foo", JScrollPane(JTextArea()))
+    }
+  }
+}
+
 fun createLafTestPanel(): JPanel {
   val spacing = createIntelliJSpacingConfiguration()
   val panel = JPanel(GridLayout(0, 1, spacing.horizontalGap, spacing.verticalGap))

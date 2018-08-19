@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -9,13 +9,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.net.HttpConfigurable;
-import com.intellij.util.net.IdeaWideProxySelector;
+import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVcsSettings;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.git4idea.http.GitAskPassXmlRpcHandler;
+import org.jetbrains.git4idea.nativessh.GitNativeSshAskPassXmlRpcHandler;
 import org.jetbrains.git4idea.ssh.GitSSHHandler;
+import org.jetbrains.git4idea.ssh.GitXmlRpcNativeSshService;
 import org.jetbrains.git4idea.ssh.GitXmlRpcSshService;
 
 import java.io.IOException;
@@ -37,6 +39,8 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
 
   @Nullable private UUID mySshHandler;
 
+  @Nullable private UUID myNativeSshHandler;
+
   private GitHandlerAuthenticationManager(@NotNull Project project, @NotNull GitLineHandler handler) {
     myProject = project;
     myHandler = handler;
@@ -46,7 +50,12 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
   public static GitHandlerAuthenticationManager prepare(@NotNull Project project, @NotNull GitLineHandler handler) throws IOException {
     GitHandlerAuthenticationManager manager = new GitHandlerAuthenticationManager(project, handler);
     manager.prepareHttpAuth();
-    if (GitVcsSettings.getInstance(project).isIdeaSsh()) manager.prepareSshAuth();
+    if (GitVcsSettings.getInstance(project).isIdeaSsh()) {
+      manager.prepareSshAuth();
+    }
+    else if (GitVcsApplicationSettings.getInstance().isOverrideSshAskPass()) {
+      manager.prepareNativeSshAuth();
+    }
     return manager;
   }
 
@@ -54,6 +63,7 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
   public void close() {
     cleanupHttpAuth();
     cleanupSshAuth();
+    cleanupNativeSshAuth();
   }
 
   private void prepareHttpAuth() throws IOException {
@@ -67,7 +77,7 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
     myHandler.addCustomEnvironmentVariable(GitAskPassXmlRpcHandler.GIT_ASK_PASS_PORT_ENV, Integer.toString(port));
     LOG.debug(String.format("myHandler=%s, port=%s", myHttpHandler, port));
 
-    myHandler.addLineListener(new GitLineHandlerAdapter() {
+    myHandler.addLineListener(new GitLineHandlerListener() {
       @Override
       public void onLineAvailable(@NonNls String line, Key outputType) {
         String lowerCaseLine = line.toLowerCase();
@@ -147,10 +157,34 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
     }
   }
 
+  private void prepareNativeSshAuth() throws IOException {
+    GitXmlRpcNativeSshService service = ServiceManager.getService(GitXmlRpcNativeSshService.class);
+    GitNativeSshGuiAuthenticator authenticator = new GitNativeSshGuiAuthenticator(myProject, myHandler.isIgnoreAuthenticationRequest());
+
+    myNativeSshHandler = service.registerHandler(authenticator, myProject);
+    int port = service.getXmlRcpPort();
+
+    myHandler.addCustomEnvironmentVariable(GitNativeSshAskPassXmlRpcHandler.SSH_ASK_PASS_ENV, service.getScriptPath().getPath());
+    myHandler.addCustomEnvironmentVariable(GitNativeSshAskPassXmlRpcHandler.IJ_HANDLER_ENV, myNativeSshHandler.toString());
+    myHandler.addCustomEnvironmentVariable(GitNativeSshAskPassXmlRpcHandler.IJ_PORT_ENV, Integer.toString(port));
+    LOG.debug(String.format("myHandler=%s, port=%s", myNativeSshHandler, port));
+
+    // SSH_ASKPASS is ignored if DISPLAY variable is not set
+    String displayEnv = StringUtil.nullize(System.getenv(GitNativeSshAskPassXmlRpcHandler.DISPLAY_ENV));
+    myHandler.addCustomEnvironmentVariable(GitNativeSshAskPassXmlRpcHandler.DISPLAY_ENV, StringUtil.notNullize(displayEnv, ":0.0"));
+  }
+
+  private void cleanupNativeSshAuth() {
+    if (myNativeSshHandler != null) {
+      ServiceManager.getService(GitXmlRpcNativeSshService.class).unregisterHandler(myNativeSshHandler);
+      myNativeSshHandler = null;
+    }
+  }
+
   private static boolean isSshUrlExcluded(@NotNull HttpConfigurable httpConfigurable, @NotNull Collection<String> urls) {
     return ContainerUtil.exists(urls, url -> {
       String host = URLUtil.parseHostFromSshUrl(url);
-      return ((IdeaWideProxySelector)httpConfigurable.getOnlyBySettingsSelector()).isProxyException(host);
+      return httpConfigurable.isProxyException(host);
     });
   }
 }

@@ -198,6 +198,7 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
         if (setter != null) {
           FieldValueSetter finalSetter = setter;
           set(expression, callback, debuggerContext, new SetValueRunnable() {
+            @Override
             public void setValue(EvaluationContextImpl evaluationContext, Value newValue)
               throws ClassNotLoadedException, InvalidTypeException, EvaluateException {
               finalSetter.setValue(preprocessValue(evaluationContext, newValue, getLType()));

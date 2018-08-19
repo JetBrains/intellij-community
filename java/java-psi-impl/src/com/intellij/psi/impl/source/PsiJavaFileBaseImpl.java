@@ -120,6 +120,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       }
     }
     else if (!packageName.isEmpty()) {
+      cleanupBrokenPackageKeyword();
       PsiElement anchor = getFirstChild();
       if (PsiPackage.PACKAGE_INFO_FILE.equals(getName())) {
         // If javadoc is already present in a package-info.java file, position a new package statement after it,
@@ -129,6 +130,17 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
         }
       }
       addBefore(factory.createPackageStatement(packageName), anchor);
+    }
+  }
+
+  private void cleanupBrokenPackageKeyword() {
+    PsiElement child = getFirstChild();
+    while (child instanceof PsiWhiteSpace || child instanceof PsiComment || child instanceof PsiErrorElement) {
+      if (child instanceof PsiErrorElement && child.getFirstChild() != null && child.getFirstChild().textMatches(PsiKeyword.PACKAGE)) {
+        child.delete();
+        break;
+      }
+      child = child.getNextSibling();
     }
   }
 
@@ -302,7 +314,8 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
     if (processor instanceof ClassResolverProcessor &&
         isPhysical() &&
-        (getUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING) == Boolean.TRUE || myResolveCache.hasUpToDateValue())) {
+        (getUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING) == Boolean.TRUE || myResolveCache.hasUpToDateValue()) &&
+        !PsiUtil.isInsideJavadocComment(place)) {
       final ClassResolverProcessor hint = (ClassResolverProcessor)processor;
       String name = hint.getName(state);
       MostlySingularMultiMap<String, SymbolCollectingProcessor.ResultWithContext> cache = myResolveCache.getValue();

@@ -2,11 +2,11 @@
 package com.jetbrains.jsonSchema.settings.mappings;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.json.JsonBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
@@ -46,9 +46,11 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isHttpPath;
 
@@ -101,7 +103,7 @@ public class JsonSchemaMappingsView implements Disposable {
                                                      FileChooserDescriptorFactory.createSingleFileDescriptor());
     mySchemaField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         mySchemaPathChangedCallback.accept(mySchemaField.getText());
       }
     });
@@ -164,12 +166,15 @@ public class JsonSchemaMappingsView implements Disposable {
         balloon.showInCenterOf(mySchemaField);
         return;
       }
-      new OpenFileDescriptor(myProject, virtualFile).navigate(true);
+      PsiNavigationSupport.getInstance().createNavigatable(myProject, virtualFile, -1).navigate(true);
     }).registerCustomShortcutSet(CommonShortcuts.getEditSource(), mySchemaField);
   }
 
   public List<UserDefinedJsonSchemaConfiguration.Item> getData() {
-    return myTableView.getListTableModel().getItems();
+    return Collections.unmodifiableList(
+      myTableView.getListTableModel().getItems().stream()
+                 .filter(i -> i.mappingKind == JsonMappingKind.Directory || !StringUtil.isEmpty(i.path))
+                 .collect(Collectors.toList()));
   }
 
   public void setItems(String schemaFilePath,

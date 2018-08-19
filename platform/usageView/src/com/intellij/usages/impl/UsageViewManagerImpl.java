@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -31,6 +32,7 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -256,18 +258,18 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
   public static boolean isInScope(@NotNull Usage usage, @NotNull SearchScope searchScope) {
-    PsiElement element = null;
-    VirtualFile file = usage instanceof UsageInFile ? ((UsageInFile)usage).getFile() :
-                       usage instanceof PsiElementUsage
-                       ? PsiUtilCore.getVirtualFile(element = ((PsiElementUsage)usage).getElement())
-                       : null;
-    if (file != null) {
-      return isFileInScope(file, searchScope);
-    }
-    return element != null &&
-           (searchScope instanceof EverythingGlobalScope ||
+    VirtualFile file = ReadAction.compute(() -> {
+      if (usage instanceof PsiElementUsage) {
+        PsiElement element = ((PsiElementUsage)usage).getElement();
+        if (element == null) return null;
+        if (searchScope instanceof EverythingGlobalScope ||
             searchScope instanceof ProjectScopeImpl ||
-            searchScope instanceof ProjectAndLibrariesScope);
+            searchScope instanceof ProjectAndLibrariesScope) return NullVirtualFile.INSTANCE;
+        return PsiUtilCore.getVirtualFile(element);
+      }
+      return usage instanceof UsageInFile ? ((UsageInFile)usage).getFile() : null;
+    });
+    return file == NullVirtualFile.INSTANCE || file != null && isFileInScope(file, searchScope);
   }
 
   private static boolean isFileInScope(@NotNull VirtualFile file, @NotNull SearchScope searchScope) {

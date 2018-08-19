@@ -3,9 +3,11 @@ package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.impl.fixes.AddMissingPropertyFix;
 import com.jetbrains.jsonSchema.impl.fixes.RemoveProhibitedPropertyFix;
 import com.jetbrains.jsonSchema.impl.fixes.SuggestEnumValuesFix;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -18,8 +20,14 @@ public class JsonValidationError {
     return myIssueData;
   }
 
+  public JsonErrorPriority getPriority() {
+    return myPriority;
+  }
+
   public enum FixableIssueKind {
     MissingProperty,
+    MissingOneOfProperty,
+    MissingAnyOfProperty,
     ProhibitedProperty,
     NonEnumValue,
     ProhibitedType,
@@ -31,6 +39,14 @@ public class JsonValidationError {
 
   }
 
+  public static class MissingOneOfPropsIssueData implements IssueData {
+    public final Collection<MissingMultiplePropsIssueData> myExclusiveOptions;
+
+    public MissingOneOfPropsIssueData(Collection<MissingMultiplePropsIssueData> options) {
+      myExclusiveOptions = options;
+    }
+  }
+
   public static class MissingMultiplePropsIssueData implements IssueData {
     public final Collection<MissingPropertyIssueData> myMissingPropertyIssues;
 
@@ -38,9 +54,18 @@ public class JsonValidationError {
       myMissingPropertyIssues = missingPropertyIssues;
     }
 
+    private static String getPropertyNameWithComment(MissingPropertyIssueData prop) {
+      String comment = "";
+      if (prop.enumItemsCount == 1) {
+        comment = " = " + prop.defaultValue.toString();
+      }
+      return "'" + prop.propertyName + "'" + comment;
+    }
+
     public String getMessage(boolean trimIfNeeded) {
       if (myMissingPropertyIssues.size() == 1) {
-        return "property '" + myMissingPropertyIssues.iterator().next().propertyName + "'";
+        MissingPropertyIssueData prop = myMissingPropertyIssues.iterator().next();
+        return "property " + getPropertyNameWithComment(prop);
       }
 
       Collection<MissingPropertyIssueData> namesToDisplay = myMissingPropertyIssues;
@@ -53,7 +78,15 @@ public class JsonValidationError {
         }
         trimmed = true;
       }
-      String allNames = myMissingPropertyIssues.stream().map(p -> "'" + p.propertyName + "'").collect(Collectors.joining(", "));
+      String allNames = myMissingPropertyIssues.stream().map(
+        MissingMultiplePropsIssueData::getPropertyNameWithComment).sorted((s1, s2) -> {
+        boolean firstHasEq = s1.contains("=");
+        boolean secondHasEq = s2.contains("=");
+        if (firstHasEq == secondHasEq) {
+          return s1.compareTo(s2);
+        }
+        return firstHasEq ? -1 : 1;
+      }).collect(Collectors.joining(", "));
       if (trimmed) allNames += ", ...";
       return "properties " + allNames;
     }
@@ -63,13 +96,13 @@ public class JsonValidationError {
     public final String propertyName;
     public final JsonSchemaType propertyType;
     public final Object defaultValue;
-    public final boolean hasEnumItems;
+    public final int enumItemsCount;
 
-    public MissingPropertyIssueData(String propertyName, JsonSchemaType propertyType, Object defaultValue, boolean hasEnumItems) {
+    public MissingPropertyIssueData(String propertyName, JsonSchemaType propertyType, Object defaultValue, int enumItemsCount) {
       this.propertyName = propertyName;
       this.propertyType = propertyType;
       this.defaultValue = defaultValue;
-      this.hasEnumItems = hasEnumItems;
+      this.enumItemsCount = enumItemsCount;
     }
   }
 
@@ -92,11 +125,14 @@ public class JsonValidationError {
   private final String myMessage;
   private final FixableIssueKind myFixableIssueKind;
   private final IssueData myIssueData;
+  private final JsonErrorPriority myPriority;
 
-  public JsonValidationError(String message, FixableIssueKind fixableIssueKind, IssueData issueData) {
+  public JsonValidationError(String message, FixableIssueKind fixableIssueKind, IssueData issueData,
+                             JsonErrorPriority priority) {
     myMessage = message;
     myFixableIssueKind = fixableIssueKind;
     myIssueData = issueData;
+    myPriority = priority;
   }
 
   public String getMessage() {
@@ -107,17 +143,21 @@ public class JsonValidationError {
     return myFixableIssueKind;
   }
 
-  @Nullable
-  public LocalQuickFix createFix() {
+  @NotNull
+  public LocalQuickFix[] createFixes(@Nullable JsonLikePsiWalker.QuickFixAdapter quickFixAdapter) {
+    if (quickFixAdapter == null) return LocalQuickFix.EMPTY_ARRAY;
     switch (myFixableIssueKind) {
       case MissingProperty:
-        return new AddMissingPropertyFix((MissingMultiplePropsIssueData)myIssueData);
+        return new AddMissingPropertyFix[]{new AddMissingPropertyFix((MissingMultiplePropsIssueData)myIssueData, quickFixAdapter)};
+      case MissingOneOfProperty:
+      case MissingAnyOfProperty:
+        return ((MissingOneOfPropsIssueData)myIssueData).myExclusiveOptions.stream().map(d -> new AddMissingPropertyFix(d, quickFixAdapter)).toArray(LocalQuickFix[]::new);
       case ProhibitedProperty:
-        return new RemoveProhibitedPropertyFix((ProhibitedPropertyIssueData)myIssueData);
+        return new RemoveProhibitedPropertyFix[]{new RemoveProhibitedPropertyFix((ProhibitedPropertyIssueData)myIssueData, quickFixAdapter)};
       case NonEnumValue:
-        return new SuggestEnumValuesFix();
+        return new SuggestEnumValuesFix[]{new SuggestEnumValuesFix(quickFixAdapter)};
       default:
-        return null;
+        return LocalQuickFix.EMPTY_ARRAY;
     }
   }
 }

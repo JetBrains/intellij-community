@@ -3,7 +3,7 @@ interface I {
         newMethod();
     }
 
-    private static void newMethod() {
+    static void newMethod() {
         System.out.println("hello");
     }
 }

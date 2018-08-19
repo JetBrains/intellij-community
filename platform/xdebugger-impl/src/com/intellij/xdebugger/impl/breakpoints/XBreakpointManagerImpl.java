@@ -32,7 +32,8 @@ import java.util.*;
  * @author nik
  */
 public class XBreakpointManagerImpl implements XBreakpointManager {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl");
+  private static final Logger LOG = Logger.getInstance(XBreakpointManagerImpl.class);
+
   public static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTER = new SkipDefaultValuesSerializationFilters();
   private final MultiValuesMap<XBreakpointType, XBreakpointBase<?,?,?>> myBreakpoints = new MultiValuesMap<>(true);
   private final Map<XBreakpointType, XBreakpointBase<?,?,?>> myDefaultBreakpoints = new LinkedHashMap<>();
@@ -61,6 +62,26 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
       }
       XBreakpointUtil.breakpointTypes().forEach(this::addDefaultBreakpoint);
     }
+
+    myProject.getMessageBus().connect().subscribe(XBreakpointListener.TOPIC, new XBreakpointListener() {
+      @SuppressWarnings("unchecked")
+      @Override
+      public void breakpointAdded(@NotNull XBreakpoint breakpoint) {
+        myAllBreakpointsDispatcher.getMulticaster().breakpointAdded(breakpoint);
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public void breakpointRemoved(@NotNull XBreakpoint breakpoint) {
+        myAllBreakpointsDispatcher.getMulticaster().breakpointRemoved(breakpoint);
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public void breakpointChanged(@NotNull XBreakpoint breakpoint) {
+        myAllBreakpointsDispatcher.getMulticaster().breakpointChanged(breakpoint);
+      }
+    });
   }
 
   private void updateBreakpointInFile(final VirtualFile file) {
@@ -119,6 +140,13 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
     }
     else {
       myBreakpoints.put(type, breakpoint);
+      if (initUI) {
+        BreakpointsUsageCollector.reportUsage(myProject, "new.breakpoint");
+        BreakpointsUsageCollector.reportUsage(myProject, "new." + type.getId());
+        if (myDebuggerManager.getCurrentSession() != null) {
+          BreakpointsUsageCollector.reportUsage(myProject, "new.within.session");
+        }
+      }
     }
     myAllBreakpoints.add(breakpoint);
     if (breakpoint instanceof XLineBreakpointImpl) {
@@ -132,9 +160,10 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
     getBreakpointDispatcherMulticaster().breakpointAdded(breakpoint);
   }
 
+  @NotNull
   private XBreakpointListener<XBreakpoint<?>> getBreakpointDispatcherMulticaster() {
     //noinspection unchecked
-    return myAllBreakpointsDispatcher.getMulticaster();
+    return myProject.getMessageBus().syncPublisher(XBreakpointListener.TOPIC);
   }
 
   public void fireBreakpointChanged(XBreakpointBase<?, ?, ?> breakpoint) {
@@ -293,6 +322,12 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
     getOrCreateDispatcher(type).addListener(listener, parentDisposable);
   }
 
+  @SuppressWarnings("deprecation")
+  @Override
+  public void addBreakpointListener(@NotNull XBreakpointListener<XBreakpoint<?>> listener, @NotNull Disposable parentDisposable) {
+    myProject.getMessageBus().connect(parentDisposable).subscribe(XBreakpointListener.TOPIC, listener);
+  }
+
   @Override
   public void addBreakpointListener(@NotNull final XBreakpointListener<XBreakpoint<?>> listener) {
     myAllBreakpointsDispatcher.addListener(listener);
@@ -301,11 +336,6 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
   @Override
   public void removeBreakpointListener(@NotNull final XBreakpointListener<XBreakpoint<?>> listener) {
     myAllBreakpointsDispatcher.removeListener(listener);
-  }
-
-  @Override
-  public void addBreakpointListener(@NotNull final XBreakpointListener<XBreakpoint<?>> listener, @NotNull final Disposable parentDisposable) {
-    myAllBreakpointsDispatcher.addListener(listener, parentDisposable);
   }
 
   @Override

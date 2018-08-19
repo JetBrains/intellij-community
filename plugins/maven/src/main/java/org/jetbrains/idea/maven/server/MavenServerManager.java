@@ -28,7 +28,6 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PathUtil;
@@ -241,13 +240,6 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
           Object value = each.getValue();
           if (key instanceof String && value instanceof String && ((String)key).startsWith("javax.net.ssl")) {
             defs.put((String)key, (String)value);
-          }
-        }
-
-        if (SystemInfo.isMac) {
-          String arch = System.getProperty("sun.arch.data.model");
-          if (arch != null) {
-            params.getVMParametersList().addParametersString("-d" + arch);
           }
         }
 
@@ -605,8 +597,9 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   }
 
   @TestOnly
-  public void setUseMaven2(boolean useMaven2) {
-    String newMavenHome = useMaven2 ? BUNDLED_MAVEN_2 : BUNDLED_MAVEN_3;
+  @Deprecated
+  public void setUseMaven2() {
+    String newMavenHome = BUNDLED_MAVEN_2;
     if (!StringUtil.equals(myState.mavenHome, newMavenHome)) {
       myState.mavenHome = newMavenHome;
       shutdown(false);

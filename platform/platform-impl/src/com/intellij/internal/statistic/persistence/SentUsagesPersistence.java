@@ -16,17 +16,10 @@
 
 package com.intellij.internal.statistic.persistence;
 
-import com.intellij.internal.statistic.beans.GroupDescriptor;
-import com.intellij.internal.statistic.beans.UsageDescriptor;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Map;
-import java.util.Set;
-
+/**
+ * Don't use this class directly, use {@see com.intellij.internal.statistic.utils.StatisticsUploadAssistant} instead
+ */
 public abstract class SentUsagesPersistence {
-
-  @NotNull
-  public abstract Map<GroupDescriptor, Set<UsageDescriptor>> getSentUsages();
 
   public abstract boolean isAllowed();
 

@@ -71,11 +71,6 @@ public class FileElement extends LazyParseableElement implements FileASTNode, Ge
     super(type, text);
   }
 
-  @Deprecated  // for 8.1 API compatibility
-  public FileElement(IElementType type) {
-    super(type, null);
-  }
-
   @Override
   public PsiManagerEx getManager() {
     CompositeElement treeParent = getTreeParent();

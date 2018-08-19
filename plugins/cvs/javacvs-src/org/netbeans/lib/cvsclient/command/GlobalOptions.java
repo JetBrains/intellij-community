@@ -37,23 +37,28 @@ public final class GlobalOptions
 
 	// Implemented ============================================================
 
-	public boolean isCheckedOutFilesReadOnly() {
+	@Override
+        public boolean isCheckedOutFilesReadOnly() {
 		return checkedOutFilesReadOnly;
 	}
 
-	public boolean isDoNoChanges() {
+	@Override
+        public boolean isDoNoChanges() {
 		return doNoChanges;
 	}
 
-	public boolean isNoHistoryLogging() {
+	@Override
+        public boolean isNoHistoryLogging() {
 		return noHistoryLogging;
 	}
 
-	public boolean isUseGzip() {
+	@Override
+        public boolean isUseGzip() {
 		return useGzip;
 	}
 
-	public boolean isSomeQuiet() {
+	@Override
+        public boolean isSomeQuiet() {
 		return someQuiet;
 	}
 
@@ -79,7 +84,8 @@ public final class GlobalOptions
 		this.someQuiet = someQuiet;
 	}
 
-	public Map getEnvVariables() {
+	@Override
+        public Map getEnvVariables() {
 		return myEnvVariables;
 	}
 

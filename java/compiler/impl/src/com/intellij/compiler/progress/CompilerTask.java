@@ -86,12 +86,6 @@ public class CompilerTask extends Task.Backgroundable {
   private Runnable myRestartWork;
   private final boolean myCompilationStartedAutomatically;
 
-  @Deprecated
-  public CompilerTask(@NotNull Project project, String contentName, final boolean headlessMode, boolean forceAsync,
-                      boolean waitForPreviousSession) {
-    this(project, contentName, headlessMode, forceAsync, waitForPreviousSession, false);
-  }
-
   public CompilerTask(@NotNull Project project, String contentName, final boolean headlessMode, boolean forceAsync,
                       boolean waitForPreviousSession, boolean compilationStartedAutomatically) {
     this(project, contentName, headlessMode, forceAsync, waitForPreviousSession, compilationStartedAutomatically, false);

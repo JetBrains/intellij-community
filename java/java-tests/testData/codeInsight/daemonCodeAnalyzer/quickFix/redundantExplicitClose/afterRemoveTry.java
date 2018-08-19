@@ -2,7 +2,7 @@
 
 class MyAutoCloseable implements AutoCloseable {
   @Override
-  void close() {
+  public void close() {
 
   }
 }

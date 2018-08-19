@@ -37,6 +37,9 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
     new ForDescendingPostfixTemplate(this),
     new WhileStatementPostfixTemplate(this),
     new SoutPostfixTemplate(this),
+    new SerrPostfixTemplate(this),
+    new SoufPostfixTemplate(this),
+    new SoutvPostfixTemplate(this),
     new ReturnStatementPostfixTemplate(this),
     new OptionalPostfixTemplate(this),
     new ForeachPostfixTemplate("iter", this),
@@ -134,6 +137,7 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
         // cannot be editable until there is no UI for editing template variables    
         !(templateToEdit instanceof ForIndexedPostfixTemplate) &&
         !(templateToEdit instanceof ForeachPostfixTemplate) &&
+        !(templateToEdit instanceof SoutvPostfixTemplate) &&
         !(templateToEdit instanceof ArgumentPostfixTemplate) &&
         !(templateToEdit instanceof OptionalPostfixTemplate)) {
       JavaPostfixTemplateEditor editor = new JavaPostfixTemplateEditor(this);

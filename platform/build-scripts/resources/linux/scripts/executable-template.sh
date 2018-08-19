@@ -178,7 +178,7 @@ if [ -r "$VM_OPTIONS_FILE" ]; then
     if [ "$OS_TYPE" = "Linux" ]; then
       VM_OPTIONS=`echo "$VM_OPTIONS" | "$SED" -e "s|-agentlib:yjpagent\(-linux\)\?\([^=]*\)|-agentpath:$IDE_BIN_HOME/libyjpagent-linux\2.so|"`
     else
-      VM_OPTIONS=`echo "$VM_OPTIONS" | "$SED" -e "s|-agentlib:yjpagent[^ ]\+||"`
+      VM_OPTIONS=`echo "$VM_OPTIONS" | "$SED" -e "s|-agentlib:yjpagent[^ ]*||"`
     fi
   fi
 else

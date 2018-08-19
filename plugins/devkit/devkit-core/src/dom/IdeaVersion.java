@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-// Generated on Wed Nov 07 17:26:02 MSK 2007
-// DTD/Schema  :    plugin.dtd
-
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.util.xml.DomElement;
@@ -25,27 +21,28 @@ import com.intellij.util.xml.Required;
 import org.jetbrains.annotations.NotNull;
 
 public interface IdeaVersion extends DomElement {
-	/**
-	 * @deprecated Use {@link #getUntilBuild()}
-	 */
-	@SuppressWarnings("DeprecatedIsStillUsed")
-	@NotNull
-	@Deprecated
-	GenericAttributeValue<String> getMax();
 
-	@NotNull
-	@Required
-	GenericAttributeValue<String> getSinceBuild();
+  @NotNull
+  @Required
+  GenericAttributeValue<String> getSinceBuild();
 
-	@NotNull
-	GenericAttributeValue<String> getUntilBuild();
+  @NotNull
+  GenericAttributeValue<String> getUntilBuild();
 
 
-	/**
-	 * @deprecated Use {@link #getSinceBuild()}
-	 */
-	@SuppressWarnings("DeprecatedIsStillUsed")
-	@NotNull
-	@Deprecated
-	GenericAttributeValue<String> getMin();
+  /**
+   * @deprecated Use {@link #getSinceBuild()}
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @NotNull
+  @Deprecated
+  GenericAttributeValue<String> getMin();
+
+  /**
+   * @deprecated Use {@link #getUntilBuild()}
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @NotNull
+  @Deprecated
+  GenericAttributeValue<String> getMax();
 }

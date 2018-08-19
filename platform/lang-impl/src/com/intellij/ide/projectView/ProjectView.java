@@ -78,6 +78,17 @@ public abstract class ProjectView {
 
   public abstract void setHideEmptyPackages(boolean hideEmptyPackages, @NotNull String paneId);
 
+  public boolean isCompactDirectories(String paneId) {
+    return false;
+  }
+
+  public void setCompactDirectories(boolean compactDirectories, @NotNull String paneId) {
+  }
+
+  public boolean isShowExcludedFiles(String paneId) {
+    return true;
+  }
+
   public abstract boolean isShowLibraryContents(String paneId);
 
   public abstract void setShowLibraryContents(boolean showLibraryContents, @NotNull String paneId);

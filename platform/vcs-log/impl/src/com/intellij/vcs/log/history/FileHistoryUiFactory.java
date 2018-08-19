@@ -53,7 +53,8 @@ public class FileHistoryUiFactory implements VcsLogManager.VcsLogUiFactory<FileH
                              new VisiblePackRefresherImpl(project, logData,
                                                           filters,
                                                           PermanentGraph.SortType.Normal,
-                                                          new FileHistoryFilterer(logData)) {
+                                                          new FileHistoryFilterer(logData),
+                                                          FileHistoryUi.getFileHistoryLogId(myFilePath, myHash)) {
                                @Override
                                public void onRefresh() {
                                  // this is a hack here:

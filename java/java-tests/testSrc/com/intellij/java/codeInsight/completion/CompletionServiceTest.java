@@ -28,6 +28,17 @@ public class CompletionServiceTest extends LightCodeInsightFixtureTestCase {
 
   public void testCompletionServiceSimple() {
     myFixture.configureByFile("Simple.java");
+    doCompletionServiceTest("_field", "");
+    myFixture.checkResultByFile("Simple_afterCompletionService.java");
+  }
+
+  public void testCompletionServiceWithPrefix() {
+    myFixture.configureByFile("Simple.java");
+    doCompletionServiceTest("_local1", "loc");
+    myFixture.checkResultByFile("Simple_afterCompletionServiceWithAdditionalPrefix.java");
+  }
+
+  public void doCompletionServiceTest(String lookupItemText, String additionalPrefix) {
     CompletionServiceImpl service = (CompletionServiceImpl)CompletionService.getCompletionService();
     Disposable completionDisposable = Disposer.newDisposable();
     try {
@@ -41,9 +52,10 @@ public class CompletionServiceTest extends LightCodeInsightFixtureTestCase {
       CompletionLookupArranger arranger = service.createLookupArranger(parameters);
       service.performCompletion(parameters, result -> arranger.addElement(result));
       Pair<List<LookupElement>, Integer> items = arranger.arrangeItems();
-      LookupElement element = ContainerUtil.find(items.first, item -> item.getLookupString().equals("_field"));
-      WriteCommandAction.runWriteCommandAction(getProject(), () -> service.handleCompletionItemSelected(parameters, element, arranger.itemMatcher(element), '\n'));
-      myFixture.checkResultByFile("Simple_afterCompletionService.java");
+      LookupElement element = ContainerUtil.find(items.first, item -> item.getLookupString().equals(lookupItemText));
+      myFixture.type(additionalPrefix);
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> service.handleCompletionItemSelected(parameters, element, arranger.itemMatcher(element),
+                                                                                                        additionalPrefix, '\n'));
     }
     finally {
       Disposer.dispose(completionDisposable);

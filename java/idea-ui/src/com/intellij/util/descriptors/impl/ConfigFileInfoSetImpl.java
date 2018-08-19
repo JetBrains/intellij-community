@@ -47,20 +47,24 @@ public class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
     myMetaDataProvider = metaDataProvider;
   }
 
+  @Override
   public void addConfigFile(ConfigFileInfo descriptor) {
     myConfigFiles.put(descriptor.getMetaData(), descriptor);
     onChange();
   }
 
+  @Override
   public void addConfigFile(final ConfigFileMetaData metaData, final String url) {
     addConfigFile(new ConfigFileInfo(metaData, url));
   }
 
+  @Override
   public void removeConfigFile(ConfigFileInfo descriptor) {
     myConfigFiles.remove(descriptor.getMetaData(), descriptor);
     onChange();
   }
 
+  @Override
   public void replaceConfigFile(final ConfigFileMetaData metaData, final String newUrl) {
     myConfigFiles.removeAll(metaData);
     addConfigFile(new ConfigFileInfo(metaData, newUrl));
@@ -74,6 +78,7 @@ public class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
     return info;
   }
 
+  @Override
   public void removeConfigFiles(final ConfigFileMetaData... metaData) {
     for (ConfigFileMetaData data : metaData) {
       myConfigFiles.removeAll(data);
@@ -81,6 +86,7 @@ public class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
     onChange();
   }
 
+  @Override
   @Nullable
   public ConfigFileInfo getConfigFileInfo(ConfigFileMetaData metaData) {
     final Collection<ConfigFileInfo> descriptors = myConfigFiles.get(metaData);
@@ -90,11 +96,13 @@ public class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
     return descriptors.iterator().next();
   }
 
+  @Override
   public ConfigFileInfo[] getConfigFileInfos() {
     final Collection<ConfigFileInfo> configurations = myConfigFiles.values();
     return configurations.toArray(new ConfigFileInfo[0]);
   }
 
+  @Override
   public void setConfigFileInfos(final Collection<ConfigFileInfo> descriptors) {
     myConfigFiles.clear();
     for (ConfigFileInfo descriptor : descriptors) {
@@ -110,10 +118,12 @@ public class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
   }
 
 
+  @Override
   public ConfigFileMetaDataProvider getMetaDataProvider() {
     return myMetaDataProvider;
   }
 
+  @Override
   public void readExternal(final Element element) throws InvalidDataException {
     myConfigFiles.clear();
     List<Element> children = element.getChildren(ELEMENT_NAME);
@@ -131,6 +141,7 @@ public class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
     onChange();
   }
 
+  @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(final Element element) throws WriteExternalException {
     final TreeSet<ConfigFileInfo> sortedConfigFiles = new TreeSet<>((o1, o2) -> {

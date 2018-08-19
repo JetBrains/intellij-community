@@ -3,7 +3,6 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -125,13 +124,6 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return null;
   }
 
-  /**
-   * @deprecated adjust offset with PsiElement should be used instead to provide correct checking for identifier part
-   */
-  public static int adjustOffset(Document document, final int offset) {
-    return adjustOffset(null, document, offset);
-  }
-
   public static int adjustOffset(@Nullable PsiFile file, Document document, final int offset) {
     CharSequence text = document.getCharsSequence();
     int correctedOffset = offset;
@@ -154,7 +146,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
 
   private static boolean isIdentifierPart(@Nullable PsiFile file, CharSequence text, int offset) {
     if (file != null) {
-      TargetElementEvaluatorEx evaluator = getInstance().getElementEvaluatorsEx(file.getLanguage());
+      TargetElementEvaluatorEx evaluator = getElementEvaluatorsEx(file.getLanguage());
       if (evaluator != null && evaluator.isIdentifierPart(file, text, offset)) return true;
     }
     return Character.isJavaIdentifierPart(text.charAt(offset));
@@ -274,7 +266,6 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return true;
   }
 
-  @Override
   @Nullable
   public PsiElement adjustElement(final Editor editor, final int flags, @Nullable PsiElement element, @Nullable PsiElement contextElement) {
     PsiElement langElement = element == null ? contextElement : element;
@@ -285,11 +276,10 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return element;
   }
 
-  @Override
   @Nullable
   public PsiElement adjustReference(@NotNull PsiReference ref) {
     PsiElement element = ref.getElement();
-    TargetElementEvaluatorEx2 evaluator = element != null ? getElementEvaluatorsEx2(element.getLanguage()) : null;
+    TargetElementEvaluatorEx2 evaluator = getElementEvaluatorsEx2(element.getLanguage());
     return evaluator != null ? evaluator.adjustReference(ref) : null;
   }
 
@@ -332,7 +322,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
 
 
   @Nullable
-  private PsiElement getNamedElement(@Nullable final PsiElement element) {
+  private static PsiElement getNamedElement(@Nullable final PsiElement element) {
     if (element == null) return null;
 
     TargetElementEvaluatorEx2 evaluator = getElementEvaluatorsEx2(element.getLanguage());
@@ -355,8 +345,8 @@ public class TargetElementUtil extends TargetElementUtilBase {
   }
 
   @Nullable
-  private PsiElement getReferenceOrReferencedElement(PsiFile file, Editor editor, int flags, int offset) {
-    PsiElement result = doGetReferenceOrReferencedElement(file, editor, flags, offset);
+  private static PsiElement getReferenceOrReferencedElement(PsiFile file, Editor editor, int flags, int offset) {
+    PsiElement result = doGetReferenceOrReferencedElement(editor, flags, offset);
     PsiElement languageElement = file.findElementAt(offset);
     Language language = languageElement != null ? languageElement.getLanguage() : file.getLanguage();
     TargetElementEvaluatorEx2 evaluator = getElementEvaluatorsEx2(language);
@@ -367,7 +357,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
   }
 
   @Nullable
-  private PsiElement doGetReferenceOrReferencedElement(PsiFile file, Editor editor, int flags, int offset) {
+  private static PsiElement doGetReferenceOrReferencedElement(Editor editor, int flags, int offset) {
     PsiReference ref = findReference(editor, offset);
     if (ref == null) return null;
 
@@ -378,24 +368,14 @@ public class TargetElementUtil extends TargetElementUtilBase {
       if (element != null) return element;
     }
 
-    PsiManager manager = file.getManager();
-    PsiElement refElement = ref.resolve();
-    if (refElement == null) {
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        DaemonCodeAnalyzer.getInstance(manager.getProject()).updateVisibleHighlighters(editor);
-      }
-      return null;
-    }
-    else {
-      return refElement;
-    }
+    return ref.resolve();
   }
 
   @Override
   @NotNull
   public Collection<PsiElement> getTargetCandidates(@NotNull PsiReference reference) {
     PsiElement refElement = reference.getElement();
-    TargetElementEvaluatorEx2 evaluator = refElement != null ? getElementEvaluatorsEx2(refElement.getLanguage()) : null;
+    TargetElementEvaluatorEx2 evaluator = getElementEvaluatorsEx2(refElement.getLanguage());
     if (evaluator != null) {
       Collection<PsiElement> candidates = evaluator.getTargetCandidates(reference);
       if (candidates != null) return candidates;
@@ -443,7 +423,6 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return evaluator == null || evaluator.includeSelfInGotoImplementation(element);
   }
 
-  @Override
   public boolean acceptImplementationForReference(@Nullable PsiReference reference, @Nullable PsiElement element) {
     TargetElementEvaluatorEx2 evaluator = element != null ? getElementEvaluatorsEx2(ReadAction.compute(element::getLanguage)) : null;
     return evaluator == null || evaluator.acceptImplementationForReference(reference, element);
@@ -463,12 +442,12 @@ public class TargetElementUtil extends TargetElementUtilBase {
   protected static final LanguageExtension<TargetElementEvaluator> targetElementEvaluator =
     new LanguageExtension<>("com.intellij.targetElementEvaluator");
   @Nullable
-  private TargetElementEvaluatorEx getElementEvaluatorsEx(@NotNull Language language) {
+  private static TargetElementEvaluatorEx getElementEvaluatorsEx(@NotNull Language language) {
     TargetElementEvaluator result = targetElementEvaluator.forLanguage(language);
     return result instanceof TargetElementEvaluatorEx ? (TargetElementEvaluatorEx)result : null;
   }
   @Nullable
-  private TargetElementEvaluatorEx2 getElementEvaluatorsEx2(@NotNull Language language) {
+  private static TargetElementEvaluatorEx2 getElementEvaluatorsEx2(@NotNull Language language) {
     TargetElementEvaluator result = targetElementEvaluator.forLanguage(language);
     return result instanceof TargetElementEvaluatorEx2 ? (TargetElementEvaluatorEx2)result : null;
   }

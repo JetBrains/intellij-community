@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public abstract class ScalarIndexExtension<K> extends FileBasedIndexExtension<K, Void>{
 
   /**
-   * To remove in IDEA 2018.1. Use {@link VoidDataExternalizer.INSTANCE}
+   * To remove in IDEA 2018.1. Use {@link VoidDataExternalizer#INSTANCE}
    */
   @Deprecated
   public static final DataExternalizer<Void> VOID_DATA_EXTERNALIZER = VoidDataExternalizer.INSTANCE;

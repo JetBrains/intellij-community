@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.dnd;
 
 import com.intellij.icons.AllIcons;
@@ -106,6 +92,7 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
       setLayout(new BorderLayout());
     }
 
+    @Override
     public final void show(JLayeredPane aPane, Rectangle aRectangle, DnDEvent aEvent) {
       if (getParent() != aPane) {
         vanish();
@@ -118,6 +105,7 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
       return JLayeredPane.MODAL_LAYER;
     }
 
+    @Override
     public void vanish() {
       final Container parent = getParent();
       Rectangle bounds = getBounds();
@@ -139,6 +127,7 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
       myMessageType = type;
     }
 
+    @Override
     public void show(JLayeredPane aPane, Rectangle aRectangle, DnDEvent aEvent) {
       if (!Registry.is("ide.dnd.textHints")) return;
 
@@ -156,12 +145,13 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
         if (point == null) {
           point = new RelativePoint(aPane, new Point(aRectangle.x + aRectangle.width, aRectangle.y + aRectangle.height / 2));
         }
-        
+
         myCurrentBalloon = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(result, myMessageType, null).createBalloon();
         myCurrentBalloon.show(point, Balloon.Position.atRight);
       }
     }
 
+    @Override
     public void vanish() {
       if (myCurrentBalloon != null) {
         myCurrentBalloon.hide();
@@ -181,6 +171,7 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
       super(MessageType.INFO);
     }
 
+    @Override
     public int getMask() {
       return TEXT;
     }
@@ -191,6 +182,7 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
       super(MessageType.ERROR);
     }
 
+    @Override
     public int getMask() {
       return ERROR_TEXT;
     }
@@ -204,10 +196,12 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
       setBackground(JBColor.RED);
     }
 
+    @Override
     protected void _show(JLayeredPane aPane, Rectangle aRectangle, DnDEvent aEvent) {
       setBounds(aRectangle);
     }
 
+    @Override
     public int getMask() {
       return FILLED_RECTANGLE;
     }
@@ -220,10 +214,12 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
       setBorder(BorderFactory.createLineBorder(JBColor.RED));
     }
 
+    @Override
     protected void _show(JLayeredPane aPane, Rectangle aRectangle, DnDEvent aEvent) {
       setBounds(aRectangle);
     }
 
+    @Override
     public int getMask() {
       return RECTANGLE;
     }
@@ -231,6 +227,7 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
 
   private static class HorizontalLinesHighlighter extends AbstractComponentHighlighter {
 
+    @Override
     protected void _show(JLayeredPane aPane, Rectangle aRectangle, DnDEvent aEvent) {
       final Rectangle rectangle = new Rectangle(aRectangle.x - AllIcons.Ide.Dnd.Left.getIconWidth(), aRectangle.y - AllIcons.Ide.Dnd.Left
         .getIconHeight(), aRectangle.width + AllIcons.Ide.Dnd.Left.getIconWidth() + AllIcons.Ide.Dnd.Right.getIconWidth(), aRectangle.height + AllIcons.Ide.Dnd.Left
@@ -238,11 +235,13 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
       setBounds(rectangle);
     }
 
+    @Override
     protected void paintComponent(Graphics g) {
       AllIcons.Ide.Dnd.Left.paintIcon(this, g, 0, (getHeight() / 2));
       AllIcons.Ide.Dnd.Right.paintIcon(this, g, getWidth() - AllIcons.Ide.Dnd.Right.getIconWidth(), (getHeight() / 2));
     }
 
+    @Override
     public int getMask() {
       return H_ARROWS;
     }
@@ -252,17 +251,20 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
     private static final Icon TOP = AllIcons.Ide.Dnd.Top;
     private static final Icon BOTTOM = AllIcons.Ide.Dnd.Bottom;
 
+    @Override
     protected void _show(JLayeredPane aPane, Rectangle aRectangle, DnDEvent aEvent) {
       final Rectangle rectangle = new Rectangle(aRectangle.x, aRectangle.y - TOP.getIconHeight(), aRectangle.width, aRectangle.height + TOP.getIconHeight() + BOTTOM
         .getIconHeight());
       setBounds(rectangle);
     }
 
+    @Override
     protected void paintComponent(Graphics g) {
       TOP.paintIcon(this, g, (getWidth() - TOP.getIconWidth()) / 2, 0);
       BOTTOM.paintIcon(this, g, (getWidth() - BOTTOM.getIconWidth()) / 2, getHeight() - BOTTOM.getIconHeight());
     }
 
+    @Override
     public int getMask() {
       return V_ARROWS;
     }

@@ -71,7 +71,7 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitAssignmentExpression(this);
   }
 

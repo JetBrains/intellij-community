@@ -11,7 +11,10 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltipManager;
+import com.intellij.ide.actions.runAnything.activity.RunAnythingCommandExecutionProvider;
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
+import com.intellij.ide.actions.runAnything.activity.RunAnythingRecentCommandProvider;
+import com.intellij.ide.actions.runAnything.activity.RunAnythingRecentProjectProvider;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingCompletionGroup;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingGeneralGroup;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingGroup;
@@ -52,10 +55,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -92,6 +92,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.TextUI;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -116,6 +117,17 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   private static final Border RENDERER_BORDER = JBUI.Borders.empty(1, 0);
   private static final Icon RUN_ANYTHING_POPPED_ICON = new PoppedIcon(AllIcons.Actions.Run_anything, 16, 16);
   private static final String HELP_PLACEHOLDER = "?";
+  private static final NotNullLazyValue<Boolean> IS_ACTION_ENABLED = new NotNullLazyValue<Boolean>() {
+    @NotNull
+    @Override
+    protected Boolean compute() {
+      return Arrays.stream(RunAnythingProvider.EP_NAME.getExtensions())
+                   .anyMatch(provider -> !(provider instanceof RunAnythingRunConfigurationProvider ||
+                                           provider instanceof RunAnythingRecentProjectProvider ||
+                                           provider instanceof RunAnythingRecentCommandProvider ||
+                                           provider instanceof RunAnythingCommandExecutionProvider));
+    }
+  };
   private RunAnythingAction.MyListRenderer myRenderer;
   private MySearchTextField myPopupField;
   private JBPopup myPopup;
@@ -159,8 +171,9 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     }, null);
   }
 
+  @NotNull
   @Override
-  public JComponent createCustomComponent(Presentation presentation) {
+  public JComponent createCustomComponent(@NotNull Presentation presentation) {
     JPanel panel = new BorderLayoutPanel() {
       @Override
       public Dimension getPreferredSize() {
@@ -269,7 +282,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     return null;
   }
 
@@ -278,7 +291,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     //    onFocusLost();
     editor.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         myIsUsedTrigger = true;
 
         final String pattern = editor.getText();
@@ -560,7 +573,14 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
+    boolean isEnabled = IS_ACTION_ENABLED.getValue();
+    e.getPresentation().setVisible(isEnabled);
+    e.getPresentation().setEnabled(isEnabled);
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     if (Registry.is("ide.suppress.double.click.handler") && e.getInputEvent() instanceof KeyEvent) {
       if (((KeyEvent)e.getInputEvent()).getKeyCode() == KeyEvent.VK_CONTROL) {
         return;
@@ -785,7 +805,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   private void setHandleMatchedConfiguration() {
     myPopupField.getTextEditor().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         updateMatchedRunConfigurationStuff(ALT_IS_PRESSED.get());
       }
     });
@@ -899,7 +919,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
     new DumbAwareAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         final PropertiesComponent storage = PropertiesComponent.getInstance(e.getProject());
         final String[] values = storage.getValues(RUN_ANYTHING_HISTORY_KEY);
         if (values != null) {
@@ -915,7 +935,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(editor.getCaretPosition() == 0);
       }
     }.registerCustomShortcutSet(CustomShortcutSet.fromString("LEFT"), editor, balloon);
@@ -1261,9 +1281,9 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
             updatePopupBounds();
             myPopup.show(new RelativePoint(getField().getParent(), new Point(0, getField().getParent().getHeight())));
 
-            ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
+            ApplicationManager.getApplication().getMessageBus().connect(myPopup).subscribe(AnActionListener.TOPIC, new AnActionListener() {
               @Override
-              public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+              public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
                 if (action instanceof TextComponentEditorAction) {
                   return;
                 }
@@ -1271,7 +1291,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
                   myPopup.cancel();
                 }
               }
-            }, myPopup);
+            });
           }
           else {
             myList.revalidate();
@@ -1436,7 +1456,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     }
 
     @Override
-    protected boolean customSetupUIAndTextField(@NotNull TextFieldWithProcessing textField, @NotNull Consumer<TextUI> uiConsumer) {
+    protected boolean customSetupUIAndTextField(@NotNull TextFieldWithProcessing textField, @NotNull Consumer<? super TextUI> uiConsumer) {
       if (UIUtil.isUnderDarcula()) {
         uiConsumer.consume(new MyDarcula());
         textField.setBorder(new DarculaTextBorder());
@@ -1470,7 +1490,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
     @Nullable
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) {
         return getTextEditor().getText();
       }

@@ -1,12 +1,12 @@
 package com.intellij.structuralsearch.plugin;
 
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceDialog;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchContext;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Search and replace structural java code patterns action.
@@ -16,12 +16,12 @@ public class StructuralReplaceAction extends AnAction {
   /** Handles IDEA action event
    * @param event the event of action
    */
-  public void actionPerformed(AnActionEvent event) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent event) {
     triggerAction(null, SearchContext.buildFromDataContext(event.getDataContext()));
   }
 
   public static void triggerAction(Configuration config, SearchContext searchContext) {
-    UsageTrigger.trigger("structural.replace");
     final Project project = searchContext.getProject();
     if (project == null) {
       return;
@@ -41,7 +41,8 @@ public class StructuralReplaceAction extends AnAction {
   /** Updates the state of the action
    * @param event the action event
    */
-  public void update(AnActionEvent event) {
+  @Override
+  public void update(@NotNull AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
     final DataContext context = event.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(context);

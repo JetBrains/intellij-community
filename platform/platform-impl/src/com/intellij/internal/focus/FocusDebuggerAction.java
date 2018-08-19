@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.focus;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -27,13 +13,13 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.FocusEvent;
 import java.util.Arrays;
-import java.util.function.Consumer;
 
 /**
  * @author spleaner
@@ -44,11 +30,16 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
 
   public FocusDebuggerAction() {
     if (Boolean.getBoolean("idea.ui.debug.mode")) {
-      ApplicationManager.getApplication().invokeLater(() -> actionPerformed(null));
+      ApplicationManager.getApplication().invokeLater(() -> perform());
     }
   }
 
-  public void actionPerformed(final AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull final AnActionEvent e) {
+    perform();
+  }
+
+  private void perform() {
     if (myFocusDrawer == null) {
       myFocusDrawer = new FocusDrawer();
       myFocusDrawer.start();
@@ -61,7 +52,7 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     if (myFocusDrawer == null) {
       presentation.setText("Start Focus Debugger");
@@ -103,14 +94,17 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
       app.getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC, this);
     }
 
+    @Override
     public void applicationActivated(IdeFrame ideFrame) {
       myApplicationState = ApplicationState.ACTIVE;
     }
 
+    @Override
     public void applicationDeactivated(IdeFrame ideFrame) {
       myApplicationState = ApplicationState.INACTIVE;
     }
 
+    @Override
     public void delayedApplicationDeactivated(IdeFrame ideFrame) {
       myApplicationState = ApplicationState.DELAYED;
     }
@@ -123,6 +117,7 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
       return myRunning;
     }
 
+    @Override
     public void run() {
       try {
         while (myRunning) {
@@ -187,6 +182,7 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
       }
     }
 
+    @Override
     public void eventDispatched(AWTEvent event) {
       if (event instanceof FocusEvent) {
         FocusEvent focusEvent = (FocusEvent)event;

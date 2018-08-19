@@ -79,9 +79,4 @@ public final class SortedConfigurableGroup
   public String getDisplayName() {
     return myDisplayName;
   }
-
-  @Override
-  public String getShortName() {
-    return getDisplayName();
-  }
 }

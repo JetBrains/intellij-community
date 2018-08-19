@@ -9,6 +9,7 @@ import java.io.IOException;
 
 public class XmlStructuralReplaceTest extends StructuralReplaceTestCase {
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     options.getMatchOptions().setFileType(StdFileTypes.XML);

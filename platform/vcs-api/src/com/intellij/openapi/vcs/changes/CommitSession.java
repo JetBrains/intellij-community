@@ -32,6 +32,7 @@ public interface CommitSession {
   /**
    * @deprecated Since version 7.0, {@link #getAdditionalConfigurationUI(java.util.Collection, String)} is called instead
    */
+  @Deprecated
   @Nullable
   default JComponent getAdditionalConfigurationUI() {
     return null;

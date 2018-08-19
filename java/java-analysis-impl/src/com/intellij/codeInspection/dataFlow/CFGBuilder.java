@@ -126,6 +126,21 @@ public class CFGBuilder {
   }
 
   /**
+   * Generate instructions to push given DfaValue on stack and bind it to given expression.
+   * <p>
+   * Stack before: ...
+   * <p>
+   * Stack after: ... value
+   *
+   * @param value value to push
+   * @param expression expression which result is being pushed
+   * @return this builder
+   */
+  public CFGBuilder push(DfaValue value, PsiExpression expression) {
+    return add(new PushInstruction(value, expression));
+  }
+
+  /**
    * Generate instructions to pop single DfaValue from stack
    * <p>
    * Stack before: ... value
@@ -190,6 +205,16 @@ public class CFGBuilder {
    */
   public CFGBuilder objectOf() {
     return add(new ObjectOfInstruction());
+  }
+
+  /**
+   * Generate instructions to bind top-of-stack value to the given expression. Stack remains unchanged.
+   *
+   * @param expression expression to bind top-of-stack value to
+   * @return this builder
+   */
+  public CFGBuilder resultOf(PsiExpression expression) {
+    return add(new ResultOfInstruction(expression));
   }
 
   /**
@@ -358,7 +383,7 @@ public class CFGBuilder {
    *
    * @return this builder
    */
-  public CFGBuilder boxUnbox(PsiExpression expression, PsiType expectedType) {
+  public CFGBuilder boxUnbox(@NotNull PsiExpression expression, PsiType expectedType) {
     myAnalyzer.generateBoxingUnboxingInstructionFor(expression, expectedType);
     return this;
   }
@@ -456,6 +481,45 @@ public class CFGBuilder {
     } else {
       push(source);
     }
+    return this;
+  }
+
+  /**
+   * Start try section. All exceptions from it will be directed to the subsequent catchAll() section.
+   *
+   * @param anchor PSI anchor to handle nested traps
+   * @return this builder
+   */
+  public CFGBuilder doTry(@NotNull PsiElement anchor) {
+    ControlFlow.DeferredOffset offset = new ControlFlow.DeferredOffset();
+    myAnalyzer.pushTrap(new Trap.TryCatchAll(anchor, offset));
+    myBranches.add(() -> {
+      offset.setOffset(myAnalyzer.getInstructionCount());
+    });
+    return this;
+  }
+
+  /**
+   * Start catch section; must be created after {@link #doTry(PsiElement)} section and finished with {@link #end()}.
+   *
+   * @return this builder
+   */
+  public CFGBuilder catchAll() {
+    GotoInstruction gotoInstruction = new GotoInstruction(null);
+    add(gotoInstruction).end();
+    myBranches.add(() -> gotoInstruction.setOffset(myAnalyzer.getInstructionCount()));
+    return this;
+  }
+
+  /**
+   * Adds instructions to throw an exception of given type
+   *
+   * @param exceptionType exception type to throw
+   *
+   * @return this builder
+   */
+  public CFGBuilder doThrow(@NotNull PsiType exceptionType) {
+    myAnalyzer.throwException(exceptionType, null);
     return this;
   }
 
@@ -682,11 +746,12 @@ public class CFGBuilder {
       ConditionalGotoInstruction condGoto = new ConditionalGotoInstruction(null, false, null);
       condGoto.setOffset(myAnalyzer.getInstructionCount());
       myBranches.add(() -> pushUnknown().add(condGoto));
-      assign(targetVariable, factory.createCommonValue(expressions));
+      assign(targetVariable, factory.createCommonValue(expressions, targetVariable.getVariableType()));
     } else {
       push(factory.getConstFactory().getSentinel());
       for (PsiExpression expression : expressions) {
         pushExpression(expression);
+        boxUnbox(expression, targetVariable.getVariableType());
       }
       // Revert order
       add(new SpliceInstruction(expressions.length, IntStreamEx.ofIndices(expressions).toArray()));

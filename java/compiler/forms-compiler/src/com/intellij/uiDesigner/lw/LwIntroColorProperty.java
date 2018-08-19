@@ -25,6 +25,7 @@ public class LwIntroColorProperty extends LwIntrospectedProperty {
     super(name, "java.awt.Color");
   }
 
+  @Override
   public Object read(Element element) throws Exception {
     return LwXmlReader.getColorDescriptor(element);
   }

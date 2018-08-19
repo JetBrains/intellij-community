@@ -11,7 +11,6 @@ import com.intellij.util.containers.StringInterner;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceReader;
-import com.intellij.util.text.StringFactory;
 import org.jdom.*;
 import org.jdom.filter.Filter;
 import org.jdom.input.SAXBuilder;
@@ -372,18 +371,6 @@ public class JDOMUtil {
     }
   }
 
-  /**
-   * @deprecated Use {@link #writeDocument(Document, String)} or {@link #writeElement(Element)}}
-   */
-  @NotNull
-  @Deprecated
-  public static byte[] printDocument(@NotNull Document document, String lineSeparator) throws IOException {
-    CharArrayWriter writer = new CharArrayWriter();
-    writeDocument(document, writer, lineSeparator);
-
-    return StringFactory.createShared(writer.toCharArray()).getBytes(CharsetToolkit.UTF8_CHARSET);
-  }
-
   @NotNull
   public static String writeDocument(@NotNull Document document, String lineSeparator) {
     try {
@@ -470,22 +457,19 @@ public class JDOMUtil {
   }
 
   @NotNull
-  public static XMLOutputter createOutputter(String lineSeparator) {
-    return createOutputter(lineSeparator, null);
+  public static Format createFormat(@Nullable String lineSeparator) {
+    return Format.getCompactFormat()
+      .setIndent("  ")
+      .setTextMode(Format.TextMode.TRIM)
+      .setEncoding(CharsetToolkit.UTF8)
+      .setOmitEncoding(false)
+      .setOmitDeclaration(false)
+      .setLineSeparator(lineSeparator);
   }
 
   @NotNull
-  public static XMLOutputter createOutputter(String lineSeparator, @Nullable ElementOutputFilter elementOutputFilter) {
-    XMLOutputter xmlOutputter = new MyXMLOutputter(elementOutputFilter);
-    Format format = Format.getCompactFormat().
-      setIndent("  ").
-      setTextMode(Format.TextMode.TRIM).
-      setEncoding(CharsetToolkit.UTF8).
-      setOmitEncoding(false).
-      setOmitDeclaration(false).
-      setLineSeparator(lineSeparator);
-    xmlOutputter.setFormat(format);
-    return xmlOutputter;
+  public static XMLOutputter createOutputter(String lineSeparator) {
+    return new MyXMLOutputter(createFormat(lineSeparator));
   }
 
   /**
@@ -547,15 +531,9 @@ public class JDOMUtil {
     return buffer == null ? text : buffer.toString();
   }
 
-  public static class MyXMLOutputter extends XMLOutputter {
-    private final ElementOutputFilter myElementOutputFilter;
-
-    public MyXMLOutputter(@Nullable ElementOutputFilter filter) {
-      myElementOutputFilter = filter;
-    }
-
-    public MyXMLOutputter() {
-      this(null);
+  private final static class MyXMLOutputter extends XMLOutputter {
+    public MyXMLOutputter(@NotNull Format format) {
+      super(format);
     }
 
     @Override
@@ -568,13 +546,6 @@ public class JDOMUtil {
     @NotNull
     public String escapeElementEntities(@NotNull String str) {
       return escapeText(str, false, false);
-    }
-
-    @Override
-    protected void printElement(Writer out, Element element, int level, NamespaceStack namespaces) throws IOException {
-      if (myElementOutputFilter == null || myElementOutputFilter.accept(element, level)) {
-        super.printElement(out, element, level, namespaces);
-      }
     }
   }
 

@@ -47,6 +47,7 @@ public class CodeSamplesCorrectnessTest extends LightPlatformCodeInsightFixtureT
   public void testNonPhysicalFiles() {
     LanguageCodeStyleSettingsProvider[] providers = LanguageCodeStyleSettingsProvider.EP_NAME.getExtensions();
     for (LanguageCodeStyleSettingsProvider provider : providers) {
+      if (isSql(provider.getLanguage())) continue; // SQL a is special case, has its own tests
       List<CodeSampleInfo> samplesToTest = getSamplesToTest(provider);
       for (CodeSampleInfo sampleInfo : samplesToTest) {
         PsiFile file = provider.createFileFromText(getProject(), sampleInfo.codeSample);
@@ -59,8 +60,8 @@ public class CodeSamplesCorrectnessTest extends LightPlatformCodeInsightFixtureT
 
   public void testAllCodeStylePreviewSamplesValid() {
     LanguageCodeStyleSettingsProvider[] providers = LanguageCodeStyleSettingsProvider.EP_NAME.getExtensions();
-
     for (LanguageCodeStyleSettingsProvider provider : providers) {
+      if (isSql(provider.getLanguage())) continue; // SQL a is special case, has its own tests
       List<CodeSampleInfo> samplesToTest = getSamplesToTest(provider);
       processCodeSamples(provider, samplesToTest);
     }
@@ -112,6 +113,11 @@ public class CodeSamplesCorrectnessTest extends LightPlatformCodeInsightFixtureT
   @NotNull
   private static String formReport(@NotNull List<CodeErrorReport> errorReports) {
     return StringUtil.join(errorReports, report -> report.createReport(), "\n");
+  }
+
+
+  private static boolean isSql(@NotNull Language lang) {
+    return "SQL".equals(lang.getID());
   }
 }
 

@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyTypedElement;
 import org.jetbrains.annotations.NotNull;
@@ -61,15 +62,15 @@ public class TypeEvalContext {
   }
 
   public boolean allowDataFlow(PsiElement element) {
-    return myConstraints.myAllowDataFlow || element.getContainingFile() == myConstraints.myOrigin;
+    return myConstraints.myAllowDataFlow || inOrigin(element);
   }
 
   public boolean allowReturnTypes(PsiElement element) {
-    return myConstraints.myAllowDataFlow || element.getContainingFile() == myConstraints.myOrigin;
+    return myConstraints.myAllowDataFlow || inOrigin(element);
   }
 
   public boolean allowCallContext(@NotNull PsiElement element) {
-    return myConstraints.myAllowCallContext && element.getContainingFile() == myConstraints.myOrigin;
+    return myConstraints.myAllowCallContext && inOrigin(element);
   }
 
   /**
@@ -235,7 +236,7 @@ public class TypeEvalContext {
   }
 
   public boolean maySwitchToAST(@NotNull PsiElement element) {
-    return myConstraints.myAllowStubToAST || myConstraints.myOrigin == element.getContainingFile();
+    return myConstraints.myAllowStubToAST || inOrigin(element);
   }
 
   @Nullable
@@ -264,5 +265,9 @@ public class TypeEvalContext {
   @Override
   public int hashCode() {
     return myConstraints.hashCode();
+  }
+
+  private boolean inOrigin(@NotNull PsiElement element) {
+    return myConstraints.myOrigin == element.getContainingFile() || myConstraints.myOrigin == FileContextUtil.getContextFile(element);
   }
 }

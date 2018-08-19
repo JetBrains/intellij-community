@@ -2,6 +2,7 @@
 package com.intellij.java.codeInsight.template
 
 import com.intellij.JavaTestUtil
+import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.daemon.impl.quickfix.EmptyExpression
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.template.Template
@@ -72,7 +73,7 @@ import  java.util.*;
 public class Main {
     List<String> getStringList(int i){
         List<String> ints = null;
-        for (String item: getStringList(<caret>)) {
+        for (String item : getStringList(<caret>)) {
             ;
         }
         return new ArrayList<>(i);
@@ -94,7 +95,7 @@ public class Main {
 }
 '''
     final TemplateManager manager = TemplateManager.getInstance(getProject())
-    final Template template = manager.createTemplate("for", "user", 'for ($ELEMENT_TYPE$ $VAR$: $ITERABLE_TYPE$) {\n' +
+    final Template template = manager.createTemplate("for", "user", 'for ($ELEMENT_TYPE$ $VAR$ : $ITERABLE_TYPE$) {\n' +
                                                                     '$END$;\n' +
                                                                     '}')
     template.addVariable('ITERABLE_TYPE', new MacroCallNode(new CompleteSmartMacro()), new EmptyNode(), true)
@@ -108,7 +109,7 @@ import  java.util.*;
 public class Main {
     List<String> getStringList(int i){
         List<String> ints = null;
-        for (String <selection>item</selection>: ints) {
+        for (String <selection>item</selection> : ints) {
             ;
         }
         return new ArrayList<>(i);
@@ -478,10 +479,32 @@ java.util.List<? extends Integer> list;
     myFixture.type('\tgetCreatedTags()\n')
     myFixture.checkResult '''class A { Iterable<String> getCreatedTags() { }
 {
-    for (String createdTag: getCreatedTags()) {
+    for (String createdTag : getCreatedTags()) {
         
     }
 }}'''
+  }
 
+  void "test overtyping suggestion with a quote"() {
+    CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = true
+
+    myFixture.configureByText 'a.java', '''
+class A {
+  {
+    String s;
+    <caret>s.toString();
+  }
+}'''
+    myFixture.doHighlighting()
+    myFixture.launchAction(myFixture.findSingleIntention('Initialize variable'))
+    myFixture.type('"')
+    myFixture.checkResult '''
+class A {
+  {
+    String s = "";
+    s.toString();
+  }
+}'''
+    assert !myFixture.lookup
   }
 }

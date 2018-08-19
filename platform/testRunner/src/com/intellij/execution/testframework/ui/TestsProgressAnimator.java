@@ -43,14 +43,14 @@ public class TestsProgressAnimator implements Runnable, Disposable {
   }
 
   static {
-    FRAMES[0] = AllIcons.RunConfigurations.TestInProgress1;
-    FRAMES[1] = AllIcons.RunConfigurations.TestInProgress2;
-    FRAMES[2] = AllIcons.RunConfigurations.TestInProgress3;
-    FRAMES[3] = AllIcons.RunConfigurations.TestInProgress4;
-    FRAMES[4] = AllIcons.RunConfigurations.TestInProgress5;
-    FRAMES[5] = AllIcons.RunConfigurations.TestInProgress6;
-    FRAMES[6] = AllIcons.RunConfigurations.TestInProgress7;
-    FRAMES[7] = AllIcons.RunConfigurations.TestInProgress8;
+    FRAMES[0] = AllIcons.Process.Step_1;
+    FRAMES[1] = AllIcons.Process.Step_2;
+    FRAMES[2] = AllIcons.Process.Step_3;
+    FRAMES[3] = AllIcons.Process.Step_4;
+    FRAMES[4] = AllIcons.Process.Step_5;
+    FRAMES[5] = AllIcons.Process.Step_6;
+    FRAMES[6] = AllIcons.Process.Step_7;
+    FRAMES[7] = AllIcons.Process.Step_8;
   }
 
   public static int getCurrentFrameIndex() {
@@ -74,6 +74,7 @@ public class TestsProgressAnimator implements Runnable, Disposable {
     return myCurrentTestCase;
   }
 
+  @Override
   public void run() {
     if (myCurrentTestCase != null) {
       final long time = System.currentTimeMillis();
@@ -99,6 +100,7 @@ public class TestsProgressAnimator implements Runnable, Disposable {
   }
 
 
+  @Override
   public void dispose() {
     myTreeBuilder = null;
     myCurrentTestCase = null;

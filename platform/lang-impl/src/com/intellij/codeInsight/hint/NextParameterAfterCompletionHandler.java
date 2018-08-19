@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -32,7 +32,7 @@ public class NextParameterAfterCompletionHandler extends EditorActionHandler {
     Ref<Boolean> documentChanged = new Ref<>();
     DocumentListener listener = new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent event) {
+      public void documentChanged(@NotNull DocumentEvent event) {
         if (event.getOldLength() > 0 || event.getNewLength() > 0) documentChanged.set(Boolean.TRUE);
       }
     };

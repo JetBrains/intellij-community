@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.List;
 
 public abstract class EditorColorsManager {
   public static final Topic<EditorColorsListener> TOPIC = Topic.create("EditorColorsListener", EditorColorsListener.class);
@@ -41,9 +40,6 @@ public abstract class EditorColorsManager {
 
   @Deprecated
   public abstract void removeAllSchemes();
-
-  @Deprecated
-  public abstract void setSchemes(@NotNull List<EditorColorsScheme> schemes);
 
   @NotNull
   public abstract EditorColorsScheme[] getAllSchemes();

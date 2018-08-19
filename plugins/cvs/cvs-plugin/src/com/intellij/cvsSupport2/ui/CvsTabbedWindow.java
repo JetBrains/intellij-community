@@ -55,6 +55,7 @@ public class CvsTabbedWindow implements Disposable {
     final ToolWindow toolWindow = getToolWindow();
     final ContentManager contentManager = toolWindow.getContentManager();
     contentManager.addContentManagerListener(new ContentManagerAdapter() {
+      @Override
       public void contentRemoved(ContentManagerEvent event) {
         final JComponent component = event.getContent().getComponent();
         final JComponent removedComponent = component instanceof CvsTabbedWindowComponent ?
@@ -72,6 +73,7 @@ public class CvsTabbedWindow implements Disposable {
     toolWindow.installWatcher(contentManager);
   }
 
+  @Override
   public void dispose() {
     if (myOutput != null) {
       EditorFactory.getInstance().releaseEditor(myOutput);
@@ -137,6 +139,7 @@ public class CvsTabbedWindow implements Disposable {
       myErrorsView = ErrorViewFactory.SERVICE.getInstance()
         .createErrorTreeView(myProject, null, true, new AnAction[]{ActionManager.getInstance().getAction("CvsActions")},
                              new AnAction[]{new GlobalCvsSettingsAction(), new ReconfigureCvsRootAction()}, new ContentManagerProvider() {
+          @Override
           public ContentManager getParentContent() {
             return getToolWindow().getContentManager();
           }
@@ -172,7 +175,8 @@ public class CvsTabbedWindow implements Disposable {
       super(CvsBundle.message("configure.global.cvs.settings.action.name"), null, AllIcons.Nodes.Cvs_global);
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
       new ConfigureCvsGlobalSettingsDialog(e.getProject()).show();
     }
   }
@@ -182,13 +186,15 @@ public class CvsTabbedWindow implements Disposable {
       super(CvsBundle.message("action.name.reconfigure.cvs.root"), null, AllIcons.Nodes.Cvs_roots);
     }
 
-    public void update(AnActionEvent e) {
+    @Override
+    public void update(@NotNull AnActionEvent e) {
       super.update(e);
       Object data = ErrorTreeView.CURRENT_EXCEPTION_DATA_KEY.getData(e.getDataContext());
       e.getPresentation().setEnabled(data instanceof CvsException);
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
       Object data = ErrorTreeView.CURRENT_EXCEPTION_DATA_KEY.getData(e.getDataContext());
       CvsConfigurationsListEditor.reconfigureCvsRoot(((CvsException)Objects.requireNonNull(data)).getCvsRoot(), myProject);
     }

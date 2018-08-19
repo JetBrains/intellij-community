@@ -8,6 +8,7 @@ import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 import java.io.File
 import java.io.IOException
+import java.text.SimpleDateFormat
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
@@ -20,6 +21,9 @@ class ScreenshotsDuringTest @JvmOverloads constructor(private val myPeriod: Int 
   private val myExecutorService: ScheduledExecutorService = Executors.newScheduledThreadPool(1)
   private var myFolder: File? = null
   private var isTestSuccessful = false
+  private val screenshotName
+    get() = SimpleDateFormat("yyyy.MM.dd_HH.mm.ss.SSS").format(System.currentTimeMillis()) + ".png"
+
 
   override fun starting(description: Description) {
     val folderName = description.testClass.simpleName + "-" + description.methodName
@@ -28,13 +32,13 @@ class ScreenshotsDuringTest @JvmOverloads constructor(private val myPeriod: Int 
       ensureExists(myFolder!!)
     }
     catch (e: IOException) {
-      println("Could not create folder " + folderName)
+      println("Could not create folder $folderName")
     }
 
     myExecutorService.scheduleAtFixedRate({
                                             try {
                                               myScreenshotTaker.saveDesktopAsPng(
-                                                File(myFolder, System.currentTimeMillis().toString() + ".png").path)
+                                                File(myFolder, screenshotName).path)
                                             }
                                             catch (e: Throwable) {
                                               // Do nothing

@@ -58,17 +58,17 @@ public class ObjectUtils {
     }
   }
 
-  @Contract(value = "!null, _ -> !null; _, !null -> !null; _, _ -> null", pure = true)
+  @Contract(value = "!null, _ -> !null; _, !null -> !null; null, null -> null", pure = true)
   public static <T> T chooseNotNull(@Nullable T t1, @Nullable T t2) {
     return t1 == null? t2 : t1;
   }
 
-  @Contract(value = "!null, _ -> !null; _, !null -> !null; _, _ -> null", pure = true)
+  @Contract(value = "!null, _ -> !null; _, !null -> !null; null, null -> null", pure = true)
   public static <T> T coalesce(@Nullable T t1, @Nullable T t2) {
     return chooseNotNull(t1, t2);
   }
 
-  @Contract(value = "!null, _, _ -> !null; _, !null, _ -> !null; _, _, !null -> !null; _,_,_ -> null", pure = true)
+  @Contract(value = "!null, _, _ -> !null; _, !null, _ -> !null; _, _, !null -> !null; null,null,null -> null", pure = true)
   public static <T> T coalesce(@Nullable T t1, @Nullable T t2, @Nullable T t3) {
     return t1 != null ? t1 : t2 != null ? t2 : t3;
   }
@@ -117,6 +117,12 @@ public class ObjectUtils {
     return null;
   }
 
+  @Contract("null, _ -> null")
+  @Nullable
+  public static <T, S> S doIfNotNull(@Nullable T obj, @NotNull Function<? super T, ? extends S> function) {
+    return obj == null ? null : function.fun(obj);
+  }
+
   @SuppressWarnings("unchecked")
   public static <T> void consumeIfCast(@Nullable Object obj, @NotNull Class<T> clazz, final Consumer<T> consumer) {
     if (clazz.isInstance(obj)) consumer.consume((T)obj);
@@ -124,11 +130,24 @@ public class ObjectUtils {
 
   @Nullable
   @Contract("null, _ -> null")
-  public static <T> T nullizeByCondition(@Nullable final T obj, @NotNull final Condition<T> condition) {
+  public static <T> T nullizeByCondition(@Nullable final T obj, @NotNull final Condition<? super T> condition) {
     if (condition.value(obj)) {
       return null;
     }
     return obj;
+  }
+
+  public static int binarySearch(int fromIndex, int toIndex, @NotNull IntIntFunction test) {
+    int low = fromIndex;
+    int high = toIndex - 1;
+    while (low <= high) {
+      int mid = (low + high) >>> 1;
+      int cmp = test.fun(mid);
+      if (cmp < 0) low = mid + 1;
+      else if (cmp > 0) high = mid - 1;
+      else return mid;
+    }
+    return -(low + 1);
   }
 
   private static class Sentinel {

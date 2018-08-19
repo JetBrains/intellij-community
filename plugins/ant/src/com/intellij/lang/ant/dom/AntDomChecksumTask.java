@@ -28,8 +28,9 @@ public abstract class AntDomChecksumTask extends AntDomPropertyDefiningTask {
 
   @Attribute("verifyproperty")
   public abstract GenericAttributeValue<String> getVerifyProperty();
-  
 
+
+  @Override
   protected List<GenericAttributeValue<String>> getPropertyDefiningAttributes() {
     final GenericAttributeValue<String> verifyProperty = getVerifyProperty();
     if (verifyProperty.getRawText() != null) {
@@ -37,5 +38,5 @@ public abstract class AntDomChecksumTask extends AntDomPropertyDefiningTask {
     }
     return Collections.singletonList(getPropertyName());
   }
-  
+
 }

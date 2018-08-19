@@ -16,10 +16,10 @@
 
 package com.intellij.uiDesigner.lw;
 
-import org.jdom.Element;
 import com.intellij.uiDesigner.UIFormXmlConstants;
-import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import org.jdom.Element;
 
 import java.awt.*;
 
@@ -32,6 +32,7 @@ public class GridLayoutSerializer extends LayoutSerializer {
 
   public static GridLayoutSerializer INSTANCE = new GridLayoutSerializer();
 
+  @Override
   void readLayout(Element element, LwContainer container) {
     final int rowCount = LwXmlReader.getRequiredInt(element, UIFormXmlConstants.ATTRIBUTE_ROW_COUNT);
     final int columnCount = LwXmlReader.getRequiredInt(element, UIFormXmlConstants.ATTRIBUTE_COLUMN_COUNT);
@@ -60,6 +61,7 @@ public class GridLayoutSerializer extends LayoutSerializer {
     container.setLayout(layout);
   }
 
+  @Override
   void readChildConstraints(final Element constraintsElement, final LwComponent component) {
     // Read Grid constraints
     final Element gridElement = LwXmlReader.getChild(constraintsElement, "grid");

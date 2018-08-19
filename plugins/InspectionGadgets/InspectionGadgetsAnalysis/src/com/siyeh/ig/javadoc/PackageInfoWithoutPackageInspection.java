@@ -16,7 +16,6 @@
 package com.siyeh.ig.javadoc;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.wrongPackageStatement.WrongPackageStatementInspectionBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;

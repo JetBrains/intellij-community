@@ -705,7 +705,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
    * This method fills {@code myActions} list.
    * @return true if there is a shortcut with second stroke found.
    */
-  public KeyProcessorContext updateCurrentContext(Component component, Shortcut sc, boolean isModalContext){
+  public KeyProcessorContext updateCurrentContext(Component component, @NotNull Shortcut sc, boolean isModalContext){
     myContext.setFoundComponent(null);
     myContext.getActions().clear();
 
@@ -796,7 +796,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
   /**
    * @return true if action is added and has second stroke
    */
-  private boolean addAction(AnAction action, Shortcut sc) {
+  private boolean addAction(AnAction action, @NotNull Shortcut sc) {
     boolean hasSecondStroke = false;
 
     Shortcut[] shortcuts = action.getShortcutSet().getShortcuts();

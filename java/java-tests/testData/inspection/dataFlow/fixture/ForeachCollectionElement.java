@@ -26,4 +26,9 @@ class ForeachCollectionElement {
       }
     }
   }
+
+  void test4() {
+    for(Integer x : Arrays.asList(1)) {
+    }
+  }
 }

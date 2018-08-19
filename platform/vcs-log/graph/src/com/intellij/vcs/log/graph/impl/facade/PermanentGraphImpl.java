@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.vcs.log.graph.impl.facade;
 
@@ -35,10 +21,8 @@ import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.function.BiConsumer;
 
 public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, PermanentGraphInfo<CommitId> {
   @NotNull private final PermanentCommitsInfoImpl<CommitId> myPermanentCommitsInfo;
@@ -111,26 +95,29 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   private LinearGraphController createFilteredController(@NotNull LinearGraphController baseController,
                                                          @NotNull SortType sortType,
                                                          @Nullable Set<CommitId> visibleHeads, @Nullable Set<CommitId> matchingCommits) {
-    LinearGraphController controller;
+    Set<Integer> visibleHeadsIds = visibleHeads != null ? myPermanentCommitsInfo.convertToNodeIds(visibleHeads, true) : null;
     if (matchingCommits != null) {
-      controller = new FilteredController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(matchingCommits));
-      if (visibleHeads != null) {
-        return new BranchFilterController(controller, this, myPermanentCommitsInfo.convertToNodeIds(visibleHeads, true));
-      }
-      return controller;
+      return new FilteredController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(matchingCommits), visibleHeadsIds);
     }
 
     if (sortType == SortType.LinearBek) {
-      if (visibleHeads != null) {
-        return new BranchFilterController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(visibleHeads, true));
+      if (visibleHeadsIds != null) {
+        return new BranchFilterController(baseController, this, visibleHeadsIds);
       }
       return baseController;
     }
 
-    if (visibleHeads != null) {
-      return new CollapsedController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(visibleHeads, true));
-    }
-    return new CollapsedController(baseController, this, null);
+    return new CollapsedController(baseController, this, visibleHeadsIds);
+  }
+
+  @NotNull
+  public VisibleGraph<CommitId> createVisibleGraph(@NotNull SortType sortType,
+                                                   @Nullable Set<CommitId> visibleHeads,
+                                                   @Nullable Set<CommitId> matchingCommits,
+                                                   @NotNull BiConsumer<LinearGraphController, PermanentGraphInfo<CommitId>> preprocessor) {
+    LinearGraphController controller = createFilteredController(createBaseController(sortType), sortType, visibleHeads, matchingCommits);
+    preprocessor.accept(controller, this);
+    return new VisibleGraphImpl<>(controller, this, myGraphColorManager);
   }
 
   @NotNull
@@ -138,24 +125,27 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   public VisibleGraph<CommitId> createVisibleGraph(@NotNull SortType sortType,
                                                    @Nullable Set<CommitId> visibleHeads,
                                                    @Nullable Set<CommitId> matchingCommits) {
-    LinearGraphController controller = createFilteredController(createBaseController(sortType), sortType, visibleHeads, matchingCommits);
-    return new VisibleGraphImpl<>(controller, this, myGraphColorManager);
+    return createVisibleGraph(sortType, visibleHeads, matchingCommits, (controller, info) -> {
+    });
   }
 
   @NotNull
   @Override
   public List<GraphCommit<CommitId>> getAllCommits() {
-    List<GraphCommit<CommitId>> result = ContainerUtil.newArrayList();
-    for (int index = 0; index < myPermanentLinearGraph.nodesCount(); index++) {
-      CommitId commitId = myPermanentCommitsInfo.getCommitId(index);
-      List<Integer> downNodes = LinearGraphUtils.getDownNodesIncludeNotLoad(myPermanentLinearGraph, index);
-      List<CommitId> parentsCommitIds = myPermanentCommitsInfo.convertToCommitIdList(downNodes);
-      GraphCommit<CommitId> graphCommit =
-        GraphCommitImpl.createCommit(commitId, parentsCommitIds, myPermanentCommitsInfo.getTimestamp(index));
-      result.add(graphCommit);
-    }
+    return new AbstractList<GraphCommit<CommitId>>() {
+      @Override
+      public GraphCommit<CommitId> get(int index) {
+        CommitId commitId = myPermanentCommitsInfo.getCommitId(index);
+        List<Integer> downNodes = LinearGraphUtils.getDownNodesIncludeNotLoad(myPermanentLinearGraph, index);
+        List<CommitId> parentsCommitIds = myPermanentCommitsInfo.convertToCommitIdList(downNodes);
+        return GraphCommitImpl.createCommit(commitId, parentsCommitIds, myPermanentCommitsInfo.getTimestamp(index));
+      }
 
-    return result;
+      @Override
+      public int size() {
+        return myPermanentLinearGraph.nodesCount();
+      }
+    };
   }
 
   @NotNull
@@ -188,21 +178,25 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
     }
   }
 
+  @Override
   @NotNull
   public PermanentCommitsInfoImpl<CommitId> getPermanentCommitsInfo() {
     return myPermanentCommitsInfo;
   }
 
+  @Override
   @NotNull
   public PermanentLinearGraphImpl getLinearGraph() {
     return myPermanentLinearGraph;
   }
 
+  @Override
   @NotNull
   public GraphLayoutImpl getPermanentGraphLayout() {
     return myPermanentGraphLayout;
   }
 
+  @Override
   @NotNull
   public Set<Integer> getBranchNodeIds() {
     return myBranchNodeIds;

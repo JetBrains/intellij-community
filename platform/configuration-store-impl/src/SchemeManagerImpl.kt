@@ -3,6 +3,7 @@ package com.intellij.configurationStore
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.configurationStore.schemeManager.*
+import com.intellij.ide.ui.UITheme
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.components.RoamingType
@@ -25,6 +26,7 @@ import com.intellij.util.*
 import com.intellij.util.containers.ConcurrentList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.catch
+import com.intellij.util.containers.mapSmart
 import com.intellij.util.io.*
 import com.intellij.util.text.UniqueNameGenerator
 import gnu.trove.THashSet
@@ -87,7 +89,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
     get() = ioDirectory.toFile()
 
   override val allSchemeNames: Collection<String>
-    get() = schemes.let { if (it.isEmpty()) emptyList() else it.map { processor.getSchemeKey(it) } }
+    get() = schemes.mapSmart { processor.getSchemeKey(it) }
 
   override val allSchemes: List<T>
     get() = Collections.unmodifiableList(schemes)
@@ -111,6 +113,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
     try {
       val url = when (requestor) {
         is AbstractExtensionPointBean -> requestor.loaderForClass.getResource(resourceName)
+        is UITheme -> DecodeDefaultsUtil.getDefaults(requestor.providerClassLoader, resourceName)
         else -> DecodeDefaultsUtil.getDefaults(requestor, resourceName)
       }
 
@@ -140,6 +143,9 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
           LOG.warn("Duplicated scheme ${schemeKey} - old: $oldScheme, new $scheme")
         }
         schemes.add(scheme)
+        if (requestor is UITheme) {
+          requestor.editorSchemeName = schemeKey
+        }
       }
     }
     catch (e: ProcessCanceledException) {
@@ -180,8 +186,8 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
       }) {
       }
       else {
-        ioDirectory.directoryStreamIfExists({ canRead(it.fileName.toString()) }) {
-          for (file in it) {
+        ioDirectory.directoryStreamIfExists({ canRead(it.fileName.toString()) }) { directoryStream ->
+          for (file in directoryStream) {
             if (file.isDirectory()) {
               continue
             }
@@ -596,8 +602,8 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
     }
 
     if (isUseVfs) {
-      virtualDirectory?.let {
-        val childrenToDelete = it.children.filter { filesToDelete.contains(it.name) }
+      virtualDirectory?.let { virtualDir ->
+        val childrenToDelete = virtualDir.children.filter { filesToDelete.contains(it.name) }
         if (childrenToDelete.isNotEmpty()) {
           runUndoTransparentWriteAction {
             childrenToDelete.forEach { file ->
@@ -662,7 +668,9 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
   override fun toString(): String = fileSpec
 }
 
-internal fun nameIsMissed(bytes: ByteArray) = RuntimeException("Name is missed:\n${bytes.toString(Charsets.UTF_8)}")
+internal fun nameIsMissed(bytes: ByteArray): RuntimeException {
+  return RuntimeException("Name is missed:\n${bytes.toString(Charsets.UTF_8)}")
+}
 
 internal class SchemeDataHolderImpl<out T : Any, in MUTABLE_SCHEME : T>(private val processor: SchemeProcessor<T, MUTABLE_SCHEME>,
                                                                         private val bytes: ByteArray,

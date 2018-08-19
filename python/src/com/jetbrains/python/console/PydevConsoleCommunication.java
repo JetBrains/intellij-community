@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -229,6 +215,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   /**
    * Called when the server is requesting some input from this class.
    */
+  @Override
   public Object execute(String method, Vector params) throws Exception {
     if ("NotifyFinished".equals(method)) {
       return execNotifyFinished((Boolean)params.get(0));
@@ -377,6 +364,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   /**
    * @return completions from the client
    */
+  @Override
   @NotNull
   public List<PydevCompletionVariant> getCompletions(String text, String actTok) throws Exception {
     if (myDebugCommunication != null && myDebugCommunication.isSuspended()) {
@@ -394,6 +382,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   /**
    * @return the description of the given attribute in the shell
    */
+  @Override
   public String getDescription(String text) throws Exception {
     if (myDebugCommunication != null && myDebugCommunication.isSuspended()) {
       return myDebugCommunication.getDescription(text);
@@ -416,6 +405,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
    *
    * @param command the command to be executed in the client
    */
+  @Override
   public void execInterpreter(final ConsoleCodeFragment command, final Function<InterpreterResponse, Object> onResponseReceived) {
     if (myDebugCommunication != null && myDebugCommunication.isSuspended()) {
       myDebugCommunication.execInterpreter(command, onResponseReceived);
@@ -549,6 +539,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     return myExecuting;
   }
 
+  @Override
   public boolean needsMore() {
     return myNeedsMore;
   }

@@ -43,6 +43,7 @@ import java.util.Map;
  * 
  * @author Konstantin Bulenkov
  */
+@Deprecated
 public class JBMovePanel extends JBPanel {
 
   public static final String MOVE_PANEL_PLACE = "MOVE_PANEL";
@@ -329,7 +330,7 @@ public class JBMovePanel extends JBPanel {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       doLeft(); 
     }
   }
@@ -341,7 +342,7 @@ public class JBMovePanel extends JBPanel {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       doRight();
     }
   }
@@ -353,7 +354,7 @@ public class JBMovePanel extends JBPanel {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       doAllLeft();
     }
   }
@@ -365,7 +366,7 @@ public class JBMovePanel extends JBPanel {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       doAllRight();
     }
   }
@@ -377,7 +378,7 @@ public class JBMovePanel extends JBPanel {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       ListUtil.moveSelectedItemsUp(myRightList); 
     }
   }
@@ -389,7 +390,7 @@ public class JBMovePanel extends JBPanel {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       ListUtil.moveSelectedItemsDown(myRightList);
     }
   }

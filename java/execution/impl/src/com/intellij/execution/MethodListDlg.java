@@ -49,6 +49,7 @@ public class MethodListDlg extends DialogWrapper {
     createList(psiClass.getAllMethods(), filter);
     myWholePanel.add(ScrollPaneFactory.createScrollPane(myList));
     myList.setCellRenderer(new ColoredListCellRenderer() {
+      @Override
       protected void customizeCellRenderer(@NotNull final JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
         final PsiMethod psiMethod = (PsiMethod)value;
         append(PsiFormatUtil.formatMethod(psiMethod, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME, 0),
@@ -81,6 +82,7 @@ public class MethodListDlg extends DialogWrapper {
     }
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myWholePanel;
   }

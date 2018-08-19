@@ -40,7 +40,7 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.util.*;
 
-public class JUnitConfiguration extends JavaTestConfigurationBase {
+public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySupport implements InputRedirectAware {
   public static final String DEFAULT_PACKAGE_NAME = ExecutionBundle.message("default.package.presentable.name");
   public static final byte FRAMEWORK_ID = 0x0;
 
@@ -66,6 +66,8 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
   @NonNls private static final String TEST_CLASS_ATT_NAME = "testClass";
   @NonNls private static final String PATTERNS_EL_NAME = "patterns";
   private final Data myData;
+  private final InputRedirectAware.InputRedirectOptions myInputRedirectOptions = new InputRedirectOptions();
+
   final RefactoringListeners.Accessor<PsiPackage> myPackage = new RefactoringListeners.Accessor<PsiPackage>() {
     @Override
     public void setName(final String qualifiedName) {
@@ -298,6 +300,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     return !Comparing.strEqual(data.TEST_OBJECT, TEST_PACKAGE) ? null : data.getPackageName();
   }
 
+  @Override
   public void beClassConfiguration(final PsiClass testClass) {
     if (FORK_KLASS.equals(getForkMode())) {
       setForkMode(FORK_NONE);
@@ -356,6 +359,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     if (shouldUpdateName) setGeneratedName();
   }
 
+  @Override
   public void beMethodConfiguration(final Location<PsiMethod> methodLocation) {
     setForkMode(FORK_NONE);
     setModule(myData.setTestMethod(methodLocation));
@@ -374,6 +378,12 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
 
   public TestObject getTestObject() {
     return myData.getTestObject(this);
+  }
+
+  @NotNull
+  @Override
+  public InputRedirectOptions getInputRedirectOptions() {
+    return myInputRedirectOptions;
   }
 
   @Override
@@ -442,6 +452,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
         getPersistentData().setTags(StringUtil.join(tags, "|"));
       }
     }
+    myInputRedirectOptions.readExternal(element);
   }
 
   @Override
@@ -506,6 +517,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
       tagsElement.setAttribute("value", tags);
       element.addContent(tagsElement);
     }
+    myInputRedirectOptions.writeExternal(element);
   }
 
   public String getForkMode() {
@@ -521,6 +533,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     return false;
   }
 
+  @Override
   public void bePatternConfiguration(List<PsiClass> classes, PsiMethod method) {
     myData.TEST_OBJECT = TEST_PATTERN;
     final LinkedHashSet<String> patterns = new LinkedHashSet<>();
@@ -715,7 +728,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
           return ExecutionBundle.message("default.junit.config.name.whole.project");
         }
         final String moduleName = TEST_SEARCH_SCOPE.getScope() == TestSearchScope.WHOLE_PROJECT ? "" : configurationModule.getModuleName();
-        final String packageName = TEST_PACKAGE.equals(TEST_OBJECT) ? getPackageName() : StringUtil.getShortName(getDirName(), '/');
+        final String packageName = TEST_PACKAGE.equals(TEST_OBJECT) ? getPackageName() : StringUtil.getShortName(FileUtil.toSystemIndependentName(getDirName()), '/');
         if (packageName.length() == 0) {
           if (moduleName.length() > 0) {
             return ExecutionBundle.message("default.junit.config.name.all.in.module", moduleName);

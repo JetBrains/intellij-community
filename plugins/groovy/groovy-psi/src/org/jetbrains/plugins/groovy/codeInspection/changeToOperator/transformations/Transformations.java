@@ -17,8 +17,8 @@ public interface Transformations {
     .put(BITWISE_NEGATE, new UnaryTransformation(mBNOT))
     .put(NEGATIVE, new UnaryTransformation(mMINUS))
     .put(POSITIVE, new UnaryTransformation(mPLUS))
-    .put(NEXT, new UnaryTransformation(mINC))
-    .put(PREVIOUS, new UnaryTransformation(mDEC))
+    .put(NEXT, new IncDecUnaryTransformation(mINC))
+    .put(PREVIOUS, new IncDecUnaryTransformation(mDEC))
     .put(AS_BOOLEAN, new AsBooleanTransformation())
 
     // binary

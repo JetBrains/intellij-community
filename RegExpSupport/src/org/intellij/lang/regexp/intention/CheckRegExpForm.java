@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp.intention;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -13,7 +11,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.TransactionId;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -84,11 +81,11 @@ public class CheckRegExpForm {
     }
     myRegExp = new EditorTextField(document, myProject, fileType, false, false) {
       @Override
-      public void addNotify() {
-        super.addNotify();
-        final Editor editor = getEditor();
-        assert editor != null : "Editor not initialized in addNotify()";
+      protected EditorEx createEditor() {
+        final EditorEx editor = super.createEditor();
         editor.putUserData(CHECK_REG_EXP_EDITOR, Boolean.TRUE);
+        editor.setEmbeddedIntoDialogWrapper(true);
+        return editor;
       }
 
       @Override
@@ -98,6 +95,13 @@ public class CheckRegExpForm {
     };
     final String sampleText = PropertiesComponent.getInstance(myProject).getValue(LAST_EDITED_REGEXP, "Sample Text");
     mySampleText = new EditorTextField(sampleText, myProject, PlainTextFileType.INSTANCE) {
+      @Override
+      protected EditorEx createEditor() {
+        final EditorEx editor = super.createEditor();
+        editor.setEmbeddedIntoDialogWrapper(true);
+        return editor;
+      }
+
       @Override
       protected void updateBorder(@NotNull EditorEx editor) {
         setupBorder(editor);
@@ -119,17 +123,28 @@ public class CheckRegExpForm {
 
         IdeFocusManager.getGlobalInstance().requestFocus(mySampleText, true);
 
-        new AnAction(){
+        final AnAction sampleTextFocusAction = new AnAction() {
           @Override
-          public void actionPerformed(AnActionEvent e) {
+          public void actionPerformed(@NotNull AnActionEvent e) {
             IdeFocusManager.findInstance().requestFocus(myRegExp.getFocusTarget(), true);
           }
-        }.registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), mySampleText);
+        };
+        sampleTextFocusAction.registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), mySampleText);
+        sampleTextFocusAction.registerCustomShortcutSet(CustomShortcutSet.fromString("TAB"), mySampleText);
+
+        final AnAction regExpFocusAction = new AnAction() {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            IdeFocusManager.findInstance().requestFocus(mySampleText.getFocusTarget(), true);
+          }
+        };
+        regExpFocusAction.registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), myRegExp);
+        regExpFocusAction.registerCustomShortcutSet(CustomShortcutSet.fromString("TAB"), myRegExp);
 
         updater = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable);
         DocumentListener documentListener = new DocumentListener() {
           @Override
-          public void documentChanged(DocumentEvent e) {
+          public void documentChanged(@NotNull DocumentEvent e) {
             update();
           }
         };

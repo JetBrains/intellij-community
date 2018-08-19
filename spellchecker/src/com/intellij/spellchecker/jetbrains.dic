@@ -251,6 +251,7 @@ hardlink
 hardlinks
 hashbang
 hashcode
+hashtable
 hateoas
 haxe
 hazelcast
@@ -311,6 +312,7 @@ jaxb
 jaxen
 jetbrains
 jibx
+jira
 jndi
 jnilib
 jooq
@@ -325,6 +327,7 @@ json
 jsonb
 junit
 keepduplicates
+kerberos
 keychain
 keychains
 keyframe
@@ -517,6 +520,8 @@ pctversion
 permalink
 petersburg
 pipelined
+pipenv
+pipfile
 plaintext
 playlist
 plist
@@ -558,6 +563,7 @@ processlist
 profileable
 profiler
 progressbar
+projectreactor
 proto
 proven
 proxool
@@ -583,6 +589,7 @@ refactor
 refactored
 refactoring
 refactorings
+referencable
 referer
 regex
 regexp
@@ -691,6 +698,7 @@ sourcecode
 sourceforge
 spellchecker
 spellchecking
+sql
 sqlcode
 sqlerror
 sqlexception
@@ -798,6 +806,9 @@ undoable
 undofile
 unescaped
 unfoldr
+ungroup
+ungrouped
+ungrouping
 unhandled
 uninstall
 uniques

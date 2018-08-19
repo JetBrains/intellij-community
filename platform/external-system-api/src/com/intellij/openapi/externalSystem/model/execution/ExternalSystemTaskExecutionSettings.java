@@ -1,26 +1,14 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.execution;
 
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.xmlb.annotations.Tag;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +19,7 @@ import java.util.Map;
 /**
  * Keeps external system task execution parameters. Basically, this is a model class which holds data represented when
  * a user opens run configuration editor for corresponding external system.
- * 
+ *
  * @author Denis Zhdanov
  * @since 24.05.13 12:20
  */
@@ -51,6 +39,23 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
   private String myScriptParameters;
   private Map<String, String> myEnv = ContainerUtilRt.newHashMap();
   private boolean myPassParentEnvs = true;
+
+  public ExternalSystemTaskExecutionSettings() {
+  }
+
+  private ExternalSystemTaskExecutionSettings(@NotNull ExternalSystemTaskExecutionSettings source) {
+    myExecutionName = source.myExecutionName;
+    myExternalSystemIdString = source.myExternalSystemIdString;
+    myExternalProjectPath = source.myExternalProjectPath;
+    myVmOptions = source.myVmOptions;
+    myScriptParameters = source.myScriptParameters;
+
+    myTaskNames = ContainerUtil.copyList(source.myTaskNames);
+    myTaskDescriptions = ContainerUtil.copyList(source.myTaskDescriptions);
+
+    myEnv = source.myEnv == null ? null : new THashMap<>(source.myEnv);
+    myPassParentEnvs = source.myPassParentEnvs;
+  }
 
   @Nullable
   public String getExecutionName() {
@@ -132,17 +137,7 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
 
   @Override
   public ExternalSystemTaskExecutionSettings clone() {
-    ExternalSystemTaskExecutionSettings result = new ExternalSystemTaskExecutionSettings();
-    result.setExecutionName(getExecutionName());
-    result.setExternalSystemIdString(getExternalSystemIdString());
-    result.setExternalProjectPath(getExternalProjectPath());
-    result.setVmOptions(getVmOptions());
-    result.setScriptParameters(getScriptParameters());
-    result.setTaskNames(ContainerUtilRt.newArrayList(getTaskNames()));
-    result.setTaskDescriptions(ContainerUtilRt.newArrayList(getTaskDescriptions()));
-    result.setEnv(ContainerUtilRt.newHashMap(getEnv()));
-    result.setPassParentEnvs(isPassParentEnvs());
-    return result;
+    return new ExternalSystemTaskExecutionSettings(this);
   }
 
   @Override

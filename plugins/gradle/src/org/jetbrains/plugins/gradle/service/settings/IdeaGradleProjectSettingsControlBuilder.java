@@ -219,6 +219,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     ExternalSystemUiUtil.showUi(this, show);
   }
 
+  @Override
   @NotNull
   public GradleProjectSettings getInitialSettings() {
     return myInitialSettings;

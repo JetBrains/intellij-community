@@ -1,26 +1,21 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
-import com.intellij.application.options.PathMacrosImpl
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
-import com.intellij.openapi.components.impl.BasePathMacroManager
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.NamedJDOMExternalizable
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.util.io.delete
-import com.intellij.util.io.outputStream
-import com.intellij.util.write
-import org.jdom.Element
+import org.jetbrains.jps.model.serialization.JpsGlobalLoader
 
-private class ApplicationPathMacroManager : BasePathMacroManager(null)
+private class ApplicationPathMacroManager : PathMacroManager(null)
 
 const val APP_CONFIG: String = "\$APP_CONFIG$"
 private const val FILE_STORAGE_DIR = "options"
@@ -70,7 +65,7 @@ class ApplicationStorageManager(application: Application, pathMacroManager: Path
     }
   }
 
-  override fun getMacroSubstitutor(fileSpec: String): TrackingPathMacroSubstitutor? = if (fileSpec == "${PathMacrosImpl.EXT_FILE_NAME}${FileStorageCoreUtil.DEFAULT_EXT}") null else super.getMacroSubstitutor(fileSpec)
+  override fun getMacroSubstitutor(fileSpec: String): TrackingPathMacroSubstitutor? = if (fileSpec == JpsGlobalLoader.PathVariablesSerializer.STORAGE_FILE_NAME) null else super.getMacroSubstitutor(fileSpec)
 
   override val isUseXmlProlog: Boolean
     get() = false
@@ -78,19 +73,14 @@ class ApplicationStorageManager(application: Application, pathMacroManager: Path
   override val isUseVfsForWrite: Boolean
     get() = false
 
-  override fun providerDataStateChanged(storage: FileBasedStorage, element: Element?, type: DataStateChanged) {
+  override fun providerDataStateChanged(storage: FileBasedStorage, writer: DataWriter?, type: DataStateChanged) {
     // IDEA-144052 When "Settings repository" is enabled changes in 'Path Variables' aren't saved to default path.macros.xml file causing errors in build process
     if (storage.fileSpec != "path.macros.xml") {
       return
     }
 
     LOG.runAndLogException {
-      if (element == null) {
-        storage.file.delete()
-      }
-      else {
-        element.write(storage.file.outputStream())
-      }
+      writer.writeTo(storage.file)
     }
   }
 

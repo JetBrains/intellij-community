@@ -71,7 +71,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticReference
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
@@ -327,7 +326,7 @@ public class PsiImplUtil {
       return nameElement.getText();
     }
 
-    if (node.getElementType() == GroovyTokenTypes.mSTRING_LITERAL || node.getElementType() == GroovyTokenTypes.mGSTRING_LITERAL) {
+    if (GroovyTokenSets.STRING_LITERALS.contains(node.getElementType())) {
       final Object value = GrLiteralImpl.getLiteralValue(nameElement);
       if (value instanceof String) {
         return (String)value;
@@ -715,11 +714,6 @@ public class PsiImplUtil {
     }
 
     return null;
-  }
-
-  public static boolean hasImmutableAnnotation(PsiModifierList modifierList) {
-    return modifierList.hasAnnotation(GroovyCommonClassNames.GROOVY_LANG_IMMUTABLE) ||
-           modifierList.hasAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_IMMUTABLE);
   }
 
   public static boolean isWhiteSpaceOrNls(@Nullable PsiElement sibling) {

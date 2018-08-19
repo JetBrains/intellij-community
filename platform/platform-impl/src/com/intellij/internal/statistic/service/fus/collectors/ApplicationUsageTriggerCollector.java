@@ -8,16 +8,21 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 import java.util.Set;
 
-// see example:
-// public final class MyApplicationActionsUsageTriggerCollector extends ApplicationUsageTriggerCollector {
-//    public static void record(@NotNull String metric) {
-//       FUSApplicationUsageTrigger.getInstance().trigger(MyApplicationActionsUsageTriggerCollector.class, metric);
-//   }
-//
-//   public String getGroupId() { return "statistics.my.application.actions";}
-//  }
-//  in any place of code write: MyApplicationActionsUsageTriggerCollector.record("my.cool.action.performed");
-
+/**
+ * See example:
+ * <pre>{@code
+ * public final class MyApplicationActionsUsageTriggerCollector extends ApplicationUsageTriggerCollector {
+ *   public static void record(@NotNull String metric) {
+ *     FUSApplicationUsageTrigger.getInstance().trigger(MyApplicationActionsUsageTriggerCollector.class, metric);
+ *   }
+ *
+ *   public String getGroupId() {
+ *     return "statistics.my.application.actions";
+ *   }
+ * }
+ * }</pre>
+ * In any place of code write: {@code MyApplicationActionsUsageTriggerCollector.record("my.cool.action.performed");}
+ */
 public abstract class ApplicationUsageTriggerCollector extends ApplicationUsagesCollector implements FUStatisticsDifferenceSender {
   @NotNull
   @Override

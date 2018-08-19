@@ -206,7 +206,8 @@ public class PsiTypesUtil {
       }
       else {
         PsiElement parent = call.getContext();
-        while (parent != null && condition.value(parent.getNode().getElementType())) {
+        while (parent != null && condition.value(parent instanceof StubBasedPsiElement ? ((StubBasedPsiElement)parent).getElementType() 
+                                                                                       : parent.getNode().getElementType())) {
           parent = parent.getContext();
         }
         if (parent != null) {
@@ -259,7 +260,8 @@ public class PsiTypesUtil {
     }
     else if (parent instanceof PsiAssignmentExpression) {
       if (PsiUtil.checkSameExpression(element, ((PsiAssignmentExpression)parent).getRExpression())) {
-        return ((PsiAssignmentExpression)parent).getLExpression().getType();
+        PsiType type = ((PsiAssignmentExpression)parent).getLExpression().getType();
+        return !PsiType.NULL.equals(type) ? type : null;
       }
     }
     else if (parent instanceof PsiReturnStatement) {
@@ -335,7 +337,7 @@ public class PsiTypesUtil {
      * @return false if type is null or has no explicit canonical type representation (e. g. intersection type)
      */
   public static boolean isDenotableType(@Nullable PsiType type, @NotNull PsiElement context) {
-    if (type == null) return false;
+    if (type == null || type instanceof PsiWildcardType) return false;
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(context.getProject());
     try {
       PsiType typeAfterReplacement = elementFactory.createTypeElementFromText(type.getCanonicalText(), context).getType();

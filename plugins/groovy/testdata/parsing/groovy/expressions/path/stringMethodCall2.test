@@ -4,7 +4,7 @@ Groovy script
   Method call
     Reference expression
       Literal
-        PsiElement(string)(''foo'')
+        PsiElement(single quoted string)(''foo'')
       PsiElement(.)('.')
       PsiElement(identifier)('substring')
     Arguments

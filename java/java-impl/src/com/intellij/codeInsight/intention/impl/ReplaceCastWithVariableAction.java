@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
@@ -25,10 +24,14 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author Danila Ponomarenko
@@ -45,7 +48,7 @@ public class ReplaceCastWithVariableAction extends PsiElementBaseIntentionAction
       return false;
     }
 
-    final PsiExpression operand = typeCastExpression.getOperand();
+    final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(typeCastExpression.getOperand());
     if (!(operand instanceof PsiReferenceExpression)) {
       return false;
     }
@@ -85,7 +88,13 @@ public class ReplaceCastWithVariableAction extends PsiElementBaseIntentionAction
                                                   @NotNull PsiVariable castedVar,
                                                   @NotNull PsiTypeCastExpression expression) {
     final TextRange expressionTextRange = expression.getTextRange();
-    for (PsiExpression occurrence : CodeInsightUtil.findExpressionOccurrences(method,expression)){
+    PsiExpression operand = PsiUtil.skipParenthesizedExprDown(expression.getOperand());
+    List<PsiTypeCastExpression> found =
+      SyntaxTraverser.psiTraverser(method)
+                     .filter(PsiTypeCastExpression.class)
+                     .filter(cast -> EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(cast.getOperand(), operand))
+                     .toList();
+    for (PsiTypeCastExpression occurrence : found) {
       ProgressIndicatorProvider.checkCanceled();
       final TextRange occurrenceTextRange = occurrence.getTextRange();
       if (occurrence == expression || occurrenceTextRange.getEndOffset() >= expressionTextRange.getStartOffset()) {
@@ -150,7 +159,7 @@ public class ReplaceCastWithVariableAction extends PsiElementBaseIntentionAction
 
   @Nullable
   private static PsiLocalVariable getVariable(@NotNull PsiExpression occurrence) {
-    final PsiElement parent = occurrence.getParent();
+    final PsiElement parent = PsiUtil.skipParenthesizedExprUp(occurrence.getParent());
 
     if (parent instanceof PsiLocalVariable) {
       return (PsiLocalVariable)parent;

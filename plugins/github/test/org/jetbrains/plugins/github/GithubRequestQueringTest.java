@@ -15,9 +15,11 @@
  */
 package org.jetbrains.plugins.github;
 
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.plugins.github.api.GithubApiUtil;
+import org.jetbrains.plugins.github.api.GithubApiRequests;
 import org.jetbrains.plugins.github.api.data.GithubRepo;
+import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader;
 import org.jetbrains.plugins.github.test.GithubTest;
 
 import java.util.ArrayList;
@@ -35,26 +37,25 @@ public class GithubRequestQueringTest extends GithubTest {
     assumeNotNull(myAccount2);
   }
 
-  public void testPagination() throws Throwable {
-    myApiTaskExecutor.execute(myAccount2, c -> {
-      List<GithubRepo> availableRepos = GithubApiUtil.getUserRepos(c, myUsername2);
-      List<String> realData = new ArrayList<>();
-      for (GithubRepo info : availableRepos) {
-        realData.add(info.getName());
-      }
+  public void testLinkPagination() throws Throwable {
+    List<GithubRepo> availableRepos = GithubApiPagesLoader
+      .loadAll(myExecutor2, new EmptyProgressIndicator(), GithubApiRequests.CurrentUser.Repos.pages(myAccount2.getServer(), false));
+    List<String> realData = new ArrayList<>();
+    for (GithubRepo info : availableRepos) {
+      realData.add(info.getName());
+    }
 
-      List<String> expectedData = new ArrayList<>();
-      for (int i = 1; i <= 251; i++) {
-        expectedData.add(String.valueOf(i));
-      }
+    List<String> expectedData = new ArrayList<>();
+    for (int i = 1; i <= 251; i++) {
+      expectedData.add(String.valueOf(i));
+    }
 
-      assertContainsElements(realData, expectedData);
-      return null;
-    });
+    assertContainsElements(realData, expectedData);
   }
 
   public void testOwnRepos() throws Throwable {
-    List<GithubRepo> result = myApiTaskExecutor.execute(myAccount, c -> GithubApiUtil.getUserRepos(c));
+    List<GithubRepo> result = GithubApiPagesLoader
+      .loadAll(myExecutor, new EmptyProgressIndicator(), GithubApiRequests.CurrentUser.Repos.pages(myAccount.getServer(), false));
 
     assertTrue(ContainerUtil.exists(result, (it) -> it.getName().equals("example")));
     assertTrue(ContainerUtil.exists(result, (it) -> it.getName().equals("PullRequestTest")));
@@ -62,7 +63,8 @@ public class GithubRequestQueringTest extends GithubTest {
   }
 
   public void testAllRepos() throws Throwable {
-    List<GithubRepo> result = myApiTaskExecutor.execute(myAccount, c -> GithubApiUtil.getUserRepos(c, true));
+    List<GithubRepo> result = GithubApiPagesLoader
+      .loadAll(myExecutor, new EmptyProgressIndicator(), GithubApiRequests.CurrentUser.Repos.pages(myAccount.getServer()));
 
     assertTrue(ContainerUtil.exists(result, (it) -> it.getName().equals("example")));
     assertTrue(ContainerUtil.exists(result, (it) -> it.getName().equals("PullRequestTest")));

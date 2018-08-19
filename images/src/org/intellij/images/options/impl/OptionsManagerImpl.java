@@ -45,12 +45,7 @@ final class OptionsManagerImpl extends OptionsManager implements PersistentState
   @Override
   public Element getState() {
     Element element = new Element("state");
-    try {
-      options.writeExternal(element);
-    }
-    catch (WriteExternalException e) {
-      throw new RuntimeException(e);
-    }
+    options.writeExternal(element);
     return element;
   }
 

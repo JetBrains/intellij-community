@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler;
 
 import com.intellij.codeInspection.InspectionManager;
@@ -20,8 +6,8 @@ import com.intellij.compiler.impl.*;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.Compiler;
+import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.util.InspectionValidator;
 import com.intellij.openapi.compiler.util.InspectionValidatorWrapper;
 import com.intellij.openapi.diagnostic.Logger;
@@ -89,18 +75,18 @@ public class CompilerManagerImpl extends CompilerManager {
     for(Compiler compiler: Extensions.getExtensions(Compiler.EP_NAME, myProject)) {
       addCompiler(compiler);
     }
-    for(CompilerFactory factory: Extensions.getExtensions(CompilerFactory.EP_NAME, myProject)) {
+    for (CompilerFactory factory : CompilerFactory.EP_NAME.getExtensionList(project)) {
       Compiler[] compilers = factory.createCompilers(this);
       for (Compiler compiler : compilers) {
         addCompiler(compiler);
       }
     }
 
-    for (InspectionValidator validator : Extensions.getExtensions(InspectionValidator.EP_NAME, myProject)) {
+    for (InspectionValidator validator : InspectionValidator.EP_NAME.getExtensionList(project)) {
       addCompiler(new InspectionValidatorWrapper(this, InspectionManager.getInstance(project), InspectionProjectProfileManager.getInstance(project), PsiDocumentManager.getInstance(project), PsiManager.getInstance(project), validator));
     }
     addCompilableFileType(StdFileTypes.JAVA);
-    
+
     final File projectGeneratedSrcRoot = CompilerPaths.getGeneratedDataDirectory(project);
     projectGeneratedSrcRoot.mkdirs();
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
@@ -172,9 +158,8 @@ public class CompilerManagerImpl extends CompilerManager {
     return getCompilers(compilerClass, CompilerFilter.ALL);
   }
 
-  @Override
   @NotNull
-  public <T extends Compiler> T[] getCompilers(@NotNull Class<T> compilerClass, CompilerFilter filter) {
+  private <T extends Compiler> T[] getCompilers(@NotNull Class<T> compilerClass, CompilerFilter filter) {
     final List<T> compilers = new ArrayList<>(myCompilers.size());
     for (final Compiler item : myCompilers) {
       if (compilerClass.isAssignableFrom(item.getClass()) && filter.acceptCompiler(item)) {
@@ -270,13 +255,6 @@ public class CompilerManagerImpl extends CompilerManager {
   @Override
   public void makeWithModalProgress(@NotNull CompileScope scope, @Nullable CompileStatusNotification callback) {
     new CompileDriver(myProject).make(scope, true, new ListenerNotificator(callback));
-  }
-
-  @Override
-  public void make(@NotNull CompileScope scope, CompilerFilter filter, @Nullable CompileStatusNotification callback) {
-    final CompileDriver compileDriver = new CompileDriver(myProject);
-    compileDriver.setCompilerFilter(filter);
-    compileDriver.make(scope, new ListenerNotificator(callback));
   }
 
   @Override
@@ -385,6 +363,7 @@ public class CompilerManagerImpl extends CompilerManager {
   public Collection<ClassObject> compileJavaCode(List<String> options,
                                                  Collection<File> platformCp,
                                                  Collection<File> classpath,
+                                                 Collection<File> upgradeModulePath,
                                                  Collection<File> modulePath,
                                                  Collection<File> sourcePath,
                                                  Collection<File> files,
@@ -430,7 +409,7 @@ public class CompilerManagerImpl extends CompilerManager {
 
     final ExternalJavacManager javacManager = getJavacManager();
     boolean compiledOk = javacManager != null && javacManager.forkJavac(
-      javaHome, -1, Collections.emptyList(), options, platformCp, classpath, modulePath, sourcePath, files, outs, diagnostic, outputCollector,
+      javaHome, -1, Collections.emptyList(), options, platformCp, classpath, upgradeModulePath, modulePath, sourcePath, files, outs, diagnostic, outputCollector,
       new JavacCompilerTool(), CanceledStatus.NULL
     );
 

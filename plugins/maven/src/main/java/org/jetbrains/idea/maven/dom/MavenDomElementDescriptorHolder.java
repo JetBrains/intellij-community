@@ -45,16 +45,19 @@ public class MavenDomElementDescriptorHolder {
 
   private enum FileKind {
     PROJECT_FILE {
+      @Override
       public String getSchemaUrl() {
         return MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_URL;
       }
     },
     PROFILES_FILE {
+      @Override
       public String getSchemaUrl() {
         return MavenSchemaProvider.MAVEN_PROFILES_SCHEMA_URL;
       }
     },
     SETTINGS_FILE {
+      @Override
       public String getSchemaUrl() {
         return MavenSchemaProvider.MAVEN_SETTINGS_SCHEMA_URL;
       }

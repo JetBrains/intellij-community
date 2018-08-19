@@ -23,6 +23,7 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import org.jdom.Element;
@@ -102,7 +103,7 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
     }
 
     String message = InspectionsBundle.message("inspection.redundant.cast.problem.descriptor",
-                                               "<code>" + operand.getText() + "</code>", "<code>#ref</code> #loc");
+                                               "<code>" + PsiExpressionTrimRenderer.render(operand) + "</code>", "<code>#ref</code> #loc");
     return manager.createProblemDescriptor(castType, message, myQuickFixAction, ProblemHighlightType.LIKE_UNUSED_SYMBOL, onTheFly);
   }
 

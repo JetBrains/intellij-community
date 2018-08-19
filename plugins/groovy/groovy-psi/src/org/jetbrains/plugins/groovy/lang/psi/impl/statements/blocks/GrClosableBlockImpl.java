@@ -53,7 +53,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitClosure(this);
   }
 
@@ -195,6 +195,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return "Closable block";
   }
 
+  @NotNull
   @Override
   public GrParameter[] getParameters() {
     if (hasParametersSection()) {

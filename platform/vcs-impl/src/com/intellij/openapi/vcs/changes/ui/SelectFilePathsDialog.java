@@ -29,15 +29,19 @@ import java.util.List;
 /**
  * @author yole
  */
-public class SelectFilePathsDialog extends AbstractSelectFilesDialog<FilePath> {
+public class SelectFilePathsDialog extends AbstractSelectFilesDialog {
 
   private final ChangesTreeImpl<FilePath> myFileList;
 
-  public SelectFilePathsDialog(final Project project, List<FilePath> originalFiles, final String prompt,
-                               final VcsShowConfirmationOption confirmationOption,
-                               @Nullable String okActionName, @Nullable String cancelActionName, boolean showDoNotAskOption) {
-    super(project, false, confirmationOption, prompt, showDoNotAskOption);
-    myFileList = new ChangesTreeImpl.FilePaths(project, true, true, originalFiles);
+  public SelectFilePathsDialog(@NotNull Project project,
+                               @NotNull List<FilePath> originalFiles,
+                               @Nullable String prompt,
+                               @Nullable VcsShowConfirmationOption confirmationOption,
+                               @Nullable String okActionName,
+                               @Nullable String cancelActionName,
+                               boolean showCheckboxes) {
+    super(project, false, confirmationOption, prompt);
+    myFileList = new ChangesTreeImpl.FilePaths(project, showCheckboxes, true, originalFiles);
     if (okActionName != null) {
       getOKAction().putValue(Action.NAME, okActionName);
     }

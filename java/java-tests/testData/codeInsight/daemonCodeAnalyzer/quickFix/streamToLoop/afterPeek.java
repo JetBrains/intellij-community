@@ -7,7 +7,7 @@ import java.util.LongSummaryStatistics;
 public class Main {
   public static int test(List<String> list) {
       int sum = 0;
-      for (String s: list) {
+      for (String s : list) {
           System.out.println(s);
           int length = s.length();
           sum += length;
@@ -17,7 +17,7 @@ public class Main {
 
   public static LongSummaryStatistics testSummaryStatistics(List<String> list) {
       LongSummaryStatistics stat = new LongSummaryStatistics();
-      for (String s: list) {
+      for (String s : list) {
           System.out.println(s);
           long length = s.length();
           stat.accept(length);

@@ -37,7 +37,7 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
       fileset(file: "$context.paths.communityHome/NOTICE.txt")
     }
 
-    EduUtils.copyEduToolsPlugin(dependenciesPath, context, targetDirectory)
+    EduUtils.copyPlugin("EduTools", dependenciesPath, context, targetDirectory)
   }
 
   @Override

@@ -124,7 +124,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       ((JDialog)frame).setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
     }
 
-    UIUtil.decorateFrame(((RootPaneContainer)frame).getRootPane());
+    UIUtil.decorateWindowHeader(((RootPaneContainer)frame).getRootPane());
 
     final WindowAdapter focusListener = new WindowAdapter() {
       @Override
@@ -274,7 +274,7 @@ public class FrameWrapper implements Disposable, DataProvider {
   }
 
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (CommonDataKeys.PROJECT.is(dataId)) {
       return myProject;
     }
@@ -436,7 +436,7 @@ public class FrameWrapper implements Disposable, DataProvider {
     }
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       if (IdeFrame.KEY.getName().equals(dataId)) {
         return this;
       }
@@ -519,7 +519,7 @@ public class FrameWrapper implements Disposable, DataProvider {
     }
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       if (IdeFrame.KEY.getName().equals(dataId)) {
         return this;
       }

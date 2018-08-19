@@ -55,19 +55,19 @@ NSImage * createImgFrom4ByteRGBA(const unsigned char *bytes, int w, int h) {
     return nsimg;
 }
 
-NSImage * getImg(ScrubberItemData * jdata) {
+NSImage * createImg(ScrubberItemData *jdata) {
     if (jdata == NULL)
         return nil;
     return createImgFrom4ByteRGBA((const unsigned char *)jdata->raster4ByteRGBA, jdata->rasterW, jdata->rasterH);
 }
 
-NSString * getText(ScrubberItemData * jdata) {
+NSString * createString(ScrubberItemData *jdata) {
     if (jdata == NULL || jdata->text == NULL)
         return nil;
     return [NSString stringWithUTF8String:jdata->text];
 }
 
-NSString * getString(const char * utf8) {
+NSString * createStringFromUTF8(const char *utf8) {
     if (utf8 == NULL)
         return nil;
     return [NSString stringWithUTF8String:utf8];

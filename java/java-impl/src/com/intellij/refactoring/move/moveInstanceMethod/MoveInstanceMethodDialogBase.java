@@ -44,6 +44,7 @@ public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
   protected final PsiMethod myMethod;
   protected final Object[] myVariables;
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myList;
   }
@@ -90,6 +91,7 @@ public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setSelectedIndex(0);
     list.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         updateOnChanged(list);
       }
@@ -130,16 +132,19 @@ public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
   }
 
   private class MyListModel extends AbstractListModel {
+    @Override
     public int getSize() {
       return myVariables.length;
     }
 
+    @Override
     public Object getElementAt(int index) {
       return myVariables[index];
     }
   }
 
   private static class MyListCellRenderer extends DefaultListCellRenderer {
+    @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       if (value instanceof PsiVariable) {

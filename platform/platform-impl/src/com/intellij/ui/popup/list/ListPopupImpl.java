@@ -19,7 +19,6 @@ import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.ui.popup.ClosableByLeftArrow;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.popup.NextStepHandler;
@@ -70,8 +69,6 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       myMaxRowCount = maxRowCount;
     }
     replacePasteAction();
-
-    TouchBarsManager.attachPopupBar(this);
   }
 
   public void showUnderneathOfLabel(@NotNull JLabel label) {
@@ -411,6 +408,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     }
   }
 
+  @Override
   public void handleNextStep(final PopupStep nextStep, Object parentValue) {
     handleNextStep(nextStep, parentValue, null);
   }
@@ -427,7 +425,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       }
       final JComponent container = getContent();
       assert container != null : "container == null";
-      
+
       int y = point.y;
       if (parentValue != null && getListModel().isSeparatorAboveOf(parentValue)) {
         SeparatorWithText swt = new SeparatorWithText();
@@ -556,7 +554,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     }
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
        if (PlatformDataKeys.SELECTED_ITEM.is(dataId)){
         return myList.getSelectedValue();
       }

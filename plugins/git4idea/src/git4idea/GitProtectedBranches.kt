@@ -22,6 +22,15 @@ fun findProtectedRemoteBranch(repository: GitRepository, branches: Collection<St
     firstOrNull { branches.contains(it) }
 }
 
+/**
+ * Checks if the given remote branch is protected.
+ *
+ * @param branchName the name of the remote branch in the "local" format, e.g. `origin/master`
+ */
+fun isRemoteBranchProtected(repositories: Collection<GitRepository>, branchName: String): Boolean {
+  return repositories.any { findProtectedRemoteBranch(it, listOf(branchName)) != null }
+}
+
 fun findProtectedRemoteBranchContainingCommit(repository: GitRepository, hash: Hash): String? {
   val root = repository.root
   val branchesGetter = VcsProjectLog.getInstance(repository.project).dataManager?.containingBranchesGetter

@@ -29,7 +29,6 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -40,9 +39,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.util.ObjectUtils;
@@ -50,6 +49,7 @@ import com.intellij.util.Query;
 import com.intellij.util.containers.OrderedSet;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.WeakestTypeFinder;
 import com.siyeh.ig.ui.UiUtils;
@@ -61,9 +61,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.*;
-import java.util.List;
 import java.util.stream.Collectors;
 
 public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -308,7 +306,8 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
         return;
       }
       final PsiJavaCodeReferenceElement componentReferenceElement = typeElement.getInnermostComponentReferenceElement();
-      if (componentReferenceElement == null) {
+      boolean isInferredType = typeElement.isInferredType();
+      if (componentReferenceElement == null && !isInferredType) {
         return;
       }
       final PsiType oldType = typeElement.getType();
@@ -339,10 +338,18 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
           classType = factory.createType(aClass, substitutor);
         }
       }
-      final PsiJavaCodeReferenceElement referenceElement = factory.createReferenceElementByType(classType);
-      final PsiElement replacement = componentReferenceElement.replace(referenceElement);
+      final PsiElement replacement;
+      if (isInferredType) {
+        PsiTypeElement newTypeElement = factory.createTypeElement(classType);
+        replacement = new CommentTracker().replaceAndRestoreComments(typeElement, newTypeElement);
+      }
+      else {
+        final PsiJavaCodeReferenceElement referenceElement = factory.createReferenceElementByType(classType);
+        replacement = new CommentTracker().replaceAndRestoreComments(componentReferenceElement, referenceElement);
+      }
       final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
       javaCodeStyleManager.shortenClassReferences(replacement);
+
     }
   }
 
@@ -419,7 +426,7 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
           return;
         }
       }
-      if (!doNotWeakenInferredVariableType) {
+      if (doNotWeakenInferredVariableType) {
         PsiTypeElement typeElement = variable.getTypeElement();
         if (typeElement != null && typeElement.isInferredType()) {
           return;
@@ -442,6 +449,10 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
             return;
           }
         }
+      }
+      if (variable instanceof PsiParameter) {
+        PsiMethod method = PsiTreeUtil.getParentOfType(variable, PsiMethod.class);
+        if (method == null || UnusedSymbolUtil.isImplicitUsage(variable.getProject(), method, null)) return;
       }
       if (UnusedSymbolUtil.isImplicitWrite(variable) || UnusedSymbolUtil.isImplicitRead(variable)) {
         return;

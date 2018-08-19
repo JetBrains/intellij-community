@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.autoimport;
 
 import com.intellij.ProjectTopics;
@@ -47,8 +45,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -65,7 +62,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.zip.CRC32;
 
 import static com.intellij.util.ui.update.MergingUpdateQueue.ANY_COMPONENT;
 
@@ -171,7 +167,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
 
     DocumentListener myDocumentListener = new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent event) {
+      public void documentChanged(@NotNull DocumentEvent event) {
         Document doc = event.getDocument();
         VirtualFile file = FileDocumentManager.getInstance().getFile(doc);
         if (file == null) return;
@@ -446,14 +442,14 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
 
       multicaster.addCaretListener(new CaretListener() {
         @Override
-        public void caretPositionChanged(CaretEvent e) {
+        public void caretPositionChanged(@NotNull CaretEvent e) {
           mergingUpdateQueue.restartTimer();
         }
       }, mergingUpdateQueue);
 
       multicaster.addDocumentListener(new DocumentListener() {
         @Override
-        public void documentChanged(DocumentEvent event) {
+        public void documentChanged(@NotNull DocumentEvent event) {
           mergingUpdateQueue.restartTimer();
         }
       }, mergingUpdateQueue);
@@ -715,31 +711,8 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
   }
 
   @NotNull
-  private Long calculateCrc(VirtualFile file) {
-    Long newCrc;
-    PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
-    if (psiFile != null) {
-      final CRC32 crc32 = new CRC32();
-      ApplicationManager.getApplication().runReadAction(() -> psiFile.acceptChildren(new PsiRecursiveElementVisitor() {
-        @Override
-        public void visitElement(PsiElement element) {
-          if (element instanceof LeafElement && !(element instanceof PsiWhiteSpace) && !(element instanceof PsiComment)) {
-            String text = element.getText();
-            if (!text.trim().isEmpty()) {
-              for (int i = 0, end = text.length(); i < end; i++) {
-                crc32.update(text.charAt(i));
-              }
-            }
-          }
-          super.visitElement(element);
-        }
-      }));
-      newCrc = crc32.getValue();
-    }
-    else {
-      newCrc = file.getModificationStamp();
-    }
-    return newCrc;
+  private Long calculateCrc(@NotNull VirtualFile file) {
+    return new ConfigurationFileCrcFactory(myProject, file).create();
   }
 
   @ApiStatus.Experimental

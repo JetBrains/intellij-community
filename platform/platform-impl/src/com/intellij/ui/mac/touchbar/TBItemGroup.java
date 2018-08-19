@@ -3,29 +3,35 @@ package com.intellij.ui.mac.touchbar;
 
 import com.intellij.ui.mac.foundation.ID;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
+class TBItemGroup extends TBItem {
+  private final ItemsContainer myGroupItems;
 
-public class TBItemGroup extends TBItem {
-  private final List<TBItem> myGroupItems = new ArrayList<>();
-
-  TBItemGroup(@NotNull String uid, @NotNull List<TBItem> items) {
-    super(uid);
-    myGroupItems.addAll(items);
+  TBItemGroup(@NotNull String uid, @Nullable ItemListener listener) {
+    super(uid, listener);
+    myGroupItems = new ItemsContainer(uid + "_group", listener);
   }
 
-  List<TBItem> getGroupItems() { return myGroupItems; }
+  ItemsContainer getContainer() { return myGroupItems; }
 
   @Override
-  protected void _updateNativePeer() { myGroupItems.forEach(item->item._updateNativePeer()); }
+  protected void _updateNativePeer() {
+    myGroupItems.forEachDeep(item->item._updateNativePeer());
+  }
 
   @Override
   protected ID _createNativePeer() {
     if (myGroupItems.isEmpty())
       return ID.NIL;
 
-    final ID[] ids = myGroupItems.stream().map(item->item.getNativePeer()).toArray(size -> new ID[size]);
+    final ID[] ids = myGroupItems.getVisibleNativePeers();
     return NST.createGroupItem(myUid, ids, ids.length);
+  }
+
+  @Override
+  void releaseNativePeer() {
+    myGroupItems.releaseAll();
+    super.releaseNativePeer();
   }
 }

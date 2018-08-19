@@ -2,10 +2,10 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -125,38 +125,32 @@ public class ZipUtil {
 
   /** @see Decompressor.Zip */
   public static void extract(@NotNull File file, @NotNull File outputDir, @Nullable FilenameFilter filter) throws IOException {
-    new Decompressor.Zip(file).filter(FileFilterAdapter.wrap(filter)).extract(outputDir);
+    new Decompressor.Zip(file).filter(FileFilterAdapter.wrap(outputDir, filter)).extract(outputDir);
   }
 
   /** @see Decompressor.Zip */
   public static void extract(@NotNull File file, @NotNull File outputDir, @Nullable FilenameFilter filter, boolean overwrite) throws IOException {
-    new Decompressor.Zip(file).filter(FileFilterAdapter.wrap(filter)).overwrite(overwrite).extract(outputDir);
+    new Decompressor.Zip(file).filter(FileFilterAdapter.wrap(outputDir, filter)).overwrite(overwrite).extract(outputDir);
   }
 
-  private static class FileFilterAdapter implements FileFilter {
-    private static FileFilterAdapter wrap(FilenameFilter original) {
-      return original == null ? null : new FileFilterAdapter(original);
+  private static class FileFilterAdapter implements Condition<String> {
+    private static FileFilterAdapter wrap(File outputDir, FilenameFilter filter) {
+      return filter == null ? null : new FileFilterAdapter(outputDir, filter);
     }
 
-    private final FilenameFilter myOriginal;
+    private final File myOutputDir;
+    private final FilenameFilter myFilter;
 
-    private FileFilterAdapter(FilenameFilter original) {
-      myOriginal = original;
+    private FileFilterAdapter(File outputDir, FilenameFilter filter) {
+      myOutputDir = outputDir;
+      myFilter = filter;
     }
 
     @Override
-    public boolean accept(File pathname) {
-      return myOriginal.accept(pathname.getParentFile(), pathname.getName());
+    public boolean value(String entryName) {
+      File outputFile = new File(myOutputDir, entryName);
+      return myFilter.accept(outputFile.getParentFile(), outputFile.getName());
     }
-  }
-
-  @NotNull
-  public static File newFileForEntry(@NotNull File outputDir, @NotNull String entryName) throws IOException {
-    // we check that name contains .. for performance reasons
-    if (entryName.contains("..") && ArrayUtil.contains("..", entryName.split("[/\\\\]"))) {
-      throw new IOException("Invalid entry name: " + entryName);
-    }
-    return new File(outputDir, entryName);
   }
 
   @SuppressWarnings("unused")
@@ -199,17 +193,18 @@ public class ZipUtil {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-
   /** @deprecated use {@link Decompressor.Zip} */
+  @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020")
   public static void extract(@NotNull ZipFile zip, @NotNull File outputDir, @Nullable FilenameFilter filter) throws IOException {
-    new Decompressor.Zip(new File(zip.getName())).filter(FileFilterAdapter.wrap(filter)).extract(outputDir);
+    new Decompressor.Zip(new File(zip.getName())).filter(FileFilterAdapter.wrap(outputDir, filter)).extract(outputDir);
   }
 
   /** @deprecated use {@link Decompressor.Zip} */
+  @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020")
   public static void extractEntry(@NotNull ZipEntry entry, @NotNull InputStream inputStream, @NotNull File outputDir, boolean overwrite) throws IOException {
-    File outputFile = newFileForEntry(outputDir, entry.getName());
+    File outputFile = Decompressor.entryFile(outputDir, entry.getName());
     try {
       if (entry.isDirectory()) {
         FileUtil.createDirectory(outputFile);
@@ -229,18 +224,5 @@ public class ZipUtil {
       inputStream.close();
     }
   }
-
-  /** @deprecated trivial */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
-  public static boolean isZipContainsEntry(File zip, String relativePath) throws IOException {
-    ZipFile zipFile = new ZipFile(zip);
-    try {
-      return zipFile.getEntry(relativePath) != null;
-    }
-    finally {
-      zipFile.close();
-    }
-  }
-
   //</editor-fold>
 }

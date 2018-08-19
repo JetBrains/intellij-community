@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Vladislav.Soroka
  * @since 5/14/2016
  */
+@Deprecated
 public class ArtifactBuildTaskImpl extends AbstractBuildTask implements ArtifactBuildTask {
   private final Artifact myArtifact;
 

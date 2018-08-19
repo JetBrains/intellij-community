@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /** @deprecated override SMTRunnerConsoleProperties.getTestLocator() instead (to be removed in IDEA 17) */
+@Deprecated
 public interface TestLocationProvider {
   @SuppressWarnings("deprecation") ExtensionPointName<TestLocationProvider> EP_NAME = ExtensionPointName.create("com.intellij.testSrcLocator");
 

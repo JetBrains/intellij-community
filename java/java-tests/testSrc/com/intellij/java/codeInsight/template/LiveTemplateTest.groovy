@@ -4,7 +4,12 @@ package com.intellij.java.codeInsight.template
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.completion.InsertHandler
+import com.intellij.codeInsight.completion.InsertionContext
+import com.intellij.codeInsight.daemon.impl.quickfix.EmptyExpression
 import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.template.*
 import com.intellij.codeInsight.template.impl.*
@@ -571,7 +576,7 @@ class A {{
     myFixture.configureByText "a.java", "class A { public void B() { I<caret> } }"
     myFixture.type('\t')
     myFixture.checkResult("class A { public void B() {\n" +
-                          "    for (Object o:) {\n" +
+                          "    for (Object o :) {\n" +
                           "        \n" +
                           "    }\n" +
                           "} }")
@@ -795,6 +800,38 @@ class Foo {{
 """
   }
 
+  void "test next tab is not is evaluated on lookup element insert if template is finished or broken-off"() {
+    myFixture.configureByText 'a.java', '''
+<caret>
+'''
+    final TemplateManager manager = TemplateManager.getInstance(getProject())
+    final Template template = manager.createTemplate("imp", "user", 'import $PKG$')
+    Expression expr = new EmptyExpression() {
+      @Override
+      LookupElement[] calculateLookupItems(ExpressionContext context) {
+        def finishTemplateHandler = new InsertHandler<LookupElement>() {
+          @Override
+          void handleInsert(@NotNull InsertionContext insertCtx, @NotNull LookupElement item) {
+            def stateRef = TemplateManagerImpl.getTemplateState(insertCtx.editor)
+            assertFalse(stateRef.isFinished())
+            stateRef.nextTab()
+            assertTrue(stateRef.isFinished())
+            stateRef.considerNextTabOnLookupItemSelected(item)
+          }
+        }
+        return LookupElementBuilder.create("com").withInsertHandler(finishTemplateHandler) as LookupElement[]
+      }
+    }
+    template.addVariable('PKG', expr, true)
+    startTemplate(template)
+    assertNotNull(myFixture.lookup)
+    myFixture.type('\n')
+    myFixture.checkResult '''
+import com<caret>
+'''
+    assertNull(state)
+  }
+
   void "test delete at the last template position"() {
     myFixture.configureByText 'a.java', """
 class Foo {{
@@ -805,7 +842,7 @@ class Foo {{
     LightPlatformCodeInsightTestCase.delete(myFixture.editor, myFixture.project)
     myFixture.checkResult """
 class Foo {{
-    for (Object o: <caret> {
+    for (Object o : <caret> {
         
     }
 }}
@@ -919,7 +956,7 @@ class Foo {
   void "test finish template on moving caret by completion insert handler"() {
     TemplateManagerImpl templateManager = TemplateManager.getInstance(project) as TemplateManagerImpl
     myFixture.configureByText('a.html', '<selection><p></p></selection>')
-    def template = TemplateSettings.instance.getTemplate("T2", "html/xml")
+    def template = TemplateSettings.instance.getTemplate("T", "HTML/XML")
     myFixture.testAction(new InvokeTemplateAction(template, myFixture.editor, myFixture.project, ContainerUtil.newHashSet()))
     myFixture.complete(CompletionType.BASIC)
     myFixture.type("nofra")

@@ -19,6 +19,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -103,7 +104,7 @@ public interface DfaMemoryState {
    * problems under assumption that the state is still valid.
    * <p>
    *   E.g. if it's proven that nullable variable is dereferenced, for the sake of subsequent analysis one might call
-   *   {@code forceVariableFact(var, CAN_BE_NULL, false)}
+   *   {@code forceVariableFact(var, NULLABILITY, NOT_NULL)}
    * </p>
    *
    * @param var the variable to modify
@@ -123,8 +124,15 @@ public interface DfaMemoryState {
 
   boolean isNotNull(DfaValue dfaVar);
 
+  /**
+   * Returns a constant value which equals to given value, if such.
+   *
+   * @param value a value to find a corresponding constant
+   * @return found constant or null
+   */
   @Nullable
-  DfaConstValue getConstantValue(@NotNull DfaVariableValue value);
+  @Contract("null -> null")
+  DfaConstValue getConstantValue(@Nullable DfaValue value);
 
   /**
    * Ephemeral means a state that was created when considering a method contract and checking if one of its arguments is null.

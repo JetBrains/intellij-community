@@ -60,6 +60,7 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
     myProject = project;
   }
 
+  @Override
   public Key<MavenBeforeRunTask> getId() {
     return ID;
   }
@@ -102,14 +103,17 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
     return MavenProjectsManager.getInstance(myProject).findProject(file);
   }
 
+  @Override
   public boolean isConfigurable() {
     return true;
   }
 
+  @Override
   public MavenBeforeRunTask createTask(@NotNull RunConfiguration runConfiguration) {
     return new MavenBeforeRunTask();
   }
 
+  @Override
   public boolean configureTask(@NotNull RunConfiguration runConfiguration, @NotNull MavenBeforeRunTask task) {
     MavenEditGoalDialog dialog = new MavenEditGoalDialog(myProject);
 
@@ -161,6 +165,7 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
     return task.getGoal() != null && task.getProjectPath() != null;
   }
 
+  @Override
   public boolean executeTask(final DataContext context,
                              @NotNull RunConfiguration configuration,
                              @NotNull ExecutionEnvironment env,
@@ -181,6 +186,7 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
 
         targetDone.down();
         new Task.Backgroundable(project, TasksBundle.message("maven.tasks.executing"), true) {
+          @Override
           public void run(@NotNull ProgressIndicator indicator) {
             try {
               MavenRunnerParameters params = new MavenRunnerParameters(

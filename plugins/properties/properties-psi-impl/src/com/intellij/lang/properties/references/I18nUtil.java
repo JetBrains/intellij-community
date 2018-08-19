@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,7 +30,8 @@ import java.util.List;
 
 public class I18nUtil {
   @NotNull
-  public static List<PropertiesFile> propertiesFilesByBundleName(final String resourceBundleName, @NotNull PsiElement context) {
+  public static List<PropertiesFile> propertiesFilesByBundleName(@Nullable String resourceBundleName, @NotNull PsiElement context) {
+    if (resourceBundleName == null) return Collections.emptyList();
     PsiFile containingFile = context.getContainingFile();
     PsiElement containingFileContext = InjectedLanguageManager.getInstance(containingFile.getProject()).getInjectionHost(containingFile);
     if (containingFileContext != null) containingFile = containingFileContext.getContainingFile();

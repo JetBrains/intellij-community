@@ -75,7 +75,8 @@ public class ExternalSystemJdkUtil {
 
   @NotNull
   public static Pair<String, Sdk> getAvailableJdk(@Nullable Project project) throws ExternalSystemJdkException {
-    JavaSdk javaSdkType = JavaSdk.getInstance();
+    // JavaSdk.getInstance() can be null for non-java IDE
+    SdkType javaSdkType = JavaSdk.getInstance() == null ? SimpleJavaSdkType.getInstance() : JavaSdk.getInstance();
 
     if (project != null) {
       Stream<Sdk> projectSdks = Stream.concat(
@@ -94,11 +95,12 @@ public class ExternalSystemJdkUtil {
     if (mostRecentSdk != null) {
       return pair(mostRecentSdk.getName(), mostRecentSdk);
     }
-
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       String javaHome = EnvironmentUtil.getEnvironmentMap().get("JAVA_HOME");
       if (isValidJdk(javaHome)) {
-        return pair(USE_JAVA_HOME, javaSdkType.createJdk("", javaHome));
+        SimpleJavaSdkType simpleJavaSdkType = SimpleJavaSdkType.getInstance();
+        String sdkName = simpleJavaSdkType.suggestSdkName(null, javaHome);
+        return pair(USE_JAVA_HOME, simpleJavaSdkType.createJdk(sdkName, javaHome));
       }
     }
 
@@ -106,6 +108,7 @@ public class ExternalSystemJdkUtil {
   }
 
   /** @deprecated trivial (to be removed in IDEA 2019) */
+  @Deprecated
   public static boolean checkForJdk(@NotNull Project project, @Nullable String jdkName) {
     try {
       final Sdk sdk = getJdk(project, jdkName);

@@ -37,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.util.ArrayList;
@@ -49,6 +48,7 @@ public class ActionUtil {
   @NonNls private static final String WAS_ENABLED_BEFORE_DUMB = "WAS_ENABLED_BEFORE_DUMB";
   @NonNls public static final String WOULD_BE_ENABLED_IF_NOT_DUMB_MODE = "WOULD_BE_ENABLED_IF_NOT_DUMB_MODE";
   @NonNls private static final String WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE = "WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE";
+  @NonNls private static final String ACTION_UPDATE_DATA = ActionUtil.class.getName() + "ACTION_UPDATE_DATA";
 
   private ActionUtil() {
   }
@@ -82,15 +82,15 @@ public class ActionUtil {
   @NotNull
   private static String getActionUnavailableMessage(@NotNull List<String> actionNames) {
     String message;
-    final String beAvailableUntil = " available while " + ApplicationNamesInfo.getInstance().getProductName() + " is updating indices";
     if (actionNames.isEmpty()) {
-      message = "This action is not" + beAvailableUntil;
+      message = getUnavailableMessage("This action", false);
     }
     else if (actionNames.size() == 1) {
-      message = "'" + actionNames.get(0) + "' action is not" + beAvailableUntil;
+      message = getUnavailableMessage("'" + actionNames.get(0) + "'", false);
     }
     else {
-      message = "None of the following actions are" + beAvailableUntil + ": " + StringUtil.join(actionNames, ", ");
+      message = getUnavailableMessage("None of the following actions", true) +
+                                       ": " + StringUtil.join(actionNames, ", ");
     }
     return message;
   }
@@ -99,6 +99,40 @@ public class ActionUtil {
   public static String getUnavailableMessage(@NotNull String action, boolean plural) {
     return action + (plural ? " are" : " is")
            + " not available while " + ApplicationNamesInfo.getInstance().getProductName() + " is updating indices";
+  }
+
+  /**
+   * Calculates time spent for update,
+   * remember average time (with exponential smoothing) and caches update results inside action.getTemplatePresentation().getClientProperty(ACTION_UPDATE_DATA),
+   * if average time is quite big then skip update invocation and use cached presentation.
+   * @param forceUseCached use cached results for slow actions if presented (relax time doesn't take into account)
+   */
+  public static void performFastUpdate(boolean isInModalContext, @NotNull AnAction action, @NotNull AnActionEvent event, boolean forceUseCached) {
+    final Presentation templatePresentation = action.getTemplatePresentation();
+    ActionUpdateData ud = (ActionUpdateData)templatePresentation.getClientProperty(ACTION_UPDATE_DATA);
+    if (ud == null)
+      templatePresentation.putClientProperty(ACTION_UPDATE_DATA, ud = new ActionUpdateData());
+
+    final boolean isSlow = ud.averageUpdateDurationMs > 10;// empiric val: 10 ms
+    final long startTimeNs = System.nanoTime();
+    final long relaxMs = Math.min(ud.averageUpdateDurationMs*100, 10000); // empiric vals: min 1 sec, max 10 sec
+    if (isSlow && ud.lastUpdateEvent != null && (forceUseCached || (startTimeNs - ud.lastUpdateTimeNs)/1000000l < relaxMs)) {
+      // System.out.println("use cached presentation for action '" + String.valueOf(action) + "', averageUpdateDuration=" + ud.averageUpdateDurationMs + " ms, " + (startTimeNs - ud.lastUpdateTimeNs)/1000000l + " ms elapsed from last update");
+      event.getPresentation().copyFrom(ud.lastUpdateEvent.getPresentation());
+      return;
+    }
+
+    performDumbAwareUpdate(isInModalContext, action, event, false);
+    final long finishUpdateNs = System.nanoTime();
+
+    ud.lastUpdateTimeNs = finishUpdateNs;
+    ud.lastUpdateEvent = event;
+
+    final float smoothAlpha = isSlow ? 0.8f : 0.3f;
+    final float smoothCoAlpha = 1 - smoothAlpha;
+    final long spentMs = (finishUpdateNs - startTimeNs)/1000000l;
+
+    ud.averageUpdateDurationMs = Math.round(spentMs*smoothAlpha + ud.averageUpdateDurationMs*smoothCoAlpha);
   }
 
   private static int insidePerformDumbAwareUpdate;
@@ -122,7 +156,8 @@ public class ActionUtil {
     }
     final boolean enabledBeforeUpdate = presentation.isEnabled();
 
-    final boolean notAllowed = dumbMode && !action.isDumbAware() || (Registry.is("actionSystem.honor.modal.context") && isInModalContext && !action.isEnabledInModalContext());
+    boolean allowed = (!dumbMode || action.isDumbAware()) &&
+                      (!Registry.is("actionSystem.honor.modal.context") || !isInModalContext || action.isEnabledInModalContext());
 
     String description = presentation.getText() + " action update (" + action.getClass() + ")";
     if (insidePerformDumbAwareUpdate++ == 0) {
@@ -135,11 +170,11 @@ public class ActionUtil {
       else {
         action.update(e);
       }
-      presentation.putClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE, notAllowed && presentation.isEnabled());
-      presentation.putClientProperty(WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE, notAllowed && presentation.isVisible());
+      presentation.putClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE, !allowed && presentation.isEnabled());
+      presentation.putClientProperty(WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE, !allowed && presentation.isVisible());
     }
     catch (IndexNotReadyException e1) {
-      if (notAllowed) {
+      if (!allowed) {
         return true;
       }
       throw e1;
@@ -148,7 +183,7 @@ public class ActionUtil {
       if (--insidePerformDumbAwareUpdate == 0) {
         ActionPauses.STAT.finished(description);
       }
-      if (notAllowed) {
+      if (!allowed) {
         if (wasEnabledBefore == null) {
           presentation.putClientProperty(WAS_ENABLED_BEFORE_DUMB, enabledBeforeUpdate);
         }
@@ -177,8 +212,8 @@ public class ActionUtil {
     if (project != null) {
       return DumbService.getInstance(project).isDumb();
     }
-    for (Project proj : ProjectManager.getInstance().getOpenProjects()) {
-      if (DumbService.getInstance(proj).isDumb()) {
+    for (Project openProject : ProjectManager.getInstance().getOpenProjects()) {
+      if (DumbService.getInstance(openProject).isDumb()) {
         return true;
       }
     }
@@ -205,11 +240,14 @@ public class ActionUtil {
     if (!e.getPresentation().isEnabled()) {
       return false;
     }
-    if (visibilityMatters && !e.getPresentation().isVisible()) {
-      return false;
-    }
+    return !visibilityMatters || e.getPresentation().isVisible();
+  }
 
-    return true;
+  public static void performActionDumbAwareWithCallbacks(AnAction action, AnActionEvent e, DataContext context) {
+    final ActionManagerEx manager = ActionManagerEx.getInstanceEx();
+    manager.fireBeforeActionPerformed(action, context, e);
+    performActionDumbAware(action, e);
+    manager.fireAfterActionPerformed(action, context, e);
   }
 
   public static void performActionDumbAware(AnAction action, AnActionEvent e) {
@@ -273,7 +311,7 @@ public class ActionUtil {
                                                   @Nullable Disposable parentDisposable) {
     for (AnAction action : group.getChildren(null)) {
       if (action instanceof ActionGroup) {
-        recursiveRegisterShortcutSet(((ActionGroup)action), component, parentDisposable);
+        recursiveRegisterShortcutSet((ActionGroup)action, component, parentDisposable);
       }
       action.registerCustomShortcutSet(component, parentDisposable);
     }
@@ -320,7 +358,7 @@ public class ActionUtil {
     }
     p1.setDescription(ObjectUtils.chooseNotNull(p1.getDescription(), p2.getDescription()));
     ShortcutSet ss1 = a1.getShortcutSet();
-    if (ss1 == null || ss1 == CustomShortcutSet.EMPTY) {
+    if (ss1 == CustomShortcutSet.EMPTY) {
       a1.copyShortcutFrom(a2);
     }
     return a1;
@@ -353,21 +391,24 @@ public class ActionUtil {
 
   @NotNull
   public static ActionListener createActionListener(@NotNull String actionId, @NotNull Component component, @NotNull String place) {
-    return new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        AnAction action = ActionManager.getInstance().getAction(actionId);
-        if (action == null) {
-          LOG.warn("Can not find action by id " + actionId);
-          return;
-        }
-        invokeAction(action, component, place, null, null);
+    return e -> {
+      AnAction action = ActionManager.getInstance().getAction(actionId);
+      if (action == null) {
+        LOG.warn("Can not find action by id " + actionId);
+        return;
       }
+      invokeAction(action, component, place, null, null);
     };
   }
 
   @NotNull
   public static ActionListener createActionListener(@NotNull AnAction action, @NotNull Component component, @NotNull String place) {
     return e -> invokeAction(action, component, place, null, null);
+  }
+
+  private static class ActionUpdateData {
+    AnActionEvent lastUpdateEvent;
+    long lastUpdateTimeNs = 0;
+    long averageUpdateDurationMs = 0;
   }
 }

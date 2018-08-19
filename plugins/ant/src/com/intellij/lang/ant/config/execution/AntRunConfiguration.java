@@ -1,9 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.execution;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -13,7 +10,6 @@ import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.impl.BuildFileProperty;
 import com.intellij.lang.ant.config.impl.GlobalAntConfiguration;
 import com.intellij.lang.ant.config.impl.TargetChooserDialog;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
@@ -70,13 +66,12 @@ public class AntRunConfiguration extends LocatableConfigurationBase implements R
   @Override
   public String suggestedName() {
     AntBuildTarget target = getTarget();
-    return target != null ? target.getDisplayName() : "";
+    return target == null ? null : target.getDisplayName();
   }
-
 
   @Nullable
   @Override
-  public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
+  public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
     return new AntRunProfileState(env);
   }
 
@@ -101,7 +96,8 @@ public class AntRunConfiguration extends LocatableConfigurationBase implements R
   public List<BuildFileProperty> getProperties() {
     return Collections.unmodifiableList(mySettings.myProperties);
   }
-  
+
+  @SuppressWarnings("UnusedReturnValue")
   public boolean acceptSettings(AntBuildTarget target) {
     VirtualFile virtualFile = target.getModel().getBuildFile().getVirtualFile();
     if (virtualFile == null) {
@@ -174,10 +170,10 @@ public class AntRunConfiguration extends LocatableConfigurationBase implements R
   private class AntConfigurationSettingsEditor extends SettingsEditor<RunConfiguration> {
     private String myFileUrl = null;
     private String myTargetName = null;
-    
+
     private final JTextField myTextField = new JTextField();
     private final PropertiesTable myPropTable = new PropertiesTable();
-    
+
     private final ActionListener myActionListener = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -218,7 +214,7 @@ public class AntRunConfiguration extends LocatableConfigurationBase implements R
     }
 
     @Override
-    protected void applyEditorTo(@NotNull RunConfiguration s) throws ConfigurationException {
+    protected void applyEditorTo(@NotNull RunConfiguration s) {
       final AntRunConfiguration config = (AntRunConfiguration)s;
       config.mySettings.myFileUrl = myFileUrl;
       config.mySettings.myTargetName = myTargetName;
@@ -231,14 +227,14 @@ public class AntRunConfiguration extends LocatableConfigurationBase implements R
       myTextField.setEditable(false);
       final JPanel panel = new JPanel(new BorderLayout());
       panel.add(LabeledComponent.create(new TextFieldWithBrowseButton(myTextField, myActionListener), "Target name", BorderLayout.WEST), BorderLayout.NORTH);
-      
+
       final LabeledComponent<JComponent> tableComponent = LabeledComponent.create(myPropTable.getComponent(), "Ant Properties");
       tableComponent.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
       panel.add(tableComponent, BorderLayout.CENTER);
       return panel;
     }
   }
-  
+
   private static class PropertiesTable extends ListTableWithButtons<BuildFileProperty> {
     @Override
     protected ListTableModel createListModel() {
@@ -311,7 +307,7 @@ public class AntRunConfiguration extends LocatableConfigurationBase implements R
       }
     }
   }
-  
+
   private static void copyProperties(final Iterable<BuildFileProperty> from, final List<BuildFileProperty> to) {
     to.clear();
     for (BuildFileProperty p : from) {

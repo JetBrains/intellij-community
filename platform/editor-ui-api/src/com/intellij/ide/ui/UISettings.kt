@@ -28,7 +28,7 @@ import java.awt.RenderingHints
 import javax.swing.JComponent
 import javax.swing.SwingConstants
 
-@State(name = "UISettings", storages = [(Storage("ui.lnf.xml"))])
+@State(name = "UISettings", storages = [(Storage("ui.lnf.xml"))], reportStatistic = true)
 class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   // These font properties should not be set in the default ctor,
   // so that to make the serialization logic judge if a property

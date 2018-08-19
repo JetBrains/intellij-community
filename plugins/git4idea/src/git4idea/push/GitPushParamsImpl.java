@@ -5,6 +5,7 @@ import git4idea.repo.GitRemote;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 public class GitPushParamsImpl implements GitPushParams {
@@ -15,6 +16,19 @@ public class GitPushParamsImpl implements GitPushParams {
   private final boolean mySkipHooks;
   @Nullable private final String myTagMode;
   @NotNull private final List<ForceWithLease> myForceWithLease;
+
+  /**
+   * @deprecated Use {@link #GitPushParamsImpl(GitRemote, String, boolean, boolean, boolean, String, List)}
+   */
+  @Deprecated
+  public GitPushParamsImpl(@NotNull GitRemote remote,
+                           @NotNull String spec,
+                           boolean force,
+                           boolean setupTracking,
+                           boolean skipHooks,
+                           @Nullable String tagMode) {
+    this(remote, spec, force, setupTracking, skipHooks, tagMode, Collections.emptyList());
+  }
 
   public GitPushParamsImpl(@NotNull GitRemote remote,
                            @NotNull String spec,

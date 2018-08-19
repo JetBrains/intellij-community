@@ -5,9 +5,9 @@ import com.google.common.base.Preconditions
 import com.intellij.execution.RunManager
 import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectLifecycleListener
@@ -49,8 +49,8 @@ fun isNewTestsModeEnabled(): Boolean = Registry.`is`("python.tests.enableUnivers
 /**
  * Should be installed as application component
  */
-class PyTestLegacyInteropInitializer {
-  init {
+internal class PyTestLegacyInteropInitializer : ApplicationInitializedListener {
+  override fun componentsInitialized() {
     disableUnneededConfigurationProducer()
 
     // Delegate to project initialization
@@ -85,16 +85,18 @@ private fun projectInitialized(project: Project) {
  * It is impossible to have 2 producers for one type (class cast exception may take place), so we need to disable either old or new one
  */
 private fun disableUnneededConfigurationProducer() {
-  val extensionPoint = Extensions.getArea(null).getExtensionPoint(RunConfigurationProducer.EP_NAME)
+  val extensionPoint = RunConfigurationProducer.EP_NAME.getPoint(null)
 
   val newMode = isNewTestsModeEnabled()
-  extensionPoint.extensions.filter { it !is PythonDocTestConfigurationProducer }.forEach {
-    if ((it is PyTestsConfigurationProducer && !newMode) ||
-        (it is PythonTestLegacyConfigurationProducer<*> && newMode)) {
-      extensionPoint.unregisterExtension(it)
-      Logger.getInstance("PyTestLegacyInterop").info("Disabling " + it)
+  extensionPoint.extensionList
+    .filter { it !is PythonDocTestConfigurationProducer }
+    .forEach {
+      if ((it is PyTestsConfigurationProducer && !newMode) ||
+          (it is PythonTestLegacyConfigurationProducer<*> && newMode)) {
+        extensionPoint.unregisterExtension(it)
+        Logger.getInstance("PyTestLegacyInterop").info("Disabling $it")
+      }
     }
-  }
 }
 
 private fun getVirtualFileByPath(path: String): VirtualFile? {
@@ -122,9 +124,7 @@ private fun VirtualFile.asPyFile(project: Project): PyFile? {
  * Manages legacy-to-new configuration binding
  * Attach it to new configuration and mark with [com.jetbrains.reflection.DelegationProperty]
  */
-class PyTestLegacyConfigurationAdapter<in T : PyAbstractTestConfiguration>(newConfig: T)
-  : JDOMExternalizable {
-
+class PyTestLegacyConfigurationAdapter<in T : PyAbstractTestConfiguration>(newConfig: T) : JDOMExternalizable {
   private val configManager: LegacyConfigurationManager<*, *>?
   private val project = newConfig.project
 
@@ -240,7 +240,7 @@ private abstract class LegacyConfigurationManager<
    * This method should be called from AWT thread only
    *
    * Copies config from legacy to new configuration.
-   * Used by all runners but py.test which has very different settings
+   * Used by all runners but pytest which has very different settings
    */
   open fun copyFromLegacy() {
     Preconditions.checkState(SwingUtilities.isEventDispatchThread(), "Run on AWT thread only")
@@ -272,7 +272,7 @@ private class LegacyConfigurationManagerPyTest(newConfig: PyTestConfiguration) :
   LegacyConfigurationManager<PyTestRunConfiguration, PyTestConfiguration>(
     PythonTestConfigurationType.getInstance().LEGACY_PYTEST_FACTORY, newConfig) {
   /**
-   * In Py.test target is provided as keywords, joined with "and".
+   * In Pytest target is provided as keywords, joined with "and".
    * "function_foo", "MyClass" or "MyClass and my_method" could be used here.
    */
   private val KEYWORDS_SPLIT_PATTERN = java.util.regex.Pattern.compile("\\s+and\\s+", java.util.regex.Pattern.CASE_INSENSITIVE)

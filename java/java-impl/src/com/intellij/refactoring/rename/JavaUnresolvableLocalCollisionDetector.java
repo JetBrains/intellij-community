@@ -50,6 +50,7 @@ public class JavaUnresolvableLocalCollisionDetector {
     LOG.assertTrue(scope != null, element.getClass().getName());
 
     final CollidingVariableVisitor collidingNameVisitor = new CollidingVariableVisitor() {
+      @Override
       public void visitCollidingElement(PsiVariable collidingVariable) {
         if (collidingVariable.equals(element)) return;
         LocalHidesRenamedLocalUsageInfo collision = new LocalHidesRenamedLocalUsageInfo(element, collidingVariable);

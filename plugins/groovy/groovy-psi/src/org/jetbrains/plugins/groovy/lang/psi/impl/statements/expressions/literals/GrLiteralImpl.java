@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals;
 
@@ -25,6 +25,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
+
 /**
  * @author ilyas
  */
@@ -46,7 +48,7 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitLiteralExpression(this);
   }
 
@@ -94,14 +96,14 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
     else if (elemType == GroovyTokenTypes.kTRUE) {
       return Boolean.TRUE;
     }
-    else if (elemType == GroovyTokenTypes.mSTRING_LITERAL) {
+    else if (elemType == STRING_SQ || elemType == STRING_TSQ) {
       if (!text.startsWith("'")) return null;
       text = GrStringUtil.removeQuotes(text);
       StringBuilder chars = new StringBuilder(text.length());
       boolean result = GrStringUtil.parseStringCharacters(text, chars, null);
       return result ? chars.toString() : null;
     }
-    else if (elemType == GroovyTokenTypes.mGSTRING_LITERAL) {
+    else if (elemType == STRING_DQ || elemType == STRING_TDQ) {
       if (!text.startsWith("\"")) return null;
       text = GrStringUtil.removeQuotes(text);
       StringBuilder chars = new StringBuilder(text.length());

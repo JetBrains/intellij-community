@@ -24,9 +24,6 @@ public abstract class JavaCodeStyleManager {
   public static final int DO_NOT_ADD_IMPORTS = 0x1000;
   public static final int INCOMPLETE_CODE = 0x2000;
 
-  /** @deprecated use {@link #INCOMPLETE_CODE} (to be removed in IDEA 17) */
-  @SuppressWarnings({"unused", "SpellCheckingInspection"}) public static final int UNCOMPLETE_CODE = INCOMPLETE_CODE;
-
   public abstract boolean addImport(@NotNull PsiJavaFile file, @NotNull PsiClass refClass);
   @NotNull
   public abstract PsiElement shortenClassReferences(@NotNull PsiElement element,

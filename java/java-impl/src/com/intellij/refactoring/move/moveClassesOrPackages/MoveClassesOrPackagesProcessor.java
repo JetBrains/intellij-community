@@ -44,6 +44,7 @@ import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveClassesOrPackagesCallback;
 import com.intellij.refactoring.move.MoveMultipleElementsViewDescriptor;
+import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.classRefs.ClassInstanceScanner;
@@ -53,7 +54,6 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
-import java.util.HashMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,9 +88,15 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     for (PsiElement element : elements) {
       PsiUtilCore.ensureValid(element);
       if (element instanceof PsiClassOwner) {
-        for (PsiClass aClass : ((PsiClassOwner)element).getClasses()) {
-          PsiUtilCore.ensureValid(aClass);
-          toMove.add(aClass);
+        PsiClass[] classes = ((PsiClassOwner)element).getClasses();
+        if (classes.length > 0) {
+          for (PsiClass aClass : classes) {
+            PsiUtilCore.ensureValid(aClass);
+            toMove.add(aClass);
+          }
+        }
+        else {
+          toMove.add(element);
         }
       } else {
         toMove.add(element);
@@ -118,6 +124,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     myMoveCallback = moveCallback;
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     PsiElement[] elements = new PsiElement[myElementsToMove.length];
@@ -162,6 +169,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   }
 
 
+  @Override
   @NotNull
   protected UsageInfo[] findUsages() {
     final List<UsageInfo> allUsages = new ArrayList<>();
@@ -230,6 +238,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     return data;
   }
 
+  @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final UsageInfo[] usages = refUsages.get();
     return showConflicts(myConflicts, usages);
@@ -393,6 +402,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
                                            final UsageInfo[] usages,
                                            final MyClassInstanceReferenceVisitor instanceReferenceVisitor) {
     ClassReferenceScanner referenceScanner = new ClassReferenceScanner(aClass) {
+      @Override
       public PsiReference[] findReferences() {
         ArrayList<PsiReference> result = new ArrayList<>();
         for (UsageInfo usage : usages) {
@@ -419,12 +429,15 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     else if (element instanceof PsiPackage) {
       return StringUtil.getQualifiedName(qualifiedName, ((PsiPackage)element).getName());
     }
+    else if (element instanceof PsiClassOwner) {
+      return ((PsiClassOwner)element).getName();
+    }
     else {
       LOG.assertTrue(false);
       return null;
     }
   }
-  
+
   @Nullable
   private String getOldQName(PsiElement element) {
     if (element instanceof PsiClass) {
@@ -432,6 +445,9 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     }
     else if (element instanceof PsiPackage) {
       return ((PsiPackage)element).getQualifiedName();
+    }
+    else if (element instanceof PsiClassOwner) {
+      return ((PsiClassOwner)element).getName();
     }
     else {
       LOG.assertTrue(false);
@@ -455,6 +471,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @Override
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
     // If files are being moved then I need to collect some information to delete these
     // files from CVS. I need to know all common parents of the moved files and relative
@@ -518,7 +535,24 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
           final PsiClass newElement = MoveClassesOrPackagesUtil.doMoveClass(psiClass, myMoveDestination.getTargetDirectory(element.getContainingFile()), allClasses.get(psiClass));
           oldToNewElementsMapping.put(element, newElement);
           element = newElement;
-        } else {
+        }
+        else if (element instanceof PsiClassOwner) {
+          PsiDirectory directory = myMoveDestination.getTargetDirectory(element.getContainingFile());
+          MoveFilesOrDirectoriesUtil.doMoveFile((PsiClassOwner)element, directory);
+          PsiFile newElement = directory.findFile(((PsiClassOwner)element).getName());
+          LOG.assertTrue(newElement != null);
+          final PsiPackage newPackage = JavaDirectoryService.getInstance().getPackage(directory);
+          if (newPackage != null) {
+            String qualifiedName = newPackage.getQualifiedName();
+            if (!Comparing.strEqual(qualifiedName, ((PsiClassOwner)newElement).getPackageName()) &&
+                (qualifiedName.isEmpty() || PsiNameHelper.getInstance(myProject).isQualifiedName(qualifiedName))) {
+              ((PsiClassOwner)newElement).setPackageName(qualifiedName);
+            }
+          }
+          oldToNewElementsMapping.put(element, newElement);
+          element = newElement;
+        }
+        else {
           LOG.error("Unexpected element to move: " + element);
         }
         elementListener.elementMoved(element);
@@ -554,6 +588,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @Override
   @NotNull
   protected String getCommandName() {
     String elements = RefactoringUIUtil.calculatePsiElementDescriptionList(myElementsToMove);
@@ -570,6 +605,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       myConflicts = conflicts;
     }
 
+    @Override
     public void visitQualifier(PsiReferenceExpression qualified,
                                PsiExpression instanceRef,
                                PsiElement referencedInstance) {
@@ -638,14 +674,17 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       }
     }
 
+    @Override
     public void visitTypeCast(PsiTypeCastExpression typeCastExpression,
                               PsiExpression instanceRef,
                               PsiElement referencedInstance) {
     }
 
+    @Override
     public void visitReadUsage(PsiExpression instanceRef, PsiType expectedType, PsiElement referencedInstance) {
     }
 
+    @Override
     public void visitWriteUsage(PsiExpression instanceRef, PsiType assignedType, PsiElement referencedInstance) {
     }
   }

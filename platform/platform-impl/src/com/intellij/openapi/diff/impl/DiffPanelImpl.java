@@ -1,29 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.EditSourceAction;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
@@ -32,7 +14,6 @@ import com.intellij.openapi.diff.actions.ToggleAutoScrollAction;
 import com.intellij.openapi.diff.ex.DiffPanelEx;
 import com.intellij.openapi.diff.ex.DiffPanelOptions;
 import com.intellij.openapi.diff.impl.external.DiffManagerImpl;
-import com.intellij.openapi.diff.impl.fragments.Fragment;
 import com.intellij.openapi.diff.impl.fragments.FragmentList;
 import com.intellij.openapi.diff.impl.highlighting.DiffPanelState;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
@@ -45,7 +26,6 @@ import com.intellij.openapi.diff.impl.settings.DiffToolSettings;
 import com.intellij.openapi.diff.impl.splitter.DiffDividerPaint;
 import com.intellij.openapi.diff.impl.splitter.LineBlocks;
 import com.intellij.openapi.diff.impl.util.*;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ScrollingModel;
@@ -54,13 +34,10 @@ import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -71,7 +48,6 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.LineSeparator;
-import com.intellij.util.containers.CacheOneStepIterator;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.ui.PlatformColors;
 import gnu.trove.TIntFunction;
@@ -82,9 +58,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseListener;
 import java.util.Arrays;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
@@ -112,6 +85,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
   private DiffRequest.ToolbarAddons createToolbar() {
     return new DiffRequest.ToolbarAddons() {
+      @Override
       public void customize(DiffToolbar toolbar) {
         ActionManager actionManager = ActionManager.getInstance();
         toolbar.addAction(actionManager.getAction("DiffPanel.Toolbar"));
@@ -138,7 +112,6 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   }
 
   private boolean myDisposed = false;
-  private final GenericDataProvider myDataProvider;
   @NotNull private final Project myProject;
   private final boolean myIsHorizontal;
   private final DiffTool myParentTool;
@@ -152,7 +125,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
                        boolean horizontal,
                        int diffDividerPolygonsOffset,
                        DiffTool parentTool) {
-    UsageTrigger.trigger("diff.DiffPanelImpl");
+    DiffUsageTriggerCollector.trigger("deprecated.DiffPanelImpl");
 
     myProject = project;
     myIsHorizontal = horizontal;
@@ -182,8 +155,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     }
 
     myPanel.insertDiffComponent(mySplitter.getComponent(), new MyScrollingPanel());
-    myDataProvider = new MyGenericDataProvider(this);
-    myPanel.setDataProvider(myDataProvider);
+    myPanel.setDataProvider(new MyGenericDataProvider(this));
 
     ComparisonPolicy comparisonPolicy = getComparisonPolicy();
     ComparisonPolicy defaultComparisonPolicy = DiffManagerImpl.getInstanceEx().getComparisonPolicy();
@@ -277,11 +249,13 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     });
   }
 
+  @Override
   @Nullable
   public Editor getEditor1() {
     return myLeftSide.getEditor();
   }
 
+  @Override
   @Nullable
   public Editor getEditor2() {
     if (myDisposed) LOG.error("Disposed");
@@ -291,6 +265,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     return editor;
   }
 
+  @Override
   public void setContents(DiffContent content1, DiffContent content2) {
     LOG.assertTrue(content1 != null && content2 != null);
     LOG.assertTrue(!myDisposed);
@@ -324,10 +299,12 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     mySplitter.setResizeEnabled(true);
   }
 
+  @Override
   public void removeStatusBar() {
     myPanel.removeStatusBar();
   }
 
+  @Override
   public void enableToolbar(final boolean value) {
     myPanel.disableToolbar(!value);
   }
@@ -371,12 +348,14 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     }
   }
 
+  @Override
   public void setTooBigFileErrorContents() {
     setLineBlocks(LineBlocks.EMPTY);
     myTopMessageDiffPanel = new CanNotCalculateDiffPanel();
     myPanel.insertTopComponent(myTopMessageDiffPanel);
   }
 
+  @Override
   public void setPatchAppliedApproximately() {
     if (!(myTopMessageDiffPanel instanceof CanNotCalculateDiffPanel)) {
       myTopMessageDiffPanel = new DiffIsApproximate();
@@ -399,6 +378,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     }
   }
 
+  @Override
   public void setTitle1(String title) {
     setTitle(title, true);
   }
@@ -428,6 +408,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     return title;
   }
 
+  @Override
   public void setTitle2(String title) {
     setTitle(title, false);
   }
@@ -455,21 +436,18 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     return getLineBlocks().getBeginnings(side);
   }
 
+  @Override
   public void dispose() {
     myDisposed = true;
     myDiffUpdater.dispose();
     Disposer.dispose(myScrollSupport);
     Disposer.dispose(myData);
     myPanel.cancelScrollEditors();
-    JComponent component = myPanel.getBottomComponent();
-    if (component instanceof Disposable) {
-      Disposer.dispose((Disposable)component);
-    }
-    myPanel.setBottomComponent(null);
     myPanel.setDataProvider(null);
     myPanel.setScrollingPanel(null);
   }
 
+  @Override
   public JComponent getComponent() {
     return myPanel;
   }
@@ -482,17 +460,15 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     return DiffBundle.message("diff.count.differences.status.text", getLineBlocks().getCount());
   }
 
+  @Override
   public boolean hasDifferences() {
     return getLineBlocks().getCount() > 0 || myTopMessageDiffPanel != null;
   }
 
+  @Override
   @Nullable
   public JComponent getPreferredFocusedComponent() {
     return myCurrentSide.getFocusableComponent();
-  }
-
-  public int getContentsNumber() {
-    return 2;
   }
 
   @Override
@@ -500,10 +476,12 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     return DiffViewerType.contents.equals(type);
   }
 
+  @Override
   public ComparisonPolicy getComparisonPolicy() {
     return myData.getComparisonPolicy();
   }
 
+  @Override
   public void setComparisonPolicy(@NotNull ComparisonPolicy comparisonPolicy) {
     setComparisonPolicy(comparisonPolicy, true);
   }
@@ -517,11 +495,13 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     }
   }
 
+  @Override
   @NotNull
   public HighlightMode getHighlightMode() {
     return myData.getHighlightMode();
   }
 
+  @Override
   public void setHighlightMode(@NotNull HighlightMode mode) {
     setHighlightMode(mode, true);
   }
@@ -535,10 +515,12 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     }
   }
 
+  @Override
   public void setAutoScrollEnabled(boolean enabled) {
     myScrollSupport.setEnabled(enabled);
   }
 
+  @Override
   public boolean isAutoScrollEnabled() {
     return myScrollSupport.isEnabled();
   }
@@ -547,6 +529,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     return myDiffUpdater;
   }
 
+  @Override
   public void onContentChangedIn(EditorSource source) {
     myDiffUpdater.contentRemoved(source);
     final EditorEx editor = source.getEditor();
@@ -585,11 +568,13 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     }
     myFontSizeSynchronizer.synchronize(editor);
     source.addDisposable(new Disposable() {
+      @Override
       public void dispose() {
         myFontSizeSynchronizer.stopSynchronize(editor);
       }
     });
     source.addDisposable(new Disposable() {
+      @Override
       public void dispose() {
         if (visibleAreaListener != null) {
           scrollingModel.removeVisibleAreaListener(visibleAreaListener);
@@ -600,6 +585,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     });
   }
 
+  @Override
   public void setCurrentSide(@NotNull DiffSideView viewSide) {
     LOG.assertTrue(viewSide != myCurrentSide);
     if (myCurrentSide != null) myCurrentSide.beSlave();
@@ -608,18 +594,22 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
   public DiffSideView getCurrentSide() { return myCurrentSide; }
 
+  @Override
   public Project getProject() {
     return myData.getProject();
   }
 
-  public void showSource(@Nullable OpenFileDescriptor descriptor) {
+  @Override
+  public void showSource(@Nullable Navigatable descriptor) {
     myOptions.showSource(descriptor);
   }
 
+  @Override
   public DiffPanelOptions getOptions() {
     return myOptions;
   }
 
+  @Override
   public Editor getEditor(FragmentSide side) {
     return getSideView(side).getEditor();
   }
@@ -632,6 +622,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     throw new IllegalArgumentException(String.valueOf(side));
   }
 
+  @Override
   public LineBlocks getLineBlocks() { return myLineBlocks; }
 
   static JComponent createComponentForTitle(@Nullable String title,
@@ -660,12 +651,12 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     return myParentTool != null && myParentTool.canShow(request);
   }
 
+  @Override
   public void setDiffRequest(DiffRequest data) {
     myDiffRequest = data;
     if (data.getHints().contains(DiffTool.HINT_DO_NOT_IGNORE_WHITESPACES)) {
       setComparisonPolicy(ComparisonPolicy.DEFAULT, false);
     }
-    myDataProvider.putData(myDiffRequest.getGenericData());
 
     DiffContent content1 = data.getContents()[0];
     DiffContent content2 = data.getContents()[1];
@@ -675,17 +666,10 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
     setWindowTitle(myOwnerWindow, data.getWindowTitle());
     myPanel.setToolbarActions(createToolbar());
-    data.customizeToolbar(myPanel.resetToolbar());
+    myPanel.resetToolbar();
     myPanel.registerToolbarActions();
     initEditorSettings(getEditor1());
     initEditorSettings(getEditor2());
-
-    final JComponent oldBottomComponent = myPanel.getBottomComponent();
-    if (oldBottomComponent instanceof Disposable) {
-      Disposer.dispose((Disposable)oldBottomComponent);
-    }
-    final JComponent newBottomComponent = data.getBottomComponent();
-    myPanel.setBottomComponent(newBottomComponent);
 
 
     if (myIsRequestFocus) {
@@ -769,156 +753,22 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     }
   }
 
+  @Override
   public void setRequestFocus(boolean isRequestFocus) {
     myIsRequestFocus = isRequestFocus;
   }
 
   private class MyScrollingPanel implements DiffPanelOuterComponent.ScrollingPanel {
 
+    @Override
     public void scrollEditors() {
       getOptions().onNewContent(myCurrentSide);
-      final DiffNavigationContext scrollContext = myDiffRequest == null ? null :
-        (DiffNavigationContext) myDiffRequest.getGenericData().get(DiffTool.SCROLL_TO_LINE.getName());
-      if (scrollContext == null) {
-        scrollCurrentToFirstDiff();
-      } else {
-        final Document document = myRightSide.getEditor().getDocument();
-
-        final FragmentList fragmentList = getFragments();
-
-        final Application application = ApplicationManager.getApplication();
-        application.executeOnPooledThread(() -> {
-          final ChangedLinesIterator changedLinesIterator = new ChangedLinesIterator(fragmentList.iterator(), document, false);
-          final CacheOneStepIterator<Pair<Integer, String>> cacheOneStepIterator =
-            new CacheOneStepIterator<>(changedLinesIterator);
-          final NavigationContextChecker checker = new NavigationContextChecker(cacheOneStepIterator, scrollContext);
-          int line = checker.contextMatchCheck();
-          if (line < 0) {
-            // this will work for the case, when spaces changes are ignored, and corresponding fragments are not reported as changed
-            // just try to find target line  -> +-
-            final ChangedLinesIterator changedLinesIterator2 = new ChangedLinesIterator(fragmentList.iterator(), document, true);
-            final CacheOneStepIterator<Pair<Integer, String>> cacheOneStepIterator2 =
-              new CacheOneStepIterator<>(changedLinesIterator2);
-            final NavigationContextChecker checker2 = new NavigationContextChecker(cacheOneStepIterator2, scrollContext);
-            line = checker2.contextMatchCheck();
-          }
-          final int finalLine = line;
-          final ModalityState modalityState = myOwnerWindow == null ? ModalityState.NON_MODAL : ModalityState.stateForComponent(myOwnerWindow);
-          application.invokeLater(() -> {
-            if (finalLine >= 0) {
-              final int line1 = myLineBlocks.transform(myRightSide.getSide(), finalLine);
-              myLeftSide.scrollToFirstDiff(line1);
-            } else {
-              scrollCurrentToFirstDiff();
-            }
-          }, modalityState);
-        });
-      }
+      scrollCurrentToFirstDiff();
     }
 
     private void scrollCurrentToFirstDiff() {
       int[] fragments = getFragmentBeginnings();
       if (fragments.length > 0) myCurrentSide.scrollToFirstDiff(fragments[0]);
-    }
-  }
-
-  private static class ChangedLinesIterator implements Iterator<Pair<Integer, String>> {
-    private final Document myDocument;
-    private final boolean myIgnoreFragmentsType;
-    private final Iterator<Fragment> myFragmentsIterator;
-    private final List<Pair<Integer, String>> myBuffer;
-
-    private ChangedLinesIterator(Iterator<Fragment> fragmentsIterator, Document document, final boolean ignoreFragmentsType) {
-      myFragmentsIterator = fragmentsIterator;
-      myDocument = document;
-      myIgnoreFragmentsType = ignoreFragmentsType;
-      myBuffer = new LinkedList<>();
-    }
-
-    @Override
-    public boolean hasNext() {
-      return !myBuffer.isEmpty() || myFragmentsIterator.hasNext();
-    }
-
-    @Override
-    public Pair<Integer, String> next() {
-      if (! myBuffer.isEmpty()) {
-        return myBuffer.remove(0);
-      }
-
-      Fragment fragment = null;
-      while (myFragmentsIterator.hasNext()) {
-        fragment = myFragmentsIterator.next();
-        final TextDiffTypeEnum type = fragment.getType();
-        if (! myIgnoreFragmentsType && (type == null || TextDiffTypeEnum.DELETED.equals(type) || TextDiffTypeEnum.NONE.equals(type))) continue;
-        break;
-      }
-      if (fragment == null) return null;
-
-      final TextRange textRange = fragment.getRange(FragmentSide.SIDE2);
-      ApplicationManager.getApplication().runReadAction(() -> {
-        final int startLine = myDocument.getLineNumber(textRange.getStartOffset());
-        final int endFragmentOffset = textRange.getEndOffset();
-        final int endLine = myDocument.getLineNumber(endFragmentOffset);
-        for (int i = startLine; i <= endLine; i++) {
-          int lineEndOffset = myDocument.getLineEndOffset(i);
-          final int lineStartOffset = myDocument.getLineStartOffset(i);
-          if (lineEndOffset > endFragmentOffset && endFragmentOffset == lineStartOffset) {
-            lineEndOffset = endFragmentOffset;
-          }
-          if (lineStartOffset > lineEndOffset) continue;
-          String text = myDocument.getText().substring(lineStartOffset, lineEndOffset);
-          myBuffer.add(new Pair<>(i, text));
-        }
-      });
-      if (myBuffer.isEmpty()) return null;
-      return myBuffer.remove(0);
-    }
-
-    @Override
-    public void remove() {
-      throw new UnsupportedOperationException();
-    }
-  }
-
-  private static class NavigationContextChecker {
-    private final Iterator<Pair<Integer, String>> myChangedLinesIterator;
-    private final DiffNavigationContext myContext;
-
-    private NavigationContextChecker(Iterator<Pair<Integer, String>> changedLinesIterator, DiffNavigationContext context) {
-      myChangedLinesIterator = changedLinesIterator;
-      myContext = context;
-    }
-
-    public int contextMatchCheck() {
-      final Iterable<String> contextLines = myContext.getPreviousLinesIterable();
-
-      // we ignore spaces.. at least at start/end, since some version controls could ignore their changes when doing annotate
-      final Iterator<String> iterator = contextLines.iterator();
-      if (iterator.hasNext()) {
-        String contextLine = iterator.next().trim();
-
-        while (myChangedLinesIterator.hasNext()) {
-          final Pair<Integer, String> pair = myChangedLinesIterator.next();
-          if (pair.getSecond().trim().equals(contextLine)) {
-            if (! iterator.hasNext()) break;
-            contextLine = iterator.next().trim();
-          }
-        }
-        if (iterator.hasNext()) {
-          return -1;
-        }
-      }
-      if (! myChangedLinesIterator.hasNext()) return -1;
-
-      final String targetLine = myContext.getTargetString().trim();
-      while (myChangedLinesIterator.hasNext()) {
-        final Pair<Integer, String> pair = myChangedLinesIterator.next();
-        if (pair.getSecond().trim().equals(targetLine)) {
-          return pair.getFirst();
-        }
-      }
-      return -1;
     }
   }
 
@@ -930,17 +780,19 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     }
 
     private final FocusDiffSide myFocusDiffSide = new FocusDiffSide() {
+      @Override
       public Editor getEditor() {
         return myDiffPanel.getCurrentSide().getEditor();
       }
 
+      @Override
       public int[] getFragmentStartingLines() {
         return myDiffPanel.getFragmentBeginnings();
       }
     };
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       if (PlatformDataKeys.DIFF_VIEWER.is(dataId)) {
         return myDiffPanel;
       }

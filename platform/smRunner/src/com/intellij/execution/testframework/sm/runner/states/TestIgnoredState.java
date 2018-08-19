@@ -38,26 +38,32 @@ public class TestIgnoredState extends AbstractState {
     myStacktrace = stackTrace == null ? null : stackTrace + CompositePrintable.NEW_LINE;
   }
 
+  @Override
   public boolean isInProgress() {
     return false;
   }
 
+  @Override
   public boolean isDefect() {
     return true;
   }
 
+  @Override
   public boolean wasLaunched() {
     return true;
   }
 
+  @Override
   public boolean isFinal() {
     return true;
   }
 
+  @Override
   public boolean wasTerminated() {
     return false;
   }
 
+  @Override
   public Magnitude getMagnitude() {
     return Magnitude.IGNORED_INDEX;
   }

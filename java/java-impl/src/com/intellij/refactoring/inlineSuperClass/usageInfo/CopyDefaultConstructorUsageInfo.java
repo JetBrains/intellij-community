@@ -28,11 +28,12 @@ public class CopyDefaultConstructorUsageInfo extends FixableUsageInfo{
 
 
   public CopyDefaultConstructorUsageInfo(PsiClass targetClass, PsiMethod constructor) {
-    super(targetClass);
+    super(constructor);
     myTargetClass = targetClass;
     myConstructor = constructor;
   }
 
+  @Override
   public void fixUsage() throws IncorrectOperationException {
     final PsiCodeBlock body = myConstructor.getBody();
     assert body != null;

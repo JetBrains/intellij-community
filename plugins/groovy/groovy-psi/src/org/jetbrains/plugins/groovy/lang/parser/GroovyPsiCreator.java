@@ -97,9 +97,11 @@ public class GroovyPsiCreator {
     if (elem == FOR_STATEMENT) return new GrForStatementImpl(node);
     if (elem == FOR_IN_CLAUSE) return new GrForInClauseImpl(node);
     if (elem == TRADITIONAL_FOR_CLAUSE) return new GrTraditionalForClauseImpl(node);
+    if (elem == EXPRESSION_LIST) return new GrExpressionListImpl(node);
     if (elem == WHILE_STATEMENT) return new GrWhileStatementImpl(node);
     if (elem == DO_WHILE_STATEMENT) return new GrDoWhileStatementImpl(node);
     if (elem == TRY_STATEMENT) return new GrTryCatchStatementImpl(node);
+    if (elem == TRY_RESOURCE_LIST) return new GrTryResourceListImpl(node);
     if (elem == CATCH_CLAUSE) return new GrCatchClauseImpl(node);
     if (elem == FINALLY_CLAUSE) return new GrFinallyClauseImpl(node);
     if (elem == SYNCHRONIZED_STATEMENT) return new GrSynchronizedStatementImpl(node);
@@ -201,6 +203,7 @@ public class GroovyPsiCreator {
     if (elem == NEW_EXPRESSION) return new GrNewExpressionImpl(node);
     if (elem == ENUM_CONSTANT_INITIALIZER) return new GrEnumConstantInitializerImpl(node);
     if (elem == ARRAY_DECLARATION) return new GrArrayDeclarationImpl(node);
+    if (elem == ARRAY_INITIALIZER) return new GrArrayInitializerImpl(node);
 
     //Paths
     if (elem == REFERENCE_EXPRESSION) return new GrReferenceExpressionImpl(node);

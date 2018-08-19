@@ -72,6 +72,11 @@ public final class IconLoader {
     clearCache();
   }
 
+  public static void removePathPatcher(@NotNull IconPathPatcher patcher) {
+    ourPatchers.remove(patcher);
+    clearCache();
+  }
+
   @Deprecated
   @NotNull
   public static Icon getIcon(@NotNull final Image image) {
@@ -185,14 +190,19 @@ public final class IconLoader {
   @Nullable
   public static Icon findIcon(@NotNull String path, @NotNull Class aClass, boolean computeNow, boolean strict) {
     String originalPath = path;
-    Pair<String, Class> patchedPath = patchPath(path);
+    ClassLoader classLoader = aClass.getClassLoader();
+    Pair<String, ClassLoader> patchedPath = patchPath(path, classLoader);
     path = patchedPath.first;
     if (patchedPath.second != null) {
-      aClass = patchedPath.second;
+      classLoader = patchedPath.second;
     }
-    if (isReflectivePath(path)) return getReflectiveIcon(path, aClass.getClassLoader());
+    if (isReflectivePath(path)) return getReflectiveIcon(path, classLoader);
 
-    URL myURL = findURL(path, aClass);
+    URL myURL = findURL(path, classLoader);
+    // Some plugins use findIcon("icon.png",IconContainer.class)
+    if (myURL == null) {
+      myURL = findURL(path, aClass);
+    }
     if (myURL == null) {
       if (strict) throw new RuntimeException("Can't find icon in '" + path + "' near " + aClass);
       return null;
@@ -200,18 +210,28 @@ public final class IconLoader {
     final Icon icon = findIcon(myURL);
     if (icon instanceof CachedImageIcon) {
       ((CachedImageIcon)icon).myOriginalPath = originalPath;
-      ((CachedImageIcon)icon).myClassLoader = aClass.getClassLoader();
+      ((CachedImageIcon)icon).myClassLoader = classLoader;
     }
     return icon;
   }
 
   @NotNull
-  private static Pair<String, Class> patchPath(@NotNull String path) {
+  private static Pair<String, ClassLoader> patchPath(@NotNull String path, ClassLoader classLoader) {
     for (IconPathPatcher patcher : ourPatchers) {
-      String newPath = patcher.patchPath(path);
+      String newPath = patcher.patchPath(path, classLoader);
+      if (newPath == null) {
+        newPath = patcher.patchPath(path);
+      }
       if (newPath != null) {
         LOG.info("replace '" + path + "' with '" + newPath + "'");
-        return Pair.create(newPath, patcher.getContextClass(path));
+        ClassLoader contextClassLoader = patcher.getContextClassLoader(path, classLoader);
+        if (contextClassLoader == null) {
+          Class contextClass = patcher.getContextClass(path);
+          if (contextClass != null) {
+            contextClassLoader = contextClass.getClassLoader();
+          }
+        }
+        return Pair.create(newPath, contextClassLoader);
       }
     }
     return Pair.create(path, null);
@@ -229,7 +249,8 @@ public final class IconLoader {
       url = ((Class)context).getResource(path);
     }
     else if (context instanceof ClassLoader) {
-      url = ((ClassLoader)context).getResource(path);
+      // Paths in ClassLoader getResource shouldn't start with "/"
+      url = ((ClassLoader)context).getResource(path.startsWith("/") ? path.substring(1) : path);
     }
     else {
       LOG.warn("unexpected: " + context);
@@ -268,10 +289,10 @@ public final class IconLoader {
   @Nullable
   public static Icon findIcon(@NotNull String path, @NotNull ClassLoader classLoader) {
     String originalPath = path;
-    Pair<String, Class> patchedPath = patchPath(path);
+    Pair<String, ClassLoader> patchedPath = patchPath(path, null);
     path = patchedPath.first;
     if (patchedPath.second != null) {
-      classLoader = patchedPath.second.getClassLoader();
+      classLoader = patchedPath.second;
     }
     if (isReflectivePath(path)) return getReflectiveIcon(path, classLoader);
     if (!StringUtil.startsWithChar(path, '/')) return null;
@@ -467,26 +488,38 @@ public final class IconLoader {
   /**
    *  For internal usage. Converts the icon to 1x scale when applicable.
    */
-  public static Icon get1xIcon(Icon icon, boolean dark) {
+  public static Icon getMenuBarIcon(Icon icon, boolean dark) {
     if (icon instanceof RetrievableIcon) {
       icon = ((RetrievableIcon)icon).retrieveIcon();
     }
-    if (icon instanceof CachedImageIcon) {
-      Image img = ((CachedImageIcon)icon).loadFromUrl(ScaleContext.createIdentity(), dark);
-      if (img != null) {
-        icon = new ImageIcon(img);
-      }
+    if (icon instanceof MenuBarIconProvider) {
+      return ((MenuBarIconProvider)icon).getMenuBarIcon(dark);
     }
     return icon;
   }
 
-  public static final class CachedImageIcon extends RasterJBIcon implements ScalableIcon {
+  /**
+   * Returns a copy of the provided {@code icon} with darkness set to {@code dark}.
+   * The method takes effect on a {@link CachedImageIcon} (or its wrapper) only.
+   */
+  public static Icon getDarkIcon(Icon icon, boolean dark) {
+    if (icon instanceof RetrievableIcon) {
+      icon = getOrigin((RetrievableIcon)icon);
+    }
+    if (icon instanceof DarkIconProvider) {
+      return ((DarkIconProvider)icon).getDarkIcon(dark);
+    }
+    return icon;
+  }
+
+  public static final class CachedImageIcon extends RasterJBIcon implements ScalableIcon, DarkIconProvider, MenuBarIconProvider {
     private volatile Object myRealIcon;
     private String myOriginalPath;
     private ClassLoader myClassLoader;
     @NotNull
     private URL myUrl;
-    private volatile boolean dark;
+    private volatile boolean myDark;
+    private volatile boolean myDarkOverridden;
     private volatile int numberOfPatchers = ourPatchers.size();
     private final boolean useCacheOnLoad;
     private int myClearCacheCounter = clearCacheCounter;
@@ -509,7 +542,8 @@ public final class IconLoader {
       myOriginalPath = icon.myOriginalPath;
       myClassLoader = icon.myClassLoader;
       myUrl = icon.myUrl;
-      dark = icon.dark;
+      myDark = icon.myDark;
+      myDarkOverridden = icon.myDarkOverridden;
       numberOfPatchers = icon.numberOfPatchers;
       myFilters = icon.myFilters;
       useCacheOnLoad = icon.useCacheOnLoad;
@@ -522,7 +556,7 @@ public final class IconLoader {
 
     public CachedImageIcon(@NotNull URL url, boolean useCacheOnLoad) {
       myUrl = url;
-      dark = USE_DARK_ICONS;
+      myDark = USE_DARK_ICONS;
       myFilters = new ImageFilter[] {IMAGE_FILTER};
       this.useCacheOnLoad = useCacheOnLoad;
     }
@@ -556,15 +590,15 @@ public final class IconLoader {
         if (isLoaderDisabled()) return EMPTY_ICON;
         myClearCacheCounter = clearCacheCounter;
         myRealIcon = null;
-        dark = USE_DARK_ICONS;
+        if (!myDarkOverridden) myDark = USE_DARK_ICONS;
         setGlobalFilter(IMAGE_FILTER);
         myScaledIconsCache.clear();
         if (numberOfPatchers != ourPatchers.size()) {
           numberOfPatchers = ourPatchers.size();
-          Pair<String, Class> patchedPath = patchPath(myOriginalPath);
+          Pair<String, ClassLoader> patchedPath = patchPath(myOriginalPath, myClassLoader);
           String path = myOriginalPath == null ? null : patchedPath.first;
           if (patchedPath.second != null) {
-            myClassLoader = patchedPath.second.getClassLoader();
+            myClassLoader = patchedPath.second;
           }
           if (myClassLoader != null && path != null && path.startsWith("/")) {
             path = path.substring(1);
@@ -591,7 +625,7 @@ public final class IconLoader {
     }
 
     private boolean isValid() {
-      return dark == USE_DARK_ICONS &&
+      return (!myDarkOverridden && myDark == USE_DARK_ICONS) &&
              getGlobalFilter() == IMAGE_FILTER &&
              numberOfPatchers == ourPatchers.size() &&
              myClearCacheCounter == clearCacheCounter;
@@ -637,6 +671,31 @@ public final class IconLoader {
       return this;
     }
 
+    private synchronized void setDark(boolean dark) {
+      myDarkOverridden = true;
+      if (myDark != dark) {
+        myRealIcon = null;
+        myClearCacheCounter = -1;
+        myDark = dark;
+      }
+    }
+
+    @Override
+    public Icon getDarkIcon(boolean isDark) {
+      CachedImageIcon newIcon = copy();
+      newIcon.setDark(isDark);
+      return newIcon;
+    }
+
+    @Override
+    public Icon getMenuBarIcon(boolean isDark) {
+      Image img = loadFromUrl(ScaleContext.createIdentity(), isDark);
+      if (img != null) {
+        return new ImageIcon(img);
+      }
+      return this;
+    }
+
     @NotNull
     @Override
     public CachedImageIcon copy() {
@@ -648,10 +707,6 @@ public final class IconLoader {
       CachedImageIcon icon = new CachedImageIcon(this);
       icon.myFilters = new ImageFilter[] {getGlobalFilter(), filter};
       return icon;
-    }
-
-    private Image loadFromUrl(@NotNull ScaleContext ctx) {
-      return loadFromUrl(ctx, UIUtil.isUnderDarcula());
     }
 
     private Image loadFromUrl(@NotNull ScaleContext ctx, boolean dark) {
@@ -686,7 +741,7 @@ public final class IconLoader {
         if (icon != null) {
           return icon;
         }
-        Image image = loadFromUrl(ctx);
+        Image image = loadFromUrl(ctx, myDark);
         icon = checkIcon(image, myUrl);
 
         if (icon != null && icon.getIconWidth() * icon.getIconHeight() * 4 < ImageLoader.CACHED_IMAGE_MAX_SIZE) {
@@ -763,6 +818,28 @@ public final class IconLoader {
     public Icon copy() {
       return IconLoader.copy(getOrComputeIcon(), null);
     }
+  }
+
+  // todo: remove and use DarkIconProvider when JBSDK supports scalable icons in menu
+  public interface MenuBarIconProvider {
+    Icon getMenuBarIcon(boolean isDark);
+  }
+
+  public interface DarkIconProvider {
+    Icon getDarkIcon(boolean isDark);
+  }
+
+  private static Icon getOrigin(RetrievableIcon icon) {
+    final int maxDeep = 10;
+    Icon origin = icon.retrieveIcon();
+    int level = 0;
+    while (origin instanceof RetrievableIcon && level < maxDeep) {
+      ++level;
+      origin = ((RetrievableIcon)origin).retrieveIcon();
+    }
+    if (origin instanceof RetrievableIcon && level >= maxDeep)
+      LOG.error("can't calculate origin icon (too deep in hierarchy), src: " + icon);
+    return origin;
   }
 
   private static class LabelHolder {

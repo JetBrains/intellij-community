@@ -1,36 +1,21 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.event;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
+import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
   private final EventDispatcher<DocumentListener> myDocumentMulticaster = EventDispatcher.create(DocumentListener.class);
+  private final EventDispatcher<PrioritizedInternalDocumentListener> myPrioritizedDocumentMulticaster = EventDispatcher.create(PrioritizedInternalDocumentListener.class, Collections.singletonMap("getPriority", EditorDocumentPriorities.RANGE_MARKER));
   private final EventDispatcher<EditReadOnlyListener> myEditReadOnlyMulticaster = EventDispatcher.create(EditReadOnlyListener.class);
 
   private final EventDispatcher<EditorMouseListener> myEditorMouseMulticaster = EventDispatcher.create(EditorMouseListener.class);
@@ -44,6 +29,7 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
 
   public void registerDocument(@NotNull DocumentEx document) {
     document.addDocumentListener(myDocumentMulticaster.getMulticaster());
+    document.addDocumentListener(myPrioritizedDocumentMulticaster.getMulticaster());
     document.addEditReadOnlyListener(myEditReadOnlyMulticaster.getMulticaster());
   }
 
@@ -66,6 +52,11 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
   @Override
   public void addDocumentListener(@NotNull DocumentListener listener, @NotNull Disposable parentDisposable) {
     myDocumentMulticaster.addListener(listener, parentDisposable);
+  }
+
+  @Override
+  public void addPrioritizedDocumentListener(@NotNull PrioritizedInternalDocumentListener listener, @NotNull Disposable parent) {
+    myPrioritizedDocumentMulticaster.addListener(listener, parent);
   }
 
   @Override
@@ -159,13 +150,13 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
   }
 
   @Override
-  public void addFocusChangeListner(@NotNull FocusChangeListener listener, @NotNull Disposable parentDisposable) {
+  public void addFocusChangeListener(@NotNull FocusChangeListener listener, @NotNull Disposable parentDisposable) {
     myFocusChangeListenerMulticaster.addListener(listener,parentDisposable);
   }
 
   @TestOnly
-  public Map<Class, List> getListeners() {
-    Map<Class, List> myCopy = new LinkedHashMap<>();
+  public Map<Class<? extends EventListener>, List<? extends EventListener>> getListeners() {
+    Map<Class<? extends EventListener>, List<? extends EventListener>> myCopy = new LinkedHashMap<>();
     myCopy.put(DocumentListener.class, new ArrayList<>(myDocumentMulticaster.getListeners()));
     myCopy.put(EditReadOnlyListener.class, new ArrayList<>(myEditReadOnlyMulticaster.getListeners()));
 

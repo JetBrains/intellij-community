@@ -33,6 +33,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.pyi.PyiUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -187,26 +188,40 @@ public class PyResolveUtil {
   }
 
   /**
-   * Resolve a symbol by its qualified name, starting from the specified file and then following the chain of type members.
+   * Resolve a symbol by its qualified name, starting from the specified scope and then following the chain of type members.
    * This type of resolve is stub-safe, i.e. it's not supposed to cause any un-stubbing of external files unless it explicitly
    * allowed by the given type evaluation context.
    *
    * @param qualifiedName name of a symbol to resolve
-   * @param file          module which serves as a starting point for resolve
+   * @param scopeOwner    scope which serves as a starting point for resolve
    * @return all possible candidates that can be found by the given qualified name
    */
   @NotNull
-  public static List<PsiElement> resolveQualifiedNameInFile(@NotNull QualifiedName qualifiedName,
-                                                            @NotNull PyFile file,
-                                                            @NotNull TypeEvalContext context) {
+  public static List<PsiElement> resolveQualifiedNameInScope(@NotNull QualifiedName qualifiedName,
+                                                             @NotNull ScopeOwner scopeOwner,
+                                                             @NotNull TypeEvalContext context) {
     final String firstName = qualifiedName.getFirstComponent();
-    if (firstName == null) {
-      return Collections.emptyList();
+    if (firstName == null || !(scopeOwner instanceof PyTypedElement)) return Collections.emptyList();
+
+    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+
+    final List<? extends RatedResolveResult> unqualifiedResults;
+    if (scopeOwner instanceof PyiFile) {
+      // pyi-stubs are special cased because
+      // `resolveMember` delegates to `multiResolveName(..., true)` and
+      // it skips elements that are imported without `as`
+      unqualifiedResults = ((PyiFile)scopeOwner).multiResolveName(firstName, false);
     }
-    final List<RatedResolveResult> unqualifiedResults = file.multiResolveName(firstName, false);
+    else {
+      final PyType scopeType = context.getType((PyTypedElement)scopeOwner);
+      if (scopeType == null) return Collections.emptyList();
+
+      unqualifiedResults = scopeType.resolveMember(firstName, null, AccessDirection.READ, resolveContext);
+    }
+
     final StreamEx<RatedResolveResult> initialResults;
-    if (unqualifiedResults.isEmpty()) {
-      final PsiElement builtin = PyBuiltinCache.getInstance(file).getByName(firstName);
+    if (ContainerUtil.isEmpty(unqualifiedResults)) {
+      final PsiElement builtin = PyBuiltinCache.getInstance(scopeOwner).getByName(firstName);
       if (builtin == null) {
         return Collections.emptyList();
       }
@@ -215,6 +230,7 @@ public class PyResolveUtil {
     else {
       initialResults = StreamEx.of(unqualifiedResults);
     }
+
     final List<String> remainingNames = qualifiedName.removeHead(1).getComponents();
     final StreamEx<RatedResolveResult> result = StreamEx.of(remainingNames).foldLeft(initialResults, (prev, name) ->
       prev
@@ -224,10 +240,10 @@ public class PyResolveUtil {
         .nonNull()
         .flatMap(type -> {
           final PyType instanceType = type instanceof PyClassLikeType ? ((PyClassLikeType)type).toInstance() : type;
-          final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
           final List<? extends RatedResolveResult> results = instanceType.resolveMember(name, null, AccessDirection.READ, resolveContext);
           return results != null ? StreamEx.of(results) : StreamEx.<RatedResolveResult>empty();
         }));
+
     return PyUtil.filterTopPriorityResults(result.toArray(RatedResolveResult[]::new));
   }
 

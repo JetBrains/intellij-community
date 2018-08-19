@@ -30,8 +30,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.PatternSyntaxException;
 
@@ -42,7 +42,7 @@ public class SearchResults implements DocumentListener {
   }
 
   @Override
-  public void beforeDocumentChange(DocumentEvent event) {
+  public void beforeDocumentChange(@NotNull DocumentEvent event) {
     myCursorPositions.clear();
   }
 
@@ -181,7 +181,7 @@ public class SearchResults implements DocumentListener {
     searchCompleted(new ArrayList<>(), getEditor(), null, false, null, getStamp());
   }
 
-  ActionCallback updateThreadSafe(@NotNull FindModel findModel, final boolean toChangeSelection, 
+  ActionCallback updateThreadSafe(@NotNull FindModel findModel, final boolean toChangeSelection,
                                   @Nullable final TextRange next, final int stamp) {
     if (myDisposed) return ActionCallback.DONE;
 
@@ -287,7 +287,7 @@ public class SearchResults implements DocumentListener {
         result = null;
       }
       if (result == null || !result.isStringFound()) break;
-      int newOffset = result.getEndOffset();
+      final int newOffset = result.getEndOffset();
       if (result.getEndOffset() > maxOffset) break;
       if (offset == newOffset) {
         if (offset < maxOffset - 1) {
@@ -300,6 +300,7 @@ public class SearchResults implements DocumentListener {
       }
       else {
         offset = newOffset;
+        if (offset == result.getStartOffset()) ++offset; // skip zero width result
       }
       results.add(result);
     }
@@ -617,7 +618,7 @@ public class SearchResults implements DocumentListener {
       listener.cursorMoved();
     }
   }
-  
+
   public boolean isUpToDate() {
     return myDocumentTimestamp == myEditor.getDocument().getModificationStamp();
   }

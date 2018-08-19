@@ -3,8 +3,6 @@ package com.intellij.ui.messages;
 
 import com.apple.eawt.FullScreenUtilities;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -140,10 +138,8 @@ class SheetMessage implements Disposable {
     }
 
     LaterInvocator.enterModal(myWindow);
-    final Runnable closer = _showTouchBar(buttons, defaultButton);
+    _showTouchBar();
     myWindow.setVisible(true);
-    if (closer != null)
-      closer.run();
     LaterInvocator.leaveModal(myWindow);
 
     Component focusCandidate = beforeShowFocusOwner.get();
@@ -167,17 +163,13 @@ class SheetMessage implements Disposable {
     myWindow.dispose();
   }
 
-  private Runnable _showTouchBar(String[] buttons, String defaultButton) {
+  private void _showTouchBar() {
     if (!TouchBarsManager.isTouchBarAvailable())
-      return null;
+      return;
 
-    final Runnable[] actions = new Runnable[buttons.length];
-    final ModalityState ms = LaterInvocator.getCurrentModalityState();
-    for (int c = 0; c < buttons.length; ++c) {
-      final String sb = buttons[c];
-      actions[c] = () -> ApplicationManager.getApplication().invokeLater(() -> myController.setResultAndStartClose(sb), ms);
-    }
-    return TouchBarsManager.showMessageDlgBar(buttons, actions, defaultButton);
+    final Disposable tb = TouchBarsManager.showDialogWrapperButtons(myController.getSheetPanel());
+    if (tb != null)
+      Disposer.register(this, tb);
   }
 
   private static void maximizeIfNeeded(final Window owner) {

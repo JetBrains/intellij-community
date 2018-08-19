@@ -159,6 +159,7 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
       if (children != null) {
         ContainerUtil.addAll(result, children);
       }
+      extension.filterChildren(result, children);
     }
     return result.toArray(StructureViewTreeElement.EMPTY_ARRAY);
   }

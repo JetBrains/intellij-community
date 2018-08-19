@@ -92,7 +92,7 @@ public class BraceHighlightingHandler {
 
   static void lookForInjectedAndMatchBracesInOtherThread(@NotNull final Editor editor,
                                                          @NotNull final Alarm alarm,
-                                                         @NotNull final Processor<BraceHighlightingHandler> processor) {
+                                                         @NotNull final Processor<? super BraceHighlightingHandler> processor) {
     ApplicationManagerEx.getApplicationEx().assertIsDispatchThread();
     if (!isValidEditor(editor)) return;
     if (!PROCESSED_EDITORS.add(editor)) {
@@ -236,9 +236,9 @@ public class BraceHighlightingHandler {
   void updateBraces() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    if (myPsiFile == null || !myPsiFile.isValid()) return;
-
     clearBraceHighlighters();
+
+    if (myPsiFile == null || !myPsiFile.isValid()) return;
 
     if (!myCodeInsightSettings.HIGHLIGHT_BRACES) return;
 
@@ -248,13 +248,6 @@ public class BraceHighlightingHandler {
 
     int offset = myEditor.getCaretModel().getOffset();
     final CharSequence chars = myEditor.getDocument().getCharsSequence();
-
-    //if (myEditor.offsetToLogicalPosition(offset).column != myEditor.getCaretModel().getLogicalPosition().column) {
-    //  // we are in virtual space
-    //  final int caretLineNumber = myEditor.getCaretModel().getLogicalPosition().line;
-    //  if (caretLineNumber >= myDocument.getLineCount()) return;
-    //  offset = myDocument.getLineEndOffset(caretLineNumber) + myDocument.getLineSeparatorLength(caretLineNumber);
-    //}
 
     final int originalOffset = offset;
 
@@ -278,7 +271,6 @@ public class BraceHighlightingHandler {
     }
 
     if (offset < 0) {
-      removeLineMarkers();
       return;
     }
 
@@ -330,24 +322,21 @@ public class BraceHighlightingHandler {
       }
     }
 
-    //highlight scope
-    if (!myCodeInsightSettings.HIGHLIGHT_SCOPE) {
-      removeLineMarkers();
-      return;
+    if (myCodeInsightSettings.HIGHLIGHT_SCOPE) {
+      highlightScope(offset, fileType);
     }
-
-    final int _offset = offset;
-    final FileType _fileType = fileType;
-    myAlarm.addRequest(() -> {
-      if (!myProject.isDisposed() && !myEditor.isDisposed()) {
-        highlightScope(_offset, _fileType);
-      }
-    }, 300);
   }
 
   @NotNull
   private FileType getFileTypeByIterator(@NotNull HighlighterIterator iterator) {
-    return PsiUtilBase.getPsiFileAtOffset(myPsiFile, iterator.getStart()).getFileType();
+    int start;
+    try {
+      start = iterator.getStart();
+    }
+    catch (IndexOutOfBoundsException e) {
+      throw new RuntimeException("Error getting file type for " + myEditor + ", text length: " + myDocument.getTextLength(), e);
+    }
+    return PsiUtilBase.getPsiFileAtOffset(myPsiFile, start).getFileType();
   }
 
   @NotNull
@@ -367,20 +356,12 @@ public class BraceHighlightingHandler {
     HighlighterIterator iterator = getEditorHighlighter().createIterator(offset);
     final CharSequence chars = myDocument.getCharsSequence();
 
-    if (!BraceMatchingUtil.isStructuralBraceToken(fileType, iterator, chars)) {
-//      if (BraceMatchingUtil.isRBraceTokenToHighlight(myFileType, iterator) || BraceMatchingUtil.isLBraceTokenToHighlight(myFileType, iterator)) return;
+    if (!(BraceMatchingUtil.isStructuralBraceToken(fileType, iterator, chars) &&
+          (BraceMatchingUtil.isRBraceToken(iterator, chars, fileType) ||
+           BraceMatchingUtil.isLBraceToken(iterator, chars, fileType))) &&
+        BraceMatchingUtil.findStructuralLeftBrace(fileType, iterator, chars)) {
+      highlightLeftBrace(iterator, true, fileType);
     }
-    else {
-      if (BraceMatchingUtil.isRBraceToken(iterator, chars, fileType) ||
-          BraceMatchingUtil.isLBraceToken(iterator, chars, fileType)) return;
-    }
-
-    if (!BraceMatchingUtil.findStructuralLeftBrace(fileType, iterator, chars)) {
-      removeLineMarkers();
-      return;
-    }
-
-    highlightLeftBrace(iterator, true, fileType);
   }
 
   private void doHighlight(int offset, int originalOffset, @NotNull FileType fileType) {
@@ -454,29 +435,11 @@ public class BraceHighlightingHandler {
       final int startLine = myEditor.offsetToLogicalPosition(lBrace.getStartOffset()).line;
       final int endLine = myEditor.offsetToLogicalPosition(rBrace.getEndOffset()).line;
       if (endLine - startLine > 0) {
-        final Runnable runnable = () -> {
-          if (myProject.isDisposed() || myEditor.isDisposed()) return;
-          lineMarkFragment(startLine, endLine, matched);
-        };
-
-        if (!scopeHighlighting) {
-          myAlarm.addRequest(runnable, 300);
-        }
-        else {
-          runnable.run();
-        }
-      }
-      else {
-        removeLineMarkers();
+        lineMarkFragment(startLine, endLine, matched);
       }
 
       if (!scopeHighlighting) {
         showScopeHint(lBrace.getStartOffset(), lBrace.getEndOffset());
-      }
-    }
-    else {
-      if (!myCodeInsightSettings.HIGHLIGHT_SCOPE) {
-        removeLineMarkers();
       }
     }
   }
@@ -561,7 +524,7 @@ public class BraceHighlightingHandler {
     if (startLine >= endLine || endLine >= myDocument.getLineCount()) return;
 
     int startOffset = myDocument.getLineStartOffset(startLine);
-    int endOffset = myDocument.getLineStartOffset(endLine);
+    int endOffset = myDocument.getLineEndOffset(endLine);
 
     LineMarkerRenderer renderer = createLineMarkerRenderer(matched);
     if (renderer == null) return;
@@ -605,11 +568,10 @@ public class BraceHighlightingHandler {
 
     @Override
     public void paint(Editor editor, Graphics g, Rectangle r) {
-      int height = r.height + editor.getLineHeight();
       g.setColor(myColor);
-      g.fillRect(r.x, r.y, THICKNESS, height);
+      g.fillRect(r.x, r.y, THICKNESS, r.height);
       g.fillRect(r.x + THICKNESS, r.y, DEEPNESS, THICKNESS);
-      g.fillRect(r.x + THICKNESS, r.y + height - THICKNESS, DEEPNESS, THICKNESS);
+      g.fillRect(r.x + THICKNESS, r.y + r.height - THICKNESS, DEEPNESS, THICKNESS);
     }
   }
 }

@@ -6,6 +6,9 @@ import org.apache.http.client.methods.HttpPost
 import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.HttpClients
 import org.apache.http.util.EntityUtils
+import java.net.URLEncoder
+import java.text.SimpleDateFormat
+import java.util.*
 import java.util.function.Consumer
 
 internal fun report(
@@ -41,19 +44,19 @@ internal fun report(
   log(report)
   if (doNotify) {
     val success = addedByDev.isEmpty() && removedByDev.isEmpty() && modifiedByDev.isEmpty()
-    sendNotification(success, report)
+    sendNotification(success)
     if (!success) errorHandler.accept(report)
   }
 }
 
-private fun sendNotification(isSuccess: Boolean, report: String) {
+private fun sendNotification(isSuccess: Boolean) {
   if (BUILD_SERVER == null) {
     log("TeamCity url is unknown: unable to query last build status and send Slack channel notification")
   }
   else {
     callSafely {
-      if (teamCityBuildStatusChanged(isSuccess)) {
-        notifySlackChannel(isSuccess, report)
+      if (isNotificationRequired(isSuccess)) {
+        notifySlackChannel(isSuccess)
       }
     }
   }
@@ -61,22 +64,38 @@ private fun sendNotification(isSuccess: Boolean, report: String) {
 
 private val BUILD_SERVER = System.getProperty("teamcity.serverUrl")
 private val BUILD_CONF = System.getProperty("teamcity.buildType.id")
+private val DATE_FORMAT = SimpleDateFormat("yyyyMMdd'T'HHmmsszzz")
 
-private fun teamCityBuildStatusChanged(isSuccess: Boolean) =
+private fun isNotificationRequired(isSuccess: Boolean) =
   HttpClients.createDefault().use {
-    val get = HttpGet("$BUILD_SERVER/guestAuth/app/rest/builds?locator=buildType:$BUILD_CONF,count:1")
-    val response = EntityUtils.toString(it.execute(get).entity, Charsets.UTF_8)
-    isSuccess && response.contains("status=\"FAILURE\"") ||
-    !isSuccess && response.contains("status=\"SUCCESS\"")
+    val request = "$BUILD_SERVER/guestAuth/app/rest/builds?locator=buildType:$BUILD_CONF,count:1"
+    if (isSuccess) {
+      val get = HttpGet(request)
+      val previousBuild = EntityUtils.toString(it.execute(get).entity, Charsets.UTF_8)
+      // notify on fail -> success
+      previousBuild.contains("status=\"FAILURE\"")
+    }
+    else {
+      val dayAgo = DATE_FORMAT.format(Calendar.getInstance().let {
+        it.add(Calendar.HOUR, -12)
+        it.time
+      })
+      val get = HttpGet("$request,sinceDate:${URLEncoder.encode(dayAgo, "UTF-8")}")
+      val previousBuild = EntityUtils.toString(it.execute(get).entity, Charsets.UTF_8)
+      // remind of failure once per day
+      previousBuild.contains("count=\"0\"")
+    }
   }
 
 private val CHANNEL_WEB_HOOK = System.getProperty("intellij.icons.slack.channel")
 private val BUILD_ID = System.getProperty("teamcity.build.id")
+private val INTELLIJ_ICONS_SYNC_RUN_CONF = System.getProperty("intellij.icons.sync.run.conf")
 
-private fun notifySlackChannel(isSuccess: Boolean, report: String) {
+private fun notifySlackChannel(isSuccess: Boolean) {
   HttpClients.createDefault().use {
-    val text = (if (isSuccess) ":white_check_mark:" else ":scream:") + "\n$report\n" +
-               (if (!isSuccess) "Use 'Icons processing/Sync icons in IntelliJIcons from IDEA' IDEA Ultimate run configuration\n" else "") +
+    val text = "*${System.getProperty("teamcity.buildConfName")}* " +
+               (if (isSuccess) ":white_check_mark:" else ":scream:") + "\n" +
+               (if (!isSuccess) "Use 'Icons processing/*$INTELLIJ_ICONS_SYNC_RUN_CONF*' IDEA Ultimate run configuration\n" else "") +
                "<$BUILD_SERVER/viewLog.html?buildId=$BUILD_ID&buildTypeId=$BUILD_CONF|See build log>"
     val post = HttpPost(CHANNEL_WEB_HOOK)
     post.entity = StringEntity("""{ "text": "$text" }""", Charsets.UTF_8)

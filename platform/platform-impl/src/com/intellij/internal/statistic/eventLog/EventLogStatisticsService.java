@@ -75,7 +75,7 @@ public class EventLogStatisticsService implements StatisticsService {
               }
               request.write(out.toByteArray());
               if (LOG.isTraceEnabled()) {
-                LOG.trace(file.getName() + " -> " + request.readString());
+                LOG.trace(file.getName() + " -> " + readResponse(request));
               }
               return null;
             });
@@ -92,6 +92,11 @@ public class EventLogStatisticsService implements StatisticsService {
             LOG.trace(file.getName() + " -> " + e.getMessage());
           }
         }
+        catch (Exception e) {
+          if (LOG.isTraceEnabled()) {
+            LOG.trace(file.getName() + " -> " + e.getMessage());
+          }
+        }
       }
 
       cleanupFiles(toRemove);
@@ -102,6 +107,16 @@ public class EventLogStatisticsService implements StatisticsService {
     catch (Exception e) {
       LOG.info(e);
       throw new StatServiceException("Error during data sending.", e);
+    }
+  }
+
+  @Nullable
+  private static String readResponse(@NotNull HttpRequests.Request request) {
+    try {
+      return request.readString();
+    }
+    catch (Exception e) {
+      return e.getMessage();
     }
   }
 

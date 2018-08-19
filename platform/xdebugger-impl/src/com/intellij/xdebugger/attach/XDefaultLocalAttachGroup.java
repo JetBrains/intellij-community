@@ -27,6 +27,7 @@ import javax.swing.*;
 /**
  * @deprecated use {@link XAttachPresentationGroup} instead
  */
+@Deprecated
 public class XDefaultLocalAttachGroup implements XLocalAttachGroup {
   public static final XDefaultLocalAttachGroup INSTANCE = new XDefaultLocalAttachGroup();
 
@@ -59,11 +60,13 @@ public class XDefaultLocalAttachGroup implements XLocalAttachGroup {
     return null;
   }
 
+  @Override
   @NotNull
   public Icon getProcessIcon(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
     return AllIcons.RunConfigurations.Application;
   }
 
+  @Override
   @NotNull
   public String getProcessDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
     return info.getExecutableDisplayName();

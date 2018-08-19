@@ -26,7 +26,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
-import com.intellij.util.ArrayUtil
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.Html
 import com.intellij.util.ui.JBUI
@@ -49,7 +48,7 @@ val runActionCustomShortcutSet: CustomShortcutSet = CustomShortcutSet(
 internal class DaemonTooltipWithActionRenderer(text: String?,
                                                private val tooltipAction: TooltipAction?,
                                                width: Int,
-                                               comparable: Array<Any>) : DaemonTooltipRenderer(text, width, if (tooltipAction == null) comparable else ArrayUtil.append(comparable, tooltipAction)) {
+                                               comparable: Array<Any>) : DaemonTooltipRenderer(text, width, comparable) {
 
 
   override fun dressDescription(editor: Editor, tooltipText: String, expand: Boolean): String {
@@ -151,7 +150,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     buttons.add(createKeymapHint(shortcutShowAllActionsText), gridBag.next().fillCellHorizontally().insets(0, 4, 0, 20))
 
     actions.add(object : AnAction() {
-      override fun actionPerformed(e: AnActionEvent?) {
+      override fun actionPerformed(e: AnActionEvent) {
         runFixAction.run()
       }
 
@@ -161,7 +160,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     })
 
     actions.add(object : AnAction() {
-      override fun actionPerformed(e: AnActionEvent?) {
+      override fun actionPerformed(e: AnActionEvent) {
         showAllFixes.run()
       }
 
@@ -272,7 +271,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     val settingsButton = object : ActionButton(actionGroup, presentation, ActionPlaces.UNKNOWN, Dimension(18, 18)) {
       override fun paintComponent(g: Graphics?) {
         val state = popState
-        if (state == ActionButtonComponent.POPPED) {
+        if (state == ActionButtonComponent.POPPED && UIUtil.isUnderDarcula()) {
           val look = buttonLook
           look.paintBackground(g!!, this, getSettingsIconHoverBackgroundColor())
           look.paintIcon(g, this, icon)
@@ -296,7 +295,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
   }
 
   private inner class ShowActionsAction(val reloader: TooltipReloader, val isEnabled: Boolean) : ToggleAction(
-    "Show Quick fixes"), HintManagerImpl.ActionToIgnore {
+    "Show Quick Fixes"), HintManagerImpl.ActionToIgnore {
 
     override fun isSelected(e: AnActionEvent): Boolean {
       return isShowActions()
@@ -325,7 +324,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     }
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
-      ActionsCollector.getInstance().record("tooltip.actions.show.description.gear")
+      ActionsCollector.getInstance().record("tooltip.actions.show.description.gear", this::class.java)
       reloader.reload(state)
     }
 

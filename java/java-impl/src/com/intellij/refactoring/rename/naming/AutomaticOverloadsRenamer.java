@@ -31,10 +31,12 @@ public class AutomaticOverloadsRenamer extends AutomaticRenamer {
     }
   }
 
+  @Override
   public String getDialogTitle() {
     return "Rename Overloads";
   }
 
+  @Override
   public String getDialogDescription() {
     return "Rename overloads to:";
   }

@@ -1,17 +1,42 @@
+deprecated: addFacesSupport.png; to be removed in IDEA 2020
+deprecated: allLeft.png; to be removed in IDEA 2020
+deprecated: allRight.png; to be removed in IDEA 2020
 deprecated: browser-externalJavaDoc.png -> /actions/previousOccurence.svg; to be removed in IDEA 2020 - use AllIcons.Actions.PreviousOccurence
+deprecated: checkedBlack.png -> /actions/checked.png; to be removed in IDEA 2020 - use AllIcons.Actions.Checked
+deprecated: checkedGrey.png -> /actions/checked.png; to be removed in IDEA 2020 - use AllIcons.Actions.Checked
+deprecated: createFromUsage.png -> /actions/intentionBulb.svg; to be removed in IDEA 2020 - use AllIcons.Actions.IntentionBulb
+deprecated: createPatch.png; to be removed in IDEA 2020
 deprecated: delete.png -> /actions/cancel.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Cancel
+deprecated: diffPreview.png -> /actions/diff.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Diff
+deprecated: diffWithCurrent.png -> /actions/diff.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Diff
+deprecated: down.png -> /general/splitDown.png; to be removed in IDEA 2020 - use AllIcons.General.SplitDown
+deprecated: erDiagram.png; to be removed in IDEA 2020 - use J2EEIcons.ErDiagram
 deprecated: exclude.png -> /general/remove.svg; to be removed in IDEA 2020 - use AllIcons.General.Remove
 deprecated: export.png -> /toolbarDecorator/export.svg; to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Export
 deprecated: fileStatus.png
 deprecated: filter_small.png -> /general/filter.svg; to be removed in IDEA 2020 - use AllIcons.General.Filter
 deprecated: findPlain.png -> /actions/find.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Find
+deprecated: findWhite.png; to be removed in IDEA 2020
+deprecated: get.png -> /actions/download.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Download
+deprecated: left.png -> /general/splitLeft.png; to be removed in IDEA 2020 - use AllIcons.General.SplitLeft
 deprecated: menu-find.png -> /actions/find.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Find
 deprecated: menu-help.png -> /actions/help.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Help
 deprecated: menu-replace.png -> /actions/replace.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Replace
+deprecated: move-to-button-top.png -> /actions/move-to-button.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Move_to_button
+deprecated: moveToStandardPlace.png -> /actions/MoveTo2.svg; to be removed in IDEA 2020 - use AllIcons.Actions.MoveTo2
+deprecated: multicaret.svg; to be removed in IDEA 2020
 deprecated: nextfile.png -> /actions/forward.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Forward
 deprecated: prevfile.png -> /actions/back.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Back
+deprecated: quickList.png; to be removed in IDEA 2020
+deprecated: realIntentionOffBulb.png; to be removed in IDEA 2020
 deprecated: reset.png -> /actions/rollback.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Rollback
+deprecated: reset-to-default.png -> /actions/rollback.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Rollback
+deprecated: Reset_to_empty.png -> /actions/uninstall.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Uninstall
+deprecated: right.png; to be removed in IDEA 2020 - use AllIcons.General.SplitRight
+deprecated: showChangesOnly.png -> /actions/preview.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Preview
 deprecated: showViewer.png
 deprecated: sortAsc.png -> /actions/moveUp.svg; to be removed in IDEA 2020 - use AllIcons.Actions.MoveUp
 deprecated: sortDesc.png -> /actions/moveDown.svg; to be removed in IDEA 2020 - use AllIcons.Actions.MoveDown
+deprecated: submit1.png -> /actions/setDefault.svg; to be removed in IDEA 2020 - use AllIcons.Actions.SetDefault
 deprecated: synchronizeFS.png -> /actions/refresh.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Refresh
+deprecated: up.png -> /general/splitUp.png; to be removed in IDEA 2020 - use AllIcons.General.SplitUp

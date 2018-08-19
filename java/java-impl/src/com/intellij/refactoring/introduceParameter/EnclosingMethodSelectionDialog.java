@@ -55,15 +55,18 @@ public class EnclosingMethodSelectionDialog extends DialogWrapper {
     }
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction()/*, getHelpAction()*/};
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myEnclosingMethodsList;
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel();
 
@@ -93,10 +96,12 @@ public class EnclosingMethodSelectionDialog extends DialogWrapper {
     return panel;
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.refactoring.introduceParameter.EnclosingMethodSelectonDialog";
   }
 
+  @Override
   protected void doOKAction() {
     if (!isOKActionEnabled())
       return;
@@ -104,6 +109,7 @@ public class EnclosingMethodSelectionDialog extends DialogWrapper {
     super.doOKAction();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return null;
   }

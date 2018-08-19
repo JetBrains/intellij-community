@@ -1,33 +1,38 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.impl
 
+import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.testGuiFramework.cellReader.ExtendedJComboboxCellReader
 import com.intellij.testGuiFramework.cellReader.ExtendedJListCellReader
 import com.intellij.testGuiFramework.fixtures.*
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedButtonFixture
+import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedTableFixture
-import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture
 import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
-import com.intellij.testGuiFramework.impl.GuiTestUtilKt.getComponentText
-import com.intellij.testGuiFramework.impl.GuiTestUtilKt.isTextComponent
+import com.intellij.testGuiFramework.framework.Timeouts.defaultTimeout
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.typeMatcher
+import com.intellij.testGuiFramework.util.FinderPredicate
+import com.intellij.testGuiFramework.util.Predicate
 import com.intellij.ui.CheckboxTree
 import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.JBList
+import com.intellij.ui.components.labels.ActionLink
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.util.ui.AsyncProcessIcon
+import org.fest.swing.core.GenericTypeMatcher
+import org.fest.swing.core.Robot
+import org.fest.swing.exception.ActionFailedException
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
-import org.fest.swing.fixture.JLabelFixture
-import org.fest.swing.fixture.JListFixture
-import org.fest.swing.fixture.JSpinnerFixture
-import org.fest.swing.fixture.JTextComponentFixture
+import org.fest.swing.fixture.*
 import org.fest.swing.timing.Timeout
+import org.junit.Assert
 import java.awt.Component
 import java.awt.Container
-import java.util.concurrent.TimeUnit
 import javax.swing.*
 
 
@@ -35,387 +40,392 @@ import javax.swing.*
 /**
  * Finds a JList component in hierarchy of context component with a containingItem and returns JListFixture.
  *
- * @timeout in seconds to find JList component
  * @throws ComponentLookupException if component has not been found or timeout exceeded
  */
-fun <S, C : Component> ComponentFixture<S, C>.jList(containingItem: String? = null, timeout: Long = defaultTimeout): JListFixture =
-  if (target() is Container) {
-    val extCellReader = ExtendedJListCellReader()
-    val myJList = waitUntilFound(target() as Container, JList::class.java, timeout) { jList: JList<*> ->
-      if (containingItem == null) true //if were searching for any jList()
-      else {
-        val elements = (0 until jList.model.size).map { it: Int -> extCellReader.valueAt(jList as JList<Any?>, it) }
-        elements.any { it.toString() == containingItem } && jList.isShowing
-      }
+fun <C : Container> ContainerFixture<C>.jList(containingItem: String? = null, timeout: Timeout = defaultTimeout): JListFixture {
+  val extCellReader = ExtendedJListCellReader()
+  val myJList: JList<*> = findComponentWithTimeout(timeout) { jList: JList<*> ->
+    if (containingItem == null) true //if were searching for any jList()
+    else {
+      val elements = (0 until jList.model.size).map { it: Int -> extCellReader.valueAt(jList as JList<Any?>, it) }
+      elements.any { it.toString() == containingItem } && jList.isShowing
     }
-    val jListFixture = JListFixture(robot(), myJList)
-    jListFixture.replaceCellReader(extCellReader)
-    jListFixture
   }
-  else throw unableToFindComponent("JList")
+  val jListFixture = JListFixture(robot(), myJList)
+  jListFixture.replaceCellReader(extCellReader)
+  return jListFixture
+}
+
 
 /**
  * Finds a JButton component in hierarchy of context component with a name and returns ExtendedButtonFixture.
  *
- * @timeout in seconds to find JButton component
  * @throws ComponentLookupException if component has not been found or timeout exceeded
  */
-fun <S, C : Component> ComponentFixture<S, C>.button(name: String, timeout: Long = defaultTimeout): ExtendedButtonFixture =
-  if (target() is Container) {
-    val jButton = waitUntilFound(target() as Container, JButton::class.java, timeout) {
-      it.isShowing && it.isVisible && it.text == name
-    }
-    ExtendedButtonFixture(robot(), jButton)
-  }
-  else throw unableToFindComponent("""JButton named by $name""")
+fun <C : Container> ContainerFixture<C>.button(name: String, timeout: Timeout = defaultTimeout): ExtendedButtonFixture {
+  val jButton: JButton = findComponentWithTimeout(timeout) { it.isShowing && it.isVisible && it.text == name }
+  return ExtendedButtonFixture(robot(), jButton)
+}
 
 /**
  * Finds a list of JButton component in hierarchy of context component with a name and returns ExtendedButtonFixture.
  * There can be cases when there are several the same named components and it's OK
  *
- * @timeout in seconds to find JButton component
  * @throws ComponentLookupException if no component has not been found or timeout exceeded
  * @return list of JButton components sorted by locationOnScreen (left to right, top to down)
  */
-fun <S, C : Component> ComponentFixture<S, C>.buttons(name: String, timeout: Long = defaultTimeout): List<ExtendedButtonFixture> =
-  if (target() is Container) {
-    val jButtons = waitUntilFoundList(target() as Container, JButton::class.java, timeout) {
-      it.isShowing && it.isVisible && it.text == name
-    }
-    jButtons
-      .map { ExtendedButtonFixture(GuiRobotHolder.robot, it) }
-      .sortedBy { it.target().locationOnScreen.x }
-      .sortedBy { it.target().locationOnScreen.y }
-  }
-  else throw unableToFindComponent("""JButton named by $name""")
+fun <C : Container> ContainerFixture<C>.buttons(name: String, timeout: Timeout = defaultTimeout): List<ExtendedButtonFixture> {
 
-fun <S, C : Component> ComponentFixture<S, C>.componentWithBrowseButton(boundedLabelText: String,
-                                                                        timeout: Long = defaultTimeout): ComponentWithBrowseButtonFixture {
-  if (target() is Container) {
-    val boundedLabel = waitUntilFound(target() as Container, JLabel::class.java, timeout) {
-      it.text == boundedLabelText && it.isShowing
-    }
-    val component = boundedLabel.labelFor
-    if (component is ComponentWithBrowseButton<*>) {
-      return ComponentWithBrowseButtonFixture(component, robot())
-    }
+  val jButtons = waitUntilFoundList(target() as Container, JButton::class.java, timeout) {
+    it.isShowing && it.isVisible && it.text == name
   }
-  throw unableToFindComponent("ComponentWithBrowseButton with labelFor=$boundedLabelText")
+  return jButtons
+    .map { ExtendedButtonFixture(GuiRobotHolder.robot, it) }
+    .sortedBy { it.target().locationOnScreen.x }
+    .sortedBy { it.target().locationOnScreen.y }
 }
 
-fun <S, C : Component> ComponentFixture<S, C>.treeTable(timeout: Long = defaultTimeout): TreeTableFixture {
-  if (target() is Container) {
-    val table = GuiTestUtil.waitUntilFound(robot(), target() as Container,
-                                           GuiTestUtilKt.typeMatcher(TreeTable::class.java) { true },
-                                           timeout.toFestTimeout()
-    )
-    return TreeTableFixture(robot(), table)
+fun <C : Container> ContainerFixture<C>.componentWithBrowseButton(boundedLabelText: String,
+                                                                  timeout: Timeout = defaultTimeout): ComponentWithBrowseButtonFixture {
+  val boundedLabel: JLabel = findComponentWithTimeout(timeout) { it.text == boundedLabelText && it.isShowing }
+  val component = boundedLabel.labelFor
+  if (component is ComponentWithBrowseButton<*>) {
+    return ComponentWithBrowseButtonFixture(component, robot())
   }
-  else throw UnsupportedOperationException(
-    "Sorry, unable to find inspections tree with ${target()} as a Container")
+  else throw unableToFindComponent("ComponentWithBrowseButton", timeout)
 }
 
-fun <S, C : Component> ComponentFixture<S, C>.spinner(boundedLabelText: String, timeout: Long = defaultTimeout): JSpinnerFixture {
-  if (target() is Container) {
-    val boundedLabel = waitUntilFound(target() as Container, JLabel::class.java, timeout) { it.text == boundedLabelText }
-    val component = boundedLabel.labelFor
-    if (component is JSpinner)
-      return JSpinnerFixture(robot(), component)
-  }
-  throw unableToFindComponent("""JSpinner with $boundedLabelText bounded label""")
+fun <C : Container> ContainerFixture<C>.treeTable(timeout: Timeout = defaultTimeout): TreeTableFixture {
+  val table: TreeTable = findComponentWithTimeout(timeout)
+  return TreeTableFixture(robot(), table)
+}
+
+fun <C : Container> ContainerFixture<C>.spinner(boundedLabelText: String, timeout: Timeout = defaultTimeout): JSpinnerFixture {
+  val boundedLabel: JLabel = findComponentWithTimeout(timeout) { it.text == boundedLabelText }
+  val component = boundedLabel.labelFor
+  if (component is JSpinner)
+    return JSpinnerFixture(robot(), component)
+  else throw unableToFindComponent("JSpinner", timeout)
+}
+
+fun <C : Container> ContainerFixture<C>?.unableToFindComponent(componentName: String, timeout: Timeout): Throwable {
+  if (this == null) throw ComponentLookupException("Unable to find $componentName component without parent container (null) in $timeout")
+  else throw ComponentLookupException(
+    "Unable to find $componentName component without parent container ${this.target()::javaClass.name} in $timeout")
 }
 
 /**
  * Finds a JComboBox component in hierarchy of context component by text of label and returns ComboBoxFixture.
  *
- * @timeout in seconds to find JComboBox component
  * @throws ComponentLookupException if component has not been found or timeout exceeded
  */
-fun <S, C : Component> ComponentFixture<S, C>.combobox(labelText: String, timeout: Long = defaultTimeout): ComboBoxFixture =
-  if (target() is Container) {
-    try {
-      waitUntilFound(target() as Container, Component::class.java,
-                     timeout) { it.isShowing && it.isTextComponent() && it.getComponentText() == labelText }
-    }
-    catch (e: WaitTimedOutError) {
-      throw ComponentLookupException("Unable to find label for a combobox with text \"$labelText\" in $timeout seconds")
-    }
-    val comboBox = GuiTestUtilKt.findBoundedComponentByText(robot(), target() as Container, labelText, JComboBox::class.java)
-    val comboboxFixture = ComboBoxFixture(robot(), comboBox)
-    comboboxFixture.replaceCellReader(ExtendedJComboboxCellReader())
-    comboboxFixture
-  }
-  else throw unableToFindComponent("""JComboBox near label by "$labelText"""")
+fun <C : Container> ContainerFixture<C>.combobox(labelText: String, timeout: Timeout = defaultTimeout): ComboBoxFixture {
+  //todo: cut all waits in fixtures
+  val comboBox = GuiTestUtilKt.findBoundedComponentByText(robot(), target() as Container, labelText, JComboBox::class.java, timeout)
+  val comboboxFixture = ComboBoxFixture(robot(), comboBox)
+  comboboxFixture.replaceCellReader(ExtendedJComboboxCellReader())
+  return comboboxFixture
+}
 
 
 /**
  * Finds a JCheckBox component in hierarchy of context component by text of label and returns CheckBoxFixture.
  *
- * @timeout in seconds to find JCheckBox component
  * @throws ComponentLookupException if component has not been found or timeout exceeded
  */
-fun <S, C : Component> ComponentFixture<S, C>.checkbox(labelText: String, timeout: Long = defaultTimeout): CheckBoxFixture =
-  if (target() is Container) {
-    val jCheckBox = waitUntilFound(target() as Container, JCheckBox::class.java, timeout) {
-      it.isShowing && it.isVisible && it.text == labelText
-    }
-    CheckBoxFixture(robot(), jCheckBox)
-  }
-  else throw unableToFindComponent("""JCheckBox label by "$labelText""")
+fun <C : Container> ContainerFixture<C>.checkbox(labelText: String, timeout: Timeout = defaultTimeout): CheckBoxFixture {
+  val jCheckBox: JCheckBox = findComponentWithTimeout(timeout) { it.isShowing && it.isVisible && it.text == labelText }
+  return CheckBoxFixture(robot(), jCheckBox)
+}
 
 /**
  * Finds a ActionLink component in hierarchy of context component by name and returns ActionLinkFixture.
  *
- * @timeout in seconds to find ActionLink component
  * @throws ComponentLookupException if component has not been found or timeout exceeded
  */
-  fun <S, C : Component> ComponentFixture<S, C>.actionLink(name: String, timeout: Long = defaultTimeout): ActionLinkFixture =
-    if (target() is Container) {
-      ActionLinkFixture.findActionLinkByName(name, robot(), target() as Container, timeout.toFestTimeout())
-    }
-    else throw unableToFindComponent("""ActionLink by name "$name"""")
+fun <C : Container> ContainerFixture<C>.actionLink(name: String, timeout: Timeout = defaultTimeout): ActionLinkFixture {
+  val actionLink: ActionLink = findComponentWithTimeout(timeout) { it.isVisible && it.isShowing && it.text == name }
+  return ActionLinkFixture(robot(), actionLink)
+
+}
 
 /**
  * Finds a ActionButton component in hierarchy of context component by action name and returns ActionButtonFixture.
  *
  * @actionName text or action id of an action button (@see com.intellij.openapi.actionSystem.ActionManager#getId())
- * @timeout in seconds to find ActionButton component
  * @throws ComponentLookupException if component has not been found or timeout exceeded
  */
-fun <S, C : Component> ComponentFixture<S, C>.actionButton(actionName: String, timeout: Long = defaultTimeout): ActionButtonFixture =
-  if (target() is Container) {
-    try {
-      ActionButtonFixture.findByText(actionName, robot(), target() as Container, timeout.toFestTimeout())
-    }
-    catch (componentLookupException: ComponentLookupException) {
-      ActionButtonFixture.findByActionId(actionName, robot(), target() as Container, timeout.toFestTimeout())
-    }
+fun <C : Container> ContainerFixture<C>.actionButton(actionName: String, timeout: Timeout = defaultTimeout): ActionButtonFixture {
+  val actionButton: ActionButton = try {
+    findComponentWithTimeout(timeout, ActionButtonFixture.textMatcher(actionName))
   }
-  else throw unableToFindComponent("""ActionButton by action name "$actionName"""")
+  catch (componentLookupException: ComponentLookupException) {
+    findComponentWithTimeout(timeout, ActionButtonFixture.actionIdMatcher(actionName))
+  }
+  return ActionButtonFixture(robot(), actionButton)
+}
 
 
 /**
  * Finds a InplaceButton component in hierarchy of context component by icon and returns InplaceButtonFixture.
  *
  * @icon of InplaceButton component.
- * @timeout in seconds to find InplaceButton component. It is better to use static cached icons from (@see com.intellij.openapi.util.IconLoader.AllIcons)
  * @throws ComponentLookupException if component has not been found or timeout exceeded
  */
-fun <S, C : Component> ComponentFixture<S, C>.inplaceButton(icon: Icon, timeout: Long = defaultTimeout): InplaceButtonFixture {
+fun <C : Container> ContainerFixture<C>.inplaceButton(icon: Icon, timeout: Timeout = defaultTimeout): InplaceButtonFixture {
   val target = target()
-  return if (target is Container) {
-    InplaceButtonFixture.findInplaceButtonFixture(target, robot(), icon, timeout)
-  }
-  else throw unableToFindComponent("""InplaceButton by icon "$icon"""")
+  return InplaceButtonFixture.findInplaceButtonFixture(target, robot(), icon, timeout)
 }
 
 /**
  * Finds a ActionButton component in hierarchy of context component by action class name and returns ActionButtonFixture.
  *
  * @actionClassName qualified name of class for action
- * @timeout in seconds to find ActionButton component
  * @throws ComponentLookupException if component has not been found or timeout exceeded
  */
-fun <S, C : Component> ComponentFixture<S, C>.actionButtonByClass(actionClassName: String,
-                                                                  timeout: Long = defaultTimeout): ActionButtonFixture =
-  if (target() is Container) {
-    ActionButtonFixture.findByActionClassName(actionClassName, robot(), target() as Container, timeout.toFestTimeout())
-  }
-  else throw unableToFindComponent("""ActionButton by action class name "$actionClassName"""")
+fun <C : Container> ContainerFixture<C>.actionButtonByClass(actionClassName: String,
+                                                            timeout: Timeout = defaultTimeout): ActionButtonFixture {
+  val actionButton: ActionButton = findComponentWithTimeout(timeout, ActionButtonFixture.actionClassNameMatcher(actionClassName))
+  return ActionButtonFixture(robot(), actionButton)
+
+}
+
 
 /**
  * Finds a JRadioButton component in hierarchy of context component by label text and returns JRadioButtonFixture.
  *
- * @timeout in seconds to find JRadioButton component
  * @throws ComponentLookupException if component has not been found or timeout exceeded
  */
-fun <S, C : Component> ComponentFixture<S, C>.radioButton(textLabel: String, timeout: Long = defaultTimeout): RadioButtonFixture =
-  if (target() is Container) GuiTestUtil.findRadioButton(target() as Container, textLabel, timeout.toFestTimeout())
-  else throw unableToFindComponent("""RadioButton by label "$textLabel"""")
+fun <C : Container> ContainerFixture<C>.radioButton(textLabel: String, timeout: Timeout = defaultTimeout): RadioButtonFixture =
+  GuiTestUtil.findRadioButton(target() as Container, textLabel, timeout)
 
 /**
  * Finds a JTextComponent component (JTextField) in hierarchy of context component by text of label and returns JTextComponentFixture.
  *
  * @textLabel could be a null if label is absent
- * @timeout in seconds to find JTextComponent component
  * @throws ComponentLookupException if component has not been found or timeout exceeded
  */
-fun <S, C : Component> ComponentFixture<S, C>.textfield(textLabel: String?, timeout: Long = defaultTimeout): JTextComponentFixture {
-  val target = target()
-  if (target is Container) {
-    return GuiTestUtil.textfield(textLabel, target, timeout)
-  }
-  else throw unableToFindComponent("""JTextComponent (JTextField) by label "$textLabel"""")
+fun <C : Container> ContainerFixture<C>.textfield(textLabel: String?, timeout: Timeout = defaultTimeout): JTextComponentFixture {
+  return GuiTestUtil.textfield(textLabel, target(), timeout)
 }
 
 /**
  * Finds a JTree component in hierarchy of context component by a path and returns ExtendedTreeFixture.
  *
  * @pathStrings comma separated array of Strings, representing path items: jTree("myProject", "src", "Main.java")
- * @timeout in seconds to find JTree component
  * @throws ComponentLookupException if component has not been found or timeout exceeded
  */
-fun <S, C : Component> ComponentFixture<S, C>.jTree(vararg pathStrings: String, timeout: Long = defaultTimeout): ExtendedTreeFixture =
-  if (target() is Container) GuiTestUtil.jTreePath(target() as Container, timeout, *pathStrings)
-  else throw unableToFindComponent("""JTree "${if (pathStrings.isNotEmpty()) "by path $pathStrings" else ""}"""")
+fun <C : Container> ContainerFixture<C>.jTree(vararg pathStrings: String,
+                                              timeout: Timeout = defaultTimeout,
+                                              predicate: FinderPredicate = Predicate.equality): ExtendedJTreePathFixture =
+  ExtendedJTreePathFixture(GuiTestUtil.jTreeComponent(
+    container = target() as Container,
+    timeout = timeout,
+    pathStrings = *pathStrings,
+    predicate = predicate
+  ), pathStrings.toList(), predicate)
 
 /**
  * Finds a CheckboxTree component in hierarchy of context component by a path and returns CheckboxTreeFixture.
  *
  * @pathStrings comma separated array of Strings, representing path items: checkboxTree("JBoss", "JBoss Drools")
- * @timeout in seconds to find JTree component
  * @throws ComponentLookupException if component has not been found or timeout exceeded
  */
-fun <S, C : Component> ComponentFixture<S, C>.checkboxTree(vararg pathStrings: String,
-                                                           timeout: Long = defaultTimeout): CheckboxTreeFixture =
-  if (target() is Container) {
-    val extendedTreeFixture = GuiTestUtil.jTreePath(target() as Container, timeout, *pathStrings)
-    if (extendedTreeFixture.tree !is CheckboxTree) throw ComponentLookupException("Found JTree but not a CheckboxTree")
-    CheckboxTreeFixture(robot(), extendedTreeFixture.tree)
-  }
-  else throw unableToFindComponent("""CheckboxTree "${if (pathStrings.isNotEmpty()) "by path $pathStrings" else ""}"""")
+fun <C : Container> ContainerFixture<C>.checkboxTree(
+  vararg pathStrings: String,
+  timeout: Timeout = defaultTimeout,
+  predicate: FinderPredicate = Predicate.equality
+): CheckboxTreeFixture {
+  val tree = GuiTestUtil.jTreeComponent(
+    container = target() as Container,
+    timeout = timeout,
+    predicate = predicate,
+    pathStrings = *pathStrings
+  ) as? CheckboxTree ?: throw ComponentLookupException("Found JTree but not a CheckboxTree")
+  return CheckboxTreeFixture(tree, pathStrings.toList(), predicate, robot())
+}
 
 /**
  * Finds a JTable component in hierarchy of context component by a cellText and returns JTableFixture.
  *
- * @timeout in seconds to find JTable component
  * @throws ComponentLookupException if component has not been found or timeout exceeded
  */
-fun <S, C : Component> ComponentFixture<S, C>.table(cellText: String, timeout: Long = defaultTimeout): ExtendedTableFixture =
-  if (target() is Container) {
-    var tableFixture: ExtendedTableFixture? = null
-    waitUntilFound(target() as Container, JTable::class.java, timeout) {
-      tableFixture = com.intellij.testGuiFramework.fixtures.extended.ExtendedTableFixture(robot(), it)
-      try {
-        tableFixture?.cell(cellText)
-        tableFixture != null
-      }
-      catch (e: org.fest.swing.exception.ActionFailedException) {
-        false
-      }
+fun <C : Container> ContainerFixture<C>.table(cellText: String, timeout: Timeout = defaultTimeout): ExtendedTableFixture {
+  var tableFixture: ExtendedTableFixture? = null
+  val jTable: JTable = findComponentWithTimeout(timeout) {
+    tableFixture = ExtendedTableFixture(robot(), it)
+    try {
+      tableFixture?.cell(cellText)
+      tableFixture != null
     }
-    tableFixture ?: throw unableToFindComponent("""JTable with cell text "$cellText"""")
+    catch (e: ActionFailedException) {
+      false
+    }
   }
-  else throw unableToFindComponent("""JTable with cell text "$cellText"""")
+  return tableFixture ?: throw unableToFindComponent("""JTable with cell text "$cellText"""", timeout)
+}
 
+fun popupMenu(
+  item: String,
+  robot: Robot,
+  root: Container? = null,
+  timeout: Timeout = defaultTimeout,
+  predicate: FinderPredicate = Predicate.equality
+): JBListPopupFixture {
+  val jbList = GuiTestUtil.waitUntilFound(
+    robot,
+    root,
+    object : GenericTypeMatcher<JBList<*>>(JBList::class.java) {
+      override fun isMatching(component: JBList<*>): Boolean {
+        return JBListPopupFixture(component, item, predicate, robot).isSearchedItemPresent()
+      }
+    },
+    timeout)
+  return JBListPopupFixture(jbList, item, predicate, robot)
 
-/**
- * Finds popup on screen with item (itemName) and clicks on it item
- *
- * @timeout timeout in seconds to find JTextComponent component
- * @throws ComponentLookupException if component has not been found or timeout exceeded
- */
-fun <S, C : Component> ComponentFixture<S, C>.popupClick(itemName: String, timeout: Long = defaultTimeout) =
-  if (target() is Container) {
-    JBListPopupFixture.clickPopupMenuItem(itemName, false, target() as Container, robot(), timeout.toFestTimeout())
-  }
-  else throw unableToFindComponent("Popup")
+}
+
+fun <C : Container> ContainerFixture<C>.popupMenu(item: String,
+                                                  timeout: Timeout = defaultTimeout,
+                                                  predicate: FinderPredicate = Predicate.equality): JBListPopupFixture {
+  val root: Container? = GuiTestUtil.getRootContainer(target())
+  Assert.assertNotNull(root)
+  return popupMenu(item, robot(), root, timeout, predicate)
+}
+
 
 /**
  * Finds a LinkLabel component in hierarchy of context component by a link name and returns fixture for it.
  *
- * @timeout in seconds to find LinkLabel component
  * @throws ComponentLookupException if component has not been found or timeout exceeded
  */
-fun <S, C : Component> ComponentFixture<S, C>.linkLabel(linkName: String, timeout: Long = defaultTimeout) =
-  if (target() is Container) {
-    val myLinkLabel = GuiTestUtil.waitUntilFound(
-      robot(), target() as Container,
-      GuiTestUtilKt.typeMatcher(LinkLabel::class.java) { it.isShowing && (it.text == linkName) },
-      timeout.toFestTimeout())
-    ComponentFixture(ComponentFixture::class.java, robot(), myLinkLabel)
-  }
-  else throw unableToFindComponent("LinkLabel")
+fun <C : Container> ContainerFixture<C>.linkLabel(linkName: String,
+                                                  timeout: Timeout = defaultTimeout): ComponentFixture<ComponentFixture<*, *>, LinkLabel<*>> {
+  val myLinkLabel = GuiTestUtil.waitUntilFound(
+    robot(), target() as Container,
+    GuiTestUtilKt.typeMatcher(LinkLabel::class.java) { it.isShowing && (it.text == linkName) },
+    timeout)
+  return ComponentFixture(ComponentFixture::class.java, robot(), myLinkLabel)
+}
 
 
-fun <S, C : Component> ComponentFixture<S, C>.hyperlinkLabel(labelText: String, timeout: Long = defaultTimeout): HyperlinkLabelFixture =
-  if (target() is Container) {
-    val hyperlinkLabel = GuiTestUtil.waitUntilFound(robot(), target() as Container,
-                                                    GuiTestUtilKt.typeMatcher(HyperlinkLabel::class.java) {
-                                                      it.isShowing && (it.text == labelText)
-                                                    }, timeout.toFestTimeout())
-    HyperlinkLabelFixture(robot(), hyperlinkLabel)
-  }
-  else throw unableToFindComponent("""HyperlinkLabel by label text: "$labelText"""")
+fun <C : Container> ContainerFixture<C>.hyperlinkLabel(labelText: String,
+                                                       timeout: Timeout = defaultTimeout): HyperlinkLabelFixture {
+  val hyperlinkLabel = GuiTestUtil.waitUntilFound(robot(), target() as Container,
+                                                  GuiTestUtilKt.typeMatcher(HyperlinkLabel::class.java) {
+                                                    it.isShowing && (it.text == labelText)
+                                                  }, timeout)
+  return HyperlinkLabelFixture(robot(), hyperlinkLabel)
+}
 
 /**
  * Finds a table of plugins component in hierarchy of context component by a link name and returns fixture for it.
  *
- * @timeout in seconds to find table of plugins component
  * @throws ComponentLookupException if component has not been found or timeout exceeded
  */
-fun <S, C : Component> ComponentFixture<S, C>.pluginTable(timeout: Long = defaultTimeout) =
-  if (target() is Container) PluginTableFixture.find(robot(), target() as Container, timeout.toFestTimeout())
-  else throw unableToFindComponent("PluginTable")
+fun <C : Container> ContainerFixture<C>.pluginTable(timeout: Timeout = defaultTimeout) =
+  PluginTableFixture.find(robot(), target() as Container, timeout)
 
 /**
  * Finds a Message component in hierarchy of context component by a title MessageFixture.
  *
- * @timeout in seconds to find component for Message
  * @throws ComponentLookupException if component has not been found or timeout exceeded
  */
-fun <S, C : Component> ComponentFixture<S, C>.message(title: String, timeout: Long = defaultTimeout) =
-  if (target() is Container) MessagesFixture.findByTitle(robot(), target() as Container, title, timeout.toFestTimeout())
-  else throw unableToFindComponent("Message")
+fun <C : Container> ContainerFixture<C>.message(title: String, timeout: Timeout = defaultTimeout): MessagesFixture<*> =
+  MessagesFixture.findByTitle(robot(), target() as Container, title, timeout)
 
 
-/**
- * Finds a Message component in hierarchy of context component by a title MessageFixture.
- *
- * @timeout in seconds to find component for Message
- * @throws ComponentLookupException if component has not been found or timeout exceeded
- */
-fun <S, C : Component> ComponentFixture<S, C>.message(title: String, timeout: Long = defaultTimeout, func: MessagesFixture.() -> Unit) {
-  if (target() is Container) func(MessagesFixture.findByTitle(robot(), target() as Container, title, timeout.toFestTimeout()))
-  else throw unableToFindComponent("Message")
+fun <C : Container> ContainerFixture<C>.message(title: String,
+                                                timeout: Timeout = defaultTimeout,
+                                                func: MessagesFixture<*>.() -> Unit) {
+  func(MessagesFixture.findByTitle(robot(), target() as Container, title, timeout))
 }
 
 /**
  * Finds a JBLabel component in hierarchy of context component by a label name and returns fixture for it.
  *
- * @timeout in seconds to find JBLabel component
  * @throws ComponentLookupException if component has not been found or timeout exceeded
  */
-fun <S, C : Component> ComponentFixture<S, C>.label(labelName: String, timeout: Long = defaultTimeout): JLabelFixture =
-  if (target() is Container) {
-    val jbLabel = GuiTestUtil.waitUntilFound(
-      robot(), target() as Container,
-      GuiTestUtilKt.typeMatcher(JBLabel::class.java) { it.isShowing && (it.text == labelName || labelName in it.text) },
-      timeout.toFestTimeout())
-    JLabelFixture(robot(), jbLabel)
-  }
-  else throw unableToFindComponent("JBLabel")
+fun <C : Container> ContainerFixture<C>.label(labelName: String, timeout: Timeout = defaultTimeout): JLabelFixture {
+  val jbLabel = GuiTestUtil.waitUntilFound(
+    robot(), target() as Container,
+    GuiTestUtilKt.typeMatcher(JBLabel::class.java) { it.isShowing && (it.text == labelName || labelName in it.text) },
+    timeout)
+  return JLabelFixture(robot(), jbLabel)
+}
 
-private fun <S, C : Component> ComponentFixture<S, C>.unableToFindComponent(component: String): ComponentLookupException =
-  ComponentLookupException("""Sorry, unable to find $component component with ${target()} as a Container""")
 
 /**
  * Find an AsyncProcessIcon component in a current context (gets by receiver) and returns a fixture for it.
- *
- * @timeout timeout in seconds to find AsyncProcessIcon
+ * Indexing processIcon is excluded from this search
  */
-fun <S, C : Component> ComponentFixture<S, C>.asyncProcessIcon(timeout: Long = defaultTimeout): AsyncProcessIconFixture {
+fun <C : Container> ContainerFixture<C>.asyncProcessIcon(timeout: Timeout = defaultTimeout): AsyncProcessIconFixture {
+  val indexingProcessIconTooltipText = ActionsBundle.message("action.ShowProcessWindow.double.click")
   val asyncProcessIcon = GuiTestUtil.waitUntilFound(
     robot(),
-    target() as Container,
-    GuiTestUtilKt.typeMatcher(AsyncProcessIcon::class.java) { it.isShowing && it.isVisible },
-    timeout.toFestTimeout())
+    target(),
+    GuiTestUtilKt.typeMatcher(AsyncProcessIcon::class.java) {
+      it.isShowing &&
+      it.isVisible &&
+      it.toolTipText != indexingProcessIconTooltipText
+    },
+    timeout)
   return AsyncProcessIconFixture(robot(), asyncProcessIcon)
 }
 
-internal fun Long.toFestTimeout(): Timeout = if (this == 0L) Timeout.timeout(50, TimeUnit.MILLISECONDS)
-else Timeout.timeout(this, TimeUnit.SECONDS)
-
 fun <ComponentType : Component> waitUntilFound(container: Container?,
                                                componentClass: Class<ComponentType>,
-                                               timeout: Long,
+                                               timeout: Timeout,
                                                matcher: (ComponentType) -> Boolean): ComponentType {
-  return GuiTestUtil.waitUntilFound(GuiRobotHolder.robot, container, GuiTestUtilKt.typeMatcher(componentClass) { matcher(it) }, timeout.toFestTimeout())
+  return GuiTestUtil.waitUntilFound(GuiRobotHolder.robot, container, GuiTestUtilKt.typeMatcher(componentClass) { matcher(it) },
+                                    timeout)
 }
 
 fun <ComponentType : Component> waitUntilFoundList(container: Container?,
-                                               componentClass: Class<ComponentType>,
-                                               timeout: Long,
-                                               matcher: (ComponentType) -> Boolean): List<ComponentType> {
-  return GuiTestUtil.waitUntilFoundList(container, timeout.toFestTimeout(), GuiTestUtilKt.typeMatcher(componentClass) { matcher(it) })
+                                                   componentClass: Class<ComponentType>,
+                                                   timeout: Timeout,
+                                                   matcher: (ComponentType) -> Boolean): List<ComponentType> {
+  return GuiTestUtil.waitUntilFoundList(container, timeout, GuiTestUtilKt.typeMatcher(componentClass) { matcher(it) })
+}
+
+/**
+ * function to find component of returning type inside a container (gets from receiver).
+ *
+ * @throws ComponentLookupException if desired component haven't been found under the container (gets from receiver) in specified timeout
+ */
+inline fun <reified ComponentType : Component, ContainerComponentType : Container> ContainerFixture<ContainerComponentType>?.findComponentWithTimeout(
+  timeout: Timeout = defaultTimeout,
+  crossinline finderFunction: (ComponentType) -> Boolean = { _ -> true }): ComponentType {
+  try {
+    return GuiTestUtil.waitUntilFound(GuiRobotHolder.robot, this?.target() as Container?,
+                                      GuiTestUtilKt.typeMatcher(ComponentType::class.java) { finderFunction(it) },
+                                      timeout)
+  }
+  catch (e: WaitTimedOutError) {
+    throw ComponentLookupException(
+      "Unable to find ${ComponentType::class.java.name} ${if (this?.target() != null) "in container ${this.target()}" else ""} in $timeout seconds")
+  }
+}
+
+fun <ComponentType : Component> findComponentWithTimeout(container: Container?,
+                                                         componentClass: Class<ComponentType>,
+                                                         timeout: Timeout = defaultTimeout,
+                                                         finderFunction: (ComponentType) -> Boolean = { _ -> true }): ComponentType {
+  try {
+    return GuiTestUtil.waitUntilFound(GuiRobotHolder.robot, container, GuiTestUtilKt.typeMatcher(componentClass) { finderFunction(it) },
+                                      timeout)
+  }
+  catch (e: WaitTimedOutError) {
+    throw ComponentLookupException(
+      "Unable to find ${componentClass.simpleName} ${if (container != null) "in container $container" else ""} in $timeout seconds")
+  }
+}
+
+fun <ComponentType : Component> Robot.findComponent(container: Container?,
+                                                    componentClass: Class<ComponentType>,
+                                                    finderFunction: (ComponentType) -> Boolean = { _ -> true }): ComponentType {
+  return if (container == null)
+    this.finder().find(typeMatcher(componentClass, finderFunction))
+  else
+    this.finder().find(container, typeMatcher(componentClass, finderFunction))
 }

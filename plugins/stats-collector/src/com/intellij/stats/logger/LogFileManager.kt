@@ -30,8 +30,7 @@ class LogFileManager(private val filePathProvider: FilePathProvider) : FileLogge
     override fun println(message: String) {
         synchronized(this) {
             if (storage.size > 0 && storage.sizeWithNewLine(message) > MAX_SIZE_BYTE) {
-                saveDataChunk(storage)
-                storage = LineStorage()
+                flushImpl()
             }
             storage.appendLine(message)
         }
@@ -40,10 +39,15 @@ class LogFileManager(private val filePathProvider: FilePathProvider) : FileLogge
     fun flush() {
         synchronized(this) {
             if (storage.size > 0) {
-                saveDataChunk(storage)
-                storage = LineStorage()
+                flushImpl()
             }
         }
+    }
+
+    private fun flushImpl() {
+        saveDataChunk(storage)
+        filePathProvider.cleanupOldFiles()
+        storage = LineStorage()
     }
 
     private fun saveDataChunk(storage: LineStorage) {

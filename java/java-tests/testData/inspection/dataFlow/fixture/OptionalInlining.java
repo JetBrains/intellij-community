@@ -56,7 +56,7 @@ public class OptionalInlining {
 
   void testDeref(Optional<String> opt) {
     if (opt == null) {
-      System.out.println(opt.<warning descr="Method invocation 'orElse' may produce 'java.lang.NullPointerException'">orElse</warning>("qq"));
+      System.out.println(opt.<warning descr="Method invocation 'orElse' will produce 'java.lang.NullPointerException'">orElse</warning>("qq"));
     }
   }
 
@@ -68,7 +68,7 @@ public class OptionalInlining {
       }
       return "baz";
     });
-    if (<warning descr="Condition 's.equals(\"bar\") && !opt.isPresent()' is always 'false'">s.equals("bar") && <warning descr="Condition '!opt.isPresent()' is always 'false' when reached">!<warning descr="Condition 'opt.isPresent()' is always 'true' when reached">opt.isPresent()</warning></warning></warning>) {
+    if (<warning descr="Condition 's.equals(\"bar\") && !opt.isPresent()' is always 'false'">s.equals("bar") && <warning descr="Condition '!opt.isPresent()' is always 'false' when reached">!<warning descr="Result of 'opt.isPresent()' is always 'true'">opt.isPresent()</warning></warning></warning>) {
       System.out.println("Impossible");
     }
   }
@@ -80,14 +80,14 @@ public class OptionalInlining {
     if (<warning descr="Condition 's1.equals(\"xz\")' is always 'false'">s1.equals("xz")</warning>) {
       System.out.println("never");
     }
-    String abc = opt.filter(s -> s == "xyz").orElse("abc"); // s.equals("xyz") does not work yet :(
+    String abc = opt.filter(s -> s.equals("xyz")).orElse("abc");
     if (<warning descr="Condition 'abc.equals(\"123\")' is always 'false'">abc.equals("123")</warning>) {
       System.out.println("never");
     }
     if (abc.equals("xyz") && <warning descr="Condition 'opt.isPresent()' is always 'true' when reached">opt.isPresent()</warning>) {
       System.out.println("always");
     }
-    opt.filter(x -> x.length() > 5).filter(x -> <warning descr="Condition 'x.isEmpty()' is always 'false'">x.isEmpty()</warning>).ifPresent(x -> System.out.println(x));
+    opt.filter(x -> x.length() > 5).filter(x -> <warning descr="Result of 'x.isEmpty()' is always 'false'">x.isEmpty()</warning>).ifPresent(x -> System.out.println(x));
   }
 
   @Nullable
@@ -111,7 +111,7 @@ public class OptionalInlining {
   void testMap(Optional<String> opt) {
     opt.map(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
     String res = opt.<String>map(s -> null).orElse("abc");
-    if (<warning descr="Condition '!res.equals(\"abc\")' is always 'false'">!<warning descr="Condition 'res.equals(\"abc\")' is always 'true'">res.equals("abc")</warning></warning>) {
+    if (<warning descr="Condition '!res.equals(\"abc\")' is always 'false'">!<warning descr="Result of 'res.equals(\"abc\")' is always 'true'">res.equals("abc")</warning></warning>) {
       System.out.println("Never");
     }
     String trimmed = Optional.ofNullable(nullableMethod()).map(xx -> xx.trim()).orElse("");
@@ -170,7 +170,7 @@ public class OptionalInlining {
     if (<warning descr="Condition 's.equals(\"qux\")' is always 'false'">s.equals("qux")</warning>) {
       System.out.println("Never");
     }
-    boolean res = <warning descr="Condition 'opt.filter(x -> x.isEmpty()).flatMap(x -> x.length() <= 2 ? Optional.empty() : Optional.of(\"foo\")) ...' is always 'false'">opt.filter(x -> x.isEmpty()).flatMap(x -> <warning descr="Condition 'x.length() <= 2' is always 'true'">x.length() <= 2</warning> ? Optional.empty() : Optional.of("foo"))
+    boolean res = <warning descr="Result of 'opt.filter(x -> x.isEmpty()).flatMap(x -> x.length() <= 2 ? Optional.empty() : Optional.of(\"foo\")) ...' is always 'false'">opt.filter(x -> x.isEmpty()).flatMap(x -> <warning descr="Condition 'x.length() <= 2' is always 'true'">x.length() <= 2</warning> ? Optional.empty() : Optional.of("foo"))
       .isPresent()</warning>;
   }
 
@@ -184,7 +184,8 @@ public class OptionalInlining {
   }
 
   void testIntermediate(Optional<String> opt) {
-    if (<warning descr="Condition 'opt.filter(x -> x == \"foo\").filter(x -> x == \"bar\").isPresent()' is always 'false'">opt.filter(x -> x == "foo").filter(x -> <warning descr="Condition 'x == \"bar\"' is always 'false'">x == "bar"</warning>).isPresent()</warning>) {
+    if (<warning descr="Condition 'opt.filter(x -> x.equals(\"foo\")) .filter(\"bar\"::equals).isPresent()' is always 'false'">opt.filter(x -> x.equals("foo"))
+            .filter(<warning descr="Method reference result is always 'false'">"bar"::equals</warning>).isPresent()</warning>) {
       System.out.println("never");
     }
   }
@@ -214,14 +215,14 @@ public class OptionalInlining {
   }
 
   void testFilterChain(Optional<Holder> opt) {
-    boolean present = <warning descr="Condition 'opt .filter(h -> h.x < 5) .filter(h -> h.x > 6) .map(h -> h.x).isPresent()' is always 'false'">opt
+    boolean present = <warning descr="Result of 'opt .filter(h -> h.x < 5) .filter(h -> h.x > 6) .map(h -> h.x).isPresent()' is always 'false'">opt
         .filter(h -> h.x < 5)
         .filter(h -> <warning descr="Condition 'h.x > 6' is always 'false'">h.x > 6</warning>)
         .map(h -> h.x).isPresent()</warning>;
   }
 
   void testFilterMap(Optional<Holder> opt) {
-    boolean present = <warning descr="Condition 'opt .filter(h -> h.s == null) .map(h -> h.s) .isPresent()' is always 'false'">opt
+    boolean present = <warning descr="Result of 'opt .filter(h -> h.s == null) .map(h -> h.s) .isPresent()' is always 'false'">opt
       .filter(h -> h.s == null)
       .map(h -> h.s)
       .isPresent()</warning>;

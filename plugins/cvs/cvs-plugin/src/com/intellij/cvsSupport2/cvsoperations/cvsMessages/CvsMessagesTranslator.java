@@ -19,7 +19,6 @@ import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.cvshandlers.CvsMessagePattern;
 import com.intellij.cvsSupport2.cvsoperations.common.UpdatedFilesManager;
 import com.intellij.util.PatternUtil;
-import java.util.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
@@ -32,9 +31,10 @@ import org.netbeans.lib.cvsclient.event.IMessageListener;
 import org.netbeans.lib.cvsclient.file.FileObject;
 import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
 
-import java.io.*;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -116,6 +116,7 @@ public class CvsMessagesTranslator implements IFileInfoListener, IMessageListene
     myCvsRoot = cvsroot;
   }
 
+  @Override
   public void fileInfoGenerated(Object info) {
     if (info instanceof UpdateFileInfo) {
       final UpdateFileInfo updateFileInfo = (UpdateFileInfo)info;
@@ -133,8 +134,10 @@ public class CvsMessagesTranslator implements IFileInfoListener, IMessageListene
     }
   }
 
+  @Override
   public void gotEntry(FileObject fileObject, Entry entry) {}
 
+  @Override
   public void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
     myListener.addMessage(new MessageEvent(message, error, tagged));
     if (message.isEmpty()) {
@@ -242,5 +245,6 @@ public class CvsMessagesTranslator implements IFileInfoListener, IMessageListene
     }
   }
 
+  @Override
   public void binaryMessageSent(final byte[] bytes) {}
 }

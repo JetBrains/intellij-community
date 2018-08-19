@@ -83,7 +83,7 @@ public class DuplicateThrowsInspection extends AbstractBaseJavaLocalInspectionTo
               }
             }
             if (problem != null) {
-              holder.registerProblem(ref, problem, ProblemHighlightType.LIKE_UNUSED_SYMBOL, new MethodThrowsFix.Remove(method, type, false));
+              holder.registerProblem(ref, problem, ProblemHighlightType.LIKE_UNUSED_SYMBOL, new MethodThrowsFix.RemoveFirst(method, type, false));
             }
           }
         }

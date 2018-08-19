@@ -41,6 +41,7 @@ import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,7 +106,8 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
 
         final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)initializer;
         final PsiExpression operand = typeCastExpression.getOperand();
-        if (operand != null && !PsiEquivalenceUtil.areElementsEquivalent(operand, instanceOfExpression.getOperand())) continue;
+        if (operand != null &&
+            !EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(operand, instanceOfExpression.getOperand())) continue;
         PsiTypeElement castTypeElement = typeCastExpression.getCastType();
         if (castTypeElement == null) continue;
         PsiType castType = castTypeElement.getType();

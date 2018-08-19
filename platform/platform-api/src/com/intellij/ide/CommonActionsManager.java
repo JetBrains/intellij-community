@@ -22,6 +22,9 @@ public abstract class CommonActionsManager {
 
   public abstract AnAction createNextOccurenceAction(OccurenceNavigator navigator);
 
+  /**
+   * @deprecated use {@link #createCollapseAllAction(TreeExpander, JComponent)} instead
+   */
   @Deprecated
   public abstract AnAction createExpandAllAction(TreeExpander expander);
 
@@ -31,6 +34,9 @@ public abstract class CommonActionsManager {
 
   public abstract AnAction createExpandAllHeaderAction(JTree tree);
 
+  /**
+   * @deprecated use {@link #createCollapseAllAction(TreeExpander, JComponent)} instead
+   */
   @Deprecated
   public abstract AnAction createCollapseAllAction(TreeExpander expander);
 

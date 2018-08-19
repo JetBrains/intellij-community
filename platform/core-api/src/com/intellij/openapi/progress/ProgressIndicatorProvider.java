@@ -38,11 +38,6 @@ public abstract class ProgressIndicatorProvider {
   /** use {@link ProgressManager#executeNonCancelableSection(Runnable)} instead */
   @NotNull
   @Deprecated
-  protected abstract NonCancelableSection startNonCancelableSection();
-
-  /** use {@link ProgressManager#executeNonCancelableSection(Runnable)} instead */
-  @NotNull
-  @Deprecated
   public static NonCancelableSection startNonCancelableSectionIfSupported() {
     throw new UnsupportedOperationException();
   }

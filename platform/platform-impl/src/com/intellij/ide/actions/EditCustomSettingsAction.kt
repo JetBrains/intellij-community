@@ -4,13 +4,13 @@ package com.intellij.ide.actions
 import com.intellij.CommonBundle
 import com.intellij.diagnostic.VMOptions
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.DefaultProjectFactory
@@ -65,7 +65,7 @@ abstract class EditCustomSettingsAction : DumbAwareAction() {
       val vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)
       if (vFile != null) {
         vFile.refresh(false, false)
-        OpenFileDescriptor(project, vFile, vFile.length.toInt()).navigate(true)
+        PsiNavigationSupport.getInstance().createNavigatable(project, vFile, vFile.length.toInt()).navigate(true)
       }
     }
     else if (frame != null) {

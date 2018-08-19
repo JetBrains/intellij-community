@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class Java9CollectionFactoryInspectionTest extends LightQuickFixParameterizedTestCase {
   @Override
-  protected LanguageLevel getLanguageLevel() {
+  protected LanguageLevel getDefaultLanguageLevel() {
     return LanguageLevel.JDK_1_9;
   }
 

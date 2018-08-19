@@ -42,8 +42,8 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class LiveTemplateSettingsEditor extends JPanel {
   private final TemplateImpl myTemplate;
@@ -90,14 +90,14 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
     myKeyField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(javax.swing.event.DocumentEvent e) {
+      protected void textChanged(@NotNull javax.swing.event.DocumentEvent e) {
         myTemplate.setKey(StringUtil.notNullize(myKeyField.getText()).trim());
         myNodeChanged.run();
       }
     });
     myDescription.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(javax.swing.event.DocumentEvent e) {
+      protected void textChanged(@NotNull javax.swing.event.DocumentEvent e) {
         myTemplate.setDescription(myDescription.getText());
         myNodeChanged.run();
       }
@@ -148,7 +148,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
     myTemplateEditor.getDocument().addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         validateEditVariablesButton();
 
         myTemplate.setString(myTemplateEditor.getDocument().getText());
@@ -266,8 +266,9 @@ public class LiveTemplateSettingsEditor extends JPanel {
     return panel;
   }
 
+  @NotNull
   private List<TemplateContextType> getApplicableContexts() {
-    ArrayList<TemplateContextType> result = new ArrayList<>();
+    List<TemplateContextType> result = new ArrayList<>();
     for (TemplateContextType type : TemplateManagerImpl.getAllContextTypes()) {
       if (myContext.isEnabled(type)) {
         result.add(type);
@@ -398,12 +399,11 @@ public class LiveTemplateSettingsEditor extends JPanel {
       protected void onNodeStateChanged(CheckedTreeNode node) {
         final TemplateContextType type = (TemplateContextType)((Pair)node.getUserObject()).first;
         if (type != null) {
-          context.setEnabled(type, node.isChecked());
-          if (node.isChecked()) {
-            for (TemplateContextType inheritor : hierarchy.get(type)) {
-              if (context.getOwnValue(inheritor) == null) {
-                context.setEnabled(inheritor, false);
-              }
+          boolean enabled = node.isChecked();
+          context.setEnabled(type, enabled);
+          for (TemplateContextType inheritor : hierarchy.get(type)) {
+            if (context.getOwnValue(inheritor) == null) {
+              context.setEnabled(inheritor, !enabled);
             }
           }
         }
@@ -468,7 +468,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
       }
       hasNonExpandable = true;
     }
-    
+
     return !hasNonExpandable;
   }
 
@@ -537,9 +537,9 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
   private ArrayList<Variable> updateVariablesByTemplateText() {
     List<Variable> oldVariables = getCurrentVariables();
-    
+
     Set<String> oldVariableNames = ContainerUtil.map2Set(oldVariables, variable -> variable.getName());
-    
+
     Map<String,Variable> newVariableNames = parseVariables();
 
     int oldVariableNumber = 0;
@@ -587,11 +587,11 @@ public class LiveTemplateSettingsEditor extends JPanel {
     ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().invokeLater(() -> IdeFocusManager.findInstanceByComponent(myKeyField).requestFocus(myKeyField, true), modalityState), modalityState), modalityState);
   }
 
+  @NotNull
   private Map<String, Variable> parseVariables() {
     Map<String,Variable> map = TemplateImplUtil.parseVariables(myTemplateEditor.getDocument().getCharsSequence());
     map.keySet().removeAll(TemplateImpl.INTERNAL_VARS_SET);
     return map;
   }
-
 }
 

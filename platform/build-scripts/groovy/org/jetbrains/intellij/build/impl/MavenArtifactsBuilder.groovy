@@ -6,12 +6,18 @@ import com.intellij.psi.codeStyle.NameUtil
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.transform.Immutable
+import org.apache.maven.model.Dependency
+import org.apache.maven.model.Exclusion
+import org.apache.maven.model.Model
+import org.apache.maven.model.io.xpp3.MavenXpp3Writer
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.library.JpsLibrary
+import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
 import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
@@ -76,38 +82,36 @@ class MavenArtifactsBuilder {
   }
 
   private static void generatePomXmlFile(String pomXmlPath, MavenArtifactData artifactData) {
+    Model pomModel = new Model(
+      modelVersion: '4.0.0',
+      groupId: artifactData.coordinates.groupId,
+      artifactId: artifactData.coordinates.artifactId,
+      version: artifactData.coordinates.version
+    )
+    artifactData.dependencies.each { dep ->
+      pomModel.addDependency(createDependencyTag(dep))
+    }
+
     File file = new File(pomXmlPath)
     FileUtil.createParentDirs(file)
-    file.text = """
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <groupId>${artifactData.coordinates.groupId}</groupId>
-    <artifactId>${artifactData.coordinates.artifactId}</artifactId>
-    <version>${artifactData.coordinates.version}</version>
-    <dependencies>
-${artifactData.dependencies.collect {"""
-        <dependency>
-             <groupId>$it.coordinates.groupId</groupId>
-             <artifactId>$it.coordinates.artifactId</artifactId>
-             <version>$it.coordinates.version</version>
-${it.scope == DependencyScope.COMPILE ? "" : """
-             <scope>runtime</scope>
-"""}             
-${it.includeTransitiveDeps ? "" : """
-             <exclusions>
-                 <exclusion>
-                     <artifactId>*</artifactId>
-                     <groupId>*</groupId>
-                 </exclusion>
-             </exclusions>
-"""}             
-        </dependency>
-"""}.join("\n")}    
-    </dependencies>    
-</project>
-""".readLines().findAll {!it.trim().isEmpty()}.join("\n")
+    file.withWriter {
+      new MavenXpp3Writer().write(it, pomModel)
+    }
+  }
+
+  private static Dependency createDependencyTag(MavenArtifactDependency dep) {
+    def dependency = new Dependency(
+      groupId: dep.coordinates.groupId,
+      artifactId: dep.coordinates.artifactId,
+      version: dep.coordinates.version
+    )
+    if (dep.scope == DependencyScope.RUNTIME) {
+      dependency.scope = "runtime"
+    }
+    if (!dep.includeTransitiveDeps) {
+      dependency.addExclusion(new Exclusion(groupId: "*", artifactId: "*"))
+    }
+    dependency
   }
 
   static MavenCoordinates generateMavenCoordinates(String moduleName, BuildMessages messages, String version) {
@@ -210,15 +214,18 @@ ${it.includeTransitiveDeps ? "" : """
       }
       else if (dependency instanceof JpsLibraryDependency) {
         def library = (dependency as JpsLibraryDependency).library
-        def repLibrary = library.asTyped(JpsRepositoryLibraryType.INSTANCE)
-        if (repLibrary == null) {
-          buildContext.messages.debug(" module '$module.name' depends on non-maven library ${LibraryLicensesListGenerator.getLibraryName(library)}")
+        def libraryDescriptors = getMavenLibraryDescriptors(library)
+        if (libraryDescriptors.isEmpty()) {
+          List<String> names = LibraryLicensesListGenerator.getLibraryNames(library)
+          for (n in names) {
+            buildContext.messages.debug(" module '$module.name' depends on non-maven library $n")
+          }
           mavenizable = false
         }
         else {
-          def libraryDescriptor = repLibrary.properties.data
-          dependencies << new MavenArtifactDependency(new MavenCoordinates(libraryDescriptor.groupId, libraryDescriptor.artifactId, libraryDescriptor.version),
-                                                      libraryDescriptor.includeTransitiveDependencies, scope)
+          libraryDescriptors.each {
+            dependencies << createArtifactDependencyByLibrary(it, scope)
+          }
         }
       }
     }
@@ -230,6 +237,34 @@ ${it.includeTransitiveDeps ? "" : """
     def artifactData = new MavenArtifactData(generateMavenCoordinates(module.name, buildContext.messages, buildContext.buildNumber), dependencies)
     results[module] = artifactData
     return artifactData
+  }
+
+  private static MavenArtifactDependency createArtifactDependencyByLibrary(JpsMavenRepositoryLibraryDescriptor descriptor, DependencyScope scope) {
+    new MavenArtifactDependency(new MavenCoordinates(descriptor.groupId, descriptor.artifactId, descriptor.version),
+                                descriptor.includeTransitiveDependencies, scope)
+  }
+
+  static Dependency createDependencyTagByLibrary(JpsMavenRepositoryLibraryDescriptor descriptor) {
+    createDependencyTag(createArtifactDependencyByLibrary(descriptor, DependencyScope.COMPILE))
+  }
+
+  private List<JpsMavenRepositoryLibraryDescriptor> getMavenLibraryDescriptors(JpsLibrary library) {
+    def typed = library.asTyped(JpsRepositoryLibraryType.INSTANCE)
+    if (typed != null) {
+      return [typed.properties.data]
+    }
+    if (library.name == "KotlinJavaRuntime") {
+      //todo[nik] remove this when KotlinJavaRuntime will be converted to repository library (we didn't do it yet for historical reasons and to avoid specifying Kotlin version in two places
+      def versionFile = new File(buildContext.paths.kotlinHome, "kotlinc/build.txt")
+      if (!versionFile.exists()) {
+        buildContext.messages.error("Cannot read Kotlin version, $versionFile doesn't exist")
+      }
+      def kotlinVersion = versionFile.text.trim().takeWhile { it != '-' }.toString()
+      return ["kotlin-stdlib", "kotlin-stdlib-jdk7", "kotlin-stdlib-jdk8", "kotlin-reflect", "kotlin-test"].collect {
+        new JpsMavenRepositoryLibraryDescriptor("org.jetbrains.kotlin", it, kotlinVersion, false)
+      }
+    }
+    return []
   }
 
   @Immutable

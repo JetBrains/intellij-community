@@ -170,6 +170,43 @@ public class PyRegexpTest extends PyTestCase {
                        "(foomissing_valuebaz$)");
   }
 
+  // PY-21493
+  public void testFStringSingleStringRegexpFragmentFirst() {
+    doTestInjectedText("import re\n" +
+                       "\n" +
+                       "re.search(rf'{42}.<caret>*{42}', 'foo')", "missing_value.*missing_value");
+  }
+
+  // PY-21493
+  public void testFStringSingleStringRegexpFirstFragmentInMiddle() {
+    doTestInjectedText("import re\n" +
+                       "\n" +
+                       "re.search(rf'<caret>.*{42}.*{42}', 'foo')", ".*missing_value.*missing_value");
+  }
+
+  // PY-21493
+  public void testFStringMultiStringRegexp() {
+    doTestInjectedText("import re\n" +
+                       "\n" +
+                       "re.search(rf'<caret>.*{42}'\n" +
+                       "          r'.*{42}.*'\n" +
+                       "          rf'{42}.*', 'foo')", ".*missing_value.*{42}.*missing_value.*");
+  }
+
+  // PY-21493
+  public void testFStringSingleStringIncompleteFragment() {
+    doTestInjectedText("import re\n" +
+                       "\n" +
+                       "re.search(rf'<caret>.*{42.*', 'foo')", ".*missing_value");
+  }
+
+  // PY-21493
+  public void testFStringSingleStringNestedFragments() {
+    doTestInjectedText("import re\n" +
+                       "\n" +
+                       "re.search(rf'<caret>.*{42:{42}}.*{42}', 'foo')", ".*missing_value.*missing_value");
+  }
+
   // PY-18881
   public void testVerboseSyntaxWithShortFlag() {
     final PsiElement element =

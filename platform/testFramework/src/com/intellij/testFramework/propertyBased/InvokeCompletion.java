@@ -84,7 +84,6 @@ public class InvokeCompletion extends ActionOnFile {
       Registry.get("ide.completion.variant.limit").setValue(100_000, raiseCompletionLimit);
       try {
         PsiTestUtil.checkPsiStructureWithCommit(getFile(), PsiTestUtil::checkStubsMatchText);
-        //noinspection deprecation
         Editor caretEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, getFile());
         performCompletion(caretEditor, Objects.requireNonNull(PsiUtilBase.getPsiFileInEditor(caretEditor, project)), completionChar, env);
         PsiTestUtil.checkPsiStructureWithCommit(getFile(), PsiTestUtil::checkStubsMatchText);
@@ -145,6 +144,7 @@ public class InvokeCompletion extends ActionOnFile {
     LookupElement item = env.generateValue(Generator.sampledFrom(items), null);
     env.logMessage("Select '" + item + "' with '" + StringUtil.escapeStringCharacters(String.valueOf(completionChar)) + "'");
 
+    lookup.setCurrentItem(item);
     if (LookupEvent.isSpecialCompletionChar(completionChar)) {
       ((LookupImpl)lookup).finishLookup(completionChar, item);
     } else {

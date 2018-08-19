@@ -112,15 +112,12 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myChangesLoadingPane = new JBLoadingPanel(new BorderLayout(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
     myChangesLoadingPane.add(myChangesBrowser);
 
-    myDetailsSplitter = new OnePixelSplitter(true, DETAILS_SPLITTER_PROPORTION, 0.7f);
-    myDetailsSplitter.setFirstComponent(myChangesLoadingPane);
-    showDetails(myUiProperties.get(CommonUiProperties.SHOW_DETAILS));
-
     myPreviewDiff = new VcsLogChangeProcessor(logData.getProject(), myChangesBrowser, this);
-    myPreviewDiffSplitter = new OnePixelSplitter(false, DIFF_SPLITTER_PROPORTION, 0.5f);
-    myPreviewDiffSplitter.setHonorComponentsMinimumSize(false);
-    myPreviewDiffSplitter.setFirstComponent(myDetailsSplitter);
-    showDiffPreview(myUiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW));
+
+    myTextFilter = myFilterUi.createTextFilter();
+    myToolbar = createActionsToolbar();
+    myChangesBrowser.setToolbarHeightReferent(myToolbar);
+    myPreviewDiff.getToolbarWrapper().setVerticalSizeReferent(myToolbar);
 
     Runnable changesListener = () -> ApplicationManager.getApplication().invokeLater(
       () -> myPreviewDiff.updatePreview(myUiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW)));
@@ -132,24 +129,28 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myDetailsPanel.installCommitSelectionListener(myGraphTable);
     VcsLogUiUtil.installDetailsListeners(myGraphTable, myDetailsPanel, myLogData, this);
 
-    myTextFilter = myFilterUi.createTextFilter();
-    myToolbar = createActionsToolbar();
-    myChangesBrowser.setToolbarHeightReferent(myToolbar);
-    myPreviewDiff.getToolbarWrapper().setVerticalSizeReferent(myToolbar);
-
     JComponent toolbars = new JPanel(new BorderLayout());
     toolbars.add(myToolbar, BorderLayout.NORTH);
     JComponent toolbarsAndTable = new JPanel(new BorderLayout());
     toolbarsAndTable.add(toolbars, BorderLayout.NORTH);
     toolbarsAndTable.add(VcsLogUiUtil.installProgress(VcsLogUiUtil.setupScrolledGraph(myGraphTable, SideBorder.TOP),
-                                                      myLogData, this), BorderLayout.CENTER);
+                                                      myLogData, ui.getId(), this), BorderLayout.CENTER);
+
+    myDetailsSplitter = new OnePixelSplitter(true, DETAILS_SPLITTER_PROPORTION, 0.7f);
+    myDetailsSplitter.setFirstComponent(myChangesLoadingPane);
+    showDetails(myUiProperties.get(CommonUiProperties.SHOW_DETAILS));
 
     myChangesBrowserSplitter = new OnePixelSplitter(false, CHANGES_SPLITTER_PROPORTION, 0.7f);
     myChangesBrowserSplitter.setFirstComponent(toolbarsAndTable);
-    myChangesBrowserSplitter.setSecondComponent(myPreviewDiffSplitter);
+    myChangesBrowserSplitter.setSecondComponent(myDetailsSplitter);
+
+    myPreviewDiffSplitter = new OnePixelSplitter(false, DIFF_SPLITTER_PROPORTION, 0.7f);
+    myPreviewDiffSplitter.setHonorComponentsMinimumSize(false);
+    myPreviewDiffSplitter.setFirstComponent(myChangesBrowserSplitter);
+    showDiffPreview(myUiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW));
 
     setLayout(new BorderLayout());
-    add(myChangesBrowserSplitter);
+    add(myPreviewDiffSplitter);
 
     Disposer.register(ui, this);
     myGraphTable.resetDefaultFocusTraversalKeys();
@@ -183,7 +184,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     DefaultActionGroup toolbarGroup = new DefaultActionGroup();
     toolbarGroup.copyFromGroup((DefaultActionGroup)ActionManager.getInstance().getAction(VcsLogActionPlaces.TOOLBAR_ACTION_GROUP));
     if (BekUtil.isBekEnabled()) {
-      Constraints constraint = new Constraints(Anchor.BEFORE, VcsLogActionPlaces.VCS_LOG_PRESENTATION_SETTINGS_ACTION);
+      Constraints constraint = new Constraints(Anchor.BEFORE, VcsLogActionPlaces.PRESENTATION_SETTINGS_ACTION_GROUP);
       if (BekUtil.isLinearBekEnabled()) {
         toolbarGroup.add(new IntelliSortChooserPopupAction(), constraint);
         // can not register both of the actions in xml file, choosing to register an action for the "outer world"
@@ -194,9 +195,9 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
                          constraint);
       }
     }
-    
+
     DefaultActionGroup mainGroup = new DefaultActionGroup();
-    mainGroup.add(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_TEXT_FILTER_SETTINGS_ACTION));
+    mainGroup.add(ActionManager.getInstance().getAction(VcsLogActionPlaces.TEXT_FILTER_SETTINGS_ACTION_GROUP));
     mainGroup.add(new Separator());
     mainGroup.add(myFilterUi.createActionGroup());
     mainGroup.addSeparator();
@@ -234,7 +235,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (VcsDataKeys.CHANGES.is(dataId) || VcsDataKeys.SELECTED_CHANGES.is(dataId)) {
       return ArrayUtil.toObjectArray(myChangesBrowser.getDirectChanges(), Change.class);
     }
@@ -286,9 +287,9 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myChangesBrowserSplitter.dispose();
   }
 
-  private class MyCommitSelectionListenerForDiff extends CommitSelectionListener {
+  private class MyCommitSelectionListenerForDiff extends CommitSelectionListener<VcsFullCommitDetails> {
     protected MyCommitSelectionListenerForDiff() {
-      super(myLogData, MainFrame.this.myGraphTable);
+      super(MainFrame.this.myGraphTable, myLogData.getCommitDetailsGetter());
     }
 
     @Override

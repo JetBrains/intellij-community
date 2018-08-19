@@ -86,6 +86,7 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testCallInFor() { doTest(); }
 
   public void testSCR20655() { doTest(); }
+  public void testGenericArrayCreation() { doTest(); }
 
 
   public void testFieldInitializer() { doTest(); }
@@ -94,8 +95,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
 
   public void testStaticFieldInitializer() { doTest(); }
   public void testSCR22644() { doTest(); }
+  public void testChangeContextForThisInNestedClasses() { doTest(); }
 
   public void testCallUnderIf() { doTest(); }
+  public void testInlineEnumArgsChangeContext() { doTest(); }
 
   //This gives extra 'result' local variable, currently I don't see a way to cope with it, todo: think about addional inline possibilities
   //public void testLocalVariableResult() throws Exception { doTest(); }

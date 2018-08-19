@@ -1306,6 +1306,7 @@ public class HighlightMethodUtil {
     HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();
     if (!hasNoBody) {
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createDeleteMethodBodyFix(method));
+      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createPushDownMethodFix());
     }
     if (method.hasModifierProperty(PsiModifier.ABSTRACT) && !isInterface) {
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.ABSTRACT, false, false));
@@ -1711,8 +1712,18 @@ public class HighlightMethodUtil {
       try {
         final PsiDiamondType diamondType = constructorCall instanceof PsiNewExpression ? PsiDiamondType.getDiamondType((PsiNewExpression)constructorCall) : null;
         final JavaResolveResult staticFactory = diamondType != null ? diamondType.getStaticFactory() : null;
-        applicable = staticFactory instanceof MethodCandidateInfo ? ((MethodCandidateInfo)staticFactory).isApplicable()
-                                                                  : result != null && result.isApplicable();
+        if (staticFactory instanceof MethodCandidateInfo) {
+          if (((MethodCandidateInfo)staticFactory).isApplicable()) {
+            result = (MethodCandidateInfo)staticFactory;
+            constructor = ((MethodCandidateInfo)staticFactory).getElement();
+          }
+          else {
+            applicable = false;
+          }
+        } 
+        else {
+          applicable = result != null && result.isApplicable();
+        }
       }
       catch (IndexNotReadyException e) {
         // ignore

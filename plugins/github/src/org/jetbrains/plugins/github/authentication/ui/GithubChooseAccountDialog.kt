@@ -13,11 +13,12 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
+import java.awt.Component
 import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.JTextArea
 
-class GithubChooseAccountDialog(project: Project?, parentComponent: JComponent?,
+class GithubChooseAccountDialog(project: Project?, parentComponent: Component?,
                                 accounts: Collection<GithubAccount>,
                                 descriptionText: String?, showHosts: Boolean, allowDefault: Boolean,
                                 title: String, okText: String)
@@ -58,6 +59,7 @@ class GithubChooseAccountDialog(project: Project?, parentComponent: JComponent?,
     this.title = title
     setOKButtonText(okText)
     init()
+    accountsList.selectedIndex = 0
   }
 
   override fun doValidate(): ValidationInfo? {
@@ -74,4 +76,6 @@ class GithubChooseAccountDialog(project: Project?, parentComponent: JComponent?,
       .addToCenter(JBScrollPane(accountsList).apply { preferredSize = JBDimension(150, 80) })
       .apply { setDefaultCheckBox?.run(::addToBottom) }
   }
+
+  override fun getPreferredFocusedComponent() = accountsList
 }

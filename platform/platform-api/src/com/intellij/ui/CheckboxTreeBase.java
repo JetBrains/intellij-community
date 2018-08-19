@@ -66,11 +66,6 @@ public class CheckboxTreeBase extends Tree {
     myHelper.initTree(this, this, cellRenderer);
   }
 
-  @Deprecated
-  public void installRenderer(final CheckboxTreeCellRendererBase cellRenderer) {
-    setCellRenderer(cellRenderer);
-  }
-
   /**
    * @deprecated use {@link #setNodeState} to change node state or subscribe to {@link #addCheckboxTreeListener} to get notifications about state changes
    */
@@ -113,6 +108,7 @@ public class CheckboxTreeBase extends Tree {
   }
 
 
+  @Override
   public int getToggleClickCount() {
     // to prevent node expanding/collapsing on checkbox toggling
     return -1;
@@ -123,10 +119,6 @@ public class CheckboxTreeBase extends Tree {
 
   protected void nodeStateWillChange(CheckedTreeNode node) {
   }
-
-  @SuppressWarnings("unused")
-  @Deprecated
-  protected void adjustParents(final CheckedTreeNode node, final boolean checked) {}
 
   public static class CheckboxTreeCellRendererBase extends JPanel implements TreeCellRenderer {
     private final ColoredTreeCellRenderer myTextRenderer;
@@ -145,6 +137,7 @@ public class CheckboxTreeBase extends Tree {
       myCheckbox.setSelected(false);
       myCheckbox.setThirdStateEnabled(false);
       myTextRenderer = new ColoredTreeCellRenderer() {
+        @Override
         public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) { }
       };
       myTextRenderer.setOpaque(opaque);
@@ -156,6 +149,7 @@ public class CheckboxTreeBase extends Tree {
       this(true);
     }
 
+    @Override
     public final Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       invalidate();
       if (value instanceof CheckedTreeNode) {

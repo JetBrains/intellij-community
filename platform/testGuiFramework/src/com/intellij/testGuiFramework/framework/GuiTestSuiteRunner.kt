@@ -32,7 +32,7 @@ class GuiTestSuiteRunner(private val suiteClass: Class<*>, builder: RunnerBuilde
     object: Filter() {
 
       val filteredClassNameSet: Set<String> by lazy {
-        GuiTestOptions.getFilteredListOfTests().split(",").toSet()
+        GuiTestOptions.filteredListOfTests.split(",").toSet()
       }
 
       override fun shouldRun(description: Description?): Boolean {
@@ -46,7 +46,7 @@ class GuiTestSuiteRunner(private val suiteClass: Class<*>, builder: RunnerBuilde
 
   init {
     try {
-      if (GuiTestOptions.shouldTestsBeFiltered()) {
+      if (GuiTestOptions.shouldTestsBeFiltered) {
         LOG.info("Tests filter is applied, next tests will be run: ${testsFilter.filteredClassNameSet.joinToString(", ")}")
         filter(testsFilter)
       }

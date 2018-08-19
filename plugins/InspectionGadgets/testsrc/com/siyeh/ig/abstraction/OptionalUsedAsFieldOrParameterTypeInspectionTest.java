@@ -61,12 +61,12 @@ public class OptionalUsedAsFieldOrParameterTypeInspectionTest extends LightInspe
     doTest("import java.util.Optional;" +
            "import java.util.function.Function;" +
            "class X {" +
-           "  Function<Optional<Long>, Long> homebrewOrElseNull = new Function<Optional<Long>, Long>() {" +
-           "    @Override\n" +
-           "    public Long apply(Optional<Long> input) {" +
-           "      return input.isPresent() ? input.get() : null;" +
-           "    }" +
-           "  };" +
+           "" +
+           "" +
+           "" +
+           "" +
+           "  " +
+           "Function<Optional<Long>, Long> homebrewOrElseNull = input-> input.isPresent() ? input.get() : null;" +
            "}");
   }
 

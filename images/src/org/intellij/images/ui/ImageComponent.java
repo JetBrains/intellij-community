@@ -19,6 +19,7 @@
 package org.intellij.images.ui;
 
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI.ScaleContext;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.editor.ImageDocument;
 import org.intellij.images.options.GridOptions;
@@ -31,7 +32,11 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.List;
+
+import static com.intellij.util.ui.JBUI.ScaleType.OBJ_SCALE;
 
 /**
  * Image component is draw image box with effects.
@@ -68,10 +73,6 @@ public class ImageComponent extends JComponent {
      */
     @NonNls
     private static final String uiClassID = "ImageComponentUI";
-
-    static {
-        UIManager.getDefaults().put(uiClassID, ImageComponentUI.class.getName());
-    }
 
     private final ImageDocument document = new ImageDocumentImpl(this);
     private final Grid grid = new Grid();
@@ -234,25 +235,41 @@ public class ImageComponent extends JComponent {
         return new Dimension(size.width - IMAGE_INSETS * 2, size.height - IMAGE_INSETS * 2);
     }
 
+    @Override
     public String getUIClassID() {
         return uiClassID;
     }
 
+    @Override
     public void updateUI() {
-        setUI(UIManager.getUI(this));
+      boolean customUI = UIManager.getDefaults().get(uiClassID) != null;
+      setUI(customUI ? UIManager.getUI(this) : new ImageComponentUI(this));
     }
 
     private static class ImageDocumentImpl implements ImageDocument {
         private final List<ChangeListener> listeners = ContainerUtil.createLockFreeCopyOnWriteList();
-        private ScaledImageProvider imageProvider;
+        private CachedScaledImageProvider imageProvider;
         private String format;
         private Image renderer;
-        private Component myComponent;
+        private final Component myComponent;
+        private final ScaleContext.Cache<Rectangle> cachedBounds = new ScaleContext.Cache<>((ctx) -> {
+            BufferedImage image = getValue(ctx.getScale(OBJ_SCALE));
+            return image != null ? new Rectangle(image.getWidth(), image.getHeight()) : null;
+        });
 
         public ImageDocumentImpl(Component component) {
-            this.myComponent = component;
+            myComponent = component;
+            myComponent.addPropertyChangeListener(new PropertyChangeListener() {
+                @Override
+                public void propertyChange(PropertyChangeEvent e) {
+                    if (e.getPropertyName().equals("ancestor") && e.getNewValue() == null && imageProvider != null) {
+                        imageProvider.clearCache();
+                    }
+                }
+            });
         }
 
+        @Override
         public Image getRenderer() {
             return renderer;
         }
@@ -262,6 +279,15 @@ public class ImageComponent extends JComponent {
             return getValue(scale);
         }
 
+        @Nullable
+        @Override
+        public Rectangle getBounds(double scale) {
+            ScaleContext ctx = ScaleContext.create(myComponent);
+            ctx.update(OBJ_SCALE.of(scale));
+            return cachedBounds.getOrProvide(ctx);
+        }
+
+        @Override
         public BufferedImage getValue() {
             return getValue(1d);
         }
@@ -271,6 +297,7 @@ public class ImageComponent extends JComponent {
             return imageProvider != null ? imageProvider.apply(scale, myComponent) : null;
         }
 
+        @Override
         public void setValue(BufferedImage image) {
             this.renderer = image != null ? Toolkit.getDefaultToolkit().createImage(image.getSource()) : null;
             setValue(image != null ? (scale, anchor) -> image : null);
@@ -278,15 +305,22 @@ public class ImageComponent extends JComponent {
 
         @Override
         public void setValue(ScaledImageProvider imageProvider) {
-            this.imageProvider = imageProvider;
+            this.imageProvider = imageProvider instanceof CachedScaledImageProvider ?
+                (CachedScaledImageProvider)imageProvider :
+                imageProvider != null ? (zoom, ancestor) -> imageProvider.apply(zoom, ancestor) :
+                null;
+
+            cachedBounds.clear();
             fireChangeEvent(new ChangeEvent(this));
         }
 
+        @Override
         public String getFormat() {
             return format;
         }
 
 
+        @Override
         public void setFormat(String format) {
             this.format = format;
             fireChangeEvent(new ChangeEvent(this));
@@ -298,10 +332,12 @@ public class ImageComponent extends JComponent {
             }
         }
 
+        @Override
         public void addChangeListener(ChangeListener listener) {
             listeners.add(listener);
         }
 
+        @Override
         public void removeChangeListener(ChangeListener listener) {
             listeners.remove(listener);
         }

@@ -7,7 +7,7 @@ import java.util.stream.Stream;
 public class Main {
   private static Object[] test(int[] numbers) {
       List<Integer> list = new ArrayList<>();
-      for (int number: numbers) {
+      for (int number : numbers) {
           Integer integer = number;
           list.add(integer);
       }
@@ -16,7 +16,7 @@ public class Main {
 
   private static Integer[][] test2d(int[] numbers) {
       List<Integer[]> list = new ArrayList<>();
-      for (int number: numbers) {
+      for (int number : numbers) {
           Integer n = number;
           Integer[] integers = new Integer[]{n};
           list.add(integers);
@@ -26,7 +26,7 @@ public class Main {
 
   private static Number[] testCovariant(int[] numbers) {
       List<Integer> list = new ArrayList<>();
-      for (int number: numbers) {
+      for (int number : numbers) {
           Integer integer = number;
           list.add(integer);
       }
@@ -35,7 +35,7 @@ public class Main {
 
   private static Number[] testCovariantLambda(int[] numbers) {
       List<Integer> list = new ArrayList<>();
-      for (int number: numbers) {
+      for (int number : numbers) {
           Integer integer = number;
           list.add(integer);
       }
@@ -44,7 +44,7 @@ public class Main {
 
   private static <A> A[] toArraySkippingNulls(List<?> list, IntFunction<A[]> generator) {
       List<Object> result = new ArrayList<>();
-      for (Object o: list) {
+      for (Object o : list) {
           if (o != null) {
               result.add(o);
           }
@@ -54,7 +54,7 @@ public class Main {
 
   private static List<?>[] testGeneric(int[] numbers) {
       List<List<Integer>> list = new ArrayList<>();
-      for (int number: numbers) {
+      for (int number : numbers) {
           Integer n = number;
           List<Integer> integers = Collections.singletonList(n);
           list.add(integers);
@@ -64,7 +64,7 @@ public class Main {
 
   private static Number[] testTypeMismatch(Object[] objects) {
       List<Object> list = new ArrayList<>();
-      for (Object object: objects) {
+      for (Object object : objects) {
           if (object instanceof Number) {
               list.add(object);
           }
@@ -76,7 +76,7 @@ public class Main {
     private static Class<?>[] resolver(String list) {
         // convert to loop
         List<Class<?>> result = new ArrayList<>();
-        for (String s: list.split(",")) {
+        for (String s : list.split(",")) {
             Class<?> aClass = loadType(s);
             result.add(aClass);
         }

@@ -56,7 +56,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
         if (isConstructor && !canBeConstructed(containingClass)) {
           return JavaResolveResult.EMPTY_ARRAY;
         }
-        final PsiType functionalInterfaceType = getInterfaceType(reference);
+        final PsiType functionalInterfaceType = reference.getFunctionalInterfaceType();
         final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
         final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
         final PsiSubstitutor functionalInterfaceSubstitutor = interfaceMethod != null ? LambdaUtil.getSubstitutor(interfaceMethod, resolveResult) : null;
@@ -185,10 +185,6 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
       }
     }
     return false;
-  }
-
-  private static PsiType getInterfaceType(PsiMethodReferenceExpression reference) {
-    return reference.getFunctionalInterfaceType();
   }
 
   protected PsiConflictResolver createResolver(PsiMethodReferenceExpressionImpl referenceExpression,

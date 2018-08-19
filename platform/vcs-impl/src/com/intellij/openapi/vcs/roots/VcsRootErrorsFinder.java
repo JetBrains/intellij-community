@@ -26,12 +26,23 @@ public class VcsRootErrorsFinder {
   }
 
   @NotNull
+  public Collection<VcsRootError> getOrFind() {
+    Collection<VcsRoot> vcsRoots = myRootDetector.getOrDetect();
+    return calcErrors(vcsRoots);
+  }
+
+  @NotNull
   public Collection<VcsRootError> find() {
-    List<VcsDirectoryMapping> mappings = myVcsManager.getDirectoryMappings();
     Collection<VcsRoot> vcsRoots = myRootDetector.detect();
+    return calcErrors(vcsRoots);
+  }
+
+  @NotNull
+  private Collection<VcsRootError> calcErrors(@NotNull Collection<VcsRoot> detectedRoots) {
+    List<VcsDirectoryMapping> mappings = myVcsManager.getDirectoryMappings();
     Collection<VcsRootError> errors = new ArrayList<>();
     errors.addAll(findExtraMappings(mappings));
-    errors.addAll(findUnregisteredRoots(mappings, vcsRoots));
+    errors.addAll(findUnregisteredRoots(mappings, detectedRoots));
     return errors;
   }
 
@@ -46,7 +57,7 @@ public class VcsRootErrorsFinder {
         continue;
       }
       String vcsPath = virtualFileFromRoot.getPath();
-      if (!mappedPaths.contains(vcsPath) && root.getVcs() != null) {
+      if (root.getVcs() != null && !mappedPaths.contains(vcsPath)) {
         errors.add(new VcsRootErrorImpl(VcsRootError.Type.UNREGISTERED_ROOT, vcsPath, root.getVcs().getName()));
       }
     }

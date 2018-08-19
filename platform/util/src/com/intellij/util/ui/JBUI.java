@@ -11,6 +11,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.util.Function;
 import com.intellij.util.LazyInitializer.NotNullValue;
 import com.intellij.util.LazyInitializer.NullableValue;
 import com.intellij.util.ObjectUtils;
@@ -29,9 +30,9 @@ import java.awt.image.ImageObserver;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.EnumMap;
+import java.util.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.util.ui.JBUI.ScaleType.*;
 
@@ -555,14 +556,6 @@ public class JBUI {
     return insets(0, 0, 0, r);
   }
 
-  /**
-   * @deprecated use JBUI.scale(EmptyIcon.create(size)) instead
-   */
-  @NotNull
-  public static EmptyIcon emptyIcon(int size) {
-    return scale(EmptyIcon.create(size));
-  }
-
   @NotNull
   @SuppressWarnings("unchecked")
   public static <T extends JBIcon> T scale(@NotNull T icon) {
@@ -999,6 +992,45 @@ public class JBUI {
     public String toString() {
       return usrScale + ", " + objScale + ", " + pixScale;
     }
+
+    /**
+     * A cache for the last usage of a data object matching a scale context.
+     *
+     * @param <D> the data type
+     * @param <S> the context type
+     */
+    public static class Cache<D, S extends BaseScaleContext> {
+      private final Function<S, D> myDataProvider;
+      private final AtomicReference<Pair<Double, D>> myData = new AtomicReference<Pair<Double, D>>(null);
+
+      /**
+       * @param dataProvider provides a data object matching the passed scale context
+       */
+      public Cache(@NotNull Function<S, D> dataProvider) {
+        this.myDataProvider = dataProvider;
+      }
+
+      /**
+       * Retunrs the data object from the cache if it matches the {@code ctx},
+       * otherwise provides the new data via the provider and caches it.
+       */
+      @Nullable
+      public D getOrProvide(@NotNull S ctx) {
+        Pair<Double, D> data = myData.get();
+        double scale = ctx.getScale(PIX_SCALE);
+        if (data == null || Double.compare(scale, data.first) != 0) {
+          myData.set(data = Pair.create(scale, myDataProvider.fun(ctx)));
+        }
+        return data.second;
+      }
+
+      /**
+       * Clears the cache.
+       */
+      public void clear() {
+        myData.set(null);
+      }
+    }
   }
 
   /**
@@ -1218,6 +1250,12 @@ public class JBUI {
     @Override
     public String toString() {
       return usrScale + ", " + sysScale + ", " + objScale + ", " + pixScale;
+    }
+
+    public static class Cache<D> extends BaseScaleContext.Cache<D, ScaleContext> {
+      public Cache(@NotNull Function<ScaleContext, D> dataProvider) {
+        super(dataProvider);
+      }
     }
   }
 
@@ -1472,6 +1510,23 @@ public class JBUI {
   }
 
   public static class CurrentTheme {
+    public static class CustomFrameDecorations {
+      @NotNull
+      public static Color separatorForeground() {
+        return JBColor.namedColor("Separator.foreground", 0xcdcdcd);
+      }
+
+      @NotNull
+      public static Color titlePaneBackground() {
+        return JBColor.namedColor("TitlePane.background", paneBackground());
+      }
+
+      @NotNull
+      public static Color paneBackground() {
+        return JBColor.namedColor("Panel.background", 0xcdcdcd);
+      }
+    }
+
     public static class ToolWindow {
       @NotNull
       public static Color tabSelectedBackground() {
@@ -1638,14 +1693,16 @@ public class JBUI {
         return active ? JBColor.namedColor("Focus.activeWarningBorderColor", 0xe2a53a) :
                         JBColor.namedColor("Focus.inactiveWarningBorderColor",0xffd385);
       }
+    }
 
-      public static class TabbedPane {
-        public static final Color ENABLED_SELECTED_COLOR = JBColor.namedColor("TabbedPane.selectedСolor", 0x357ecc);
-        public static final Color DISABLED_SELECTED_COLOR = JBColor.namedColor("TabbedPane.selectedDisabledColor", Gray.xAB);
-        public static final Color HOVER_COLOR = JBColor.namedColor("TabbedPane.hoverColor", Gray.xD9);
-        public static final JBValue TAB_HEIGHT = new JBValue.UIInteger("TabbedPane.tabHeight", 32);
-        public static final JBValue SELECTION_HEIGHT = new JBValue.UIInteger("TabbedPane.tabSelectionHeight", 2);
-      }
+    public static class TabbedPane {
+      public static final Color ENABLED_SELECTED_COLOR = JBColor.namedColor("TabbedPane.selectedColor", 0x4083C9);
+      public static final Color DISABLED_SELECTED_COLOR = JBColor.namedColor("TabbedPane.selectedDisabledColor", Gray.xAB);
+      public static final Color DISABLED_TEXT_COLOR = JBColor.namedColor("TabbedPane.disabledText", Gray.x99);
+      public static final Color HOVER_COLOR = JBColor.namedColor("TabbedPane.hoverColor", Gray.xD9);
+      public static final Color FOCUS_COLOR = JBColor.namedColor("TabbedPane.focusColor", 0xDAE4ED);
+      public static final JBValue TAB_HEIGHT = new JBValue.UIInteger("TabbedPane.tabHeight", 32);
+      public static final JBValue SELECTION_HEIGHT = new JBValue.UIInteger("TabbedPane.tabSelectionHeight", 3);
     }
 
     //todo #UX-1 maybe move to popup
@@ -1671,10 +1728,10 @@ public class JBUI {
       }
 
       public static Insets searchFieldInsets() {
-        return insets(0, 12, 0, 10);
+        return insets(0, 6, 0, 5);
       }
 
-      public static int maxListHeght() {
+      public static int maxListHeight() {
         return JBUI.scale(600);
       }
 

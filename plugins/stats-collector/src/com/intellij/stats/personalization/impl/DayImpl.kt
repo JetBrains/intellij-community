@@ -42,7 +42,7 @@ class DayImpl(date: Date) : Day {
                 date = DATE_FORMAT.parse(str, position)
             }
             catch (e: NumberFormatException) {
-                LOG.error("Could not parse a date from string: $str. Collected data for the day will be skipped.")
+                LOG.error("Could not parse a date from string: $str. Collected data for the day will be skipped.", e)
                 return null
             }
             if (position.index == 0) return null
@@ -80,6 +80,8 @@ class DayImpl(date: Date) : Day {
     }
 
     override fun toString(): String {
-        return "$dayOfMonth-$month-$year"
+        val calendar = Calendar.getInstance()
+        calendar.set(year, month - 1, dayOfMonth)
+        return DATE_FORMAT.format(calendar.time)
     }
 }

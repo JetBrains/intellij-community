@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images.sync
 
+import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.intellij.build.images.imageSize
 import org.jetbrains.intellij.build.images.isImage
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -17,15 +18,23 @@ private const val repoArg = "repos"
 private const val patternArg = "skip.dirs.pattern"
 private const val syncIcons = "sync.icons"
 private const val syncDevIcons = "sync.dev.icons"
+private const val syncRemovedIconsInDev = "sync.dev.icons.removed"
 
 fun main(args: Array<String>) {
   if (args.isEmpty()) printUsageAndExit()
   val repos = args.find(repoArg)?.split(",") ?: emptyList()
   if (repos.size < 2) printUsageAndExit()
   val skipPattern = args.find(patternArg)
-  checkIcons(repos[0], repos[1], skipPattern,
+  checkIcons(ignoreCaseInDirName(repos[0]), ignoreCaseInDirName(repos[1]), skipPattern,
              args.find(syncIcons)?.toBoolean() ?: false,
-             args.find(syncDevIcons)?.toBoolean() ?: false)
+             args.find(syncDevIcons)?.toBoolean() ?: false,
+             args.find(syncRemovedIconsInDev)?.toBoolean() ?: true)
+}
+
+private fun ignoreCaseInDirName(path: String) = File(path).let {
+  it.parentFile.listFiles().first {
+    it.absolutePath.equals(FileUtil.toSystemDependentName(path), ignoreCase = true)
+  }.absolutePath
 }
 
 private fun Array<String>.find(arg: String) = this.find {
@@ -33,7 +42,15 @@ private fun Array<String>.find(arg: String) = this.find {
 }?.removePrefix("$arg=")
 
 private fun printUsageAndExit() {
-  println("Usage: $repoArg=<devRepoDir>,<iconsRepoDir> [$patternArg=...] [$syncIcons=false|true] [$syncDevIcons=false|true]")
+  println("""
+    |Usage: $repoArg=<devRepoDir>,<iconsRepoDir> [$patternArg=...] [$syncIcons=false|true] [$syncDevIcons=false|true]
+    |
+    |* `$repoArg` - comma-separated repository paths, first is developers' repo, second is designers'
+    |* `$patternArg` - test data folders regular expression
+    |* `$syncDevIcons` - update icons in developers' repo. Switch off to run check only
+    |* `$syncIcons` - update icons in designers' repo. Switch off to run check only
+    |* `$syncRemovedIconsInDev` - remove icons in developers' repo removed by designers
+  """.trimMargin())
   System.exit(1)
 }
 
@@ -44,7 +61,7 @@ private fun printUsageAndExit() {
  */
 fun checkIcons(
   devRepoDir: String, iconsRepoDir: String, skipDirsPattern: String?,
-  doSyncIconsRepo: Boolean = false, doSyncDevRepo: Boolean = false,
+  doSyncIconsRepo: Boolean = false, doSyncDevRepo: Boolean = false, doSyncRemovedIconsInDev: Boolean = true,
   loggerImpl: Consumer<String> = Consumer { println(it) },
   errorHandler: Consumer<String> = Consumer { throw IllegalStateException(it) }
 ) {
@@ -86,14 +103,15 @@ fun checkIcons(
       }
     )
   }
-  if (doSyncIconsRepo) callSafely {
+  if (doSyncIconsRepo) {
     syncAdded(addedByDev, devIconsBackup, File(iconsRepoDir)) { iconsRepo }
     syncModified(modifiedByDev, icons, devIconsBackup)
     syncRemoved(removedByDev, icons)
   }
-  if (doSyncDevRepo) callSafely {
+  if (doSyncDevRepo) {
     syncAdded(addedByDesigners, icons, File(devRepoDir)) { findGitRepoRoot(it.absolutePath, true) }
     syncModified(modifiedByDesigners, devIconsBackup, icons)
+    if (doSyncRemovedIconsInDev) syncRemoved(removedByDesigners, devIconsBackup)
   }
   report(
     devIconsBackup.size, icons.size, skippedDirs.size,

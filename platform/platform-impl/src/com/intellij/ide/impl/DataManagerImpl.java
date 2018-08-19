@@ -79,7 +79,7 @@ public class DataManagerImpl extends DataManager {
         ids.add(dataId);
         data = dataRule.getData(new DataProvider() {
           @Override
-          public Object getData(String dataId) {
+          public Object getData(@NotNull String dataId) {
             return getDataFromProvider(provider, dataId, ids);
           }
         });
@@ -125,7 +125,7 @@ public class DataManagerImpl extends DataManager {
           return plainRule.getData(new DataProvider() {
             @Override
             @Nullable
-            public Object getData(@NonNls String dataId) {
+            public Object getData(@NotNull @NonNls String dataId) {
               return dataProvider.getData(AnActionEvent.injectedId(dataId));
             }
           });
@@ -166,11 +166,14 @@ public class DataManagerImpl extends DataManager {
     return data;
   }
 
+  @NotNull
   @Override
   public DataContext getDataContext(Component component) {
+    //noinspection deprecation
     return new MyDataContext(component);
   }
 
+  @NotNull
   @Override
   public DataContext getDataContext(@NotNull Component component, int x, int y) {
     if (x < 0 || x >= component.getWidth() || y < 0 || y >= component.getHeight()) {
@@ -317,6 +320,11 @@ public class DataManagerImpl extends DataManager {
     PlatformDataKeys.MODALITY_STATE.getName()
   ));
 
+  /**
+   * todo make private in 2020
+   * @deprecated use {@link DataManager#getDataContext(Component)} instead
+   */
+  @Deprecated
   public static class MyDataContext implements DataContext, UserDataHolder {
     private int myEventCount;
     // To prevent memory leak we have to wrap passed component into
@@ -338,7 +346,7 @@ public class DataManagerImpl extends DataManager {
     }
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       if (dataId == null) return null;
       int currentEventCount = IdeEventQueue.getInstance().getEventCount();
       if (myEventCount != -1 && myEventCount != currentEventCount) {
@@ -382,6 +390,7 @@ public class DataManagerImpl extends DataManager {
       return ((DataManagerImpl)DataManager.getInstance()).getData(dataId, component);
     }
 
+    @Override
     @NonNls
     public String toString() {
       return "component=" + SoftReference.dereference(myRef);

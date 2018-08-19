@@ -20,7 +20,6 @@ import com.intellij.cvsSupport2.cvsoperations.cvsEdit.EditorInfo;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -50,50 +49,60 @@ public class EditorsPanel extends JPanel implements TypeSafeDataProvider {
   private final TableView<EditorInfo> myTable = new TableView<>(myModel);
 
   private final static ColumnInfo<EditorInfo, String> USER = new ColumnInfo<EditorInfo, String>(CvsBundle.message("view.editors.user.column.name")){
+    @Override
     public String valueOf(EditorInfo object) {
       return object.getUserName();
     }
 
+    @Override
     public Comparator<EditorInfo> getComparator() {
       return (o, o1) -> o.getUserName().compareTo(o1.getUserName());
     }
   };
 
   private final static ColumnInfo<EditorInfo, String> HOST = new ColumnInfo<EditorInfo, String>(CvsBundle.message("view.editors.host.column.name")){
+    @Override
     public String valueOf(EditorInfo object) {
       return object.getHostName();
     }
 
+    @Override
     public Comparator<EditorInfo> getComparator() {
       return (o, o1) -> o.getHostName().compareTo(o1.getHostName());
     }
   };
 
   private final static ColumnInfo<EditorInfo, String> DATE = new ColumnInfo<EditorInfo, String>(CvsBundle.message("view.editors.date.column.name")){
+    @Override
     public String valueOf(EditorInfo object) {
       return DateFormatUtil.formatPrettyDateTime(object.getEditDate());
     }
 
+    @Override
     public Comparator<EditorInfo> getComparator() {
       return (o, o1) -> o.getEditDate().compareTo(o1.getEditDate());
     }
   };
 
   private final static ColumnInfo<EditorInfo, String> DIR = new ColumnInfo<EditorInfo, String>(CvsBundle.message("view.editors.directory.column.name")){
+    @Override
     public String valueOf(EditorInfo object) {
       return object.getPath();
     }
 
+    @Override
     public Comparator<EditorInfo> getComparator() {
       return (o, o1) -> o.getPath().compareTo(o1.getPath());
     }
   };
 
   private final static ColumnInfo<EditorInfo, String> FILE = new ColumnInfo<EditorInfo, String>(CvsBundle.message("view.editors.file.column.name")){
+    @Override
     public String valueOf(EditorInfo object) {
       return object.getFilePath();
     }
 
+    @Override
     public Comparator<EditorInfo> getComparator() {
       return (o, o1) -> o.getFilePath().compareTo(o1.getFilePath());
     }
@@ -113,6 +122,7 @@ public class EditorsPanel extends JPanel implements TypeSafeDataProvider {
     EditSourceOnEnterKeyHandler.install(myTable, null);
   }
 
+  @Override
   public void calcData(DataKey key, DataSink sink) {
     if (key.equals(CommonDataKeys.PROJECT)) {
       sink.put(CommonDataKeys.PROJECT, myProject);

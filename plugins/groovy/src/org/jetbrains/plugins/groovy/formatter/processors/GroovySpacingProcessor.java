@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.formatter.processors;
 
 import com.intellij.formatting.Block;
@@ -13,6 +12,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
@@ -32,7 +32,9 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrArrayInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrDoWhileStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrTryResourceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArgumentList;
@@ -147,7 +149,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   private boolean manageComments() {
     if (mySettings.KEEP_FIRST_COLUMN_COMMENT && TokenSets.COMMENT_SET.contains(myType2)) {
       if (!isAfterElementOrSemi(GroovyElementTypes.IMPORT_STATEMENT)) {
-        myResult = Spacing.createKeepingFirstColumnSpacing(0, Integer.MAX_VALUE, true, 1);
+        myResult = Spacing.createKeepingFirstColumnSpacing(0, Integer.MAX_VALUE, mySettings.KEEP_LINE_BREAKS, keepBlankLines());
         return true;
       }
       return false;
@@ -195,23 +197,28 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitAnnotationArgumentList(@NotNull GrAnnotationArgumentList annotationArgumentList) {
-    if (myType1 == GroovyTokenTypes.mLPAREN || myType2 == GroovyTokenTypes.mRPAREN) {
+    if (isWithinParentheses()) {
       createSpaceInCode(mySettings.SPACE_WITHIN_ANNOTATION_PARENTHESES);
     }
   }
 
   @Override
   public void visitArgumentList(@NotNull GrArgumentList list) {
-    if (myType1 == GroovyTokenTypes.mLBRACK || myType2 == GroovyTokenTypes.mRBRACK) {
-      createSpaceInCode(mySettings.SPACE_WITHIN_BRACKETS);
+    if (list.getParent() instanceof GrIndexProperty) {
+      processBrackets(
+        mySettings.SPACE_WITHIN_BRACKETS,
+        null,
+        mySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE,
+        mySettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE
+      );
     }
     else {
-      processParentheses(GroovyTokenTypes.mLPAREN,
-                         GroovyTokenTypes.mRPAREN,
-                         mySettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES,
-                         mySettings.SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES,
-                         mySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE,
-                         mySettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE);
+      processParentheses(
+        mySettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES,
+        mySettings.SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES,
+        mySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE,
+        mySettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE
+      );
     }
   }
 
@@ -290,6 +297,9 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     else if (myType2 == GroovyElementTypes.ARRAY_DECLARATOR) {
       createSpaceInCode(false);
     }
+    else if (myType2 == ARRAY_INITIALIZER) {
+      createSpaceInCode(mySettings.SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE);
+    }
   }
 
   @Override
@@ -303,7 +313,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   }
 
   private void manageSpaceInTuple() {
-    if (myType1 == GroovyTokenTypes.mLPAREN || myType2 == GroovyTokenTypes.mRPAREN) {
+    if (isWithinParentheses()) {
       createSpaceInCode(myGroovySettings.SPACE_WITHIN_TUPLE_EXPRESSION);
     }
   }
@@ -609,27 +619,48 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
       createSpaceInCode(true);
     }
     else {
-      processParentheses(GroovyTokenTypes.mLPAREN,
-                         GroovyTokenTypes.mRPAREN,
-                         mySettings.SPACE_WITHIN_METHOD_PARENTHESES,
-                         mySettings.SPACE_WITHIN_EMPTY_METHOD_PARENTHESES,
-                         mySettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE,
-                         mySettings.METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE);
+      processParentheses(
+        mySettings.SPACE_WITHIN_METHOD_PARENTHESES,
+        mySettings.SPACE_WITHIN_EMPTY_METHOD_PARENTHESES,
+        mySettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE,
+        mySettings.METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE
+      );
     }
   }
 
-  private boolean processParentheses(@NotNull IElementType left,
-                                     @NotNull IElementType right,
-                                     @NotNull Boolean spaceWithin,
+  private boolean processBrackets(@NotNull Boolean spaceWithin,
+                                  @Nullable Boolean spaceWithinEmpty,
+                                  @Nullable Boolean leftLF,
+                                  @Nullable Boolean rightLF) {
+    return processParentheses(spaceWithin, spaceWithinEmpty, leftLF, rightLF, T_LBRACK, T_RBRACK);
+  }
+
+  private boolean processParentheses(@NotNull Boolean spaceWithin,
                                      @Nullable Boolean spaceWithinEmpty,
                                      @Nullable Boolean leftLF,
                                      @Nullable Boolean rightLF) {
-    if (myType1 == left && myType2 == right && spaceWithinEmpty != null) {
+    return processParentheses(spaceWithin, spaceWithinEmpty, leftLF, rightLF, T_LPAREN, T_RPAREN);
+  }
+
+  private boolean processBraces(@NotNull Boolean spaceWithin,
+                                @Nullable Boolean spaceWithinEmpty,
+                                @Nullable Boolean leftLF,
+                                @Nullable Boolean rightLF) {
+    return processParentheses(spaceWithin, spaceWithinEmpty, leftLF, rightLF, T_LBRACE, T_RBRACE);
+  }
+
+  private boolean processParentheses(@NotNull Boolean spaceWithin,
+                                     @Nullable Boolean spaceWithinEmpty,
+                                     @Nullable Boolean leftLF,
+                                     @Nullable Boolean rightLF,
+                                     @NotNull IElementType leftType,
+                                     @NotNull IElementType rightType) {
+    if (myType1 == leftType && myType2 == rightType && spaceWithinEmpty != null) {
       createSpaceInCode(spaceWithinEmpty);
       return true;
     }
-    else if (myType1 == left) {
-      final ASTNode rparenth = findFrom(myChild1, right, true);
+    else if (myType1 == leftType) {
+      final ASTNode rparenth = findFrom(myChild1, rightType, true);
       if (rparenth == null || leftLF == null) {
         createSpaceInCode(spaceWithin);
       }
@@ -639,8 +670,8 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
       }
       return true;
     }
-    else if (myType2 == right) {
-      final ASTNode lparenth = findFrom(myChild1, left, false);
+    else if (myType2 == rightType) {
+      final ASTNode lparenth = findFrom(myChild1, leftType, false);
       if (lparenth == null || rightLF == null) {
         createSpaceInCode(spaceWithin);
       }
@@ -703,7 +734,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     if (myType2 == GroovyTokenTypes.mLPAREN) {
       createSpaceInCode(mySettings.SPACE_BEFORE_WHILE_PARENTHESES);
     }
-    else if (myType1 == GroovyTokenTypes.mLPAREN || myType2 == GroovyTokenTypes.mRPAREN) {
+    else if (isWithinParentheses()) {
       createSpaceInCode(mySettings.SPACE_WITHIN_WHILE_PARENTHESES);
     }
     else if (myChild2.getPsi() instanceof GrBlockStatement) {
@@ -737,7 +768,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     else if (myType2 == T_LPAREN) {
       createSpaceInCode(mySettings.SPACE_BEFORE_WHILE_PARENTHESES);
     }
-    else if (myType1 == T_LPAREN || myType2 == T_RPAREN) {
+    else if (isWithinParentheses()) {
       createSpaceInCode(mySettings.SPACE_WITHIN_WHILE_PARENTHESES);
     }
     else {
@@ -754,7 +785,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     else if (myType2 == GroovyTokenTypes.mLPAREN) {
       createSpaceInCode(mySettings.SPACE_BEFORE_CATCH_PARENTHESES);
     }
-    else if (myType1 == GroovyTokenTypes.mLPAREN || myType2 == GroovyTokenTypes.mRPAREN) {
+    else if (isWithinParentheses()) {
       createSpaceInCode(mySettings.SPACE_WITHIN_CATCH_PARENTHESES);
     }
   }
@@ -769,7 +800,10 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitTryStatement(@NotNull GrTryCatchStatement tryCatchStatement) {
-    if (myType2 == GroovyElementTypes.FINALLY_CLAUSE) {
+    if (myType2 == TRY_RESOURCE_LIST) {
+      createSpaceInCode(mySettings.SPACE_BEFORE_TRY_PARENTHESES);
+    }
+    else if (myType2 == GroovyElementTypes.FINALLY_CLAUSE) {
       processTryOnNewLineCondition(mySettings.FINALLY_ON_NEW_LINE, mySettings.SPACE_BEFORE_FINALLY_KEYWORD);
     }
     else if (isOpenBlock(myType2)) {
@@ -778,6 +812,16 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     else if (myType2 == GroovyElementTypes.CATCH_CLAUSE) {
       processTryOnNewLineCondition(mySettings.CATCH_ON_NEW_LINE, mySettings.SPACE_BEFORE_CATCH_KEYWORD);
     }
+  }
+
+  @Override
+  public void visitTryResourceList(@NotNull GrTryResourceList resourceList) {
+    processParentheses(
+      mySettings.SPACE_WITHIN_TRY_PARENTHESES,
+      null,
+      mySettings.RESOURCE_LIST_LPAREN_ON_NEXT_LINE,
+      mySettings.RESOURCE_LIST_RPAREN_ON_NEXT_LINE
+    );
   }
 
   @Override
@@ -829,14 +873,14 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     if (myType1 == GroovyTokenTypes.kSWITCH && myType2 == GroovyTokenTypes.mLPAREN) {
       createSpaceInCode(mySettings.SPACE_BEFORE_SWITCH_PARENTHESES);
     }
-    else if (myType1 == GroovyTokenTypes.mLPAREN || myType2 == GroovyTokenTypes.mRPAREN) {
+    else if (isWithinParentheses()) {
       createSpaceInCode(mySettings.SPACE_WITHIN_SWITCH_PARENTHESES);
     }
     else if (myType2 == GroovyTokenTypes.mLCURLY) {
       createSpaceBeforeLBrace(mySettings.SPACE_BEFORE_SWITCH_LBRACE, mySettings.BRACE_STYLE, null,
                               mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
     }
-    else if (myType1 == GroovyTokenTypes.mLCURLY || myType2 == GroovyTokenTypes.mRCURLY) {
+    else if (isWithinBraces()) {
       createLF(true);
     }
   }
@@ -845,7 +889,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   public void visitSynchronizedStatement(@NotNull GrSynchronizedStatement synchronizedStatement) {
     if (myType1 == GroovyTokenTypes.kSYNCHRONIZED || myType2 == GroovyTokenTypes.mLPAREN) {
       createSpaceInCode(mySettings.SPACE_BEFORE_SYNCHRONIZED_PARENTHESES);
-    } else if (myType1 == GroovyTokenTypes.mLPAREN || myType2 == GroovyTokenTypes.mRPAREN) {
+    } else if (isWithinParentheses()) {
       createSpaceInCode(mySettings.SPACE_WITHIN_SYNCHRONIZED_PARENTHESES);
     } else if (isOpenBlock(myType2)) {
       createSpaceBeforeLBrace(mySettings.SPACE_BEFORE_SYNCHRONIZED_LBRACE, mySettings.BRACE_STYLE, null,
@@ -895,20 +939,24 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitListOrMap(@NotNull GrListOrMap listOrMap) {
-    if (myType1 == GroovyTokenTypes.mLBRACK || myType2 == GroovyTokenTypes.mRBRACK) {
+    if (isWithinBrackets()) {
       createSpaceInCode(myGroovySettings.SPACE_WITHIN_LIST_OR_MAP);
     }
   }
 
   @Override
   public void visitParenthesizedExpression(@NotNull GrParenthesizedExpression expression) {
-    processParentheses(GroovyTokenTypes.mLPAREN, GroovyTokenTypes.mRPAREN, mySettings.SPACE_WITHIN_PARENTHESES, null, mySettings.PARENTHESES_EXPRESSION_LPAREN_WRAP,
-                       mySettings.PARENTHESES_EXPRESSION_RPAREN_WRAP);
+    processParentheses(
+      mySettings.SPACE_WITHIN_PARENTHESES,
+      null,
+      mySettings.PARENTHESES_EXPRESSION_LPAREN_WRAP,
+      mySettings.PARENTHESES_EXPRESSION_RPAREN_WRAP
+    );
   }
 
   @Override
   public void visitAnnotationArrayInitializer(@NotNull GrAnnotationArrayInitializer arrayInitializer) {
-    if (myType1 == GroovyTokenTypes.mLBRACK || myType2 == GroovyTokenTypes.mRBRACK) {
+    if (isWithinBrackets()) {
       createSpaceInCode(mySettings.SPACE_WITHIN_BRACKETS);
     }
   }
@@ -968,7 +1016,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     else if (myType2 == GroovyTokenTypes.mLPAREN) {
       createSpaceInCode(mySettings.SPACE_BEFORE_IF_PARENTHESES);
     }
-    else if (myType1 == GroovyTokenTypes.mLPAREN || myType2 == GroovyTokenTypes.mRPAREN) {
+    else if (isWithinParentheses()) {
       createSpaceInCode(mySettings.SPACE_WITHIN_IF_PARENTHESES);
     }
     else if (((GrIfStatement)myParent).getThenBranch() == myChild2.getPsi()) {
@@ -998,13 +1046,23 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
       createSpacingBeforeElementInsideControlStatement();
     }
     else {
-      processParentheses(GroovyTokenTypes.mLPAREN,
-                         GroovyTokenTypes.mRPAREN,
-                         mySettings.SPACE_WITHIN_FOR_PARENTHESES,
-                         null,
-                         mySettings.FOR_STATEMENT_LPAREN_ON_NEXT_LINE,
-                         mySettings.FOR_STATEMENT_RPAREN_ON_NEXT_LINE);
+      processParentheses(
+        mySettings.SPACE_WITHIN_FOR_PARENTHESES,
+        null,
+        mySettings.FOR_STATEMENT_LPAREN_ON_NEXT_LINE,
+        mySettings.FOR_STATEMENT_RPAREN_ON_NEXT_LINE
+      );
     }
+  }
+
+  @Override
+  public void visitArrayInitializer(@NotNull GrArrayInitializer arrayInitializer) {
+    processBraces(
+      mySettings.SPACE_WITHIN_ARRAY_INITIALIZER_BRACES,
+      mySettings.SPACE_WITHIN_EMPTY_ARRAY_INITIALIZER_BRACES,
+      mySettings.ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE,
+      mySettings.ARRAY_INITIALIZER_RBRACE_ON_NEXT_LINE
+    );
   }
 
   private static boolean isOpenBlock(IElementType type) {
@@ -1106,6 +1164,26 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     else {
       return mySettings.KEEP_BLANK_LINES_IN_CODE;
     }
+  }
+
+  @Contract(pure = true)
+  private boolean isWithinParentheses() {
+    return isWithin(T_LPAREN, T_RPAREN);
+  }
+
+  @Contract(pure = true)
+  private boolean isWithinBraces() {
+    return isWithin(T_LBRACE, T_RBRACE);
+  }
+
+  @Contract(pure = true)
+  private boolean isWithinBrackets() {
+    return isWithin(T_LBRACK, T_RBRACK);
+  }
+
+  @Contract(pure = true)
+  private boolean isWithin(IElementType left, IElementType right) {
+    return myType1 == left || myType2 == right;
   }
 
   static boolean isWhiteSpace(final ASTNode node) {

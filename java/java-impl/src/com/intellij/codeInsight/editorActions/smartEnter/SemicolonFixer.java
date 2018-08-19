@@ -38,8 +38,9 @@ import org.jetbrains.annotations.Nullable;
 public class SemicolonFixer implements Fixer {
   @Override
   public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
-    @SuppressWarnings("unused") boolean b =
-      fixReturn(editor, psiElement) || fixForUpdate(editor, psiElement) || fixAfterLastValidElement(editor, psiElement);
+    if (fixReturn(editor, psiElement)) return;
+    if (fixForUpdate(editor, psiElement)) return;
+    fixAfterLastValidElement(editor, psiElement);
   }
 
   private static boolean fixReturn(@NotNull Editor editor, @Nullable PsiElement psiElement) {

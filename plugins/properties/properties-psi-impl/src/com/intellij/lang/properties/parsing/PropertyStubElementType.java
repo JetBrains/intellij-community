@@ -34,40 +34,47 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-public class PropertyStubElementType extends ILightStubElementType<PropertyStub, Property> {
-  public PropertyStubElementType() {
+class PropertyStubElementType extends ILightStubElementType<PropertyStub, Property> {
+  PropertyStubElementType() {
     super("PROPERTY", PropertiesElementTypes.LANG);
   }
 
+  @Override
   public Property createPsi(@NotNull final PropertyStub stub) {
     return new PropertyImpl(stub, this);
   }
 
+  @Override
   @NotNull
   public PropertyStub createStub(@NotNull final Property psi, final StubElement parentStub) {
     return new PropertyStubImpl(parentStub, psi.getKey());
   }
 
+  @Override
   @NotNull
   public String getExternalId() {
     return "properties.prop";
   }
 
+  @Override
   public void serialize(@NotNull final PropertyStub stub, @NotNull final StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getKey());
   }
 
+  @Override
   @NotNull
   public PropertyStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     return new PropertyStubImpl(parentStub, dataStream.readNameString());
   }
 
+  @Override
   public void indexStub(@NotNull final PropertyStub stub, @NotNull final IndexSink sink) {
     sink.occurrence(PropertyKeyIndex.KEY, PropertyImpl.unescape(stub.getKey()));
   }
 
+  @NotNull
   @Override
-  public PropertyStub createStub(LighterAST tree, LighterASTNode node, StubElement parentStub) {
+  public PropertyStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement parentStub) {
     LighterASTNode keyNode = LightTreeUtil.firstChildOfType(tree, node, PropertiesTokenTypes.KEY_CHARACTERS);
     String key = intern(tree.getCharTable(), keyNode);
     return new PropertyStubImpl(parentStub, key);

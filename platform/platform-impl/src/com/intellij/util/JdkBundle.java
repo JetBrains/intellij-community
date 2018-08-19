@@ -148,6 +148,7 @@ public class JdkBundle {
   //<editor-fold desc="Deprecated stuff.">
 
   /** @deprecated does not belong to the class (to be removed in IDEA 2019) */
+  @Deprecated
   public String getVisualRepresentation() {
     StringBuilder representation = new StringBuilder();
 
@@ -165,27 +166,32 @@ public class JdkBundle {
   }
 
   /** @deprecated useless (to be removed in IDEA 2019) */
+  @Deprecated
   public String getBundleName() {
     return "java";
   }
 
   /** @deprecated use {@link #getBundleVersion()} (to be removed in IDEA 2019) */
+  @Deprecated
   public Version getVersion() {
     JavaVersion v = myVersionInfo.version;
     return v.feature <= 8 ? new Version(1, v.feature, 0) : new Version(v.feature, 0, v.update);
   }
 
   /** @deprecated use {@link #getBundleVersion()} (to be removed in IDEA 2019) */
+  @Deprecated
   public Integer getUpdateNumber() {
     return myVersionInfo.version.update;
   }
 
   /** @deprecated use {@link #createBundle(File)} (to be removed in IDEA 2019) */
+  @Deprecated
   public static JdkBundle createBundle(@NotNull File jvm, boolean boot, boolean bundled) {
     return createBundle(jvm, boot, bundled, true);
   }
 
   /** @deprecated use {@link #createBundle(File)} (to be removed in IDEA 2019) */
+  @Deprecated
   public static JdkBundle createBundle(@NotNull File jvm, boolean boot, @SuppressWarnings("unused") boolean bundled, boolean matchArch) {
     JdkBundle bundle = createBundle(jvm, boot);
     if (matchArch && bundle != null) {
@@ -198,12 +204,13 @@ public class JdkBundle {
   }
 
   /** @deprecated use {@link #createBundled()} (to be removed in IDEA 2019) */
+  @Deprecated
   public static File getBundledJDKAbsoluteLocation() {
     return new File(PathManager.getHomePath(), SystemInfo.isMac ? "jdk" : "jre");
   }
 
   /** @deprecated use {@link SystemInfo#is64Bit} (to be removed in IDEA 2019) */
-  public static final Bitness runtimeBitness = SystemInfo.is64Bit ? Bitness.x64 : Bitness.x32;
+  @Deprecated public static final Bitness runtimeBitness = SystemInfo.is64Bit ? Bitness.x64 : Bitness.x32;
 
   //</editor-fold>
 }

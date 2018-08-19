@@ -15,16 +15,15 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.todo.TodoIndexPatternProvider;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.IndexPatternOccurrence;
 import com.intellij.psi.search.searches.IndexPatternSearch;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.SmartList;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,15 +42,19 @@ public class TodoCommentInspection extends LocalInspectionTool {
     }
 
     final List<ProblemDescriptor> result = new SmartList<>();
-    final THashSet<PsiComment> comments = new THashSet<>();
+    int lastEndOffset = -1;
     for (TextRange todoRange : ranges) {
       final int todoStart = todoRange.getStartOffset();
-      final PsiComment comment = PsiTreeUtil.getParentOfType(file.findElementAt(todoStart), PsiComment.class, false);
-      if (comment != null && comments.add(comment)) {
-        final int commentStart = comment.getTextOffset();
-        final TextRange range = new TextRange(todoStart - commentStart, todoRange.getEndOffset() - commentStart);
-        result.add(manager.createProblemDescriptor(comment, range, InspectionsBundle.message("todo.comment.problem.descriptor"),
+      final int todoEnd = todoRange.getEndOffset();
+      if (todoStart < lastEndOffset) continue;
+      PsiElement element = file.findElementAt(todoStart);
+      while (element != null && element.getTextRange().getEndOffset() < todoEnd) element = element.getParent();
+      if (element != null) {
+        final int elementStart = element.getTextRange().getStartOffset();
+        final TextRange range = new TextRange(todoStart - elementStart, todoEnd - elementStart);
+        result.add(manager.createProblemDescriptor(element, range, InspectionsBundle.message("todo.comment.problem.descriptor"),
                                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly));
+        lastEndOffset = todoEnd;
       }
     }
     return result.toArray(ProblemDescriptor.EMPTY_ARRAY);
@@ -60,9 +63,19 @@ public class TodoCommentInspection extends LocalInspectionTool {
   private static List<TextRange> getTodoRanges(@NotNull PsiFile file) {
     final TodoIndexPatternProvider todoIndexPatternProvider = TodoIndexPatternProvider.getInstance();
     assert todoIndexPatternProvider != null;
-    final Collection<IndexPatternOccurrence> occurrences = IndexPatternSearch.search(file, todoIndexPatternProvider).findAll();
-    final List<TextRange> ranges = occurrences.stream().map(o -> o.getTextRange()).collect(Collectors.toList());
-    ranges.sort((a, b) -> Comparing.compare(a.getStartOffset(), b.getStartOffset()));
-    return ranges;
+    final Collection<IndexPatternOccurrence> occurrences = IndexPatternSearch.search(file, todoIndexPatternProvider,
+                                                                                     TodoConfiguration.getInstance().isMultiLine())
+                                                                             .findAll();
+    return occurrences.stream()
+                      .map(occurrence -> {
+                        TextRange mainRange = occurrence.getTextRange();
+                        List<TextRange> additionalRanges = occurrence.getAdditionalTextRanges();
+                        return additionalRanges.isEmpty()
+                               ? mainRange
+                               : new TextRange(mainRange.getStartOffset(),
+                                               additionalRanges.get(additionalRanges.size() - 1).getEndOffset());
+                      })
+                      .sorted((a, b) -> Comparing.compare(a.getStartOffset(), b.getStartOffset()))
+                      .collect(Collectors.toList());
   }
 }

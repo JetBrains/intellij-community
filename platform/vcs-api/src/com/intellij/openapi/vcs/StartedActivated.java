@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * By the nature of the process, we do not expect here situations where one thread activates/starts and another simultaneosly
+ * By the nature of the process, we do not expect here situations where one thread activates/starts and another simultaneously
  * tries to deactivate/shutdown. It that situations, it would be very hard to decide what should be done=)
  *
  * So, synchronization here should only be used as a barrier to do not allow repeated activation etc.
@@ -47,6 +47,7 @@ public abstract class StartedActivated {
     myLock = new Object();
 
     Disposer.register(parent, new Disposable() {
+      @Override
       public void dispose() {
         try {
           doShutdown();
@@ -88,7 +89,7 @@ public abstract class StartedActivated {
   public final void doActivate() throws VcsException {
     callImpl(myActivate, true);
   }
-  
+
   public final void doDeactivate() throws VcsException {
     callImpl(myActivate, false);
   }

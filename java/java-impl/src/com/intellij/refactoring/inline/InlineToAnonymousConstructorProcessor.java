@@ -30,6 +30,7 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
@@ -178,7 +179,7 @@ class InlineToAnonymousConstructorProcessor {
   private void checkInlineChainingConstructor() {
     while(true) {
       PsiMethod constructor = myNewExpression.resolveConstructor();
-      if (constructor == null || !InlineMethodHandler.isChainingConstructor(constructor)) break;
+      if (constructor == null || !InlineUtil.isChainingConstructor(constructor)) break;
       InlineMethodProcessor.inlineConstructorCall(myNewExpression);
     }
   }

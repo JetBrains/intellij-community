@@ -35,7 +35,6 @@ import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.indexing.*;
@@ -54,8 +53,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.psi.impl.source.tree.JavaElementType.*;
 
-public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<FunctionalExpressionKey, List<FunExprOccurrence>> implements PsiDependentIndex {
-  public static final ID<FunctionalExpressionKey, List<FunExprOccurrence>> INDEX_ID = ID.create("java.fun.expression");
+public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<FunctionalExpressionKey, Map<Integer, FunExprOccurrence>> implements PsiDependentIndex {
+  public static final ID<FunctionalExpressionKey, Map<Integer, FunExprOccurrence>> INDEX_ID = ID.create("java.fun.expression");
   private static final KeyDescriptor<FunctionalExpressionKey> KEY_DESCRIPTOR = new KeyDescriptor<FunctionalExpressionKey>() {
     @Override
     public int getHashCode(FunctionalExpressionKey value) {
@@ -339,18 +338,18 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
 
   @Override
   public int getVersion() {
-    return 2;
+    return 3;
   }
 
   @NotNull
   @Override
-  public ID<FunctionalExpressionKey, List<FunExprOccurrence>> getName() {
+  public ID<FunctionalExpressionKey, Map<Integer, FunExprOccurrence>> getName() {
     return INDEX_ID;
   }
 
   @NotNull
   @Override
-  public DataIndexer<FunctionalExpressionKey, List<FunExprOccurrence>, FileContent> getIndexer() {
+  public DataIndexer<FunctionalExpressionKey, Map<Integer, FunExprOccurrence>, FileContent> getIndexer() {
     return inputData -> {
       CharSequence text = inputData.getContentAsText();
       int[] offsets = ArrayUtil.mergeArrays(
@@ -358,7 +357,7 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
         new StringSearcher("::", true, true).findAllOccurrences(text));
       if (offsets.length == 0) return Collections.emptyMap();
 
-      Map<FunctionalExpressionKey, List<FunExprOccurrence>> result = new HashMap<>();
+      Map<FunctionalExpressionKey, Map<Integer, FunExprOccurrence>> result = new HashMap<>();
       LighterAST tree = ((FileContentImpl)inputData).getLighterASTForPsiDependentIndex();
       FileLocalResolver resolver = new FileLocalResolver(tree);
 
@@ -371,11 +370,8 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
           FunctionalExpressionKey key = new FunctionalExpressionKey(getFunExprParameterCount(tree, element),
                                                                     calcReturnType(tree, element),
                                                                     calcExprType(element, resolver));
-          List<FunExprOccurrence> list = result.get(key);
-          if (list == null) {
-            result.put(key, list = new SmartList<>());
-          }
-          list.add(createOccurrence(element, resolver));
+          Map<Integer, FunExprOccurrence> map = result.computeIfAbsent(key, __ -> new LinkedHashMap<>());
+          map.put(element.getStartOffset(), createOccurrence(element, resolver));
         }
       }
 
@@ -398,30 +394,31 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
       }
     }
 
-    return new FunExprOccurrence(funExpr.getStartOffset(), argIndex,
-                                 createCallChain(resolver, chainExpr));
+    return new FunExprOccurrence(argIndex, createCallChain(resolver, chainExpr));
   }
 
   @NotNull
   @Override
-  public DataExternalizer<List<FunExprOccurrence>> getValueExternalizer() {
-    return new DataExternalizer<List<FunExprOccurrence>>() {
+  public DataExternalizer<Map<Integer, FunExprOccurrence>> getValueExternalizer() {
+    return new DataExternalizer<Map<Integer, FunExprOccurrence>>() {
       @Override
-      public void save(@NotNull DataOutput out, List<FunExprOccurrence> value) throws IOException {
+      public void save(@NotNull DataOutput out, Map<Integer, FunExprOccurrence> value) throws IOException {
         DataInputOutputUtil.writeINT(out, value.size());
-        for (FunExprOccurrence info : value) {
-          info.serialize(out);
+        for (Map.Entry<Integer, FunExprOccurrence> entry : value.entrySet()) {
+          DataInputOutputUtil.writeINT(out, entry.getKey());
+          entry.getValue().serialize(out);
         }
       }
 
       @Override
-      public List<FunExprOccurrence> read(@NotNull DataInput in) throws IOException {
+      public Map<Integer, FunExprOccurrence> read(@NotNull DataInput in) throws IOException {
         int length = DataInputOutputUtil.readINT(in);
-        List<FunExprOccurrence> list = new SmartList<>();
+        Map<Integer, FunExprOccurrence> map = new LinkedHashMap<>();
         for (int i = 0; i < length; i++) {
-          list.add(FunExprOccurrence.deserialize(in));
+          int offset = DataInputOutputUtil.readINT(in);
+          map.put(offset, FunExprOccurrence.deserialize(in));
         }
-        return list;
+        return map;
       }
     };
   }

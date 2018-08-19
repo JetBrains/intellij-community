@@ -69,6 +69,7 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   private void checkHTMLOnly() {
     final Map<String, PsiElement> marks = loadTest();
     final PsiElement originalElement = marks.get("<the_ref>");
+    assertNotNull("<the_ref> marker is missing in test data", originalElement);
     final DocumentationManager manager = DocumentationManager.getInstance(myFixture.getProject());
     final PsiElement target = manager.findTargetElement(myFixture.getEditor(),
                                                         originalElement.getTextOffset(),
@@ -227,7 +228,11 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   }
 
   public void testParamOfFunctionInModuleWithIllegalName() {
-    final Map<String, PsiElement> marks = configureByFile(getTestName(false) + "/illegal name.py");
+    doMultiFileCheckByHTML("illegal name.py");
+  }
+
+  public void doMultiFileCheckByHTML(@NotNull String activeFilePath) {
+    final Map<String, PsiElement> marks = configureByFile(getTestName(false) + "/" + activeFilePath);
     final PsiElement originalElement = marks.get("<the_ref>");
     final DocumentationManager manager = DocumentationManager.getInstance(myFixture.getProject());
     final PsiElement target = manager.findTargetElement(myFixture.getEditor(),
@@ -545,6 +550,35 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     final VirtualFile file = myFixture.findFileInTempDir("pkg/__init__.py");
     final PyFile init = as(PsiManager.getInstance(myFixture.getProject()).findFile(file), PyFile.class);
     checkByHTML(myProvider.generateDoc(init, init));
+  }
+
+  public void testSingleLetterInheritedDocstring() {
+    checkHTMLOnly();
+  }
+
+  // PY-30432
+  public void testNoExternalDocumentationSection() {
+    doMultiFileCheckByHTML("numpy.py");
+  }
+
+  // PY-31025
+  public void testGoogleDocstringWithReturnValueDescriptionWithoutType() {
+    checkHTMLOnly();
+  }
+
+  // PY-31148
+  public void testSphinxDocstringWithCombinedParamTypeAndDescription() {
+    checkHTMLOnly();
+  }
+
+  // PY-31033
+  public void testDefaultValues() {
+    checkHTMLOnly();
+  }
+
+  // PY-31074
+  public void testClassDocumentationTakenFromConstructor() {
+    checkHTMLOnly();
   }
 
   @Override

@@ -7,7 +7,6 @@ import com.intellij.CommonBundle;
 import com.intellij.diff.DiffRequestFactory;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.diff.*;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -84,7 +83,6 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   private volatile boolean myDisposed;
 
   public DirDiffTableModel(@Nullable Project project, DiffElement source, DiffElement target, DirDiffSettings settings) {
-    UsageTrigger.trigger("diff.DirDiffTableModel");
     myProject = project;
     mySettings = settings;
     mySource = source;
@@ -172,6 +170,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     return !myDisposed && mySettings.enableOperations && mySource.isOperationsEnabled() && myTarget.isOperationsEnabled();
   }
 
+  @Override
   public List<DirDiffElementImpl> getElements() {
     return myElements;
   }
@@ -225,6 +224,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     myListeners.add(listener);
   }
 
+  @Override
   public void reloadModel(boolean userForcedRefresh) {
     fireUpdateStarted();
     myUpdating.set(true);
@@ -316,6 +316,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     return UIUtil.getClientProperty(myTable, DECORATOR_KEY);
   }
 
+  @Override
   public void applySettings() {
     if (!myUpdating.get()) myUpdating.set(true);
     JBLoadingPanel loadingPanel = getLoadingPanel();
@@ -442,18 +443,22 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     return 0 <= index && index < myElements.size() ? myElements.get(index) : null;
   }
 
+  @Override
   public DiffElement getSourceDir() {
     return mySource;
   }
 
+  @Override
   public DiffElement getTargetDir() {
     return myTarget;
   }
 
+  @Override
   public void setSourceDir(DiffElement src) {
     mySource = src;
   }
 
+  @Override
   public void setTargetDir(DiffElement trg) {
     myTarget = trg;
   }
@@ -597,6 +602,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     myTree = null;
   }
 
+  @Override
   public DirDiffSettings getSettings() {
     return mySettings;
   }

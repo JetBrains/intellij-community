@@ -4,6 +4,7 @@ package com.intellij.ide;
 import com.intellij.AppTopics;
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -30,15 +31,16 @@ import java.util.*;
 /**
  * @author nik
  */
-public class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceFileChangeTracker {
+public class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceFileChangeTracker implements ProjectComponent {
+  private final Project myProject;
   private final FileDocumentManager myDocumentManager;
   private final EditorNotifications myEditorNotifications;
   private final MergingUpdateQueue myCheckingQueue;
-  private final Set<VirtualFile> myFilesToCheck = Collections.synchronizedSet(new HashSet<VirtualFile>());
-  private final Set<VirtualFile> myEditedGeneratedFiles = Collections.synchronizedSet(new HashSet<VirtualFile>());
+  private final Set<VirtualFile> myFilesToCheck = Collections.synchronizedSet(new HashSet<>());
+  private final Set<VirtualFile> myEditedGeneratedFiles = Collections.synchronizedSet(new HashSet<>());
 
   public GeneratedSourceFileChangeTrackerImpl(Project project, FileDocumentManager documentManager, EditorNotifications editorNotifications) {
-    super(project);
+    myProject = project;
     myDocumentManager = documentManager;
     myEditorNotifications = editorNotifications;
     myCheckingQueue = new MergingUpdateQueue("Checking for changes in generated sources", 500, false, null, project, null, Alarm.ThreadToUse.POOLED_THREAD);
@@ -59,7 +61,7 @@ public class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceFileCha
     };
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         if (myProject.isDisposed()) return;
         VirtualFile file = myDocumentManager.getFile(e.getDocument());
         ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(myProject);

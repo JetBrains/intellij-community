@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.vfs;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -35,7 +21,9 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.commands.*;
+import git4idea.commands.Git;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
 import git4idea.util.GitFileUtils;
 import git4idea.util.GitVcsConsoleWriter;
@@ -82,14 +70,17 @@ public class GitVFSListener extends VcsVFSListener {
     return super.isEventIgnored(event, putInDirty) || myEventsSuppressLevel.get() != 0;
   }
 
+  @Override
   protected String getAddTitle() {
     return GitBundle.getString("vfs.listener.add.title");
   }
 
+  @Override
   protected String getSingleFileAddTitle() {
     return GitBundle.getString("vfs.listener.add.single.title");
   }
 
+  @Override
   protected String getSingleFileAddPromptTemplate() {
     return GitBundle.getString("vfs.listener.add.single.prompt");
   }
@@ -137,6 +128,7 @@ public class GitVFSListener extends VcsVFSListener {
     super.executeAdd(addedFiles, copiedFiles);
   }
 
+  @Override
   protected void performAdding(final Collection<VirtualFile> addedFiles, final Map<VirtualFile, VirtualFile> copyFromMap) {
     // copied files (copyFromMap) are ignored, because they are included into added files.
     performAdding(ObjectsConvertor.vf2fp(new ArrayList<>(addedFiles)));
@@ -162,22 +154,27 @@ public class GitVFSListener extends VcsVFSListener {
     });
   }
 
+  @Override
   protected String getDeleteTitle() {
     return GitBundle.getString("vfs.listener.delete.title");
   }
 
+  @Override
   protected String getSingleFileDeleteTitle() {
     return GitBundle.getString("vfs.listener.delete.single.title");
   }
 
+  @Override
   protected String getSingleFileDeletePromptTemplate() {
     return GitBundle.getString("vfs.listener.delete.single.prompt");
   }
 
+  @Override
   protected void performDeletion(final List<FilePath> filesToDelete) {
     performBackgroundOperation(filesToDelete, GitBundle.getString("remove.removing"), new LongOperationPerRootExecutor() {
       HashSet<File> filesToRefresh = new HashSet<>();
 
+      @Override
       public void execute(@NotNull VirtualFile root, @NotNull List<FilePath> files) throws VcsException {
         GitFileUtils.delete(myProject, root, files, "--ignore-unmatch", "--cached");
         if (!myProject.isDisposed()) {
@@ -191,12 +188,14 @@ public class GitVFSListener extends VcsVFSListener {
         }
       }
 
+      @Override
       public Collection<File> getFilesToRefresh() {
         return filesToRefresh;
       }
     });
   }
 
+  @Override
   protected void performMoveRename(final List<MovedFileInfo> movedFiles) {
     List<FilePath> toAdd = ContainerUtil.newArrayList();
     List<FilePath> toRemove = ContainerUtil.newArrayList();
@@ -241,6 +240,7 @@ public class GitVFSListener extends VcsVFSListener {
     });
   }
 
+  @Override
   protected boolean isDirectoryVersioningSupported() {
     return false;
   }
@@ -264,6 +264,7 @@ public class GitVFSListener extends VcsVFSListener {
     }
 
     GitVcs.runInBackground(new Task.Backgroundable(myProject, operationTitle) {
+      @Override
       public void run(@NotNull ProgressIndicator indicator) {
         for (Map.Entry<VirtualFile, List<FilePath>> e : sortedFiles.entrySet()) {
           try {

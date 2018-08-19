@@ -31,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.actions.VcsContext;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -51,10 +52,12 @@ public class CheckoutAction extends AbstractAction {
     myUseAlternativeCheckoutPath = useAlternativeCheckoutPath;
   }
 
+  @Override
   protected String getTitle(VcsContext context) {
     return CvsBundle.message("operation.name.check.out.project");
   }
 
+  @Override
   protected CvsHandler getCvsHandler(CvsContext context) {
     final Project project = context.getProject();
     CheckoutWizard checkoutWizard = new CheckoutWizard(project);
@@ -83,6 +86,7 @@ public class CheckoutAction extends AbstractAction {
     return checkoutPaths;
   }
 
+  @Override
   protected void onActionPerformed(final CvsContext context,
                                    CvsTabbedWindow tabbedWindow,
                                    boolean successfully,
@@ -94,7 +98,8 @@ public class CheckoutAction extends AbstractAction {
         myCheckoutDirectory, myUseAlternativeCheckoutPath);
   }
 
-  public void update(AnActionEvent e) {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     presentation.setVisible(true);
     presentation.setEnabled(true);

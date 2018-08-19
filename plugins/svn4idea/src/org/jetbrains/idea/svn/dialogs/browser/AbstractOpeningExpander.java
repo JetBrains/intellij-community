@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs.browser;
 
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +22,7 @@ public abstract class AbstractOpeningExpander implements Expander {
     mySelectionPath = selectionPath;
   }
 
+  @Override
   public void onBeforeRefresh(final RepositoryTreeNode node) {
     myKeepingExpander.onBeforeRefresh(node);
   }
@@ -36,6 +37,7 @@ public abstract class AbstractOpeningExpander implements Expander {
 
   protected abstract boolean checkChild(@NotNull Url childUrl);
 
+  @Override
   public void onAfterRefresh(final RepositoryTreeNode node) {
     myKeepingExpander.onAfterRefresh(node);
 

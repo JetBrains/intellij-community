@@ -185,34 +185,41 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
     private final boolean isValid;
     private final boolean isSuppressed;
     private final boolean isFixApplied;
+    private final boolean isExcluded;
 
-    private NodeState(boolean isValid, boolean isSuppressed, boolean isFixApplied) {
+    private NodeState(boolean isValid, boolean isSuppressed, boolean isFixApplied, boolean isExcluded) {
       this.isValid = isValid;
       this.isSuppressed = isSuppressed;
       this.isFixApplied = isFixApplied;
+      this.isExcluded = isExcluded;
     }
 
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+      if (!(o instanceof NodeState)) return false;
 
       NodeState state = (NodeState)o;
 
       if (isValid != state.isValid) return false;
       if (isSuppressed != state.isSuppressed) return false;
       if (isFixApplied != state.isFixApplied) return false;
+      if (isExcluded != state.isExcluded) return false;
 
       return true;
     }
 
     @Override
     public int hashCode() {
-     return (isValid ? 0x1 : 0) + (isFixApplied ? 0x2 : 0) + (isSuppressed ? 0x4 : 0);
+      int result = (isValid ? 1 : 0);
+      result = 31 * result + (isSuppressed ? 1 : 0);
+      result = 31 * result + (isFixApplied ? 1 : 0);
+      result = 31 * result + (isExcluded ? 1 : 0);
+      return result;
     }
   }
 
   private NodeState calculateState() {
-    return NodeState.INTERNER.intern(new NodeState(isValid(), isAlreadySuppressedFromView(), isQuickFixAppliedFromView()));
+    return NodeState.INTERNER.intern(new NodeState(isValid(), isAlreadySuppressedFromView(), isQuickFixAppliedFromView(), isExcluded()));
   }
 }

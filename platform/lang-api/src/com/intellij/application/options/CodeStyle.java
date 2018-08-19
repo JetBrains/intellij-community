@@ -215,10 +215,11 @@ public class CodeStyle {
    * @see #setTemporarySettings(Project, CodeStyleSettings)
    */
   @TestOnly
-  public static void dropTemporarySettings(@NotNull Project project) {
-    if (project.isDefault()) {
+  public static void dropTemporarySettings(@Nullable Project project) {
+    if (project == null || project.isDefault()) {
       return;
     }
+
     ProjectCodeStyleSettingsManager manager = ServiceManager.getServiceIfCreated(project, ProjectCodeStyleSettingsManager.class);
     if (manager != null) {
       manager.dropTemporarySettings();
@@ -237,12 +238,18 @@ public class CodeStyle {
   public static void doWithTemporarySettings(@NotNull Project project,
                                              @NotNull CodeStyleSettings tempSettings,
                                              @NotNull Runnable runnable) {
+    CodeStyleSettings tempSettingsBefore = CodeStyleSettingsManager.getInstance(project).getTemporarySettings();
     try {
       setTemporarySettings(project, tempSettings);
       runnable.run();
     }
     finally {
-      dropTemporarySettings(project);
+      if (tempSettingsBefore != null) {
+        setTemporarySettings(project, tempSettingsBefore);
+      }
+      else {
+        dropTemporarySettings(project);
+      }
     }
   }
 

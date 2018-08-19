@@ -89,18 +89,22 @@ public class DualView extends JPanel {
     add(createFlatComponent(columns), FLAT);
 
     myTreeView.getTreeViewModel().addTreeModelListener(new TreeModelListener() {
+      @Override
       public void treeNodesInserted(TreeModelEvent e) {
         refreshFlatModel();
       }
 
+      @Override
       public void treeNodesRemoved(TreeModelEvent e) {
         refreshFlatModel();
       }
 
+      @Override
       public void treeStructureChanged(TreeModelEvent e) {
         refreshFlatModel();
       }
 
+      @Override
       public void treeNodesChanged(TreeModelEvent e) {
         refreshFlatModel();
       }
@@ -113,6 +117,7 @@ public class DualView extends JPanel {
     restoreState();
 
     myPropertyChangeListener = new PropertyChangeListener() {
+      @Override
       public void propertyChange(PropertyChangeEvent evt) {
         if (mySuppressStore) return;
         saveState();
@@ -145,14 +150,17 @@ public class DualView extends JPanel {
 
     final ColumnInfo firstColumn = columns[0];
     ColumnInfo firstTreeColumn = new ColumnInfo(firstColumn.getName()) {
+      @Override
       public Object valueOf(Object object) {
         return firstColumn.valueOf(object);
       }
 
+      @Override
       public Class getColumnClass() {
         return TreeTableModel.class;
       }
 
+      @Override
       public boolean isCellEditable(Object o) {
         return true;
       }
@@ -201,6 +209,7 @@ public class DualView extends JPanel {
 
   private Component createTreeComponent(DualViewColumnInfo[] columns, TreeNode root) {
     myTreeView = new TreeTableView(new ListTreeTableModelOnColumns(root, createTreeColumns(columns))) {
+      @Override
       public TableCellRenderer getCellRenderer(int row, int column) {
         return createWrappedRenderer(super.getCellRenderer(row, column));
       }
@@ -235,6 +244,7 @@ public class DualView extends JPanel {
     ListTableModel flatModel = new ListTableModel(shownColumns.toArray(ColumnInfo.EMPTY_ARRAY));
     //noinspection unchecked
     myFlatView = new TableView(flatModel) {
+      @Override
       public TableCellRenderer getCellRenderer(int row, int column) {
         return createWrappedRenderer(super.getCellRenderer(row, column));
       }
@@ -433,6 +443,7 @@ public class DualView extends JPanel {
       return myRenderer;
     }
 
+    @Override
     public Component getTableCellRendererComponent(JTable table,
                                                    Object value,
                                                    boolean isSelected,

@@ -38,7 +38,7 @@ public class RefactoringUtil {
     public static Set<XPathExpression> collectMatchingExpressions(XPathExpression expression) {
         final PsiElement usageBlock = XsltCodeInsightUtil.getUsageBlock(expression);
         if (usageBlock == null) return Collections.emptySet();
-        
+
         final ExpressionCollector visitor = new ExpressionCollector(expression);
         usageBlock.accept(visitor);
 
@@ -94,7 +94,7 @@ public class RefactoringUtil {
         protected void superVisitElement(PsiElement element) {
             super.visitElement(element);
         }
-        
+
         @Override
         public void visitElement(PsiElement element) {
             if (element instanceof XPathElement) {
@@ -109,6 +109,7 @@ public class RefactoringUtil {
 
         protected abstract void visitXPathExpression(XPathExpression expr);
 
+        @Override
         public void visitXmlAttribute(XmlAttribute attribute) {
             if (XsltSupport.isXPathAttribute(attribute)) {
                 final PsiFile[] xpathFiles = XsltSupport.getFiles(attribute);
@@ -126,6 +127,7 @@ public class RefactoringUtil {
             myList = new HashSet<>();
         }
 
+        @Override
         protected void visitXPathExpression(XPathExpression expr) {
             if (expr instanceof XPathVariableReference) {
                 myList.add((XPathVariableReference)expr);
@@ -146,6 +148,7 @@ public class RefactoringUtil {
             myList = new HashSet<>();
         }
 
+        @Override
         protected void visitXPathExpression(XPathExpression expr) {
             if (expr != myExpression) {
                 if (isAccepted(expr) && isEquivalent(expr, myExpression)) {

@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ContextHelpAction extends AnAction implements DumbAware {
@@ -35,7 +36,8 @@ public class ContextHelpAction extends AnAction implements DumbAware {
     myHelpID = helpID;
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     final String helpId = getHelpId(dataContext);
     if (helpId != null) {
@@ -48,7 +50,8 @@ public class ContextHelpAction extends AnAction implements DumbAware {
     return myHelpID != null ? myHelpID : PlatformDataKeys.HELP_ID.getData(dataContext);
   }
 
-  public void update(AnActionEvent event){
+  @Override
+  public void update(@NotNull AnActionEvent event){
     Presentation presentation = event.getPresentation();
     if (!ApplicationInfo.contextHelpAvailable()) {
       presentation.setVisible(false);

@@ -20,6 +20,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.util.Producer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -45,11 +46,7 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
     if (child != null) {
       Document document = FileDocumentManager.getInstance().getCachedDocument(file);
       if (document == null) {
-        final Element detachedStateCopy = JDOMUtil.internElement(child);
-        state.setDelayedFoldState(() -> {
-          Document document1 = FileDocumentManager.getInstance().getCachedDocument(file);
-          return document1 == null ? null : CodeFoldingManager.getInstance(project).readFoldingState(detachedStateCopy, document1);
-        });
+        state.setDelayedFoldState(new MyDelayedFoldingState(project, file, child));
       }
       else {
         //PsiDocumentManager.getInstance(project).commitDocument(document);
@@ -76,6 +73,12 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
       }
       if (!JDOMUtil.isEmpty(e)) {
         element.addContent(e);
+      }
+    }
+    else {
+      Producer<CodeFoldingState> delayedProducer = state.getDelayedFoldState();
+      if (delayedProducer instanceof MyDelayedFoldingState) {
+        element.addContent(((MyDelayedFoldingState)delayedProducer).getSerializedState());
       }
     }
   }
@@ -140,6 +143,28 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
     @Override
     public boolean isValid() {
       return !getEditor().isDisposed();
+    }
+  }
+
+  private static class MyDelayedFoldingState implements Producer<CodeFoldingState> {
+    private final Project myProject;
+    private final VirtualFile myFile;
+    private final Element mySerializedState;
+
+    private MyDelayedFoldingState(Project project, VirtualFile file, Element state) {
+      myProject = project;
+      myFile = file;
+      mySerializedState = JDOMUtil.internElement(state);
+    }
+
+    @Override
+    public CodeFoldingState produce() {
+      Document document = FileDocumentManager.getInstance().getCachedDocument(myFile);
+      return document == null ? null : CodeFoldingManager.getInstance(myProject).readFoldingState(mySerializedState, document);
+    }
+
+    private Element getSerializedState() {
+      return mySerializedState.clone();
     }
   }
 }

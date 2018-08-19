@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -23,4 +24,6 @@ public interface VcsAnnotationLocalChangesListener {
   void registerAnnotation(VirtualFile file, FileAnnotation annotation);
 
   void unregisterAnnotation(VirtualFile file, FileAnnotation annotation);
+
+  void reloadAnnotationsForVcs(VcsKey key);
 }

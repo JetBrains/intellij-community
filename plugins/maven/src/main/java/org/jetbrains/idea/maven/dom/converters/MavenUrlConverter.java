@@ -34,6 +34,7 @@ public class MavenUrlConverter extends MavenReferenceConverter<String> {
     return text;
   }
 
+  @Override
   protected PsiReference createReference(PsiElement element, String text, TextRange range) {
     return new WebReference(element, range);
   }

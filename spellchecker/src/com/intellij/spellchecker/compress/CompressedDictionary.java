@@ -84,20 +84,6 @@ public final class CompressedDictionary implements Dictionary {
     return new TreeSet<>(COMPARATOR);
   }
 
-  /** @deprecated use {@link #getWords(char, int, int, Collection)} (to be removed in IDEA 17) */
-  public List<String> getWords(char first, int minLength, int maxLength) {
-    List<String> result = new ArrayList<>();
-    getWords(first, minLength, maxLength, result);
-    return result;
-  }
-
-  /** @deprecated use {@link #getWords(char, int, int, Collection)} (to be removed in IDEA 17) */
-  public List<String> getWords(char first) {
-    List<String> result = new ArrayList<>();
-    getWords(first, 0, Integer.MAX_VALUE, result);
-    return result;
-  }
-
   public void getWords(char first, int minLength, int maxLength, @NotNull Collection<String> result) {
     getWords(first, minLength, maxLength, result::add);
   }

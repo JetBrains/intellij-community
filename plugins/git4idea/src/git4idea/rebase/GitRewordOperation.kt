@@ -60,6 +60,7 @@ class GitRewordOperation(private val repository: GitRepository,
     if (reworded) {
       headAfterReword = repository.currentRevision
       rewordedCommit = findNewHashOfRewordedCommit(headAfterReword!!)
+      notifySuccess()
     }
   }
 
@@ -98,7 +99,6 @@ class GitRewordOperation(private val repository: GitRepository,
     val result = Git.getInstance().runCommand(handler)
     repository.update()
     if (result.success()) {
-      notifySuccess()
       return true
     }
     else {
@@ -128,11 +128,11 @@ class GitRewordOperation(private val repository: GitRepository,
   }
 
   private fun injectRewordAction(list: List<GitRebaseEntry>): List<GitRebaseEntry> {
-    return list.map({ entry ->
+    return list.map { entry ->
       if (entry.action == PICK && commit.id.asString().startsWith(entry.commit))
         GitRebaseEntry(REWORD, entry.commit, entry.subject)
       else entry
-    })
+    }
   }
 
   private fun supplyNewMessage(editorText: String): String {
@@ -153,9 +153,13 @@ class GitRewordOperation(private val repository: GitRepository,
       LOG.error("Couldn't find commits after reword in range $newCommitsRange")
       return null
     }
-    val newCommit = newCommits.last()
-    if (!StringUtil.equalsIgnoreWhitespaces(newCommit.fullMessage, newMessage)) {
-      LOG.error("Couldn't find the reworded commit. Expected message: \n[$newMessage]\nActual message: \n[${newCommit.fullMessage}]")
+    val newCommit = newCommits.find {
+      commit.author == it.author &&
+      commit.authorTime == it.authorTime &&
+      StringUtil.equalsIgnoreWhitespaces(it.fullMessage, newMessage)
+    }
+    if (newCommit == null) {
+      LOG.error("Couldn't find the reworded commit in range $newCommitsRange")
       return null
     }
     return newCommit.id
@@ -185,10 +189,12 @@ class GitRewordOperation(private val repository: GitRepository,
 
     val connection = project.messageBus.connect()
     notification.whenExpired { connection.disconnect() }
-    connection.subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener {
-      BackgroundTaskUtil.executeOnPooledThread(repository, Runnable {
-        if (checkUndoPossibility() !is UndoPossibility.Possible) notification.expire()
-      })
+    connection.subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener { it: GitRepository ->
+      if (it == repository) {
+        BackgroundTaskUtil.executeOnPooledThread(repository, Runnable {
+          if (checkUndoPossibility() !== UndoPossibility.Possible) notification.expire()
+        })
+      }
     })
 
     notifier.notify(notification)
@@ -214,7 +220,6 @@ class GitRewordOperation(private val repository: GitRepository,
 
     override fun notifySuccess(successful: MutableMap<GitRepository, GitSuccessfulRebase>,
                                skippedCommits: MultiMap<GitRepository, GitRebaseUtils.CommitInfo>) {
-      notifySuccess()
       succeeded = true
     }
   }

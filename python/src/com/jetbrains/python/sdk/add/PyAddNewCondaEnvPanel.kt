@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.add
 
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
@@ -34,7 +21,8 @@ import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.packaging.PyCondaPackageManagerImpl
 import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.associateWithProject
+import com.jetbrains.python.sdk.associateWithModule
+import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.createSdkByGenerateTask
 import icons.PythonIcons
 import org.jetbrains.annotations.SystemIndependent
@@ -49,6 +37,7 @@ import javax.swing.event.DocumentEvent
  * @author vlan
  */
 class PyAddNewCondaEnvPanel(private val project: Project?,
+                            private val module: Module?,
                             private val existingSdks: List<Sdk>,
                             newProjectPath: String?) : PyAddNewEnvPanel() {
   override val envName: String = "Conda"
@@ -64,7 +53,7 @@ class PyAddNewCondaEnvPanel(private val project: Project?,
     addBrowseFolderListener("Select Path to Conda Executable", null, project,
                             FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor())
     textField.document.addDocumentListener(object : DocumentAdapter() {
-      override fun textChanged(e: DocumentEvent?) {
+      override fun textChanged(e: DocumentEvent) {
         updatePathField()
       }
     })
@@ -117,10 +106,10 @@ class PyAddNewCondaEnvPanel(private val project: Project?,
       }
     }
     val shared = makeSharedField.isSelected
-    val associatedPath = if (!shared) newProjectPath ?: project?.basePath else null
-    val sdk = createSdkByGenerateTask(task, existingSdks, null, associatedPath) ?: return null
+    val associatedPath = if (!shared) projectBasePath else null
+    val sdk = createSdkByGenerateTask(task, existingSdks, null, associatedPath, null) ?: return null
     if (!shared) {
-      sdk.associateWithProject(project, newProjectPath != null)
+      sdk.associateWithModule(module, newProjectPath)
     }
     PyCondaPackageService.getInstance().PREFERRED_CONDA_PATH = condaPath
     return sdk
@@ -128,7 +117,7 @@ class PyAddNewCondaEnvPanel(private val project: Project?,
 
   override fun addChangeListener(listener: Runnable) {
     val documentListener = object : DocumentAdapter() {
-      override fun textChanged(e: DocumentEvent?) {
+      override fun textChanged(e: DocumentEvent) {
         listener.run()
       }
     }
@@ -162,7 +151,7 @@ class PyAddNewCondaEnvPanel(private val project: Project?,
     }
 
   private val projectBasePath: @SystemIndependent String?
-    get() = newProjectPath ?: project?.basePath
+    get() = newProjectPath ?: module?.basePath ?: project?.basePath
 
   private val selectedLanguageLevel: String
     get() = languageLevelsField.getItemAt(languageLevelsField.selectedIndex)

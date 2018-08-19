@@ -8,7 +8,7 @@ public class Main {
   public void testAveragingDouble(String... list) {
       double sum = 0;
       long count = 0;
-      for (String s: list) {
+      for (String s : list) {
           if (s != null) {
               sum += 1.0 / s.length();
               count++;
@@ -20,7 +20,7 @@ public class Main {
   public void testAveragingInt(String... list) {
       long sum = 0;
       long count = 0;
-      for (String s: list) {
+      for (String s : list) {
           if (s != null) {
               sum += s.length();
               count++;
@@ -31,7 +31,7 @@ public class Main {
 
   public static long testCounting(List<String> strings) {
       long count = 0L;
-      for (String s: strings) {
+      for (String s : strings) {
           if (!s.isEmpty()) {
               count++;
           }
@@ -42,7 +42,7 @@ public class Main {
   public static Optional<String> testMaxBy(List<String> strings) {
       boolean seen = false;
       String best = null;
-      for (String s: strings) {
+      for (String s : strings) {
           if (!s.isEmpty()) {
               if (!seen || s.compareTo(best) > 0) {
                   seen = true;
@@ -56,7 +56,7 @@ public class Main {
   public static Optional<String> testReducing1(List<String> list) {
       boolean seen = false;
       String acc = null;
-      for (String s: list) {
+      for (String s : list) {
           if (!seen) {
               seen = true;
               acc = s;
@@ -69,7 +69,7 @@ public class Main {
 
   public static String testReducing2(List<String> list) {
       String acc = "";
-      for (String s: list) {
+      for (String s : list) {
           acc = acc + s;
       }
       return acc;
@@ -77,7 +77,7 @@ public class Main {
 
   static Integer testReducing3() {
       Integer totalLength = 0;
-      for (String s: Arrays.asList("a", "bb", "ccc")) {
+      for (String s : Arrays.asList("a", "bb", "ccc")) {
           Integer length = s.length();
           totalLength = totalLength + length;
       }
@@ -86,7 +86,7 @@ public class Main {
 
   public static DoubleSummaryStatistics testSummarizingDouble(List<String> strings) {
       DoubleSummaryStatistics stat = new DoubleSummaryStatistics();
-      for (String str: strings) {
+      for (String str : strings) {
           if (str != null) {
               stat.accept(str.length() / 2.0);
           }
@@ -96,7 +96,7 @@ public class Main {
 
   public static Double testSummingDouble(List<String> strings) {
       double sum = 0.0;
-      for (String string: strings) {
+      for (String string : strings) {
           if (string != null) {
               sum += string.length();
           }
@@ -106,7 +106,7 @@ public class Main {
 
   private static TreeSet<Integer> testToCollection() {
       TreeSet<Integer> integers = new TreeSet<>();
-      for (int i: new int[]{4, 2, 1}) {
+      for (int i : new int[]{4, 2, 1}) {
           Integer integer = i;
           integers.add(integer);
       }
@@ -116,7 +116,7 @@ public class Main {
   // Unresolved reference
   void f(Collection<? extends Foo> c) {
       R treeSet = new TreeSet();
-      for (Foo foo: c) {
+      for (Foo foo : c) {
           treeSet.add(foo);
       }
       Set<Foo> uniqueDescriptors = treeSet;

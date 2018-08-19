@@ -15,13 +15,11 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.SetInspectionOptionFix;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -98,22 +96,12 @@ public class PointlessNullCheckInspection extends BaseInspection {
     PsiExpression parent = PsiTreeUtil.getParentOfType((PsiElement)infos[1], PsiInstanceOfExpression.class, PsiMethodCallExpression.class);
     PointlessNullCheckFix removeNullCheckFix = new PointlessNullCheckFix(expression.getText());
     if (parent instanceof PsiMethodCallExpression) {
-      return new InspectionGadgetsFix[]{removeNullCheckFix, new DoNotReportOnCallsFix(this)};
+      SetInspectionOptionFix disableOnCallsFix = new SetInspectionOptionFix(this, REPORT_CALLS_OPTION, InspectionGadgetsBundle
+        .message("pointless.nullcheck.option.report.calls.off"), false);
+      return new InspectionGadgetsFix[]{removeNullCheckFix, new DelegatingFix(disableOnCallsFix)};
     }
     else {
       return new InspectionGadgetsFix[]{removeNullCheckFix};
-    }
-  }
-
-  private static class DoNotReportOnCallsFix extends DelegatingFix implements LowPriorityAction, Iconable {
-    public DoNotReportOnCallsFix(PointlessNullCheckInspection inspection) {
-      super(new SetInspectionOptionFix(inspection, REPORT_CALLS_OPTION,
-                                       InspectionGadgetsBundle.message("pointless.nullcheck.option.report.calls.off"), false));
-    }
-
-    @Override
-    public Icon getIcon(int flags) {
-      return ((Iconable)delegate).getIcon(flags);
     }
   }
 
@@ -217,6 +205,7 @@ public class PointlessNullCheckInspection extends BaseInspection {
       final PsiReferenceExpression explicitCheckReference = getReferenceFromNullCheck(binaryExpression);
       if (explicitCheckReference == null) return false;
       final PsiVariable variable = tryCast(explicitCheckReference.resolve(), PsiVariable.class);
+      if (variable == null) return false;
       final PsiReferenceExpression implicitCheckReference = getReferenceFromImplicitNullCheckExpression(implicitCheckCandidate);
       if (implicitCheckReference == null || !implicitCheckReference.isReferenceTo(variable)) return false;
       if (isVariableUsed(operands, i, j, variable)) return false;
@@ -296,6 +285,7 @@ public class PointlessNullCheckInspection extends BaseInspection {
       final PsiReferenceExpression referenceExpression = getReferenceFromImplicitNullCheckExpression(operands[0]);
       if (referenceExpression == null) return null;
       final PsiVariable variable = tryCast(referenceExpression.resolve(), PsiVariable.class);
+      if (variable == null) return null;
       for (int i = 1, operandsLength = operands.length; i < operandsLength; i++) {
         final PsiReferenceExpression reference2 = getReferenceFromImplicitNullCheckExpression(operands[i]);
         if (reference2 == null || !reference2.isReferenceTo(variable)) {

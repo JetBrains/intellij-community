@@ -65,6 +65,7 @@ public class MethodParameterInjection extends BaseInjection {
     return myParameterMap.values();
   }
 
+  @Override
   public MethodParameterInjection copyFrom(@NotNull BaseInjection o) {
     super.copyFrom(o);
     if (o instanceof MethodParameterInjection) {
@@ -78,6 +79,7 @@ public class MethodParameterInjection extends BaseInjection {
     return this;
   }
 
+  @Override
   protected void readExternalImpl(Element e) {
     if (e.getAttribute("injector-id") == null) {
       setClassName(JDOMExternalizer.readString(e, "CLASS"));
@@ -147,6 +149,7 @@ public class MethodParameterInjection extends BaseInjection {
     return result;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     final String className = getClassName();

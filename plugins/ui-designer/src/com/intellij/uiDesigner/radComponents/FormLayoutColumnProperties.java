@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.radComponents;
 
-import com.intellij.ui.MappingListCellRenderer;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.MappingListCellRenderer;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.util.containers.ContainerUtil;
 import com.jgoodies.forms.layout.*;
@@ -100,6 +86,7 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
     updateOnRadioChange();
 
     myGrowCheckBox.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         myGrowSpinner.setEnabled(myGrowCheckBox.isSelected());
         updateSpec();
@@ -122,14 +109,17 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
     myConstantSizeUnitsCombo.addItemListener(itemListener);
   }
 
+  @Override
   public JPanel getComponent() {
     return myRootPanel;
   }
 
+  @Override
   public void addChangeListener(ChangeListener listener) {
     myListeners.add(listener);
   }
 
+  @Override
   public void removeChangeListener(ChangeListener listener) {
     myListeners.remove(listener);
   }
@@ -248,7 +238,7 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
       }
       if (maximumSize instanceof ConstantSize) {
         myMaximumCheckBox.setSelected(true);
-        myMinimumCheckBox.setEnabled(false);       // TODO: remove this code when IDEADEV-9678 is implemented 
+        myMinimumCheckBox.setEnabled(false);       // TODO: remove this code when IDEADEV-9678 is implemented
         showConstantSize((ConstantSize)maximumSize, myMaxSizeUnitsCombo, myMaxSizeSpinner);
       }
       else {
@@ -364,6 +354,7 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
   }
 
   private class MyRadioListener implements ActionListener {
+    @Override
     public void actionPerformed(ActionEvent e) {
       updateOnRadioChange();
     }
@@ -382,6 +373,7 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
       myWasSelected = myButton.isSelected();
     }
 
+    @Override
     public void stateChanged(ChangeEvent e) {
       if (myWasSelected != myButton.isSelected()) {
         myWasSelected = myButton.isSelected();
@@ -396,12 +388,14 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
   }
 
   private class MyChangeListener implements ChangeListener {
+    @Override
     public void stateChanged(ChangeEvent e) {
       updateSpec();
     }
   }
 
   private class MyItemListener implements ItemListener {
+    @Override
     public void itemStateChanged(ItemEvent e) {
       updateSpec();
     }

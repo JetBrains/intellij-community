@@ -61,6 +61,8 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
       List<Node.Method> methods = new SmartList<>();
       methods.add(methodNode);
       myTests.put(classNode, methods);
+
+      treeStructureChanged(null, null, null);
       return;
     }
 
@@ -96,6 +98,10 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
 
   synchronized int getTestCount() {
     return myTests.values().stream().mapToInt(ms -> ms.size()).sum();
+  }
+
+  synchronized int getTestClassesCount() {
+    return myTests.size();
   }
 
   public static abstract class Node<Psi extends PsiMember> {

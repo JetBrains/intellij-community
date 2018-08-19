@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.cvsUpdate.ui;
 
+import com.intellij.cvsSupport2.Options;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.cvsoperations.cvsUpdate.MergedWithConflictProjectOrModuleFile;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,7 +28,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.cvsSupport2.Options;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -70,10 +70,12 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
     showNextFileInfo();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myPanel;
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[]{new SkipFile(), new GetFile(), new SkipAll(), new GetAll()
@@ -120,6 +122,7 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
       putValue(NAME, com.intellij.CvsBundle.message("button.text.skip"));
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       onCurrentFileProcessed(false);
     }
@@ -130,6 +133,7 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
       putValue(NAME, com.intellij.CvsBundle.message("button.text.get"));
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       myCorruptedFiles.get(0).setShouldBeCheckedOut();
       onCurrentFileProcessed(true);
@@ -141,6 +145,7 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
       putValue(NAME, com.intellij.CvsBundle.message("button.text.skip.all"));
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       myCorruptedFiles.clear();
       onCurrentFileProcessed(false);
@@ -152,6 +157,7 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
       putValue(NAME, com.intellij.CvsBundle.message("button.text.get.all"));
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       for (final MergedWithConflictProjectOrModuleFile myCorruptedFile : myCorruptedFiles) {
         myCorruptedFile.setShouldBeCheckedOut();
@@ -207,11 +213,13 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
     }
   }
 
+  @Override
   protected void doOKAction() {
     saveShowDialogOptions();
     super.doOKAction();
   }
 
+  @Override
   public void doCancelAction() {
     saveShowDialogOptions();
     super.doCancelAction();

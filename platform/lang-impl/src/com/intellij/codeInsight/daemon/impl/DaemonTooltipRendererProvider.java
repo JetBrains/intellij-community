@@ -90,7 +90,7 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
   @Override
   public TooltipRenderer calcTooltipRenderer(@NotNull String text, @Nullable TooltipAction action, int width) {
     if (action != null || Registry.is("ide.tooltip.show.with.actions")) {
-      return new DaemonTooltipWithActionRenderer(text, action, width, new Object[]{text});
+      return new DaemonTooltipWithActionRenderer(text, action, width, action == null ? new Object[]{text} : new Object[]{text, action});
     }
     
     return ErrorStripTooltipRendererProvider.super.calcTooltipRenderer(text, action, width);

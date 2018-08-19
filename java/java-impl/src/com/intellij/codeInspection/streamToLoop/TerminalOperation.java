@@ -38,6 +38,8 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static com.intellij.util.ObjectUtils.tryCast;
+
 abstract class TerminalOperation extends Operation {
   @Override
   final String wrap(StreamVariable inVar, StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
@@ -98,10 +100,10 @@ abstract class TerminalOperation extends Operation {
       return ToCollectionTerminalOperation.toSet(resultType);
     }
     if(name.equals("toImmutableList") && args.length == 0) {
-      return new WrappedCollectionTerminalOperation(ToCollectionTerminalOperation.toList(resultType), "unmodifiableList");
+      return new WrappedCollectionTerminalOperation(ToCollectionTerminalOperation.toList(resultType), "unmodifiableList", resultType);
     }
     if(name.equals("toImmutableSet") && args.length == 0) {
-      return new WrappedCollectionTerminalOperation(ToCollectionTerminalOperation.toSet(resultType), "unmodifiableSet");
+      return new WrappedCollectionTerminalOperation(ToCollectionTerminalOperation.toSet(resultType), "unmodifiableSet", resultType);
     }
     if((name.equals("anyMatch") || name.equals("allMatch") || name.equals("noneMatch")) && args.length == 1) {
       FunctionHelper fn = FunctionHelper.create(args[0], 1);
@@ -145,7 +147,7 @@ abstract class TerminalOperation extends Operation {
         return new ExplicitCollectTerminalOperation(supplier, accumulator);
       }
       if (args.length == 1) {
-        return fromCollector(elementType, resultType, args[0]);
+        return fromCollector(elementType, resultType, PsiUtil.skipParenthesizedExprDown(args[0]));
       }
     }
     return null;
@@ -179,17 +181,27 @@ abstract class TerminalOperation extends Operation {
         return ToCollectionTerminalOperation.toList(resultType);
       case "toUnmodifiableList":
         if (collectorArgs.length != 0) return null;
-        return new WrappedCollectionTerminalOperation(ToCollectionTerminalOperation.toList(resultType), "unmodifiableList");
+        return new WrappedCollectionTerminalOperation(ToCollectionTerminalOperation.toList(resultType), "unmodifiableList", resultType);
       case "toSet":
         if (collectorArgs.length != 0) return null;
         return ToCollectionTerminalOperation.toSet(resultType);
       case "toUnmodifiableSet":
         if (collectorArgs.length != 0) return null;
-        return new WrappedCollectionTerminalOperation(ToCollectionTerminalOperation.toSet(resultType), "unmodifiableSet");
+        return new WrappedCollectionTerminalOperation(ToCollectionTerminalOperation.toSet(resultType), "unmodifiableSet", resultType);
       case "toCollection":
         if (collectorArgs.length != 1) return null;
         fn = FunctionHelper.create(collectorArgs[0], 0);
         return fn == null ? null : new ToCollectionTerminalOperation(resultType, fn, null);
+      case "collectingAndThen": {
+        PsiExpression collectorCall = collectorArgs[0];
+        PsiType downstreamResultType = PsiUtil.substituteTypeParameter(collectorCall.getType(), "java.util.stream.Collector", 2, false);
+        if (downstreamResultType == null) return null;
+        CollectorBasedTerminalOperation downstream =
+          tryCast(fromCollector(elementType, downstreamResultType, collectorCall), CollectorBasedTerminalOperation.class);
+        if (downstream == null) return null;
+        FunctionHelper andThen = FunctionHelper.create(collectorArgs[1], 1);
+        return andThen != null ? new WrappedCollectionTerminalOperation(downstream, andThen) : null;
+      }
       case "toUnmodifiableMap":
       case "toMap": {
         if (collectorArgs.length < 2 || collectorArgs.length > 4) return null;
@@ -203,7 +215,7 @@ abstract class TerminalOperation extends Operation {
         if(supplier == null) return null;
         CollectorBasedTerminalOperation operation = new ToMapTerminalOperation(key, value, merger, supplier, resultType);
         return collectorName.equals("toUnmodifiableMap")
-               ? new WrappedCollectionTerminalOperation(operation, "unmodifiableMap")
+               ? new WrappedCollectionTerminalOperation(operation, "unmodifiableMap", resultType)
                : operation;
       }
       case "reducing":
@@ -350,6 +362,7 @@ abstract class TerminalOperation extends Operation {
     abstract String initAccumulator(StreamVariable inVar, StreamToLoopReplacementContext context);
     abstract String getAccumulatorUpdater(StreamVariable inVar, String acc);
 
+    @Override
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
       String acc = initAccumulator(inVar, context);
       return getAccumulatorUpdater(inVar, acc);
@@ -730,9 +743,14 @@ abstract class TerminalOperation extends Operation {
 
   static class WrappedCollectionTerminalOperation extends TerminalOperation {
     private final CollectorBasedTerminalOperation myDelegate;
-    private final String myWrapper;
+    private final FunctionHelper myWrapper;
 
-    public WrappedCollectionTerminalOperation(CollectorBasedTerminalOperation delegate, String wrapper) {
+    public WrappedCollectionTerminalOperation(CollectorBasedTerminalOperation delegate, String wrapper, PsiType resultType) {
+      this(delegate,
+           new FunctionHelper.InlinedFunctionHelper(resultType, 1, CommonClassNames.JAVA_UTIL_COLLECTIONS + "." + wrapper + "({0})"));
+    }
+
+    public WrappedCollectionTerminalOperation(CollectorBasedTerminalOperation delegate, FunctionHelper wrapper) {
       myDelegate = delegate;
       myWrapper = wrapper;
     }
@@ -740,6 +758,7 @@ abstract class TerminalOperation extends Operation {
     @Override
     public void registerReusedElements(Consumer<PsiElement> consumer) {
       myDelegate.registerReusedElements(consumer);
+      myWrapper.registerReusedElements(consumer);
     }
 
     @Override
@@ -750,7 +769,8 @@ abstract class TerminalOperation extends Operation {
     @Override
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
       String acc = myDelegate.initAccumulator(inVar, context, false);
-      context.setFinisher(CommonClassNames.JAVA_UTIL_COLLECTIONS + "." + myWrapper + "(" + acc + ")");
+      myWrapper.transform(context, acc);
+      context.setFinisher(myWrapper.getText());
       return myDelegate.getAccumulatorUpdater(inVar, acc);
     }
   }

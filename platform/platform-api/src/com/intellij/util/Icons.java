@@ -19,5 +19,6 @@ package com.intellij.util;
  * @deprecated use {@link PlatformIcons} for generic icons and corresponding classes from plugins for plugin-specific icons
  * @see PlatformIcons
  */
+@Deprecated
 public abstract class Icons implements PlatformIcons {
 }

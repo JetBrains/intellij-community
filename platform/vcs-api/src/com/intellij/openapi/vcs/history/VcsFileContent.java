@@ -19,10 +19,20 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 
 public interface VcsFileContent {
   byte[] loadContent() throws IOException, VcsException;
 
   @Nullable
   byte[] getContent() throws IOException, VcsException;
+
+
+  /**
+   * @return the default charset to be used if detection by content fails. If null, the encoding from project settings will be used.
+   */
+  @Nullable
+  default Charset getDefaultCharset() {
+    return null;
+  }
 }

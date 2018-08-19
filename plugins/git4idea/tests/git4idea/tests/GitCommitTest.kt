@@ -34,8 +34,10 @@ import org.junit.Assume.assumeTrue
 import java.io.File
 import java.util.*
 
+class GitStagingCommitTest : GitCommitTest(true)
+class GitWithOnlyCommitTest : GitCommitTest(false)
 
-class GitCommitTest : GitSingleRepoTest() {
+abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRepoTest() {
   private val myMovementProvider = MyExplicitMovementProvider()
 
   override fun getDebugLogCategories() = super.getDebugLogCategories().plus("#" + GitCheckinEnvironment::class.java.name)
@@ -46,6 +48,7 @@ class GitCommitTest : GitSingleRepoTest() {
     val point = Extensions.getRootArea().getExtensionPoint(GitCheckinExplicitMovementProvider.EP_NAME)
     point.registerExtension(myMovementProvider)
     Registry.get("git.allow.explicit.commit.renames").setValue(true)
+    Registry.get("git.force.commit.using.staging.area").setValue(useStagingArea)
 
     (vcs.checkinEnvironment as GitCheckinEnvironment).setCommitRenamesSeparately(true)
   }
@@ -55,6 +58,7 @@ class GitCommitTest : GitSingleRepoTest() {
       val point = Extensions.getRootArea().getExtensionPoint(GitCheckinExplicitMovementProvider.EP_NAME)
       point.unregisterExtension(myMovementProvider)
       Registry.get("git.allow.explicit.commit.renames").resetToDefault()
+      Registry.get("git.force.commit.using.staging.area").resetToDefault()
 
       (vcs.checkinEnvironment as GitCheckinEnvironment).setCommitRenamesSeparately(false)
     }
@@ -417,7 +421,7 @@ class GitCommitTest : GitSingleRepoTest() {
       modified("c.java")
     }
 
-    val expectedIndexContent = if (SystemInfo.isFileSystemCaseSensitive) {
+    val expectedIndexContent = if (SystemInfo.isFileSystemCaseSensitive && !Registry.`is`("git.force.commit.using.staging.area")) {
       STAGED_CONTENT
     }
     else {
@@ -529,6 +533,160 @@ class GitCommitTest : GitSingleRepoTest() {
     repo.assertCommitted(2) {
       rename("a.before", "a.after")
     }
+  }
+
+  fun `test commit rename with conflicting staged rename`() {
+    `assume version where git reset returns 0 exit code on success `()
+    assumeTrue(Registry.`is`("git.force.commit.using.staging.area")) // known bug in "--only" implementation
+
+    tac("a.txt", "file content")
+
+    rm("a.txt")
+    touch("b.txt", "file content")
+    touch("c.txt", "file content")
+    git("add a.txt")
+    git("add b.txt")
+
+    val changes = assertChanges {
+      rename("a.txt", "b.txt")
+    }
+
+    git("add c.txt")
+    git("rm b.txt --cached")
+    assertChanges {
+      rename("a.txt", "c.txt")
+    }
+
+    commit(changes)
+
+    assertChanges {
+      added("c.txt")
+    }
+
+    assertMessage("comment", repo.message("HEAD"))
+
+    repo.assertCommitted {
+      rename("a.txt", "b.txt")
+    }
+  }
+
+  fun `test commit with excluded added-deleted file`() {
+    `assume version where git reset returns 0 exit code on success `()
+
+    tac("a.txt", "file content")
+    overwrite("a.txt", "new content")
+
+    touch("b.txt", "file content")
+    git("add b.txt")
+    rm("b.txt")
+
+    val changes = assertChanges {
+      modified("a.txt")
+    }
+
+    commit(changes)
+
+    assertNoChanges()
+    assertMessage("comment", repo.message("HEAD"))
+    repo.assertCommitted {
+      modified("a.txt")
+    }
+  }
+
+  fun `test commit with excluded deleted-added file`() {
+    `assume version where git reset returns 0 exit code on success `()
+
+    tac("a.txt", "file content")
+    tac("b.txt", "file content")
+
+    overwrite("a.txt", "new content")
+
+    rm("b.txt")
+    git("add -A b.txt")
+    touch("b.txt", "new content")
+
+    val changes = assertChanges {
+      modified("a.txt")
+      deleted("b.txt")
+    }
+
+    commit(listOf(changes[0]))
+
+    assertChanges {
+      deleted("b.txt")
+    }
+    assertMessage("comment", repo.message("HEAD"))
+    repo.assertCommitted {
+      modified("a.txt")
+    }
+  }
+
+  fun `test commit with deleted-added file`() {
+    `assume version where git reset returns 0 exit code on success `()
+
+    tac("a.txt", "file content")
+    tac("b.txt", "file content")
+
+    overwrite("a.txt", "new content")
+
+    rm("b.txt")
+    git("add -A b.txt")
+    touch("b.txt", "new content")
+
+    val changes = assertChanges {
+      modified("a.txt")
+      deleted("b.txt")
+    }
+
+    commit(changes)
+
+    assertNoChanges()
+    assertMessage("comment", repo.message("HEAD"))
+
+    // bad case, but committing "deletion" seems logical (as it is shown in commit dialog)
+    if (Registry.`is`("git.force.commit.using.staging.area")) {
+      repo.assertCommitted {
+        modified("a.txt")
+        deleted("b.txt")
+      }
+    }
+    else {
+      repo.assertCommitted {
+        modified("a.txt")
+        modified("b.txt")
+      }
+    }
+  }
+
+  fun `test commit during unresolved merge conflict`() {
+    `assume version where git reset returns 0 exit code on success `()
+    assumeTrue(Registry.`is`("git.force.commit.using.staging.area")) // "--only" shows dialog in this case
+
+    createFileStructure(projectRoot, "a.txt")
+    addCommit("created some file structure")
+
+    git("branch feature")
+
+    val file = File(projectPath, "a.txt")
+    assertTrue("File doesn't exist!", file.exists())
+    overwrite(file, "my content")
+    addCommit("modified in master")
+
+    checkout("feature")
+    overwrite(file, "brother content")
+    addCommit("modified in feature")
+
+    checkout("master")
+    git("merge feature", true) // ignoring non-zero exit-code reporting about conflicts
+
+    updateChangeListManager()
+    val changes = changeListManager.allChanges
+    assertTrue(!changes.isEmpty())
+
+    val exceptions = vcs.checkinEnvironment!!.commit(ArrayList(changes), "comment")
+    assertTrue(exceptions!!.isNotEmpty())
+
+    assertMessage("modified in master", repo.message("HEAD"))
   }
 
   private fun `assume version where git reset returns 0 exit code on success `() {

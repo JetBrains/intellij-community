@@ -29,7 +29,7 @@ open class PeekTraceHandler(num: Int, callName: String, private val myTypeBefore
   override fun additionalCallsBefore(): List<IntermediateStreamCall> {
     val lambda = dsl.lambda("x") {
       doReturn(beforeMap.set(dsl.currentTime(), lambdaArg))
-    }.toCode()
+    }
 
     return listOf(dsl.createPeekCall(myTypeBefore, lambda))
   }
@@ -37,7 +37,7 @@ open class PeekTraceHandler(num: Int, callName: String, private val myTypeBefore
   override fun additionalCallsAfter(): List<IntermediateStreamCall> {
     val lambda = dsl.lambda("x") {
       doReturn(afterMap.set(dsl.currentTime(), lambdaArg))
-    }.toCode()
+    }
 
     return listOf(dsl.createPeekCall(myTypeBefore, lambda))
   }

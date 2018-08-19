@@ -41,7 +41,6 @@ import com.intellij.psi.compiled.ClassFileDecompilers;
 import com.intellij.psi.impl.JavaClassSupersImpl;
 import com.intellij.psi.impl.PsiElementFinderImpl;
 import com.intellij.psi.impl.PsiTreeChangePreprocessor;
-import com.intellij.psi.impl.compiled.ClsCustomNavigationPolicy;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
 import com.intellij.psi.meta.MetaDataContributor;
 import com.intellij.psi.stubs.BinaryFileStubBuilders;
@@ -93,6 +92,7 @@ public class TestCoreEnvironment extends AbstractCoreEnvironment {
     getProjectEnvironment().addSourcesToClasspath(virtualFile);
   }
 
+  @Override
   public void addJar(@NotNull File root) {
     getProjectEnvironment().addJarToClassPath(root);
   }
@@ -166,8 +166,6 @@ public class TestCoreEnvironment extends AbstractCoreEnvironment {
     //
     CoreApplicationEnvironment.registerExtensionPoint(
       Extensions.getRootArea(), ContainerProvider.EP_NAME, ContainerProvider.class);
-    CoreApplicationEnvironment.registerExtensionPoint(
-      Extensions.getRootArea(), ClsCustomNavigationPolicy.EP_NAME, ClsCustomNavigationPolicy.class);
     CoreApplicationEnvironment.registerExtensionPoint(
       Extensions.getRootArea(), ClassFileDecompilers.EP_NAME, ClassFileDecompilers.Decompiler.class);
     CoreApplicationEnvironment.registerExtensionPoint(

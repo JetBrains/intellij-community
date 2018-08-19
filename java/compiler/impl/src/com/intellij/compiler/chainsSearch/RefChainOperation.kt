@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.chainsSearch
 
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceEx
@@ -23,31 +9,31 @@ import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.util.PsiUtil
-import org.jetbrains.jps.backwardRefs.LightRef
+import org.jetbrains.jps.backwardRefs.CompilerRef
 import org.jetbrains.jps.backwardRefs.SignatureData
 
 sealed class RefChainOperation {
   abstract val qualifierRawName: String
 
-  abstract val qualifierDef: LightRef.LightClassHierarchyElementDef
+  abstract val qualifierDef: CompilerRef.CompilerClassHierarchyElementDef
 
-  abstract val lightRef: LightRef
+  abstract val compilerRef: CompilerRef
 }
 
-class TypeCast(override val lightRef: LightRef.LightClassHierarchyElementDef,
-               val castTypeRef: LightRef.LightClassHierarchyElementDef,
+class TypeCast(override val compilerRef: CompilerRef.CompilerClassHierarchyElementDef,
+               val castTypeRef: CompilerRef.CompilerClassHierarchyElementDef,
                refService: CompilerReferenceServiceEx): RefChainOperation() {
   override val qualifierRawName: String
     get() = operandName.value
-  override val qualifierDef: LightRef.LightClassHierarchyElementDef
-    get() = lightRef
+  override val qualifierDef: CompilerRef.CompilerClassHierarchyElementDef
+    get() = compilerRef
 
   private val operandName = lazy(LazyThreadSafetyMode.NONE) {
-    refService.getName(lightRef.name)
+    refService.getName(compilerRef.name)
   }
 }
 
-class MethodCall(override val lightRef: LightRef.JavaLightMethodRef,
+class MethodCall(override val compilerRef: CompilerRef.JavaCompilerMethodRef,
                  private val signatureData: SignatureData,
                  private val context: ChainCompletionContext): RefChainOperation() {
 
@@ -57,15 +43,15 @@ class MethodCall(override val lightRef: LightRef.JavaLightMethodRef,
 
   override val qualifierRawName: String
     get() = owner.value
-  override val qualifierDef: LightRef.LightClassHierarchyElementDef
-    get() = lightRef.owner
+  override val qualifierDef: CompilerRef.CompilerClassHierarchyElementDef
+    get() = compilerRef.owner
 
   private val name = lazy(LazyThreadSafetyMode.NONE) {
-    context.refService.getName(lightRef.name)
+    context.refService.getName(compilerRef.name)
   }
 
   private val owner = lazy(LazyThreadSafetyMode.NONE) {
-    context.refService.getName(lightRef.owner.name)
+    context.refService.getName(compilerRef.owner.name)
   }
 
   private val rawReturnType = lazy(LazyThreadSafetyMode.NONE) {
@@ -117,21 +103,21 @@ class MethodCall(override val lightRef: LightRef.JavaLightMethodRef,
 
     other as MethodCall
 
-    if (lightRef.owner != other.lightRef.owner) return false
-    if (lightRef.name != other.lightRef.name) return false
+    if (compilerRef.owner != other.compilerRef.owner) return false
+    if (compilerRef.name != other.compilerRef.name) return false
     if (signatureData != other.signatureData) return false
 
     return true
   }
 
   override fun hashCode(): Int {
-    var result = lightRef.owner.hashCode()
-    result = 31 * result + lightRef.name.hashCode()
+    var result = compilerRef.owner.hashCode()
+    result = 31 * result + compilerRef.name.hashCode()
     result = 31 * result + signatureData.hashCode()
     return result
   }
 
   override fun toString(): String {
-    return qualifierRawName + (if (isStatic) "." else "#") + name + "(" + lightRef.parameterCount + ")"
+    return qualifierRawName + (if (isStatic) "." else "#") + name + "(" + compilerRef.parameterCount + ")"
   }
 }

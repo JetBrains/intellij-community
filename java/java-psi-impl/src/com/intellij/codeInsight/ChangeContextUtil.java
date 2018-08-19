@@ -167,6 +167,13 @@ public class ChangeContextUtil {
     if (qualifier == null){
       if (encodedQualifierClass != null && encodedQualifierClass.isValid()){
         if (encodedQualifierClass.equals(thisClass) && thisAccessExpr != null && thisAccessExpr.isValid()){
+          if (thisAccessExpr instanceof PsiThisExpression) {
+            PsiJavaCodeReferenceElement thisAccessQualifier = ((PsiThisExpression)thisAccessExpr).getQualifier();
+            PsiElement resolve = thisAccessQualifier != null ? thisAccessQualifier.resolve() : null;
+            if (PsiTreeUtil.getParentOfType(thisExpr, PsiClass.class) == resolve) {
+              return thisExpr;
+            }
+          }
           return thisExpr.replace(thisAccessExpr);
         }
       }
@@ -326,12 +333,7 @@ public class ChangeContextUtil {
       PsiThisExpression thisExpr = (PsiThisExpression)scope;
       if (thisExpr.getQualifier() == null){
         if (thisClass instanceof PsiAnonymousClass) return null;
-        PsiThisExpression qualifiedThis = RefactoringChangeUtil.createThisExpression(thisClass.getManager(), thisClass);
-        if (thisExpr.getParent() != null) {
-          return thisExpr.replace(qualifiedThis);
-        } else {
-          return qualifiedThis;
-        }
+        return RefactoringChangeUtil.createThisExpression(thisClass.getManager(), thisClass);
       }
     }
     else if (!(scope instanceof PsiClass)){

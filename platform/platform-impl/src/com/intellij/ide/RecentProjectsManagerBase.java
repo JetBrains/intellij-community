@@ -1,11 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
-import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.PathMacroManager;
@@ -48,8 +48,8 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.MalformedURLException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author yole
@@ -171,7 +171,8 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   public State getState() {
     synchronized (myStateLock) {
       if (myState.pid == null) {
-        myState.pid = OSProcessUtil.getApplicationPid();
+        //todo[kb] uncomment when we will fix JRE-251 The pid is needed for 3rd parties like Toolbox App to show the project is open now
+        myState.pid = "";//OSProcessUtil.getApplicationPid();
       }
       updateLastProjectPath();
       myState.validateRecentProjects();
@@ -549,7 +550,6 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   }
 
   @Nullable
-  @SuppressWarnings("unused")
   protected String getRecentProjectMetadata(@SystemIndependent String path, @NotNull Project project) {
     return null;
   }
@@ -652,25 +652,17 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     return path.endsWith(".ipr") ? FileUtilRt.getNameWithoutExtension(name) : name;
   }
 
-  @Override
-  public void clearNameCache() {
-  }
-
   private static String readProjectName(@NotNull String path) {
     final File file = new File(path);
     if (file.isDirectory()) {
       final File nameFile = new File(new File(path, Project.DIRECTORY_STORE_FOLDER), ProjectImpl.NAME_FILE);
       if (nameFile.exists()) {
         try {
-          final BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(nameFile), CharsetToolkit.UTF8_CHARSET));
-          try {
+          try (BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(nameFile), CharsetToolkit.UTF8_CHARSET))) {
             String name = in.readLine();
             if (!StringUtil.isEmpty(name)) {
               return name.trim();
             }
-          }
-          finally {
-            in.close();
           }
         }
         catch (IOException ignored) { }
@@ -744,7 +736,10 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
     @Override
     public void appStarting(Project projectFromCommandLine) {
-      if (projectFromCommandLine != null) return;
+      if (projectFromCommandLine != null || JetBrainsProtocolHandler.appStartedWithCommand()) {
+        return;
+      }
+
       doReopenLastProject();
     }
 

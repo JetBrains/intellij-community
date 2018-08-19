@@ -29,12 +29,14 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenGoalLocation;
 import org.jetbrains.idea.maven.model.MavenArtifact;
@@ -48,8 +50,8 @@ import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implements DataProvider {
   private final Project myProject;
@@ -59,6 +61,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
 
     private Map<String, Integer> standardGoalOrder;
 
+    @Override
     public int compare(String o1, String o2) {
       return getStandardGoalOrder(o1) - getStandardGoalOrder(o2);
     }
@@ -94,6 +97,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     setTransferHandler(new MyTransferHandler(project));
 
     myTree.addMouseListener(new PopupHandler() {
+      @Override
       public void invokePopup(final Component comp, final int x, final int y) {
         final String id = getMenuId(getSelectedNodes(MavenProjectsStructure.MavenSimpleNode.class));
         if (id != null) {
@@ -124,8 +128,9 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     });
   }
 
+  @Override
   @Nullable
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)) return "reference.toolWindows.mavenProjects";
 
     if (CommonDataKeys.PROJECT.is(dataId)) return myProject;
@@ -145,6 +150,9 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     }
     if (MavenDataKeys.MAVEN_PROJECTS_TREE.is(dataId)) {
       return myTree;
+    }
+    if (TouchbarDataKeys.ACTIONS_KEY.is(dataId)) {
+      return new DefaultActionGroup(ActionManager.getInstance().getAction("Maven.Reimport"));
     }
 
     return super.getData(dataId);

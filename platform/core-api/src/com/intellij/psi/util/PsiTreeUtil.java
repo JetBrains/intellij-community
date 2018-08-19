@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.lang.ASTNode;
@@ -400,15 +400,8 @@ public class PsiTreeUtil {
   @Nullable
   public static <T extends PsiElement> T[] getChildrenOfType(@Nullable PsiElement element, @NotNull Class<T> aClass) {
     if (element == null) return null;
-
-    List<T> result = null;
-    for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (aClass.isInstance(child)) {
-        if (result == null) result = new SmartList<>();
-        result.add(aClass.cast(child));
-      }
-    }
-    return result == null ? null : ArrayUtil.toObjectArray(result, aClass);
+    List<T> result = getChildrenOfTypeAsList(element, aClass);
+    return result.isEmpty() ? null : ArrayUtil.toObjectArray(result, aClass);
   }
 
   @SafeVarargs
@@ -434,13 +427,14 @@ public class PsiTreeUtil {
   public static <T extends PsiElement> List<T> getChildrenOfTypeAsList(@Nullable PsiElement element, @NotNull Class<T> aClass) {
     if (element == null) return Collections.emptyList();
 
-    List<T> result = new SmartList<>();
+    List<T> result = null;
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (aClass.isInstance(child)) {
+        if (result == null) result = new SmartList<>();
         result.add(aClass.cast(child));
       }
     }
-    return result;
+    return result == null ? Collections.emptyList() : result;
   }
 
   @NotNull

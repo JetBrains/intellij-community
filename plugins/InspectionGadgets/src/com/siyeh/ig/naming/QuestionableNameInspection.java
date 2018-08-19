@@ -17,16 +17,41 @@ package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiVariable;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.ui.UiUtils;
+import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-public class QuestionableNameInspection extends QuestionableNameInspectionBase {
+public class QuestionableNameInspection extends BaseInspection {
+
+  /**
+   * @noinspection PublicField
+   */
+  @NonNls public String nameString = "aa,abc,bad,bar,bar2,baz,baz1,baz2," +
+                                     "baz3,bb,blah,bogus,bool,cc,dd,defau1t,dummy,dummy2,ee,fa1se," +
+                                     "ff,foo,foo1,foo2,foo3,foobar,four,fred,fred1,fred2,gg,hh,hello," +
+                                     "hello1,hello2,hello3,ii,nu11,one,silly,silly2,string,two,that," +
+                                     "then,three,whi1e,var";
+  List<String> nameList = new ArrayList<>(32);
 
   public QuestionableNameInspection() {
+    parseString(this.nameString, this.nameList);
   }
 
   @Override
@@ -39,5 +64,70 @@ public class QuestionableNameInspection extends QuestionableNameInspectionBase {
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new RenameFix();
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "questionable.name.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "questionable.name.problem.descriptor");
+  }
+
+  @Override
+  public void readSettings(@NotNull Element element) throws InvalidDataException {
+    super.readSettings(element);
+    parseString(nameString, nameList);
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element element) throws WriteExternalException {
+    nameString = formatString(nameList);
+    super.writeSettings(element);
+  }
+
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new QuestionableNameVisitor();
+  }
+
+  private class QuestionableNameVisitor extends BaseInspectionVisitor {
+
+    private final Set<String> nameSet = new HashSet<>(nameList);
+
+    @Override
+    public void visitVariable(@NotNull PsiVariable variable) {
+      final String name = variable.getName();
+      if (nameSet.contains(name)) {
+        registerVariableError(variable);
+      }
+    }
+
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      final String name = method.getName();
+      if (nameSet.contains(name)) {
+        registerMethodError(method);
+      }
+    }
+
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      final String name = aClass.getName();
+      if (nameSet.contains(name)) {
+        registerClassError(aClass);
+      }
+    }
   }
 }

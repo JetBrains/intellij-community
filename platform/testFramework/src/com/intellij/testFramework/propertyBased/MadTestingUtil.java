@@ -1,21 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.propertyBased;
 
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
+import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryException;
@@ -30,8 +21,11 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
@@ -43,28 +37,36 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.SoftFactoryMap;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.TObjectLongHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jetCheck.DataStructure;
 import org.jetbrains.jetCheck.Generator;
+import org.jetbrains.jetCheck.PropertyChecker;
 
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.io.PrintStream;
+import java.lang.reflect.Method;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 /**
  * @author peter
  */
 public class MadTestingUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.propertyBased.MadTestingUtil");
-  
+  private static final boolean USE_ROULETTE_WHEEL = true;
+
   public static void restrictChangesToDocument(Document document, Runnable r) {
     letSaveAllDocumentsPassIfAny();
     watchDocumentChanges(r::run, event -> {
@@ -98,7 +100,7 @@ public class MadTestingUtil {
     Disposable disposable = Disposer.newDisposable();
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent event) {
+      public void documentChanged(@NotNull DocumentEvent event) {
         eventHandler.accept(event);
       }
     }, disposable);
@@ -158,11 +160,26 @@ public class MadTestingUtil {
                                });
   }
 
-  public static void enableAllInspections(Project project, Disposable disposable) {
+  /**
+   * Enables all inspections in the test project profile except for "HighlightVisitorInternal" and other passed inspections.<p>
+   *
+   * "HighlightVisitorInternal" inspection has error-level by default and highlights the first token from erroneous range,
+   * which is not very stable and also masks other warning-level inspections available on the same token.
+   *
+   * @param disposable when this is disposed, reverts to the previous project inspection profile
+   * @param except short names of inspections to disable
+   */
+  public static void enableAllInspections(Project project, Disposable disposable, String... except) {
     InspectionProfileImpl.INIT_INSPECTIONS = true;
     InspectionProfileImpl profile = new InspectionProfileImpl("allEnabled");
     profile.enableAllTools(project);
-    
+
+    disableInspection(project, profile, "HighlightVisitorInternal");
+
+    for (String shortId : except) {
+      disableInspection(project, profile, shortId);
+    }
+
     ProjectInspectionProfileManager manager = (ProjectInspectionProfileManager)InspectionProjectProfileManager.getInstance(project);
     manager.addProfile(profile);
     InspectionProfileImpl prev = manager.getCurrentProfile();
@@ -174,7 +191,20 @@ public class MadTestingUtil {
     });
   }
 
+  private static void disableInspection(Project project, InspectionProfileImpl profile, String shortId) {
+    ToolsImpl tools = profile.getToolsOrNull(shortId, project);
+    if (tools != null) {
+      tools.setEnabled(false);
+    }
+  }
+
   private static Generator<File> randomFiles(String rootPath, FileFilter fileFilter) {
+    return randomFiles(rootPath, fileFilter, USE_ROULETTE_WHEEL);
+  }
+
+  private static Generator<File> randomFiles(String rootPath,
+                                             FileFilter fileFilter,
+                                             boolean useRouletteWheel) {
     FileFilter interestingIdeaFiles = child -> {
       String name = child.getName();
       if (name.startsWith(".")) return false;
@@ -186,25 +216,28 @@ public class MadTestingUtil {
              fileFilter.accept(child) &&
              child.length() < 500_000;
     };
-    return Generator.from(new FileGenerator(new File(rootPath), interestingIdeaFiles))
-                    .suchThat(new Predicate<File>() {
-                      @Override
-                      public boolean test(File file) {
-                        return file != null;
-                      }
+    File root = new File(rootPath);
+    Function<DataStructure, File> generator =
+      useRouletteWheel ? new RouletteWheelFileGenerator(root, interestingIdeaFiles) : new FileGenerator(root, interestingIdeaFiles);
+    return Generator.from(generator)
+      .suchThat(new Predicate<File>() {
+        @Override
+        public boolean test(File file) {
+          return file != null;
+        }
 
-                      @Override
-                      public String toString() {
-                        return "can find a file under " + rootPath + " satisfying given filters";
-                      }
-                    })
-                    .noShrink();
+        @Override
+        public String toString() {
+          return "can find a file under " + rootPath + " satisfying given filters";
+        }
+      })
+      .noShrink();
   }
 
   /**
    * Finds files under {@code rootPath} (e.g. test data root) satisfying {@code fileFilter condition} (e.g. correct extension) and uses {@code actions} to generate actions those files (e.g. invoke completion/intentions or random editing).
    * Almost: the files with same paths and contents are created inside the test project, then the actions are executed on them.
-   * Note that the test project contains only one file at each moment, so it's best to test actions that don't require much environment. 
+   * Note that the test project contains only one file at each moment, so it's best to test actions that don't require much environment.
    * @return
    */
   @NotNull
@@ -278,6 +311,20 @@ public class MadTestingUtil {
                                  new InsertString(file));
   }
 
+  /**
+   * @param skipCondition should return {@code true} if particular accessor method should be ignored
+   * @return function returning generator of actions checking that
+   * read accessors on all PSI elements in the file don't throw exceptions when invoked.
+   */
+  @NotNull
+  public static Function<PsiFile, Generator<? extends MadTestingAction>> randomEditsWithPsiAccessorChecks(Condition<? super Method> skipCondition) {
+    return file -> Generator.sampledFrom(
+      new InsertString(file),
+      new DeleteRange(file),
+      new CheckPsiReadAccessors(file, skipCondition)
+    );
+  }
+
   public static boolean isAfterError(PsiFile file, int offset) {
     return SyntaxTraverser.psiTraverser(file).filter(PsiErrorElement.class).find(e -> e.getTextRange().getStartOffset() <= offset) != null;
   }
@@ -286,13 +333,114 @@ public class MadTestingUtil {
     return ContainerUtil.exists(viewProvider.getAllFiles(), file -> SyntaxTraverser.psiTraverser(file).filter(PsiErrorElement.class).isNotEmpty());
   }
 
+  @NotNull
+  public static String getPositionDescription(int offset, Document document) {
+    int line = document.getLineNumber(offset);
+    int start = document.getLineStartOffset(line);
+    int end = document.getLineEndOffset(line);
+    int column = offset - start;
+    String prefix = document.getText(new TextRange(start, offset)).trim();
+    if (prefix.length() > 30) {
+      prefix = "..." + prefix.substring(prefix.length() - 30);
+    }
+    String suffix = StringUtil.shortenTextWithEllipsis(document.getText(new TextRange(offset, end)), 30, 0);
+    String text = prefix + "|" + suffix;
+    return offset + "(" + line + ":" + column + ") [" + text + "]";
+  }
+
+  @NotNull
+  static String getIntentionDescription(IntentionAction action) {
+    return getIntentionDescription(action.getText(), action);
+  }
+
+  @NotNull
+  static String getIntentionDescription(String intentionName, IntentionAction action) {
+    IntentionAction actual = action;
+    while(actual instanceof IntentionActionDelegate) {
+      actual = ((IntentionActionDelegate)actual).getDelegate();
+    }
+    String family = actual.getFamilyName();
+    Class<?> aClass = actual.getClass();
+    if (actual instanceof QuickFixWrapper) {
+      LocalQuickFix fix = ((QuickFixWrapper)actual).getFix();
+      family = fix.getFamilyName();
+      aClass = fix.getClass();
+    }
+    return "'" + intentionName + "' (family: '" + family + "'; class: '" + aClass.getName() + "')";
+  }
+
+  public static void testFileGenerator(File root, FileFilter filter, int iterationCount, PrintStream out) {
+    /* Typical output:
+     Roulette wheel generator:
+     #10000: sum =  5281 [1: 3770 | 2: 767  | 3: 272  | 4..5: 232  | 6..10: 146  | 11..20: 67   | 21..30: 12   | 31..50: 12   | 51..100: 3    | 101..200: 0    | 201+: 0]
+     Plain generator:
+     #10000: sum =  2504 [1: 1478 | 2: 391  | 3: 159  | 4..5: 155  | 6..10: 156  | 11..20: 103  | 21..30: 22   | 31..50: 8    | 51..100: 22   | 101..200: 9    | 201+: 1]
+     */
+    for (boolean roulette : new boolean[]{true, false}) {
+      out.println("Testing " + (roulette ? "roulette" : "plain") + " generator");
+      TObjectLongHashMap<String> fileMap = new TObjectLongHashMap<>();
+      Generator<File> generator = randomFiles(root.getPath(), filter, roulette);
+      MadTestingAction action = env -> {
+        long lastTime = System.nanoTime(), startTime = lastTime;
+        for (int iteration = 1; iteration <= iterationCount; iteration++) {
+          File file = env.generateValue(generator, null);
+          assert filter.accept(file);
+          if (!fileMap.containsKey(file.getPath())) {
+            fileMap.put(file.getPath(), 1);
+          }
+          else {
+            fileMap.increment(file.getPath());
+          }
+          long curTime = System.nanoTime();
+          if (iteration <= 10) {
+            out.print("#" + iteration + " = " + (curTime - lastTime) / 1_000_000 + "ms");
+            if (iteration == 10) {
+              out.println();
+            } else {
+              out.print("; ");
+            }
+            lastTime = curTime;
+          }
+          if (iteration == iterationCount || curTime - lastTime > TimeUnit.SECONDS.toNanos(5)) {
+            lastTime = curTime;
+            out.println(getHistogramReport(fileMap, iteration));
+          }
+        }
+        out.println("Total time: " + (System.nanoTime() - startTime) / 1_000_000 + "ms");
+      };
+      PropertyChecker.customized().withIterationCount(1).checkScenarios(() -> action);
+    }
+  }
+
+  @NotNull
+  private static String getHistogramReport(TObjectLongHashMap<String> fileMap, int iteration) {
+    long[] stops = {1, 2, 3, 5, 10, 20, 30, 50, 100, 200, Long.MAX_VALUE};
+    int[] histogram = new int[stops.length];
+    fileMap.forEachValue(count -> {
+      int pos = Arrays.binarySearch(stops, count);
+      if (pos < 0) {
+        pos = -pos - 1;
+      }
+      histogram[pos]++;
+      return true;
+    });
+    StringBuilder report = new StringBuilder();
+    for (int i = 0; i < stops.length; i++) {
+      String range = i == 0 || stops[i - 1] == stops[i] - 1 ? String.valueOf(stops[i]) :
+                     (stops[i - 1] + 1) + (stops[i] == Long.MAX_VALUE ? "+" : ".."+stops[i]);
+      report.append(String.format(Locale.ENGLISH, "%s: %-5d| ", range, histogram[i]));
+    }
+    return String.format(Locale.ENGLISH, "#%-5d: sum = %5d [%s]", iteration,
+                         Arrays.stream(histogram).sum(), report.toString().replaceFirst("[\\s|]+$", ""));
+  }
+
   private static class FileGenerator implements Function<DataStructure, File> {
     private static final com.intellij.util.Function<File, JBIterable<File>> FS_TRAVERSAL =
       TreeTraversal.PRE_ORDER_DFS.traversal((File f) -> f.isDirectory() ? Arrays.asList(Objects.requireNonNull(f.listFiles())) : Collections.emptyList());
     private final File myRoot;
     private final FileFilter myFilter;
 
-    public FileGenerator(File root, FileFilter filter) {
+    private FileGenerator(File root, FileFilter filter) {
       myRoot = root;
       myFilter = filter;
     }
@@ -341,6 +489,72 @@ public class MadTestingUtil {
 
       int ratio = Math.max(100, dirs.size() / files.size());
       return data.generate(Generator.integers(0, ratio - 1)) != 0 ? dirs : files;
+    }
+  }
+
+  private static class RouletteWheelFileGenerator implements Function<DataStructure, File> {
+    private final File myRoot;
+    private final FileFilter myFilter;
+    private static final File[] EMPTY_DIRECTORY = new File[0];
+    private final SoftFactoryMap<File, File[]> myChildrenCache = new SoftFactoryMap<File, File[]>() {
+      @Override
+      protected File[] create(File f) {
+        File[] files = f.listFiles(child -> myFilter.accept(child) && (child.isFile() || FileGenerator.containsAtLeastOneFileDeep(child)));
+        return files != null && files.length == 0 ? EMPTY_DIRECTORY : files;
+      }
+    };
+
+    private RouletteWheelFileGenerator(File root, FileFilter filter) {
+      myRoot = root;
+      myFilter = filter;
+    }
+
+    @Override
+    public File apply(DataStructure data) {
+      return generateRandomFile(data, myRoot, new HashSet<>());
+    }
+
+    @Nullable
+    private File generateRandomFile(DataStructure data, File file, Set<File> exhausted) {
+      File[] children = myChildrenCache.get(file);
+      if (children == null) {
+        return file;
+      }
+      if (children == EMPTY_DIRECTORY) {
+        return null;
+      }
+      Arrays.sort(children, Comparator.comparing(File::getName));
+      while (true) {
+        int[] weights = Arrays.stream(children).mapToInt(child -> estimateWeight(child, exhausted)).toArray();
+        int index = spin(data, weights);
+        if (index == -1) return null;
+        File chosen = children[index];
+        File generated = generateRandomFile(data, chosen, exhausted);
+        if (generated != null) {
+          return generated;
+        }
+        exhausted.add(chosen);
+      }
+    }
+
+    private static int spin(@NotNull DataStructure data, @NotNull int[] weights) {
+      int totalWeight = Arrays.stream(weights).sum();
+      if (totalWeight == 0) return -1;
+      int value = data.generate(Generator.integers(0, totalWeight));
+      for (int i = 0; i < weights.length; i++) {
+        value -= weights[i];
+        if (value < 0) {
+          return i;
+        }
+      }
+      return -1;
+    }
+
+    private int estimateWeight(File file, @NotNull Set<File> exhausted) {
+      if (exhausted.contains(file)) return 0;
+      File[] children = myChildrenCache.get(file);
+      if (children == null) return 1;
+      return Stream.of(children).mapToInt(f -> exhausted.contains(f) ? 0 : f.isDirectory() ? 5 : 1).sum();
     }
   }
 }

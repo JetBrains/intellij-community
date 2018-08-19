@@ -15,19 +15,17 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.javacvsSpecificImpls;
 
-import org.netbeans.lib.cvsclient.admin.IAdminReader;
+import com.intellij.cvsSupport2.cvsoperations.common.RepositoryPathProvider;
 import org.netbeans.lib.cvsclient.admin.Entry;
-import org.netbeans.lib.cvsclient.file.DirectoryObject;
-import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
+import org.netbeans.lib.cvsclient.admin.IAdminReader;
 import org.netbeans.lib.cvsclient.file.AbstractFileObject;
+import org.netbeans.lib.cvsclient.file.DirectoryObject;
 import org.netbeans.lib.cvsclient.file.FileObject;
+import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.ArrayList;
-import java.io.IOException;
-
-import com.intellij.cvsSupport2.cvsoperations.common.RepositoryPathProvider;
 
 /**
  * author: lesya
@@ -39,30 +37,37 @@ public class AdminReaderOnStoredRepositoryPath implements IAdminReader {
     myRepositoryPathProvider = adminWriter;
   }
 
+  @Override
   public Collection getEntries(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) {
     return new ArrayList();
   }
 
+  @Override
   public Entry getEntry(AbstractFileObject fileObject, ICvsFileSystem cvsFileSystem) {
     return null;
   }
 
+  @Override
   public boolean isModified(FileObject fileObject, Date entryLastModified, ICvsFileSystem cvsFileSystem) {
     return false;
   }
 
+  @Override
   public boolean isStatic(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) {
     return false;
   }
 
+  @Override
   public String getRepositoryForDirectory(DirectoryObject directoryObject, String repository, ICvsFileSystem cvsFileSystem) {
     return myRepositoryPathProvider.getRepositoryPath(repository);
   }
 
+  @Override
   public boolean hasCvsDirectory(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) {
     return true;
   }
 
+  @Override
   public String getStickyTagForDirectory(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) {
     return null;
   }

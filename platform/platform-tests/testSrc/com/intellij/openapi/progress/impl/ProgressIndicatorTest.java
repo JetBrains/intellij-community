@@ -479,11 +479,6 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     }
 
     @Override
-    public int getNonCancelableCount() {
-      throw new RuntimeException();
-    }
-
-    @Override
     public void start() {
 
     }

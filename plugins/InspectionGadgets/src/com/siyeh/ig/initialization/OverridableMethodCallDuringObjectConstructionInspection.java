@@ -20,17 +20,23 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MakeClassFinalFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class OverridableMethodCallDuringObjectConstructionInspection extends OverridableMethodCallDuringObjectConstructionInspectionBase {
+public class OverridableMethodCallDuringObjectConstructionInspection extends
+                                                                     BaseInspection {
 
   @Override
   protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
@@ -52,6 +58,23 @@ public class OverridableMethodCallDuringObjectConstructionInspection extends Ove
       fixes.add(new MakeMethodFinalFix(method.getName()));
     }
     return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("overridable.method.call.in.constructor.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message("overridable.method.call.in.constructor.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new OverridableMethodCallInConstructorVisitor();
   }
 
   private static class MakeMethodFinalFix extends InspectionGadgetsFix {
@@ -92,6 +115,31 @@ public class OverridableMethodCallDuringObjectConstructionInspection extends Ove
     @Override
     public boolean startInWriteAction() {
       return false;
+    }
+  }
+
+  private static class OverridableMethodCallInConstructorVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      if (!MethodCallUtils.isCallDuringObjectConstruction(expression)) {
+        return;
+      }
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
+      if (qualifier != null && !(qualifier instanceof PsiThisExpression)) {
+        return;
+      }
+      final PsiClass containingClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+      if (containingClass == null || containingClass.hasModifierProperty(PsiModifier.FINAL)) {
+        return;
+      }
+      final PsiMethod calledMethod = expression.resolveMethod();
+      if (calledMethod == null || !PsiUtil.canBeOverridden(calledMethod) || calledMethod.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
+        return;
+      }
+      registerMethodCallError(expression, expression);
     }
   }
 }

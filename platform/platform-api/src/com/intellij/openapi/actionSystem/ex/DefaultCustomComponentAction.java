@@ -17,12 +17,13 @@ public class DefaultCustomComponentAction extends AnAction implements CustomComp
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     //do nothing
   }
 
+  @NotNull
   @Override
-  public JComponent createCustomComponent(Presentation presentation) {
+  public JComponent createCustomComponent(@NotNull Presentation presentation) {
     return myProducer.produce();
   }
 }

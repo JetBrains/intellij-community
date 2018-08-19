@@ -7,7 +7,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -78,18 +77,14 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
     }
   };
 
-  private static final ResolveCache.PolyVariantResolver<GrUnaryExpressionImpl> OUR_RESOLVER = new ResolveCache.PolyVariantResolver<GrUnaryExpressionImpl>() {
-    @NotNull
-    @Override
-    public GroovyResolveResult[] resolve(@NotNull GrUnaryExpressionImpl unary, boolean incompleteCode) {
-      final GrExpression operand = unary.getOperand();
-      if (operand == null) return GroovyResolveResult.EMPTY_ARRAY;
+  private static final ResolveCache.PolyVariantResolver<GrUnaryExpressionImpl> OUR_RESOLVER = (unary, incompleteCode) -> {
+    final GrExpression operand = unary.getOperand();
+    if (operand == null) return GroovyResolveResult.EMPTY_ARRAY;
 
-      final PsiType type = operand.getType();
-      if (type == null) return GroovyResolveResult.EMPTY_ARRAY;
+    final PsiType type = operand.getType();
+    if (type == null) return GroovyResolveResult.EMPTY_ARRAY;
 
-      return TypesUtil.getOverloadedUnaryOperatorCandidates(type, unary.getOperationTokenType(), operand, PsiType.EMPTY_ARRAY);
-    }
+    return TypesUtil.getOverloadedUnaryOperatorCandidates(type, unary.getOperationTokenType(), operand, PsiType.EMPTY_ARRAY);
   };
 
   public GrUnaryExpressionImpl(@NotNull ASTNode node) {
@@ -128,7 +123,7 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitUnaryExpression(this);
   }
 
@@ -164,7 +159,7 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     throw new IncorrectOperationException("unary expression cannot be renamed to anything");
   }
 
@@ -174,14 +169,8 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return getManager().areElementsEquivalent(resolve(), element);
-  }
-
-  @NotNull
-  @Override
-  public Object[] getVariants() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Override

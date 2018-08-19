@@ -100,7 +100,7 @@ public class GitLogParser {
     List<GitLogRecord> result = ContainerUtil.newArrayList();
 
     List<CharSequence> lines = StringUtil.split(output, "\n", true, false);
-    for (CharSequence line : lines) {
+    for (CharSequence line: lines) {
       try {
         GitLogRecord record = parseLine(line);
         if (record != null) {
@@ -343,7 +343,7 @@ public class GitLogParser {
     }
   }
 
-  private static class PathsParser {
+  private class PathsParser {
     @NotNull private final NameStatus myNameStatusOption;
     @NotNull private List<GitLogStatusInfo> myStatuses = ContainerUtil.newArrayList();
 
@@ -365,14 +365,17 @@ public class GitLogParser {
         if (match.size() == 2) {
           myStatuses.add(new GitLogStatusInfo(GitChangeType.fromString(match.get(0)), match.get(1), null));
         }
-        else {
+        else if (match.size() >= 3) {
           myStatuses.add(new GitLogStatusInfo(GitChangeType.fromString(match.get(0)), match.get(1), match.get(2)));
+        }
+        else {
+          LOG.error("Could not parse status line [" + line + "] for record " + myOptionsParser.myResult.getResult());
         }
       }
     }
 
     @NotNull
-    private static List<String> parsePathsLine(@NotNull CharSequence line) {
+    private List<String> parsePathsLine(@NotNull CharSequence line) {
       int offset = 0;
 
       PartialResult result = new PartialResult();
@@ -396,7 +399,7 @@ public class GitLogParser {
       return result.getResult();
     }
 
-    private static boolean atLineEnd(@NotNull CharSequence line, int offset) {
+    private boolean atLineEnd(@NotNull CharSequence line, int offset) {
       while (offset < line.length() && (line.charAt(offset) == '\t' || line.charAt(offset) == ' ')) offset++;
       if (offset == line.length() || (line.charAt(offset) == '\n' || line.charAt(offset) == '\r')) return true;
       return false;

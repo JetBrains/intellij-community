@@ -38,6 +38,7 @@ public class XPath2CastableImpl extends XPath2ElementImpl implements XPath2Casta
     return XPath2Type.BOOLEAN;
   }
 
+  @Override
   public void accept(XPath2ElementVisitor visitor) {
     visitor.visitXPath2Castable(this);
   }

@@ -23,6 +23,7 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.LocatableConfiguration;
 import com.intellij.execution.configurations.LocatableConfigurationBase;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -62,28 +63,32 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
 
   private AnAction[] getChildren(DataContext dataContext) {
     final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
-    if (Registry.is("suggest.all.run.configurations.from.context") || context.findExisting() == null) {
-      final List<ConfigurationFromContext> producers = getConfigurationsFromContext(context);
-      if (producers.size() > 1) {
-        final AnAction[] children = new AnAction[producers.size()];
-        int childIdx = 0;
-        for (final ConfigurationFromContext fromContext : producers) {
-          final ConfigurationType configurationType = fromContext.getConfigurationType();
-          final RunConfiguration configuration = fromContext.getConfiguration();
-          final String actionName = childActionName(configurationType, configuration);
-          final AnAction anAction = new AnAction(actionName, configurationType.getDisplayName(), configuration.getIcon()) {
-            @Override
-            public void actionPerformed(AnActionEvent e) {
-              perform(fromContext, context);
-            }
-          };
-          anAction.getTemplatePresentation().setText(actionName, false);
-          children[childIdx++] = anAction;
-        }
-        return children;
-      }
+    if (!Registry.is("suggest.all.run.configurations.from.context") && context.findExisting() != null) {
+      return EMPTY_ARRAY;
     }
-    return EMPTY_ARRAY;
+    return createChildActions(context, getConfigurationsFromContext(context)).toArray(EMPTY_ARRAY);
+  }
+
+  @NotNull
+  protected List<AnAction> createChildActions(@NotNull ConfigurationContext context,
+                                              @NotNull List<ConfigurationFromContext> configurations) {
+    if (configurations.size() <= 1) {
+      return Collections.emptyList();
+    }
+    final List<AnAction> childActions = new ArrayList<>();
+    for (final ConfigurationFromContext fromContext : configurations) {
+      final ConfigurationType configurationType = fromContext.getConfigurationType();
+      final String actionName = childActionName(fromContext);
+      final AnAction anAction = new AnAction(actionName, configurationType.getDisplayName(), fromContext.getConfiguration().getIcon()) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          perform(fromContext, context);
+        }
+      };
+      anAction.getTemplatePresentation().setText(actionName, false);
+      childActions.add(anAction);
+    }
+    return childActions;
   }
 
   @NotNull
@@ -107,7 +112,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
   }
 
   @Override
-  public boolean canBePerformed(DataContext dataContext) {
+  public boolean canBePerformed(@NotNull DataContext dataContext) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project != null && DumbService.isDumb(project)) {
       return false;
@@ -123,8 +128,9 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
+    MacroManager.getInstance().cacheMacrosPreview(e.getDataContext());
     final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
     final RunnerAndConfigurationSettings existing = context.findExisting();
     if (existing == null) {
@@ -138,7 +144,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
             @Override
             @NotNull
             public String getTextFor(final ConfigurationFromContext producer) {
-              return childActionName(producer.getConfigurationType(), producer.getConfiguration());
+              return childActionName(producer);
             }
 
             @Override
@@ -178,7 +184,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
   protected abstract void perform(ConfigurationContext context);
 
   @Override
-  public void update(final AnActionEvent event){
+  public void update(@NotNull final AnActionEvent event){
     final ConfigurationContext context = ConfigurationContext.getFromContext(event.getDataContext());
     final Presentation presentation = event.getPresentation();
     final RunnerAndConfigurationSettings existing = context.findExisting();
@@ -219,10 +225,19 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
   }
 
   @NotNull
-  private static String childActionName(ConfigurationType configurationType, RunConfiguration configuration) {
-    return configuration instanceof LocatableConfiguration
-           ? StringUtil.unquoteString(suggestRunActionName((LocatableConfiguration)configuration))
-           : configurationType.getDisplayName();
+  private static String childActionName(ConfigurationFromContext configurationFromContext) {
+    RunConfiguration configuration = configurationFromContext.getConfiguration();
+    if (!(configuration instanceof LocatableConfiguration)) {
+      return configurationFromContext.getConfigurationType().getDisplayName();
+    }
+    if (configurationFromContext.isFromAlternativeLocation()) {
+      String locationDisplayName = configurationFromContext.getAlternativeLocationDisplayName();
+      if (locationDisplayName != null) {
+        return ((LocatableConfigurationBase)configuration).getActionName() + " " + locationDisplayName;
+      }
+    }
+
+    return StringUtil.unquoteString(suggestRunActionName((LocatableConfiguration)configurationFromContext.getConfiguration()));
   }
 
   protected abstract void updatePresentation(Presentation presentation, @NotNull String actionText, ConfigurationContext context);

@@ -1,0 +1,4 @@
+deprecated: step_9.png -> /process/step_2.svg; to be removed in IDEA 2020
+deprecated: step_10.png -> /process/step_4.svg; to be removed in IDEA 2020
+deprecated: step_11.png -> /process/step_6.svg; to be removed in IDEA 2020
+deprecated: step_12.png -> /process/step_8.svg; to be removed in IDEA 2020

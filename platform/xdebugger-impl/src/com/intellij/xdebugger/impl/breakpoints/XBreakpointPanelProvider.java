@@ -1,31 +1,13 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.*;
@@ -40,15 +22,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * @author nik
  */
 public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoint> {
-
-  private final List<MyXBreakpointListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-
   @Override
   public void createBreakpointsGroupingRules(Collection<XBreakpointGroupingRule> rules) {
     rules.add(new XBreakpointGroupingByTypeRule());
@@ -58,28 +36,8 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
 
   @Override
   public void addListener(final BreakpointsListener listener, Project project, Disposable disposable) {
-    XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
-    final MyXBreakpointListener listener1 = new MyXBreakpointListener(listener, breakpointManager);
-    breakpointManager.addBreakpointListener(listener1);
-    myListeners.add(listener1);
-    Disposer.register(disposable, new Disposable() {
-      @Override
-      public void dispose() {
-        removeListener(listener);
-      }
-    });
-  }
-
-  @Override
-  protected void removeListener(BreakpointsListener listener) {
-    for (MyXBreakpointListener breakpointListener : myListeners) {
-      if (breakpointListener.myListener == listener) {
-        XBreakpointManager manager = breakpointListener.myBreakpointManager;
-        manager.removeBreakpointListener(breakpointListener);
-        myListeners.remove(breakpointListener);
-        break;
-      }
-    }
+    project.getMessageBus().connect(disposable).subscribe(XBreakpointListener.TOPIC, new MyXBreakpointListener(listener,
+                                                                                                               XDebuggerManager.getInstance(project).getBreakpointManager()));
   }
 
   @Override
@@ -150,22 +108,6 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
     @Override
     public void breakpointChanged(@NotNull XBreakpoint<?> breakpoint) {
       myListener.breakpointsChanged();
-    }
-  }
-
-  private static class AddXBreakpointAction extends AnAction {
-
-    private final XBreakpointType<?, ?> myType;
-
-    public AddXBreakpointAction(XBreakpointType<?, ?> type) {
-      myType = type;
-      getTemplatePresentation().setIcon(type.getEnabledIcon());
-      getTemplatePresentation().setText(type.getTitle());
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      myType.addBreakpoint(getEventProject(e), null);
     }
   }
 }

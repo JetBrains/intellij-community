@@ -10,7 +10,7 @@ public class Main {
   public long testCount(List<String> list) {
       long count = 0L;
       Set<String> uniqueValues = new HashSet<>();
-      for (String s: list) {
+      for (String s : list) {
           if (uniqueValues.add(s)) {
               count++;
           }
@@ -21,7 +21,7 @@ public class Main {
   private static List<Object> testToList(List<? extends Number> numbers) {
       List<Object> list = new ArrayList<>();
       Set<Number> uniqueValues = new HashSet<>();
-      for (Number number: numbers) {
+      for (Number number : numbers) {
           if (uniqueValues.add(number)) {
               list.add(number);
           }

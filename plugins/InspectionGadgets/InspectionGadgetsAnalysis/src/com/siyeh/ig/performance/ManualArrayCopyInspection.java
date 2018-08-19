@@ -24,7 +24,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -89,8 +88,7 @@ public class ManualArrayCopyInspection extends BaseInspection {
       if (Boolean.TRUE.equals(DfaUtil.evaluateCondition(ifStatement.getCondition())))  {
         PsiStatement copyStatement = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
         assert copyStatement != null;
-        CommentTracker ct = new CommentTracker();
-        ct.replaceAndRestoreComments(ifStatement, ct.markUnchanged(copyStatement));
+        new CommentTracker().replaceAndRestoreComments(ifStatement, copyStatement);
       }
     }
 

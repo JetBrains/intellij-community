@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.lang.Language;
@@ -37,6 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.AnnotationArgConverter;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Max Medvedev
@@ -60,6 +47,19 @@ public class GrLightAnnotation extends LightElement implements GrAnnotation {
     myRef = new GrLightClassReferenceElement(qualifiedName, qualifiedName, this);
   }
 
+  public GrLightAnnotation(@NotNull PsiAnnotationOwner owner,
+                           @NotNull PsiElement context,
+                           @NotNull String qualifiedName,
+                           @NotNull Map<String, String> params ) {
+    super(context.getManager(), context.getLanguage());
+    myQualifiedName = qualifiedName;
+    myOwner = owner;
+
+    myAnnotationArgList = new GrLightAnnotationArgumentList(context.getManager(), context.getLanguage());
+    myRef = new GrLightClassReferenceElement(qualifiedName, qualifiedName, this);
+    params.forEach((key, value) -> addAttribute(key, value));
+  }
+
   @NotNull
   @Override
   public GrCodeReferenceElement getClassReference() {
@@ -79,12 +79,12 @@ public class GrLightAnnotation extends LightElement implements GrAnnotation {
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitAnnotation(this);
   }
 
   @Override
-  public void acceptChildren(GroovyElementVisitor visitor) {
+  public void acceptChildren(@NotNull GroovyElementVisitor visitor) {
     //todo
   }
 
@@ -150,13 +150,16 @@ public class GrLightAnnotation extends LightElement implements GrAnnotation {
       if (newValue == null) return;
 
       String name = pair.getName();
-      GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(pair.getProject());
-      String annotationText;
-      annotationText = name != null ? "@A(" + name + "=" + newValue.getText() + ")"
-                                    : "@A(" + newValue.getText() + ")";
-      GrAnnotation annotation = factory.createAnnotationFromText(annotationText);
-      myAnnotationArgList.addAttribute(annotation.getParameterList().getAttributes()[0]);
+      addAttribute(name, newValue.getText());
     }
+  }
+
+  public void addAttribute(@Nullable String name, @NotNull String value) {
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
+    String annotationText = name != null ? "@A(" + name + "=" + value + ")"
+                                  : "@A(" + value + ")";
+    GrAnnotation annotation = factory.createAnnotationFromText(annotationText);
+    myAnnotationArgList.addAttribute(annotation.getParameterList().getAttributes()[0]);
   }
 
 
@@ -191,12 +194,12 @@ public class GrLightAnnotation extends LightElement implements GrAnnotation {
     }
 
     @Override
-    public void accept(GroovyElementVisitor visitor) {
+    public void accept(@NotNull GroovyElementVisitor visitor) {
       visitor.visitAnnotationArgumentList(this);
     }
 
     @Override
-    public void acceptChildren(GroovyElementVisitor visitor) {
+    public void acceptChildren(@NotNull GroovyElementVisitor visitor) {
       if (myAttributes != null) {
         for (GrAnnotationNameValuePair attribute : myAttributes) {
           attribute.accept(visitor);

@@ -17,6 +17,7 @@ package com.intellij.util.containers;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.RunFirst;
 import com.intellij.util.ref.GCUtil;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +30,7 @@ import java.util.concurrent.ConcurrentMap;
 import static org.junit.Assert.*;
 
 // tests various ContainerUtil.create* and ContainerUtil.new* collections for being really weak/soft/concurrent
+@RunFirst
 public class ContainerUtilCollectionsTest {
   private static final long TIMEOUT = 5 * 60 * 1000;  // 5 minutes
 
@@ -166,7 +168,6 @@ public class ContainerUtilCollectionsTest {
       assertNull(map.get(strong));
 
       GCUtil.tryGcSoftlyReachableObjects();
-      System.gc();
     }
     while (map.size() != 0);
     assertTrue(map.isEmpty());
@@ -192,7 +193,6 @@ public class ContainerUtilCollectionsTest {
       assertEquals(0, map.get(strong));
 
       GCUtil.tryGcSoftlyReachableObjects();
-      System.gc();
     }
     while (map.size() != 0);
     assertTrue(map.isEmpty());
@@ -218,7 +218,6 @@ public class ContainerUtilCollectionsTest {
       assertNull(map.get(RANDOM_INT));
 
       GCUtil.tryGcSoftlyReachableObjects();
-      System.gc();
     }
     while (map.size() != 0);
     assertTrue(map.isEmpty());

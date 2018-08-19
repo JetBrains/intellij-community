@@ -15,6 +15,6 @@ class T {
             /* inline */
             return "#"; // return comment
         }
-        return s; // return comment
+        return (s); // return comment
     }
 }

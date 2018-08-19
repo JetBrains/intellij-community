@@ -70,10 +70,16 @@ public class DataFlowInspection extends DataFlowInspectionBase {
   }
 
   @Override
+  protected LocalQuickFix createMutabilityViolationFix(ProblemsHolder holder, PsiElement violation) {
+    return WrapWithMutableCollectionFix.createFix(violation, holder.isOnTheFly());
+  }
+
+  @Override
   protected LocalQuickFix createIntroduceVariableFix(final PsiExpression expression) {
     return new IntroduceVariableFix(true);
   }
 
+  @Override
   protected LocalQuickFixOnPsiElement createSimplifyBooleanFix(PsiElement element, boolean value) {
     if (!(element instanceof PsiExpression)) return null;
     if (PsiTreeUtil.findChildOfType(element, PsiAssignmentExpression.class) != null) return null;
@@ -110,6 +116,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
     return new DeleteSideEffectsAwareFix((PsiStatement)assignment.getParent(), assignment.getRExpression());
   }
 
+  @Override
   @NotNull
   protected List<LocalQuickFix> createNPEFixes(PsiExpression qualifier, PsiExpression expression, boolean onTheFly) {
     qualifier = PsiUtil.deparenthesizeExpression(qualifier);
@@ -119,6 +126,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
 
     try {
       ContainerUtil.addIfNotNull(fixes, StreamFilterNotNullFix.makeFix(qualifier));
+      ContainerUtil.addIfNotNull(fixes, ReplaceComputeWithComputeIfPresentFix.makeFix(qualifier));
       if (isVolatileFieldReference(qualifier)) {
         ContainerUtil.addIfNotNull(fixes, createIntroduceVariableFix(qualifier));
       }

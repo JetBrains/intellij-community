@@ -8,21 +8,12 @@ import com.intellij.ide.IdeView;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewSettings;
-import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
-import com.intellij.ide.projectView.impl.CompoundProjectViewNodeDecorator;
-import com.intellij.ide.projectView.impl.CompoundTreeStructureProvider;
-import com.intellij.ide.projectView.impl.IdeViewForProjectViewPane;
-import com.intellij.ide.projectView.impl.ProjectViewTree;
-import com.intellij.ide.projectView.impl.ShowModulesAction;
+import com.intellij.ide.projectView.impl.*;
 import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.TreeState;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
@@ -44,18 +35,18 @@ import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.RestoreSelectionListener;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.Icon;
-import javax.swing.JComponent;
-import javax.swing.JScrollPane;
-import javax.swing.JTree;
-import javax.swing.ToolTipManager;
+import javax.swing.*;
 import javax.swing.tree.TreePath;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Objects;
@@ -121,17 +112,17 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
     ChangeListManager.getInstance(project).addChangeListListener(new ChangeListAdapter() {
       @Override
       public void changeListAdded(ChangeList list) {
-        myDependencyValidationManager.fireScopeListeners();
+        myAsyncTreeModel.onValidThread(myDependencyValidationManager::fireScopeListeners);
       }
 
       @Override
       public void changeListRemoved(ChangeList list) {
-        myDependencyValidationManager.fireScopeListeners();
+        myAsyncTreeModel.onValidThread(myDependencyValidationManager::fireScopeListeners);
       }
 
       @Override
       public void changeListRenamed(ChangeList list, String name) {
-        myDependencyValidationManager.fireScopeListeners();
+        myAsyncTreeModel.onValidThread(myDependencyValidationManager::fireScopeListeners);
       }
 
       @Override
@@ -184,6 +175,16 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
       myTree.setRootVisible(false);
       myTree.setShowsRootHandles(true);
       myTree.addTreeSelectionListener(new RestoreSelectionListener());
+      myTree.addKeyListener(new KeyAdapter() {
+        @Override
+        public void keyPressed(KeyEvent event) {
+          if (event.isConsumed()) return;
+          if (KeyEvent.VK_ENTER == event.getKeyCode()) {
+            OpenSourceUtil.openSourcesFrom(ScopeViewPane.this, ScreenReader.isActive());
+            event.consume();
+          }
+        }
+      });
       TreeUtil.installActions(myTree);
       ToolTipManager.sharedInstance().registerComponent(myTree);
       EditSourceOnDoubleClickHandler.install(myTree);
@@ -301,15 +302,10 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
 
   @Override
   public void addToolbarActions(DefaultActionGroup actionGroup) {
-    actionGroup.add(ActionManager.getInstance().getAction("ScopeView.EditScopes"));
-    actionGroup.addAction(new ShowModulesAction(myProject) {
-      @NotNull
-      @Override
-      protected String getId() {
-        return ID;
-      }
-    }).setAsSecondary(true);
+    actionGroup.addAction(new ShowModulesAction(myProject, ID)).setAsSecondary(true);
     actionGroup.addAction(createFlattenModulesAction(() -> true)).setAsSecondary(true);
+    AnAction editScopesAction = ActionManager.getInstance().getAction("ScopeView.EditScopes");
+    if (editScopesAction != null) actionGroup.addAction(editScopesAction).setAsSecondary(true);
   }
 
   @Override
@@ -319,12 +315,12 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
 
   @Nullable
   @Override
-  public Object getElementFromTreeNode(@Nullable Object node) {
+  public Object getValueFromNode(@Nullable Object node) {
     return myTreeModel.getContent(node);
   }
 
   @Override
-  public Object getData(final String dataId) {
+  public Object getData(@NotNull final String dataId) {
     Object data = super.getData(dataId);
     if (data != null) return data;
     //TODO:myViewPanel == null ? null : myViewPanel.getData(dataId);

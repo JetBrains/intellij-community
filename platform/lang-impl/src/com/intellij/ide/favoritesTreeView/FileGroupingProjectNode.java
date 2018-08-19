@@ -4,7 +4,7 @@ package com.intellij.ide.favoritesTreeView;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -51,7 +51,7 @@ public class FileGroupingProjectNode extends ProjectViewNodeWithChildrenList<Fil
   @Override
   public void navigate(boolean requestFocus) {
     if (myVirtualFile != null) {
-      new OpenFileDescriptor(myProject, myVirtualFile).navigate(requestFocus);
+      PsiNavigationSupport.getInstance().createNavigatable(myProject, myVirtualFile, -1).navigate(requestFocus);
     }
   }
 

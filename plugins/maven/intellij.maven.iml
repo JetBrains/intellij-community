@@ -23,6 +23,7 @@
     <orderEntry type="module" module-name="intellij.java.compiler.impl" exported="" />
     <orderEntry type="module" module-name="intellij.java.execution" exported="" />
     <orderEntry type="module" module-name="intellij.java.execution.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.java.debugger.impl" />
     <orderEntry type="module" module-name="intellij.java.ui" exported="" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" exported="" />
     <orderEntry type="library" name="jgoodies-forms" level="project" />
@@ -41,9 +42,10 @@
     <orderEntry type="module" module-name="intellij.platform.vcs" />
     <orderEntry type="module" module-name="intellij.properties.psi" />
     <orderEntry type="module-library">
-      <library>
+      <library name="plexus-archiver" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.codehaus.plexus:plexus-archiver:2.4.4" />
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/plexus-archiver-2.4.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-archiver/2.4.4/plexus-archiver-2.4.4.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

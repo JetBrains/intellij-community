@@ -12,39 +12,39 @@ import com.intellij.ui.EngravedTextGraphics;
 import com.intellij.ui.Gray;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.util.SmartList;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimedDeadzone;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 class ContentTabLabel extends BaseLabel {
-  private final int MAX_WIDTH = JBUI.scale(300);
-  private final int DEFAULT_HORIZONTAL_INSET = JBUI.scale(12);
+  private static final int MAX_WIDTH = JBUI.scale(300);
+  private static final int DEFAULT_HORIZONTAL_INSET = JBUI.scale(12);
   protected static final int ICONS_GAP = JBUI.scale(3);
 
-  private final ActiveIcon closeIcon = new ActiveIcon(JBUI.CurrentTheme.ToolWindow.closeTabIcon(true),
-                                                      JBUI.CurrentTheme.ToolWindow.closeTabIcon(false));
+  private final ActiveIcon myCloseIcon = new ActiveIcon(JBUI.CurrentTheme.ToolWindow.closeTabIcon(true),
+                                                        JBUI.CurrentTheme.ToolWindow.closeTabIcon(false));
   private final Content myContent;
   private final TabContentLayout myLayout;
 
-  private final List<AdditionalIcon> additionalIcons = new ArrayList<>();
-  private String txt = null;
-  private int iconWithInsetsWidth;
+  private final List<AdditionalIcon> myAdditionalIcons = new SmartList<>();
+  private String myText = null;
+  private int myIconWithInsetsWidth;
 
-  private final AdditionalIcon closeTabIcon = new AdditionalIcon(closeIcon) {
+  private final AdditionalIcon closeTabIcon = new AdditionalIcon(myCloseIcon) {
     private static final String ACTION_NAME = "Close tab";
 
     @NotNull
@@ -74,7 +74,7 @@ class ContentTabLabel extends BaseLabel {
       return UISettings.getShadowInstance().getCloseTabButtonOnTheRight() || !UISettings.getShadowInstance().getShowCloseButton();
     }
 
-    @Nullable
+    @NotNull
     @Override
     public String getTooltip() {
       String text =
@@ -108,8 +108,8 @@ class ContentTabLabel extends BaseLabel {
     }
 
     hideCurrentTooltip();
-    if(txt != null && !txt.equals(getText())) {
-      IdeTooltip tooltip = new IdeTooltip(this, getMousePosition(), new JLabel(txt));
+    if(myText != null && !myText.equals(getText())) {
+      IdeTooltip tooltip = new IdeTooltip(this, getMousePosition(), new JLabel(myText));
       currentIconTooltip = new CurrentTooltip(IdeTooltipManager.getInstance().show(tooltip, false, false), null);
     }
 
@@ -123,11 +123,12 @@ class ContentTabLabel extends BaseLabel {
   }
 
   BaseButtonBehavior behavior = new BaseButtonBehavior(this) {
+    @Override
     protected void execute(final MouseEvent e) {
 
-      Optional<Runnable> first = additionalIcons.stream()
-                                                .filter(icon -> mouseOverIcon(icon))
-                                                .map(icon -> icon.getAction()).findFirst();
+      Optional<Runnable> first = myAdditionalIcons.stream()
+                                                  .filter(icon -> mouseOverIcon(icon))
+                                                  .map(icon -> icon.getAction()).findFirst();
 
       if (first.isPresent()) {
         first.get().run();
@@ -140,25 +141,25 @@ class ContentTabLabel extends BaseLabel {
 
   @Override
   public void setText(String text) {
-    txt = text;
+    myText = text;
     updateText();
   }
 
   private void updateText() {
     FontMetrics fm = getFontMetrics(getFont());
-    int textWidth = SwingUtilities2.stringWidth(this, fm, txt);
-    int prefWidth = iconWithInsetsWidth + textWidth;
+    int textWidth = SwingUtilities2.stringWidth(this, fm, myText);
+    int prefWidth = myIconWithInsetsWidth + textWidth;
 
     int maxWidth = getMaximumSize().width;
 
     if(prefWidth > maxWidth) {
-      int offset = maxWidth - iconWithInsetsWidth;
-      String s = SwingUtilities2.clipString(this, fm, txt, offset);
+      int offset = maxWidth - myIconWithInsetsWidth;
+      String s = SwingUtilities2.clipString(this, fm, myText, offset);
       super.setText(s);
       return;
     }
 
-    super.setText(txt);
+    super.setText(myText);
   }
 
   protected final boolean mouseOverIcon(AdditionalIcon icon) {
@@ -176,7 +177,7 @@ class ContentTabLabel extends BaseLabel {
     myLayout = layout;
     myContent = content;
 
-    fillIcons(additionalIcons);
+    fillIcons(myAdditionalIcons);
 
     behavior.setActionTrigger(MouseEvent.MOUSE_RELEASED);
     behavior.setMouseDeadzone(TimedDeadzone.NULL);
@@ -209,7 +210,7 @@ class ContentTabLabel extends BaseLabel {
         repaint();
       }
 
-      Optional<AdditionalIcon> first = additionalIcons.stream().filter(icon -> mouseOverIcon(icon)).findFirst();
+      Optional<AdditionalIcon> first = myAdditionalIcons.stream().filter(icon -> mouseOverIcon(icon)).findFirst();
 
       if (first.isPresent()) {
         showTooltip(first.get());
@@ -221,11 +222,11 @@ class ContentTabLabel extends BaseLabel {
   }
 
   protected boolean invalid() {
-    return additionalIcons.stream().anyMatch(icon -> icon.getAvailable());
+    return myAdditionalIcons.stream().anyMatch(icon -> icon.getAvailable());
   }
 
   public final boolean canBeClosed() {
-    return myContent.isCloseable() && contentManager().canCloseContents();
+    return myContent.isCloseable() && myUi.myWindow.canCloseContents();
   }
 
   protected void selectContent() {
@@ -249,8 +250,12 @@ class ContentTabLabel extends BaseLabel {
   public Dimension getPreferredSize() {
     final Dimension size = super.getPreferredSize();
     int iconWidth = 0;
-    Map<Boolean, List<AdditionalIcon>> map =
-      additionalIcons.stream().filter(icon -> icon.getAvailable()).collect(Collectors.groupingBy(icon -> icon.getAfterText()));
+    Map<Boolean, List<AdditionalIcon>> map = new THashMap<>();
+    for (AdditionalIcon myAdditionalIcon : myAdditionalIcons) {
+      if (myAdditionalIcon.getAvailable()) {
+        map.computeIfAbsent(myAdditionalIcon.getAfterText(), k -> new SmartList<>()).add(myAdditionalIcon);
+      }
+    }
 
     int right = DEFAULT_HORIZONTAL_INSET;
     int left = DEFAULT_HORIZONTAL_INSET;
@@ -268,7 +273,7 @@ class ContentTabLabel extends BaseLabel {
     }
 
     if (map.get(true) != null) {
-      right = ICONS_GAP + 4;
+      right = ICONS_GAP + JBUI.scale(4);
 
       for (AdditionalIcon icon : map.get(true)) {
         icon.setX(iconWidth + size.width + ICONS_GAP - right);
@@ -276,45 +281,10 @@ class ContentTabLabel extends BaseLabel {
       }
     }
 
-    setBorder(JBUI.Borders.empty(0, left, 0, right));
-    iconWithInsetsWidth = iconWidth + right + left;
+    setBorder(new EmptyBorder(0, left, 0, right));
+    myIconWithInsetsWidth = iconWidth + right + left;
 
     return new Dimension(iconWidth + size.width, size.height);
-  }
-
-  private int updateAndGetInsetsWidth() {
-    if(additionalIcons == null) return 0;
-
-    Map<Boolean, List<AdditionalIcon>> map =
-      additionalIcons.stream().filter(icon -> icon.getAvailable()).collect(Collectors.groupingBy(icon -> icon.getAfterText()));
-
-    int right = DEFAULT_HORIZONTAL_INSET;
-    int left = DEFAULT_HORIZONTAL_INSET;
-
-    int iconWidth = 0;
-
-    if (map.get(false) != null) {
-      iconWidth = ICONS_GAP;
-
-      for (AdditionalIcon icon : map.get(false)) {
-        iconWidth += icon.getIconWidth() + ICONS_GAP;
-      }
-
-      left = iconWidth;
-      iconWidth = 0;
-    }
-
-    if (map.get(true) != null) {
-      right = ICONS_GAP + JBUI.scale(4);
-
-      for (AdditionalIcon icon : map.get(true)) {
-        iconWidth += icon.getIconWidth() + ICONS_GAP;
-      }
-    }
-
-    setBorder(JBUI.Borders.empty(0, left, 0, right));
-
-    return iconWidth + right + left;
   }
 
   @Override
@@ -341,13 +311,14 @@ class ContentTabLabel extends BaseLabel {
   }
 
   private void paintIcons(final Graphics g) {
-    for (AdditionalIcon icon : additionalIcons) {
+    for (AdditionalIcon icon : myAdditionalIcons) {
       if (icon.getAvailable()) {
         icon.paintIcon(this, g);
       }
     }
   }
 
+  @Override
   protected void paintComponent(final Graphics g) {
     super.paintComponent(g);
     paintIcons(g);

@@ -8,7 +8,9 @@ internal lateinit var logger: Consumer<String>
 
 internal fun log(msg: String) = logger.accept(msg)
 
-internal fun String.splitWithSpace(): List<String> = this.split(" ").filter { it.isNotBlank() }
+internal fun String.splitWithSpace(): List<String> = this.splitNotBlank(" ")
+
+internal fun String.splitNotBlank(delimiter : String): List<String> = this.split(delimiter).filter { it.isNotBlank() }
 
 internal fun String.splitWithTab(): List<String> = this.split("\t".toRegex())
 

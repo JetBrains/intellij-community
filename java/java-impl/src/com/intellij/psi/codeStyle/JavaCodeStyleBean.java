@@ -9,7 +9,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import org.jetbrains.annotations.NotNull;
 
-@SuppressWarnings("unused")
 public class JavaCodeStyleBean extends CodeStyleBean {
   @NotNull
   @Override

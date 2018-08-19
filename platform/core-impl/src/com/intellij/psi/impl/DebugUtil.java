@@ -511,6 +511,7 @@ public class DebugUtil {
    * @param trace The debug trace that the invalidated elements should be identified by. May be null, then current stack trace is used.
    * @deprecated use {@link #performPsiModification(String, ThrowableRunnable)} instead
    */
+  @Deprecated
   public static void startPsiModification(@Nullable String trace) {
     if (!PsiInvalidElementAccessException.isTrackingInvalidation()) {
       return;
@@ -530,6 +531,7 @@ public class DebugUtil {
    * @see #startPsiModification(String)
    * @deprecated use {@link #performPsiModification(String, ThrowableRunnable)} instead
    */
+  @Deprecated
   public static void finishPsiModification() {
     if (!PsiInvalidElementAccessException.isTrackingInvalidation()) {
       return;

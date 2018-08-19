@@ -4,10 +4,12 @@ package com.intellij.idea;
 import com.intellij.ExtensionPoints;
 import com.intellij.Patches;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
+import com.intellij.featureStatistics.fusCollectors.AppLifecycleUsageTriggerCollector;
 import com.intellij.ide.*;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.internal.statistic.UsageTrigger;
+import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
+import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -63,8 +65,17 @@ public class IdeaApplication {
     return ourInstance != null && ourInstance.myLoaded;
   }
 
-  @NotNull
-  private final String[] myArgs;
+  @SuppressWarnings("SSBasedInspection")
+  public static void initApplication(String[] args) {
+    IdeaApplication app = new IdeaApplication(args);
+    // this invokeLater() call is needed to place the app starting code on a freshly minted IdeEventQueue instance
+    SwingUtilities.invokeLater(() -> {
+      PluginManager.installExceptionHandler();
+      app.run();
+    });
+  }
+
+  private final @NotNull String[] myArgs;
   private static boolean myPerformProjectLoad = true;
   private ApplicationStarter myStarter;
   private volatile boolean myLoaded;
@@ -142,7 +153,8 @@ public class IdeaApplication {
 
     System.setProperty("sun.awt.noerasebackground", "true");
 
-    IdeEventQueue.getInstance(); // replace system event queue
+    //noinspection ResultOfMethodCallIgnored
+    IdeEventQueue.getInstance();  // replaces system event queue
 
     if (headless) return;
 
@@ -363,8 +375,8 @@ public class IdeaApplication {
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(PluginManager::reportPluginError);
 
-        //safe for headless and unit test modes
-        UsageTrigger.trigger("lifecycle", app.getName() + "app.started");
+        FUSApplicationUsageTrigger.getInstance().trigger(AppLifecycleUsageTriggerCollector.class, "ide.start");
+        FeatureUsageLogger.INSTANCE.log("lifecycle", "app.started");
       });
     }
 

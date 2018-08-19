@@ -81,6 +81,7 @@ public abstract class DaemonCodeAnalyzer {
   /**
    * @deprecated Use {@link DaemonListener} instead
    */
+  @Deprecated
   public abstract static class DaemonListenerAdapter implements DaemonListener {
   }
 }

@@ -22,11 +22,13 @@ import org.jetbrains.annotations.NotNull;
 public class JUnitEntryPoint extends EntryPointWithVisibilityLevel {
   public boolean ADD_JUNIT_TO_ENTRIES = true;
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "JUnit test cases";
   }
 
+  @Override
   public boolean isEntryPoint(@NotNull RefElement refElement, @NotNull PsiElement psiElement) {
     return isEntryPoint(psiElement);
   }
@@ -78,8 +80,8 @@ public class JUnitEntryPoint extends EntryPointWithVisibilityLevel {
     if (container != null && JUnitUtil.isJUnit5TestClass(container, false)) {
       return PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL;
     }
-    
-    if (member instanceof PsiField && 
+
+    if (member instanceof PsiField &&
         AnnotationUtil.isAnnotated(member, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_EXTENSION_REGISTER_EXTENSION, 0)) {
       return PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL;
     }
@@ -97,18 +99,22 @@ public class JUnitEntryPoint extends EntryPointWithVisibilityLevel {
     return "junit";
   }
 
+  @Override
   public boolean isSelected() {
     return ADD_JUNIT_TO_ENTRIES;
   }
 
+  @Override
   public void setSelected(boolean selected) {
     ADD_JUNIT_TO_ENTRIES = selected;
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     if (!ADD_JUNIT_TO_ENTRIES) {
       DefaultJDOMExternalizer.writeExternal(this, element);

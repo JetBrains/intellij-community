@@ -269,7 +269,7 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
       myPropertyNameTextField = new JBTextField(ContainerUtil.getFirstItem(myProperties).getKey());
       myPropertyNameTextField.getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
-        protected void textChanged(DocumentEvent e) {
+        protected void textChanged(@NotNull DocumentEvent e) {
           myCurrentPropertyName = myPropertyNameTextField.getText();
         }
       });

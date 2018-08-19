@@ -91,11 +91,13 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
     return isLocal ? FileUtil.toSystemDependentName(result) : result;
   }
 
+  @Override
   public int getSortWeight() {
     if (((FilePath)userObject).isDirectory()) return DIRECTORY_PATH_SORT_WEIGHT;
     return FILE_PATH_SORT_WEIGHT;
   }
 
+  @Override
   public int compareUserObjects(final FilePath o2) {
     return getUserObject().getPath().compareToIgnoreCase(o2.getPath());
   }

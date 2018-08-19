@@ -14,13 +14,15 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class InterruptThreadAction extends DebuggerAction{
-  
-  public void actionPerformed(final AnActionEvent e) {
+
+  @Override
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final DebuggerTreeNodeImpl[] nodes = getSelectedNodes(e.getDataContext());
     if (nodes == null) {
       return;
@@ -34,12 +36,13 @@ public class InterruptThreadAction extends DebuggerAction{
         threadsToInterrupt.add(((ThreadDescriptorImpl)descriptor).getThreadReference());
       }
     }
-    
+
     if (!threadsToInterrupt.isEmpty()) {
       final DebuggerContextImpl debuggerContext = getDebuggerContext(e.getDataContext());
       final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
       if (debugProcess != null) {
         debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
+          @Override
           protected void action() {
             boolean unsupported = false;
             for (ThreadReferenceProxyImpl thread : threadsToInterrupt) {
@@ -61,7 +64,8 @@ public class InterruptThreadAction extends DebuggerAction{
     }
   }
 
-  public void update(AnActionEvent e) {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     final DebuggerTreeNodeImpl[] selectedNodes = getSelectedNodes(e.getDataContext());
 
     boolean visible = false;
@@ -77,7 +81,7 @@ public class InterruptThreadAction extends DebuggerAction{
           break;
         }
       }
-      
+
       if (visible) {
         for (DebuggerTreeNodeImpl selectedNode : selectedNodes) {
           final ThreadDescriptorImpl threadDescriptor = (ThreadDescriptorImpl)selectedNode.getDescriptor();

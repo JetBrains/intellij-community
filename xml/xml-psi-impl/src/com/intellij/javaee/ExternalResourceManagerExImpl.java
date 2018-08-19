@@ -38,13 +38,7 @@ import java.io.File;
 import java.net.URL;
 import java.util.*;
 
-@State(
-  name = "ExternalResourceManagerImpl",
-  storages = {
-    @Storage("javaeeExternalResources.xml"),
-    @Storage(value = "other.xml", deprecated = true)
-  }
-)
+@State(name = "ExternalResourceManagerImpl", storages = @Storage("javaeeExternalResources.xml"))
 public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(ExternalResourceManagerExImpl.class);
 
@@ -253,17 +247,15 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     }
   }
 
+  /**
+   * @see #registerResourceTemporarily(String, String, Disposable)
+   */
+  @Deprecated()
   @TestOnly
   public static void addTestResource(final String url, final String location, Disposable parentDisposable) {
-    final ExternalResourceManagerExImpl instance = (ExternalResourceManagerExImpl)getInstance();
-    ApplicationManager.getApplication().runWriteAction(() -> instance.addResource(url, location));
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        ApplicationManager.getApplication().runWriteAction(() -> instance.removeResource(url));
-      }
-    });
+    registerResourceTemporarily(url, location, parentDisposable);
   }
+
   @Override
   public void addResource(@NotNull String url, String location) {
     addResource(url, DEFAULT_VERSION, location);
@@ -350,6 +342,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     }
   }
 
+  @Override
   public void addIgnoredResources(@NotNull List<String> urls, @Nullable Disposable disposable) {
     Application app = ApplicationManager.getApplication();
     if (app.isWriteAccessAllowed()) {
@@ -402,15 +395,6 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     }
     else {
       return false;
-    }
-  }
-
-  @Override
-  public void removeIgnoredResource(@NotNull String url) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
-    if (myIgnoredResources.remove(url)) {
-      incModificationCount();
-      fireExternalResourceChanged();
     }
   }
 

@@ -42,7 +42,7 @@ public class GitBinaryHandler extends GitHandler {
   @NotNull private final Semaphore mySteamSemaphore = new Semaphore(0); // The semaphore that waits for stream processing
   @NotNull private final AtomicReference<VcsException> myException = new AtomicReference<>();
 
-  public GitBinaryHandler(final Project project, final VirtualFile vcsRoot, final GitCommand command) {
+  public GitBinaryHandler(@NotNull Project project, @NotNull VirtualFile vcsRoot, @NotNull GitCommand command) {
     super(project, vcsRoot, command, Collections.emptyList());
   }
 
@@ -96,19 +96,20 @@ public class GitBinaryHandler extends GitHandler {
 
   @Override
   protected void waitForProcess() {
+    int exitCode;
     try {
       mySteamSemaphore.acquire(2);
       myProcess.waitFor();
-      int exitCode = myProcess.exitValue();
-      setExitCode(exitCode);
+      exitCode = myProcess.exitValue();
     }
     catch (InterruptedException e) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Ignoring process exception: ", e);
       }
-      setExitCode(255);
+      exitCode = 255;
     }
-    listeners().processTerminated(getExitCode());
+    setExitCode(exitCode);
+    listeners().processTerminated(exitCode);
   }
 
   /**

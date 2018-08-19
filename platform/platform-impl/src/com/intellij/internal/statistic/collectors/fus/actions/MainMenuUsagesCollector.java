@@ -10,20 +10,17 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-import static com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator.ensureProperKey;
-
 public final class MainMenuUsagesCollector extends ApplicationUsagesCollector implements FUStatisticsDifferenceSender {
 
+  @Override
   @NotNull
   public Set<UsageDescriptor> getUsages() {
     MainMenuCollector.State state = MainMenuCollector.getInstance().getState();
     assert state != null;
-    return ContainerUtil.map2Set(state.myValues.entrySet(), e -> {
-      String key = e.getKey().replaceAll(" -> ", "-");
-      return new UsageDescriptor(ensureProperKey(key), e.getValue());
-    });
+    return ContainerUtil.map2Set(state.myValues.entrySet(), e -> new UsageDescriptor(e.getKey(), e.getValue()));
   }
 
+  @Override
   @NotNull
   public String getGroupId() {
     return "statistics.actions.main.menu";

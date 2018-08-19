@@ -15,9 +15,13 @@
  */
 package com.intellij.refactoring.util.duplicates;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author dsl
@@ -29,6 +33,7 @@ public class VariableReturnValue implements ReturnValue {
     myVariable = variable;
   }
 
+  @Override
   public boolean isEquivalent(ReturnValue other) {
     if (!(other instanceof VariableReturnValue)) return false;
     return myVariable == ((VariableReturnValue)other).myVariable;
@@ -38,14 +43,19 @@ public class VariableReturnValue implements ReturnValue {
     return myVariable;
   }
 
-  public PsiStatement createReplacement(final PsiMethod extractedMethod, final PsiMethodCallExpression methodCallExpression) throws IncorrectOperationException {
+  @Override
+  @Nullable
+  public PsiStatement createReplacement(@NotNull final PsiMethod extractedMethod, @NotNull final PsiMethodCallExpression methodCallExpression, @Nullable final PsiType returnType) throws IncorrectOperationException {
     final PsiDeclarationStatement statement;
 
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(methodCallExpression.getProject()).getElementFactory();
-    final CodeStyleManager styleManager = CodeStyleManager.getInstance(methodCallExpression.getProject());
+    Project project = methodCallExpression.getProject();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
+    JavaCodeStyleManager javaStyleManager = JavaCodeStyleManager.getInstance(project);
+    PsiType type = returnType != null && returnType.isValid() ? returnType : myVariable.getType();
     statement = (PsiDeclarationStatement)styleManager.reformat(
-      elementFactory.createVariableDeclarationStatement(myVariable.getName(), myVariable.getType(), methodCallExpression)
-    );
+      javaStyleManager.shortenClassReferences(
+        elementFactory.createVariableDeclarationStatement(myVariable.getName(), type, methodCallExpression)));
     ((PsiVariable)statement.getDeclaredElements()[0]).getModifierList().replace(myVariable.getModifierList());
     return statement;
   }

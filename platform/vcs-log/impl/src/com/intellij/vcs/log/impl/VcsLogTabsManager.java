@@ -14,12 +14,15 @@ import java.util.List;
 
 public class VcsLogTabsManager {
   @NotNull private final Project myProject;
+  @NotNull private final VcsLogProjectTabsProperties myUiProperties;
   private boolean myIsLogDisposing = false;
 
   public VcsLogTabsManager(@NotNull Project project,
                            @NotNull MessageBus messageBus,
+                           @NotNull VcsLogProjectTabsProperties uiProperties,
                            @NotNull Disposable parent) {
     myProject = project;
+    myUiProperties = uiProperties;
 
     messageBus.connect(parent).subscribe(VcsProjectLog.VCS_PROJECT_LOG_CHANGED, new VcsProjectLog.ProjectLogListener() {
       @Override
@@ -37,30 +40,34 @@ public class VcsLogTabsManager {
 
   @CalledInAwt
   private void createLogTabs(@NotNull VcsLogManager manager) {
-    List<String> tabIds = manager.getUiProperties().getTabs();
+    List<String> tabIds = myUiProperties.getTabs();
     for (String tabId : tabIds) {
-      openLogTab(manager, tabId, false);
+      openLogTab(manager, tabId, false, false);
     }
   }
 
   public void openAnotherLogTab(@NotNull VcsLogManager manager) {
-    openLogTab(manager, VcsLogContentUtil.generateTabId(myProject), true);
+    openAnotherLogTab(manager, false);
   }
 
-  private void openLogTab(@NotNull VcsLogManager manager, @NotNull String tabId, boolean focus) {
-    VcsLogManager.VcsLogUiFactory<? extends VcsLogUiImpl> factory =
-      new PersistentVcsLogUiFactory(manager.getMainLogUiFactory(tabId), manager.getUiProperties());
-    VcsLogContentUtil.openLogTab(myProject, manager, VcsLogContentProvider.TAB_NAME, tabId, factory, focus);
+  @NotNull
+  public VcsLogUiImpl openAnotherLogTab(@NotNull VcsLogManager manager, boolean resetFilters) {
+    return openLogTab(manager, VcsLogContentUtil.generateTabId(myProject), true, resetFilters);
+  }
+
+  @NotNull
+  private VcsLogUiImpl openLogTab(@NotNull VcsLogManager manager, @NotNull String tabId, boolean focus, boolean resetFilters) {
+    if (resetFilters) myUiProperties.resetState(tabId);
+
+    VcsLogManager.VcsLogUiFactory<? extends VcsLogUiImpl> factory = new PersistentVcsLogUiFactory(manager.getMainLogUiFactory(tabId));
+   return VcsLogContentUtil.openLogTab(myProject, manager, VcsLogContentProvider.TAB_NAME, tabId, factory, focus);
   }
 
   private class PersistentVcsLogUiFactory implements VcsLogManager.VcsLogUiFactory<VcsLogUiImpl> {
     private final VcsLogManager.VcsLogUiFactory<? extends VcsLogUiImpl> myFactory;
-    @NotNull private final VcsLogTabsProperties myUiProperties;
 
-    public PersistentVcsLogUiFactory(@NotNull VcsLogManager.VcsLogUiFactory<? extends VcsLogUiImpl> factory,
-                                     @NotNull VcsLogTabsProperties properties) {
+    public PersistentVcsLogUiFactory(@NotNull VcsLogManager.VcsLogUiFactory<? extends VcsLogUiImpl> factory) {
       myFactory = factory;
-      myUiProperties = properties;
     }
 
     @Override

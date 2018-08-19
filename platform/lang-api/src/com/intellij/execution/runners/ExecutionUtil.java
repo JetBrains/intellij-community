@@ -1,16 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.runners;
 
@@ -50,7 +38,7 @@ import java.awt.*;
 import java.awt.geom.Ellipse2D;
 
 public class ExecutionUtil {
-  private static final Logger LOG = Logger.getInstance("com.intellij.execution.runners.ExecutionUtil");
+  static final Logger LOG = Logger.getInstance("com.intellij.execution.runners.ExecutionUtil");
 
   private static final NotificationGroup ourNotificationGroup = NotificationGroup.logOnlyGroup("Execution");
 
@@ -188,14 +176,35 @@ public class ExecutionUtil {
   }
 
   public static void runConfiguration(@NotNull RunnerAndConfigurationSettings configuration, @NotNull Executor executor) {
-    doRunConfiguration(configuration, executor, null);
+    doRunConfiguration(configuration, executor, null, null);
   }
 
   public static void runConfiguration(@NotNull RunnerAndConfigurationSettings configuration, @NotNull Executor executor, @NotNull ExecutionTarget target) {
-    doRunConfiguration(configuration, executor, target);
+    doRunConfiguration(configuration, executor, target, null);
   }
-  
-  private static void doRunConfiguration(@NotNull RunnerAndConfigurationSettings configuration, @NotNull Executor executor, @Nullable ExecutionTarget targetOrNullForDefault) {
+
+  /**
+   * @param executionId Id that will be set for {@link ExecutionEnvironment} that is created to run configuration.
+   */
+  public static void runConfiguration(
+    @NotNull RunnerAndConfigurationSettings configuration,
+    @NotNull Executor executor,
+    @NotNull ExecutionTarget target,
+    long executionId
+  ) {
+    doRunConfiguration(configuration, executor, target, executionId);
+  }
+
+  public static void runConfiguration(@NotNull RunnerAndConfigurationSettings configuration, @NotNull Executor executor, long executionId) {
+    doRunConfiguration(configuration, executor, null, executionId);
+  }
+
+  private static void doRunConfiguration(
+    @NotNull RunnerAndConfigurationSettings configuration,
+    @NotNull Executor executor,
+    @Nullable ExecutionTarget targetOrNullForDefault,
+    @Nullable Long executionId
+  ) {
     ExecutionEnvironmentBuilder builder = createEnvironment(executor, configuration);
     if (builder != null) {
       if (targetOrNullForDefault != null) {
@@ -203,6 +212,9 @@ public class ExecutionUtil {
       }
       else {
         builder.activeTarget();
+      }
+      if (executionId != null) {
+        builder.executionId(executionId);
       }
       ExecutionManager.getInstance(configuration.getConfiguration().getProject()).restartRunProfile(builder.build());
     }

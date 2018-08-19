@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileTextField;
@@ -54,8 +39,10 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
+
+import static com.intellij.openapi.actionSystem.IdeActions.ACTION_CODE_COMPLETION;
 
 public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileTextField {
 
@@ -134,26 +121,31 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     myFileSpitRegExp = myFinder.getSeparator().replaceAll("\\\\", "\\\\\\\\");
 
     myPathTextField.getDocument().addDocumentListener(new DocumentListener() {
+      @Override
       public void insertUpdate(final DocumentEvent e) {
         processTextChanged();
       }
 
+      @Override
       public void removeUpdate(final DocumentEvent e) {
         processTextChanged();
       }
 
+      @Override
       public void changedUpdate(final DocumentEvent e) {
         processTextChanged();
       }
     });
 
     myPathTextField.addKeyListener(new KeyAdapter() {
+      @Override
       public void keyPressed(final KeyEvent e) {
         processListSelection(e);
       }
     });
 
     myPathTextField.addFocusListener(new FocusAdapter() {
+      @Override
       public void focusLost(final FocusEvent e) {
         closePopup();
       }
@@ -163,12 +155,14 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
 
 
     new LazyUiDisposable<FileTextFieldImpl>(parent, field, this) {
+      @Override
       protected void initialize(@NotNull Disposable parent, @NotNull FileTextFieldImpl child, @Nullable Project project) {
         Disposer.register(child, myUiUpdater);
       }
     };
   }
 
+  @Override
   public void dispose() {
   }
 
@@ -199,6 +193,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     }
 
     myUiUpdater.queue(new Update("textField.suggestCompletion") {
+      @Override
       public void run() {
         final String completionBase = getCompletionBase();
         if (completionBase != null) {
@@ -282,6 +277,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
       myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
       myList.setCellRenderer(new GroupedItemsListRenderer(new ListItemDescriptorAdapter() {
+        @Override
         public String getTextFor(final Object value) {
           final LookupFile file = (LookupFile)value;
 
@@ -294,6 +290,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
 
         }
 
+        @Override
         public Icon getIconFor(final Object value) {
           final LookupFile file = (LookupFile)value;
           return file.getIcon();
@@ -325,10 +322,12 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
           return null;
         }
 
+        @Override
         public boolean hasSeparatorAboveOf(final Object value) {
           return getSeparatorAboveOf(value) != null;
         }
 
+        @Override
         public String getCaptionAboveOf(final Object value) {
           final FileTextFieldImpl.Separator separator = getSeparatorAboveOf(value);
           return separator != null ? separator.getText() : null;
@@ -350,10 +349,12 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     }
 
     myList.setModel(new AbstractListModel() {
+      @Override
       public int getSize() {
         return myCurrentCompletion.myToComplete.size();
       }
 
+      @Override
       public Object getElementAt(final int index) {
         return myCurrentCompletion.myToComplete.get(index);
       }
@@ -361,6 +362,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     myList.getSelectionModel().clearSelection();
     final PopupChooserBuilder builder = JBPopupFactory.getInstance().createListPopupBuilder(myList);
     builder.addListener(new JBPopupListener() {
+      @Override
       public void beforeShown(LightweightWindowEvent event) {
         myPathTextField
           .registerKeyboardAction(myCancelAction, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
@@ -369,6 +371,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
         }
       }
 
+      @Override
       public void onClosed(LightweightWindowEvent event) {
         myPathTextField.unregisterKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
         for (Action each : myDisabledTextActions) {
@@ -493,6 +496,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
 
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
       public void run() {
         if (result.current != null) {
           result.myToComplete.addAll(getMatchingChildren(result.effectivePrefix, result.current));
@@ -560,6 +564,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
       private List<LookupFile> getMatchingChildren(String prefix, LookupFile parent) {
         final MinusculeMatcher matcher = createMatcher(prefix);
         return parent.getChildren(new LookupFilter() {
+          @Override
           public boolean isAccepted(final LookupFile file) {
             return !file.equals(result.current) && myFilter.isAccepted(file) && matcher.matches(file.getName());
           }
@@ -831,9 +836,10 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     }
     else {
       final Keymap active = KeymapManager.getInstance().getActiveKeymap();
-      final String[] ids = active.getActionIds(stroke);
-      if (ids.length > 0 && IdeActions.ACTION_CODE_COMPLETION.equals(ids[0])) {
-        suggestCompletion(true, true);
+      for (String id : active.getActionIds(stroke)) {
+        if (ACTION_CODE_COMPLETION.equals(id)) {
+          suggestCompletion(true, true);
+        }
       }
     }
 
@@ -846,6 +852,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
   }
 
 
+  @Override
   public JTextField getField() {
     return myPathTextField;
   }
@@ -877,6 +884,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
 
   public final void setText(final String text, boolean now, @Nullable final Runnable onDone) {
     final Update update = new Update("pathFromTree") {
+      @Override
       public void run() {
         myPathIsUpdating = true;
         getField().setText(text);
@@ -920,6 +928,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
       this(new JTextField(), macroMap, parent, chooserFilter);
     }
 
+    @Override
     public VirtualFile getSelectedFile() {
       LookupFile lookupFile = getFile();
       return lookupFile != null ? ((LocalFsFinder.VfsFile)lookupFile).getFile() : null;
@@ -927,6 +936,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
   }
 
   private class CancelAction implements ActionListener {
+    @Override
     public void actionPerformed(final ActionEvent e) {
       if (myCurrentPopup != null) {
         myAutopopup = false;

@@ -6,7 +6,11 @@ public class Test
 
     public Test()
     {
-        arrayList = new ArrayList();
+        //c1
+        arrayList = new //c2 
+          ArrayList(
+            //c3
+        );
     }
 
 }

@@ -29,6 +29,7 @@ class ArrayInitializerEvaluator implements Evaluator{
   /**
    * @return an array of Values
    */
+  @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     Object[] values = new Object[myValueEvaluators.length];
     for (int idx = 0; idx < myValueEvaluators.length; idx++) {

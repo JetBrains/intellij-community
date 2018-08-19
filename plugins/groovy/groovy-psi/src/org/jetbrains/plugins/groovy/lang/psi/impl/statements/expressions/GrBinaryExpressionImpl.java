@@ -21,6 +21,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.BINARY_OPERA
  */
 public abstract class GrBinaryExpressionImpl extends GrOperatorExpressionImpl implements GrBinaryExpression {
 
+  @Override
   @Nullable
   public PsiType getRightType() {
     final GrExpression rightOperand = getRightOperand();
@@ -63,7 +64,7 @@ public abstract class GrBinaryExpressionImpl extends GrOperatorExpressionImpl im
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitBinaryExpression(this);
   }
 

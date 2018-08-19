@@ -14,6 +14,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiMethodImpl;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -27,21 +28,31 @@ import static com.intellij.codeInspection.dataFlow.JavaMethodContractUtil.ORG_JE
 public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
   private static final Key<Boolean> INFERRED_ANNOTATION = Key.create("INFERRED_ANNOTATION");
 
-  private static final Set<String> INFERRED_ANNOTATIONS =
-    ContainerUtil.set(NOT_NULL, NULLABLE, ORG_JETBRAINS_ANNOTATIONS_CONTRACT, Mutability.UNMODIFIABLE_ANNOTATION,
+  private static final Set<String> JB_INFERRED_ANNOTATIONS =
+    ContainerUtil.set(ORG_JETBRAINS_ANNOTATIONS_CONTRACT, Mutability.UNMODIFIABLE_ANNOTATION,
                       Mutability.UNMODIFIABLE_VIEW_ANNOTATION);
   private static final Set<String> EXPERIMENTAL_INFERRED_ANNOTATIONS =
     ContainerUtil.set(Mutability.UNMODIFIABLE_ANNOTATION, Mutability.UNMODIFIABLE_VIEW_ANNOTATION);
   private final Project myProject;
 
+  // Could be added via external annotations, but there are many signatures to handle
+  // and we have troubles supporting external annotations for JDK 9+
+  private static final CallMatcher IMMUTABLE_FACTORY = CallMatcher.anyOf(
+    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_LIST, "of", "copyOf"),
+    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_SET, "of", "copyOf"),
+    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_MAP, "of", "ofEntries", "copyOf", "entry")
+  );
+  private final NullableNotNullManager myNullabilityManager;
+
   public InferredAnnotationsManagerImpl(Project project) {
     myProject = project;
+    myNullabilityManager = NullableNotNullManager.getInstance(project);
   }
 
   @Nullable
   @Override
   public PsiAnnotation findInferredAnnotation(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN) {
-    if (!INFERRED_ANNOTATIONS.contains(annotationFQN)) {
+    if (!JB_INFERRED_ANNOTATIONS.contains(annotationFQN) && !isDefaultNullabilityAnnotation(annotationFQN)) {
       return null;
     }
 
@@ -63,7 +74,7 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
       return fromBytecode;
     }
 
-    if ((NOT_NULL.equals(annotationFQN) || NULLABLE.equals(annotationFQN))) {
+    if (isDefaultNullabilityAnnotation(annotationFQN)) {
       PsiAnnotation anno = null;
       if (listOwner instanceof PsiMethodImpl) {
         anno = getInferredNullabilityAnnotation((PsiMethodImpl)listOwner);
@@ -85,21 +96,33 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
     return null;
   }
 
+  private boolean isDefaultNullabilityAnnotation(String annotationFQN) {
+    return annotationFQN.equals(myNullabilityManager.getDefaultNullable()) || annotationFQN.equals(myNullabilityManager.getDefaultNotNull());
+  }
+
   @Nullable
   private PsiAnnotation getHardcodedContractAnnotation(PsiMethod method) {
     List<MethodContract> contracts = HardcodedContracts.getHardcodedContracts(method, null);
     return contracts.isEmpty() ? null : createContractAnnotation(contracts, HardcodedContracts.isHardcodedPure(method));
   }
 
-  @Override
-  public boolean ignoreInference(@NotNull PsiModifierListOwner owner, @Nullable String annotationFQN) {
+  /**
+   * There is a number of well-known methods where automatic inference fails (for example, {@link java.util.Objects#requireNonNull(Object)}.
+   * For such methods, contracts are hardcoded, and for their parameters inferred @NotNull are suppressed.<p/>
+   *
+   * {@link Contract} and {@link NotNull} annotations on methods are not necessarily applicable to the overridden implementations, so they're ignored, too.<p/>
+   *
+   * @return whether inference is to be suppressed the given annotation on the given method or parameter
+   */
+  private boolean ignoreInference(@NotNull PsiModifierListOwner owner, @Nullable String annotationFQN) {
+    if (annotationFQN == null) return true;
     if (owner instanceof PsiMethod && PsiUtil.canBeOverridden((PsiMethod)owner)) {
       return true;
     }
     if (ORG_JETBRAINS_ANNOTATIONS_CONTRACT.equals(annotationFQN) && HardcodedContracts.hasHardcodedContracts(owner)) {
       return true;
     }
-    if (NOT_NULL.equals(annotationFQN) && owner instanceof PsiParameter && owner.getParent() != null) {
+    if (annotationFQN.equals(myNullabilityManager.getDefaultNotNull()) && owner instanceof PsiParameter && owner.getParent() != null) {
       List<String> annotations = NullableNotNullManager.getInstance(owner.getProject()).getNullables();
       if (isAnnotated(owner, annotations, CHECK_EXTERNAL | CHECK_INFERRED | CHECK_TYPE)) {
         return true;
@@ -113,6 +136,9 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
 
   @Nullable
   private PsiAnnotation getInferredMutabilityAnnotation(@NotNull PsiModifierListOwner owner) {
+    if (owner instanceof PsiMethod && IMMUTABLE_FACTORY.methodMatches((PsiMethod)owner)) {
+      return Mutability.UNMODIFIABLE.asAnnotation(myProject);
+    }
     if (!(owner instanceof PsiMethodImpl)) return null;
     PsiMethodImpl method = (PsiMethodImpl)owner;
     PsiModifierList modifiers = method.getModifierList();
@@ -134,15 +160,9 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
 
   @Nullable
   private PsiAnnotation getInferredNullabilityAnnotation(PsiMethodImpl method) {
-    NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
-    if (findAnnotation(method, manager.getNotNulls(), true) != null || findAnnotation(method, manager.getNullables(), true) != null) {
+    if (hasExplicitNullability(method)) {
       return null;
     }
-
-    if (manager.findNullityDefaultInHierarchy(method) != null) {
-      return null;
-    }
-
     Nullability nullability = JavaSourceInference.inferNullability(method);
     if (nullability == Nullability.NOT_NULL) {
       return ProjectBytecodeAnalysis.getInstance(myProject).getNotNullAnnotation();
@@ -153,10 +173,16 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
     return null;
   }
 
+  private boolean hasExplicitNullability(PsiModifierListOwner owner) {
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
+    return findAnnotation(owner, manager.getNotNulls(), true) != null ||
+           findAnnotation(owner, manager.getNullables(), true) != null ||
+           manager.findNullityDefaultInHierarchy(owner) != null;
+  }
+
   @Nullable
   private PsiAnnotation getInferredNullabilityAnnotation(PsiParameter parameter) {
-    NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
-    if (findAnnotation(parameter, manager.getNotNulls(), true) != null || findAnnotation(parameter, manager.getNullables(), true) != null) {
+    if (hasExplicitNullability(parameter)) {
       return null;
     }
     PsiElement parent = parameter.getParent();
@@ -226,7 +252,8 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
           ContainerUtil.addIfNotNull(result, getInferredContractAnnotation((PsiMethodImpl)listOwner));
         }
 
-        if (!ignoreInference(listOwner, NOT_NULL) || !ignoreInference(listOwner, NULLABLE)) {
+        if (!ignoreInference(listOwner, myNullabilityManager.getDefaultNotNull()) ||
+            !ignoreInference(listOwner, myNullabilityManager.getDefaultNullable())) {
           PsiAnnotation annotation = getInferredNullabilityAnnotation((PsiMethodImpl)listOwner);
           if (annotation != null && !ignoreInference(listOwner, annotation.getQualifiedName())) {
             result.add(annotation);
@@ -235,7 +262,7 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
       }
     }
 
-    if (listOwner instanceof PsiParameter && !ignoreInference(listOwner, NOT_NULL)) {
+    if (listOwner instanceof PsiParameter && !ignoreInference(listOwner, myNullabilityManager.getDefaultNotNull())) {
       ContainerUtil.addIfNotNull(result, getInferredNullabilityAnnotation((PsiParameter)listOwner));
     }
 

@@ -7,8 +7,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessInfo;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.icons.AllIcons;
-import com.intellij.internal.statistic.UsageTrigger;
-import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -58,7 +56,7 @@ public class AttachToProcessAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
 
     Project project = getEventProject(e);
@@ -69,7 +67,7 @@ public class AttachToProcessAction extends AnAction {
 
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = getEventProject(e);
     if (project == null) return;
 
@@ -454,6 +452,7 @@ public class AttachToProcessAction extends AnAction {
       super(group, isFirstInGroup, group.getGroupName(), host, project, dataHolder);
     }
 
+    @Override
     public boolean hasSubStep() {
       return true;
     }
@@ -464,6 +463,7 @@ public class AttachToProcessAction extends AnAction {
       return myGroup.getItemDisplayText(project, myInfo, myDataHolder);
     }
 
+    @Override
     @Nullable
     public String getTooltipText(@NotNull Project project)  {
       return myGroup.getItemDescription(project, myInfo, myDataHolder);
@@ -537,15 +537,18 @@ public class AttachToProcessAction extends AnAction {
       return myHost;
     }
 
+    @Override
     public boolean hasSubStep() {
       return !mySubItems.isEmpty();
     }
 
+    @Override
     @Nullable
     public String getTooltipText(@NotNull Project project)  {
       return myGroup.getItemDescription(project, myInfo, myDataHolder);
     }
 
+    @Override
     @NotNull
     public String getText(@NotNull Project project) {
       String shortenedText = StringUtil.shortenTextWithEllipsis(myGroup.getItemDisplayText(project, myInfo, myDataHolder), 200, 0);
@@ -557,6 +560,7 @@ public class AttachToProcessAction extends AnAction {
       return myDebuggers;
     }
 
+    @Override
     @NotNull
     public List<AttachToProcessItem> getSubItems() {
       return mySubItems;
@@ -569,8 +573,6 @@ public class AttachToProcessAction extends AnAction {
 
     public void startDebugSession(@NotNull Project project) {
       XAttachDebugger debugger = getSelectedDebugger();
-      UsageTrigger.trigger(ConvertUsagesUtil.ensureProperKey("debugger.attach"));
-      UsageTrigger.trigger(ConvertUsagesUtil.ensureProperKey("debugger.attach." + debugger.getDebuggerDisplayName()));
 
       try {
         debugger.attachDebugSession(project, myHost, myInfo);

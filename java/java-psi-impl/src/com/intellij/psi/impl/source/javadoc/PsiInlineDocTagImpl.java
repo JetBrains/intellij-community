@@ -36,8 +36,6 @@ import org.jetbrains.annotations.NotNull;
 
 public class PsiInlineDocTagImpl extends CompositePsiElement implements PsiInlineDocTag, Constants {
   private static final TokenSet TAG_VALUE_BIT_SET = TokenSet.create(DOC_TAG_VALUE_ELEMENT, DOC_METHOD_OR_FIELD_REF);
-  private static final TokenSet VALUE_NO_WHITESPACE_BIT_SET = TokenSet.orSet(TAG_VALUE_BIT_SET, TokenSet.create(
-    JAVA_CODE_REFERENCE, DOC_TAG_VALUE_TOKEN, DOC_COMMENT_DATA, DOC_INLINE_TAG, DOC_REFERENCE_HOLDER, DOC_COMMENT_BAD_CHARACTER));
   private static final TokenSet VALUE_BIT_SET = TokenSet.orSet(TAG_VALUE_BIT_SET, TokenSet.create(
     JAVA_CODE_REFERENCE, DOC_TAG_VALUE_TOKEN, WHITE_SPACE, DOC_COMMENT_DATA, DOC_INLINE_TAG, DOC_REFERENCE_HOLDER, DOC_COMMENT_BAD_CHARACTER));
 
@@ -65,16 +63,12 @@ public class PsiInlineDocTagImpl extends CompositePsiElement implements PsiInlin
     return getChildrenAsPsiElements(VALUE_BIT_SET, PsiElement.ARRAY_FACTORY);
   }
 
-  @NotNull
-  public PsiElement[] getDataElementsIgnoreWhitespaces() {
-    return getChildrenAsPsiElements(VALUE_NO_WHITESPACE_BIT_SET, PsiElement.ARRAY_FACTORY);
-  }
-
   @Override
   public PsiDocTagValue getValueElement() {
     return (PsiDocTagValue)findPsiChildByType(TAG_VALUE_BIT_SET);
   }
 
+  @NotNull
   @Override
   public String getName() {
     final PsiElement nameElement = getNameElement();
@@ -116,6 +110,7 @@ public class PsiInlineDocTagImpl extends CompositePsiElement implements PsiInlin
     }
   }
 
+  @Override
   public String toString() {
     PsiElement nameElement = getNameElement();
     return "PsiInlineDocTag:" + (nameElement != null ? nameElement.getText() : null);

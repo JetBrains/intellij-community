@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.util;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -40,7 +26,6 @@ public class DiffPanelOuterComponent extends JPanel implements DataProvider {
   private DeferScrollToFirstDiff myScrollState = NO_SCROLL_NEEDED;
   private ScrollingPanel myScrollingPanel = null;
   private final JPanel myBottomContainer;
-  private JComponent myBottomComponent;
   private final JPanel myWrapper;
   private Getter<Integer> myPreferredHeightGetter;
   private int myPrefferedWidth;
@@ -82,20 +67,6 @@ public class DiffPanelOuterComponent extends JPanel implements DataProvider {
     myWrapper.add(component, BorderLayout.NORTH);
   }
 
-  public JComponent getBottomComponent() {
-    return myBottomComponent;
-  }
-
-  public void setBottomComponent(JComponent component) {
-    if (myBottomComponent != null) {
-      myBottomContainer.remove(myBottomComponent);
-    }
-    myBottomComponent = component;
-    if (myBottomComponent != null) {
-      myBottomContainer.add(BorderLayout.CENTER, component);
-    }
-  }
-
   public void setDataProvider(DataProvider dataProvider) {
     myDataProvider = dataProvider;
   }
@@ -127,7 +98,8 @@ public class DiffPanelOuterComponent extends JPanel implements DataProvider {
     }
   }
 
-  public Object getData(String dataId) {
+  @Override
+  public Object getData(@NotNull String dataId) {
     if (PlatformDataKeys.SOURCE_NAVIGATION_LOCKED.is(dataId)) {
       return Boolean.TRUE;
     }
@@ -135,13 +107,6 @@ public class DiffPanelOuterComponent extends JPanel implements DataProvider {
       return null;
     }
     if (CommonDataKeys.EDITOR.is(dataId)) {
-      if (myBottomComponent != null) {
-        // we don't want editor actions to be executed when the bottom component has focus
-        final Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-        if (myBottomComponent.isAncestorOf(focusOwner)) {
-          return null;
-        }
-      }
       final FocusDiffSide side = (FocusDiffSide)myDataProvider.getData(FocusDiffSide.DATA_KEY.getName());
       if (side != null) {
         final Editor editor = side.getEditor();
@@ -170,16 +135,19 @@ public class DiffPanelOuterComponent extends JPanel implements DataProvider {
     if (newState != null) myScrollState = newState;
   }
 
+  @Override
   public void addNotify() {
     super.addNotify();
     tryScrollNow();
   }
 
+  @Override
   public void setBounds(int x, int y, int width, int height) {
     super.setBounds(x, y, width, height);
     tryScrollNow();
   }
 
+  @Override
   protected void validateTree() {
     super.validateTree();
     tryScrollNow();
@@ -204,21 +172,25 @@ public class DiffPanelOuterComponent extends JPanel implements DataProvider {
   }
 
   private static final DeferScrollToFirstDiff NO_SCROLL_NEEDED = new DeferScrollToFirstDiff() {
+    @Override
     public DeferScrollToFirstDiff scrollNow(ScrollingPanel panel, JComponent component) {
       return NO_SCROLL_NEEDED;
     }
 
+    @Override
     public void deferScroll(DiffPanelOuterComponent outer) {
     }
   };
 
   private static final DeferScrollToFirstDiff SCROLL_WHEN_POSSIBLE = new DeferScrollToFirstDiff() {
+    @Override
     public DeferScrollToFirstDiff scrollNow(ScrollingPanel panel, JComponent component) {
       if (!component.isDisplayable()) return null;
       panel.scrollEditors();
       return NO_SCROLL_NEEDED;
     }
 
+    @Override
     public void deferScroll(final DiffPanelOuterComponent outer) {
       if (!outer.isDisplayable()) return;
       SwingUtilities.invokeLater(() -> outer.performScroll());

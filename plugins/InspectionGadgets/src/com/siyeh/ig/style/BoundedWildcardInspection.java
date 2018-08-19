@@ -8,6 +8,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -15,6 +16,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
@@ -23,11 +25,13 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jdom.Element;
@@ -36,13 +40,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * {@code "void process(Processor<T> p)"  -> "void process(Processor<? super T> p)"}
  */
 public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTool {
+  private static final Logger LOG = Logger.getInstance(BoundedWildcardInspection.class);
   @SuppressWarnings("WeakerAccess") public boolean REPORT_INVARIANT_CLASSES = true;
   @SuppressWarnings("WeakerAccess") public boolean REPORT_PRIVATE_METHODS = true;
   private JBCheckBox myReportInvariantClassesCB;
@@ -81,7 +86,10 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
                       ? InspectionGadgetsBundle.message("bounded.wildcard.covariant.descriptor")
                       : InspectionGadgetsBundle.message("bounded.wildcard.contravariant.descriptor")) +
                      (wildCardIsUseless ? " but decided against it" : "");
-        holder.registerProblem(typeElement, msg, type, new ReplaceWithQuestionTFix(isOverriddenOrOverrides(candidate.method), canBeExtends));
+        // show verbose message in debug mode only
+        if (!wildCardIsUseless || LOG.isDebugEnabled()) {
+          holder.registerProblem(typeElement, msg, type, new ReplaceWithQuestionTFix(isOverriddenOrOverrides(candidate.method), canBeExtends));
+        }
       }
     };
   }
@@ -180,7 +188,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     PsiTypeElement newInnerTypeElement = pf.createTypeElement(isExtends ? PsiWildcardType
       .createExtends(psiManager, type) : PsiWildcardType.createSuper(psiManager, type));
 
-    PsiClassReferenceType methodParamType = (PsiClassReferenceType)candidate.methodParameter.getType();
+    PsiClassReferenceType methodParamType = candidate.methodParameterType;
     PsiClassReferenceType clone = new PsiClassReferenceType((PsiJavaCodeReferenceElement)methodParamType.getReference().copy(), methodParamType.getLanguageLevel());
     PsiAnnotation[] annotations = methodParamType.getApplicableAnnotations();
 
@@ -210,11 +218,11 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
   private static PsiField findFieldAssignedFromMethodParameter(@NotNull PsiParameter methodParameter, @NotNull PsiMethod method) {
     PsiCodeBlock methodBody = method.getBody();
     if (methodBody == null) return null;
-
+    PsiClass containingClass = method.getContainingClass();
     Ref<Pair<PsiField, PsiType>> assignedToField = Ref.create();
     ReferencesSearch.search(methodParameter, new LocalSearchScope(methodBody)).forEach(ref -> {
       ProgressManager.checkCanceled();
-      Pair<PsiField, PsiType> assigned = isAssignedToField(ref);
+      Pair<PsiField, PsiType> assigned = isAssignedToField(ref, containingClass);
       if (assigned != null) {
         if (!assignedToField.isNull() && !assigned.equals(assignedToField.get())) {
           assignedToField.set(null);
@@ -235,7 +243,8 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
 
     PsiClassReferenceType newParameterType = suggestMethodParameterType(candidate, isExtends);
 
-    PsiMethod methodCopy = createMethodCopy(project, candidate.method, candidate.methodParameterIndex, newParameterType);
+    PsiMethod methodCopy = DebugUtil
+      .performPsiModification("Creating method copy", () -> createMethodCopy(project, candidate.method, candidate.methodParameterIndex, newParameterType));
     PsiClass containingClass = candidate.method.getContainingClass();
     PsiField field = findFieldAssignedFromMethodParameter(candidate.methodParameter, method);
     List<PsiElement> superMethodsCalls = new ArrayList<>(); // shouldn't error-check these because they're not generalized yet
@@ -245,10 +254,56 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
       // check body only to avoid messing with @Override annotations errors
       return errorChecks(methodCopy.getBody(), superMethodsCalls);
     }
-    // field can be referenced from anywhere in the file
-    PsiClass classCopy = createClassCopy(project, field, containingClass, candidate.method, methodCopy, newParameterType);
+    // not anonymous nor local
+    if (containingClass.getQualifiedName() != null) {
+      // field can be referenced from anywhere in the file
+      PsiMethod methodCopyInClass = DebugUtil.performPsiModification("Creating class copy",
+                                    () -> createClassCopy(project, field, containingClass, candidate.method, methodCopy, newParameterType));
+      Collection<PsiMethod> methodsToErrorCheck;
 
-    return errorChecks(classCopy, superMethodsCalls);
+      // check all field usages in the file
+      if (field != null) {
+        PsiClass classCopy = methodCopyInClass.getContainingClass();
+        int fieldIndex = ArrayUtil.indexOf(containingClass.getFields(), field);
+        if (fieldIndex == -1) return false;
+        PsiField fieldCopy = classCopy.getFields()[fieldIndex];
+        Collection<PsiReference> refs = ReferencesSearch.search(fieldCopy, new LocalSearchScope(classCopy)).findAll();
+        Map<PsiMethod, List<PsiReference>> collect =
+          refs.stream()
+            // map null to "method" to filter it out later
+            .collect(Collectors.groupingBy(ref -> ObjectUtils.notNull(PsiTreeUtil.getParentOfType(ref.getElement(), PsiMethod.class), method)));
+        methodsToErrorCheck = ContainerUtil.filter(collect.keySet(), k->k != method);
+      }
+      else {
+        methodsToErrorCheck = Collections.singletonList(methodCopyInClass);
+      }
+
+      for (PsiMethod psiMethodCopy : methodsToErrorCheck) {
+        PsiCodeBlock body = psiMethodCopy.getBody();
+        if (body != null && !errorChecks(body, superMethodsCalls)) return false;
+      }
+
+      return true;
+    }
+    // for anon/local have to copy containing method
+    PsiMethod containingMethod = PsiTreeUtil.getParentOfType(containingClass, PsiMethod.class);
+    if (containingMethod != null) {
+      PsiMethod containingMethodCopy = DebugUtil
+        .performPsiModification("Creating method copy", () -> createMethodCopy(project, containingMethod, -1, newParameterType));
+
+      // find anon class in the copy
+      int anonClassOffsetInContainingMethod = containingClass.getTextRange().getStartOffset() - containingMethod.getTextRange().getStartOffset();
+      PsiElement element = containingMethodCopy.findElementAt(anonClassOffsetInContainingMethod);
+      PsiClass containingClassCopy = PsiTreeUtil.getParentOfType(element, containingClass.getClass(), false);
+      PsiMethod newMethodCopy = containingClassCopy.getMethods()[ArrayUtil.indexOf(containingClass.getMethods(), candidate.method)];
+      PsiTypeElement paramTE = newMethodCopy.getParameterList().getParameters()[candidate.methodParameterIndex].getTypeElement();
+      ReplaceWithQuestionTFix.replaceType(project, paramTE, newParameterType);
+
+      findSuperMethodCallsInside(newMethodCopy, candidate.superMethods, superMethodsCalls);
+      return errorChecks(newMethodCopy.getBody(), superMethodsCalls);
+    }
+
+    return false;
   }
 
   private static void findSuperMethodCallsInside(@NotNull PsiMethod method, @NotNull List<PsiMethod> superMethods, @NotNull List<? super PsiElement> result) {
@@ -274,19 +329,21 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     JavaDummyHolder dummyHolder = (JavaDummyHolder)DummyHolderFactory.createHolder(PsiManager.getInstance(project), method);
     PsiMethod methodCopy = (PsiMethod)dummyHolder.add(method);
 
+    // force this dummy holder resolve recursive method calls to this "methodCopy" instead of original method
+    dummyHolder.setInjectedDeclarations((processor, state, lastParent, place) ->
+                                          processor.execute(methodCopy, state));
+
     if (methodParameterIndex != -1) {
       PsiTypeElement paramTE = methodCopy.getParameterList().getParameters()[methodParameterIndex].getTypeElement();
       ReplaceWithQuestionTFix.replaceType(project, paramTE, newParameterExtends);
     }
 
-    // force this dummy holder resolve recursive method calls to this "methodCopy" instead of original method
-    dummyHolder.setInjectedDeclarations((processor, state, lastParent, place) ->
-              processor.execute(methodCopy, state));
     return methodCopy;
   }
 
   @NotNull
-  private static PsiClass createClassCopy(@NotNull Project project,
+  // copies class and returns copy of the method in this class
+  private static PsiMethod createClassCopy(@NotNull Project project,
                                           @Nullable PsiField field,
                                           @NotNull PsiClass containingClass, @NotNull PsiMethod method,
                                           @NotNull PsiMethod methodCopy,
@@ -301,10 +358,36 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
 
     int methodIndex = ArrayUtil.indexOf(containingClass.getMethods(), method);
     PsiMethod methodInClassCopy = classCopy.getMethods()[methodIndex];
-    methodInClassCopy.replace(methodCopy); // patch method parameter type
+    PsiMethod result = (PsiMethod)methodInClassCopy.replace(methodCopy); // patch method parameter type
 
-    return classCopy;
+    patchThisExpression(result, containingClass);
+
+    return result;
   }
+
+  private static void patchThisExpression(PsiMethod methodCopy, PsiClass containingClass) {
+    PsiClass classCopy = methodCopy.getContainingClass();
+    List<PsiThisExpression> these = new ArrayList<>();
+    methodCopy.accept(new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitThisExpression(PsiThisExpression expression) {
+        super.visitThisExpression(expression);
+        if (PsiUtil.resolveClassInType(expression.getType()) == classCopy) {
+          these.add(expression);
+        }
+      }
+    });
+    if (!these.isEmpty()) {
+      PsiElementFactory f = PsiElementFactory.SERVICE.getInstance(containingClass.getProject());
+      PsiParameter __this__ = f.createParameter("__this__", f.createType(containingClass));
+      methodCopy.getParameterList().add(__this__);
+      for (PsiThisExpression thisExpr : these) {
+        PsiExpression newExpr = f.createExpressionFromText("__this__", thisExpr);
+        thisExpr.replace(newExpr);
+      }
+    }
+  }
+
 
   private static boolean errorChecks(@NotNull PsiElement method, @NotNull List<PsiElement> elementsToIgnore) {
     HighlightVisitor visitor = ContainerUtil.find(Extensions.getExtensions(HighlightVisitor.EP_HIGHLIGHT_VISITOR, method.getProject()), h -> h instanceof HighlightVisitorImpl).clone();
@@ -350,7 +433,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
   }
 
   // return field assigned to, type of the expression assigned from
-  private static Pair<PsiField, PsiType> isAssignedToField(@NotNull PsiReference ref) {
+  private static Pair<PsiField, PsiType> isAssignedToField(@NotNull PsiReference ref, PsiClass containingClass) {
     PsiElement refElement = ref.getElement();
     PsiElement parent = skipParensAndCastsUp(refElement);
     if (!(parent instanceof PsiAssignmentExpression) || ((PsiAssignmentExpression)parent).getOperationTokenType() != JavaTokenType.EQ) return null;
@@ -361,14 +444,16 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     PsiReferenceExpression lExpression = (PsiReferenceExpression)l;
     PsiExpression lQualifier = skipParensAndCastsDown(lExpression.getQualifierExpression());
     if (lQualifier != null && !(lQualifier instanceof PsiThisExpression)) return null;
-    PsiElement field = lExpression.resolve();
+    PsiElement resolved = lExpression.resolve();
+    if (!(resolved instanceof PsiField)) return null;
     // too expensive to search for usages of public field otherwise
-    if (!(field instanceof PsiField) ||
-        !((PsiField)field).hasModifierProperty(PsiModifier.PRIVATE) &&
-        !((PsiField)field).hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) return null;
+    PsiField field = (PsiField)resolved;
+    if (!field.hasModifierProperty(PsiModifier.PRIVATE) &&
+        !field.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) return null;
     PsiType type = r.getType();
     if (type == null) return null;
-    return Pair.createNonNull((PsiField)field, type);
+    if (field.getContainingClass() != containingClass) return null;
+    return Pair.createNonNull(field, type);
   }
 
 

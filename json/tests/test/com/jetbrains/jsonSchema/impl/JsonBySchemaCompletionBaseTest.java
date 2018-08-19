@@ -20,6 +20,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.EditorTestUtil;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
@@ -31,7 +32,7 @@ import java.util.List;
  * @author Irina.Chernushina on 2/20/2017.
  */
 public abstract class JsonBySchemaCompletionBaseTest extends CompletionTestCase {
-  protected void testBySchema(@NotNull final String schema, final @NotNull String text, final @NotNull String extension,
+  protected void testBySchema(@Language("JSON") @NotNull final String schema, final @NotNull String text, final @NotNull String extension,
                               final @NotNull String... variants) throws Exception {
     final int position = EditorTestUtil.getCaretPosition(text);
     Assert.assertTrue(position > 0);

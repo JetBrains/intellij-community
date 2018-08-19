@@ -13,14 +13,14 @@ static void _setPopoverData(NSPopoverTouchBarItem * popoverItem, int itemWidth, 
     popoverItem.pressAndHoldTouchBar = ((TouchBar*)tbObjTapAndHold).touchBar;
 }
 
-// NOTE: called from AppKit (creation when TB becomes visible)
+// NOTE: called from AppKit-thread (creation when TB becomes visible), uses default autorelease-pool (create before event processing)
 id createPopover(const char * uid, int itemWidth, const char * text, const char * raster4ByteRGBA, int w, int h, id tbObjExpand, id tbObjTapAndHold) {
-    NSString * nsUid = getString(uid);
+    NSString * nsUid = createStringFromUTF8(uid);
     nstrace(@"create popover [%@] (thread: %@)", nsUid, [NSThread currentThread]);
 
     NSPopoverTouchBarItem * popoverItem = [[NSPopoverTouchBarItem alloc] initWithIdentifier:nsUid]; // create non-autorelease object to be owned by java-wrapper
     NSImage * img = createImgFrom4ByteRGBA((const unsigned char *)raster4ByteRGBA, w, h);
-    NSString * nstext = getString(text);
+    NSString * nstext = createStringFromUTF8(text);
     _setPopoverData(popoverItem, itemWidth, nstext, img, tbObjExpand, tbObjTapAndHold);
     return popoverItem;
 }
@@ -31,7 +31,7 @@ void updatePopover(id popoverObj, int itemWidth, const char * text, const char *
     nstrace(@"async update popover [%@] (thread: %@)", popoverItem.identifier, [NSThread currentThread]);
     NSAutoreleasePool * edtPool = [[NSAutoreleasePool alloc] init];
     NSImage * img = createImgFrom4ByteRGBA((const unsigned char *)raster4ByteRGBA, w, h);
-    NSString * nstext = getString(text);
+    NSString * nstext = createStringFromUTF8(text);
     dispatch_async(dispatch_get_main_queue(), ^{
         // NOTE: block is copied, img/text objects is automatically retained
 //        nstrace(@"\tperform update popover [%@] (thread: %@)", popoverItem.identifier, [NSThread currentThread]);

@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdesktop.swingx.graphics.GraphicsUtilities;
@@ -110,8 +111,10 @@ public class SheetController implements Disposable {
       buttons[i].setOpaque(false);
       handleMnemonics(i, buttonTitle);
 
+      final TouchbarDataKeys.DlgButtonDesc bdesc = TouchbarDataKeys.putDialogButtonDescriptor(buttons[i], buttons.length - i).setMainGroup(true);
       if (buttonTitle.equals(defaultButtonTitle)) {
         defaultButtonIndex = i;
+        bdesc.setDefault(true);
       }
 
       if (buttonTitle.equals(focusedButtonTitle) && !focusedButtonTitle.equals("Cancel")) {
@@ -484,6 +487,8 @@ public class SheetController implements Disposable {
     return image;
   }
 
+  JPanel getSheetPanel() { return mySheetPanel; }
+
   public boolean getDoNotAskResult () {
     return myDoNotAskResult;
   }
@@ -492,6 +497,7 @@ public class SheetController implements Disposable {
     return myResult;
   }
 
+  @Override
   public void dispose() {
     mySheetPanel.unregisterKeyboardAction(VK_ESC_KEYSTROKE);
     mySheetMessage = null;

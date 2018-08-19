@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector
+import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.project.isDirectoryBased
@@ -30,6 +31,7 @@ import gnu.trove.THashMap
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import java.util.*
+import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -46,8 +48,8 @@ private const val RECENT = "recent_temporary"
 @State(name = "RunManager", storages = [(Storage(value = StoragePathMacros.WORKSPACE_FILE, useSaveThreshold = ThreeState.NO))])
 open class RunManagerImpl(internal val project: Project) : RunManagerEx(), PersistentStateComponent<Element>, Disposable {
   companion object {
-    const val CONFIGURATION: String = "configuration"
-    const val NAME_ATTR: String = "name"
+    const val CONFIGURATION = "configuration"
+    const val NAME_ATTR = "name"
 
     internal val LOG = logger<RunManagerImpl>()
 
@@ -132,19 +134,21 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
 
   private val isFirstLoadState = AtomicBoolean(true)
 
-  private val stringIdToBeforeRunProvider by lazy {
-    val result = ContainerUtil.newConcurrentMap<String, BeforeRunTaskProvider<*>>()
-    for (provider in BeforeRunTaskProvider.EXTENSION_POINT_NAME.getExtensions(project)) {
-      result.put(provider.id.toString(), provider)
+  private val stringIdToBeforeRunProvider = object : ClearableLazyValue<ConcurrentMap<String, BeforeRunTaskProvider<*>>>() {
+    override fun compute(): ConcurrentMap<String, BeforeRunTaskProvider<*>> {
+      val result = ContainerUtil.newConcurrentMap<String, BeforeRunTaskProvider<*>>()
+      for (provider in BeforeRunTaskProvider.EXTENSION_POINT_NAME.getExtensions(project)) {
+        result.put(provider.id.toString(), provider)
+      }
+      return result
     }
-    result
   }
 
   internal val eventPublisher: RunManagerListener
     get() = project.messageBus.syncPublisher(RunManagerListener.TOPIC)
 
   init {
-    initializeConfigurationTypes(ConfigurationType.CONFIGURATION_TYPE_EP.extensions)
+    initializeConfigurationTypes(ConfigurationType.CONFIGURATION_TYPE_EP.extensionList)
     project.messageBus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
       override fun rootsChanged(event: ModuleRootEvent) {
         selectedConfiguration?.let {
@@ -155,7 +159,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   }
 
   // separate method needed for tests
-  fun initializeConfigurationTypes(factories: Array<ConfigurationType>) {
+  fun initializeConfigurationTypes(factories: List<ConfigurationType>) {
     val types = factories.toMutableList()
     types.sortBy { it.displayName }
     types.add(UnknownConfigurationType.INSTANCE)
@@ -187,7 +191,10 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   }
 
   override fun dispose() {
-    lock.write { templateIdToConfiguration.clear() }
+    lock.write {
+      iconCache.clear()
+      templateIdToConfiguration.clear()
+    }
   }
 
   override fun getConfig(): RunManagerConfig = _config
@@ -498,6 +505,8 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       templateIdToConfiguration.clear()
       listManager.idToSettings.clear()
       recentlyUsedTemporaries.clear()
+
+      stringIdToBeforeRunProvider.drop()
     }
     workspaceSchemeManager.reload()
     projectSchemeManager.reload()
@@ -522,11 +531,11 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     }
 
     val nameGenerator = UniqueNameGenerator()
-    workspaceSchemeManagerProvider.load(parentNode) {
-      var schemeKey: String? = it.getAttributeValue("name")
+    workspaceSchemeManagerProvider.load(parentNode) { element ->
+      var schemeKey: String? = element.getAttributeValue("name")
       if (schemeKey == "<template>" || schemeKey == null) {
         // scheme name must be unique
-        it.getAttributeValue("type")?.let {
+        element.getAttributeValue("type")?.let {
           if (schemeKey == null) {
             schemeKey = "<template>"
           }
@@ -534,7 +543,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
         }
       }
       else if (schemeKey != null) {
-        val typeId = it.getAttributeValue("type")
+        val typeId = element.getAttributeValue("type")
         if (typeId == null) {
           LOG.warn("typeId is null for '${schemeKey}'")
         }
@@ -546,7 +555,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
         schemeKey = nameGenerator.generateUniqueName("Unnamed")
       }
       else {
-        schemeKey = "${schemeKey!!}, factoryName: ${it.getAttributeValue("factoryName", "")}"
+        schemeKey = "${schemeKey!!}, factoryName: ${element.getAttributeValue("factoryName", "")}"
         nameGenerator.addExistingName(schemeKey!!)
       }
       schemeKey!!
@@ -640,7 +649,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   fun clearAll() {
     clear(true)
     idToType.clear()
-    initializeConfigurationTypes(emptyArray())
+    initializeConfigurationTypes(emptyList())
   }
 
   private fun clear(allConfigurations: Boolean) {
@@ -715,7 +724,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     if (element != null) {
       for (methodElement in element.getChildren(OPTION)) {
         val key = methodElement.getAttributeValue(NAME_ATTR)
-        val provider = stringIdToBeforeRunProvider.getOrPut(key) { UnknownBeforeRunTaskProvider(key) }
+        val provider = stringIdToBeforeRunProvider.value.getOrPut(key) { UnknownBeforeRunTaskProvider(key) }
         val beforeRunTask = provider.createTask(configuration) ?: continue
         if (beforeRunTask is PersistentStateComponent<*>) {
           // for PersistentStateComponent we don't write default value for enabled, so, set it to true explicitly
@@ -843,6 +852,10 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     return icon
   }
 
+  fun isInvalidInCache(settings: RunnerAndConfigurationSettings): Boolean {
+    return iconCache.isInvalid(settings.uniqueID)
+  }
+
   fun getConfigurationById(id: String): RunnerAndConfigurationSettings? = lock.read { idToSettings.get(id) }
 
   override fun findConfigurationByName(name: String?): RunnerAndConfigurationSettings? {
@@ -874,12 +887,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     return result ?: emptyList()
   }
 
-  override fun getBeforeRunTasks(configuration: RunConfiguration): List<BeforeRunTask<*>> {
-    return when (configuration) {
-      is WrappingRunConfiguration<*> -> getBeforeRunTasks(configuration.peer)
-      else -> configuration.beforeRunTasks
-    }
-  }
+  override fun getBeforeRunTasks(configuration: RunConfiguration) = doGetBeforeRunTasks(configuration)
 
   fun shareConfiguration(settings: RunnerAndConfigurationSettings, value: Boolean) {
     if (settings.isShared == value) {
@@ -1021,9 +1029,13 @@ private inline fun Collection<RunnerAndConfigurationSettings>.forEachManaged(han
   }
 }
 
-fun getBeforeRunTasks(configuration: RunConfiguration): List<BeforeRunTask<*>> {
+internal fun doGetBeforeRunTasks(configuration: RunConfiguration): List<BeforeRunTask<*>> {
   return when (configuration) {
-    is WrappingRunConfiguration<*> -> getBeforeRunTasks(configuration.peer)
+    is WrappingRunConfiguration<*> -> doGetBeforeRunTasks(configuration.peer)
     else -> configuration.beforeRunTasks
   }
+}
+
+internal fun RunConfiguration.cloneBeforeRunTasks() {
+  beforeRunTasks = doGetBeforeRunTasks(this).mapSmart { it.clone() }
 }

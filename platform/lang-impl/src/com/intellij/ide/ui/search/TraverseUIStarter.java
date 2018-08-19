@@ -36,6 +36,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -160,7 +161,7 @@ public class TraverseUIStarter extends ApplicationStarterEx {
     }
   }
 
-  private static void collectOptions(SearchableOptionsRegistrar registrar, Set<OptionDescription> options, String text, String path) {
+  private static void collectOptions(SearchableOptionsRegistrar registrar, Set<OptionDescription> options, @NotNull String text, String path) {
     for (String word : registrar.getProcessedWordsWithoutStemming(text)) {
       options.add(new OptionDescription(word, text, path));
     }
@@ -172,7 +173,7 @@ public class TraverseUIStarter extends ApplicationStarterEx {
     writeOptions(configurableElement, result);
   }
 
-  private static Set<OptionDescription> wordsToOptionDescriptors(Set<String> optionsPath) {
+  private static Set<OptionDescription> wordsToOptionDescriptors(@NotNull Set<String> optionsPath) {
     SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();
     Set<OptionDescription> result = new TreeSet<>();
     for (String opt : optionsPath) {

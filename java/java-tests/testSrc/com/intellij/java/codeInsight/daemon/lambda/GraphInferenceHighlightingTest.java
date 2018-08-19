@@ -166,6 +166,7 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     }
   }
 
+  public void testNameConflictBetweenFreshVariables() { doTest(); }
   public void testCreateFreshVariablesOnlyForWildcardPlacesDuringReturnTypeProcessing() { doTest(); }
   public void testCapturedConversionDuringDirectSuperCheck() { doTest(); }
   //public void _testResolutionOrderForVariableCycles() { doTest(); }
@@ -192,11 +193,12 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
   public void testSameNamedFreshVariables() { doTest(); }
   public void testEnsureOrderOfFreshVariablesWhenCaptureNonProperTypes() { doTest(); }
   public void testFreshVariablesBounds() { doTest(); }
+  public void testRawInIntersection() { doTest(); }
 
   public void testApplicabilityCheckFailsExpressionTypeCheckPasses() {
     doTest();
   }
-
+  public void testNotInferredVarShouldNotBeUsedForInferenceJava10() { doTest(); }
   public void testTopLevelParentNoParameters() {
     doTest();
   }

@@ -89,7 +89,7 @@ public class MatchPatchPaths {
                                    @NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress> result) {
     for (FilePatch patch : newOrWithoutMatches) {
       String afterName = patch.getAfterName();
-      final String[] strings = afterName != null ? afterName.replace('\\', '/').split("/") : ArrayUtil.EMPTY_STRING_ARRAY;
+      final String[] strings = getPathParts(afterName);
       FileBaseMatch best = null;
       boolean bestIsUnique = true;
       for (int i = strings.length - 2; i >= 0; --i) {
@@ -178,7 +178,7 @@ public class MatchPatchPaths {
       final Collection<VirtualFile> files = new ArrayList<>(findFilesFromIndex(directoryDetector, fileName));
       // for directories outside the project scope but under version control
       if (patch.getBeforeName() != null && patch.getBeforeName().startsWith("..")) {
-        final VirtualFile relativeFile = VfsUtil.findRelativeFile(myBaseDir, patch.getBeforeName().replace('\\', '/').split("/"));
+        final VirtualFile relativeFile = VfsUtil.findRelativeFile(myBaseDir, getPathParts(patch.getBeforeName()));
         if (relativeFile != null) {
           files.add(relativeFile);
         }
@@ -338,22 +338,41 @@ public class MatchPatchPaths {
   }
 
   private boolean variantMatchedToProjectDir(@NotNull AbstractFilePatchInProgress variant) {
-    return variant.getCurrentStrip() == 0 && myBaseDir.equals(variant.getBase());
+    if (variant.getCurrentStrip() == 0) {
+      return myBaseDir.equals(variant.getBase());
+    }
+
+    int upDirCount = 0;
+    VirtualFile base = myBaseDir;
+
+    for (String part : getPathParts(variant.getOriginalBeforePath())) {
+      if (!part.equals("..")) break;
+
+      upDirCount++;
+      if (base != null) base = base.getParent();
+    }
+
+    return upDirCount == variant.getCurrentStrip() &&
+           base != null && base.equals(variant.getBase());
   }
 
   @Nullable
   private static FileBaseMatch compareNames(final String beforeName, final VirtualFile file) {
     if (beforeName == null) return null;
-    final String[] parts = beforeName.replace('\\', '/').split("/");
+    final String[] parts = getPathParts(beforeName);
     return compareNamesImpl(parts, file.getParent(), parts.length - 2);
+  }
+
+  @NotNull
+  private static String[] getPathParts(@Nullable String relativePath) {
+    if (relativePath == null) return ArrayUtil.EMPTY_STRING_ARRAY;
+    return relativePath.replace('\\', '/').split("/");
   }
 
   @Nullable
   private static FileBaseMatch compareNamesImpl(String[] parts, VirtualFile parent, int idx) {
-    while ((parent != null) && (idx >= 0)) {
-      if (!parent.getName().equals(parts[idx])) {
-        return new FileBaseMatch(parent, idx + 1);
-      }
+    while (parent != null && idx >= 0 &&
+           parent.getName().equals(parts[idx])) {
       parent = parent.getParent();
       --idx;
     }

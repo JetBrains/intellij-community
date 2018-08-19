@@ -19,10 +19,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author max
@@ -46,6 +43,8 @@ public class RedundantCastUtil {
 
   public static boolean isCastRedundant (PsiTypeCastExpression typeCast) {
     PsiElement parent = typeCast.getParent();
+    PsiExpression operand = typeCast.getOperand();
+    if (operand != null && operand.getType() != null && operand.getType().equals(typeCast.getType())) return true;
     while(parent instanceof PsiParenthesizedExpression) parent = parent.getParent();
     if (parent instanceof PsiExpressionList) parent = parent.getParent();
     if (parent instanceof PsiReferenceExpression) parent = parent.getParent();
@@ -241,7 +240,7 @@ public class RedundantCastUtil {
       PsiReferenceExpression methodExpr = methodCall.getMethodExpression();
       PsiExpression qualifier = methodExpr.getQualifierExpression();
       if (!(qualifier instanceof PsiParenthesizedExpression)) return;
-      PsiExpression operand = ((PsiParenthesizedExpression)qualifier).getExpression();
+      PsiExpression operand = PsiUtil.skipParenthesizedExprDown(qualifier);
       if (!(operand instanceof PsiTypeCastExpression)) return;
       PsiTypeCastExpression typeCast = (PsiTypeCastExpression)operand;
       PsiExpression castOperand = typeCast.getOperand();
@@ -264,7 +263,8 @@ public class RedundantCastUtil {
         if (!(expressionFromText instanceof PsiMethodCallExpression)) return;
         PsiMethodCallExpression newCall = (PsiMethodCallExpression)expressionFromText;
         PsiExpression newQualifier = newCall.getMethodExpression().getQualifierExpression();
-        PsiExpression newOperand = ((PsiTypeCastExpression)((PsiParenthesizedExpression)newQualifier).getExpression()).getOperand();
+        PsiTypeCastExpression newCast = Objects.requireNonNull((PsiTypeCastExpression)PsiUtil.skipParenthesizedExprDown(newQualifier));
+        PsiExpression newOperand = Objects.requireNonNull(newCast.getOperand());
         newQualifier.replace(newOperand);
 
         final JavaResolveResult newResult = newCall.getMethodExpression().advancedResolve(false);
@@ -543,7 +543,8 @@ public class RedundantCastUtil {
                  (expr.getType() instanceof PsiPrimitiveType || expr instanceof PsiFunctionalExpression)) {
           return;
         } else if (expr instanceof PsiLambdaExpression || expr instanceof PsiMethodReferenceExpression) {
-          if (parent instanceof PsiParenthesizedExpression && parent.getParent() instanceof PsiReferenceExpression) {
+          if (parent instanceof PsiParenthesizedExpression &&
+              PsiUtil.skipParenthesizedExprUp(parent.getParent()) instanceof PsiReferenceExpression) {
             return;
           }
 

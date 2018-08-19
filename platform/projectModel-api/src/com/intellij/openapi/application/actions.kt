@@ -3,6 +3,7 @@ package com.intellij.openapi.application
 
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.Ref
 import java.lang.reflect.InvocationTargetException
 import javax.swing.SwingUtilities
 
@@ -31,23 +32,23 @@ fun <T> invokeAndWaitIfNeed(modalityState: ModalityState? = null, runnable: () -
       return runnable()
     }
     else {
-      var result: T? = null
       try {
-        SwingUtilities.invokeAndWait { result = runnable() }
+        val resultRef = Ref.create<T>()
+        SwingUtilities.invokeAndWait { resultRef.set(runnable()) }
+        return resultRef.get()
       }
       catch (e: InvocationTargetException) {
         throw e.cause ?: e
       }
-      return result!!
     }
   }
   else if (app.isDispatchThread) {
     return runnable()
   }
   else {
-    var result: T? = null
-    app.invokeAndWait({ result = runnable() }, modalityState ?: ModalityState.defaultModalityState())
-    return result!!
+    val resultRef = Ref.create<T>()
+    app.invokeAndWait({ resultRef.set(runnable()) }, modalityState ?: ModalityState.defaultModalityState())
+    return resultRef.get()
   }
 }
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,6 +12,7 @@ import com.intellij.util.lang.UrlClassLoader;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,12 +30,9 @@ public class NST {
   static boolean isSupportedOS() { return SystemInfo.isMac && SystemInfo.isOsVersionAtLeast(MIN_OS_VERSION); }
 
   static {
-    final Application app = ApplicationManager.getApplication();
-    final boolean isUIPresented = app != null && !app.isHeadlessEnvironment() && !app.isUnitTestMode() && !app.isCommandLine();
     final boolean isRegistryKeyEnabled = Registry.is(ourRegistryKeyTouchbar, false);
     if (
-      isUIPresented
-      && isSupportedOS()
+      isSupportedOS()
       && isRegistryKeyEnabled
       && Utils.isTouchBarServerRunning()
     ) {
@@ -61,9 +60,7 @@ public class NST {
       } else {
         LOG.error("nst library wasn't loaded");
       }
-    } else if (!isUIPresented)
-      LOG.debug("unit-test mode, skip nst loading");
-    else if (!isSupportedOS())
+    } else if (!isSupportedOS())
       LOG.info("OS doesn't support touchbar, skip nst loading");
     else if (!isRegistryKeyEnabled)
       LOG.info("registry key '" + ourRegistryKeyTouchbar + "' is disabled, skip nst loading");
@@ -86,7 +83,7 @@ public class NST {
   public static boolean isAvailable() { return ourNSTLibrary != null; }
 
   public static ID createTouchBar(String name, NSTLibrary.ItemCreator creator, String escID) {
-    return ourNSTLibrary.createTouchBar(name, creator, escID);
+    return ourNSTLibrary.createTouchBar(name, creator, escID); // creates autorelease-pool internally
   }
 
   public static void releaseTouchBar(ID tbObj) {
@@ -98,12 +95,11 @@ public class NST {
   }
 
   public static void selectItemsToShow(ID tbObj, String[] ids, int count) {
-    _assertIsDispatchThread();
-    ourNSTLibrary.selectItemsToShow(tbObj, ids, count);
+    ourNSTLibrary.selectItemsToShow(tbObj, ids, count); // creates autorelease-pool internally
   }
 
   public static void setPrincipal(ID tbObj, String uid) {
-    ourNSTLibrary.setPrincipal(tbObj, uid);
+    ourNSTLibrary.setPrincipal(tbObj, uid); // creates autorelease-pool internally
   }
 
   public static ID createButton(String uid,
@@ -116,7 +112,7 @@ public class NST {
     final byte[] raster4ByteRGBA = _getRaster(img);
     final int w = _getImgW(img);
     final int h = _getImgH(img);
-    return ourNSTLibrary.createButton(uid, buttWidth, buttFlags, text, raster4ByteRGBA, w, h, action);
+    return ourNSTLibrary.createButton(uid, buttWidth, buttFlags, text, raster4ByteRGBA, w, h, action); // called from AppKit, uses per-event autorelease-pool
   }
 
   public static ID createPopover(String uid,
@@ -129,16 +125,16 @@ public class NST {
     final byte[] raster4ByteRGBA = _getRaster(img);
     final int w = _getImgW(img);
     final int h = _getImgH(img);
-    return ourNSTLibrary.createPopover(uid, itemWidth, text, raster4ByteRGBA, w, h, tbObjExpand, tbObjTapAndHold);
+    return ourNSTLibrary.createPopover(uid, itemWidth, text, raster4ByteRGBA, w, h, tbObjExpand, tbObjTapAndHold); // called from AppKit, uses per-event autorelease-pool
   }
 
   public static ID createScrubber(String uid, int itemWidth, List<TBItemScrubber.ItemData> items) {
     final NSTLibrary.ScrubberItemData[] vals = _makeItemsArray2(items);
-    return ourNSTLibrary.createScrubber(uid, itemWidth, vals, vals != null ? vals.length : 0);
+    return ourNSTLibrary.createScrubber(uid, itemWidth, vals, vals != null ? vals.length : 0); // called from AppKit, uses per-event autorelease-pool
   }
 
   public static ID createGroupItem(String uid, ID[] items, int count) {
-    return ourNSTLibrary.createGroupItem(uid, items, count);
+    return ourNSTLibrary.createGroupItem(uid, items, count); // called from AppKit, uses per-event autorelease-pool
   }
 
   public static void updateButton(ID buttonObj,
@@ -148,12 +144,19 @@ public class NST {
                                   String text,
                                   Icon icon,
                                   NSTLibrary.Action action) {
-    _assertIsDispatchThread();
     final BufferedImage img = _getImg4ByteRGBA(icon);
     final byte[] raster4ByteRGBA = _getRaster(img);
     final int w = _getImgW(img);
     final int h = _getImgH(img);
-    ourNSTLibrary.updateButton(buttonObj, updateOptions, buttWidth, buttonFlags, text, raster4ByteRGBA, w, h, action);
+    ourNSTLibrary.updateButton(buttonObj, updateOptions, buttWidth, buttonFlags, text, raster4ByteRGBA, w, h, action); // creates autorelease-pool internally
+  }
+
+  public static void setArrowImage(ID buttObj, @Nullable Icon arrow) {
+    final BufferedImage img = _getImg4ByteRGBA(arrow);
+    final byte[] raster4ByteRGBA = _getRaster(img);
+    final int w = _getImgW(img);
+    final int h = _getImgH(img);
+    ourNSTLibrary.setArrowImage(buttObj, raster4ByteRGBA, w, h); // creates autorelease-pool internally
   }
 
   public static void updatePopover(ID popoverObj,
@@ -161,18 +164,16 @@ public class NST {
                                    String text,
                                    Icon icon,
                                    ID tbObjExpand, ID tbObjTapAndHold) {
-    _assertIsDispatchThread();
     final BufferedImage img = _getImg4ByteRGBA(icon);
     final byte[] raster4ByteRGBA = _getRaster(img);
     final int w = _getImgW(img);
     final int h = _getImgH(img);
-    ourNSTLibrary.updatePopover(popoverObj, itemWidth, text, raster4ByteRGBA, w, h, tbObjExpand, tbObjTapAndHold);
+    ourNSTLibrary.updatePopover(popoverObj, itemWidth, text, raster4ByteRGBA, w, h, tbObjExpand, tbObjTapAndHold); // creates autorelease-pool internally
   }
 
   public static void updateScrubber(ID scrubObj, int itemWidth, List<TBItemScrubber.ItemData> items) {
-    _assertIsDispatchThread();
     final NSTLibrary.ScrubberItemData[] vals = _makeItemsArray2(items);
-    ourNSTLibrary.updateScrubber(scrubObj, itemWidth, vals, vals != null ? vals.length : 0);
+    ourNSTLibrary.updateScrubber(scrubObj, itemWidth, vals, vals != null ? vals.length : 0); // creates autorelease-pool internally
   }
 
   private static NSTLibrary.ScrubberItemData[] _makeItemsArray2(List<TBItemScrubber.ItemData> items) {
@@ -250,23 +251,16 @@ public class NST {
   }
 
   private static BufferedImage _getImg4ByteRGBA(Icon icon) {
-    if (icon == null)
+    if (icon == null || icon.getIconHeight() == 0)
       return null;
 
     // according to https://developer.apple.com/macos/human-interface-guidelines/touch-bar/touch-bar-icons-and-images/
     // icons generally should not exceed 44px in height (36px for circular icons)
     // Ideal icon size	    36px × 36px (18pt × 18pt @2x)
     // Maximum icon size    44px × 44px (22pt × 22pt @2x)
-    final int newIconW = 40;
-    final float fMulX = newIconW/(float)icon.getIconWidth();
-    return _getImg4ByteRGBA(icon, fMulX);
-  }
 
-  private static void _assertIsDispatchThread() {
     final Application app = ApplicationManager.getApplication();
-    if (app != null)
-      app.assertIsDispatchThread();
-    else
-      assert SwingUtilities.isEventDispatchThread();
+    final float fMulX = app != null && UISettings.getInstance().getPresentationMode() ? 40.f/icon.getIconHeight() : (icon.getIconHeight() < 24 ? 40.f/16 : 44.f/icon.getIconHeight());
+    return _getImg4ByteRGBA(icon, fMulX);
   }
 }

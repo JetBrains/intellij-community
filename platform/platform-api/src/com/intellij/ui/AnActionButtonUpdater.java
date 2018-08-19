@@ -16,10 +16,12 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
  */
+@FunctionalInterface
 public interface AnActionButtonUpdater {
-  boolean isEnabled(AnActionEvent e);
+  boolean isEnabled(@NotNull AnActionEvent e);
 }

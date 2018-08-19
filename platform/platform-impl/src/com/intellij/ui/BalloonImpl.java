@@ -5,7 +5,6 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.openapi.MnemonicHelper;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -50,6 +49,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+
+import static com.intellij.util.ui.UIUtil.useSafely;
 
 public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   /**
@@ -580,14 +581,14 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       myAwtActivityListener, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.KEY_EVENT_MASK);
 
     if (ApplicationManager.getApplication() != null) {
-      ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
-        @Override
-        public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-          if (myHideOnAction && !(action instanceof HintManagerImpl.ActionToIgnore)) {
-            hide();
+      ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(AnActionListener.TOPIC, new AnActionListener() {
+          @Override
+          public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
+            if (myHideOnAction && !(action instanceof HintManagerImpl.ActionToIgnore)) {
+              hide();
+            }
           }
-        }
-      }, this);
+        });
     }
 
     if (myHideOnLinkClick) {
@@ -604,7 +605,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   }
 
   /**
-   * Figure out the component to focus inside the {@link myContent} field.
+   * Figure out the component to focus inside the {@link #myContent} field.
    */
   @NotNull
   private Component getContentToFocus() {
@@ -1698,13 +1699,14 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       @SuppressWarnings("UndesirableClassUsage")
       BufferedImage image = UIUtil.createImage(g, getWidth(), getHeight(),
                                                BufferedImage.TYPE_INT_RGB);//new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
-      Graphics2D imageGraphics = image.createGraphics();
-      //noinspection UseJBColor
-      imageGraphics.setColor(new Color(myFillColor.getRGB())); // create a copy to remove alpha
-      imageGraphics.fillRect(0, 0, getWidth(), getHeight());
+      useSafely(image.createGraphics(), imageGraphics -> {
+        //noinspection UseJBColor
+        imageGraphics.setColor(new Color(myFillColor.getRGB())); // create a copy to remove alpha
+        imageGraphics.fillRect(0, 0, getWidth(), getHeight());
 
-      super.paintChildren(imageGraphics);
-      imageGraphics.dispose();
+        super.paintChildren(imageGraphics);
+      });
+
       Graphics2D g2d = (Graphics2D)g.create();
       try {
         if (UIUtil.isJreHiDPI(g2d)) {
@@ -1807,10 +1809,10 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       if (myImage != null) return;
 
       myImage = UIUtil.createImage(myComp, getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
-      Graphics2D imageGraphics = (Graphics2D)myImage.getGraphics();
-      myBalloon.myPosition.paintComponent(myBalloon, shapeBounds, imageGraphics, pointTarget);
-      paintChildrenImpl(imageGraphics);
-      imageGraphics.dispose();
+      useSafely(myImage.getGraphics(), imageGraphics -> {
+        myBalloon.myPosition.paintComponent(myBalloon, shapeBounds, imageGraphics, pointTarget);
+        paintChildrenImpl(imageGraphics);
+      });
     }
 
 
@@ -2014,7 +2016,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   }
 
   public boolean isAnimationEnabled() {
-    return myAnimationEnabled && myAnimationCycle > 0 && !RemoteDesktopService.isAnimationDisabled();
+    return myAnimationEnabled && myAnimationCycle > 0 && !RemoteDesktopService.isRemoteSession();
   }
 
   public boolean isBlockClicks() {

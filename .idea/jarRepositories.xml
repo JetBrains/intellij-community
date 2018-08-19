@@ -12,9 +12,9 @@
       <option name="url" value="https://jetbrains.bintray.com/intellij-third-party-dependencies" />
     </remote-repository>
     <remote-repository>
-      <option name="id" value="jcenter"/>
-      <option name="name" value="JCenter on Bintray"/>
-      <option name="url" value="https://jcenter.bintray.com"/>
+      <option name="id" value="jcenter" />
+      <option name="name" value="JCenter on Bintray" />
+      <option name="url" value="https://jcenter.bintray.com" />
     </remote-repository>
     <remote-repository>
       <option name="id" value="18c13506-e994-44b4-9eef-4e6ec3262e15" />
@@ -30,6 +30,16 @@
       <option name="id" value="groovy" />
       <option name="name" value="Groovy Bintray Repository" />
       <option name="url" value="https://dl.bintray.com/groovy/maven/" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="jitpack" />
+      <option name="name" value="jitpack" />
+      <option name="url" value="https://jitpack.io" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="8e0b07ff-f7c3-4a77-a62b-ab464737b720" />
+      <option name="name" value="8e0b07ff-f7c3-4a77-a62b-ab464737b720" />
+      <option name="url" value="https://jetbrains.bintray.com/jediterm/" />
     </remote-repository>
   </component>
 </project>

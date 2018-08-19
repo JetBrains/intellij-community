@@ -2,7 +2,10 @@
 package com.intellij.xdebugger.memory.component;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.xmlb.annotations.XCollection;
@@ -16,15 +19,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @State(name = "InstancesTracker", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class InstancesTracker extends AbstractProjectComponent
-  implements PersistentStateComponent<InstancesTracker.MyState> {
-  private final EventDispatcher<InstancesTrackerListener> myDispatcher =
-    EventDispatcher.create(InstancesTrackerListener.class);
+public class InstancesTracker implements PersistentStateComponent<InstancesTracker.MyState> {
+  private final EventDispatcher<InstancesTrackerListener> myDispatcher = EventDispatcher.create(InstancesTrackerListener.class);
   private MyState myState = new MyState();
-
-  public InstancesTracker(Project project) {
-    super(project);
-  }
 
   public static InstancesTracker getInstance(@NotNull Project project) {
     return project.getComponent(InstancesTracker.class);

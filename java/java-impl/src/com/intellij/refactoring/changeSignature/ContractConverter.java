@@ -2,13 +2,10 @@
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.InferredAnnotationsManagerImpl;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.MutationSignature;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiMethod;
 import one.util.streamex.IntStreamEx;
@@ -21,7 +18,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-final class ContractConverter {
+public final class ContractConverter {
   private ContractConverter() {}
 
   @Nullable
@@ -30,16 +27,16 @@ final class ContractConverter {
   }
 
   @Nullable
-  static PsiAnnotation convertContract(@NotNull PsiMethod method,
-                                       @NotNull String[] oldParameterNames,
-                                       @NotNull JavaParameterInfo[] newParameters) throws ContractConversionException {
+  public static PsiAnnotation convertContract(@NotNull PsiMethod method,
+                                              @NotNull String[] oldParameterNames,
+                                              @NotNull JavaParameterInfo[] newParameters) throws ContractConversionException {
     PsiAnnotation annotation = JavaMethodContractUtil.findContractAnnotation(method);
     if (annotation == null || AnnotationUtil.isInferredAnnotation(annotation)) return null;
     if (AnnotationUtil.isExternalAnnotation(annotation)) {
       throw new ContractConversionException("automatic update of external annotation is not supported");
     }
     if (annotation.getOwner() != method.getModifierList()) {
-      throw new ContractConversionException("annotation is inherited from base method");
+      throw new ContractInheritedException();
     }
     if (annotation.findDeclaredAttributeValue(MutationSignature.ATTR_MUTATES) != null) {
       throw new ContractConversionException("it contains mutation contract");
@@ -62,11 +59,7 @@ final class ContractConverter {
       result.add(convertContract(contract, newToOldIndex, oldToNewIndex, oldParameterNames));
     }
     if (result.equals(contracts)) return annotation;
-    boolean pure = Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(annotation, "pure"));
-    String mutates = StringUtil.notNullize(AnnotationUtil.getStringAttributeValue(annotation, MutationSignature.ATTR_MUTATES));
-    String resultValue = StreamEx.of(result).joining("; ");
-    Project project = method.getProject();
-    return InferredAnnotationsManagerImpl.createContractAnnotation(project, pure, resultValue, mutates);
+    return JavaMethodContractUtil.updateContract(annotation, result);
   }
 
   @NotNull
@@ -114,9 +107,15 @@ final class ContractConverter {
     return oldToNewIndex;
   }
 
-  static final class ContractConversionException extends Exception {
+  public static class ContractConversionException extends Exception {
     ContractConversionException(String message) {
       super(message);
+    }
+  }
+
+  public static class ContractInheritedException extends ContractConversionException {
+    ContractInheritedException() {
+      super("annotation is inherited from base method");
     }
   }
 }

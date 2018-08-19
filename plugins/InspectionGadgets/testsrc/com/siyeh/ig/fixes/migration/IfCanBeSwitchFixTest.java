@@ -47,4 +47,5 @@ public class IfCanBeSwitchFixTest extends IGQuickFixesTestCase {
   public void testPolyadic() { doTest(); }
   public void testStringEquality() { doTest(); }
   public void testObjectsEquals() { doTest();}
+  public void testEnumEquals() { doTest();}
 }

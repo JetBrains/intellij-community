@@ -134,6 +134,7 @@ public class JavaBuilderUtil {
    * {@link #registerFilesToCompile(CompileContext, Collection)}, or
    * {@link #registerSuccessfullyCompiled(CompileContext, Collection)} instead.
    */
+  @Deprecated
   public static boolean updateMappings(CompileContext context,
                                        final Mappings delta,
                                        DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,

@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -38,7 +39,7 @@ public class TabsAlphabeticalModeSwitcher extends ToggleAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     final int place = UISettings.getInstance().getEditorTabPlacement();
     e.getPresentation().setEnabled(UISettings.getInstance().getScrollTabLayoutInEditor()

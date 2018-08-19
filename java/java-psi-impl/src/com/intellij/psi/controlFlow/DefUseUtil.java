@@ -397,7 +397,7 @@ public class DefUseUtil {
 
     RefsDefs(@NotNull PsiCodeBlock body) throws AnalysisCanceledException {
       this.body = body;
-      flow = ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body, ourPolicy);
+      flow = ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body, ourPolicy, false, false);
       instructions = flow.getInstructions();
     }
 
@@ -429,6 +429,9 @@ public class DefUseUtil {
         final Set<PsiElement> res = new THashSet<>();
         class Inner {
           private void traverse(int index) {
+            if (visited[index]) {
+              return;
+            }
             visited [index] = true;
 
             if (defs ()) {

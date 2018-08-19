@@ -5,9 +5,11 @@ package com.intellij.openapi.vcs.roots;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -99,7 +101,7 @@ public class VcsRootDetectorTest extends VcsRootBaseTest {
     String linkedRoot = "linked_root";
     File linkedRootDir = new File(testRoot, linkedRoot);
     assertTrue(new File(linkedRootDir, DOT_MOCK).mkdirs());
-    myRootModel.addContentEntry(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(linkedRootDir));
+    PsiTestUtil.addContentRoot(myRootModule, LocalFileSystem.getInstance().refreshAndFindFileByIoFile(linkedRootDir));
 
     Collection<VcsRoot> roots = detect(projectRoot);
 
@@ -123,6 +125,7 @@ public class VcsRootDetectorTest extends VcsRootBaseTest {
 
   // This is a test of performance optimization via limitation: don't scan deep though the whole VFS, i.e. don't detect deep roots
   public void testDontScanDeeperThan2LevelsBelowAContentRoot() throws IOException {
+    Registry.get("vcs.root.detector.folder.depth").setValue(2, getTestRootDisposable());
     VcsRootConfiguration vcsRootConfiguration =
       new VcsRootConfiguration().vcsRoots("community", "content_root/lev1", "content_root2/lev1/lev2/lev3")
         .contentRoots("content_root");
@@ -149,7 +152,7 @@ public class VcsRootDetectorTest extends VcsRootBaseTest {
   }
 
   private void markAsExcluded(@NotNull VirtualFile dir) {
-    ModuleRootModificationUtil.updateExcludedFolders(myRootModel.getModule(), dir, emptyList(), singletonList(dir.getUrl()));
+    ModuleRootModificationUtil.updateExcludedFolders(myRootModule, dir, emptyList(), singletonList(dir.getUrl()));
   }
 
   @NotNull

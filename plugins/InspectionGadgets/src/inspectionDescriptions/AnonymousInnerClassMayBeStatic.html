@@ -1,7 +1,7 @@
 <html>
 <body>
 Reports any anonymous classes which may safely be made into a named <b>static</b> inner class.
-An anonymous class may be <b>static</b> if it doesn't explicitly reference its enclosing instance or local variables from its surrounding method.
+An anonymous class may be <b>static</b> if it doesn't explicitly reference its enclosing instance or local classes from its surrounding method.
 <p>
 A <b>static</b> inner class does not keep an implicit reference to its enclosing instance.
 This prevents a common cause of memory leaks and uses less memory per instance of the class.

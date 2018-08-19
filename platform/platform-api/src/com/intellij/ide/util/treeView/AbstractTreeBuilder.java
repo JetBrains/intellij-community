@@ -231,6 +231,7 @@ public class AbstractTreeBuilder implements Disposable {
    * @see #queueUpdateFrom
    * @deprecated
    */
+  @Deprecated
   public void updateFromRoot() {
     queueUpdate();
   }
@@ -238,15 +239,6 @@ public class AbstractTreeBuilder implements Disposable {
   public void initRootNode() {
     AbstractTreeUi ui = getUi();
     if (ui != null) ui.initRootNode();
-  }
-
-  /**
-   * @see #queueUpdateFrom
-   * @deprecated
-   */
-  @NotNull
-  protected ActionCallback updateFromRootCB() {
-    return queueUpdate();
   }
 
   @NotNull
@@ -292,6 +284,7 @@ public class AbstractTreeBuilder implements Disposable {
    * @param element
    * @deprecated
    */
+  @Deprecated
   public void buildNodeForElement(Object element) {
     AbstractTreeUi ui = getUi();
     if (ui != null) ui.buildNodeForElement(element);
@@ -302,6 +295,7 @@ public class AbstractTreeBuilder implements Disposable {
    * @return
    * @deprecated
    */
+  @Deprecated
   @Nullable
   public DefaultMutableTreeNode getNodeForElement(Object element) {
     AbstractTreeUi ui = getUi();
@@ -340,15 +334,6 @@ public class AbstractTreeBuilder implements Disposable {
     return getUi() == null;
   }
 
-  /**
-   * @param node
-   * @deprecated
-   */
-  public final void updateSubtree(final DefaultMutableTreeNode node) {
-    AbstractTreeUi ui = getUi();
-    if (ui != null) ui.updateSubtree(node, true);
-  }
-
   public final boolean wasRootNodeInitialized() {
     AbstractTreeUi ui = getUi();
     return ui != null && ui.wasRootNodeInitialized();
@@ -357,24 +342,6 @@ public class AbstractTreeBuilder implements Disposable {
   public final boolean isNodeBeingBuilt(final TreePath path) {
     AbstractTreeUi ui = getUi();
     return ui != null && ui.isNodeBeingBuilt(path);
-  }
-
-  /**
-   * @param path
-   * @deprecated
-   */
-  public final void buildNodeForPath(final Object[] path) {
-    AbstractTreeUi ui = getUi();
-    if (ui != null) ui.buildNodeForPath(path);
-  }
-
-  /**
-   * @deprecated
-   */
-  @Nullable
-  public final DefaultMutableTreeNode getNodeForPath(final Object[] path) {
-    AbstractTreeUi ui = getUi();
-    return ui == null ? null : ui.getNodeForPath(path);
   }
 
   @Nullable

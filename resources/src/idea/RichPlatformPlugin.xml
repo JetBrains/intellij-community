@@ -149,6 +149,7 @@
     <applicationService serviceImplementation="com.intellij.debugger.settings.NodeRendererSettings"/>
     <applicationService serviceImplementation="com.intellij.debugger.settings.ViewsGeneralSettings"/>
     <applicationService serviceImplementation="com.intellij.debugger.settings.DebuggerSettings"/>
+    <projectService serviceImplementation="com.intellij.debugger.settings.DebuggerProjectSettings"/>
     <applicationService serviceImplementation="com.intellij.debugger.settings.ThreadsViewSettings"/>
 
     <applicationService serviceInterface="com.intellij.packaging.elements.PackagingElementFactory"
@@ -300,8 +301,6 @@
 
     <moduleConfigurationEditorProvider implementation="com.intellij.openapi.roots.ui.configuration.DefaultModuleEditorsProvider" order="first"/>
 
-    <statistics.usagesCollector implementation="com.intellij.openapi.roots.ui.configuration.libraries.impl.LibraryUsageCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.compiler.CompilerSettingsUsageCollector"/>
     <postStartupActivity implementation="com.intellij.compiler.impl.CleanStaleModuleOutputsActivity"/>
 
     <keymapExtension implementation="com.intellij.debugger.actions.DebuggerKeymapExtension"/>

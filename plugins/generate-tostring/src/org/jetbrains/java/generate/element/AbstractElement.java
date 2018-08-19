@@ -57,10 +57,12 @@ public abstract class AbstractElement implements Element {
     private boolean isNotNull;
     private boolean isNestedArray;
 
+  @Override
   public String getName() {
         return name;
     }
 
+    @Override
     public boolean isArray() {
         return isArray;
     }
@@ -69,67 +71,82 @@ public abstract class AbstractElement implements Element {
     public boolean isNestedArray() {
       return isNestedArray;
     }
-  
+
     public void setNestedArray(boolean isNestedArray) {
       this.isNestedArray = isNestedArray;
     }
-  
+
+    @Override
     public boolean isCollection() {
         return isCollection;
     }
 
+    @Override
     public boolean isMap() {
         return isMap;
     }
 
+    @Override
     public boolean isPrimitive() {
         return isPrimitive;
     }
 
+    @Override
     public boolean isString() {
         return isString;
     }
 
+    @Override
     public boolean isPrimitiveArray() {
         return isPrimitiveArray;
     }
 
+    @Override
     public boolean isObjectArray() {
         return isObjectArray;
     }
 
+    @Override
     public boolean isNumeric() {
         return isNumeric;
     }
 
+    @Override
     public boolean isObject() {
         return isObject;
     }
 
+    @Override
     public boolean isDate() {
         return isDate;
     }
 
+    @Override
     public boolean isSet() {
         return isSet;
     }
 
+    @Override
     public boolean isList() {
         return isList;
     }
 
+    @Override
     public boolean isStringArray() {
         return isStringArray;
     }
 
+    @Override
     public boolean isCalendar() {
         return isCalendar;
     }
 
+    @Override
     public String getTypeName() {
         return typeName;
     }
 
+    @Override
     public String getTypeQualifiedName() {
         return typeQualifiedName;
     }
@@ -138,11 +155,12 @@ public abstract class AbstractElement implements Element {
     public String getType() {
       return type;
     }
-  
+
     public void setType(String type) {
       this.type = type;
     }
-  
+
+    @Override
     public boolean isBoolean() {
         return isBoolean;
     }

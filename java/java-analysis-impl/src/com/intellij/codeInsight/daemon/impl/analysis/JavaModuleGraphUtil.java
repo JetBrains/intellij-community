@@ -5,7 +5,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
@@ -15,6 +17,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.graph.DFSTBuilder;
@@ -23,13 +26,12 @@ import com.intellij.util.graph.GraphGenerator;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static com.intellij.psi.util.PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT;
 
 public class JavaModuleGraphUtil {
   private JavaModuleGraphUtil() { }
@@ -48,14 +50,55 @@ public class JavaModuleGraphUtil {
 
   @Nullable
   public static PsiJavaModule findDescriptorByFile(@Nullable VirtualFile file, @NotNull Project project) {
-    return ModuleHighlightUtil.getModuleDescriptor(file, project);
+    if (file == null) return null;
+
+    ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
+    if (index.isInLibrary(file)) {
+      VirtualFile root = index.getClassRootForFile(file);
+      if (root != null) {
+        VirtualFile descriptorFile = JavaModuleNameIndex.descriptorFile(root);
+        if (descriptorFile != null) {
+          PsiFile psiFile = PsiManager.getInstance(project).findFile(descriptorFile);
+          if (psiFile instanceof PsiJavaFile) {
+            return ((PsiJavaFile)psiFile).getModuleDeclaration();
+          }
+        }
+        else if (root.getFileSystem() instanceof JarFileSystem && "jar".equalsIgnoreCase(root.getExtension())) {
+          return LightJavaModule.getModule(PsiManager.getInstance(project), root);
+        }
+      }
+    }
+    else {
+      return findDescriptorByModule(index.getModuleForFile(file), index.isInTestSourceContent(file));
+    }
+
+    return null;
+  }
+
+  @Nullable
+  public static PsiJavaModule findDescriptorByModule(@Nullable Module module, boolean inTests) {
+    if (module != null) {
+      JavaSourceRootType rootType = inTests ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
+      List<VirtualFile> files = ModuleRootManager.getInstance(module).getSourceRoots(rootType).stream()
+        .map(root -> root.findChild(PsiJavaModule.MODULE_INFO_FILE))
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
+      if (files.size() == 1) {
+        PsiFile psiFile = PsiManager.getInstance(module.getProject()).findFile(files.get(0));
+        if (psiFile instanceof PsiJavaFile) {
+          return ((PsiJavaFile)psiFile).getModuleDeclaration();
+        }
+      }
+    }
+
+    return null;
   }
 
   @Nullable
   public static Collection<PsiJavaModule> findCycle(@NotNull PsiJavaModule module) {
     Project project = module.getProject();
     List<Set<PsiJavaModule>> cycles = CachedValuesManager.getManager(project).getCachedValue(project, () ->
-      Result.create(findCycles(project), OUT_OF_CODE_BLOCK_MODIFICATION_COUNT));
+      Result.create(findCycles(project), cacheDependency()));
     return ContainerUtil.find(cycles, set -> set.contains(module));
   }
 
@@ -78,6 +121,11 @@ public class JavaModuleGraphUtil {
   @Nullable
   public static PsiJavaModule findOrigin(@NotNull PsiJavaModule module, @NotNull String packageName) {
     return getRequiresGraph(module).findOrigin(module, packageName);
+  }
+
+  @SuppressWarnings("deprecation")
+  private static Object cacheDependency() {
+    return PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT;
   }
 
   /*
@@ -133,7 +181,7 @@ public class JavaModuleGraphUtil {
   private static RequiresGraph getRequiresGraph(PsiJavaModule module) {
     Project project = module.getProject();
     return CachedValuesManager.getManager(project).getCachedValue(project, () ->
-      Result.create(buildRequiresGraph(project), OUT_OF_CODE_BLOCK_MODIFICATION_COUNT));
+      Result.create(buildRequiresGraph(project), cacheDependency()));
   }
 
   /*
@@ -143,6 +191,7 @@ public class JavaModuleGraphUtil {
   private static RequiresGraph buildRequiresGraph(Project project) {
     MultiMap<PsiJavaModule, PsiJavaModule> relations = MultiMap.create();
     Set<String> transitiveEdges = ContainerUtil.newTroveSet();
+
     JavaModuleNameIndex index = JavaModuleNameIndex.getInstance();
     GlobalSearchScope scope = ProjectScope.getAllScope(project);
     for (String key : index.getAllKeys(project)) {
@@ -179,7 +228,7 @@ public class JavaModuleGraphUtil {
     private final Graph<PsiJavaModule> myGraph;
     private final Set<String> myTransitiveEdges;
 
-    public RequiresGraph(Graph<PsiJavaModule> graph, Set<String> transitiveEdges) {
+    private RequiresGraph(Graph<PsiJavaModule> graph, Set<String> transitiveEdges) {
       myGraph = graph;
       myTransitiveEdges = transitiveEdges;
     }
@@ -254,7 +303,7 @@ public class JavaModuleGraphUtil {
     private final MultiMap<N, N> myEdges;
     private final boolean myInbound;
 
-    public ChameleonGraph(MultiMap<N, N> edges, boolean inbound) {
+    private ChameleonGraph(MultiMap<N, N> edges, boolean inbound) {
       myNodes = new THashSet<>();
       edges.entrySet().forEach(e -> {
         myNodes.add(e.getKey());
@@ -264,16 +313,19 @@ public class JavaModuleGraphUtil {
       myInbound = inbound;
     }
 
+    @NotNull
     @Override
     public Collection<N> getNodes() {
       return myNodes;
     }
 
+    @NotNull
     @Override
     public Iterator<N> getIn(N n) {
       return myInbound ? myEdges.get(n).iterator() : Collections.emptyIterator();
     }
 
+    @NotNull
     @Override
     public Iterator<N> getOut(N n) {
       return myInbound ? Collections.emptyIterator() : myEdges.get(n).iterator();

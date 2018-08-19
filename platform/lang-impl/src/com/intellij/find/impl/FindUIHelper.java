@@ -86,6 +86,7 @@ public class FindUIHelper implements Disposable {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         ui.saveSettings();
+        myModel.copyFrom(FindManager.getInstance(myProject).getFindInProjectModel());
         FindUtil.initStringToFindWithSelection(myModel, e.getData(CommonDataKeys.EDITOR));
         myModel.setReplaceState(replace);
         ui.initByModel();

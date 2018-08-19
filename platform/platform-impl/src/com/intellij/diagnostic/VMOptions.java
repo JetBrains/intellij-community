@@ -180,33 +180,10 @@ public class VMOptions {
 
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated use {@link #readOption(MemoryKind, boolean)} (to be removed in IDEA 2018) */
+  @Deprecated
   public static int readXmx() {
     return readOption(MemoryKind.HEAP, true);
   }
 
-  /** @deprecated use {@link #readOption(MemoryKind, boolean)} (to be removed in IDEA 2018) */
-  public static int readMaxPermGen() {
-    return readOption(MemoryKind.PERM_GEN, true);
-  }
-
-  /** @deprecated use {@link #readOption(MemoryKind, boolean)} (to be removed in IDEA 2018) */
-  public static int readCodeCache() {
-    return readOption(MemoryKind.CODE_CACHE, true);
-  }
-
-  /** @deprecated use {@link #writeOption(MemoryKind, int)} (to be removed in IDEA 2018) */
-  public static void writeXmx(int value) {
-    writeOption(MemoryKind.HEAP, value);
-  }
-
-  /** @deprecated use {@link #writeOption(MemoryKind, int)} (to be removed in IDEA 2018) */
-  public static void writeMaxPermGen(int value) {
-    writeOption(MemoryKind.PERM_GEN, value);
-  }
-
-  /** @deprecated use {@link #writeOption(MemoryKind, int)} (to be removed in IDEA 2018) */
-  public static void writeCodeCache(int value) {
-    writeOption(MemoryKind.CODE_CACHE, value);
-  }
   //</editor-fold>
 }

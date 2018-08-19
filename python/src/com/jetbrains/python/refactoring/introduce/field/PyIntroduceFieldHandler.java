@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring.introduce.field;
 
 import com.intellij.lang.ASTNode;
@@ -64,6 +50,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     super(new IntroduceFieldValidator(), RefactoringBundle.message("introduce.field.title"));
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     final IntroduceOperation operation = new IntroduceOperation(project, editor, file, null);
     operation.addAvailableInitPlace(InitPlace.CONSTRUCTOR);
@@ -121,9 +108,9 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     ResolvingVisitor visitor = new ResolvingVisitor(scope);
     initializer.accept(visitor);
     return visitor.hasLocalScopeDependencies;
-    
+
   }
-  
+
   private static class ResolvingVisitor extends PyRecursiveElementVisitor {
     private boolean hasLocalScopeDependencies = false;
     private final ScopeOwner myScope;
@@ -156,7 +143,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
   @Nullable
   @Override
   protected PsiElement addDeclaration(@NotNull PsiElement expression, @NotNull PsiElement declaration, @NotNull IntroduceOperation operation) {
-    final PsiElement expr = expression instanceof PyClass ? expression : expression.getParent();    
+    final PsiElement expr = expression instanceof PyClass ? expression : expression.getParent();
     PyClass clazz = PyUtil.getContainingClassOrSelf(expr);
     assert clazz != null;
     final Project project = clazz.getProject();
@@ -189,7 +176,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     }
     final PyFunctionBuilder builder = new PyFunctionBuilder(PythonUnitTestUtil.TESTCASE_SETUP_NAME, clazz);
     builder.parameter(PyNames.CANONICAL_SELF);
-    PyFunction setUp = builder.buildFunction(clazz.getProject(), LanguageLevel.getDefault());
+    PyFunction setUp = builder.buildFunction();
     final PyStatementList statements = clazz.getStatementList();
     final PsiElement anchor = statements.getFirstChild();
     setUp = (PyFunction)statements.addBefore(setUp, anchor);
@@ -286,6 +273,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
       myDeclaration = declaration;
     }
 
+    @Override
     public PyStatement fun(String self_name) {
       if (PyNames.CANONICAL_SELF.equals(self_name)) {
         return (PyStatement)myDeclaration;

@@ -12,7 +12,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.PathUtil;
+import com.intellij.util.Processor;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import gnu.trove.THashSet;
@@ -21,13 +24,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.util.*;
 
 public class VfsUtil extends VfsUtilCore {
@@ -183,6 +185,11 @@ public class VfsUtil extends VfsUtilCore {
   public static VirtualFile findFileByURL(@NotNull URL url) {
     String vfsUrl = convertFromUrl(url);
     return VirtualFileManager.getInstance().findFileByUrl(vfsUrl);
+  }
+
+  @Nullable
+  public static VirtualFile findFile(@NotNull Path path, boolean refreshIfNeeded) {
+    return findFileByIoFile(path.toFile(), refreshIfNeeded);
   }
 
   @Nullable
@@ -506,12 +513,14 @@ public class VfsUtil extends VfsUtilCore {
   //<editor-fold desc="Deprecated stuff.">
 
   /** @deprecated use {@link VfsUtilCore#toIdeaUrl(String)} to be removed in IDEA 2019 */
+  @Deprecated
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static String toIdeaUrl(@NotNull String url) {
     return toIdeaUrl(url, true);
   }
 
   /** @deprecated to be removed in IDEA 2018 */
+  @Deprecated
   public static VirtualFile copyFileRelative(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir, @NotNull String relativePath) throws IOException {
     StringTokenizer tokenizer = new StringTokenizer(relativePath,"/");
     VirtualFile curDir = toDir;
@@ -532,6 +541,7 @@ public class VfsUtil extends VfsUtilCore {
   }
 
   /** @deprecated incorrect when {@code src} is a directory; use {@link #findRelativePath(VirtualFile, VirtualFile, char)} instead */
+  @Deprecated
   @Nullable
   public static String getPath(@NotNull VirtualFile src, @NotNull VirtualFile dst, char separatorChar) {
     final VirtualFile commonAncestor = getCommonAncestor(src, dst);
@@ -551,6 +561,7 @@ public class VfsUtil extends VfsUtilCore {
   }
 
   /** @deprecated incorrect, use {@link #toUri(String)} if needed (to be removed in IDEA 2019 */
+  @Deprecated
   @NotNull
   public static URI toUri(@NotNull VirtualFile file) {
     String path = file.getPath();

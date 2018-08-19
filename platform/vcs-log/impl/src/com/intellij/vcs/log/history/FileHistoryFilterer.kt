@@ -17,7 +17,6 @@ package com.intellij.vcs.log.history
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
@@ -28,14 +27,17 @@ import com.intellij.openapi.vcs.history.VcsFileRevisionEx
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.*
-import com.intellij.vcs.log.data.*
+import com.intellij.vcs.log.data.CompressedRefs
+import com.intellij.vcs.log.data.DataPack
+import com.intellij.vcs.log.data.VcsLogBranchFilterImpl
+import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.data.index.VcsLogModifiableIndex
 import com.intellij.vcs.log.graph.GraphCommit
 import com.intellij.vcs.log.graph.GraphCommitImpl
 import com.intellij.vcs.log.graph.PermanentGraph
 import com.intellij.vcs.log.graph.VisibleGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
-import com.intellij.vcs.log.graph.impl.facade.ReachableNodes
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.impl.HashImpl
@@ -46,6 +48,7 @@ import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.CommitCountStage
 import com.intellij.vcs.log.visible.VcsLogFilterer
 import com.intellij.vcs.log.visible.VcsLogFiltererImpl
+import com.intellij.vcs.log.visible.VcsLogFiltererImpl.matchesNothing
 import com.intellij.vcs.log.visible.VisiblePack
 import com.intellij.vcsUtil.VcsUtil
 
@@ -173,29 +176,23 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
                                 filters: VcsLogFilterCollection): VisiblePack {
       val matchingHeads = vcsLogFilterer.getMatchingHeads(dataPack.refsModel, setOf(root), filters)
       val data = indexDataGetter.buildFileNamesData(filePath)
-      var visibleGraph = vcsLogFilterer.createVisibleGraph(dataPack, sortType, matchingHeads, data.commits)
 
-      var pathsMap: Map<Int, FilePath>? = null
-      if (visibleGraph.visibleCommitCount > 0) {
-        if (visibleGraph is VisibleGraphImpl<*>) {
-          val row = getCurrentRow(dataPack, visibleGraph, data)
-          if (row >= 0) {
-            val refiner = FileHistoryRefiner(visibleGraph as VisibleGraphImpl<Int>, data)
-            if (refiner.refine(row, filePath)) {
-              // creating a vg is the most expensive task, so trying to avoid that when unnecessary
-              visibleGraph = vcsLogFilterer.createVisibleGraph(dataPack, sortType, matchingHeads, refiner.pathsForCommits.keys)
-              pathsMap = refiner.pathsForCommits
-            }
-          }
-        }
+      val permanentGraph = dataPack.permanentGraph
+      if (permanentGraph !is PermanentGraphImpl) {
+        val visibleGraph = vcsLogFilterer.createVisibleGraph(dataPack, sortType, matchingHeads, data.commits)
+        return FileHistoryVisiblePack(dataPack, visibleGraph, false, filters, data.buildPathsMap())
       }
 
-      if (pathsMap == null) {
-        pathsMap = data.buildPathsMap()
+      if (matchesNothing(matchingHeads) || data.isEmpty) {
+        return VisiblePack.EMPTY
       }
+
+      val commit = (hash ?: getHead(dataPack))?.let { storage.getCommitIndex(it, root) }
+      val historyBuilder = FileHistoryBuilder(commit, filePath, data)
+      val visibleGraph = permanentGraph.createVisibleGraph(sortType, matchingHeads, data.commits, historyBuilder)
 
       if (!filePath.isDirectory) reindexFirstCommitsIfNeeded(visibleGraph)
-      return FileHistoryVisiblePack(dataPack, visibleGraph, false, filters, pathsMap)
+      return FileHistoryVisiblePack(dataPack, visibleGraph, false, filters, historyBuilder.pathsMap)
     }
 
     private fun reindexFirstCommitsIfNeeded(graph: VisibleGraph<Int>) {
@@ -204,24 +201,12 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
         val liteLinearGraph = LinearGraphUtils.asLiteLinearGraph((graph as VisibleGraphImpl<*>).linearGraph)
         for (row in 0 until liteLinearGraph.nodesCount()) {
           // checking if commit is a root commit (which means file was added or renamed there)
-          if (liteLinearGraph.getNodes(row, LiteLinearGraph.NodeFilter.DOWN).isEmpty()) {
+          if (liteLinearGraph.getNodes(row, LiteLinearGraph.NodeFilter.DOWN).isEmpty()
+              && index is VcsLogModifiableIndex) {
             index.reindexWithRenames(graph.getRowInfo(row).commit, root)
           }
         }
       }
-    }
-
-    private fun getCurrentRow(pack: DataPack,
-                              visibleGraph: VisibleGraph<Int>,
-                              fileIndexData: FileNamesData): Int {
-      val permanentGraph = pack.permanentGraph
-      if (permanentGraph is PermanentGraphImpl<*>) {
-        val hash = hash ?: getHead(pack)
-        if (hash != null) {
-          return findAncestorRowAffectingFile(permanentGraph as PermanentGraphImpl<Int>, hash, visibleGraph, fileIndexData)
-        }
-      }
-      return 0
     }
 
     private fun getHead(pack: DataPack): Hash? {
@@ -234,42 +219,23 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
       }
       return null
     }
-
-    private fun findAncestorRowAffectingFile(permanentGraph: PermanentGraphImpl<Int>,
-                                             hash: Hash,
-                                             visibleGraph: VisibleGraph<Int>,
-                                             fileNamesData: FileNamesData): Int {
-      val result = Ref<Int>()
-
-      val commitsInfo = permanentGraph.permanentCommitsInfo
-      val reachableNodes = ReachableNodes(LinearGraphUtils.asLiteLinearGraph(permanentGraph.linearGraph))
-      reachableNodes.walk(setOf(commitsInfo.getNodeId(storage.getCommitIndex(hash, root))), true) { currentNode ->
-        val id = commitsInfo.getCommitId(currentNode)
-        if (fileNamesData.affects(id, filePath)) {
-          result.set(currentNode)
-          false // stop walk, we have found it
-        }
-        else {
-          true // continue walk
-        }
-      }
-
-      if (!result.isNull) {
-        return visibleGraph.getVisibleRowIndex(commitsInfo.getCommitId(result.get()))!!
-      }
-
-      return -1
-    }
   }
 
+  private fun getStructureFilter(filters: VcsLogFilterCollection) = filters.detailsFilters.singleOrNull() as? VcsLogStructureFilter
+
   private fun getFilePath(filters: VcsLogFilterCollection): FilePath? {
-    val filter = filters.detailsFilters.singleOrNull() as? VcsLogStructureFilter ?: return null
+    val filter = getStructureFilter(filters) ?: return null
     return filter.files.singleOrNull()
   }
 
   private fun getHash(filters: VcsLogFilterCollection): Hash? {
-    val revisionFilter = filters.get(VcsLogFilterCollection.REVISION_FILTER) ?: return null
-    return revisionFilter.heads.singleOrNull()?.hash
+    val fileHistoryFilter = getStructureFilter(filters) as? VcsLogFileHistoryFilter
+    if (fileHistoryFilter != null) {
+      return fileHistoryFilter.hash
+    }
+
+    val revisionFilter = filters.get(VcsLogFilterCollection.REVISION_FILTER)
+    return revisionFilter?.heads?.singleOrNull()?.hash
   }
 
   companion object {
@@ -280,15 +246,14 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
                       revision: Hash?,
                       root: VirtualFile,
                       showAllBranches: Boolean): VcsLogFilterCollection {
-      val fileFilter = VcsLogStructureFilterImpl(setOf(path))
+      val fileFilter = VcsLogFileHistoryFilter(path, revision)
 
-      if (revision != null) {
-        val revisionFilter = VcsLogRevisionFilterImpl.fromCommit(CommitId(revision, root))
-        return VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder(fileFilter, revisionFilter).build()
+      val revisionFilter = when {
+        showAllBranches -> null
+        revision != null -> VcsLogRevisionFilterImpl.fromCommit(CommitId(revision, root))
+        else -> VcsLogBranchFilterImpl.fromBranch("HEAD")
       }
-
-      val branchFilter = if (showAllBranches) null else VcsLogBranchFilterImpl.fromBranch("HEAD")
-      return VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder(fileFilter, branchFilter).build()
+      return VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder(fileFilter, revisionFilter).build()
     }
   }
 }
