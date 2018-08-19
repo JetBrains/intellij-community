@@ -27,7 +27,7 @@ public class DumpFocusableComponentHierarchyAction extends AnAction implements D
 
     CopyOnWriteArrayList<String> dump = new CopyOnWriteArrayList<>();
 
-    dump.add("Active Window: " +  activeWindow.getClass().getName());
+    dump.add("Active Window: " +  (activeWindow == null ? "null" : activeWindow.getClass().getName()));
     dump.add("Focused Window: " + (focusedWindow == null ? "null" : focusedWindow.getClass().getName()));
     dump.add("Focused Component: " + (focusedComponent == null ? "null" : focusedComponent.getClass().getName()));
 
