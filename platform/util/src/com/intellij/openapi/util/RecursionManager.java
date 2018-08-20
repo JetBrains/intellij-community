@@ -347,8 +347,8 @@ public class RecursionManager {
   }
 
   @TestOnly
-  public static void assertOnRecursionPrevention(@NotNull Disposable parentDisposable, boolean enableAssert) {
-    ourAssertOnPrevention = enableAssert;
+  public static void assertOnRecursionPrevention(@NotNull Disposable parentDisposable) {
+    ourAssertOnPrevention = true;
     Disposer.register(parentDisposable, new Disposable() {
       @Override
       public void dispose() {
@@ -359,7 +359,7 @@ public class RecursionManager {
   }
 
   @TestOnly
-  public static void assertOnRecursionPrevention(@NotNull Disposable parentDisposable) {
-    assertOnRecursionPrevention(parentDisposable, true);
+  public static void disableAssertOnRecursionPrevention() {
+    ourAssertOnPrevention = false;
   }
 }
