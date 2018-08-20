@@ -40,11 +40,9 @@
         "/editorScheme.xml"
       ]
     },
-
     "ui": {
       "type": "object"
     },
-
     "background": {
       "type": "object",
       "required": ["image"],
@@ -93,7 +91,6 @@
         }
       }
     },
-
     "icons": {
       "type": "object",
       "patternProperties": {
@@ -107,6 +104,53 @@
             "^/": {
               "type": "string",
               "pattern": "^/"
+            }
+          }
+        }
+      },
+      "properties": {
+        "ColorPalette": {
+          "type": "object",
+          "properties": {
+            "Action.Red": {
+              "type": "string",
+              "pattern": "#[0-9a-fA-F]{6}"
+            },
+            "Action.Red.Dark": {
+              "type": "string",
+              "pattern": "#[0-9a-fA-F]{6}"
+            },
+            "Action.Yellow": {
+              "type": "string",
+              "pattern": "#[0-9a-fA-F]{6}"
+            },
+            "Action.Yellow.Dark": {
+              "type": "string",
+              "pattern": "#[0-9a-fA-F]{6}"
+            },
+            "Action.Green": {
+              "type": "string",
+              "pattern": "#[0-9a-fA-F]{6}"
+            },
+            "Action.Green.Dark": {
+              "type": "string",
+              "pattern": "#[0-9a-fA-F]{6}"
+            },
+            "Action.Blue": {
+              "type": "string",
+              "pattern": "#[0-9a-fA-F]{6}"
+            },
+            "Action.Blue.Dark": {
+              "type": "string",
+              "pattern": "#[0-9a-fA-F]{6}"
+            },
+            "Action.Grey": {
+              "type": "string",
+              "pattern": "#[0-9a-fA-F]{6}"
+            },
+            "Action.Grey.Dark": {
+              "type": "string",
+              "pattern": "#[0-9a-fA-F]{6}"
             }
           }
         }
