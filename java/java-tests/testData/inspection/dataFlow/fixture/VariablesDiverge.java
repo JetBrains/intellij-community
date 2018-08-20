@@ -8,7 +8,7 @@ class Some {
       while (parent != null) {
         parent = parent.getParentFile();
       }
-      System.out.println(parent.<warning descr="Method invocation 'getName' will produce 'java.lang.NullPointerException'">getName</warning>());
+      System.out.println(parent.<warning descr="Method invocation 'getName' will produce 'NullPointerException'">getName</warning>());
     }
     System.out.println(file.getName());
   }

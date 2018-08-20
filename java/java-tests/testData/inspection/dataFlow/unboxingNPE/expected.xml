@@ -13,7 +13,7 @@
     </class>
   </method>
   <problem_class>Constant conditions &amp; exceptions</problem_class>
-  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;java.lang.NullPointerException&lt;/code&gt;.</description>
+  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;NullPointerException&lt;/code&gt;.</description>
 </problem>
 
 
@@ -31,7 +31,7 @@
     </class>
   </method>
   <problem_class>Constant conditions &amp; exceptions</problem_class>
-  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;java.lang.NullPointerException&lt;/code&gt;.</description>
+  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;NullPointerException&lt;/code&gt;.</description>
 </problem>
 
 
@@ -49,7 +49,7 @@
     </class>
   </method>
   <problem_class>Constant conditions &amp; exceptions</problem_class>
-  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;java.lang.NullPointerException&lt;/code&gt;.</description>
+  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;NullPointerException&lt;/code&gt;.</description>
 </problem>
 
 
@@ -67,7 +67,7 @@
     </class>
   </method>
   <problem_class>Constant conditions &amp; exceptions</problem_class>
-  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;java.lang.NullPointerException&lt;/code&gt;.</description>
+  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;NullPointerException&lt;/code&gt;.</description>
 </problem>
 
 
@@ -85,7 +85,7 @@
     </class>
   </method>
   <problem_class>Constant conditions &amp; exceptions</problem_class>
-  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;java.lang.NullPointerException&lt;/code&gt;.</description>
+  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;NullPointerException&lt;/code&gt;.</description>
 </problem>
 
 
@@ -103,7 +103,7 @@
     </class>
   </method>
   <problem_class>Constant conditions &amp; exceptions</problem_class>
-  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;java.lang.NullPointerException&lt;/code&gt;.</description>
+  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;NullPointerException&lt;/code&gt;.</description>
 </problem>
 
 
@@ -121,7 +121,7 @@
     </class>
   </method>
   <problem_class>Constant conditions &amp; exceptions</problem_class>
-  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;java.lang.NullPointerException&lt;/code&gt;.</description>
+  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;NullPointerException&lt;/code&gt;.</description>
 </problem>
 
 
@@ -139,7 +139,7 @@
     </class>
   </method>
   <problem_class>Constant conditions &amp; exceptions</problem_class>
-  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;java.lang.NullPointerException&lt;/code&gt;.</description>
+  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;NullPointerException&lt;/code&gt;.</description>
 </problem>
 
 
@@ -157,7 +157,7 @@
     </class>
   </method>
   <problem_class>Constant conditions &amp; exceptions</problem_class>
-  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;java.lang.NullPointerException&lt;/code&gt;.</description>
+  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;NullPointerException&lt;/code&gt;.</description>
 </problem>
 
 
@@ -175,7 +175,7 @@
     </class>
   </method>
   <problem_class>Constant conditions &amp; exceptions</problem_class>
-  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;java.lang.NullPointerException&lt;/code&gt;.</description>
+  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;NullPointerException&lt;/code&gt;.</description>
 </problem>
 
 
@@ -193,7 +193,7 @@
     </class>
   </method>
   <problem_class>Constant conditions &amp; exceptions</problem_class>
-  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;java.lang.NullPointerException&lt;/code&gt;.</description>
+  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;NullPointerException&lt;/code&gt;.</description>
 </problem>
 
 
@@ -211,7 +211,7 @@
     </class>
   </method>
   <problem_class>Constant conditions &amp; exceptions</problem_class>
-  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;java.lang.NullPointerException&lt;/code&gt;.</description>
+  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;NullPointerException&lt;/code&gt;.</description>
 </problem>
 
 
@@ -229,7 +229,7 @@
     </class>
   </method>
   <problem_class>Constant conditions &amp; exceptions</problem_class>
-  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;java.lang.NullPointerException&lt;/code&gt;.</description>
+  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;NullPointerException&lt;/code&gt;.</description>
 </problem>
 
 
@@ -247,7 +247,7 @@
     </class>
   </method>
   <problem_class>Constant conditions &amp; exceptions</problem_class>
-  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;java.lang.NullPointerException&lt;/code&gt;.</description>
+  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;NullPointerException&lt;/code&gt;.</description>
 </problem>
 
 
@@ -265,7 +265,7 @@
     </class>
   </method>
   <problem_class>Constant conditions &amp; exceptions</problem_class>
-  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;java.lang.NullPointerException&lt;/code&gt;.</description>
+  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;NullPointerException&lt;/code&gt;.</description>
 </problem>
 
 
@@ -283,7 +283,7 @@
     </class>
   </method>
   <problem_class>Constant conditions &amp; exceptions</problem_class>
-  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;java.lang.NullPointerException&lt;/code&gt;.</description>
+  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;NullPointerException&lt;/code&gt;.</description>
 </problem>
 
 
@@ -301,7 +301,7 @@
     </class>
   </method>
   <problem_class>Constant conditions &amp; exceptions</problem_class>
-  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;java.lang.NullPointerException&lt;/code&gt;.</description>
+  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;NullPointerException&lt;/code&gt;.</description>
 </problem>
 
 
@@ -319,7 +319,7 @@
     </class>
   </method>
   <problem_class>Constant conditions &amp; exceptions</problem_class>
-  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;java.lang.NullPointerException&lt;/code&gt;.</description>
+  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;NullPointerException&lt;/code&gt;.</description>
 </problem>
 
 
@@ -337,7 +337,7 @@
     </class>
   </method>
   <problem_class>Constant conditions &amp; exceptions</problem_class>
-  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;java.lang.NullPointerException&lt;/code&gt;.</description>
+  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;NullPointerException&lt;/code&gt;.</description>
 </problem>
 
 
@@ -355,7 +355,7 @@
     </class>
   </method>
   <problem_class>Constant conditions &amp; exceptions</problem_class>
-  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;java.lang.NullPointerException&lt;/code&gt;.</description>
+  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;NullPointerException&lt;/code&gt;.</description>
 </problem>
 
 
@@ -373,7 +373,7 @@
     </class>
   </method>
   <problem_class>Constant conditions &amp; exceptions</problem_class>
-  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;java.lang.NullPointerException&lt;/code&gt;.</description>
+  <description>Unboxing of &lt;code&gt;i&lt;/code&gt; may produce &lt;code&gt;NullPointerException&lt;/code&gt;.</description>
 </problem>
 
   <problem>

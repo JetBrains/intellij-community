@@ -6,7 +6,7 @@ abstract class Node {
 
   Node getRoot() {
     Node node = this;
-    while(node.<warning descr="Method invocation 'getName' may produce 'java.lang.NullPointerException'">getName</warning>() == null) {
+    while(node.<warning descr="Method invocation 'getName' may produce 'NullPointerException'">getName</warning>() == null) {
       node = node.getParent();
     }
     return node;
@@ -26,7 +26,7 @@ class GetUnknownTest {
 
     if (isApplicable) {
       // Dubious warning: message.getHeader() is not annotated, but assigned to nullable field; should we consider the result as nullable?
-      System.out.println(field.<warning descr="Method invocation 'hashCode' may produce 'java.lang.NullPointerException'">hashCode</warning>());
+      System.out.println(field.<warning descr="Method invocation 'hashCode' may produce 'NullPointerException'">hashCode</warning>());
     }
   }
 

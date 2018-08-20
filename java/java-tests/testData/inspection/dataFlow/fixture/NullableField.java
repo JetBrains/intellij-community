@@ -18,6 +18,6 @@ class DDD {
   }
 
   int test() {
-    return new DDD().field.<warning descr="Method invocation 'hashCode' may produce 'java.lang.NullPointerException'">hashCode</warning>();
+    return new DDD().field.<warning descr="Method invocation 'hashCode' may produce 'NullPointerException'">hashCode</warning>();
   }
 }

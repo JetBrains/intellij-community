@@ -9,7 +9,7 @@ class Test {
 
   void m1() throws Exception {
     MyResourceProvider provider = null;
-    try (MyResource r = provider.<warning descr="Method invocation 'getResource' will produce 'java.lang.NullPointerException'">getResource</warning>()) {
+    try (MyResource r = provider.<warning descr="Method invocation 'getResource' will produce 'NullPointerException'">getResource</warning>()) {
       System.out.println(r);
     }
   }

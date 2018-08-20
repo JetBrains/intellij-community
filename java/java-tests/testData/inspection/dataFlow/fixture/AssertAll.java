@@ -11,7 +11,7 @@ public class AssertAll {
     String s4 = readNullable();
     Assertions.assertAll(
       () -> Assertions.assertNotNull(<warning descr="Argument 's1' might be null but passed to non-annotated parameter">s1</warning>),
-      () -> Assertions.assertTrue(s1.<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>().isEmpty()),
+      () -> Assertions.assertTrue(s1.<warning descr="Method invocation 'trim' may produce 'NullPointerException'">trim</warning>().isEmpty()),
       <warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>
     );
     Assertions.assertNotNull(<warning descr="Argument 's2' might be null but passed to non-annotated parameter">s2</warning>);
@@ -20,8 +20,8 @@ public class AssertAll {
       () -> Assertions.assertTrue(s1.trim().isEmpty()),
       () -> Assertions.assertTrue(s1.trim().isEmpty()),
       () -> Assertions.assertTrue(s2.trim().isEmpty()),
-      () -> Assertions.assertTrue(s3.<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>().isEmpty()),
-      () -> Assertions.assertTrue(s4.<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>().isEmpty())
+      () -> Assertions.assertTrue(s3.<warning descr="Method invocation 'trim' may produce 'NullPointerException'">trim</warning>().isEmpty()),
+      () -> Assertions.assertTrue(s4.<warning descr="Method invocation 'trim' may produce 'NullPointerException'">trim</warning>().isEmpty())
     );
     Assertions.assertAll(
       () -> Assertions.assertTrue(<warning descr="Result of 's1.trim().isEmpty()' is always 'true'">s1.trim().isEmpty()</warning>),

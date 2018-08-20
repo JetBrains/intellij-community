@@ -198,8 +198,8 @@ public class LongRangeBasics {
       System.out.println(s2.trim());
     }
     if(code == 0) {
-      System.out.println(s1.<warning descr="Method invocation 'trim' will produce 'java.lang.NullPointerException'">trim</warning>());
-      System.out.println(s2.<warning descr="Method invocation 'trim' will produce 'java.lang.NullPointerException'">trim</warning>());
+      System.out.println(s1.<warning descr="Method invocation 'trim' will produce 'NullPointerException'">trim</warning>());
+      System.out.println(s2.<warning descr="Method invocation 'trim' will produce 'NullPointerException'">trim</warning>());
     }
   }
 

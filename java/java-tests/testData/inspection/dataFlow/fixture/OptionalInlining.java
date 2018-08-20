@@ -56,7 +56,7 @@ public class OptionalInlining {
 
   void testDeref(Optional<String> opt) {
     if (opt == null) {
-      System.out.println(opt.<warning descr="Method invocation 'orElse' will produce 'java.lang.NullPointerException'">orElse</warning>("qq"));
+      System.out.println(opt.<warning descr="Method invocation 'orElse' will produce 'NullPointerException'">orElse</warning>("qq"));
     }
   }
 
@@ -124,7 +124,7 @@ public class OptionalInlining {
       // n instanceof Integer -> n is not null -> xyz was not null -> safe to dereference
       System.out.println(xyz.trim());
     }
-    xyz.<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>();
+    xyz.<warning descr="Method invocation 'trim' may produce 'NullPointerException'">trim</warning>();
     //opt.map(x -> x.isEmpty() ? "foo" : "bar").filter(x -> x.isEmpty()).ifPresent(x -> System.out.println(x));
   }
 
@@ -150,7 +150,7 @@ public class OptionalInlining {
       // n instanceof Integer -> n is not null -> xyz was not null -> safe to dereference
       System.out.println(xyz.trim());
     }
-    xyz.<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>();
+    xyz.<warning descr="Method invocation 'trim' may produce 'NullPointerException'">trim</warning>();
   }
 
   void testFlatMap(Optional<String> opt) {
@@ -227,7 +227,7 @@ public class OptionalInlining {
       .map(h -> h.s)
       .isPresent()</warning>;
 
-    opt.filter(h -> h.s == null).map(h -> h.s.<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>()).ifPresent(System.out::println);
+    opt.filter(h -> h.s == null).map(h -> h.s.<warning descr="Method invocation 'trim' may produce 'NullPointerException'">trim</warning>()).ifPresent(System.out::println);
   }
 
   private List<Integer> tryGetFromCache(List<String> keys, Map<String, Optional<Integer>> cache) {

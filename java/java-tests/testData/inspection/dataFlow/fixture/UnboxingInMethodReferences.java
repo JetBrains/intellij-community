@@ -7,7 +7,7 @@ class X {
     Integer get();
   }
   
-  I is = <warning descr="Use of 'X::m' would need unboxing which may produce 'java.lang.NullPointerException'">X::m</warning>;
+  I is = <warning descr="Use of 'X::m' would need unboxing which may produce 'NullPointerException'">X::m</warning>;
   J j = X::m;
 
   @org.jetbrains.annotations.Nullable

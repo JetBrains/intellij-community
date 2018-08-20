@@ -39,7 +39,7 @@ class TestNewObjects {
     if(ConstantHolder.X.str != null && ConstantHolder.X.str.isEmpty()) {
       System.out.println("ok");
     }
-    if(ConstantHolder.X.str != null && ConstantHolder.Y.str.<warning descr="Method invocation 'isEmpty' may produce 'java.lang.NullPointerException'">isEmpty</warning>()) {
+    if(ConstantHolder.X.str != null && ConstantHolder.Y.str.<warning descr="Method invocation 'isEmpty' may produce 'NullPointerException'">isEmpty</warning>()) {
       System.out.println("possible NPE");
     }
   }
@@ -69,7 +69,7 @@ class TestNewObjects {
       System.out.println(ConstantHolder.ARRAY[0].hashCode());
     }
     if(ConstantHolder.ARRAY2[0] != null) {
-      System.out.println(ConstantHolder.ARRAY[0].<warning descr="Method invocation 'hashCode' may produce 'java.lang.NullPointerException'">hashCode</warning>());
+      System.out.println(ConstantHolder.ARRAY[0].<warning descr="Method invocation 'hashCode' may produce 'NullPointerException'">hashCode</warning>());
     }
   }
 }
