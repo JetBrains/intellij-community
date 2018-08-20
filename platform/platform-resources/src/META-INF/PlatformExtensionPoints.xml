@@ -302,6 +302,7 @@
     <extensionPoint name="smartSelectProvider" interface="com.intellij.openapi.ide.SmartSelectProvider"/>
 
     <extensionPoint name="sshCredentialProvider" interface="com.intellij.remote.SshCredentialProvider"/>
+    <extensionPoint name="sshConfigurableProvider" interface="com.intellij.remote.SshConfigurableProvider"/>
 
     <extensionPoint name="experimentalFeature" beanClass="com.intellij.openapi.application.ExperimentalFeatureImpl" />
     <extensionPoint name="themeProvider" beanClass="com.intellij.ide.ui.UIThemeProvider">

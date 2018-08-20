@@ -401,6 +401,9 @@
       <configurable instance="com.intellij.javaee.XMLCatalogConfigurable" displayName="XML Catalog" id="xml.catalog"/>
     </projectConfigurable>
 
+    <!-- SSH -->
+    <projectConfigurable groupId="tools" id="ssh.servers" displayName="SSH Servers" instance="com.intellij.remote.SshServersConfigurable"/>
+
     <bundledKeymapProvider implementation="com.intellij.openapi.keymap.impl.DefaultBundledKeymaps"/>
 
     <keymapExtension implementation="com.intellij.ide.actions.ToolWindowKeymapExtension"/>
