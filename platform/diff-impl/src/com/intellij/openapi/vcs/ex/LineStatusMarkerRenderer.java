@@ -319,13 +319,19 @@ public abstract class LineStatusMarkerRenderer {
   }
 
   public static void paintSimpleRange(Graphics g, Editor editor, int line1, int line2, @Nullable Color color) {
-    Rectangle area = getMarkerArea(editor, line1, line2);
+    IntPair horizontalArea = getGutterArea(editor);
+    int x = horizontalArea.val1;
+    int endX = horizontalArea.val2;
+
+    int y = lineToY(editor, line1);
+    int endY = lineToY(editor, line2);
+
     Color borderColor = getGutterBorderColor(editor);
-    if (area.height != 0) {
-      paintRect((Graphics2D)g, color, borderColor, area.x, area.y, area.x + area.width, area.y + area.height);
+    if (endY != y) {
+      paintRect((Graphics2D)g, color, borderColor, x, y, endX, endY);
     }
     else {
-      paintTriangle((Graphics2D)g, color, borderColor, area.x, area.x + area.width, area.y);
+      paintTriangle((Graphics2D)g, color, borderColor, x, endX, y);
     }
   }
 
@@ -335,16 +341,6 @@ public abstract class LineStatusMarkerRenderer {
     int x = gutter.getLineMarkerFreePaintersAreaOffset() + 1; // leave 1px for brace highlighters
     int endX = gutter.getWhitespaceSeparatorOffset();
     return new IntPair(x, endX);
-  }
-
-  @NotNull
-  public static Rectangle getMarkerArea(@NotNull Editor editor, int line1, int line2) {
-    IntPair horizontalArea = getGutterArea(editor);
-    int x = horizontalArea.val1;
-    int endX = horizontalArea.val2;
-    int y = lineToY(editor, line1);
-    int endY = lineToY(editor, line2);
-    return new Rectangle(x, y, endX - x, endY - y);
   }
 
   public static boolean isInsideMarkerArea(@NotNull MouseEvent e) {
