@@ -682,7 +682,7 @@ public abstract class UsefulTestCase extends TestCase {
   public static <T> void assertOneOf(T value, @NotNull T... values) {
     boolean found = false;
     for (T v : values) {
-      if (value == v || value != null && value.equals(v)) {
+      if (Objects.equals(value, v)) {
         found = true;
       }
     }

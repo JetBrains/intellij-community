@@ -86,7 +86,7 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
 
   protected final void initCompiler() {
     try {
-      myCompilerTester = new CompilerTester(myProject, ContainerUtil.list(ModuleManager.getInstance(myProject).getModules()[0]), getTestRootDisposable());
+      myCompilerTester = new CompilerTester(myProject, ContainerUtil.list(ModuleManager.getInstance(myProject).getModules()[0]), myProject);
     }
     catch (Throwable e) {
       fail(e.getMessage());

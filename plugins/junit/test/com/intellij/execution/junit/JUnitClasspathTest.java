@@ -8,7 +8,6 @@ import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -80,8 +79,7 @@ public class JUnitClasspathTest extends JavaCodeInsightFixtureTestCase {
 
   @NotNull
   private CompilerTester createCompilerTester() throws Exception {
-    Project project = getProject();
-    return new CompilerTester(project, Arrays.asList(ModuleManager.getInstance(project).getModules()), getTestRootDisposable());
+    return new CompilerTester(myFixture, Arrays.asList(ModuleManager.getInstance(getProject()).getModules()));
   }
 
   public void testNoWorkingDirsFileWhenOnlyOneModuleExist() throws Exception {

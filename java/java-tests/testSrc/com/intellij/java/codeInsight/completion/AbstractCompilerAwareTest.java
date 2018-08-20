@@ -25,7 +25,7 @@ public abstract class AbstractCompilerAwareTest extends JavaCodeInsightFixtureTe
 
   protected final void installCompiler() {
     try {
-      myCompilerTester = new CompilerTester(getProject(), ContainerUtil.list(ModuleManager.getInstance(getProject()).getModules()), getTestRootDisposable());
+      myCompilerTester = new CompilerTester(myFixture, ContainerUtil.list(ModuleManager.getInstance(getProject()).getModules()));
     }
     catch (Exception e) {
       fail(e.getMessage());

@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.compiler;
 
-import com.intellij.compiler.CompilerTestUtil;
 import com.intellij.compiler.artifacts.ArtifactsTestUtil;
 import com.intellij.compiler.impl.ModuleCompileScope;
 import com.intellij.openapi.compiler.CompileScope;
@@ -16,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 import com.intellij.testFramework.CompilerTester;
+import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.io.TestFileSystemBuilder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -35,16 +35,6 @@ import java.util.Optional;
  * @author nik
  */
 public abstract class MavenCompilingTestCase extends MavenImportingTestCase {
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      CompilerTestUtil.disableExternalCompiler(myProject);
-    }
-    finally {
-      super.tearDown();
-    }
-  }
-
   protected void compileModules(final String... moduleNames) {
     compile(createModulesCompileScope(moduleNames));
   }
@@ -72,7 +62,7 @@ public abstract class MavenCompilingTestCase extends MavenImportingTestCase {
       }
     }
     catch (Exception e) {
-      throw new RuntimeException(e);
+      ExceptionUtilRt.rethrow(e);
     }
   }
 

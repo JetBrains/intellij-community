@@ -26,6 +26,7 @@ import com.intellij.project.ProjectKt;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
 import com.intellij.util.Consumer;
@@ -58,6 +59,10 @@ public class CompilerTester {
 
   public CompilerTester(@NotNull Module module) throws Exception {
     this(module.getProject(), Collections.singletonList(module), null);
+  }
+
+  public CompilerTester(@NotNull IdeaProjectTestFixture fixture, @NotNull List<Module> modules) throws Exception {
+    this(fixture.getProject(), modules, fixture.getTestRootDisposable());
   }
 
   public CompilerTester(@NotNull Project project, @NotNull List<Module> modules, @Nullable Disposable disposable) throws Exception {
