@@ -490,9 +490,6 @@ class DocumentTracker : Disposable {
 
     fun onRangesMerged(range1: Block, range2: Block, merged: Block): Boolean = true
 
-    fun onRangeRemoved(block: Block) {}
-    fun onRangeAdded(block: Block) {}
-
     fun afterRangeChange() {}
     fun afterBulkRangeChange() {}
 
@@ -523,7 +520,6 @@ private class LineTracker(private val handler: Handler,
 
 
   fun destroy() {
-    handler.onRangesRemoved(blocks)
     blocks = emptyList()
   }
 
@@ -534,18 +530,13 @@ private class LineTracker(private val handler: Handler,
                    fastRefresh: Boolean) {
     if (!isDirty) return
 
-    val removedBlocks = ArrayList<Block>()
-    val addedBlocks = ArrayList<Block>()
-
     val newBlocks = ArrayList<Block>()
 
     BlockGroupsProcessor(text1, lineOffsets1).processMergeableGroups(blocks) { group ->
       if (group.any { it.isDirty }) {
-        MergingBlockProcessor(handler).processMergedBlocks(group) { original, mergedBlock ->
+        MergingBlockProcessor(handler).processMergedBlocks(group) { mergedBlock ->
           val freshBlocks = refreshBlock(mergedBlock, text1, text2, lineOffsets1, lineOffsets2, fastRefresh)
 
-          removedBlocks.addAll(original)
-          addedBlocks.addAll(freshBlocks)
           handler.onRangeRefreshed(mergedBlock, freshBlocks)
 
           newBlocks.addAll(freshBlocks)
@@ -555,9 +546,6 @@ private class LineTracker(private val handler: Handler,
         newBlocks.addAll(group)
       }
     }
-
-    handler.onRangesRemoved(removedBlocks)
-    handler.onRangesAdded(addedBlocks)
 
     blocks = newBlocks
     isDirty = false
@@ -572,12 +560,6 @@ private class LineTracker(private val handler: Handler,
     for (i in data.afterBlocks.indices) {
       handler.onRangeShifted(data.afterBlocks[i], data.newAfterBlocks[i])
     }
-
-    handler.onRangesRemoved(data.affectedBlocks)
-    handler.onRangesRemoved(data.afterBlocks)
-
-    handler.onRangeAdded(data.newAffectedBlock)
-    handler.onRangesAdded(data.newAfterBlocks)
 
     blocks = ContainerUtil.concat(data.beforeBlocks, listOf(data.newAffectedBlock), data.newAfterBlocks)
     isDirty = true
@@ -618,7 +600,6 @@ private class LineTracker(private val handler: Handler,
 
 
   fun partiallyApplyBlocks(side: Side, condition: (Block) -> Boolean): List<Block> {
-    val oldBlocks = blocks
     val newBlocks = mutableListOf<Block>()
     val appliedBlocks = mutableListOf<Block>()
 
@@ -634,9 +615,6 @@ private class LineTracker(private val handler: Handler,
       }
     }
 
-    handler.onRangesRemoved(oldBlocks)
-    handler.onRangesAdded(newBlocks)
-
     blocks = newBlocks
 
     handler.afterBulkRangeChange()
@@ -645,13 +623,7 @@ private class LineTracker(private val handler: Handler,
   }
 
   fun setRanges(ranges: List<Range>, dirty: Boolean) {
-    val oldBlocks = blocks
-    val newBlocks = ranges.map { Block(it, dirty, false) }
-
-    handler.onRangesRemoved(oldBlocks)
-    handler.onRangesAdded(newBlocks)
-
-    blocks = newBlocks
+    blocks = ranges.map { Block(it, dirty, false) }
     isDirty = dirty
 
     handler.afterBulkRangeChange()
@@ -803,14 +775,6 @@ private class LineTracker(private val handler: Handler,
   private data class BlockChangeData(val beforeBlocks: List<Block>,
                                      val affectedBlocks: List<Block>, val afterBlocks: List<Block>,
                                      val newAffectedBlock: Block, val newAfterBlocks: List<Block>)
-
-  private fun Handler.onRangesRemoved(blocks: List<Block>) {
-    blocks.forEach(this::onRangeRemoved)
-  }
-
-  private fun Handler.onRangesAdded(blocks: List<Block>) {
-    blocks.forEach(this::onRangeAdded)
-  }
 }
 
 private class BlockGroupsProcessor(private val text1: CharSequence,
@@ -842,33 +806,28 @@ private class BlockGroupsProcessor(private val text1: CharSequence,
 
 private class MergingBlockProcessor(private val handler: Handler) {
   fun processMergedBlocks(group: List<Block>,
-                          processBlock: (original: List<Block>, merged: Block) -> Unit) {
+                          processBlock: (merged: Block) -> Unit) {
     assert(!group.isEmpty())
 
-    val originalGroup = mutableListOf<Block>()
     var merged: Block? = null
 
     for (block in group) {
       if (merged == null) {
-        originalGroup.add(block)
         merged = block
       }
       else {
         val newMerged = mergeBlocks(merged, block)
         if (newMerged != null) {
-          originalGroup.add(block)
           merged = newMerged
         }
         else {
-          processBlock(originalGroup, merged)
-          originalGroup.clear()
-          originalGroup.add(block)
+          processBlock(merged)
           merged = block
         }
       }
     }
 
-    processBlock(originalGroup, merged!!)
+    processBlock(merged!!)
   }
 
   private fun mergeBlocks(block1: Block, block2: Block): Block? {
