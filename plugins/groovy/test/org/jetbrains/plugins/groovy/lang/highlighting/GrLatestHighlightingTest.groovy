@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInspection.InspectionProfileEntry
+import com.intellij.openapi.util.RecursionManager
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
@@ -21,6 +22,12 @@ class GrLatestHighlightingTest extends GrHighlightingTestBase {
   InspectionProfileEntry[] getCustomInspections() {
     [new GroovyAssignabilityCheckInspection(), new GrUnresolvedAccessInspection(), new GroovyAccessibilityInspection(),
      new MissingReturnInspection()]
+  }
+
+  @Override
+  void setUp() throws Exception {
+    super.setUp()
+    RecursionManager.assertOnRecursionPrevention(myFixture.testRootDisposable)
   }
 
   void 'test IDEA-184690'() {
@@ -383,6 +390,7 @@ class GoodCodeRed {
   }
 
   void 'test recursive generics'() {
+    RecursionManager.assertOnRecursionPrevention(myFixture.testRootDisposable, false)
     testHighlighting '''
 import groovy.transform.CompileStatic
 
@@ -434,6 +442,32 @@ class Cl {
   }
 '''
   }
+
+  void 'test constructor  parameter'() {
+    testHighlighting '''
+import groovy.transform.CompileStatic
+
+@CompileStatic
+class Cl {
+
+    Cl(Map<String, Integer> a, Condition<Cl> con, String s) {
+    }
+
+    interface Condition<T> {}
+
+    static <T> Condition<T> alwaysFalse() {
+        return (Condition<T>)null
+    }
+
+
+    static m() {
+        new Cl(alwaysFalse(), name: 1, m: 2, new Object().toString(), sad: 12)
+    }
+}
+'''
+  }
+
+
 
   void 'test call without reference'() {
     testHighlighting '''
