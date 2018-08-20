@@ -10,6 +10,7 @@ import com.jetbrains.python.psi.PyStringLiteralUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -39,6 +40,14 @@ public class PyLiteralStringNodeImpl extends LeafPsiElement implements PyLiteral
 
   @NotNull
   @Override
+  public List<Pair<TextRange, String>> getDecodedFragments() {
+    final PyStringLiteralDecoder decoder = new PyStringLiteralDecoder(this);
+    decoder.decodeContent();
+    return decoder.getResult();
+  }
+
+  @NotNull
+  @Override
   public String getTextWithoutPrefix() {
     return getText().substring(getPrefixLength());
   }
@@ -46,11 +55,7 @@ public class PyLiteralStringNodeImpl extends LeafPsiElement implements PyLiteral
   @NotNull
   @Override
   public TextRange getContentRange() {
-    final Pair<String, String> quotes = PyStringLiteralUtil.getQuotes(getText());
-    assert quotes != null;
-    final String prefixWithOpeningQuote = quotes.getFirst();
-    final String closingQuote = quotes.getSecond();
-    return TextRange.create(prefixWithOpeningQuote.length(), getTextLength() - closingQuote.length());
+    return PyStringLiteralExpressionImpl.getNodeTextRange(getText());
   }
 
   @NotNull

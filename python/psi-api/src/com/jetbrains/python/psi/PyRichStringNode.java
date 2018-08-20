@@ -1,9 +1,11 @@
 package com.jetbrains.python.psi;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -50,6 +52,9 @@ public interface PyRichStringNode extends PsiElement {
    */
   @NotNull
   String getContent();
+
+  @NotNull
+  List<Pair<TextRange, String>> getDecodedFragments();
 
   @NotNull
   String getQuote();

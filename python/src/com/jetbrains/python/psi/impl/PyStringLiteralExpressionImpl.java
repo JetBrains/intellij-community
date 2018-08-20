@@ -45,49 +45,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
 
 public class PyStringLiteralExpressionImpl extends PyElementImpl implements PyStringLiteralExpression, RegExpLanguageHost, PsiLiteralValue {
   private static final Logger LOG = Logger.getInstance(PyStringLiteralExpressionImpl.class);
-  public static final Pattern PATTERN_ESCAPE = Pattern
-      .compile("\\\\(\n|\\\\|'|\"|a|b|f|n|r|t|v|([0-7]{1,3})|x([0-9a-fA-F]{1,2})" + "|N(\\{.*?\\})|u([0-9a-fA-F]{4})|U([0-9a-fA-F]{8}))");
-         //        -> 1                        ->   2      <-->     3          <-     ->   4     <-->    5      <-   ->  6           <-<-
-
-  private enum EscapeRegexGroup {
-    WHOLE_MATCH,
-    ESCAPED_SUBSTRING,
-    OCTAL,
-    HEXADECIMAL,
-    UNICODE_NAMED,
-    UNICODE_16BIT,
-    UNICODE_32BIT
-  }
-
-  private static final Map<String, String> escapeMap = initializeEscapeMap();
 
   @Nullable private volatile String myStringValue;
   @Nullable private volatile List<TextRange> myValueTextRanges;
   @Nullable private volatile List<Pair<TextRange, String>> myDecodedFragments;
   private final DefaultRegExpPropertiesProvider myPropertiesProvider;
-
-  @NotNull
-  private static Map<String, String> initializeEscapeMap() {
-    Map<String, String> map = new HashMap<>();
-    map.put("\n", "\n");
-    map.put("\\", "\\");
-    map.put("'", "'");
-    map.put("\"", "\"");
-    map.put("a", "\001");
-    map.put("b", "\b");
-    map.put("f", "\f");
-    map.put("n", "\n");
-    map.put("r", "\r");
-    map.put("t", "\t");
-    map.put("v", "\013");
-    return map;
-  }
 
   public PyStringLiteralExpressionImpl(ASTNode astNode) {
     super(astNode);
@@ -112,13 +81,13 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   public List<TextRange> getStringValueTextRanges() {
     List<TextRange> result = myValueTextRanges;
     if (result == null) {
-      int elStart = getTextRange().getStartOffset();
-      List<TextRange> ranges = new ArrayList<>();
-      for (ASTNode node : getStringNodes()) {
-        TextRange range = getNodeTextRange(node.getText());
-        int nodeOffset = node.getStartOffset() - elStart;
-        ranges.add(TextRange.from(nodeOffset + range.getStartOffset(), range.getLength()));
-      }
+      final int elementStart = getTextRange().getStartOffset();
+      final List<TextRange> ranges = StreamEx.of(getGluedStringNodes())
+        .map(node -> {
+          final int nodeRelativeOffset = node.getTextRange().getStartOffset() - elementStart;
+          return node.getContentRange().shiftRight(nodeRelativeOffset);
+        })
+        .toList();
       myValueTextRanges = result = Collections.unmodifiableList(ranges);
     }
     return result;
@@ -146,36 +115,20 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     return PyStringLiteralUtil.getPrefixEndOffset(text, 0);
   }
 
-  private boolean isUnicodeByDefault() {
-    if (!LanguageLevel.forElement(this).isPython2()) {
-      return true;
-    }
-    final PsiFile file = getContainingFile();
-    if (file instanceof PyFile) {
-      final PyFile pyFile = (PyFile)file;
-      return pyFile.hasImportFromFuture(FutureFeature.UNICODE_LITERALS);
-    }
-    return false;
-  }
-
   @Override
   @NotNull
   public List<Pair<TextRange, String>> getDecodedFragments() {
+    final int elementStart = getTextRange().getStartOffset();
     List<Pair<TextRange, String>> result = myDecodedFragments;
     if (result == null) {
-      result = new ArrayList<>();
-      final int elementStart = getTextRange().getStartOffset();
-      final boolean unicodeByDefault = isUnicodeByDefault();
-      for (ASTNode node : getStringNodes()) {
-        final String text = node.getText();
-        final TextRange textRange = getNodeTextRange(text);
-        final int offset = node.getTextRange().getStartOffset() - elementStart + textRange.getStartOffset();
-        final String encoded = textRange.substring(text);
-        final boolean hasRawPrefix = PyStringLiteralUtil.isRawPrefix(PyStringLiteralUtil.getPrefix(text));
-        final boolean hasUnicodePrefix = PyStringLiteralUtil.isUnicodePrefix(PyStringLiteralUtil.getPrefix(text));
-        result.addAll(getDecodedFragments(encoded, offset, hasRawPrefix, unicodeByDefault || hasUnicodePrefix));
-      }
-      myDecodedFragments = result;
+      final List<Pair<TextRange, String>> combined = StreamEx.of(getGluedStringNodes())
+        .flatMap(node -> StreamEx.of(node.getDecodedFragments())
+          .map(pair -> {
+            final int nodeRelativeOffset = node.getTextRange().getStartOffset() - elementStart;
+            return Pair.create(pair.getFirst().shiftRight(nodeRelativeOffset), pair.getSecond());
+          }))
+        .toList();
+      myDecodedFragments = result = Collections.unmodifiableList(combined);
     }
     return result;
   }
@@ -184,74 +137,6 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   public boolean isDocString() {
     final List<ASTNode> stringNodes = getStringNodes();
     return stringNodes.size() == 1 && stringNodes.get(0).getElementType() == PyTokenTypes.DOCSTRING;
-  }
-
-  @NotNull
-  private static List<Pair<TextRange, String>> getDecodedFragments(@NotNull String encoded, int offset, boolean raw, boolean unicode) {
-    final List<Pair<TextRange, String>> result = new ArrayList<>();
-    final Matcher escMatcher = PATTERN_ESCAPE.matcher(encoded);
-    int index = 0;
-    while (escMatcher.find(index)) {
-      if (index < escMatcher.start()) {
-        final TextRange range = TextRange.create(index, escMatcher.start());
-        final TextRange offsetRange = range.shiftRight(offset);
-        result.add(Pair.create(offsetRange, range.substring(encoded)));
-      }
-
-      final String octal = escapeRegexGroup(escMatcher, EscapeRegexGroup.OCTAL);
-      final String hex = escapeRegexGroup(escMatcher, EscapeRegexGroup.HEXADECIMAL);
-      // TODO: Implement unicode character name escapes: EscapeRegexGroup.UNICODE_NAMED
-      final String unicode16 = escapeRegexGroup(escMatcher, EscapeRegexGroup.UNICODE_16BIT);
-      final String unicode32 = escapeRegexGroup(escMatcher, EscapeRegexGroup.UNICODE_32BIT);
-      final String wholeMatch = escapeRegexGroup(escMatcher, EscapeRegexGroup.WHOLE_MATCH);
-
-      final boolean escapedUnicode = raw && unicode || !raw;
-
-      final String str;
-      if (!raw && octal != null) {
-        str = new String(new char[]{(char)Integer.parseInt(octal, 8)});
-      }
-      else if (!raw && hex != null) {
-        str = new String(new char[]{(char)Integer.parseInt(hex, 16)});
-      }
-      else if (escapedUnicode && unicode16 != null) {
-        str = unicode ? new String(new char[]{(char)Integer.parseInt(unicode16, 16)}) : wholeMatch;
-      }
-      else if (escapedUnicode && unicode32 != null) {
-        String s = wholeMatch;
-        if (unicode) {
-          try {
-            s = new String(Character.toChars((int)Long.parseLong(unicode32, 16)));
-          }
-          catch (IllegalArgumentException ignored) {
-          }
-        }
-        str = s;
-      }
-      else if (raw) {
-        str = wholeMatch;
-      }
-      else {
-        final String toReplace = escapeRegexGroup(escMatcher, EscapeRegexGroup.ESCAPED_SUBSTRING);
-        str = escapeMap.get(toReplace);
-      }
-
-      if (str != null) {
-        final TextRange wholeMatchRange = TextRange.create(escMatcher.start(), escMatcher.end());
-        result.add(Pair.create(wholeMatchRange.shiftRight(offset), str));
-      }
-
-      index = escMatcher.end();
-    }
-    final TextRange range = TextRange.create(index, encoded.length());
-    final TextRange offRange = range.shiftRight(offset);
-    result.add(Pair.create(offRange, range.substring(encoded)));
-    return result;
-  }
-
-  @Nullable
-  private static String escapeRegexGroup(@NotNull Matcher matcher, EscapeRegexGroup group) {
-    return matcher.group(group.ordinal());
   }
 
   @Override
@@ -321,7 +206,8 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
       PyFile file = PsiTreeUtil.getParentOfType(this, PyFile.class);
       if (file != null) {
         IElementType type = PythonHighlightingLexer.convertStringType(getStringNodes().get(0).getElementType(), text,
-                                                LanguageLevel.forElement(this), file.hasImportFromFuture(FutureFeature.UNICODE_LITERALS));
+                                                                      LanguageLevel.forElement(this),
+                                                                      file.hasImportFromFuture(FutureFeature.UNICODE_LITERALS));
         if (PyTokenTypes.UNICODE_NODES.contains(type)) {
           return PyBuiltinCache.getInstance(this).getUnicodeType(LanguageLevel.forElement(this));
         }
