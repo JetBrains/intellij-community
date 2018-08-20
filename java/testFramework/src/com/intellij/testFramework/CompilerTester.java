@@ -25,9 +25,11 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
 import com.intellij.util.Consumer;
+import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
@@ -148,7 +150,8 @@ public class CompilerTester {
     return runCompiler(callback -> CompilerManager.getInstance(getProject()).compile(files, callback));
   }
 
-  public List<CompilerMessage> runCompiler(final Consumer<CompileStatusNotification> runnable) {
+  @NotNull
+  public List<CompilerMessage> runCompiler(@NotNull Consumer<CompileStatusNotification> runnable) {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
 
@@ -203,7 +206,7 @@ public class CompilerTester {
     private Throwable myError;
     private final List<CompilerMessage> myMessages = new ArrayList<>();
 
-    ErrorReportingCallback(Semaphore semaphore) {
+    ErrorReportingCallback(@NotNull Semaphore semaphore) {
       mySemaphore = semaphore;
     }
 
@@ -234,14 +237,13 @@ public class CompilerTester {
 
     void throwException() {
       if (myError != null) {
-        throw new RuntimeException(myError);
+        ExceptionUtilRt.rethrow(myError);
       }
     }
 
+    @NotNull
     public List<CompilerMessage> getMessages() {
       return myMessages;
     }
   }
-
-
 }
