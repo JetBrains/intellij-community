@@ -144,7 +144,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       for (ProblemDescriptor descriptor : inspectionResult.foundProblems) {
         if (descriptor.getHighlightType() == ProblemHighlightType.INFORMATION) {
           if (ourToolsWithInformationProblems.add(shortName)) {
-            LOG.error("Tool '" + shortName + "' registers INFORMATION level problem in batch mode on " + getFile() + ". " +
+            LOG.error("Tool #" + shortName + " registers INFORMATION level problem in batch mode on " + getFile() + ". " +
                       "INFORMATION level 'warnings' are invisible in the editor and should not become visible in batch mode. " +
                       "Moreover, cause INFORMATION level fixes act more like intention actions, they could e.g. change semantics and " +
                       "thus should not be suggested for batch transformations");
