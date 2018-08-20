@@ -522,6 +522,13 @@ private class LineTracker(private val handler: Handler,
   private var isDirty: Boolean = false
 
 
+  fun setRanges(ranges: List<Range>, dirty: Boolean) {
+    blocks = ranges.map { Block(it, dirty, false) }
+    isDirty = dirty
+
+    handler.afterBulkRangeChange()
+  }
+
   fun destroy() {
     blocks = emptyList()
   }
@@ -570,38 +577,6 @@ private class LineTracker(private val handler: Handler,
     handler.afterRangeChange()
   }
 
-  private fun refreshBlock(block: Block,
-                           text1: CharSequence,
-                           text2: CharSequence,
-                           lineOffsets1: LineOffsets,
-                           lineOffsets2: LineOffsets,
-                           fastRefresh: Boolean): List<Block> {
-    if (block.range.isEmpty) return emptyList()
-
-    val iterable: FairDiffIterable
-    val isTooBig: Boolean
-    if (block.isTooBig && fastRefresh) {
-      iterable = fastCompareLines(block.range, text1, text2, lineOffsets1, lineOffsets2)
-      isTooBig = true
-    }
-    else {
-      val realIterable = tryCompareLines(block.range, text1, text2, lineOffsets1, lineOffsets2)
-      if (realIterable != null) {
-        iterable = realIterable
-        isTooBig = false
-      }
-      else {
-        iterable = fastCompareLines(block.range, text1, text2, lineOffsets1, lineOffsets2)
-        isTooBig = true
-      }
-    }
-
-    return iterable.iterateChanges().map {
-      Block(shiftRange(it, block.range.start1, block.range.start2), false, isTooBig)
-    }
-  }
-
-
   fun partiallyApplyBlocks(side: Side, condition: (Block) -> Boolean): List<Block> {
     val newBlocks = mutableListOf<Block>()
     val appliedBlocks = mutableListOf<Block>()
@@ -626,13 +601,6 @@ private class LineTracker(private val handler: Handler,
     handler.afterBulkRangeChange()
 
     return appliedBlocks
-  }
-
-  fun setRanges(ranges: List<Range>, dirty: Boolean) {
-    blocks = ranges.map { Block(it, dirty, false) }
-    isDirty = dirty
-
-    handler.afterBulkRangeChange()
   }
 
   companion object {
@@ -742,21 +710,10 @@ private class LineTracker(private val handler: Handler,
       return Block(range, true, isTooBig)
     }
 
-    private fun Block.shift(side: Side, delta: Int) = Block(
-      shiftRange(this.range, side, delta), this.isDirty, this.isTooBig)
-
     private fun createRange(side: Side, start: Int, end: Int, otherStart: Int, otherEnd: Int): Range {
       return Range(side[start, otherStart], side[end, otherEnd],
                    side[otherStart, start], side[otherEnd, end])
     }
-
-    private fun shiftRange(range: Range, side: Side, shift: Int) = shiftRange(
-      range, side[shift, 0], side[0, shift])
-
-    private fun shiftRange(range: Range, shift1: Int, shift2: Int) = Range(range.start1 + shift1,
-                                                                           range.end1 + shift1,
-                                                                           range.start2 + shift2,
-                                                                           range.end2 + shift2)
   }
 
   private data class BlockChangeData(val beforeBlocks: List<Block>,
@@ -831,9 +788,50 @@ private class MergingBlockProcessor(private val handler: Handler) {
   }
 }
 
+private fun refreshBlock(block: Block,
+                         text1: CharSequence,
+                         text2: CharSequence,
+                         lineOffsets1: LineOffsets,
+                         lineOffsets2: LineOffsets,
+                         fastRefresh: Boolean): List<Block> {
+  if (block.range.isEmpty) return emptyList()
+
+  val iterable: FairDiffIterable
+  val isTooBig: Boolean
+  if (block.isTooBig && fastRefresh) {
+    iterable = fastCompareLines(block.range, text1, text2, lineOffsets1, lineOffsets2)
+    isTooBig = true
+  }
+  else {
+    val realIterable = tryCompareLines(block.range, text1, text2, lineOffsets1, lineOffsets2)
+    if (realIterable != null) {
+      iterable = realIterable
+      isTooBig = false
+    }
+    else {
+      iterable = fastCompareLines(block.range, text1, text2, lineOffsets1, lineOffsets2)
+      isTooBig = true
+    }
+  }
+
+  return iterable.iterateChanges().map {
+    Block(shiftRange(it, block.range.start1, block.range.start2), false, isTooBig)
+  }
+}
+
 private fun getRangeDelta(range: Range, side: Side): Int {
   val otherSide = side.other()
   val deleted = range.end(side) - range.start(side)
   val inserted = range.end(otherSide) - range.start(otherSide)
   return inserted - deleted
 }
+
+private fun Block.shift(side: Side, delta: Int) = Block(
+  shiftRange(this.range, side, delta), this.isDirty, this.isTooBig)
+
+private fun shiftRange(range: Range, side: Side, shift: Int) = shiftRange(range, side[shift, 0], side[0, shift])
+
+private fun shiftRange(range: Range, shift1: Int, shift2: Int) = Range(range.start1 + shift1,
+                                                                       range.end1 + shift1,
+                                                                       range.start2 + shift2,
+                                                                       range.end2 + shift2)
