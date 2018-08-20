@@ -138,7 +138,9 @@ public class ServiceManagerImpl implements Disposable {
             continue;
           }
 
-          processor.test(aClass, pluginId == null ? null : PluginManager.getPlugin(pluginId));
+          if (!processor.test(aClass, pluginId == null ? null : PluginManager.getPlugin(pluginId))) {
+            break;
+          }
         }
       }
     }
