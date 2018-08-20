@@ -8,11 +8,13 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckoutProviderEx;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.actions.BasicAction;
 import git4idea.commands.Git;
@@ -24,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 /**
  * Checkout provider for the Git
@@ -102,7 +105,11 @@ public class GitCheckoutProvider extends CheckoutProviderEx {
     if (result.success()) {
       return true;
     }
-    VcsNotifier.getInstance(project).notifyError("Clone failed", result.getErrorOutputAsHtmlString());
+    String description = result.getErrorOutput().stream().
+      filter(msg -> !StringUtil.startsWithIgnoreCase(msg, "Cloning into")).
+      map (msg -> GitUtil.cleanupErrorPrefixes(msg)).
+      collect(Collectors.joining("<br/>"));
+    VcsNotifier.getInstance(project).notifyError("Clone failed", description);
     return false;
   }
 

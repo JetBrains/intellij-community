@@ -9,6 +9,7 @@ import com.intellij.debugger.engine.requests.MethodReturnValueWatcher;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerManagerImpl;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.Requestor;
@@ -19,7 +20,6 @@ import com.intellij.debugger.ui.breakpoints.RunToCursorBreakpoint;
 import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.debugger.ui.overhead.OverheadProducer;
 import com.intellij.debugger.ui.overhead.OverheadTimings;
-import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -110,10 +110,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
       text = DebuggerBundle.message("status.process.terminated");
     }
     else if (event instanceof VMDisconnectEvent) {
-      final RemoteConnection connection = getConnection();
-      final String addressDisplayName = DebuggerBundle.getAddressDisplayName(connection);
-      final String transportName = DebuggerBundle.getTransportName(connection);
-      text = DebuggerBundle.message("status.disconnected", addressDisplayName, transportName);
+      text = DebuggerBundle.message("status.disconnected", DebuggerUtilsImpl.getConnectionDisplayName(getConnection()));
     }
     return text;
   }
@@ -375,9 +372,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
         trackClassRedefinitions();
       }
 
-      final String addressDisplayName = DebuggerBundle.getAddressDisplayName(getConnection());
-      final String transportName = DebuggerBundle.getTransportName(getConnection());
-      showStatusText(DebuggerBundle.message("status.connected", addressDisplayName, transportName));
+      showStatusText(DebuggerBundle.message("status.connected", DebuggerUtilsImpl.getConnectionDisplayName(getConnection())));
       LOG.debug("leave: processVMStartEvent()");
 
       if (!machineProxy.canBeModified()) {

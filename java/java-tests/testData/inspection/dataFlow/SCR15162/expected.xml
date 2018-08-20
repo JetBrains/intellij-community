@@ -3,7 +3,7 @@
   <problem>
     <file>NullTest.java</file>
     <line>6</line>
-    <description>Dereference of 't' will produce java.lang.NullPointerException</description>
+    <description>Dereference of 't' will produce NullPointerException</description>
   </problem>
 </problems>
 

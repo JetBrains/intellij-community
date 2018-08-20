@@ -189,6 +189,8 @@
     <compiler.updateResourcesBuildContributor implementation="org.jetbrains.idea.maven.execution.MavenUpdateResourcesBuildContributor"/>
 
     <projectTaskRunner implementation="org.jetbrains.idea.maven.execution.build.MavenProjectTaskRunner"/>
+    <runAnything.executionProvider implementation="org.jetbrains.idea.maven.execution.MavenRunAnythingProvider"/>
+    <runAnything.helpGroup implementation="org.jetbrains.idea.maven.execution.MavenRunAnythingHelpGroup"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">

@@ -329,11 +329,9 @@ public class RainbowHighlighter {
 
   @NotNull
   private static TextAttributesKey createRainbowKey(int i, Color rainbowColor) {
-    TextAttributesKey key = TextAttributesKey.createTempTextAttributesKey(
-      RAINBOW_TEMP_PREF + i,
-      new TextAttributes());
-    key.getDefaultAttributes().setForegroundColor(rainbowColor);
-    return key;
+    TextAttributes attributes = new TextAttributes();
+    attributes.setForegroundColor(rainbowColor);
+    return TextAttributesKey.createTempTextAttributesKey(RAINBOW_TEMP_PREF + i, attributes);
   }
 
   @NotNull

@@ -1,7 +1,6 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.fixtures
 
-import com.intellij.testGuiFramework.driver.ExtendedJTreeDriver
 import com.intellij.testGuiFramework.driver.ExtendedJTreePathFinder
 import com.intellij.ui.treeStructure.treetable.TreeTable
 import org.fest.swing.core.MouseButton
@@ -20,7 +19,7 @@ class TreeTableFixture(val robot: Robot, val target: TreeTable) :
     ComponentPreconditions.checkEnabledAndShowing(target)
 
     val tree = target.tree
-    val path = ExtendedJTreePathFinder(tree).findMatchingPath(*pathStrings)
+    val path = ExtendedJTreePathFinder(tree).findMatchingPath(pathStrings.toList())
 
     var x = target.location.x + (0 until column).sumBy { target.columnModel.getColumn(it).width }
     x += target.columnModel.getColumn(column).width / 3

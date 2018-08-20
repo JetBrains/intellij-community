@@ -1237,7 +1237,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiExpression[] initializers = expression.getInitializers();
     DfaExpressionFactory expressionFactory = myFactory.getExpressionFactory();
     if (arrayWriteTarget != null) {
-      PsiVariable arrayVariable = (PsiVariable)arrayWriteTarget.getPsiVariable();
+      PsiVariable arrayVariable = ObjectUtils.tryCast(arrayWriteTarget.getPsiVariable(), PsiVariable.class);
       if (arrayWriteTarget.isFlushableByCalls() ||
           arrayVariable == null ||
           VariableAccessUtils.variableIsUsed(arrayVariable, expression) ||

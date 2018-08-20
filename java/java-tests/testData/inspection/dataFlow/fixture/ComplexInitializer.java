@@ -24,7 +24,7 @@ class InitializerTest {
     }
   }
 
-  static final String XYZ = ABC.<warning descr="Method invocation 'toLowerCase' may produce 'java.lang.NullPointerException'">toLowerCase</warning>();
+  static final String XYZ = ABC.<warning descr="Method invocation 'toLowerCase' may produce 'NullPointerException'">toLowerCase</warning>();
 
   static {
     new InitializerTest(); // INITIALIZED is not initialized yet here

@@ -1,11 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.actions.DebuggerAction;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.PidRemoteConnection;
 import com.intellij.debugger.engine.StackFrameContext;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -17,6 +17,7 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeExpression;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.render.BatchEvaluator;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -258,5 +259,14 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
       }
       ProgressIndicatorUtils.yieldToPendingWriteActions();
     }
+  }
+
+  public static String getConnectionDisplayName(RemoteConnection connection) {
+    if (connection instanceof PidRemoteConnection) {
+      return "pid " + ((PidRemoteConnection)connection).getPid();
+    }
+    String addressDisplayName = DebuggerBundle.getAddressDisplayName(connection);
+    String transportName = DebuggerBundle.getTransportName(connection);
+    return DebuggerBundle.message("string.connection", addressDisplayName, transportName);
   }
 }

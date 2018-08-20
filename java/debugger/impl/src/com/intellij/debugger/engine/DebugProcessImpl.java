@@ -1473,7 +1473,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         VirtualMachineProxyImpl virtualMachineProxy = getVirtualMachineProxy();
 
         if (!virtualMachineProxy.canBeModified()) {
-          closeProcess(true);
+          closeProcess(false);
           return;
         }
 

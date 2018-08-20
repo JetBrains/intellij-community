@@ -264,7 +264,7 @@ public class FindInProjectUtil {
 
       final int prevOffset = offset;
       offset = result.getEndOffset();
-      if (prevOffset == offset) {
+      if (prevOffset == offset || offset == result.getStartOffset()) {
         // for regular expr the size of the match could be zero -> could be infinite loop in finding usages!
         ++offset;
       }

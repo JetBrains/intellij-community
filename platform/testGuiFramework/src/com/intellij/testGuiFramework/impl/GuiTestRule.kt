@@ -26,9 +26,10 @@ import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.computeOnEdt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.runOnEdt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
-import com.intellij.testGuiFramework.launcher.GuiTestOptions.getScreenRecorderJarDirPath
-import com.intellij.testGuiFramework.launcher.GuiTestOptions.getTestsToRecord
-import com.intellij.testGuiFramework.launcher.GuiTestOptions.getVideoDuration
+import com.intellij.testGuiFramework.launcher.GuiTestOptions
+import com.intellij.testGuiFramework.launcher.GuiTestOptions.screenRecorderJarDirPath
+import com.intellij.testGuiFramework.launcher.GuiTestOptions.testsToRecord
+import com.intellij.testGuiFramework.launcher.GuiTestOptions.videoDuration
 import com.intellij.testGuiFramework.util.Key
 import com.intellij.ui.Splash
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -100,14 +101,14 @@ class GuiTestRule : TestRule {
       val screenRecorderJarUrl: URL? = getScreenRecorderJarUrl()
       if (screenRecorderJarUrl == null) return null
 
-      val testsToRecord: List<String> = getTestsToRecord()
+      val testsToRecord: List<String> = testsToRecord
       if (testsToRecord.isEmpty()) return null
 
       val classLoader: ClassLoader = UrlClassLoader.build().urls(screenRecorderJarUrl).parent(javaClass.classLoader).get()
       return Class.forName("org.jetbrains.intellij.deps.screenrecorder.ScreenRecorderRule", true, classLoader)
         .constructors
         .singleOrNull { it.parameterCount == 3 }
-        ?.newInstance(Duration.ofMinutes(getVideoDuration()), getFailedTestVideoDirPath().absolutePath, testsToRecord) as TestRule?
+        ?.newInstance(Duration.ofMinutes(videoDuration), getFailedTestVideoDirPath().absolutePath, testsToRecord) as TestRule?
     }
     catch (e: Exception) {
       return null
@@ -115,7 +116,7 @@ class GuiTestRule : TestRule {
   }
 
   private fun getScreenRecorderJarUrl(): URL? {
-    val jarDir: String? = getScreenRecorderJarDirPath()
+    val jarDir: String? = screenRecorderJarDirPath
     if (jarDir == null) return null
 
     return File(jarDir)
@@ -436,12 +437,12 @@ class GuiTestRule : TestRule {
   }
 
 
-  fun getMasterProjectDirPath(projectDirName: String): File {
+  private fun getMasterProjectDirPath(projectDirName: String): File {
     return File(GuiTestUtil.testProjectsRootDirPath, projectDirName)
   }
 
-  fun getTestProjectDirPath(projectDirName: String): File {
-    return File(GuiTestUtil.projectCreationDirPath, projectDirName)
+  private fun getTestProjectDirPath(projectDirName: String): File {
+    return File(GuiTestOptions.projectDirPath, projectDirName)
   }
 
   fun cleanUpProjectForImport(projectPath: File) {

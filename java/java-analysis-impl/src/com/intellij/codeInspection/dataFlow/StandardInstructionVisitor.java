@@ -61,7 +61,12 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       memState.push(dfaDest);
       return nextInstruction(instruction, runner, memState);
     }
-    dropLocality(dfaSource, memState);
+    if (!(dfaDest instanceof DfaVariableValue &&
+          ((DfaVariableValue)dfaDest).getPsiVariable() instanceof PsiLocalVariable &&
+          dfaSource instanceof DfaVariableValue &&
+          ControlFlowAnalyzer.isTempVariable((DfaVariableValue)dfaSource))) {
+      dropLocality(dfaSource, memState);
+    }
 
     PsiExpression lValue = PsiUtil.skipParenthesizedExprDown(instruction.getLExpression());
     PsiExpression rValue = instruction.getRExpression();

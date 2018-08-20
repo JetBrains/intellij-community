@@ -6,7 +6,7 @@ import com.intellij.execution.configurations.RemoteConnection;
 /**
  * @author egor
  */
-class PidRemoteConnection extends RemoteConnection {
+public class PidRemoteConnection extends RemoteConnection {
   private final String myPid;
 
   public PidRemoteConnection(String pid) {

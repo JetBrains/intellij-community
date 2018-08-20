@@ -2,6 +2,7 @@
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
@@ -19,6 +20,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.JavaOverridingMethodUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -189,7 +191,7 @@ public class MissingOverrideAnnotationInspection extends AbstractBaseJavaLocalIn
         boolean hasSupers = false;
         for (PsiMethod superMethod : superMethods) {
           final PsiClass superClass = superMethod.getContainingClass();
-          if (!InheritanceUtil.isInheritorOrSelf(methodClass, superClass, true)) {
+          if (ignoreSuperMethod(method, methodClass, superMethod, superClass)) {
             continue;
           }
           hasSupers = true;
@@ -207,7 +209,7 @@ public class MissingOverrideAnnotationInspection extends AbstractBaseJavaLocalIn
         final PsiMethod[] superMethods = method.findSuperMethods();
         for (PsiMethod superMethod : superMethods) {
           final PsiClass superClass = superMethod.getContainingClass();
-          if (superClass == null || !InheritanceUtil.isInheritorOrSelf(methodClass, superClass, true)) {
+          if (ignoreSuperMethod(method, methodClass, superMethod, superClass)) {
             continue;
           }
           if (superClass.isInterface()) {
@@ -222,6 +224,12 @@ public class MissingOverrideAnnotationInspection extends AbstractBaseJavaLocalIn
           return true;
         }
         return false;
+      }
+
+      @Contract("_, _, _,null -> true")
+      private boolean ignoreSuperMethod(PsiMethod method, PsiClass methodClass, PsiMethod superMethod, PsiClass superClass) {
+        return !InheritanceUtil.isInheritorOrSelf(methodClass, superClass, true) ||
+               Java15APIUsageInspection.getLastIncompatibleLanguageLevel(superMethod, PsiUtil.getLanguageLevel(method)) != null;
       }
     };
   }

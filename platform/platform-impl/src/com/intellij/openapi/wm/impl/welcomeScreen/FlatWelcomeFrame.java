@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.diagnostic.IdeMessagePanel;
@@ -22,6 +22,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
+import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
@@ -403,7 +404,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       link.setPaintUnderline(false);
       link.setNormalColor(getLinkNormalColor());
       JActionLinkPanel panel = new JActionLinkPanel(link);
-      panel.setBorder(JBUI.Borders.empty(4, 6, 4, 6));
+      panel.setBorder(JBUI.Borders.empty(4, 6));
       panel.add(createArrow(link), BorderLayout.EAST);
       return panel;
     }
@@ -930,12 +931,17 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     };
     list.addListSelectionListener(selectionListener);
     if (backAction != null) {
-      new AnAction() {
+      new DumbAwareAction() {
+        @Override
+        public void update(@NotNull AnActionEvent e) {
+          e.getPresentation().setEnabled(!StackingPopupDispatcher.getInstance().isPopupFocused());
+        }
+
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           backAction.run();
         }
-      }.registerCustomShortcutSet(KeyEvent.VK_ESCAPE, 0, main);
+      }.registerCustomShortcutSet(CommonShortcuts.ESCAPE, main, parentDisposable);
     }
     installQuickSearch(list);
 
