@@ -32,6 +32,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.io.FileTreePrinterKt;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,10 +45,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -68,15 +66,6 @@ public class CompilerTester {
     myMainOutput = new TempDirTestFixtureImpl();
     myMainOutput.setUp();
 
-    CompilerTestUtil.enableExternalCompiler();
-    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
-      //noinspection ConstantConditions
-      CompilerProjectExtension.getInstance(getProject()).setCompilerOutputUrl(myMainOutput.findOrCreateDir("out").getUrl());
-      for (Module module : myModules) {
-        ModuleRootModificationUtil.setModuleSdk(module, JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk());
-      }
-    });
-
     if (disposable != null) {
       Disposer.register(disposable, new Disposable() {
         @Override
@@ -85,6 +74,17 @@ public class CompilerTester {
         }
       });
     }
+
+    CompilerTestUtil.enableExternalCompiler();
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      Objects.requireNonNull(CompilerProjectExtension.getInstance(getProject())).setCompilerOutputUrl(myMainOutput.findOrCreateDir("out").getUrl());
+      if (!myModules.isEmpty()) {
+        JavaAwareProjectJdkTableImpl projectJdkTable = JavaAwareProjectJdkTableImpl.getInstanceEx();
+        for (Module module : myModules) {
+          ModuleRootModificationUtil.setModuleSdk(module, projectJdkTable.getInternalJdk());
+        }
+      }
+    });
   }
 
   public void tearDown() {
@@ -94,7 +94,7 @@ public class CompilerTester {
       myMainOutput.tearDown();
     }
     catch (Exception e) {
-      throw new RuntimeException(e);
+      ExceptionUtilRt.rethrow(e);
     }
     finally {
       myMainOutput = null;
@@ -106,7 +106,7 @@ public class CompilerTester {
     return myProject;
   }
 
-  public void deleteClassFile(final String className) throws IOException {
+  public void deleteClassFile(@NotNull String className) throws IOException {
     WriteAction.runAndWait(() -> {
       //noinspection ConstantConditions
       touch(JavaPsiFacade.getInstance(getProject()).findClass(className, GlobalSearchScope.allScope(getProject())).getContainingFile().getVirtualFile());
@@ -193,9 +193,11 @@ public class CompilerTester {
       Map<String, String> userMacros = PathMacros.getInstance().getUserMacros();
       if (!userMacros.isEmpty()) {
         // require to be presented on disk
-        Path macroFilePath = Paths.get(PathManager.getConfigPath(), "options", JpsGlobalLoader.PathVariablesSerializer.STORAGE_FILE_NAME);
+        Path configDir = Paths.get(PathManager.getConfigPath());
+        Path macroFilePath = configDir.resolve("options").resolve(JpsGlobalLoader.PathVariablesSerializer.STORAGE_FILE_NAME);
         if (!Files.exists(macroFilePath)) {
-          throw new AssertionError("File " + macroFilePath + " doesn't exist, but user macros defined: " + userMacros);
+          throw new AssertionError("File " + macroFilePath + " doesn't exist, but user macros defined: " + userMacros +
+                                   "\n\n File listing:" + FileTreePrinterKt.getDirectoryTree(configDir));
         }
       }
       runnable.consume(callback);

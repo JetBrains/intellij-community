@@ -16,6 +16,7 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.SmartList
 import com.intellij.util.io.delete
+import com.intellij.util.io.getDirectoryTree
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.isEmpty
 import com.intellij.util.loadElement
@@ -123,7 +124,7 @@ internal class DefaultProjectStoreTest {
     normalizeDefaultProjectElement(ProjectManager.getInstance().defaultProject, element, tempDir)
     assertThat(element.isEmpty()).isTrue()
 
-    val directoryTree = printDirectoryTree(tempDir)
+    val directoryTree = tempDir.getDirectoryTree()
     assertThat(directoryTree.trim()).isEqualTo(testData.resolve("testData1.txt"))
   }
 
@@ -135,7 +136,7 @@ internal class DefaultProjectStoreTest {
     moveComponentConfiguration(ProjectManager.getInstance().defaultProject, element) { if (it == "workspace.xml") tempDir.resolve("test.iws") else tempDir.resolve("test.ipr") }
     assertThat(element).isEqualTo(loadElement(testData.resolve("normalize-ipr.xml")))
 
-    val directoryTree = printDirectoryTree(tempDir)
+    val directoryTree = tempDir.getDirectoryTree()
     assertThat(directoryTree.trim()).isEqualTo(testData.resolve("testData1-ipr.txt"))
   }
 }
