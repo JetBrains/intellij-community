@@ -127,7 +127,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       ContainerUtil.addAll(typeParams, sourceClass.getTypeParameters());
     }
     else {
-      final Set<PsiTypeParameter> typeParamSet = new HashSet<>();
+      final Set<PsiTypeParameter> typeParamSet = new LinkedHashSet<>();
       final TypeParametersVisitor visitor = new TypeParametersVisitor(typeParamSet);
       for (PsiField field : fields) {
         field.accept(visitor);
