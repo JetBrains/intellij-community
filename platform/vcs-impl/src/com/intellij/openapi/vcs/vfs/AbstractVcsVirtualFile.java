@@ -16,7 +16,11 @@
 package com.intellij.openapi.vcs.vfs;
 
 import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
@@ -148,5 +152,12 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
 
   protected void setRevision(String revision) {
     myRevision = revision;
+  }
+
+  protected void showLoadingContentFailedMessage(@NotNull VcsException e) {
+    ApplicationManager.getApplication().invokeLater(() -> Messages.showMessageDialog(
+      VcsBundle.message("message.text.could.not.load.virtual.file.content", getPresentableUrl(), e.getLocalizedMessage()),
+      VcsBundle.message("message.title.could.not.load.content"),
+      Messages.getInformationIcon()));
   }
 }
