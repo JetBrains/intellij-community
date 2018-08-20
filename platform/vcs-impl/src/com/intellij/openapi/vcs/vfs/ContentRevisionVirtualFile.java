@@ -2,7 +2,6 @@
 
 package com.intellij.openapi.vcs.vfs;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -51,7 +50,7 @@ public class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
   @Override
   @NotNull
   public byte[] contentsToByteArray() {
-    if (myContentLoadFailed || myProcessingBeforeContentsChange) {
+    if (myContentLoadFailed) {
       return ArrayUtil.EMPTY_BYTE_ARRAY;
     }
     if (myContent == null) {
@@ -61,8 +60,6 @@ public class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
   }
 
   private void loadContent() {
-    final VcsFileSystem vcsFileSystem = ((VcsFileSystem)getFileSystem());
-
     try {
       byte[] bytes = null;
       if (myContentRevision instanceof ByteBackedContentRevision) {
@@ -76,28 +73,12 @@ public class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
       if (bytes == null) {
         throw new VcsException("Could not load content");
       }
-      fireBeforeContentsChange();
 
       myContent = bytes;
-
-      myModificationStamp++;
       setRevision(myContentRevision.getRevisionNumber().asString());
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          vcsFileSystem.fireContentsChanged(this, ContentRevisionVirtualFile.this, 0);
-        }
-      });
-
     }
     catch (VcsException e) {
       myContentLoadFailed = true;
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          vcsFileSystem.fireBeforeFileDeletion(this, ContentRevisionVirtualFile.this);
-        }
-      });
       myContent = ArrayUtil.EMPTY_BYTE_ARRAY;
       setRevision("0");
 
@@ -105,14 +86,6 @@ public class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
         VcsBundle.message("message.text.could.not.load.virtual.file.content", getPresentableUrl(), e.getLocalizedMessage()),
                                  VcsBundle.message("message.title.could.not.load.content"),
                                  Messages.getInformationIcon());
-
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          vcsFileSystem.fireFileDeleted(this, ContentRevisionVirtualFile.this, getName(), getParent());
-        }
-      });
-
     }
     catch (ProcessCanceledException ex) {
       myContent = ArrayUtil.EMPTY_BYTE_ARRAY;
