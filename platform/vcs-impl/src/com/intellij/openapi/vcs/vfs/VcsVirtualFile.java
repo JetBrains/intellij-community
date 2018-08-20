@@ -3,8 +3,6 @@ package com.intellij.openapi.vcs.vfs;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -12,7 +10,6 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,11 +66,9 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
     assert myFileRevision != null;
 
     try {
-      myFileRevision.loadContent();
-
       final VcsRevisionNumber revisionNumber = myFileRevision.getRevisionNumber();
       setRevision(VcsUtil.getShortRevisionString(revisionNumber));
-      myContent = myFileRevision.getContent();
+      myContent = myFileRevision.loadContent();
       myCharset = new CharsetToolkit(myContent).guessEncoding(myContent.length);
     }
     catch (VcsException e) {
