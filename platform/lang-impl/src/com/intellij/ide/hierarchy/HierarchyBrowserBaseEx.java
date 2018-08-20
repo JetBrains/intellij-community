@@ -205,8 +205,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   protected abstract String getBrowserDataKey();
 
   @Nullable
-  protected Color getFileColorForNode(Object node)
-  {
+  protected Color getFileColorForNode(Object node) {
     if (node instanceof HierarchyNodeDescriptor) {
       PsiFile containingFile = ((HierarchyNodeDescriptor) node).getContainingFile();
       return ProjectViewTree.getColorForElement(containingFile);
