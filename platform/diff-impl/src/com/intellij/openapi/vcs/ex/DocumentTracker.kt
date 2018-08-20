@@ -217,11 +217,14 @@ class DocumentTracker : Disposable {
 
       // We use already filtered blocks here, because conditions might have been changed from other thread.
       // The documents/blocks themselves did not change though.
-      LineTracker.processAppliedRanges(appliedBlocks, { true }, side) { block, shift, _ ->
+      var shift = 0
+      for (block in appliedBlocks) {
         DiffUtil.applyModification(document, block.range.start(side) + shift, block.range.end(side) + shift,
                                    otherDocument, block.range.start(otherSide), block.range.end(otherSide))
 
         consumer(block, shift)
+
+        shift += getRangeDelta(block.range, side)
       }
 
       LOCK.write {
@@ -603,9 +606,12 @@ private class LineTracker(private val handler: Handler,
     val newBlocks = mutableListOf<Block>()
     val appliedBlocks = mutableListOf<Block>()
 
-    processAppliedRanges(blocks, condition, side) { block, shift, isApplied ->
-      if (isApplied) {
-        appliedBlocks += block
+    var shift = 0
+    for (block in blocks) {
+      if (condition(block)) {
+        appliedBlocks.add(block)
+
+        shift += getRangeDelta(block.range, side)
       }
       else {
         val newBlock = block.shift(side, shift)
@@ -736,25 +742,6 @@ private class LineTracker(private val handler: Handler,
       return Block(range, true, isTooBig)
     }
 
-    fun processAppliedRanges(blocks: List<Block>, condition: (Block) -> Boolean, side: Side,
-                             handler: (block: Block, shift: Int, isApplied: Boolean) -> Unit) {
-      val otherSide = side.other()
-
-      var shift = 0
-      for (block in blocks) {
-        if (condition(block)) {
-          handler(block, shift, true)
-
-          val deleted = block.range.end(side) - block.range.start(side)
-          val inserted = block.range.end(otherSide) - block.range.start(otherSide)
-          shift += inserted - deleted
-        }
-        else {
-          handler(block, shift, false)
-        }
-      }
-    }
-
     private fun Block.shift(side: Side, delta: Int) = Block(
       shiftRange(this.range, side, delta), this.isDirty, this.isTooBig)
 
@@ -842,4 +829,11 @@ private class MergingBlockProcessor(private val handler: Handler) {
     }
     return merged
   }
+}
+
+private fun getRangeDelta(range: Range, side: Side): Int {
+  val otherSide = side.other()
+  val deleted = range.end(side) - range.start(side)
+  val inserted = range.end(otherSide) - range.start(otherSide)
+  return inserted - deleted
 }
