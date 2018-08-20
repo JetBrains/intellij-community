@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.lang.ASTFactory;
+import com.intellij.lang.LanguageASTFactory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.LiteralTextEscaper;
