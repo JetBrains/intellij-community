@@ -320,14 +320,6 @@ class PartialLocalLineStatusTracker(project: Project,
   }
 
   private inner class PartialDocumentTrackerHandler : LineStatusTrackerBase<LocalRange>.MyDocumentTrackerHandler() {
-    override fun onRangeAdded(block: Block) {
-      super.onRangeAdded(block)
-
-      if (block.ourData.marker == null) { // do not override markers, that are set via other methods of this listener
-        block.marker = defaultMarker
-      }
-    }
-
     override fun onRangeRefreshed(before: Block, after: List<Block>) {
       super.onRangeRefreshed(before, after)
 
@@ -403,6 +395,13 @@ class PartialLocalLineStatusTracker(project: Project,
 
     override fun afterBulkRangeChange() {
       super.afterBulkRangeChange()
+
+      blocks.forEach {
+        // do not override markers, that are set via other methods of this listener
+        if (it.ourData.marker == null) {
+          it.marker = defaultMarker
+        }
+      }
 
       updateAffectedChangeLists()
       fireExcludedFromCommitChanged()
