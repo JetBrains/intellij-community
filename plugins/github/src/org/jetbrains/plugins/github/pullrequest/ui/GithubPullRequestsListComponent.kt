@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui
 
+import com.intellij.codeInsight.AutoPopupController
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
@@ -9,20 +10,27 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsLoader
+import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchComponent
+import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchModel
 import javax.swing.JScrollBar
 import javax.swing.ScrollPaneConstants
 
-class GithubPullRequestsListComponent(private val loader: GithubPullRequestsLoader, actionManager: ActionManager)
+class GithubPullRequestsListComponent(project: Project,
+                                      actionManager: ActionManager,
+                                      autoPopupController: AutoPopupController,
+                                      popupFactory: JBPopupFactory,
+                                      private val loader: GithubPullRequestsLoader)
   : BorderLayoutPanel(), Disposable, GithubPullRequestsLoader.StateListener {
 
   private val tableModel = GithubPullRequestsTableModel()
@@ -36,9 +44,18 @@ class GithubPullRequestsListComponent(private val loader: GithubPullRequestsLoad
   private var loadOnScrollThreshold = true
   private val errorPanel = HtmlErrorPanel()
   private val progressStripe = ProgressStripe(scrollPane, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
+  private val searchModel = GithubPullRequestSearchModel()
+  private val search = GithubPullRequestSearchComponent(project, autoPopupController, popupFactory, searchModel)
 
   init {
     loader.addStateListener(this)
+
+    searchModel.addStateListener(object : GithubPullRequestSearchModel.StateListener {
+      override fun queryChanged() {
+        loader.setSearchQuery(searchModel.query)
+        loader.reset()
+      }
+    })
 
     val refreshAction = object : DumbAwareAction("Refresh", null, AllIcons.Actions.Refresh) {
       override fun actionPerformed(e: AnActionEvent) = loader.reset()
@@ -47,7 +64,7 @@ class GithubPullRequestsListComponent(private val loader: GithubPullRequestsLoad
     val toolbar = actionManager.createActionToolbar("GithubPullRequestsToolWindowListToolbar", actionGroup, true)
     toolbar.setReservePlaceAutoPopupIcon(false)
 
-    val headerPanel = JBUI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, 0).addToRight(toolbar.component)
+    val headerPanel = JBUI.Panels.simplePanel(0, 0).addToCenter(search).addToRight(toolbar.component)
     val tableWithError = JBUI.Panels
       .simplePanel(progressStripe)
       .addToTop(errorPanel)
@@ -55,6 +72,8 @@ class GithubPullRequestsListComponent(private val loader: GithubPullRequestsLoad
 
     addToCenter(tableWithError)
     addToTop(headerPanel)
+
+    resetSearch()
   }
 
   private fun potentiallyLoadMore() {
@@ -94,7 +113,15 @@ class GithubPullRequestsListComponent(private val loader: GithubPullRequestsLoad
 
   override fun moreDataLoaded(data: List<GithubSearchedIssue>, hasNext: Boolean) {
     invokeAndWaitIfNeed {
-      table.emptyText.text = "No pull requests loaded."
+      if (searchModel.query.isEmpty()) {
+        table.emptyText.text = "No pull requests loaded."
+      }
+      else {
+        table.emptyText.text = "No pull requests matching filters."
+        table.emptyText.appendSecondaryText("Reset Filters", SimpleTextAttributes.LINK_ATTRIBUTES) {
+          resetSearch()
+        }
+      }
       loadOnScrollThreshold = hasNext
       tableModel.addItems(data)
 
@@ -104,10 +131,13 @@ class GithubPullRequestsListComponent(private val loader: GithubPullRequestsLoad
     }
   }
 
+  private fun resetSearch() {
+    search.searchText = "state:open"
+  }
+
   override fun loaderReset() {
     invokeAndWaitIfNeed {
       loadOnScrollThreshold = false
-      errorPanel.setError(null)
       tableModel.clear()
       loader.requestLoadMore()
     }

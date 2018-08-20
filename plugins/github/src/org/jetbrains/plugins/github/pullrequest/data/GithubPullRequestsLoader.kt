@@ -14,23 +14,38 @@ import org.jetbrains.annotations.CalledInBackground
 import org.jetbrains.plugins.github.api.*
 import org.jetbrains.plugins.github.api.data.GithubResponsePage
 import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
-import org.jetbrains.plugins.github.api.search.GithubIssueSearchQuery
+import org.jetbrains.plugins.github.api.search.GithubIssueSearchType
+import org.jetbrains.plugins.github.api.util.GithubApiSearchQueryBuilder
+import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchQuery
 import java.util.*
 
 class GithubPullRequestsLoader(private val serverPath: GithubServerPath,
-                               repoPath: GithubFullPath,
+                               private val repoPath: GithubFullPath,
                                private val progressManager: ProgressManager,
                                private val requestExecutor: GithubApiRequestExecutor) : Disposable {
   private val LOG = logger<GithubPullRequestsLoader>()
 
   private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("GitHub PR loading breaker", 1)
   private var progressIndicator = EmptyProgressIndicator()
-  private val query = GithubIssueSearchQuery(GithubIssueSearchQuery.Type.pr, null, repoPath)
+  private var query: String = buildQuery(null)
   private var nextPageRequest: GithubApiRequest<GithubResponsePage<GithubSearchedIssue>>? = createInitialRequest()
 
   private val stateEventDispatcher = EventDispatcher.create(StateListener::class.java)
 
   private fun createInitialRequest() = GithubApiRequests.Search.Issues.get(serverPath, query)
+
+  @CalledInAwt
+  fun setSearchQuery(searchQuery: GithubPullRequestSearchQuery?) {
+    query = buildQuery(searchQuery)
+  }
+
+  private fun buildQuery(searchQuery: GithubPullRequestSearchQuery?): String {
+    return GithubApiSearchQueryBuilder.searchQuery {
+      qualifier("type", GithubIssueSearchType.pr.name)
+      qualifier("repo", repoPath.fullName)
+      searchQuery?.buildApiSearchQuery(this)
+    }
+  }
 
   @CalledInAwt
   fun requestLoadMore() {

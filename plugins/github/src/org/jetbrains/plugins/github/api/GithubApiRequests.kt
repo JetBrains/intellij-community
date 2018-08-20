@@ -5,9 +5,8 @@ import com.intellij.util.ThrowableConvertor
 import org.jetbrains.plugins.github.api.GithubApiRequest.*
 import org.jetbrains.plugins.github.api.data.*
 import org.jetbrains.plugins.github.api.requests.*
-import org.jetbrains.plugins.github.api.search.GithubIssueSearchQuery
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
-import org.jetbrains.plugins.github.api.util.GithubApiSearchTermBuilder
+import org.jetbrains.plugins.github.api.util.GithubApiSearchQueryBuilder
 import org.jetbrains.plugins.github.api.util.GithubApiUrlQueryBuilder
 import java.awt.Image
 
@@ -186,7 +185,7 @@ object GithubApiRequests {
               pagination: GithubRequestPagination? = null) =
         get(getUrl(server, Search.urlSuffix, urlSuffix,
                    GithubApiUrlQueryBuilder.urlQuery {
-                     param("q", GithubApiSearchTermBuilder.searchQuery {
+                     param("q", GithubApiSearchQueryBuilder.searchQuery {
                        qualifier("repo", repoPath?.fullName.orEmpty())
                        qualifier("state", state)
                        qualifier("assignee", assignee)
@@ -196,10 +195,10 @@ object GithubApiRequests {
                    }))
 
       @JvmStatic
-      fun get(server: GithubServerPath, query: GithubIssueSearchQuery, pagination: GithubRequestPagination? = null) =
+      fun get(server: GithubServerPath, query: String, pagination: GithubRequestPagination? = null) =
         get(getUrl(server, Search.urlSuffix, urlSuffix,
                    GithubApiUrlQueryBuilder.urlQuery {
-                     param("q", query.toParameterValue())
+                     param("q", query)
                      param(pagination)
                    }))
 
