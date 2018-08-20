@@ -98,13 +98,11 @@ public class CompilerTester {
   }
 
   public void tearDown() {
-    CompilerTestUtil.disableExternalCompiler(getProject());
-
     try {
-      myMainOutput.tearDown();
-    }
-    catch (Exception e) {
-      ExceptionUtilRt.rethrow(e);
+      new RunAll(
+        () -> CompilerTestUtil.disableExternalCompiler(getProject()),
+        () -> myMainOutput.tearDown()
+      ).run();
     }
     finally {
       myMainOutput = null;

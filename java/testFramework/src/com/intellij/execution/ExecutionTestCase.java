@@ -58,7 +58,8 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
     if (!myModuleOutputDir.exists()) {
       VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ourOutputRoot);
       assertNotNull(ourOutputRoot.getAbsolutePath(), vDir);
-      vDir.getChildren();//we need this to load children to VFS to fire VFileCreatedEvent for the output directory
+      //we need this to load children to VFS to fire VFileCreatedEvent for the output directory
+      vDir.getChildren();
 
       CompilerTester compilerTester = new CompilerTester(myProject, Arrays.asList(ModuleManager.getInstance(myProject).getModules()), null);
       try {
@@ -121,7 +122,7 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
   @Override
   protected void tearDown() throws Exception {
     myChecker = null;
-    super.tearDown();
+    EdtTestUtil.runInEdtAndWait(() -> super.tearDown());
     //myChecker.checkValid(getTestProjectJdk());
     //probably some thread is destroyed right now because of log exception
     //wait a little bit
