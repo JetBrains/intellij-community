@@ -20,7 +20,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -51,7 +50,6 @@ import java.util.EnumSet;
 import java.util.List;
 
 public class PyStringLiteralExpressionImpl extends PyElementImpl implements PyStringLiteralExpression, RegExpLanguageHost, PsiLiteralValue {
-  private static final Logger LOG = Logger.getInstance(PyStringLiteralExpressionImpl.class);
 
   @Nullable private volatile String myStringValue;
   @Nullable private volatile List<TextRange> myValueTextRanges;
@@ -91,24 +89,6 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
       myValueTextRanges = result = Collections.unmodifiableList(ranges);
     }
     return result;
-  }
-
-  // TODO replace all usages with PyStringLiteralUtil.getStringValue(String)
-  public static TextRange getNodeTextRange(final String text) {
-    LOG.assertTrue(PyStringLiteralUtil.isStringLiteralToken(text), "Text of a single string literal node expected: " + text);
-    int startOffset = PyStringLiteralUtil.getPrefixLength(text);
-    int delimiterLength = 1;
-    final String afterPrefix = text.substring(startOffset);
-    if (afterPrefix.startsWith("\"\"\"") || afterPrefix.startsWith("'''")) {
-      delimiterLength = 3;
-    }
-    final String delimiter = text.substring(startOffset, startOffset + delimiterLength);
-    startOffset += delimiterLength;
-    int endOffset = text.length();
-    if (text.substring(startOffset).endsWith(delimiter)) {
-      endOffset -= delimiterLength;
-    }
-    return new TextRange(startOffset, endOffset);
   }
 
   @Override

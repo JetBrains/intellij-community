@@ -18,7 +18,7 @@ package com.jetbrains.python.codeInsight.fstrings;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
+import com.jetbrains.python.psi.PyStringLiteralUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -44,7 +44,7 @@ public class FStringParser {
 
   private FStringParser(@NotNull String nodeText) {
     myNodeText = nodeText;
-    myNodeContentRange = PyStringLiteralExpressionImpl.getNodeTextRange(myNodeText);
+    myNodeContentRange = PyStringLiteralUtil.getContentRange(myNodeText);
   }
 
   private void parseTopLevel() {

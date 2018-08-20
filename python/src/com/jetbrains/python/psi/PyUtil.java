@@ -1921,7 +1921,7 @@ public class PyUtil {
       final String nodeText = node.getText();
       final int prefixLength = PyStringLiteralUtil.getPrefixLength(nodeText);
       myPrefix = nodeText.substring(0, prefixLength);
-      myContentRange = PyStringLiteralExpressionImpl.getNodeTextRange(nodeText);
+      myContentRange = PyStringLiteralUtil.getContentRange(nodeText);
       myQuote = nodeText.substring(prefixLength, myContentRange.getStartOffset());
     }
 
