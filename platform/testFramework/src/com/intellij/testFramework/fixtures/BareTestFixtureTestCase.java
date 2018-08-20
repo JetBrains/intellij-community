@@ -12,7 +12,9 @@ import com.intellij.testFramework.SkipInHeadlessEnvironment;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.TestFrameworkUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
@@ -21,7 +23,8 @@ import static com.intellij.testFramework.TestFrameworkUtil.SKIP_HEADLESS;
 import static com.intellij.testFramework.TestFrameworkUtil.SKIP_SLOW;
 import static org.junit.Assume.assumeFalse;
 
-public abstract class BareTestFixtureTestCase {
+@TestOnly
+public abstract class BareTestFixtureTestCase extends Assert {
   public static final Logger LOG = Logger.getInstance(BareTestFixtureTestCase.class);
   @Rule public final TestName myNameRule = new TestName();
 
