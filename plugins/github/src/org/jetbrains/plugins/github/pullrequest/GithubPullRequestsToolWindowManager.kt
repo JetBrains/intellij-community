@@ -110,7 +110,7 @@ class GithubPullRequestsToolWindowManager(private val project: Project,
 
   private fun removeContentsForRemovedRepositories(toolWindow: ToolWindow, repositories: List<GitRepository>) {
     findAndRemoveContents(toolWindow) {
-      repositories.contains(it.getUserData(REPOSITORY_KEY))
+      !repositories.contains(it.getUserData(REPOSITORY_KEY))
     }
   }
 
