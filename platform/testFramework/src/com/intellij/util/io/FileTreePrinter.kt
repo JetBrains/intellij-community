@@ -42,9 +42,12 @@ private fun sortedFileList(dir: Path): List<Path>? {
 private fun printFile(file: Path, indent: Int, sb: StringBuilder) {
   getIndentString(indent, sb)
   sb.append("\u251c\u2500\u2500")
-  sb.append(file.fileName.toString())
-  sb.append("\n")
-  sb.append(file.readChars()).append("\n\n")
+  val fileName = file.fileName.toString()
+  sb.append(fileName)
+  if (!(fileName.endsWith(".zip") || fileName.endsWith(".jar"))) {
+    sb.append("\n")
+    sb.append(file.readChars()).append("\n\n")
+  }
 }
 
 private fun getIndentString(indent: Int, sb: StringBuilder) {
