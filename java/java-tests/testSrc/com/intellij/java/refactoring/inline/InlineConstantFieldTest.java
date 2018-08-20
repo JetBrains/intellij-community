@@ -70,6 +70,10 @@ public class InlineConstantFieldTest extends LightRefactoringTestCase {
     doTest();
   }
 
+  public void testQualifierJava6() {
+    doTest();
+  }
+
   public void testFinalInitializedInConstructor() {
     doTest();
   }
