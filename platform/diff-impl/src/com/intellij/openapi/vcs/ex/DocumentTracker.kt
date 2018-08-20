@@ -493,9 +493,8 @@ class DocumentTracker : Disposable {
     fun onRangeRemoved(block: Block) {}
     fun onRangeAdded(block: Block) {}
 
-    fun afterRefresh() {}
     fun afterRangeChange() {}
-    fun afterExplicitChange() {}
+    fun afterBulkRangeChange() {}
 
     fun onFreeze(side: Side) {}
     fun onUnfreeze(side: Side) {}
@@ -563,7 +562,7 @@ private class LineTracker(private val handler: Handler,
     blocks = newBlocks
     isDirty = false
 
-    handler.afterRefresh()
+    handler.afterBulkRangeChange()
   }
 
   fun rangeChanged(side: Side, startLine: Int, beforeLength: Int, afterLength: Int) {
@@ -640,7 +639,7 @@ private class LineTracker(private val handler: Handler,
 
     blocks = newBlocks
 
-    handler.afterExplicitChange()
+    handler.afterBulkRangeChange()
 
     return appliedBlocks
   }
@@ -655,7 +654,7 @@ private class LineTracker(private val handler: Handler,
     blocks = newBlocks
     isDirty = dirty
 
-    handler.afterExplicitChange()
+    handler.afterBulkRangeChange()
   }
 
   companion object {

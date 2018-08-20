@@ -394,13 +394,6 @@ class PartialLocalLineStatusTracker(project: Project,
       return false
     }
 
-    override fun afterRefresh() {
-      super.afterRefresh()
-
-      updateAffectedChangeLists()
-      fireExcludedFromCommitChanged()
-    }
-
     override fun afterRangeChange() {
       super.afterRangeChange()
 
@@ -408,8 +401,8 @@ class PartialLocalLineStatusTracker(project: Project,
       fireExcludedFromCommitChanged()
     }
 
-    override fun afterExplicitChange() {
-      super.afterExplicitChange()
+    override fun afterBulkRangeChange() {
+      super.afterBulkRangeChange()
 
       updateAffectedChangeLists()
       fireExcludedFromCommitChanged()
