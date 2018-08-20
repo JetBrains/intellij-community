@@ -10,6 +10,9 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.impl.stores.IComponentStore;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
@@ -53,6 +56,8 @@ import java.util.concurrent.TimeUnit;
  * @author peter
  */
 public class CompilerTester {
+  private static final Logger LOG = Logger.getInstance(CompilerTester.class);
+
   private final Project myProject;
   private List<Module> myModules;
   private TempDirTestFixture myMainOutput;
@@ -195,7 +200,8 @@ public class CompilerTester {
         }
       }
 
-      Map<String, String> userMacros = PathMacros.getInstance().getUserMacros();
+      PathMacros pathMacroManager = PathMacros.getInstance();
+      Map<String, String> userMacros = pathMacroManager.getUserMacros();
       if (!userMacros.isEmpty()) {
         // require to be presented on disk
         Path configDir = Paths.get(PathManager.getConfigPath());
@@ -203,7 +209,18 @@ public class CompilerTester {
         if (!Files.exists(macroFilePath)) {
           String message = "File " + macroFilePath + " doesn't exist, but user macros defined: " + userMacros +
                            "\n\n File listing:" + FileTreePrinterKt.getDirectoryTree(configDir);
-          throw new AssertionError(message);
+          // todo find out who deletes this file during tests
+          LOG.warn(message);
+
+          String fakeMacroName = "__remove_me__";
+          IComponentStore applicationStore = CompilerTestUtil.getApplicationStore();
+          pathMacroManager.setMacro(fakeMacroName, fakeMacroName);
+          applicationStore.saveApplicationComponent((PersistentStateComponent<?>)pathMacroManager);
+          pathMacroManager.removeMacro(fakeMacroName);
+          applicationStore.saveApplicationComponent((PersistentStateComponent<?>)pathMacroManager);
+          if (!Files.exists(macroFilePath)) {
+            throw new AssertionError(message);
+          }
         }
       }
       runnable.consume(callback);
