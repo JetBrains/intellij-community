@@ -4,6 +4,8 @@ package com.intellij.testFramework;
 import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.CompilerTestUtil;
 import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.openapi.application.PathMacros;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.compiler.*;
@@ -31,6 +33,7 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 import org.junit.Assert;
 
 import javax.swing.*;
@@ -42,6 +45,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -162,7 +166,7 @@ public class CompilerTester {
         refreshVfs(module.getModuleFilePath());
       }
 
-      PlatformTestUtil.saveProject(getProject());
+      PlatformTestUtil.saveProject(getProject(), false);
       CompilerTestUtil.saveApplicationSettings();
       // for now directory based project is used for external storage
       if (!ProjectKt.isDirectoryBased(myProject)) {
@@ -174,10 +178,19 @@ public class CompilerTester {
           }
         }
       }
+
+      Map<String, String> userMacros = PathMacros.getInstance().getUserMacros();
+      if (!userMacros.isEmpty()) {
+        // require to be presented on disk
+        Path macroFilePath = Paths.get(PathManager.getConfigPath(), "options", JpsGlobalLoader.PathVariablesSerializer.STORAGE_FILE_NAME);
+        if (!Files.exists(macroFilePath)) {
+          throw new AssertionError("File " + macroFilePath + " doesn't exist, but user macros defined: " + userMacros);
+        }
+      }
       runnable.consume(callback);
     });
 
-    //tests run in awt
+    // tests run in awt
     while (!semaphore.waitFor(100)) {
       if (SwingUtilities.isEventDispatchThread()) {
         //noinspection TestOnlyProblems

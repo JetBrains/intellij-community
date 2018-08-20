@@ -4,6 +4,7 @@ package com.intellij.application.options;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.AtomicClearableLazyValue;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -37,6 +38,26 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
   private final List<String> myIgnoredMacros = ContainerUtil.createLockFreeCopyOnWriteList();
 
+  private final AtomicClearableLazyValue<Map<String, String>> myUserMacroMapCache = new AtomicClearableLazyValue<Map<String, String>>() {
+    @NotNull
+    @Override
+    protected Map<String, String> compute() {
+      myLock.readLock().lock();
+      try {
+        if (myMacros.isEmpty()) {
+          return Collections.emptyMap();
+        }
+
+        LinkedHashMap<String, String> result = new LinkedHashMap<>();
+        result.putAll(myMacros);
+        return Collections.unmodifiableMap(result);
+      }
+      finally {
+        myLock.readLock().unlock();
+      }
+    }
+  };
+
   static {
     SYSTEM_MACROS.add(PathMacroUtil.APPLICATION_HOME_DIR);
     SYSTEM_MACROS.add(PathMacroUtil.APPLICATION_PLUGINS_DIR);
@@ -55,13 +76,13 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
 
   @Override
   public Set<String> getUserMacroNames() {
-    myLock.readLock().lock();
-    try {
-      return new THashSet<>(myMacros.keySet()); // keyset should not escape the lock
-    }
-    finally {
-      myLock.readLock().unlock();
-    }
+    return myUserMacroMapCache.getValue().keySet();
+  }
+
+  @Override
+  @NotNull
+  public Map<String, String> getUserMacros() {
+    return myUserMacroMapCache.getValue();
   }
 
   @NotNull
@@ -136,9 +157,9 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
     try {
       myLock.writeLock().lock();
       myMacros.clear();
+      userMacroModified();
     }
     finally {
-      myModificationStamp++;
       myLock.writeLock().unlock();
     }
   }
@@ -162,19 +183,24 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
 
       if (StringUtil.isEmptyOrSpaces(value)) {
         if (myMacros.remove(name) != null) {
-          myModificationStamp++;
+          userMacroModified();
         }
         return;
       }
 
       String prevValue = myMacros.put(name, value);
       if (!value.equals(prevValue)) {
-        myModificationStamp++;
+        userMacroModified();
       }
     }
     finally {
       myLock.writeLock().unlock();
     }
+  }
+
+  private void userMacroModified() {
+    myModificationStamp++;
+    myUserMacroMapCache.drop();
   }
 
   @Override
@@ -183,9 +209,9 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
       myLock.writeLock().lock();
       myLegacyMacros.put(name, value);
       myMacros.remove(name);
+      userMacroModified();
     }
     finally {
-      myModificationStamp++;
       myLock.writeLock().unlock();
     }
   }
@@ -194,11 +220,10 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
   public void removeMacro(@NotNull String name) {
     try {
       myLock.writeLock().lock();
-      final String value = myMacros.remove(name);
-      LOG.assertTrue(value != null);
+      LOG.assertTrue(myMacros.remove(name) != null);
+      userMacroModified();
     }
     finally {
-      myModificationStamp++;
       myLock.writeLock().unlock();
     }
   }
@@ -261,16 +286,18 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
           myIgnoredMacros.add(ignoredName);
         }
       }
+
+      userMacroModified();
     }
     finally {
-      myModificationStamp++;
       myLock.writeLock().unlock();
     }
   }
 
   public void addMacroReplacements(@NotNull ReplacePathToMacroMap result) {
-    for (String name : getUserMacroNames()) {
-      String value = getValue(name);
+    Map<String, String> userMacros = getUserMacros();
+    for (String name : userMacros.keySet()) {
+      String value = userMacros.get(name);
       if (!StringUtil.isEmptyOrSpaces(value)) {
         result.addMacroReplacement(value, name);
       }
@@ -278,8 +305,9 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
   }
 
   public void addMacroExpands(@NotNull ExpandMacroToPathMap result) {
-    for (String name : getUserMacroNames()) {
-      String value = getValue(name);
+    Map<String, String> userMacros = getUserMacros();
+    for (String name : userMacros.keySet()) {
+      String value = userMacros.get(name);
       if (!StringUtil.isEmptyOrSpaces(value)) {
         result.addMacroExpand(name, value);
       }

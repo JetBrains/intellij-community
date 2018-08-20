@@ -24,13 +24,13 @@ import java.io.IOException;
 import java.util.Arrays;
 
 public class JUnitClasspathTest extends JavaCodeInsightFixtureTestCase {
-
   public void testWorkingDirsFileWhenConfigurationSpansToMultipleModules() throws Exception {
     final Module mod1 = setupModule("mod1", "T1");
     final Module mod2 = setupModule("mod2", "T2");
     CompilerTester compiler = new CompilerTester(myFixture.getProject(), Arrays.asList(ModuleManager.getInstance(myFixture.getProject()).getModules()));
-    compiler.rebuild();
     try {
+      compiler.rebuild();
+
       final JUnitConfiguration configuration = new JUnitConfiguration("p", getProject());
       configuration.setWorkingDirectory("$MODULE_DIR$");
       final JUnitConfiguration.Data persistentData = configuration.getPersistentData();
@@ -84,8 +84,8 @@ public class JUnitClasspathTest extends JavaCodeInsightFixtureTestCase {
   public void testNoWorkingDirsFileWhenOnlyOneModuleExist() throws Exception {
     setupModule("mod1", "T1");
     CompilerTester compiler = new CompilerTester(getProject(), Arrays.asList(ModuleManager.getInstance(getProject()).getModules()));
-    compiler.rebuild();
     try {
+      compiler.rebuild();
       final JUnitConfiguration configuration = new JUnitConfiguration("p", getProject());
       configuration.setWorkingDirectory("$MODULE_DIR$");
       final JUnitConfiguration.Data persistentData = configuration.getPersistentData();
