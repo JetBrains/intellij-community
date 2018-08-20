@@ -653,7 +653,7 @@ private class LineTracker(private val handler: Handler,
     handler.onRangesAdded(newBlocks)
 
     blocks = newBlocks
-    if (dirty) isDirty = true
+    isDirty = dirty
 
     handler.afterExplicitChange()
   }
