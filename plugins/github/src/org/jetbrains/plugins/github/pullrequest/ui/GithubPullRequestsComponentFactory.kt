@@ -23,9 +23,8 @@ class GithubPullRequestsComponentFactory(private val project: Project,
                                          private val popupFactory: JBPopupFactory) {
 
   fun createComponent(remoteUrl: String, account: GithubAccount): JComponent? {
-    val requestExecutor = requestExecutorManager.getExecutor(account, project) ?: return null
-    val loader = GithubPullRequestsLoader(account.server, GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(remoteUrl)!!,
-                                          progressManager, requestExecutor)
+    val loader = GithubPullRequestsLoader.create(project, progressManager, requestExecutorManager,
+                                                 account, GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(remoteUrl)!!) ?: return null
     val list = GithubPullRequestsListComponent(project, actionManager, autoPopupController, popupFactory, loader)
     Disposer.register(list, loader)
 

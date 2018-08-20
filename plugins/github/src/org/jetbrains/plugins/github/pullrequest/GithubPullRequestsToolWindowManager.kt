@@ -18,7 +18,7 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
 import icons.GithubIcons
-import org.jetbrains.plugins.github.authentication.accounts.AccountRemovedListener
+import org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestsComponentFactory
@@ -31,10 +31,11 @@ private val REMOTE_KEY = Key<GitRemote>("REMOTE")
 private val REMOTE_URL_KEY = Key<String>("REMOTE_URL")
 private val ACCOUNT_KEY = Key<GithubAccount>("ACCOUNT")
 
-class GithubPullRequestsToolWindowManager(private val project: Project,
-                                          private val toolWindowManager: ToolWindowManager,
-                                          private val gitRepositoryManager: GitRepositoryManager,
-                                          private val componentFactory: GithubPullRequestsComponentFactory) {
+class GithubPullRequestsToolWindowManager internal constructor(private val project: Project,
+                                                               private val toolWindowManager: ToolWindowManager,
+                                                               private val gitRepositoryManager: GitRepositoryManager,
+                                                               private val accountManager: GithubAccountManager,
+                                                               private val componentFactory: GithubPullRequestsComponentFactory) {
 
   fun showPullRequestsTab(repository: GitRepository, remote: GitRemote, remoteUrl: String, account: GithubAccount) {
     val toolWindow = getCurrentOrRegisterNewToolWindow()
@@ -98,11 +99,11 @@ class GithubPullRequestsToolWindowManager(private val project: Project,
       }
     })
 
-    busConnection.subscribe(GithubAccountManager.ACCOUNT_REMOVED_TOPIC, object : AccountRemovedListener {
-      override fun accountRemoved(removedAccount: GithubAccount) {
+    busConnection.subscribe(GithubAccountManager.ACCOUNT_TOKEN_CHANGED_TOPIC, object : AccountTokenChangedListener {
+      override fun tokenChanged(account: GithubAccount) {
         runInEdt {
           val toolWindow = toolWindowManager.getToolWindow(TOOL_WINDOW_ID) ?: return@runInEdt
-          removeContentsUsingRemovedAccount(toolWindow, removedAccount)
+          if (accountManager.getTokenForAccount(account) == null) removeContentsUsingRemovedAccount(toolWindow, account)
         }
       }
     })
