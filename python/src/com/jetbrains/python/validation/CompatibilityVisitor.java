@@ -21,7 +21,6 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.inspections.quickfix.*;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -219,7 +218,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
 
     for (ASTNode stringNode : node.getStringNodes()) {
       final String text = stringNode.getText();
-      final int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(text);
+      final int prefixLength = PyStringLiteralUtil.getPrefixLength(text);
       final String prefix = text.substring(0, prefixLength).toUpperCase();
       if (prefix.isEmpty()) continue;
 

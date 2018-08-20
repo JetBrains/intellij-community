@@ -19,7 +19,6 @@ import com.jetbrains.python.inspections.PyStringFormatParser;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,7 +92,7 @@ public class ConvertFormatOperatorToMethodIntention extends PyBaseIntentionActio
       CharSequence text = stringNode.getChars();
       int openPos = 0;
       boolean hasPrefix = false;
-      final int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(String.valueOf(text));
+      final int prefixLength = PyStringLiteralUtil.getPrefixLength(String.valueOf(text));
       if (prefixLength != 0) hasPrefix = true;
       openPos += prefixLength;
 

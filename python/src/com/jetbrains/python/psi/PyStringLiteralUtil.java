@@ -126,6 +126,10 @@ public class PyStringLiteralUtil {
     return offset;
   }
 
+  public static int getPrefixLength(@NotNull String text) {
+    return getPrefixEndOffset(text, 0);
+  }
+
   @NotNull
   public static String getPrefix(@NotNull CharSequence text) {
     return getPrefix(text, 0);

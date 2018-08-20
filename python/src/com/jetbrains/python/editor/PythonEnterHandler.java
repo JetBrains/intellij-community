@@ -38,7 +38,6 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.docstrings.*;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -140,7 +139,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     if (string != null && prevElement != null && PyTokenTypes.STRING_NODES.contains(prevElement.getNode().getElementType())
         && string.getTextOffset() < offset && !(element.getNode() instanceof PsiWhiteSpace)) {
       final String stringText = element.getText();
-      final int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(stringText);
+      final int prefixLength = PyStringLiteralUtil.getPrefixLength(stringText);
       if (string.getTextOffset() + prefixLength >= offset) {
         return Result.Continue;
       }
@@ -412,7 +411,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     if (pyString != null) {
 
       String nodeText = element.getText();
-      final int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(nodeText);
+      final int prefixLength = PyStringLiteralUtil.getPrefixLength(nodeText);
       nodeText = nodeText.substring(prefixLength);
 
       final String literalText = pyString.getText();
