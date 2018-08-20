@@ -41,7 +41,7 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
-public class DirtyScopeHolder extends UserDataHolderBase {
+class DirtyScopeHolder extends UserDataHolderBase {
   private final CompilerReferenceServiceBase<?> myService;
   private final FileDocumentManager myFileDocManager;
   private final PsiDocumentManager myPsiDocManager;
@@ -56,11 +56,10 @@ public class DirtyScopeHolder extends UserDataHolderBase {
   private final FileTypeRegistry myFileTypeRegistry = FileTypeRegistry.getInstance();
 
 
-  public DirtyScopeHolder(@NotNull CompilerReferenceServiceBase<?> service,
-                          FileDocumentManager fileDocumentManager,
-                          PsiDocumentManager psiDocumentManager,
-                          BiConsumer<MessageBusConnection, Set<String>> compilationAffectedModulesSubscription
-                          ){
+  DirtyScopeHolder(@NotNull CompilerReferenceServiceBase<?> service,
+                   FileDocumentManager fileDocumentManager,
+                   PsiDocumentManager psiDocumentManager,
+                   BiConsumer<? super MessageBusConnection, ? super Set<String>> compilationAffectedModulesSubscription) {
     myService = service;
     myFileDocManager = fileDocumentManager;
     myPsiDocManager = psiDocumentManager;
@@ -103,7 +102,7 @@ public class DirtyScopeHolder extends UserDataHolderBase {
     }
   }
 
-  public void upToDateChecked(boolean isUpToDate) {
+  void upToDateChecked(boolean isUpToDate) {
     final Module[] modules = ReadAction.compute(() -> {
       final Project project = myService.getProject();
       if (project.isDisposed()) {
@@ -148,7 +147,7 @@ public class DirtyScopeHolder extends UserDataHolderBase {
     myExcludedFilesScope = ExcludedFromCompileFilesUtil.getExcludedFilesScope(descriptions, myService.getFileTypes(), myService.getProject(), myService.getFileIndex());
   }
 
-  public GlobalSearchScope getDirtyScope() {
+  GlobalSearchScope getDirtyScope() {
     final Project project = myService.getProject();
     return ReadAction.compute(() -> {
       synchronized (myLock) {
@@ -174,7 +173,7 @@ public class DirtyScopeHolder extends UserDataHolderBase {
   }
 
   @NotNull
-  public Set<Module> getAllDirtyModules() {
+  Set<Module> getAllDirtyModules() {
     final Set<Module> dirtyModules = new THashSet<>(myVFSChangedModules);
     for (Document document : myFileDocManager.getUnsavedDocuments()) {
       final VirtualFile file = myFileDocManager.getFile(document);
@@ -197,7 +196,7 @@ public class DirtyScopeHolder extends UserDataHolderBase {
     return getDirtyScope().contains(file);
   }
 
-  public void installVFSListener() {
+  void installVFSListener() {
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
       @Override
       public void fileCreated(@NotNull VirtualFileEvent event) {
@@ -277,7 +276,7 @@ public class DirtyScopeHolder extends UserDataHolderBase {
 
   @TestOnly
   @NotNull
-  public Set<Module> getAllDirtyModulesForTest() {
+  Set<Module> getAllDirtyModulesForTest() {
     synchronized (myLock) {
       return getAllDirtyModules();
     }

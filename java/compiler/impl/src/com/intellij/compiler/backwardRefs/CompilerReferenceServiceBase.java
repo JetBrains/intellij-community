@@ -553,8 +553,13 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
 
   // should not be used in production code
   @NotNull
-  public DirtyScopeHolder getDirtyScopeHolder() {
+  DirtyScopeHolder getDirtyScopeHolder() {
     return myDirtyScopeHolder;
+  }
+
+  @TestOnly
+  public Set<Module> getAllDirtyModulesForTest() {
+    return myDirtyScopeHolder.getAllDirtyModulesForTest();
   }
 
   @Nullable

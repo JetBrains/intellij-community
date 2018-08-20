@@ -754,7 +754,7 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
                                @NotNull Set<? super String> files,
                                @NotNull Set<? super String> middleDirs) {
     int endIndex = groupByPath(events, startIndex, files, middleDirs);
-    // since all events in the group are mutually non-conflicting, we can re-arrange creations/deletions together
+    // since all events in the group events[startIndex..endIndex) are mutually non-conflicting, we can re-arrange creations/deletions together
     groupCreations(events, startIndex, endIndex, outValidatedEvents, outApplyEvents);
     groupDeletions(events, startIndex, endIndex, outValidatedEvents, outApplyEvents);
     groupOthers(events, startIndex, endIndex, outValidatedEvents, outApplyEvents);
