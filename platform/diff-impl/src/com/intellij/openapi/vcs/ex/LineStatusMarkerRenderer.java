@@ -298,11 +298,11 @@ public abstract class LineStatusMarkerRenderer {
 
         if (!change.isIgnored) {
           Color gutterColor = getGutterColor(change.type, editor);
-          paintTriangle(g, gutterColor, borderColor, x, endX, start);
+          paintTriangle(g, editor, gutterColor, borderColor, x, endX, start);
         }
         else {
           Color ignoredBorderColor = getIgnoredGutterBorderColor(change.type, editor);
-          paintTriangle(g, null, ignoredBorderColor, x, endX, start);
+          paintTriangle(g, editor, null, ignoredBorderColor, x, endX, start);
         }
       }
     }
@@ -331,7 +331,7 @@ public abstract class LineStatusMarkerRenderer {
       paintRect((Graphics2D)g, color, borderColor, x, y, endX, endY);
     }
     else {
-      paintTriangle((Graphics2D)g, color, borderColor, x, endX, y);
+      paintTriangle((Graphics2D)g, editor, color, borderColor, x, endX, y);
     }
   }
 
@@ -364,8 +364,10 @@ public abstract class LineStatusMarkerRenderer {
     }
   }
 
-  private static void paintTriangle(@NotNull Graphics2D g, @Nullable Color color, @Nullable Color borderColor, int x1, int x2, int y) {
-    int size = JBUI.scale(4);
+  private static void paintTriangle(@NotNull Graphics2D g, @NotNull Editor editor, @Nullable Color color, @Nullable Color borderColor,
+                                    int x1, int x2, int y) {
+    float editorScale = editor instanceof EditorImpl ? ((EditorImpl)editor).getScale() : 1.0f;
+    int size = (int)JBUI.scale(4 * editorScale);
 
     final int[] xPoints = new int[]{x1, x1, x2};
     final int[] yPoints = new int[]{y - size, y + size, y};
