@@ -201,8 +201,9 @@ public class CompilerTester {
         Path configDir = Paths.get(PathManager.getConfigPath());
         Path macroFilePath = configDir.resolve("options").resolve(JpsGlobalLoader.PathVariablesSerializer.STORAGE_FILE_NAME);
         if (!Files.exists(macroFilePath)) {
-          throw new AssertionError("File " + macroFilePath + " doesn't exist, but user macros defined: " + userMacros +
-                                   "\n\n File listing:" + FileTreePrinterKt.getDirectoryTree(configDir));
+          String message = "File " + macroFilePath + " doesn't exist, but user macros defined: " + userMacros +
+                           "\n\n File listing:" + FileTreePrinterKt.getDirectoryTree(configDir);
+          throw new AssertionError(message);
         }
       }
       runnable.consume(callback);

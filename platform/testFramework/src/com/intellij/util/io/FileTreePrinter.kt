@@ -44,8 +44,8 @@ private fun printFile(file: Path, indent: Int, sb: StringBuilder) {
   sb.append("\u251c\u2500\u2500")
   val fileName = file.fileName.toString()
   sb.append(fileName)
+  sb.append("\n")
   if (!(fileName.endsWith(".zip") || fileName.endsWith(".jar"))) {
-    sb.append("\n")
     sb.append(file.readChars()).append("\n\n")
   }
 }

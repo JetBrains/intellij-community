@@ -74,6 +74,7 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
     return (PathMacrosImpl)getInstance();
   }
 
+  @NotNull
   @Override
   public Set<String> getUserMacroNames() {
     return myUserMacroMapCache.getValue().keySet();
@@ -90,11 +91,13 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
     return Collections.emptySet();
   }
 
+  @NotNull
   @Override
   public Set<String> getSystemMacroNames() {
     return SYSTEM_MACROS;
   }
 
+  @NotNull
   @Override
   public Collection<String> getIgnoredMacroNames() {
     return myIgnoredMacros;
@@ -164,6 +167,7 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
     }
   }
 
+  @NotNull
   @Override
   public Collection<String> getLegacyMacroNames() {
     try {
