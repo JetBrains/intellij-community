@@ -101,6 +101,13 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
+  public UsefulTestCase() {
+  }
+
+  public UsefulTestCase(String name) {
+    super(name);
+  }
+
   protected boolean shouldContainTempFiles() {
     return true;
   }
