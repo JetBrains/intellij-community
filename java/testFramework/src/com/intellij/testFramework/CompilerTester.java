@@ -4,6 +4,7 @@ package com.intellij.testFramework;
 import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.CompilerTestUtil;
 import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.WriteAction;
@@ -16,6 +17,7 @@ import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -56,11 +58,11 @@ public class CompilerTester {
   private List<Module> myModules;
   private TempDirTestFixture myMainOutput;
 
-  public CompilerTester(Module module) throws Exception {
-    this(module.getProject(), Collections.singletonList(module));
+  public CompilerTester(@NotNull Module module) throws Exception {
+    this(module.getProject(), Collections.singletonList(module), null);
   }
 
-  public CompilerTester(Project project, List<Module> modules) throws Exception {
+  public CompilerTester(@NotNull Project project, @NotNull List<Module> modules, @Nullable Disposable disposable) throws Exception {
     myProject = project;
     myModules = modules;
     myMainOutput = new TempDirTestFixtureImpl();
@@ -74,6 +76,15 @@ public class CompilerTester {
         ModuleRootModificationUtil.setModuleSdk(module, JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk());
       }
     });
+
+    if (disposable != null) {
+      Disposer.register(disposable, new Disposable() {
+        @Override
+        public void dispose() {
+          tearDown();
+        }
+      });
+    }
   }
 
   public void tearDown() {

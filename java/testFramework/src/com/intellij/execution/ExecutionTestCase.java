@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.debugger.impl.OutputChecker;
@@ -48,13 +34,12 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
   private int myTimeout;
   private static File ourOutputRoot;
   private File myModuleOutputDir;
-  private CompilerTester myCompilerTester;
 
   public ExecutionTestCase() {
     setTimeout(300000); //30 seconds
   }
 
-  public void setTimeout(int timeout) {
+  public final void setTimeout(int timeout) {
     myTimeout = timeout;
   }
 
@@ -75,13 +60,18 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
       assertNotNull(ourOutputRoot.getAbsolutePath(), vDir);
       vDir.getChildren();//we need this to load children to VFS to fire VFileCreatedEvent for the output directory
 
-      myCompilerTester = new CompilerTester(myProject, Arrays.asList(ModuleManager.getInstance(myProject).getModules()));
-      List<CompilerMessage> messages = myCompilerTester.rebuild();
-      for (CompilerMessage message : messages) {
-        if (message.getCategory() == CompilerMessageCategory.ERROR) {
-          FileUtil.delete(myModuleOutputDir);
-          fail("Compilation failed: " + message);
+      CompilerTester compilerTester = new CompilerTester(myProject, Arrays.asList(ModuleManager.getInstance(myProject).getModules()), null);
+      try {
+        List<CompilerMessage> messages = compilerTester.rebuild();
+        for (CompilerMessage message : messages) {
+          if (message.getCategory() == CompilerMessageCategory.ERROR) {
+            FileUtil.delete(myModuleOutputDir);
+            fail("Compilation failed: " + message);
+          }
         }
+      }
+      finally {
+        compilerTester.tearDown();
       }
     }
   }
@@ -130,12 +120,8 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    if (myCompilerTester != null) {
-      myCompilerTester.tearDown();
-      myCompilerTester = null;
-    }
     myChecker = null;
-    EdtTestUtil.runInEdtAndWait(() -> super.tearDown());
+    super.tearDown();
     //myChecker.checkValid(getTestProjectJdk());
     //probably some thread is destroyed right now because of log exception
     //wait a little bit
