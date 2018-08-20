@@ -89,12 +89,13 @@ public class ServiceManagerImpl implements Disposable {
   }
 
   public static void processAllImplementationClasses(@NotNull ComponentManagerImpl componentManager, @NotNull BiPredicate<Class<?>, PluginDescriptor> processor) {
-    Collection adapters = componentManager.getPicoContainer().getComponentAdapters();
+    @SuppressWarnings("unchecked")
+    Collection<ComponentAdapter> adapters = componentManager.getPicoContainer().getComponentAdapters();
     if (adapters.isEmpty()) {
       return;
     }
 
-    for (Object o : adapters) {
+    for (ComponentAdapter o : adapters) {
       Class aClass;
       if (o instanceof MyComponentAdapter) {
         MyComponentAdapter adapter = (MyComponentAdapter)o;
@@ -125,12 +126,12 @@ public class ServiceManagerImpl implements Disposable {
           break;
         }
       }
-      else if (o instanceof ComponentAdapter && !(o instanceof ExtensionComponentAdapter)) {
-        PluginId pluginId = componentManager.getConfig((ComponentAdapter)o);
+      else if (!(o instanceof ExtensionComponentAdapter)) {
+        PluginId pluginId = componentManager.getConfig(o);
         // allow InstanceComponentAdapter without pluginId to test
         if (pluginId != null || o instanceof InstanceComponentAdapter) {
           try {
-            aClass = ((ComponentAdapter)o).getComponentImplementation();
+            aClass = o.getComponentImplementation();
           }
           catch (Throwable e) {
             LOG.error(e);
