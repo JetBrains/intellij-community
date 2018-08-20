@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.vfs;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.ui.Messages;
@@ -69,7 +54,7 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
   @Override
   @NotNull
   public byte[] contentsToByteArray() throws IOException {
-    if (myContentLoadFailed || myProcessingBeforeContentsChange) {
+    if (myContentLoadFailed) {
       return ArrayUtil.EMPTY_BYTE_ARRAY;
     }
     if (myContent == null) {
@@ -82,31 +67,16 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
     if (myContent != null) return;
     assert myFileRevision != null;
 
-    final VcsFileSystem vcsFileSystem = ((VcsFileSystem)getFileSystem());
-
     try {
       myFileRevision.loadContent();
-      fireBeforeContentsChange();
 
-      myModificationStamp++;
       final VcsRevisionNumber revisionNumber = myFileRevision.getRevisionNumber();
       setRevision(VcsUtil.getShortRevisionString(revisionNumber));
       myContent = myFileRevision.getContent();
       myCharset = new CharsetToolkit(myContent).guessEncoding(myContent.length);
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          vcsFileSystem.fireContentsChanged(this, VcsVirtualFile.this, 0);
-        }
-      });
-
     }
     catch (VcsException e) {
       myContentLoadFailed = true;
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          vcsFileSystem.fireBeforeFileDeletion(this, VcsVirtualFile.this);
-        }
-      });
       myContent = ArrayUtil.EMPTY_BYTE_ARRAY;
       setRevision("0");
 
@@ -114,18 +84,10 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
         VcsBundle.message("message.text.could.not.load.virtual.file.content", getPresentableUrl(), e.getLocalizedMessage()),
                                  VcsBundle.message("message.title.could.not.load.content"),
                                  Messages.getInformationIcon());
-
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          vcsFileSystem.fireFileDeleted(this, VcsVirtualFile.this, getName(), getParent());
-        }
-      });
-
     }
     catch (ProcessCanceledException ex) {
       myContent = null;
     }
-
   }
 
   @Nullable
@@ -140,6 +102,7 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
     return super.getCharset();
   }
 
+  @Override
   public boolean isDirectory() {
     return false;
   }

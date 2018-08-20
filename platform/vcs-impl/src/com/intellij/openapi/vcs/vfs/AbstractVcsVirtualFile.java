@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs.vfs;
 
 import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,7 +23,10 @@ import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 public abstract class AbstractVcsVirtualFile extends VirtualFile {
 
@@ -34,7 +36,6 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
   private final VirtualFile myParent;
   protected int myModificationStamp = 0;
   private final VirtualFileSystem myFileSystem;
-  protected boolean myProcessingBeforeContentsChange;
 
   protected AbstractVcsVirtualFile(String path, VirtualFileSystem fileSystem) {
     myFileSystem = fileSystem;
@@ -147,20 +148,5 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
 
   protected void setRevision(String revision) {
     myRevision = revision;
-  }
-
-  protected void fireBeforeContentsChange() {
-    myProcessingBeforeContentsChange = true;
-    try {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          ((VcsFileSystem)getFileSystem()).fireBeforeContentsChange(this, AbstractVcsVirtualFile.this);
-        }
-      });
-    }
-    finally {
-      myProcessingBeforeContentsChange = false;
-    }
   }
 }
