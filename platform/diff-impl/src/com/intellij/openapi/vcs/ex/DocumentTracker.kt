@@ -370,7 +370,7 @@ class DocumentTracker : Disposable {
 
     private fun getAffectedRange(line1: Int, oldLine2: Int, newLine2: Int, e: DocumentEvent): Triple<Int, Int, Int> {
       val afterLength = newLine2 - line1
-      val beforeLength = line2 - line1
+      val beforeLength = oldLine2 - line1
 
       // Whole line insertion / deletion
       if (e.oldLength == 0 && e.newLength != 0) {
