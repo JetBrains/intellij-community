@@ -55,7 +55,7 @@ public class PyLiteralStringNodeImpl extends LeafPsiElement implements PyLiteral
   @NotNull
   @Override
   public TextRange getContentRange() {
-    return PyStringLiteralExpressionImpl.getNodeTextRange(getText());
+    return PyStringLiteralUtil.getContentRange(getText());
   }
 
   @NotNull
