@@ -489,15 +489,18 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   public static void checkEditorsReleased() {
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
-    RunAll runAll = new RunAll(() -> UIUtil.dispatchAllInvocationEvents());
-    for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
-      runAll = runAll
-        .append(
-          () -> EditorFactoryImpl.throwNotReleasedError(editor),
-          () -> EditorFactory.getInstance().releaseEditor(editor)
-        );
-    }
-    runAll.run();
+    new RunAll(
+      () -> UIUtil.dispatchAllInvocationEvents(),
+      () -> {
+        // getAllEditors() should be called only after dispatchAllInvocationEvents(), that's why separate RunAll is used
+        RunAll runAll = new RunAll();
+        for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
+          runAll = runAll
+            .append(() -> EditorFactoryImpl.throwNotReleasedError(editor))
+            .append(() -> EditorFactory.getInstance().releaseEditor(editor));
+        }
+        runAll.run();
+      }).run();
   }
 
   @Override

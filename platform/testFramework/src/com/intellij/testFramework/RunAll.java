@@ -9,6 +9,7 @@ import com.intellij.util.lang.CompoundRuntimeException;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -31,7 +32,7 @@ public class RunAll implements Runnable {
   @SafeVarargs
   @Contract(pure=true)
   public final RunAll append(@NotNull ThrowableRunnable<Throwable>... actions) {
-    return new RunAll(ContainerUtil.concat(myActions, ContainerUtilRt.newArrayList(actions)));
+    return new RunAll(ContainerUtil.concat(myActions, actions.length == 1 ? Collections.singletonList(actions[0]) : ContainerUtilRt.newArrayList(actions)));
   }
 
   @Override
