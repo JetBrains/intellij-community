@@ -83,8 +83,24 @@ abstract class LineStatusTrackerBase<R : Range> {
 
   abstract protected fun Block.toRange(): R
 
-  protected open fun createDocumentTrackerHandlers(): List<DocumentTracker.Handler> = listOf(MyDocumentTrackerHandler())
+  protected open fun createDocumentTrackerHandlers(): List<DocumentTracker.RichHandler> = listOf(MyRichDocumentTrackerHandler())
 
+  protected open fun createHeadlessDocumentTrackerHandlers(): List<DocumentTracker.Handler> = listOf(MyHeadlessDocumentTrackerHandler())
+
+
+  fun getUpToDateRanges(): List<R> {
+    application.assertReadAccessAllowed()
+    LOCK.read {
+      val upToDateBlocks = if (isValid()) {
+        blocks
+      }
+      else {
+        val handlers = createHeadlessDocumentTrackerHandlers()
+        documentTracker.getUpToDateBlocks(handlers)
+      }
+      return upToDateBlocks.filter { !it.range.isEmpty }.map { it.toRange() }
+    }
+  }
 
   fun getRanges(): List<R>? {
     application.assertReadAccessAllowed()
@@ -176,11 +192,7 @@ abstract class LineStatusTrackerBase<R : Range> {
   }
 
 
-  private inner class MyDocumentTrackerHandler : DocumentTracker.Handler {
-    override fun onRangeShifted(before: Block, after: Block) {
-      after.ourData.innerRanges = before.ourData.innerRanges
-    }
-
+  private inner class MyRichDocumentTrackerHandler : MyHeadlessDocumentTrackerHandler(), DocumentTracker.RichHandler {
     override fun afterRangeChange() {
       updateHighlighters()
     }
@@ -191,7 +203,7 @@ abstract class LineStatusTrackerBase<R : Range> {
       updateHighlighters()
     }
 
-    override fun onUnfreeze(side: Side) {
+    override fun onUnfreeze() {
       calcInnerRanges()
       updateHighlighters()
     }
@@ -211,6 +223,12 @@ abstract class LineStatusTrackerBase<R : Range> {
           }
         }
       }
+    }
+  }
+
+  private open inner class MyHeadlessDocumentTrackerHandler : DocumentTracker.Handler {
+    override fun onRangeCopied(before: Block, after: Block) {
+      after.ourData.innerRanges = before.ourData.innerRanges
     }
   }
 

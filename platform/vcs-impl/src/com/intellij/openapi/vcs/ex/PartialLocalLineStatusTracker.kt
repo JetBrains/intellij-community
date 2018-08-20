@@ -89,8 +89,11 @@ class PartialLocalLineStatusTracker(project: Project,
   override fun Block.toRange(): LocalRange = LocalRange(this.start, this.end, this.vcsStart, this.vcsEnd, this.innerRanges,
                                                         this.marker.changelistId, this.excludedFromCommit)
 
-  override fun createDocumentTrackerHandlers(): List<DocumentTracker.Handler> =
-    super.createDocumentTrackerHandlers() + ChangelistDocumentTrackerHandler() + ExcludedDocumentTrackerHandler()
+  override fun createDocumentTrackerHandlers(): List<DocumentTracker.RichHandler> =
+    super.createDocumentTrackerHandlers() + RichChangelistDocumentTrackerHandler() + RichExcludedDocumentTrackerHandler()
+
+  override fun createHeadlessDocumentTrackerHandlers(): List<DocumentTracker.Handler> =
+    super.createHeadlessDocumentTrackerHandlers() + ChangelistDocumentTrackerHandler(true) + HeadlessExcludedDocumentTrackerHandler()
 
   override fun getAffectedChangeListsIds(): List<String> {
     return documentTracker.readLock {
@@ -320,7 +323,28 @@ class PartialLocalLineStatusTracker(project: Project,
     undoableActions.add(action)
   }
 
-  private inner class ChangelistDocumentTrackerHandler : DocumentTracker.Handler {
+  private inner class RichChangelistDocumentTrackerHandler : ChangelistDocumentTrackerHandler(false), DocumentTracker.RichHandler {
+    override fun onUnfreeze() {
+      if (isValid()) eventDispatcher.multicaster.onBecomingValid(this@PartialLocalLineStatusTracker)
+    }
+  }
+
+  private open inner class ChangelistDocumentTrackerHandler(val headless: Boolean) : DocumentTracker.Handler {
+    override fun afterBulkRangeChange() {
+      blocks.forEach {
+        // do not override markers, that are set via other methods of this listener
+        if (it.ourData.marker == null) {
+          it.marker = defaultMarker
+        }
+      }
+
+      if (!headless) updateAffectedChangeLists()
+    }
+
+    override fun afterRangeChange() {
+      if (!headless) updateAffectedChangeLists()
+    }
+
     override fun onRangeRefreshed(before: Block, after: List<Block>) {
       val marker = before.marker
       for (block in after) {
@@ -339,14 +363,14 @@ class PartialLocalLineStatusTracker(project: Project,
         after.marker = affectedMarkers.single()
       }
       else {
-        if (!affectedMarkers.isEmpty()) {
+        if (!affectedMarkers.isEmpty() && !headless) {
           lstManager.notifyInactiveRangesDamaged(virtualFile)
         }
         after.marker = defaultMarker
       }
     }
 
-    override fun onRangeShifted(before: Block, after: Block) {
+    override fun onRangeCopied(before: Block, after: Block) {
       after.marker = before.marker
     }
 
@@ -371,48 +395,10 @@ class PartialLocalLineStatusTracker(project: Project,
 
       return false
     }
-
-    override fun afterRangeChange() {
-      updateAffectedChangeLists()
-    }
-
-    override fun afterBulkRangeChange() {
-      blocks.forEach {
-        // do not override markers, that are set via other methods of this listener
-        if (it.ourData.marker == null) {
-          it.marker = defaultMarker
-        }
-      }
-
-      updateAffectedChangeLists()
-    }
-
-    override fun onUnfreeze() {
-      if (isValid()) eventDispatcher.multicaster.onBecomingValid(this@PartialLocalLineStatusTracker)
-    }
   }
 
-  private inner class ExcludedDocumentTrackerHandler : DocumentTracker.Handler {
-    override fun onRangeRefreshed(before: Block, after: List<Block>) {
-      val isExcludedFromCommit = before.excludedFromCommit
-      for (block in after) {
-        block.excludedFromCommit = isExcludedFromCommit
-      }
-    }
 
-    override fun onRangesChanged(before: List<Block>, after: Block) {
-      after.excludedFromCommit = mergeExcludedFromCommitRanges(before)
-    }
-
-    override fun onRangeShifted(before: Block, after: Block) {
-      after.excludedFromCommit = before.excludedFromCommit
-    }
-
-    override fun onRangesMerged(range1: Block, range2: Block, merged: Block): Boolean {
-      merged.excludedFromCommit = mergeExcludedFromCommitRanges(listOf(range1, range2))
-      return true
-    }
-
+  private inner class RichExcludedDocumentTrackerHandler : HeadlessExcludedDocumentTrackerHandler(), DocumentTracker.RichHandler {
     override fun afterRangeChange() {
       fireExcludedFromCommitChanged()
     }
@@ -428,6 +414,28 @@ class PartialLocalLineStatusTracker(project: Project,
           block.excludedFromCommit = true
         }
       }
+    }
+  }
+
+  private open inner class HeadlessExcludedDocumentTrackerHandler : DocumentTracker.Handler {
+    override fun onRangeRefreshed(before: Block, after: List<Block>) {
+      val isExcludedFromCommit = before.excludedFromCommit
+      for (block in after) {
+        block.excludedFromCommit = isExcludedFromCommit
+      }
+    }
+
+    override fun onRangesChanged(before: List<Block>, after: Block) {
+      after.excludedFromCommit = mergeExcludedFromCommitRanges(before)
+    }
+
+    override fun onRangeCopied(before: Block, after: Block) {
+      after.excludedFromCommit = before.excludedFromCommit
+    }
+
+    override fun onRangesMerged(range1: Block, range2: Block, merged: Block): Boolean {
+      merged.excludedFromCommit = mergeExcludedFromCommitRanges(listOf(range1, range2))
+      return true
     }
 
     private fun mergeExcludedFromCommitRanges(ranges: List<DocumentTracker.Block>): Boolean {

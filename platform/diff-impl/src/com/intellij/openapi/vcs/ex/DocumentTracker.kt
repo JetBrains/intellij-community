@@ -40,7 +40,7 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 class DocumentTracker : Disposable {
-  private val handler: Handler
+  private val handler: RichHandler
 
   // Any external calls (ex: Document modifications) must be avoided under lock,
   // do avoid deadlock with ChangeListManager
@@ -57,17 +57,17 @@ class DocumentTracker : Disposable {
 
   constructor(document1: Document,
               document2: Document,
-              handler: List<Handler>) {
+              handler: List<RichHandler>) {
     assert(document1 != document2)
     this.document1 = document1
     this.document2 = document2
-    this.handler = WrapperHandler(handler.toList())
+    this.handler = RichWrapperHandler(handler.toList())
 
     val changes = compareLines(document1.immutableCharSequence,
                                document2.immutableCharSequence,
                                document1.lineOffsets,
                                document2.lineOffsets).iterateChanges().toList()
-    tracker = LineTracker(this.handler, changes)
+    tracker = LineTracker(this.handler, changes.map { Block(it, false, false) })
 
     val application = ApplicationManager.getApplication()
     application.addApplicationListener(MyApplicationListener(), this)
@@ -172,15 +172,7 @@ class DocumentTracker : Disposable {
     if (isDisposed) return
 
     val newText = side[document1, document2]
-
-    var shift = 0
-    val iterable = compareLines(oldText, newText.immutableCharSequence, oldText.lineOffsets, newText.lineOffsets)
-    for (range in iterable.changes()) {
-      val beforeLength = range.end1 - range.start1
-      val afterLength = range.end2 - range.start2
-      tracker.rangeChanged(side, range.start1 + shift, beforeLength, afterLength)
-      shift += afterLength - beforeLength
-    }
+    tracker.contentChanged(side, oldText, newText.immutableCharSequence, oldText.lineOffsets, newText.lineOffsets)
   }
 
   fun updateFrozenContentIfNeeded() {
@@ -306,6 +298,35 @@ class DocumentTracker : Disposable {
 
   private fun isValidLineRange(lineOffsets: LineOffsets, start: Int, end: Int): Boolean {
     return start >= 0 && start <= end && end <= lineOffsets.lineCount
+  }
+
+
+  fun getUpToDateBlocks(handlers: List<DocumentTracker.Handler>): List<DocumentTracker.Block> {
+    val lightHandler = WrapperHandler(handlers)
+    val initialBlocks = tracker.blocks.map {
+      val newBlock = Block(it.range, it.isDirty, it.isTooBig)
+      lightHandler.onRangeCopied(it, newBlock)
+      newBlock
+    }
+
+    val lightTracker = LineTracker(lightHandler, initialBlocks)
+
+    val oldLeftText = freezeHelper.getFrozenContent(Side.LEFT)
+    if (oldLeftText != null) {
+      lightTracker.contentChanged(Side.LEFT, oldLeftText, document1.immutableCharSequence,
+                                  oldLeftText.lineOffsets, document1.lineOffsets)
+    }
+
+    val oldRightText = freezeHelper.getFrozenContent(Side.LEFT)
+    if (oldRightText != null) {
+      lightTracker.contentChanged(Side.RIGHT, oldRightText, document2.immutableCharSequence,
+                                  oldRightText.lineOffsets, document2.lineOffsets)
+    }
+
+    lightTracker.refreshDirty(document1.immutableCharSequence, document2.immutableCharSequence,
+                              document1.lineOffsets, document2.lineOffsets,
+                              false)
+    return lightTracker.blocks
   }
 
 
@@ -485,16 +506,7 @@ class DocumentTracker : Disposable {
       get() = myLock.isHeldByCurrentThread
   }
 
-  interface Handler {
-    fun onRangeRefreshed(before: Block, after: List<Block>) {}
-    fun onRangesChanged(before: List<Block>, after: Block) {}
-    fun onRangeShifted(before: Block, after: Block) {}
-
-    fun onRangesMerged(range1: Block, range2: Block, merged: Block): Boolean = true
-
-    fun afterRangeChange() {}
-    fun afterBulkRangeChange() {}
-
+  interface RichHandler : Handler {
     fun onFreeze(side: Side) {}
     fun onUnfreeze(side: Side) {}
 
@@ -502,7 +514,18 @@ class DocumentTracker : Disposable {
     fun onUnfreeze() {}
   }
 
-  private class WrapperHandler(val handlers: List<Handler>) : Handler {
+  interface Handler {
+    fun onRangeRefreshed(before: Block, after: List<Block>) {}
+    fun onRangesChanged(before: List<Block>, after: Block) {}
+    fun onRangeCopied(before: Block, after: Block) {}
+
+    fun onRangesMerged(range1: Block, range2: Block, merged: Block): Boolean = true
+
+    fun afterRangeChange() {}
+    fun afterBulkRangeChange() {}
+  }
+
+  private class RichWrapperHandler(val handlers: List<RichHandler>) : RichHandler {
     override fun onRangeRefreshed(before: Block, after: List<Block>) {
       handlers.forEach { it.onRangeRefreshed(before, after) }
     }
@@ -511,8 +534,8 @@ class DocumentTracker : Disposable {
       handlers.forEach { it.onRangesChanged(before, after) }
     }
 
-    override fun onRangeShifted(before: Block, after: Block) {
-      handlers.forEach { it.onRangeShifted(before, after) }
+    override fun onRangeCopied(before: Block, after: Block) {
+      handlers.forEach { it.onRangeCopied(before, after) }
     }
 
     override fun onRangesMerged(range1: Block, range2: Block, merged: Block): Boolean {
@@ -546,6 +569,35 @@ class DocumentTracker : Disposable {
     }
   }
 
+  private class WrapperHandler(val handlers: List<Handler>) : Handler {
+    override fun onRangeRefreshed(before: Block, after: List<Block>) {
+      handlers.forEach { it.onRangeRefreshed(before, after) }
+    }
+
+    override fun onRangesChanged(before: List<Block>, after: Block) {
+      handlers.forEach { it.onRangesChanged(before, after) }
+    }
+
+    override fun onRangeCopied(before: Block, after: Block) {
+      handlers.forEach { it.onRangeCopied(before, after) }
+    }
+
+    override fun onRangesMerged(range1: Block, range2: Block, merged: Block): Boolean {
+      var mergeable = true
+      handlers.forEach { mergeable = mergeable && it.onRangesMerged(range1, range2, merged) }
+      return mergeable
+    }
+
+    override fun afterBulkRangeChange() {
+      handlers.forEach { it.afterBulkRangeChange() }
+    }
+
+    override fun afterRangeChange() {
+      handlers.forEach { it.afterRangeChange() }
+    }
+  }
+
+
 
   class Block(val range: Range, internal val isDirty: Boolean, internal val isTooBig: Boolean) {
     var data: Any? = null
@@ -558,8 +610,8 @@ class DocumentTracker : Disposable {
 
 
 private class LineTracker(private val handler: Handler,
-                          originalChanges: List<Range>) {
-  var blocks: List<Block> = originalChanges.map { Block(it, false, false) }
+                          originalBlocks: List<Block>) {
+  var blocks: List<Block> = originalBlocks
     private set
 
   private var isDirty: Boolean = false
@@ -591,12 +643,26 @@ private class LineTracker(private val handler: Handler,
     handler.afterBulkRangeChange()
   }
 
+
+  fun contentChanged(side: Side,
+                     oldText: CharSequence, newText: CharSequence,
+                     oldLineOffsets: LineOffsets, newLineOffsets: LineOffsets) {
+    var shift = 0
+    val iterable = compareLines(oldText, newText, oldLineOffsets, newLineOffsets)
+    for (range in iterable.changes()) {
+      val beforeLength = range.end1 - range.start1
+      val afterLength = range.end2 - range.start2
+      rangeChanged(side, range.start1 + shift, beforeLength, afterLength)
+      shift += afterLength - beforeLength
+    }
+  }
+
   fun rangeChanged(side: Side, startLine: Int, beforeLength: Int, afterLength: Int) {
     val data = RangeChangeHandler().run(blocks, side, startLine, beforeLength, afterLength)
 
     handler.onRangesChanged(data.affectedBlocks, data.newAffectedBlock)
     for (i in data.afterBlocks.indices) {
-      handler.onRangeShifted(data.afterBlocks[i], data.newAfterBlocks[i])
+      handler.onRangeCopied(data.afterBlocks[i], data.newAfterBlocks[i])
     }
 
     blocks = data.newBlocks
@@ -618,7 +684,7 @@ private class LineTracker(private val handler: Handler,
       }
       else {
         val newBlock = block.shift(side, shift)
-        handler.onRangeShifted(block, newBlock)
+        handler.onRangeCopied(block, newBlock)
 
         newBlocks.add(newBlock)
       }
