@@ -6,8 +6,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyStringLiteralUtil;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -26,7 +26,7 @@ public class StringLiteralQuotesAnnotator extends PyAnnotator {
     final List<ASTNode> stringNodes = node.getStringNodes();
     for (ASTNode stringNode : stringNodes) {
       final String nodeText = PyPsiUtils.getElementTextWithoutHostEscaping(stringNode.getPsi());
-      final int index = PyStringLiteralExpressionImpl.getPrefixLength(nodeText);
+      final int index = PyStringLiteralUtil.getPrefixLength(nodeText);
       final String unprefixed = nodeText.substring(index);
       final boolean foundError;
       if (StringUtil.startsWith(unprefixed, TRIPLE_QUOTES)) {

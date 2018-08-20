@@ -96,7 +96,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   // TODO replace all usages with PyStringLiteralUtil.getStringValue(String)
   public static TextRange getNodeTextRange(final String text) {
     LOG.assertTrue(PyStringLiteralUtil.isStringLiteralToken(text), "Text of a single string literal node expected: " + text);
-    int startOffset = getPrefixLength(text);
+    int startOffset = PyStringLiteralUtil.getPrefixLength(text);
     int delimiterLength = 1;
     final String afterPrefix = text.substring(startOffset);
     if (afterPrefix.startsWith("\"\"\"") || afterPrefix.startsWith("'''")) {
@@ -109,10 +109,6 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
       endOffset -= delimiterLength;
     }
     return new TextRange(startOffset, endOffset);
-  }
-
-  public static int getPrefixLength(String text) {
-    return PyStringLiteralUtil.getPrefixEndOffset(text, 0);
   }
 
   @Override

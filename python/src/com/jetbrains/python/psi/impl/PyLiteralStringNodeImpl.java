@@ -29,7 +29,7 @@ public class PyLiteralStringNodeImpl extends LeafPsiElement implements PyLiteral
 
   @Override
   public int getPrefixLength() {
-    return PyStringLiteralUtil.getPrefixEndOffset(getText(), 0);
+    return PyStringLiteralUtil.getPrefixLength(getText());
   }
 
   @NotNull
