@@ -61,18 +61,14 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
       //we need this to load children to VFS to fire VFileCreatedEvent for the output directory
       vDir.getChildren();
 
-      CompilerTester compilerTester = new CompilerTester(myProject, Arrays.asList(ModuleManager.getInstance(myProject).getModules()), null);
-      try {
-        List<CompilerMessage> messages = compilerTester.rebuild();
-        for (CompilerMessage message : messages) {
-          if (message.getCategory() == CompilerMessageCategory.ERROR) {
-            FileUtil.delete(myModuleOutputDir);
-            fail("Compilation failed: " + message);
-          }
+      // JDK added by compilerTester is used after compilation, so, we don't dispose compilerTester after rebuild
+      CompilerTester compilerTester = new CompilerTester(myProject, Arrays.asList(ModuleManager.getInstance(myProject).getModules()), getTestRootDisposable());
+      List<CompilerMessage> messages = compilerTester.rebuild();
+      for (CompilerMessage message : messages) {
+        if (message.getCategory() == CompilerMessageCategory.ERROR) {
+          FileUtil.delete(myModuleOutputDir);
+          fail("Compilation failed: " + message);
         }
-      }
-      finally {
-        compilerTester.tearDown();
       }
     }
   }
