@@ -70,7 +70,8 @@ fun buildTopLevelArgumentTypes(place: PsiElement): Array<PsiType?> {
     else {
       if (type is GrMapType) {
         TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_UTIL_MAP, place)
-      } else {
+      }
+      else {
         type
       }
     }
