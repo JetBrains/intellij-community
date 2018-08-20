@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.ui.MessageType
 import com.intellij.xdebugger.XDebugSession
 import org.jetbrains.plugins.ipnb.configuration.IpnbConnectionManager
+import org.jetbrains.plugins.ipnb.debugger.IpnbDebugProcess
 import org.jetbrains.plugins.ipnb.debugger.IpnbDebugRunner
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor
 import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodePanel
@@ -28,6 +29,7 @@ class IpnbDebugAction(private val myFileEditor: IpnbFileEditor) : AnAction("Debu
         val selectedCellPanel = myFileEditor.ipnbFilePanel.selectedCellPanel
         if (selectedCellPanel is IpnbCodePanel) {
           myDebugSession = IpnbDebugRunner.createDebugSession(project, filePath, selectedCellPanel)
+          IpnbRunCellAction.runCell(myFileEditor.ipnbFilePanel, false)
         }
       }
       else {
@@ -36,7 +38,13 @@ class IpnbDebugAction(private val myFileEditor: IpnbFileEditor) : AnAction("Debu
       }
     }
     else {
-      IpnbConnectionManager.showMessage(myFileEditor, "Previous debug session is still running", null, MessageType.WARNING)
+      val debugProcess = myDebugSession?.debugProcess
+      if (debugProcess is IpnbDebugProcess && debugProcess.isConnected) {
+        IpnbRunCellAction.runCell(myFileEditor.ipnbFilePanel, false)
+      }
+      else {
+        IpnbConnectionManager.showMessage(myFileEditor, "Previous debug session is still running", null, MessageType.WARNING)
+      }
     }
   }
 }

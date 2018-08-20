@@ -630,7 +630,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
   }
 
-  protected boolean isConnected() {
+  public boolean isConnected() {
     return myDebugger.isConnected();
   }
 

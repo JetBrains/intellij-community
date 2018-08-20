@@ -21,13 +21,16 @@ class IpnbDebugProcess(session: XDebugSession,
                                                                                             false) {
   private val myLocalPort = serverSocket.localPort
 
-  private fun createPydevConnectionCommand(): String {
+  private fun createPydevConnectionCommand(portToConnect: Int): String {
     val command = StringBuilder()
     command.append("import sys\n")
     command.append("sys.path.append('")
     command.append(StringUtil.escapeCharCharacters(PythonHelpersLocator.getHelpersRoot().path + "/pydev"))
     command.append("')\n")
-    command.append("import pydevd")
+    command.append("from pydev_jupyter import pydev_debug_jupyter\n")
+    command.append("pydev_debug_jupyter.attach_to_debugger(")
+    command.append(portToConnect)
+    command.append(")\n")
 
     return command.toString()
   }
@@ -40,6 +43,6 @@ class IpnbDebugProcess(session: XDebugSession,
     val envs = PyConsoleDebugProcess.getDebuggerEnvs(session)
 
     val connectionManager = IpnbConnectionManager.getInstance(project)
-    connectionManager.executeCode(codePanel, connectionId, createPydevConnectionCommand())
+    connectionManager.executeCode(codePanel, connectionId, createPydevConnectionCommand(portToConnect))
   }
 }
