@@ -3,7 +3,6 @@ package com.jetbrains.jsonSchema;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.idea.Bombed;
 import com.intellij.json.JsonFileType;
 import com.intellij.json.psi.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -110,15 +109,14 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       }
 
       @Override
-      public void doCheck() {
+      public void doCheck() throws Exception {
         final VirtualFile moduleFile = getProject().getBaseDir().findChild(myModuleDir);
         assertNotNull(moduleFile);
-        checkSchemaCompletion(moduleFile, "basePropertiesSchema.json");
+        checkSchemaCompletion(moduleFile, "basePropertiesSchema.json", false);
       }
     });
   }
 
-  @Bombed(month = Calendar.AUGUST, day = 20, year = 2018, user = "Anton.Lobov")
   public void testJsonSchemaCrossReferenceCompletionWithSchemaEditing() throws Exception {
     skeleton(new Callback() {
       private String myModuleDir;
@@ -146,15 +144,15 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       }
 
       @Override
-      public void doCheck() {
+      public void doCheck() throws Exception {
         final VirtualFile moduleFile = getProject().getBaseDir().findChild(myModuleDir);
         assertNotNull(moduleFile);
-        checkSchemaCompletion(moduleFile, "baseSchema.json");
+        checkSchemaCompletion(moduleFile, "baseSchema.json", true);
       }
     });
   }
 
-  private void checkSchemaCompletion(VirtualFile moduleFile, final String fileName) {
+  private void checkSchemaCompletion(VirtualFile moduleFile, final String fileName, boolean delayAfterUpdate) throws InterruptedException {
     doHighlighting();
     complete();
     assertStringItems("\"one\"", "\"two\"");
@@ -170,12 +168,16 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
 
     ApplicationManager.getApplication().runWriteAction(() -> {
       document.replaceString(start, start + str.length(), "\"enum\": [\"one1\", \"two1\"]");
-
       fileDocumentManager.saveAllDocuments();
     });
     LookupImpl lookup = getActiveLookup();
     if (lookup != null) lookup.hide();
     JsonSchemaService.Impl.get(getProject()).reset();
+
+    if (delayAfterUpdate) {
+      // give time for vfs callbacks to finish
+      Thread.sleep(200);
+    }
 
     doHighlighting();
     complete();

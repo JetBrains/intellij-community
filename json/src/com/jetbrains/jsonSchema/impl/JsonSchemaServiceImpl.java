@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.util.containers.ConcurrentList;
@@ -26,6 +27,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   @NotNull private final Project myProject;
   @NotNull private final MyState myState;
   @NotNull private final ClearableLazyValue<Set<String>> myBuiltInSchemaIds;
+  @NotNull private final Set<String> myRefs = ContainerUtil.newConcurrentSet();
   private final AtomicLong myAnyChangeCount = new AtomicLong(0);
   private final ModificationTracker myAnySchemaChangeTracker;
 
@@ -45,6 +47,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     myCatalogManager = new JsonSchemaCatalogManager(myProject);
 
     project.getMessageBus().connect().subscribe(JsonSchemaVfsListener.JSON_SCHEMA_CHANGED, myAnyChangeCount::incrementAndGet);
+    project.getMessageBus().connect().subscribe(JsonSchemaVfsListener.JSON_DEPS_CHANGED, () -> { myRefs.clear(); myAnyChangeCount.incrementAndGet(); });
     JsonSchemaVfsListener.startListening(project, this);
     myCatalogManager.startUpdates();
   }
@@ -333,6 +336,20 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   @Override
   public void unregisterResetAction(Runnable action) {
     myResetActions.remove(action);
+  }
+
+  @Override
+  public void registerReference(String ref) {
+    int index = StringUtil.lastIndexOfAny(ref, "\\/");
+    if (index >= 0) {
+      ref = ref.substring(index + 1);
+    }
+    myRefs.add(ref);
+  }
+
+  @Override
+  public boolean possiblyHasReference(String ref) {
+    return myRefs.contains(ref);
   }
 
   @Override
