@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,10 +81,7 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
       myContent = ArrayUtil.EMPTY_BYTE_ARRAY;
       setRevision("0");
 
-      Messages.showMessageDialog(
-        VcsBundle.message("message.text.could.not.load.virtual.file.content", getPresentableUrl(), e.getLocalizedMessage()),
-                                 VcsBundle.message("message.title.could.not.load.content"),
-                                 Messages.getInformationIcon());
+      showLoadingContentFailedMessage(e);
     }
     catch (ProcessCanceledException ex) {
       myContent = null;
