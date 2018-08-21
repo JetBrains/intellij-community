@@ -175,6 +175,11 @@ public class TemplateModuleBuilder extends ModuleBuilder {
       ProjectTemplateParameterFactory factory = WizardInputField.getFactoryById(field.getId());
       factory.applyResult(field.getValue(), model);
     }
+    for (ProjectTemplateParameterFactory factory : ProjectTemplateParameterFactory.EP_NAME.getExtensions()) {
+      String value = factory.getImmediateValue();
+      if (value != null)
+        factory.applyResult(value, model);
+    }
     model.commit();
   }
 
