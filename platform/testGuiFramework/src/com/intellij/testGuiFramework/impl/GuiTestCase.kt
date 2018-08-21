@@ -387,7 +387,7 @@ open class GuiTestCase {
     return fixture.rowCount()
   }
 
-  fun waitForPanelToDisappear(panelTitle: String, timeout: Long = 300000) {
+  fun waitForPanelToDisappear(panelTitle: String, timeout: Timeout = Timeouts.minutes05) {
     Pause.pause(object : Condition("Wait for $panelTitle panel appears") {
       override fun test(): Boolean {
         try {
@@ -414,7 +414,7 @@ open class GuiTestCase {
         }
         return false
       }
-    })
+    }, timeout)
 
   }
 
