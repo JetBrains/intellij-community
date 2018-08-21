@@ -104,11 +104,24 @@ public abstract class ConfigurationFactory {
   public void configureBeforeRunTaskDefaults(Key<? extends BeforeRunTask> providerID, BeforeRunTask task) {
   }
 
+  /**
+   * @deprecated Use {@link RunConfigurationSingletonPolicy}
+   */
+  @Deprecated
   public boolean isConfigurationSingletonByDefault() {
-    return false;
+    return getSingletonPolicy() != RunConfigurationSingletonPolicy.MULTIPLE_INSTANCE;
   }
 
+  /**
+   * @deprecated Use {@link RunConfigurationSingletonPolicy}
+   */
+  @Deprecated
   public boolean canConfigurationBeSingleton() {
-    return true; // Configuration may be marked as singleton by default
+    return getSingletonPolicy() != RunConfigurationSingletonPolicy.SINGLE_INSTANCE_ONLY;
+  }
+
+  @NotNull
+  public RunConfigurationSingletonPolicy getSingletonPolicy() {
+    return RunConfigurationSingletonPolicy.SINGLE_INSTANCE;
   }
 }
