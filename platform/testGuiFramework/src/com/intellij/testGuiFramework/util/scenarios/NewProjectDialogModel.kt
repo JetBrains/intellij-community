@@ -219,6 +219,14 @@ fun NewProjectDialogModel.createJavaProject(projectPath: String,
       else {
         button(buttonNext).click()
         if (template.isNotEmpty()) {
+          var previousCoordX = checkbox(checkCreateProjectFromTemplate).target().locationOnScreen.x
+          GuiTestUtilKt.waitUntil("Wait when coord X stop changing"){
+            val currentCoordX = checkbox(checkCreateProjectFromTemplate).target().locationOnScreen.x
+            val result = previousCoordX == currentCoordX
+            previousCoordX = currentCoordX
+            result
+          }
+
           val templateCheckbox = checkbox(checkCreateProjectFromTemplate)
           if (!templateCheckbox.isSelected)
             templateCheckbox.click()
@@ -263,7 +271,16 @@ fun NewProjectDialogModel.createJavaEnterpriseProject(projectPath: String, libs:
       else {
         button(buttonNext).click()
         if (template.isNotEmpty()) {
-          checkbox(checkCreateProjectFromTemplate).isSelected = true
+          var previousCoordX = checkbox(checkCreateProjectFromTemplate).target().locationOnScreen.x
+          GuiTestUtilKt.waitUntil("Wait when coord X stop changing"){
+            val currentCoordX = checkbox(checkCreateProjectFromTemplate).target().locationOnScreen.x
+            val result = previousCoordX == currentCoordX
+            previousCoordX = currentCoordX
+            result
+          }
+
+          val checkboxTemplate = checkbox(checkCreateProjectFromTemplate)
+          if(!checkboxTemplate.isSelected) checkboxTemplate.click()
           jList(template).clickItem(template)
         }
       }
