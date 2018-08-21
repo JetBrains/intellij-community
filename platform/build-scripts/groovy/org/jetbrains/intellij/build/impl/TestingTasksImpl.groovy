@@ -288,6 +288,7 @@ class TestingTasksImpl extends TestingTasks {
       "java.io.tmpdir"                         : tempDir,
       "teamcity.build.tempDir"                 : tempDir,
       "teamcity.tests.recentlyFailedTests.file": System.getProperty("teamcity.tests.recentlyFailedTests.file"),
+      "teamcity.build.branch.is_default"       : System.getProperty("teamcity.build.branch.is_default"),
       "jna.nosys"                              : "true",
       "file.encoding"                          : "UTF-8",
       "io.netty.leakDetectionLevel"            : "PARANOID",
