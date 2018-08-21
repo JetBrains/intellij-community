@@ -16,7 +16,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -30,7 +29,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
@@ -58,6 +56,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
@@ -94,22 +94,22 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
 
   private JBPopup myHint;
 
-  private CalcThread myCalcThread; //todo using in different threads? #UX-1
-  private volatile ActionCallback myCurrentWorker = ActionCallback.DONE;
-  private int myCalcThreadRestartRequestId = 0;
-  private final Object myWorkerRestartRequestLock = new Object();
-  private final Alarm listOperationsAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
-  private final Alarm emptyListAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
-
   private Runnable searchFinishedHandler = () -> {};
   private final List<ViewTypeListener> myViewTypeListeners = new ArrayList<>();
   private ViewType myViewType = ViewType.SHORT;
+
+  private final Alarm listOperationsAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
+  private final Alarm mySearchAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
+  private final MultithreadSearcher mySearcher;
+  private ProgressIndicator mySearchProgressIndicator;
 
   public SearchEverywhereUI(Project project,
                             List<SearchEverywhereContributor> serviceContributors,
                             List<SearchEverywhereContributor> contributors,
                             Map<String, SearchEverywhereContributorFilter<?>> filters) {
     withBackground(JBUI.CurrentTheme.SearchEverywhere.dialogBackground());
+
+    mySearcher = createSearcher();
 
     myProject = project;
     myServiceContributors = serviceContributors;
@@ -124,6 +124,26 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     JPanel settingsPanel = createSettingsPanel();
     mySearchField = createSearchField();
     suggestionsPanel = createSuggestionsPanel();
+
+    myListModel.addListDataListener(new ListDataListener() {
+      @Override
+      public void intervalAdded(ListDataEvent e) {
+        updateViewType(ViewType.FULL);
+      }
+
+      @Override
+      public void intervalRemoved(ListDataEvent e) {
+        if (myResultsList.isEmpty() && getSearchPattern().isEmpty()) {
+          updateViewType(ViewType.SHORT);
+        }
+      }
+
+      @Override
+      public void contentsChanged(ListDataEvent e) {
+        ViewType viewType = myResultsList.isEmpty() && getSearchPattern().isEmpty() ? ViewType.SHORT : ViewType.FULL;
+        updateViewType(viewType);
+      }
+    });
 
     myResultsList.setModel(myListModel);
     myResultsList.setFocusable(false);
@@ -180,6 +200,39 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       size.height -= suggestionsPanel.getPreferredSize().height;
     }
     return size;
+  }
+
+  private MultithreadSearcher createSearcher() {
+    MultithreadSearcher.Listener listener = new MultithreadSearcher.Listener() {
+      @Override
+      public void elementsAdded(List<MultithreadSearcher.ElementInfo> list) {
+        Map<SearchEverywhereContributor<?>, List<Object>> map = new HashMap<>();
+        list.forEach(info -> {
+          List<Object> lst = map.computeIfAbsent(info.getContributor(), o -> new ArrayList<>());
+          lst.add(info.getElement());
+        });
+
+        map.forEach((key, lst) -> myListModel.addElements(lst, key));
+        ScrollingUtil.ensureSelectionExists(myResultsList);
+      }
+
+      @Override
+      public void elementsRemoved(List<MultithreadSearcher.ElementInfo> list) {
+        list.forEach(info -> myListModel.removeElement(info.getElement(), info.getContributor()));
+      }
+
+      @Override
+      public void searchFinished(Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
+        hasMoreContributors.forEach(myListModel::setHasMore);
+        myResultsList.setEmptyText(getEmptyText());
+        ScrollingUtil.ensureSelectionExists(myResultsList);
+        if (myResultsList.isEmpty()) {
+          handleEmptyResults();
+        }
+      }
+    };
+
+    return new MultithreadSearcher(listener, runnable -> listOperationsAlarm.addRequest(runnable, 0));
   }
 
   private JPanel createSuggestionsPanel() {
@@ -507,11 +560,11 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
 
   private void rebuildList() {
     assert EventQueue.isDispatchThread() : "Must be EDT";
-    if (myCalcThread != null && !myCurrentWorker.isProcessed()) {
-      myCurrentWorker = myCalcThread.cancel();
-    }
-    if (myCalcThread != null && !myCalcThread.isCanceled()) {
-      myCalcThread.cancel();
+
+    mySearchAlarm.cancelAllRequests();
+    if (mySearchProgressIndicator != null && !mySearchProgressIndicator.isCanceled()) {
+      mySearchProgressIndicator.cancel();
+      mySearchProgressIndicator = null;
     }
 
     String pattern = getSearchPattern();
@@ -523,19 +576,14 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     MinusculeMatcher matcher = NameUtil.buildMatcher("*" + matcherString, NameUtil.MatchingCaseSensitivity.NONE);
     MatcherHolder.associateMatcher(myResultsList, matcher);
 
-    synchronized (myWorkerRestartRequestLock) { // this lock together with RestartRequestId should be enough to prevent two CalcThreads running at the same time
-      final int currentRestartRequest = ++myCalcThreadRestartRequestId;
-      myCurrentWorker.doWhenProcessed(() -> {
-        synchronized (myWorkerRestartRequestLock) {
-          if (currentRestartRequest != myCalcThreadRestartRequestId) {
-            return;
-          }
-          myCalcThread = new CalcThread(pattern, null);
-
-          myCurrentWorker = myCalcThread.start();
-        }
-      });
-    }
+    mySearchAlarm.addRequest(() -> {
+      myResultsList.setEmptyText(IdeBundle.message("label.choosebyname.searching"));
+      myListModel.clear();
+      Map<SearchEverywhereContributor<?>, Integer> contributorsMap = mySelectedTab.getContributor()
+        .map(contributor -> Collections.singletonMap(((SearchEverywhereContributor<?>) contributor), SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT))
+        .orElse(getUsedContributors().stream().collect(Collectors.toMap(c -> c, c -> MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT)));
+      mySearchProgressIndicator = mySearcher.search(contributorsMap, pattern, isUseNonProjectItems(), c -> myContributorFilters.get(c.getSearchProviderId()));
+    }, 200);
   }
 
   @NotNull
@@ -678,25 +726,14 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
   }
 
   private void showMoreElements(SearchEverywhereContributor contributor) {
-    synchronized (myWorkerRestartRequestLock) { // this lock together with RestartRequestId should be enough to prevent two CalcThreads running at the same time
-      final int currentRestartRequest = ++myCalcThreadRestartRequestId;
-      myCurrentWorker.doWhenProcessed(() -> {
-        synchronized (myWorkerRestartRequestLock) {
-          if (currentRestartRequest != myCalcThreadRestartRequestId) {
-            return;
-          }
-          myCalcThread = new CalcThread(getSearchPattern(), contributor);
 
-          myCurrentWorker = myCalcThread.start();
-        }
-      });
-    }
   }
 
   private void stopSearching() {
     listOperationsAlarm.cancelAllRequests();
-    if (myCalcThread != null && !myCalcThread.isCanceled()) {
-      myCalcThread.cancel();
+    mySearchAlarm.cancelAllRequests();
+    if (mySearchProgressIndicator != null && !mySearchProgressIndicator.isCanceled()) {
+      mySearchProgressIndicator.cancel();
     }
   }
 
@@ -709,135 +746,6 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     }
 
     hideHint();
-  }
-
-  @SuppressWarnings("Duplicates") //todo remove suppress #UX-1
-  private class CalcThread implements Runnable {
-    private final String pattern;
-    private final ProgressIndicator myProgressIndicator = new ProgressIndicatorBase();
-    private final ActionCallback myDone = new ActionCallback();
-    private final SearchEverywhereContributor contributorToExpand;
-
-    private CalcThread(@NotNull String pattern, @Nullable SearchEverywhereContributor expand) {
-      this.pattern = pattern;
-      contributorToExpand = expand;
-    }
-
-    @Override
-    public void run() {
-      try {
-        check();
-
-        if (contributorToExpand == null) {
-          resetList();
-        } else {
-          showMore(contributorToExpand);
-        }
-      }
-      catch (ProcessCanceledException ignore) {
-        myDone.setRejected();
-      }
-      catch (Exception e) {
-        LOG.error(e);
-        myDone.setRejected();
-      }
-      finally {
-        if (!isCanceled()) {
-          listOperationsAlarm.addRequest(() -> myResultsList.getEmptyText().setText(getEmptyText()), 0);
-        }
-        if (!myDone.isProcessed()) {
-          myDone.setDone();
-        }
-      }
-    }
-
-    private void resetList() {
-      listOperationsAlarm.cancelAllRequests();
-      emptyListAlarm.cancelAllRequests();
-      listOperationsAlarm.addRequest(() -> {
-        Dimension oldSize = getPreferredSize();
-        myResultsList.getEmptyText().setText(IdeBundle.message("label.choosebyname.searching"));
-        myListModel.clear();
-        Dimension newSize = getPreferredSize();
-        firePropertyChange("preferredSize", oldSize, newSize);
-      }, 200);
-
-      boolean anyFound = false;
-      SearchEverywhereContributor selectedContributor = mySelectedTab.getContributor().orElse(null);
-      if (selectedContributor != null) {
-        anyFound = addContributorItems(selectedContributor, SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT, true);
-      } else {
-        boolean clearBefore = true;
-        for (SearchEverywhereContributor contributor : getUsedContributors()) {
-          int count = myServiceContributors.contains(contributor) ? -1 : MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT; //show ALL items for service contributors
-          anyFound |= addContributorItems(contributor, count, clearBefore);
-          clearBefore = false;
-        }
-      }
-
-      if (!anyFound) {
-        emptyListAlarm.addRequest(() -> handleEmptyResults(), 50);
-      }
-    }
-
-    private void showMore(SearchEverywhereContributor contributor) {
-      int delta = isAllTabSelected() ? MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT : SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT;
-      int size = myListModel.getItemsForContributor(contributor) + delta;
-      addContributorItems(contributor, size, false);
-    }
-
-    private boolean addContributorItems(SearchEverywhereContributor contributor, int count, boolean clearBefore) {
-      ContributorSearchResult<Object> results =
-        contributor.search(pattern, isUseNonProjectItems(), myContributorFilters.get(contributor.getSearchProviderId()), myProgressIndicator, count);
-      boolean found = !results.isEmpty();
-
-      if (clearBefore) {
-        listOperationsAlarm.cancelAllRequests();
-      }
-
-      listOperationsAlarm.addRequest(() -> {
-        if (isCanceled()) {
-          return;
-        }
-
-        Dimension oldSize = getPreferredSize();
-        if (clearBefore) {
-          myListModel.clear();
-        }
-        List<Object> itemsToAdd = results.getItems().stream()
-                                         .filter(o -> !myListModel.contains(o))
-                                         .collect(Collectors.toList());
-        if (!itemsToAdd.isEmpty()) {
-          updateViewType(ViewType.FULL);
-          myListModel.addElements(itemsToAdd, contributor, results.hasMoreItems());
-          ScrollingUtil.ensureSelectionExists(myResultsList);
-        }
-        firePropertyChange("preferredSize", oldSize, getPreferredSize());
-      }, 50);
-
-      return found;
-    }
-
-    protected void check() {
-      myProgressIndicator.checkCanceled();
-      if (myDone.isRejected()) throw new ProcessCanceledException();
-      assert myCalcThread == this : "There are two CalcThreads running before one of them was cancelled";
-    }
-
-    private boolean isCanceled() {
-      return myProgressIndicator.isCanceled() || myDone.isRejected();
-    }
-
-    public ActionCallback cancel() {
-      myProgressIndicator.cancel();
-      //myDone.setRejected();
-      return myDone;
-    }
-
-    public ActionCallback start() {
-      ApplicationManager.getApplication().executeOnPooledThread(this);
-      return myDone;
-    }
   }
 
   @NotNull
@@ -966,47 +874,53 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
         .anyMatch(pair -> pair.first == MORE_ELEMENT && pair.second == contributor);
     }
 
-    public void addElements(List<Object> items, SearchEverywhereContributor contributor, boolean hasMore) {
+    public void addElements(List<Object> items, SearchEverywhereContributor contributor) {
       if (items.isEmpty()) {
         return;
       }
 
       List<Pair<Object, SearchEverywhereContributor>> pairsToAdd = items.stream()
-                                                                        .map(o -> Pair.create(o, contributor))
-                                                                        .collect(Collectors.toList());
+        .map(o -> Pair.create(o, contributor))
+        .collect(Collectors.toList());
 
-      int insertPoint = contributors().lastIndexOf(contributor);
-      int startIndex;
-      int endIndex;
-      if (insertPoint < 0) {
-        // no items of this contributor - add to the end of list
-        startIndex = listElements.size();
-        listElements.addAll(pairsToAdd);
-        if (hasMore) {
-          listElements.add(Pair.create(MORE_ELEMENT, contributor));
-        }
-        endIndex = listElements.size() - 1;
-        fireIntervalAdded(this, startIndex, endIndex);
-      } else {
-        // contributor elements already exists in list - add before 'more' element
-        boolean hadMoreBeforeAdd = isMoreElement(insertPoint);
-        if (!hadMoreBeforeAdd) {
-          insertPoint += 1;
-        }
-        startIndex = insertPoint;
-        endIndex = startIndex + pairsToAdd.size() - 1;
-        listElements.addAll(insertPoint, pairsToAdd);
+      int startIndex = getInsertionPoint(contributor);
+      int endIndex = startIndex + pairsToAdd.size() - 1;
+      listElements.addAll(startIndex, pairsToAdd);
+      fireIntervalAdded(this, startIndex, endIndex);
+    }
 
-        if (hasMore && !hadMoreBeforeAdd) {
-          listElements.add(insertPoint + pairsToAdd.size(), Pair.create(MORE_ELEMENT, contributor));
-          endIndex += 1;
-        }
-        fireIntervalAdded(this, startIndex, endIndex);
+    public void removeElement(@NotNull Object item, SearchEverywhereContributor contributor) {
+      int index = contributors().indexOf(contributor);
+      if (index < 0) {
+        return;
+      }
 
-        if (hadMoreBeforeAdd && !hasMore) {
-          listElements.remove(endIndex + 1);
-          fireIntervalRemoved(this, endIndex + 1, endIndex + 1);
+      while (listElements.get(index).second == contributor) {
+        if (item.equals(listElements.get(index).first)) {
+          listElements.remove(index);
+          fireIntervalRemoved(this, index, index);
+          return;
         }
+        index++;
+      }
+    }
+
+    public void setHasMore(SearchEverywhereContributor<?> contributor, boolean newVal) {
+      int index = contributors().lastIndexOf(contributor);
+      if (index < 0) {
+        return;
+      }
+
+      boolean alreadyHas = isMoreElement(index);
+      if (alreadyHas && !newVal) {
+        listElements.remove(index);
+        fireIntervalRemoved(this, index, index);
+      }
+
+      if (!alreadyHas && newVal) {
+        index += 1;
+        listElements.add(index, Pair.create(MORE_ELEMENT, contributor));
+        fireIntervalAdded(this, index, index);
       }
     }
 
@@ -1053,6 +967,26 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     @NotNull
     private List<Object> values() {
       return Lists.transform(listElements, pair -> pair.getFirst());
+    }
+
+    private int getInsertionPoint(SearchEverywhereContributor contributor) {
+      if (listElements.isEmpty()) {
+        return 0;
+      }
+
+      List<SearchEverywhereContributor> list = contributors();
+      int index = list.lastIndexOf(contributor);
+      if (index >= 0) {
+        return index;
+      }
+
+      for (int i = 0; i < list.size(); i++) {
+        if (list.get(i).getSortWeight() > contributor.getSortWeight()) {
+          return i;
+        }
+      }
+
+      return listElements.size();
     }
   }
 

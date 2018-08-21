@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.EqualityPolicy;
@@ -38,8 +39,9 @@ class MultithreadSearcher {
   public ProgressIndicator search(Map<SearchEverywhereContributor<?>, Integer> contributorsAndLimits, String pattern,
                                   boolean useNonProjectItems,
                                   Function<SearchEverywhereContributor<?>, SearchEverywhereContributorFilter<?>> filterSupplier) {
-    ResultsAccumulator accumulator = new ResultsAccumulator(contributorsAndLimits, myListener, myNotificationExecutor);
+    LOG.debug("Search started for pattern [", pattern, "]");
     ProgressIndicator indicator = new ProgressIndicatorBase();
+    ResultsAccumulator accumulator = new ResultsAccumulator(contributorsAndLimits, myListener, indicator, myNotificationExecutor);
     Phaser phaser = new Phaser();
 
     Runnable finisherTask = createFinisherTask(phaser, accumulator);
@@ -58,16 +60,18 @@ class MultithreadSearcher {
                                                ProgressIndicator indicator, Phaser phaser, SearchEverywhereContributor<F> contributor,
                                                SearchEverywhereContributorFilter<?> filter) {
     phaser.register();
-    return new ContributorSearchTask<>(contributor, pattern, (SearchEverywhereContributorFilter<F>) filter, useNonProjectItems, accumulator,
-                                       indicator, () -> phaser.arrive());
+    ContributorSearchTask<F> task = new ContributorSearchTask<>(contributor, pattern, (SearchEverywhereContributorFilter<F>)filter,
+                                                                useNonProjectItems, accumulator, indicator, () -> phaser.arrive());
+    return ConcurrencyUtil.underThreadNameRunnable("SE-SearchTask", task);
   }
 
   private static Runnable createFinisherTask(Phaser phaser, ResultsAccumulator accumulator) {
     phaser.register();
-    return () -> {
+
+    return ConcurrencyUtil.underThreadNameRunnable("SE-FinisherTask", () -> {
       phaser.arriveAndAwaitAdvance();
       accumulator.searchFinished();
-    };
+    });
   }
 
   public interface Listener {
@@ -104,6 +108,7 @@ class MultithreadSearcher {
 
     @Override
     public void run() {
+      LOG.debug("Search task started for contributor ", myContributor);
       try {
         myContributor.fetchElements(myPattern, myUseNonProjectItems, filter, myIndicator,
                                     element -> {
@@ -129,6 +134,7 @@ class MultithreadSearcher {
       } finally {
         finishCallback.run();
       }
+      LOG.debug("Search task finished for contributor ", myContributor);
     }
   }
 
@@ -184,15 +190,18 @@ class MultithreadSearcher {
     private final Set<SearchEverywhereContributor<?>> finishedContributorsSet = ContainerUtil.newConcurrentSet();
     private final Lock lock = new ReentrantLock();
     private final Listener myListener;
+    private final ProgressIndicator myProgressIndicator;
 
     private volatile boolean mySearchFinished = false;
     private final Executor myNotificationExecutor;
 
     private final BlockingQueue<Event> updateEventQueue = new LinkedBlockingQueue<>();
 
-    ResultsAccumulator(Map<SearchEverywhereContributor<?>, Integer> contributorsAndLimits, Listener listener, Executor notificationExecutor) {
+    ResultsAccumulator(Map<SearchEverywhereContributor<?>, Integer> contributorsAndLimits, Listener listener,
+                       ProgressIndicator indicator, Executor notificationExecutor) {
       sectionsLimits = contributorsAndLimits;
       myListener = listener;
+      myProgressIndicator = indicator;
       myNotificationExecutor = notificationExecutor;
       sections = contributorsAndLimits.entrySet().stream().collect(Collectors.toMap(entry -> entry.getKey(), entry -> new ArrayList<>(entry.getValue())));
       conditionsMap = contributorsAndLimits.keySet().stream().collect(Collectors.toMap(Function.identity(), c -> lock.newCondition()));
@@ -294,11 +303,16 @@ class MultithreadSearcher {
     }
 
     private Runnable createNotifierTask() {
-      return () -> {
+      return ConcurrencyUtil.underThreadNameRunnable("SE-NotifierTask", () -> {
         try {
           boolean finished = false;
           while (!finished) {
             Event event = updateEventQueue.take();
+
+            if (myProgressIndicator.isCanceled()) {
+              return;
+            }
+
             long startTime = System.currentTimeMillis();
             Collection<Event> events = new ArrayList<>();
             while (event != null) {
@@ -321,7 +335,8 @@ class MultithreadSearcher {
         catch (InterruptedException e) {
           LOG.debug("Notification process interrupted");
         }
-      };
+        LOG.debug("Notification thread finished");
+      });
     }
 
     private void notifyListener(Collection<Event> events, int type, Consumer<List<ElementInfo>> notifyCallback) {
