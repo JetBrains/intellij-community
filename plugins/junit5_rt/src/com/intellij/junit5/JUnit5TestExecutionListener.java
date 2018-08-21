@@ -197,7 +197,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   }
   
   private void testFinished(TestIdentifier testIdentifier, long duration) {
-    myPrintStream.println("\n##teamcity[testFinished" + idAndName(testIdentifier) + (duration > 0 ? " duration=\'" + Long.toString(duration) + "\'" : "") + "]");
+    myPrintStream.println("\n##teamcity[testFinished" + idAndName(testIdentifier) + (duration > 0 ? " duration=\'" + duration + "\'" : "") + "]");
   }
 
   private void testFailure(TestIdentifier testIdentifier,

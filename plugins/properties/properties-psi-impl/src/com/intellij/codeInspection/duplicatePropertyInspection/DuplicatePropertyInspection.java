@@ -112,7 +112,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
           LOG.error(e);
         }
         lineAnchor.append("\">");
-        lineAnchor.append(Integer.toString(lineNumber));
+        lineAnchor.append(lineNumber);
         lineAnchor.append("</a>");
       }
     }

@@ -159,7 +159,7 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
         // is 15 seconds (http://download.oracle.com/javase/6/docs/technotes/guides/rmi/sunrmiproperties.html#connectionTimeout),
         // we don't want to get EOFException because of that.
         params.getVMParametersList().addParametersString(
-          "-Dsun.rmi.transport.connectionTimeout=" + String.valueOf(TimeUnit.HOURS.toMillis(1))
+          "-Dsun.rmi.transport.connectionTimeout=" + TimeUnit.HOURS.toMillis(1)
         );
         final String debugPort = System.getProperty(ExternalSystemConstants.EXTERNAL_SYSTEM_REMOTE_COMMUNICATION_MANAGER_DEBUG_PORT);
         if (debugPort != null) {

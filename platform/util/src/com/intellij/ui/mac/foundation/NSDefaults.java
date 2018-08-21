@@ -225,9 +225,9 @@ public class NSDefaults {
     String sval = path.readStringVal(appId);
     final boolean settingEnabled = sval != null && sval.equals(ourTouchBarShowFnValue);
 
-    final String initDesc = "appId='" + String.valueOf(appId)
-                            + "', value (requested be set) ='" + String.valueOf(val)
-                            + "', initial path (tail) value = '" + String.valueOf(sval)
+    final String initDesc = "appId='" + appId
+                            + "', value (requested be set) ='" + val
+                            + "', initial path (tail) value = '" + sval
                             + "', path='" + path.toString() + "'";
 
     if (val == settingEnabled) {
@@ -242,9 +242,9 @@ public class NSDefaults {
       sval = path.readStringVal(appId, true);
       final boolean isFNEnabled = sval != null && sval.equals(ourTouchBarShowFnValue);
       if (val != isFNEnabled)
-        LOG.error("can't write value '" + String.valueOf(val) + "' (was written just now, but read '" + String.valueOf(sval) + "'): " + initDesc);
+        LOG.error("can't write value '" + val + "' (was written just now, but read '" + sval + "'): " + initDesc);
       else
-        LOG.error("value '" + String.valueOf(val) + "' was written from second attempt: " + initDesc);
+        LOG.error("value '" + val + "' was written from second attempt: " + initDesc);
     }
 
     return true;

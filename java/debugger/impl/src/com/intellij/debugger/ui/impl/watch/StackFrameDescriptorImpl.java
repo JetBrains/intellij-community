@@ -136,7 +136,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
       label.append(settings.SHOW_ARGUMENTS_TYPES ? DebuggerUtilsEx.methodNameWithArguments(method) : myName);
     }
     if (settings.SHOW_LINE_NUMBER) {
-      label.append(':').append(Integer.toString(DebuggerUtilsEx.getLineNumber(myLocation, false)));
+      label.append(':').append(DebuggerUtilsEx.getLineNumber(myLocation, false));
     }
     if (settings.SHOW_CLASS_NAME) {
       String name;

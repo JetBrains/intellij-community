@@ -81,7 +81,7 @@ public class BTreeEnumeratorTest extends TestCase {
 
     // clear strings and nodes cache
     for (int i = 0; i < 10000; ++i) {
-      final String v = Integer.toString(i) + "Just another string";
+      final String v = i + "Just another string";
       final int idx = myEnumerator.enumerate(v);
       assertEquals(v, myEnumerator.valueOf(idx));
       strings.put(idx, v);

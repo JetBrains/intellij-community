@@ -606,7 +606,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       }
 
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Processed " + types.size() + " classes in " + String.valueOf(System.currentTimeMillis() - start) + "ms");
+        LOG.debug("Processed " + types.size() + " classes in " + (System.currentTimeMillis() - start) + "ms");
       }
     }
     finally {

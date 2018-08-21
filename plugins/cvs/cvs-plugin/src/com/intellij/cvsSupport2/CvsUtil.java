@@ -766,10 +766,10 @@ public class CvsUtil {
     }
 
     public String toString() {
-      StringBuffer result = new StringBuffer();
+      StringBuilder result = new StringBuilder();
       result.append(myName);
       result.append(DELIM);
-      result.append(String.valueOf(myPreviousTime));
+      result.append(myPreviousTime);
       result.append(DELIM);
       for (int i = 0; i < myRevisions.size(); i++) {
         if (i > 0) {
