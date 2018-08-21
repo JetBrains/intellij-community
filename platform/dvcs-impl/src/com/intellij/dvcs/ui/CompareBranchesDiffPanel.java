@@ -100,7 +100,7 @@ class CompareBranchesDiffPanel extends JPanel {
 
     String currentBranchText = String.format("current working tree on <b><code>%s</code></b>", myCurrentBranchName);
     String otherBranchText = String.format("files in <b><code>%s</code></b>", myBranchName);
-    myLabel.setText(String.format("<html>Difference between %s and %s:&emsp<a href=\"\">Swap branches</a></html>",
+    myLabel.setText(String.format("<html>Difference between %s and %s:&emsp;<a href=\"\">Swap branches</a></html>",
                                   swapSides ? otherBranchText : currentBranchText,
                                   swapSides ? currentBranchText : otherBranchText));
 
