@@ -310,7 +310,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
   fun testNonRootJdkModule() {
     highlight("test.java", """
-        import <error descr="Package 'javax.doomed' is declared in module 'javax.doomed', which is not in the module graph">javax.doomed</error>.*;
+        import <error descr="Package 'java.non.root' is declared in module 'java.non.root', which is not in the module graph">java.non.root</error>.*;
         """.trimIndent())
   }
 
