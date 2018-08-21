@@ -7,9 +7,9 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EnvironmentUtil;
@@ -137,20 +137,17 @@ public class ExternalSystemJdkUtil {
 
   @NotNull
   public static Sdk addJdk(String homePath) {
+    Sdk jdk;
     // JavaSdk.getInstance() can be null for non-java IDE
     JavaSdk javaSdk = JavaSdk.getInstance();
     if (javaSdk == null) {
       SimpleJavaSdkType simpleJavaSdkType = SimpleJavaSdkType.getInstance();
-      return simpleJavaSdkType.createJdk(simpleJavaSdkType.suggestSdkName(null, homePath), homePath);
+      jdk = simpleJavaSdkType.createJdk(simpleJavaSdkType.suggestSdkName(null, homePath), homePath);
     }
     else {
-      return ApplicationManager.getApplication().runWriteAction(
-        (Computable<Sdk>)() -> {
-          Sdk jdk = javaSdk.createJdk(javaSdk.suggestSdkName(null, homePath), homePath, false);
-          ProjectJdkTable.getInstance().addJdk(jdk);
-          return jdk;
-        }
-      );
+      jdk = javaSdk.createJdk(javaSdk.suggestSdkName(null, homePath), homePath, false);
     }
+    SdkConfigurationUtil.addSdk(jdk);
+    return jdk;
   }
 }
