@@ -34,7 +34,9 @@ internal class ImagePaths(val id: String,
     flags = mergeImageFlags(flags, fileFlags, file.toString())
   }
 
-  val files: List<Path> get() = images
+  val files: List<Path>
+    get() = images
+
   fun getFiles(vararg types: ImageType): List<Path> = files.filter { ImageType.fromFile(it) in types }
 
   val file: Path?

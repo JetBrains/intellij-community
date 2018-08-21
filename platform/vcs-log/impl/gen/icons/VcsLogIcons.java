@@ -27,6 +27,7 @@ public class VcsLogIcons {
   }
 
   /** @deprecated to be removed in IDEA 2020 - use VcsLogIcons.Branch */
+  @SuppressWarnings("unused")
   @Deprecated
   public static final Icon ShowOtherBranches = VcsLogIcons.Branch;
 }

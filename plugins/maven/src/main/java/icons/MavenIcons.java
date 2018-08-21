@@ -26,6 +26,7 @@ public class MavenIcons {
   public static final Icon ModulesClosed = load("/images/modulesClosed.png"); // 16x16
 
   /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.OfflineMode */
+  @SuppressWarnings("unused")
   @Deprecated
   public static final Icon OfflineMode = load("/actions/offlineMode.svg", com.intellij.icons.AllIcons.class);
   public static final Icon ParentProject = load("/images/parentProject.png"); // 12x12

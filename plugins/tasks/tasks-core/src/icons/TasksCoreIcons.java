@@ -28,6 +28,7 @@ public class TasksCoreIcons {
   public static final Icon Fogbugz = load("/icons/fogbugz.png"); // 16x16
 
   /** @deprecated to be removed in IDEA 2020 - use AllIcons.Vcs.Vendors.Github */
+  @SuppressWarnings("unused")
   @Deprecated
   public static final Icon Github = load("/vcs/vendors/github.svg", com.intellij.icons.AllIcons.class);
   public static final Icon Gitlab = load("/icons/gitlab.svg"); // 16x16

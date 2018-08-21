@@ -229,6 +229,7 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
       if (deprecationComment != null) {
         append(answer, "/** @deprecated $deprecationComment */", level)
       }
+      append(answer, "@SuppressWarnings(\"unused\")", level)
     }
     if (image.deprecated) {
       append(answer, "@Deprecated", level)
@@ -240,7 +241,7 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
       @Suppress("UNCHECKED_CAST")
       val packagePrefix = (sourceRoot.properties as JpsSimpleElement<JavaSourceRootProperties>).data.packagePrefix
       if (!packagePrefix.isEmpty()) {
-        rootPrefix += packagePrefix.replace('.', '/')
+        rootPrefix += packagePrefix.replace('.', '/') + "/"
       }
     }
 

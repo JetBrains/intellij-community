@@ -27,6 +27,7 @@ public class AntIcons {
   public static final Icon MetaTarget = load("/icons/metaTarget.png"); // 16x16
 
   /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Properties */
+  @SuppressWarnings("unused")
   @Deprecated
   public static final Icon Properties = load("/actions/properties.svg", com.intellij.icons.AllIcons.class);
   public static final Icon Target = load("/icons/target.png"); // 16x16

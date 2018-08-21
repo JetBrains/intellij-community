@@ -188,7 +188,7 @@ private class MyOptimumSizeChecker(val projectHome: Path, val iconsOnly: Boolean
     val allImages = ImageCollector(projectHome, iconsOnly, ignoreSkipTag).collect(module)
     allImages.parallelStream().filter { it.file != null }.forEach { image ->
       image.files.parallelStream().forEach { file ->
-        val optimized = ImageSizeOptimizer.optimizeImage(file.toFile())
+        val optimized = ImageSizeOptimizer.optimizeImage(file)
         if (optimized != null && !optimized.hasOptimumSize) {
           failures.add(FailedTest(module, "image size can be optimized: ${optimized.compressionStats}", image, file.toFile()))
         }
