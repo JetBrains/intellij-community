@@ -27,7 +27,7 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
 
   @Nullable
   @Override
-  public String askPassphrase(@NotNull String description) {
+  public String handleInput(@NotNull String description) {
     if (isKeyPassphrase(description)) return askKeyPassphraseInput(description);
     if (isConfirmation(description)) return askConfirmationInput(description);
 
