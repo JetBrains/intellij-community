@@ -443,12 +443,21 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
       final String address = myConnection.getAddress();
 
-      if (myConnection instanceof PidRemoteConnection) {
-        String pid = ((PidRemoteConnection)myConnection).getPid();
+      if (myConnection instanceof SAPidRemoteConnection) {
+        SAPidRemoteConnection pidRemoteConnection = (SAPidRemoteConnection)myConnection;
+        AttachingConnector connector;
+        try {
+          Class<?> connectorClass = Class.forName(SAPID_ATTACHING_CONNECTOR_NAME, true,
+                                                  new SAJDIClassLoader(getClass().getClassLoader(), pidRemoteConnection.getSAJarPath()));
+          connector = (AttachingConnector)connectorClass.newInstance();
+        }
+        catch (Exception e) {
+          throw new ExecutionException(processError(e), e);
+        }
+        String pid = pidRemoteConnection.getPid();
         if (StringUtil.isEmpty(pid)) {
           throw new CantRunException(DebuggerBundle.message("error.no.pid"));
         }
-        AttachingConnector connector = (AttachingConnector)findConnector(SAPID_ATTACHING_CONNECTOR_NAME);
         myArguments = connector.defaultArguments();
         Connector.Argument pidArg = myArguments.get("pid");
         if (pidArg != null) {
