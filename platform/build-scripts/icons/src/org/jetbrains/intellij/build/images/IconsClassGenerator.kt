@@ -14,7 +14,7 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
 import java.util.*
 
-class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeChangesToDisk: Boolean = true) {
+class IconsClassGenerator(private val projectHome: File, val util: JpsModule, private val writeChangesToDisk: Boolean = true) {
   private var processedClasses = 0
   private var processedIcons = 0
   private var processedPhantom = 0
@@ -183,7 +183,7 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
 
     val (nodes, leafs) = images.partition { getImageId(it, depth).contains('/') }
     val nodeMap = nodes.groupBy { getImageId(it, depth).substringBefore('/') }
-    val leafMap = ContainerUtil.newMapFromValues(leafs.iterator(), { getImageId(it, depth) })
+    val leafMap = ContainerUtil.newMapFromValues(leafs.iterator()) { getImageId(it, depth) }
 
     val sortedKeys = (nodeMap.keys + leafMap.keys).sortedWith(NAME_COMPARATOR)
     sortedKeys.forEach { key ->
@@ -248,7 +248,7 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
       val imageFile: File
       if (deprecationReplacement != null) {
         imageFile = File(sourceRoot.file, deprecationReplacement)
-        assert(isIcon(imageFile), { "Overriding icon should be valid: $iconName - ${imageFile.path}" })
+        assert(isIcon(imageFile)) { "Overriding icon should be valid: $iconName - ${imageFile.path}" }
       }
       else {
         imageFile = file
@@ -256,14 +256,10 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
 
       val size = if (imageFile.exists()) imageSize(imageFile) else null
       val comment: String
-      if (size != null) {
-        comment = " // ${size.width}x${size.height}"
-      }
-      else if (image.phantom) {
-        comment = ""
-      }
-      else {
-        error("Can't get icon size: $imageFile")
+      when {
+        size != null -> comment = " // ${size.width}x${size.height}"
+        image.phantom -> comment = ""
+        else -> error("Can't get icon size: $imageFile")
       }
 
       val method = if (customLoad) "load" else "IconLoader.getIcon"
@@ -274,9 +270,8 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
     }
     else {
       val method = if (customLoad) "load" else "IconLoader.getIcon"
-      val relativePath = deprecationReplacement
       append(answer,
-             "public static final Icon $iconName = $method(\"$relativePath\", ${deprecationReplacementContextClazz}.class);",
+             "public static final Icon $iconName = $method(\"$deprecationReplacement\", ${deprecationReplacementContextClazz}.class);",
              level)
     }
   }
@@ -301,7 +296,7 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
     val rootDir = File(JpsPathUtil.urlToPath(rootUrl))
     if (!rootDir.isDirectory) return null
 
-    val file = File(rootDir, ImageCollector.ROBOTS_FILE_NAME)
+    val file = File(rootDir, ROBOTS_FILE_NAME)
     if (!file.exists()) return null
 
     val prefix = "name:"

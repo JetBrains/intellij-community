@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.util.io.FileUtil
@@ -26,6 +12,8 @@ import java.util.*
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 import kotlin.collections.ArrayList
+
+internal const val ROBOTS_FILE_NAME = "icon-robots.txt"
 
 internal class ImagePaths(val id: String,
                           val sourceRoot: JpsModuleSourceRoot,
@@ -64,7 +52,7 @@ class ImageFlags(val skipped: Boolean,
 data class DeprecationData(val comment: String?, val replacement: String?, val replacementContextClazz: String?)
 
 
-internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = true, val ignoreSkipTag: Boolean = false) {
+internal class ImageCollector(private val projectHome: File, private val iconsOnly: Boolean = true, val ignoreSkipTag: Boolean = false) {
   private val icons = HashMap<String, ImagePaths>()
   private val phantomIcons = HashMap<String, ImagePaths>()
 
@@ -130,7 +118,7 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
     val flags = robotData.getImageFlags(file)
     if (flags.skipped) return
 
-    val iconPaths = icons.computeIfAbsent(id, { ImagePaths(id, sourceRoot, false) })
+    val iconPaths = icons.computeIfAbsent(id) { ImagePaths(id, sourceRoot, false) }
     iconPaths.addImage(file, flags)
   }
 
@@ -145,7 +133,6 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
       paths.addImage(iconFile, icon.second)
 
       if (phantomIcons.containsKey(id)) {
-        val otherPaths = phantomIcons[id]!!
         throw Exception("Duplicated phantom icon found: $id\n${root.path}/${ROBOTS_FILE_NAME}")
       }
 
@@ -167,21 +154,21 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
   private fun downToRoot(root: File, file: File, common: File?, robotData: IconRobotsData): File? {
     if (robotData.isSkipped(file)) return common
 
-    if (file.isDirectory) {
-      val childRobotData = robotData.fork(file, root)
+    when {
+      file.isDirectory -> {
+        val childRobotData = robotData.fork(file, root)
 
-      var childCommon = common
-      file.children.forEach {
-        childCommon = downToRoot(root, it, childCommon, childRobotData)
+        var childCommon = common
+        file.children.forEach {
+          childCommon = downToRoot(root, it, childCommon, childRobotData)
+        }
+        return childCommon
       }
-      return childCommon
-    }
-    else if (isImage(file, iconsOnly)) {
-      if (common == null) return file
-      return FileUtil.findAncestor(common, file)
-    }
-    else {
-      return common
+      isImage(file, iconsOnly) -> {
+        if (common == null) return file
+        return FileUtil.findAncestor(common, file)
+      }
+      else -> return common
     }
   }
 
@@ -218,9 +205,9 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
 
       val answer = IconRobotsData(this)
       parse(robots,
-            Pair("skip:", { value -> answer.skip += compilePattern(dir, root, value) }),
-            Pair("used:", { value -> answer.used += compilePattern(dir, root, value) }),
-            Pair("deprecated:", { value ->
+            RobotFileHandler("skip:") { value -> answer.skip += compilePattern(dir, root, value) },
+            RobotFileHandler("used:") { value -> answer.used += compilePattern(dir, root, value) },
+            RobotFileHandler("deprecated:") { value ->
               val comment = StringUtil.nullize(value.substringAfter(";", "").trim())
               val valueWithoutComment = value.substringBefore(";")
               val pattern = valueWithoutComment.substringBefore("->").trim()
@@ -234,19 +221,19 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
               if (!pattern.contains('*') && !pattern.startsWith('/')) {
                 answer.ownDeprecatedIcons.add(Pair(pattern, deprecatedData))
               }
-            }),
-            Pair("name:", { value -> }), // ignore directive for IconsClassGenerator
-            Pair("#", { value -> }) // comment
+            },
+            RobotFileHandler("name:") { _ -> }, // ignore directive for IconsClassGenerator
+            RobotFileHandler("#") { _ -> } // comment
       )
       return answer
     }
 
-    private fun parse(robots: File, vararg handlers: Pair<String, (String) -> Unit>) {
+    private fun parse(robots: File, vararg handlers: RobotFileHandler) {
       robots.forEachLine { line ->
         if (line.isBlank()) return@forEachLine
         for (h in handlers) {
-          if (line.startsWith(h.first)) {
-            h.second(StringUtil.trimStart(line, h.first))
+          if (line.startsWith(h.start)) {
+            h.handler(StringUtil.trimStart(line, h.start))
             return@forEachLine
           }
         }
@@ -290,16 +277,12 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
       val extension = FileUtilRt.getExtension(path)
 
       val basicPathWithoutExtension = ImageType.stripSuffix(pathWithoutExtension)
-      val basicPath = basicPathWithoutExtension + if (extension.isNotEmpty()) "." + extension else ""
-      return basicPath
+      return basicPathWithoutExtension + if (extension.isNotEmpty()) ".$extension" else ""
     }
-  }
-
-  companion object {
-    const val ROBOTS_FILE_NAME: String = "icon-robots.txt"
   }
 }
 
+private data class RobotFileHandler(val start: String, val handler: (String) -> Unit)
 
 private fun mergeImageFlags(flags1: ImageFlags,
                             flags2: ImageFlags,
