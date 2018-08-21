@@ -2,9 +2,8 @@
 package com.intellij.testFramework.propertyBased
 
 import com.intellij.openapi.util.Condition
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiRecursiveElementWalkingVisitor
+import com.intellij.psi.SyntaxTraverser.psiTraverser
 import org.jetbrains.jetCheck.ImperativeCommand.Environment
 import java.beans.BeanInfo
 import java.beans.IntrospectionException
@@ -17,9 +16,9 @@ import java.lang.reflect.Method
 class CheckPsiReadAccessors(file: PsiFile, private val skipCondition: Condition<in Method>) : ActionOnFile(file) {
 
   override fun performCommand(env: Environment) {
-    file.accept(object : PsiRecursiveElementWalkingVisitor(true) {
-      override fun elementFinished(element: PsiElement): Unit = invokeAllReadAccessors(element)
-    })
+    for (element in psiTraverser(file)) {
+      invokeAllReadAccessors(element)
+    }
   }
 
   private fun invokeAllReadAccessors(instance: Any) {
