@@ -1,8 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea;
 
-import com.google.common.base.Predicates;
-import com.google.common.collect.Collections2;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -95,26 +93,6 @@ public class GitUtil {
    */
   private GitUtil() {
     // do nothing
-  }
-
-  /**
-   * Returns the Git repository location for the given repository root directory, or null if nothing can be found.
-   * Able to find the real repository root of a submodule or of a working tree.
-   * @see #findGitDir(VirtualFile)
-   */
-  @Nullable
-  public static File findGitDir(@NotNull File rootDir) {
-    File dotGit = new File(rootDir, DOT_GIT);
-    if (dotGit.isDirectory()) {
-      boolean headExists = new File(dotGit, HEAD_FILE).exists();
-      return headExists ? dotGit : null;
-    }
-    if (!dotGit.exists()) return null;
-
-    String content = DvcsUtil.tryLoadFileOrReturn(dotGit, null, CharsetToolkit.UTF8);
-    if (content == null) return null;
-    String pathToDir = parsePathToRepository(content);
-    return findRealRepositoryDir(rootDir.getPath(), pathToDir);
   }
 
   /**
@@ -565,7 +543,7 @@ public class GitUtil {
    *
    * @param path a path to unescape
    * @return unescaped path ready to be searched in the VFS or file system.
-   * @throws com.intellij.openapi.vcs.VcsException if the path in invalid
+   * @throws VcsException if the path in invalid
    */
   @NotNull
   public static String unescapePath(@NotNull String path) throws VcsException {
@@ -645,7 +623,7 @@ public class GitUtil {
                 rc.append(new String(b, encoding));
               }
               catch (UnsupportedEncodingException e1) {
-                throw new IllegalStateException("The file name encoding is unsuported: " + encoding);
+                throw new IllegalStateException("The file name encoding is unsupported: " + encoding);
               }
             }
             else {
@@ -810,15 +788,6 @@ public class GitUtil {
   }
 
   @NotNull
-  public static Collection<GitRepository> getRepositoriesForFiles(@NotNull Project project, @NotNull Collection<VirtualFile> files) {
-    final GitRepositoryManager manager = getRepositoryManager(project);
-    com.google.common.base.Function<VirtualFile,GitRepository> ROOT_TO_REPO =
-      root -> root != null ? manager.getRepositoryForRoot(root) : null;
-    return Collections2.filter(Collections2.transform(sortFilesByGitRootsIgnoringOthers(files).keySet(), ROOT_TO_REPO),
-                               Predicates.notNull());
-  }
-
-  @NotNull
   public static Map<VirtualFile, List<VirtualFile>> sortFilesByGitRootsIgnoringOthers(@NotNull Collection<VirtualFile> files) {
     try {
       return sortFilesByGitRoot(files, true);
@@ -831,7 +800,7 @@ public class GitUtil {
 
   /**
    * git diff --name-only [--cached]
-   * @return true if there is anything in the unstaged/staging area, false if the unstraed/staging area is empty.
+   * @return true if there is anything in the unstaged/staging area, false if the unstaged/staging area is empty.
    * @param staged if true checks the staging area, if false checks unstaged files.
    * @param project
    * @param root
