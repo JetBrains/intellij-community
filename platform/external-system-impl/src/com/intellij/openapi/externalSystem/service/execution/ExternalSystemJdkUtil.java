@@ -9,12 +9,14 @@ import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EnvironmentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -75,8 +77,7 @@ public class ExternalSystemJdkUtil {
 
   @NotNull
   public static Pair<String, Sdk> getAvailableJdk(@Nullable Project project) throws ExternalSystemJdkException {
-    // JavaSdk.getInstance() can be null for non-java IDE
-    SdkType javaSdkType = JavaSdk.getInstance() == null ? SimpleJavaSdkType.getInstance() : JavaSdk.getInstance();
+    SdkType javaSdkType = getJavaSdkType();
 
     if (project != null) {
       Stream<Sdk> projectSdks = Stream.concat(
@@ -107,6 +108,18 @@ public class ExternalSystemJdkUtil {
     return pair(USE_INTERNAL_JAVA, JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk());
   }
 
+  @NotNull
+  public static Collection<String> suggestJdkHomePaths() {
+    return getJavaSdkType().suggestHomePaths();
+  }
+
+  @NotNull
+  public static SdkType getJavaSdkType() {
+    // JavaSdk.getInstance() can be null for non-java IDE
+    JavaSdk javaSdk = JavaSdk.getInstance();
+    return javaSdk == null ? SimpleJavaSdkType.getInstance() : javaSdk;
+  }
+
   /** @deprecated trivial (to be removed in IDEA 2019) */
   public static boolean checkForJdk(@NotNull Project project, @Nullable String jdkName) {
     try {
@@ -119,5 +132,24 @@ public class ExternalSystemJdkUtil {
 
   public static boolean isValidJdk(@Nullable String homePath) {
     return !StringUtil.isEmptyOrSpaces(homePath) && (JdkUtil.checkForJdk(homePath) || JdkUtil.checkForJre(homePath));
+  }
+
+  @NotNull
+  public static Sdk addJdk(String homePath) {
+    // JavaSdk.getInstance() can be null for non-java IDE
+    JavaSdk javaSdk = JavaSdk.getInstance();
+    if (javaSdk == null) {
+      SimpleJavaSdkType simpleJavaSdkType = SimpleJavaSdkType.getInstance();
+      return simpleJavaSdkType.createJdk(simpleJavaSdkType.suggestSdkName(null, homePath), homePath);
+    }
+    else {
+      return ApplicationManager.getApplication().runWriteAction(
+        (Computable<Sdk>)() -> {
+          Sdk jdk = javaSdk.createJdk(javaSdk.suggestSdkName(null, homePath), homePath, false);
+          ProjectJdkTable.getInstance().addJdk(jdk);
+          return jdk;
+        }
+      );
+    }
   }
 }
