@@ -10,8 +10,10 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
+import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
+import org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Before
 import org.junit.Test
@@ -64,7 +66,7 @@ class GradleTaskManagerTest: UsefulTestCase() {
       VfsUtil.saveText(wrapperProps, """
       distributionBase=GRADLE_USER_HOME
       distributionPath=wrapper/dists
-      distributionUrl=https\://services.gradle.org/distributions/gradle-4.4-bin.zip
+      distributionUrl=${AbstractModelBuilderTest.DistributionLocator().getDistributionFor(GradleVersion.version("4.4"))}
       zipStoreBase=GRADLE_USER_HOME
       zipStorePath=wrapper/dists
     """.trimIndent())
