@@ -72,9 +72,7 @@ public class PyLiteralStringNodeImpl extends LeafPsiElement implements PyLiteral
   @NotNull
   @Override
   public String getQuote() {
-    final Pair<String, String> quotes = PyStringLiteralUtil.getQuotes(getText());
-    assert quotes != null;
-    return quotes.getFirst();
+    return getText().substring(getPrefixLength(), getContentRange().getStartOffset());
   }
 
   @Override
@@ -133,7 +131,7 @@ public class PyLiteralStringNodeImpl extends LeafPsiElement implements PyLiteral
   }
 
   @Override
-  public boolean isFormatted() {
-    return StringUtil.containsIgnoreCase(getPrefix(), "f");
+  public final boolean isFormatted() {
+    return false;
   }
 }

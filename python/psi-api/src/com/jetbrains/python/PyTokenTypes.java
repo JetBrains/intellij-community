@@ -178,4 +178,6 @@ public class PyTokenTypes {
 
   public static final PyElementType INDENT = new PyElementType("INDENT");
   public static final PyElementType DEDENT = new PyElementType("DEDENT");
+
+  PyElementType FSTRING_TEXT = new PyElementType("FSTRING_FRAGMENT");
 }

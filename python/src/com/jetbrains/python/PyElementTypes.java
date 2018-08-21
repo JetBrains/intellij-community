@@ -150,4 +150,7 @@ public interface PyElementTypes {
   TokenSet STAR_PARAMETERS = TokenSet.create(NAMED_PARAMETER, STAR_ARGUMENT_EXPRESSION, STAR_EXPRESSION, DOUBLE_STAR_EXPRESSION);
   TokenSet CLASS_OR_FUNCTION = TokenSet.create(CLASS_DECLARATION, FUNCTION_DECLARATION);
   TokenSet IMPORT_STATEMENTS = TokenSet.create(IMPORT_STATEMENT, FROM_IMPORT_STATEMENT);
+
+  PyElementType FSTRING_NODE = new PyElementType("FSTRING_NODE", PyFormattedStringNodeImpl.class);
+  PyElementType FSTRING_FRAGMENT = new PyElementType("FSTRING_FRAGMENT", PyFStringFragmentImpl.class);
 }
