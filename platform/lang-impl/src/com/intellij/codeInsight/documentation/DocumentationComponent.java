@@ -143,7 +143,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private final MyScrollPane myScrollPane;
   private final JEditorPane myEditorPane;
   private String myText; // myEditorPane.getText() surprisingly crashes.., let's cache the text
-  private final JPanel myControlPanel;
+  private final JComponent myControlPanel;
   private boolean myControlPanelVisible;
   private int myHighlightedLink = -1;
   private Object myHighlightingTag;
@@ -246,12 +246,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         }
       }
     };
-    DataProvider helpDataProvider = new DataProvider() {
-      @Override
-      public Object getData(@NotNull @NonNls String dataId) {
-        return PlatformDataKeys.HELP_ID.is(dataId) ? DOCUMENTATION_TOPIC_ID : null;
-      }
-    };
+    DataProvider helpDataProvider = dataId -> PlatformDataKeys.HELP_ID.is(dataId) ? DOCUMENTATION_TOPIC_ID : null;
     myEditorPane.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, helpDataProvider);
     myText = "";
     myEditorPane.setEditable(false);
@@ -409,7 +404,13 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     new PreviousLinkAction().registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), this);
     new ActivateLinkAction().registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER"), this);
 
-    myToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.JAVADOC_TOOLBAR, actions, true);
+    DefaultActionGroup toolbarActions = new DefaultActionGroup();
+    toolbarActions.add(actions);
+    toolbarActions.addAction(new ShowAsToolwindowAction()).setAsSecondary(true);
+    toolbarActions.addAction(new MyShowSettingsAction()).setAsSecondary(true);
+    toolbarActions.addAction(new ShowToolbarAction()).setAsSecondary(true);
+    toolbarActions.addAction(new RestoreDefaultSizeAction()).setAsSecondary(true);
+    myToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.JAVADOC_TOOLBAR, toolbarActions, true);
 
     JLayeredPane layeredPane = new JBLayeredPane() {
       @Override
@@ -461,11 +462,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     layeredPane.setLayer(myCorner, JLayeredPane.POPUP_LAYER);
     add(layeredPane, BorderLayout.CENTER);
 
-    myControlPanel = new JPanel(new BorderLayout(5, 5));
+    myControlPanel = myToolBar.getComponent();
     myControlPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
-
-    myControlPanel.add(myToolBar.getComponent(), BorderLayout.WEST);
-    myControlPanel.add(new MyShowSettingsButton(), BorderLayout.EAST);
     myControlPanelVisible = false;
 
     HyperlinkListener hyperlinkListener = new HyperlinkListener() {
@@ -1518,22 +1516,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     Context withText(@NotNull String text) {
       return new Context(element, text, externalUrl, provider,
                          viewRect, caretPosition, highlightedLink);
-    }
-  }
-
-  private class MyShowSettingsButton extends ActionButton {
-
-    MyShowSettingsButton() {
-      this(new MyGearActionGroup(new ShowAsToolwindowAction(),
-                                 new MyShowSettingsAction(),
-                                 new ShowToolbarAction(),
-                                 new RestoreDefaultSizeAction()),
-           new Presentation(), ActionPlaces.JAVADOC_INPLACE_SETTINGS, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
-    }
-
-    private MyShowSettingsButton(AnAction action, Presentation presentation, String place, @NotNull Dimension minimumSize) {
-      super(action, presentation, place, minimumSize);
-      myPresentation.setIcon(AllIcons.General.GearPlain);
     }
   }
 
