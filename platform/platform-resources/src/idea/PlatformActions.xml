@@ -762,7 +762,7 @@
       <action id="Console.History.Browse" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.General.MessageHistory"/>
     </group>
 
-    <group id="Internal" text="&amp;Internal Actions" internal="true" popup="true">
+    <group id="Internal" text="&amp;Internal Actions" internal="true" popup="true" compact="true">
       <group id="Internal.Errors" popup="true" text="Exceptions">
         <action id="DropAnError" internal="true" class="com.intellij.diagnostic.DropAnErrorAction"/>
         <action id="DropAnErrorWithAttachments" internal="true" class="com.intellij.diagnostic.DropAnErrorWithAttachmentsAction"/>
