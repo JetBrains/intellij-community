@@ -51,6 +51,28 @@ public class PsiVFSListener implements VirtualFileListener, BulkFileListener {
 
   private static final AtomicBoolean ourGlobalListenerInstalled = new AtomicBoolean(false);
 
+  public PsiVFSListener(Project project) {
+    installGlobalListener();
+
+    myProject = project;
+    myFileTypeManager = FileTypeManager.getInstance();
+    myProjectRootManager = ProjectRootManager.getInstance(project);
+    myManager = (PsiManagerImpl) PsiManager.getInstance(project);
+    myFileManager = (FileManagerImpl) myManager.getFileManager();
+
+    StartupManager.getInstance(project).registerPreStartupActivity(() -> {
+      MessageBusConnection connection = project.getMessageBus().connect(project);
+      connection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyModuleRootListener());
+      connection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
+        @Override
+        public void fileTypesChanged(@NotNull FileTypeEvent e) {
+          myFileManager.processFileTypesChanged();
+        }
+      });
+      connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new MyFileDocumentManagerAdapter());
+    });
+  }
+
   /**
    * This code is implemented as static method (and not static constructor, as it was done before) to prevent installing listeners in Upsource
    */
@@ -85,28 +107,6 @@ public class PsiVFSListener implements VirtualFileListener, BulkFileListener {
         }
       });
     }
-  }
-
-  public PsiVFSListener(Project project) {
-    installGlobalListener();
-
-    myProject = project;
-    myFileTypeManager = FileTypeManager.getInstance();
-    myProjectRootManager = ProjectRootManager.getInstance(project);
-    myManager = (PsiManagerImpl) PsiManager.getInstance(project);
-    myFileManager = (FileManagerImpl) myManager.getFileManager();
-
-    StartupManager.getInstance(project).registerPreStartupActivity(() -> {
-      MessageBusConnection connection = project.getMessageBus().connect(project);
-      connection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyModuleRootListener());
-      connection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
-        @Override
-        public void fileTypesChanged(@NotNull FileTypeEvent e) {
-          myFileManager.processFileTypesChanged();
-        }
-      });
-      connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new MyFileDocumentManagerAdapter());
-    });
   }
 
   @Nullable
@@ -615,7 +615,8 @@ public class PsiVFSListener implements VirtualFileListener, BulkFileListener {
             }
           }
         );
-      } else {
+      }
+      else {
         handleVfsChangeWithoutPsi(file);
       }
     }

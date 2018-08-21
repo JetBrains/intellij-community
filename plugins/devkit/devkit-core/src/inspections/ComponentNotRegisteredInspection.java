@@ -122,12 +122,21 @@ public class ComponentNotRegisteredInspection extends DevKitJvmInspection {
       return;
     }
 
-    PsiClass compClass = JavaPsiFacade.getInstance(project).findClass(BaseComponent.class.getName(), scope);
-    if (compClass == null) {
+    PsiClass baseComponentClass = JavaPsiFacade.getInstance(project).findClass(BaseComponent.class.getName(), scope);
+    if (baseComponentClass == null) {
       // stop if component class cannot be found (non-devkit module/project)
       return;
     }
-    if (!checkedClass.isInheritor(compClass, true)) {
+
+    // if directly implements BaseComponent, check that registered as some component
+    if (checkedClass.isInheritor(baseComponentClass, false)) {
+      if (findRegistrationType(checkedClass, RegistrationCheckerUtil.RegistrationType.ALL_COMPONENTS) == null && canFix(checkedClass)) {
+        sink.highlight(DevKitBundle.message("inspections.component.not.registered.message", "Component"));
+      }
+      return;
+    }
+
+    if (!checkedClass.isInheritor(baseComponentClass, true)) {
       return;
     }
 

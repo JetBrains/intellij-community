@@ -1556,6 +1556,9 @@ public class AllIcons {
     public static final Icon TabAlert = IconLoader.getIcon("/nodes/tabAlert.png"); // 16x16
     public static final Icon TabPin = IconLoader.getIcon("/nodes/tabPin.png"); // 16x16
     public static final Icon Tag = IconLoader.getIcon("/nodes/tag.png"); // 16x16
+    public static final Icon Test = IconLoader.getIcon("/nodes/test.svg"); // 16x16
+    public static final Icon TestGroup = IconLoader.getIcon("/nodes/testGroup.svg"); // 16x16
+    public static final Icon TestIgnored = IconLoader.getIcon("/nodes/testIgnored.svg"); // 16x16
     public static final Icon TestSourceFolder = IconLoader.getIcon("/nodes/testSourceFolder.png"); // 16x16
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Folder */

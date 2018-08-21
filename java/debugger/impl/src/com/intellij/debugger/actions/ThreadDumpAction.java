@@ -157,7 +157,7 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
         hasEmptyStack = frames.size() == 0;
 
         final TIntObjectHashMap<List<ObjectReference>> lockedAt = new TIntObjectHashMap<>();
-        if (vmProxy.canGetMonitorFrameInfo()) {
+        if (vmProxy.canGetMonitorFrameInfo() && vmProxy.canBeModified()) {
           for (MonitorInfo info : threadReference.ownedMonitorsAndFrames()) {
             final int stackDepth = info.stackDepth();
             List<ObjectReference> monitors;

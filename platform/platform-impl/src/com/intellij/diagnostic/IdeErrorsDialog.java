@@ -79,7 +79,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private final boolean myInternalMode;
   private final Set<String> myAcceptedNotices;
   private final List<MessageCluster> myMessageClusters = new ArrayList<>();  // exceptions with the same stacktrace
-  private int myIndex;
+  private int myIndex, myLastIndex = -1;
 
   private JLabel myCountLabel;
   private HyperlinkLabel.Croppable myInfoLabel;
@@ -510,16 +510,20 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     AbstractMessage message = cluster.first;
     boolean canReport = cluster.canSubmit();
 
-    myCommentArea.setText(message.getAdditionalInfo());
-    myCommentArea.setCaretPosition(0);
-    myCommentArea.setEditable(canReport);
+    if (myLastIndex != myIndex) {
+      myCommentArea.setText(message.getAdditionalInfo());
 
-    myAttachmentsList.clear();
-    myAttachmentsList.addItem(STACKTRACE_ATTACHMENT, true);
-    for (Attachment attachment : message.getAllAttachments()) {
-      myAttachmentsList.addItem(attachment.getName(), attachment.isIncluded());
+      myAttachmentsList.clear();
+      myAttachmentsList.addItem(STACKTRACE_ATTACHMENT, true);
+      for (Attachment attachment : message.getAllAttachments()) {
+        myAttachmentsList.addItem(attachment.getName(), attachment.isIncluded());
+      }
+      myAttachmentsList.setSelectedIndex(0);
+
+      myLastIndex = myIndex;
     }
-    myAttachmentsList.setSelectedIndex(0);
+
+    myCommentArea.setEditable(canReport);
     myAttachmentsList.setEditable(canReport);
   }
 
@@ -660,7 +664,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      myIndex--;
+      myLastIndex = myIndex--;
       updateControls();
     }
   }
@@ -681,7 +685,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      myIndex++;
+      myLastIndex = myIndex++;
       updateControls();
     }
   }

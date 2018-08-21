@@ -382,7 +382,9 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
   @Override
   public void processAttached(DebugProcessImpl process) {
-    myEventRequestManager = myDebugProcess.getVirtualMachineProxy().eventRequestManager();
+    if (myDebugProcess.getVirtualMachineProxy().canBeModified()) {
+      myEventRequestManager = myDebugProcess.getVirtualMachineProxy().eventRequestManager();
+    }
   }
 
   public void processClassPrepared(final ClassPrepareEvent event) {

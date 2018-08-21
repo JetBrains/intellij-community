@@ -36,8 +36,11 @@ public interface RefClass extends RefJavaElement {
   @NotNull
   Set<RefElement> getInTypeReferences();
 
+  @Deprecated
   @NotNull
-  Set<RefElement> getInstanceReferences();
+  default Set<RefElement> getInstanceReferences() {
+    throw new UnsupportedOperationException();
+  }
 
   RefMethod getDefaultConstructor();
 

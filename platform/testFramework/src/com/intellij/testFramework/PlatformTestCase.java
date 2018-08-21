@@ -533,7 +533,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
           }
         }
       })
-      .append(super::tearDown)
+      .append(() -> super.tearDown())
       .append(() -> {
         if (myEditorListenerTracker != null) {
           myEditorListenerTracker.checkListenersLeak();

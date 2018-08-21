@@ -24,7 +24,7 @@ open class SystemPropertiesTestCase : GuiTestCase() {
    */
   fun restartIdeWithSystemProperties(systemProperties: Array<Pair<String, String>>,
                                      setUpBlock: (Array<Pair<String, String>>) -> Unit = { }) {
-    if (guiTestRule.getTestName() == GuiTestOptions.getResumeTestName() && GuiTestOptions.getResumeInfo() == SYSTEM_PROPERTIES) return
+    if (guiTestRule.getTestName() == GuiTestOptions.resumeTestName && GuiTestOptions.resumeInfo == SYSTEM_PROPERTIES) return
     setUpBlock(systemProperties)
     GuiTestThread.client?.send(createTransportMessage(systemProperties)) ?: throw Exception(
       "Unable to get the client instance to send message.")

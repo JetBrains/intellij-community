@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -36,10 +37,16 @@ public abstract class PathMacros {
 
   public abstract void removeMacro(@NotNull String name);
 
+  @NotNull
   public abstract Set<String> getUserMacroNames();
 
+  @NotNull
+  public abstract Map<String, String> getUserMacros();
+
+  @NotNull
   public abstract Set<String> getSystemMacroNames();
 
+  @NotNull
   public abstract Collection<String> getIgnoredMacroNames();
 
   public abstract void setIgnoredMacroNames(@NotNull final Collection<String> names);
@@ -50,5 +57,6 @@ public abstract class PathMacros {
 
   public abstract void removeAllMacros();
 
+  @NotNull
   public abstract Collection<String> getLegacyMacroNames();
 }

@@ -127,7 +127,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       ContainerUtil.addAll(typeParams, sourceClass.getTypeParameters());
     }
     else {
-      final Set<PsiTypeParameter> typeParamSet = new HashSet<>();
+      final Set<PsiTypeParameter> typeParamSet = new LinkedHashSet<>();
       final TypeParametersVisitor visitor = new TypeParametersVisitor(typeParamSet);
       for (PsiField field : fields) {
         field.accept(visitor);
@@ -417,9 +417,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     fieldBuffer.append(fullyQualifiedName);
     if (!typeParams.isEmpty()) {
       fieldBuffer.append('<');
-      for (PsiTypeParameter typeParameter : typeParams) {
-        fieldBuffer.append(typeParameter.getName());
-      }
+      fieldBuffer.append(StringUtil.join(typeParams, param -> param.getName(), ", "));
       fieldBuffer.append('>');
     }
     fieldBuffer.append(' ');
@@ -427,9 +425,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     fieldBuffer.append(" = new ").append(fullyQualifiedName);
     if (!typeParams.isEmpty()) {
       fieldBuffer.append('<');
-      for (PsiTypeParameter typeParameter : typeParams) {
-        fieldBuffer.append(typeParameter.getName());
-      }
+      fieldBuffer.append(StringUtil.join(typeParams, param -> param.getName(), ", "));
       fieldBuffer.append('>');
     }
     fieldBuffer.append('(');

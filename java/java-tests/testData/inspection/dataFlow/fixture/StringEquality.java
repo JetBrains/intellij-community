@@ -53,4 +53,28 @@ class StringEquality {
     }
     return false;
   }
+
+  static final String SENTINEL = "foo";
+
+  void test(Object o) {
+    if(o == SENTINEL) {
+      System.out.println("oops");
+    } else {
+      System.out.println(((Number)o).longValue());
+    }
+  }
+
+  String internFoo(String s) {
+    if (s.equals("foo")) {
+      // "foo" is often used, intern it
+      s = "foo";
+    }
+    return s;
+  }
+
+  void length(String s) {
+    if(!s.startsWith("--") || <warning descr="Condition 's.equals(\".\")' is always 'false' when reached">s.equals(".")</warning>) {
+      System.out.println("invalid parameter");
+    }
+  }
 }

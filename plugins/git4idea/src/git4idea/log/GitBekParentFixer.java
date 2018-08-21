@@ -18,7 +18,10 @@ package git4idea.log;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.TimedVcsCommit;
+import com.intellij.vcs.log.VcsLogFilterCollection;
+import com.intellij.vcs.log.VcsLogTextFilter;
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder;
 import com.intellij.vcs.log.util.BekUtil;
 import org.jetbrains.annotations.NotNull;
@@ -100,8 +103,8 @@ class GitBekParentFixer {
       }
 
       @Override
-      public boolean matches(@NotNull VcsCommitMetadata details) {
-        return details.getFullMessage().contains(MAGIC_TEXT);
+      public boolean matches(@NotNull String message) {
+        return message.contains(MAGIC_TEXT);
       }
     };
 

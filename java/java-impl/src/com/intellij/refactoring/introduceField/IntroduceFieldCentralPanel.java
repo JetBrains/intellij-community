@@ -87,7 +87,7 @@ public abstract class IntroduceFieldCentralPanel {
     myTypeSelectorManager = typeSelectorManager;
   }
 
-  protected boolean setEnabledInitializationPlaces(@NotNull final PsiElement initializer) {
+  protected boolean setEnabledInitializationPlaces(@NotNull final PsiExpression initializer) {
     final Set<PsiField> fields = new HashSet<>();
     final Ref<Boolean> refsLocal = new Ref<>(false);
     initializer.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -113,11 +113,12 @@ public abstract class IntroduceFieldCentralPanel {
     });
 
     final boolean locals = refsLocal.get();
-    if (!locals && fields.isEmpty()) {
+    boolean superOrThis = IntroduceFieldHandler.isInSuperOrThis(initializer);
+    if (!locals && fields.isEmpty() && !superOrThis) {
       return true;
     }
     return updateInitializationPlaceModel(!locals && initializedInSetUp(fields),
-                                          !locals && initializedInConstructor(fields));
+                                          !locals && !superOrThis && initializedInConstructor(fields));
   }
 
   private static boolean initializedInConstructor(Set<PsiField> fields) {

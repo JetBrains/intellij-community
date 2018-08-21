@@ -165,6 +165,15 @@ fun <C : Container> ContainerFixture<C>.actionButton(actionName: String, timeout
   return ActionButtonFixture(robot(), actionButton)
 }
 
+fun <C : Container> ContainerFixture<C>.actionButton(actionName: String, filter: (ActionButton) -> Boolean, timeout: Timeout = defaultTimeout): ActionButtonFixture {
+  val actionButton: ActionButton = try {
+    findComponentWithTimeout(timeout) { ActionButtonFixture.textMatcher(actionName).invoke(it).and(filter.invoke(it)) }
+  }
+  catch (componentLookupException: ComponentLookupException) {
+    findComponentWithTimeout(timeout) { ActionButtonFixture.actionIdMatcher(actionName).invoke(it).and(filter.invoke(it)) }
+  }
+  return ActionButtonFixture(robot(), actionButton)
+}
 
 /**
  * Finds a InplaceButton component in hierarchy of context component by icon and returns InplaceButtonFixture.

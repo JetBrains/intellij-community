@@ -11,6 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.TypeUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +40,9 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   @Override
   public DfaInstructionState[] visitAssign(AssignInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     PsiExpression left = instruction.getLExpression();
-    if (left != null && !Boolean.FALSE.equals(mySameValueAssigned.get(left))) {
+    if (left != null && !Boolean.FALSE.equals(mySameValueAssigned.get(left)) && !TypeUtils.isJavaLangString(left.getType())) {
+      // Reporting strings is skipped because string reassignment might be intentionally used to deduplicate the heap objects
+      // (we compare strings by contents)
       if (!left.isPhysical()) {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Non-physical element in assignment instruction: " + left.getParent().getText(), new Throwable());

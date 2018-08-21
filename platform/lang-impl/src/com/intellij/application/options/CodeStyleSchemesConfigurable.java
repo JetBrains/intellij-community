@@ -26,10 +26,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.codeStyle.CodeStyleScheme;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
-import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +41,7 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
   implements OptionsContainingConfigurable, Configurable.NoMargin, Configurable.NoScroll, Configurable.VariableProjectAppLevel {
 
   private CodeStyleSchemesPanel myRootSchemesPanel;
-  private CodeStyleSchemesModel myModel;
+  private @NotNull final CodeStyleSchemesModel myModel;
   private List<Configurable> myPanels;
   private boolean myResetCompleted = false;
   private boolean myInitResetInvoked = false;
@@ -54,13 +51,36 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
 
   public CodeStyleSchemesConfigurable(Project project) {
     myProject = project;
+    myModel = new CodeStyleSchemesModel(project);
   }
 
   @Override
   public JComponent createComponent() {
-    myModel = ensureModel();
-
+    initSchemesPanel(myModel);
     return myPanels == null || myPanels.isEmpty() ? null : myPanels.get(0).createComponent();
+  }
+
+  private void initSchemesPanel(@NotNull final CodeStyleSchemesModel model) {
+    myRootSchemesPanel = new CodeStyleSchemesPanel(model, 0);
+
+    model.addListener(new CodeStyleSchemesModelListener() {
+      @Override
+      public void currentSchemeChanged(final Object source) {
+        if (source != myRootSchemesPanel) {
+          myRootSchemesPanel.onSelectedSchemeChanged();
+        }
+      }
+
+      @Override
+      public void schemeListChanged() {
+        myRootSchemesPanel.resetSchemesCombo();
+      }
+
+      @Override
+      public void schemeChanged(final CodeStyleScheme scheme) {
+        if (scheme == model.getSelectedScheme()) myRootSchemesPanel.onSelectedSchemeChanged();
+      }
+    });
   }
 
   @Override
@@ -79,7 +99,6 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
       }
       finally {
         myPanels = null;
-        myModel = null;
         myRootSchemesPanel = null;
         myResetCompleted = false;
         myRevertCompleted = false;
@@ -111,9 +130,7 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
   }
 
   private void resetImpl() {
-    if (myModel != null) {
-      myModel.reset();
-    }
+    myModel.reset();
 
     if (myPanels != null) {
       for (Configurable panel : myPanels) {
@@ -184,7 +201,7 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
 
   @Override
   protected Configurable[] buildConfigurables() {
-    CodeStyleGroupProviderFactory groupProviderFactory = new CodeStyleGroupProviderFactory(ensureModel(), this);
+    CodeStyleGroupProviderFactory groupProviderFactory = new CodeStyleGroupProviderFactory(getModel(), this);
     myPanels = new ArrayList<>();
     Set<CodeStyleGroupProvider> addedGroupProviders = ContainerUtil.newHashSet();
 
@@ -215,7 +232,7 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
       else {
         if (provider.hasSettingsPage()) {
           CodeStyleConfigurableWrapper e =
-            ConfigurableFactory.Companion.getInstance().createCodeStyleConfigurable(provider, ensureModel(), this);
+            ConfigurableFactory.Companion.getInstance().createCodeStyleConfigurable(provider, getModel(), this);
           myPanels.add(e);
         }
       }
@@ -233,30 +250,8 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
     myRevertCompleted = false;
   }
 
-  CodeStyleSchemesModel ensureModel() {
-    if (myModel == null) {
-      myModel = new CodeStyleSchemesModel(myProject);
-      myRootSchemesPanel = new CodeStyleSchemesPanel(myModel, 0);
-
-      myModel.addListener(new CodeStyleSchemesModelListener(){
-        @Override
-        public void currentSchemeChanged(final Object source) {
-          if (source != myRootSchemesPanel) {
-            myRootSchemesPanel.onSelectedSchemeChanged();
-          }
-        }
-
-        @Override
-        public void schemeListChanged() {
-          myRootSchemesPanel.resetSchemesCombo();
-        }
-
-        @Override
-        public void schemeChanged(final CodeStyleScheme scheme) {
-          if (scheme == myModel.getSelectedScheme()) myRootSchemesPanel.onSelectedSchemeChanged();
-        }
-      });
-    }
+  @NotNull
+  CodeStyleSchemesModel getModel() {
     return myModel;
   }
 
@@ -272,19 +267,15 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
 
   @Override
   public boolean isModified() {
-    if (myModel != null) {
-      if (myModel.containsModifiedCodeStyleSettings()) return true;
-      for (Configurable panel : myPanels) {
-        if (panel.isModified()) return true;
-      }
-      boolean schemeListModified = myModel.isSchemeListModified();
-      if (schemeListModified) {
-        myRevertCompleted = false;
-      }
-      return schemeListModified;
+    if (myModel.containsModifiedCodeStyleSettings()) return true;
+    for (Configurable panel : myPanels) {
+      if (panel.isModified()) return true;
     }
-
-    return false;
+    boolean schemeListModified = myModel.isSchemeListModified();
+    if (schemeListModified) {
+      myRevertCompleted = false;
+    }
+    return schemeListModified;
   }
 
   @Override
@@ -306,7 +297,7 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
 
   @Override
   public boolean isProjectLevel() {
-    return myModel != null && myModel.isUsePerProjectSettings();
+    return myModel.isUsePerProjectSettings();
   }
 
   @Nullable

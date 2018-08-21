@@ -10,6 +10,8 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
+import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -103,11 +105,11 @@ public class GitUtil {
   @Nullable
   public static File findGitDir(@NotNull File rootDir) {
     File dotGit = new File(rootDir, DOT_GIT);
-    if (!dotGit.exists()) return null;
     if (dotGit.isDirectory()) {
       boolean headExists = new File(dotGit, HEAD_FILE).exists();
       return headExists ? dotGit : null;
     }
+    if (!dotGit.exists()) return null;
 
     String content = DvcsUtil.tryLoadFileOrReturn(dotGit, null, CharsetToolkit.UTF8);
     if (content == null) return null;
@@ -373,7 +375,7 @@ public class GitUtil {
   }
 
   public static boolean isGitRoot(@NotNull File folder) {
-    return findGitDir(folder) != null;
+    return isGitRoot(folder.getPath());
   }
 
   /**
@@ -1058,5 +1060,22 @@ public class GitUtil {
     for (GitRepository repository : repositories) {
       refreshVfs(repository.getRoot(), null);
     }
+  }
+
+  public static boolean isGitRoot(@NotNull String rootDir) {
+    String dotGit = rootDir + File.separatorChar + DOT_GIT;
+    FileAttributes attributes = FileSystemUtil.getAttributes(dotGit);
+    if (attributes == null) return false;
+
+    if (attributes.isDirectory()) {
+      FileAttributes headExists = FileSystemUtil.getAttributes(dotGit + File.separatorChar + HEAD_FILE);
+      return headExists != null && headExists.isFile();
+    }
+    if (!attributes.isFile()) return false;
+
+    String content = DvcsUtil.tryLoadFileOrReturn(new File(dotGit), null, CharsetToolkit.UTF8);
+    if (content == null) return false;
+    String pathToDir = parsePathToRepository(content);
+    return findRealRepositoryDir(rootDir, pathToDir) != null;
   }
 }

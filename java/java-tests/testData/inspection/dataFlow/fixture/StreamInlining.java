@@ -12,11 +12,11 @@ public class StreamInlining {
     list.stream().flatMap(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>).forEach(System.out::println);
     list.stream().filter(x -> x != null).forEach(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
     List<String> l = null;
-    l.<warning descr="Method invocation 'stream' will produce 'java.lang.NullPointerException'">stream</warning>().count();
+    l.<warning descr="Method invocation 'stream' will produce 'NullPointerException'">stream</warning>().count();
     int[] arr = null;
     Arrays.stream(<warning descr="Argument 'arr' might be null">arr</warning>).count();
     Stream<String> stream = null;
-    stream.<warning descr="Method invocation 'filter' will produce 'java.lang.NullPointerException'">filter</warning>(x -> x != null).forEach(System.out::println);
+    stream.<warning descr="Method invocation 'filter' will produce 'NullPointerException'">filter</warning>(x -> x != null).forEach(System.out::println);
   }
 
   void testMethodRef(List<String> list, int[] data) {
@@ -26,7 +26,7 @@ public class StreamInlining {
     if(<warning descr="Condition 'Arrays.stream(data).mapToObj(int[]::new).anyMatch(x -> x == null)' is always 'false'">Arrays.stream(data).mapToObj(int[]::new).anyMatch(x -> <warning descr="Condition 'x == null' is always 'false'">x == null</warning>)</warning>) {
       System.out.println("never");
     }
-    list.stream().filter(Objects::isNull).map(<warning descr="Method reference invocation 'String::trim' may produce 'java.lang.NullPointerException'">String::trim</warning>).forEach(System.out::println);
+    list.stream().filter(Objects::isNull).map(<warning descr="Method reference invocation 'String::trim' may produce 'NullPointerException'">String::trim</warning>).forEach(System.out::println);
     if(<warning descr="Condition 'list.stream().filter(Objects::nonNull).anyMatch(x -> x == null)' is always 'false'">list.stream().filter(Objects::nonNull).anyMatch(x -> <warning descr="Condition 'x == null' is always 'false'">x == null</warning>)</warning>) {
       System.out.println("never");
     }
@@ -42,7 +42,7 @@ public class StreamInlining {
   }
 
   int hash(List<Holder> holders) {
-    return holders.stream().filter(h -> h.obj == null).mapToInt(h -> h.obj.<warning descr="Method invocation 'hashCode' may produce 'java.lang.NullPointerException'">hashCode</warning>()).sum();
+    return holders.stream().filter(h -> h.obj == null).mapToInt(h -> h.obj.<warning descr="Method invocation 'hashCode' may produce 'NullPointerException'">hashCode</warning>()).sum();
   }
 
   void test2(int[] array) {
@@ -61,7 +61,7 @@ public class StreamInlining {
   void testIsInstanceIncomplete(List<?> objects) {
     IntStream is = objects.stream()
       .filter(String.class::isInstance)
-      .mapToInt(x -> (<warning descr="Casting 'x' to 'Integer' may produce 'java.lang.ClassCastException'">Integer</warning>)x);
+      .mapToInt(x -> (<warning descr="Casting 'x' to 'Integer' may produce 'ClassCastException'">Integer</warning>)x);
 
     objects.stream()
       .filter(String.class::isInstance)
@@ -126,7 +126,7 @@ public class StreamInlining {
   boolean flatMap(List<String> list, List<List<String>> ll) {
     System.out.println(ll.stream().flatMap(l -> l.stream()).count());
     return <warning descr="Result of 'list.stream().map(s -> s.isEmpty() ? null : s) .flatMap(s -> Stream.of(s, s.trim()) ...' is always 'false'">list.stream().map(s -> s.isEmpty() ? null : s)
-               .flatMap(s -> Stream.of(s, s.<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>())
+               .flatMap(s -> Stream.of(s, s.<warning descr="Method invocation 'trim' may produce 'NullPointerException'">trim</warning>())
                     .filter(r -> <warning descr="Condition 'r != null' is always 'true'">r != null</warning>))
       .anyMatch(x -> <warning descr="Condition 'x == null' is always 'false'">x == null</warning>)</warning>;
   }

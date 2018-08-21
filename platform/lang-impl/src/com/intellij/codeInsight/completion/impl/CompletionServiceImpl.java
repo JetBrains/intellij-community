@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Set;
 
 /**
  * @author peter
@@ -36,11 +37,13 @@ public final class CompletionServiceImpl extends CompletionService {
   private static volatile CompletionPhase ourPhase = CompletionPhase.NoCompletion;
   private static Throwable ourPhaseTrace;
 
+  @Nullable private CompletionProcess myApiCompletionProcess;
+
   public CompletionServiceImpl() {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosing(Project project) {
-        CompletionProgressIndicator indicator = getCurrentCompletion();
+        CompletionProgressIndicator indicator = getCurrentCompletionProgressIndicator();
         if (indicator != null && indicator.getProject() == project) {
           indicator.closeAndFinish(true);
           setCompletionPhase(CompletionPhase.NoCompletion);
@@ -51,6 +54,23 @@ public final class CompletionServiceImpl extends CompletionService {
     });
   }
 
+  @Override
+  public void performCompletion(final CompletionParameters parameters, final Consumer<CompletionResult> consumer) {
+    myApiCompletionProcess = parameters.getProcess();
+    try {
+      final Set<LookupElement> lookupSet = ContainerUtil.newConcurrentSet();
+
+      getVariantsFromContributors(parameters, null, result -> {
+        if (lookupSet.add(result.getLookupElement())) {
+          consumer.consume(result);
+        }
+      });
+    }
+    finally {
+      myApiCompletionProcess = null;
+    }
+  }
+
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
   public static CompletionServiceImpl getCompletionService() {
     return (CompletionServiceImpl) CompletionService.getCompletionService();
@@ -58,14 +78,14 @@ public final class CompletionServiceImpl extends CompletionService {
 
   @Override
   public String getAdvertisementText() {
-    final CompletionProgressIndicator completion = getCompletionService().getCurrentCompletion();
+    final CompletionProgressIndicator completion = getCurrentCompletionProgressIndicator();
     return completion == null ? null : ContainerUtil.getFirstItem(completion.getLookup().getAdvertisements());
   }
 
   @Override
   public void setAdvertisementText(@Nullable final String text) {
     if (text == null) return;
-    final CompletionProgressIndicator completion = getCompletionService().getCurrentCompletion();
+    final CompletionProgressIndicator completion = getCurrentCompletionProgressIndicator();
     if (completion != null) {
       completion.addAdvertisement(text, null);
     }
@@ -100,9 +120,14 @@ public final class CompletionServiceImpl extends CompletionService {
   }
 
   @Override
-  public CompletionProgressIndicator getCurrentCompletion() {
+  public CompletionProcess getCurrentCompletion() {
+    CompletionProgressIndicator indicator = getCurrentCompletionProgressIndicator();
+    return indicator != null ? indicator : myApiCompletionProcess;
+  }
+
+  public static CompletionProgressIndicator getCurrentCompletionProgressIndicator() {
     if (isPhase(CompletionPhase.BgCalculation.class, CompletionPhase.ItemsCalculated.class, CompletionPhase.CommittingDocuments.class,
-      CompletionPhase.Synchronous.class)) {
+                CompletionPhase.Synchronous.class)) {
       return ourPhase.indicator;
     }
     return null;

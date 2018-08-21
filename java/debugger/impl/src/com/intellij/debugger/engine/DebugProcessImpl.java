@@ -83,6 +83,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -95,6 +96,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   @NonNls private static final String SHMEM_ATTACHING_CONNECTOR_NAME = "com.sun.jdi.SharedMemoryAttach";
   @NonNls private static final String SOCKET_LISTENING_CONNECTOR_NAME = "com.sun.jdi.SocketListen";
   @NonNls private static final String SHMEM_LISTENING_CONNECTOR_NAME = "com.sun.jdi.SharedMemoryListen";
+  @NonNls static final String SAPID_ATTACHING_CONNECTOR_NAME = "sun.jvm.hotspot.jdi.SAPIDAttachingConnector";
 
   private final Project myProject;
   private final RequestManagerImpl myRequestManager;
@@ -440,7 +442,36 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
 
       final String address = myConnection.getAddress();
-      if (myConnection.isServerMode()) {
+
+      if (myConnection instanceof SAPidRemoteConnection) {
+        SAPidRemoteConnection pidRemoteConnection = (SAPidRemoteConnection)myConnection;
+        AttachingConnector connector;
+        try {
+          Class<?> connectorClass = Class.forName(SAPID_ATTACHING_CONNECTOR_NAME, true,
+                                                  new SAJDIClassLoader(getClass().getClassLoader(), pidRemoteConnection.getSAJarPath()));
+          connector = (AttachingConnector)connectorClass.newInstance();
+        }
+        catch (Exception e) {
+          throw new ExecutionException(processError(e), e);
+        }
+        String pid = pidRemoteConnection.getPid();
+        if (StringUtil.isEmpty(pid)) {
+          throw new CantRunException(DebuggerBundle.message("error.no.pid"));
+        }
+        myArguments = connector.defaultArguments();
+        Connector.Argument pidArg = myArguments.get("pid");
+        if (pidArg != null) {
+          pidArg.setValue(pid);
+        }
+        myDebugProcessDispatcher.getMulticaster().connectorIsReady();
+        try {
+          return connector.attach(myArguments);
+        }
+        catch (IllegalArgumentException e) {
+          throw new CantRunException(e.getLocalizedMessage());
+        }
+      }
+      else if (myConnection.isServerMode()) {
         ListeningConnector connector = (ListeningConnector)findConnector(myConnection.isUseSockets(), true);
         myArguments = connector.defaultArguments();
         if (myArguments == null) {
@@ -567,7 +598,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   @NotNull
-  private static Connector findConnector(String connectorName) throws ExecutionException {
+  static Connector findConnector(String connectorName) throws ExecutionException {
     VirtualMachineManager virtualMachineManager;
     try {
       virtualMachineManager = Bootstrap.virtualMachineManager();
@@ -834,6 +865,14 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   public static String processIOException(@NotNull IOException e, @Nullable String address) {
     if (e instanceof UnknownHostException) {
       return DebuggerBundle.message("error.unknown.host") + (address != null ? " (" + address + ")" : "") + ":\n" + e.getLocalizedMessage();
+    }
+
+    // Failed SA attach
+    Throwable cause = e.getCause();
+    if (cause instanceof InvocationTargetException) {
+      if (cause.getCause() != null) {
+        return cause.getCause().getLocalizedMessage();
+      }
     }
 
     String message;
@@ -1449,7 +1488,13 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     @Override
     protected void action() {
       if (isAttached()) {
-        final VirtualMachineProxyImpl virtualMachineProxy = getVirtualMachineProxy();
+        VirtualMachineProxyImpl virtualMachineProxy = getVirtualMachineProxy();
+
+        if (!virtualMachineProxy.canBeModified()) {
+          closeProcess(false);
+          return;
+        }
+
         if (myIsTerminateTargetVM) {
           virtualMachineProxy.exit(-1);
         }

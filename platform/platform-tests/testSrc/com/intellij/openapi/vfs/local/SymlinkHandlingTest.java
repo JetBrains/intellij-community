@@ -35,7 +35,6 @@ import java.util.Set;
 
 import static com.intellij.openapi.util.io.IoTestUtil.*;
 import static com.intellij.testFramework.PlatformTestUtil.assertPathsEqual;
-import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
 public class SymlinkHandlingTest extends BareTestFixtureTestCase {

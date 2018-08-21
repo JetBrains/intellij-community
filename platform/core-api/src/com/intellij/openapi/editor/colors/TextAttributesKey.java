@@ -2,14 +2,12 @@
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.VolatileNullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.JBIterable;
 import gnu.trove.THashSet;
@@ -29,7 +27,6 @@ import java.util.concurrent.ConcurrentMap;
  */
 public final class TextAttributesKey implements Comparable<TextAttributesKey> {
   private static final String TEMP_PREFIX = "TEMP::";
-  private static final Logger LOG = Logger.getInstance(TextAttributesKey.class);
   private static final TextAttributes NULL_ATTRIBUTES = new TextAttributes();
 
   private static final ConcurrentMap<String, TextAttributesKey> ourRegistry = new ConcurrentHashMap<>();
@@ -120,9 +117,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
 
     final TextAttributesKey that = (TextAttributesKey)o;
 
-    if (!myExternalName.equals(that.myExternalName)) return false;
-
-    return true;
+    return myExternalName.equals(that.myExternalName);
   }
 
   @Override
@@ -166,37 +161,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
   @NotNull
   @Deprecated
   public static TextAttributesKey createTextAttributesKey(@NonNls @NotNull String externalName, TextAttributes defaultAttributes) {
-    TextAttributesKey result = ourRegistry.get(externalName);
-    TextAttributesKey fallbackAttributeKey;
-    if (result == null) {
-      fallbackAttributeKey = null;
-    }
-    else {
-      if (Comparing.equal(result.getDefaultAttributes(), defaultAttributes)) {
-        return result;
-      }
-      // ouch. Someone's re-creating already existing key with different attributes.
-      // Have to remove the old one from the map, create the new one with correct attributes, re-insert to the map
-      fallbackAttributeKey = result.getFallbackAttributeKey();
-      ourRegistry.remove(externalName, result);
-    }
-    TextAttributesKey newKey = new TextAttributesKey(externalName, defaultAttributes, fallbackAttributeKey);
-    return ConcurrencyUtil.cacheOrGet(ourRegistry, externalName, newKey);
-  }
-
-  /**
-   * Registers a temp text attribute key with the specified identifier and default attributes.
-   * The attribute of the temp attribute key is not serialized and not copied while TextAttributesScheme
-   * manipulations.
-   *
-   * @param externalName      the unique identifier of the key.
-   * @param defaultAttributes the default text attributes associated with the key.
-   * @return the new key instance, or an existing instance if the key with the same
-   * identifier was already registered.
-   */
-  @NotNull
-  public static TextAttributesKey createTempTextAttributesKey(@NonNls @NotNull String externalName, TextAttributes defaultAttributes) {
-    return createTextAttributesKey(TEMP_PREFIX + externalName, defaultAttributes);
+    return getOrCreate(externalName, defaultAttributes, null);
   }
 
   /**
@@ -217,22 +182,61 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
    */
   @NotNull
   public static TextAttributesKey createTextAttributesKey(@NonNls @NotNull String externalName, TextAttributesKey fallbackAttributeKey) {
-    TextAttributesKey result = ourRegistry.get(externalName);
-    TextAttributes defaultAttributes;
-    if (result == null) {
-      defaultAttributes = null;
+    return getOrCreate(externalName, null, fallbackAttributeKey);
+  }
+
+  @NotNull
+  private static TextAttributesKey getOrCreate(@NotNull @NonNls String externalName,
+                                               TextAttributes defaultAttributes,
+                                               TextAttributesKey fallbackAttributeKey) {
+    TextAttributesKey existing = ourRegistry.get(externalName);
+    if (existing != null
+        && (defaultAttributes == null || Comparing.equal(existing.myDefaultAttributes, defaultAttributes))
+        && (fallbackAttributeKey == null || Comparing.equal(existing.myFallbackAttributeKey, fallbackAttributeKey))) {
+      return existing;
     }
-    else {
-      if (Comparing.equal(result.getFallbackAttributeKey(), fallbackAttributeKey)) {
-        return result;
-      }
-      // ouch. Someone's re-creating already existing key with different attributes.
-      // Have to remove the old one from the map, create the new one with correct attributes, re-insert to the map
-      defaultAttributes = result.getDefaultAttributes();
-      ourRegistry.remove(externalName, result);
+    return ourRegistry.compute(externalName, (oldName, oldKey) -> mergeKeys(oldName, oldKey, defaultAttributes, fallbackAttributeKey));
+  }
+
+  @NotNull
+  private static TextAttributesKey mergeKeys(@NonNls @NotNull String externalName,
+                                             @Nullable TextAttributesKey oldKey,
+                                             TextAttributes defaultAttributes,
+                                             TextAttributesKey fallbackAttributeKey) {
+    if (oldKey == null) return new TextAttributesKey(externalName, defaultAttributes, fallbackAttributeKey);
+    // ouch. Someone's re-creating already existing key with different attributes.
+    // Have to re-create the new one with correct attributes, re-insert to the map
+
+    // but don't allow to rewrite not-null fallback key
+    if (oldKey.myFallbackAttributeKey != null && !oldKey.myFallbackAttributeKey.equals(fallbackAttributeKey)) {
+      throw new IllegalStateException("TextAttributeKey(name:'" + externalName + "', fallbackAttributeKey:'" + fallbackAttributeKey + "') " +
+                                      " was already registered with the other fallback attribute key: " + oldKey.myFallbackAttributeKey);
     }
-    TextAttributesKey newKey = new TextAttributesKey(externalName, defaultAttributes, fallbackAttributeKey);
-    return ConcurrencyUtil.cacheOrGet(ourRegistry, externalName, newKey);
+
+    // but don't allow to rewrite not-null default attributes
+    if (oldKey.myDefaultAttributes != null && !oldKey.myDefaultAttributes.equals(defaultAttributes)) {
+      throw new IllegalStateException("TextAttributeKey(name:'" + externalName +"', defaultAttributes:'"+defaultAttributes+"') "+
+                                      " was already registered with the other defaultAttributes: "+oldKey.myDefaultAttributes);
+    }
+
+    TextAttributes newDefaults = ObjectUtils.chooseNotNull(defaultAttributes, oldKey.myDefaultAttributes); // care with not calling unwanted providers
+    TextAttributesKey newFallback = ObjectUtils.chooseNotNull(fallbackAttributeKey, oldKey.myFallbackAttributeKey);
+    return new TextAttributesKey(externalName, newDefaults, newFallback);
+  }
+
+  /**
+   * Registers a temp text attribute key with the specified identifier and default attributes.
+   * The attribute of the temp attribute key is not serialized and not copied while TextAttributesScheme
+   * manipulations.
+   *
+   * @param externalName      the unique identifier of the key.
+   * @param defaultAttributes the default text attributes associated with the key.
+   * @return the new key instance, or an existing instance if the key with the same
+   * identifier was already registered.
+   */
+  @NotNull
+  public static TextAttributesKey createTempTextAttributesKey(@NonNls @NotNull String externalName, TextAttributes defaultAttributes) {
+    return createTextAttributesKey(TEMP_PREFIX + externalName, defaultAttributes);
   }
 
   @Nullable

@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Caret;
@@ -11,12 +10,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.Weigher;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * For completion FAQ, see {@link CompletionContributor}.
@@ -113,15 +110,7 @@ public abstract class CompletionService {
    * @param parameters Parameters specifying current completion environment
    * @param consumer This consumer will directly add lookup elements to the lookup
    */
-  public void performCompletion(final CompletionParameters parameters, final Consumer<CompletionResult> consumer) {
-    final Set<LookupElement> lookupSet = ContainerUtil.newConcurrentSet();
-
-    getVariantsFromContributors(parameters, null, result -> {
-      if (lookupSet.add(result.getLookupElement())) {
-        consumer.consume(result);
-      }
-    });
-  }
+  public abstract void performCompletion(CompletionParameters parameters, Consumer<CompletionResult> consumer);
 
   public abstract CompletionSorter defaultSorter(CompletionParameters parameters, PrefixMatcher matcher);
 

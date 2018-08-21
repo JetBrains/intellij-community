@@ -1510,6 +1510,18 @@ public class JBUI {
   }
 
   public static class CurrentTheme {
+    public static class ActionButton {
+      @NotNull
+      public static Color pressedBackground() {
+        return JBColor.namedColor("ActionButton.pressedBackground", Gray.xCF);
+      }
+
+      @NotNull
+      public static Color hoverBackground() {
+        return JBColor.namedColor("ActionButton.hoverBackground", Gray.xDF);
+      }
+    }
+
     public static class CustomFrameDecorations {
       @NotNull
       public static Color separatorForeground() {
@@ -1732,7 +1744,7 @@ public class JBUI {
       }
 
       public static int maxListHeight() {
-        return JBUI.scale(600);
+        return scale(600);
       }
 
       public static Color listSeparatorColor() {

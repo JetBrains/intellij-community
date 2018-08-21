@@ -29,6 +29,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -38,6 +39,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import com.intellij.testGuiFramework.framework.Timeouts;
@@ -369,9 +371,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
     MouseEvent fakeMainMenuMouseEvent =
       new MouseEvent(jMenuBar, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, MouseInfo.getPointerInfo().getLocation().x,
                      MouseInfo.getPointerInfo().getLocation().y, 1, false);
-    ApplicationManager.getApplication()
-                      .invokeLater(
-                        () -> actionManager.tryToExecute(mainMenuAction, fakeMainMenuMouseEvent, null, ActionPlaces.MAIN_MENU, true));
+    DumbService.getInstance(getProject()).smartInvokeLater(() -> actionManager.tryToExecute(mainMenuAction, fakeMainMenuMouseEvent, null, ActionPlaces.MAIN_MENU, true));
   }
 
   /**
@@ -552,17 +552,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
 
   @NotNull
   public IdeFrameFixture waitForBackgroundTasksToFinish() {
-    pause(new Condition("Background tasks to finish") {
-                  @Override
-                  public boolean test() {
-                    ProgressManager progressManager = ProgressManager.getInstance();
-                    return !progressManager.hasModalProgressIndicator() &&
-                           !progressManager.hasProgressIndicator() &&
-                           !progressManager.hasUnsafeProgressIndicator();
-                  }
-                }
-      , Timeouts.INSTANCE.getMinutes15());
-    robot().waitForIdle();
+    DumbService.getInstance(getProject()).waitForSmartMode();
     return this;
   }
 
@@ -750,7 +740,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
       @Override
       public boolean test() {
         for (Frame frame : Frame.getFrames()) {
-          if (frame == WelcomeFrame.getInstance() && frame.isShowing()) {
+          if (frame instanceof FlatWelcomeFrame && frame.isShowing()) {
             return true;
           }
         }

@@ -89,7 +89,7 @@ public class PsiElementListNavigator {
   }
 
   @Nullable
-  private static JBPopup navigateOrCreatePopup(final NavigatablePsiElement[] targets,
+  public static JBPopup navigateOrCreatePopup(final NavigatablePsiElement[] targets,
                                                final String title,
                                                final String findUsagesTitle,
                                                final ListCellRenderer listRenderer,

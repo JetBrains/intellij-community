@@ -19,7 +19,6 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
-import kotlin.test.fail
 
 class RunnableActionsTest : BareTestFixtureTestCase() {
   private val message = "<test message>"
@@ -45,12 +44,7 @@ class RunnableActionsTest : BareTestFixtureTestCase() {
       assertThat(e.message).endsWith(message)
     }
 
-    val result = try {
-      action.executeSilently()
-    }
-    catch(e: RuntimeException) {
-      fail("BaseActionRunnable.executeSilently() should capture exceptions")
-    }
+    val result:RunResult<Any> = action.executeSilently()
     assertThat(result.hasException()).isTrue()
     assertThat(result.throwable.message).endsWith(message)
   }

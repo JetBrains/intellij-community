@@ -2,8 +2,8 @@
 package com.intellij.testGuiFramework.fixtures
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.PluginManagerConfigurableNew.CellPluginComponent
-import com.intellij.ide.plugins.PluginManagerConfigurableNew.TabHeaderComponent
+import com.intellij.ide.plugins.newui.CellPluginComponent
+import com.intellij.ide.plugins.newui.TabHeaderComponent
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.options.ex.ConfigurableCardPanel
 import com.intellij.testGuiFramework.framework.GuiTestUtil.findAndClickButtonWhenEnabled

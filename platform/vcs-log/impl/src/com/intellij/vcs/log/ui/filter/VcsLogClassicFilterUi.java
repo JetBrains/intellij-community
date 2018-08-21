@@ -148,7 +148,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       return Pair.empty();
     }
 
-    VcsLogTextFilter textFilter = new VcsLogTextFilterImpl(text, isRegexAllowed, matchesCase);
+    VcsLogTextFilter textFilter = VcsLogTextFilterImpl.createTextFilter(text, isRegexAllowed, matchesCase);
     VcsLogHashFilterImpl hashFilter = createHashFilter(text);
     return Pair.create(textFilter, hashFilter);
   }
@@ -286,9 +286,9 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     @NotNull
     @Override
     protected VcsLogTextFilter createFilter(@NotNull List<String> values) {
-      return new VcsLogTextFilterImpl(ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(values)),
-                                      myUiProperties.get(MainVcsLogUiProperties.TEXT_FILTER_REGEX),
-                                      myUiProperties.get(MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE));
+      return VcsLogTextFilterImpl.createTextFilter(ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(values)),
+                                                   myUiProperties.get(MainVcsLogUiProperties.TEXT_FILTER_REGEX),
+                                                   myUiProperties.get(MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE));
     }
 
     @NotNull
@@ -465,10 +465,9 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     }
 
     protected void applyFilter() {
-      myTextFilterModel.setFilter(new VcsLogTextFilterImpl(getText(),
-                                                           myTextFilterModel.myUiProperties.get(MainVcsLogUiProperties.TEXT_FILTER_REGEX),
-                                                           myTextFilterModel.myUiProperties
-                                                             .get(MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE)));
+      boolean isRegexpAllowed = myTextFilterModel.myUiProperties.get(MainVcsLogUiProperties.TEXT_FILTER_REGEX);
+      boolean isMatchCase = myTextFilterModel.myUiProperties.get(MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE);
+      myTextFilterModel.setFilter(VcsLogTextFilterImpl.createTextFilter(getText(), isRegexpAllowed, isMatchCase));
       addCurrentTextToHistory();
     }
 

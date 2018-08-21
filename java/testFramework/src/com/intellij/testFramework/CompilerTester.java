@@ -4,9 +4,15 @@ package com.intellij.testFramework;
 import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.CompilerTestUtil;
 import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.PathMacros;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.impl.stores.IComponentStore;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
@@ -14,6 +20,7 @@ import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -22,13 +29,18 @@ import com.intellij.project.ProjectKt;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
 import com.intellij.util.Consumer;
+import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.io.FileTreePrinterKt;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 import org.junit.Assert;
 
 import javax.swing.*;
@@ -37,47 +49,60 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
  * @author peter
  */
 public class CompilerTester {
+  private static final Logger LOG = Logger.getInstance(CompilerTester.class);
+
   private final Project myProject;
   private List<Module> myModules;
   private TempDirTestFixture myMainOutput;
 
-  public CompilerTester(Module module) throws Exception {
-    this(module.getProject(), Collections.singletonList(module));
+  public CompilerTester(@NotNull Module module) throws Exception {
+    this(module.getProject(), Collections.singletonList(module), null);
   }
 
-  public CompilerTester(Project project, List<Module> modules) throws Exception {
+  public CompilerTester(@NotNull IdeaProjectTestFixture fixture, @NotNull List<Module> modules) throws Exception {
+    this(fixture.getProject(), modules, fixture.getTestRootDisposable());
+  }
+
+  public CompilerTester(@NotNull Project project, @NotNull List<Module> modules, @Nullable Disposable disposable) throws Exception {
     myProject = project;
     myModules = modules;
     myMainOutput = new TempDirTestFixtureImpl();
     myMainOutput.setUp();
 
+    if (disposable != null) {
+      Disposer.register(disposable, new Disposable() {
+        @Override
+        public void dispose() {
+          tearDown();
+        }
+      });
+    }
+
     CompilerTestUtil.enableExternalCompiler();
     WriteCommandAction.writeCommandAction(getProject()).run(() -> {
-      //noinspection ConstantConditions
-      CompilerProjectExtension.getInstance(getProject()).setCompilerOutputUrl(myMainOutput.findOrCreateDir("out").getUrl());
-      for (Module module : myModules) {
-        ModuleRootModificationUtil.setModuleSdk(module, JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk());
+      Objects.requireNonNull(CompilerProjectExtension.getInstance(getProject())).setCompilerOutputUrl(myMainOutput.findOrCreateDir("out").getUrl());
+      if (!myModules.isEmpty()) {
+        JavaAwareProjectJdkTableImpl projectJdkTable = JavaAwareProjectJdkTableImpl.getInstanceEx();
+        for (Module module : myModules) {
+          ModuleRootModificationUtil.setModuleSdk(module, projectJdkTable.getInternalJdk());
+        }
       }
     });
   }
 
   public void tearDown() {
-    CompilerTestUtil.disableExternalCompiler(getProject());
-
     try {
-      myMainOutput.tearDown();
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
+      new RunAll(
+        () -> CompilerTestUtil.disableExternalCompiler(getProject()),
+        () -> myMainOutput.tearDown()
+      ).run();
     }
     finally {
       myMainOutput = null;
@@ -89,7 +114,7 @@ public class CompilerTester {
     return myProject;
   }
 
-  public void deleteClassFile(final String className) throws IOException {
+  public void deleteClassFile(@NotNull String className) throws IOException {
     WriteAction.runAndWait(() -> {
       //noinspection ConstantConditions
       touch(JavaPsiFacade.getInstance(getProject()).findClass(className, GlobalSearchScope.allScope(getProject())).getContainingFile().getVirtualFile());
@@ -148,7 +173,8 @@ public class CompilerTester {
     return runCompiler(callback -> CompilerManager.getInstance(getProject()).compile(files, callback));
   }
 
-  public List<CompilerMessage> runCompiler(final Consumer<CompileStatusNotification> runnable) {
+  @NotNull
+  public List<CompilerMessage> runCompiler(@NotNull Consumer<CompileStatusNotification> runnable) {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
 
@@ -159,7 +185,7 @@ public class CompilerTester {
         refreshVfs(module.getModuleFilePath());
       }
 
-      PlatformTestUtil.saveProject(getProject());
+      PlatformTestUtil.saveProject(getProject(), false);
       CompilerTestUtil.saveApplicationSettings();
       // for now directory based project is used for external storage
       if (!ProjectKt.isDirectoryBased(myProject)) {
@@ -171,10 +197,34 @@ public class CompilerTester {
           }
         }
       }
+
+      PathMacros pathMacroManager = PathMacros.getInstance();
+      Map<String, String> userMacros = pathMacroManager.getUserMacros();
+      if (!userMacros.isEmpty()) {
+        // require to be presented on disk
+        Path configDir = Paths.get(PathManager.getConfigPath());
+        Path macroFilePath = configDir.resolve("options").resolve(JpsGlobalLoader.PathVariablesSerializer.STORAGE_FILE_NAME);
+        if (!Files.exists(macroFilePath)) {
+          String message = "File " + macroFilePath + " doesn't exist, but user macros defined: " + userMacros +
+                           "\n\n File listing:" + FileTreePrinterKt.getDirectoryTree(configDir);
+          // todo find out who deletes this file during tests
+          LOG.warn(message);
+
+          String fakeMacroName = "__remove_me__";
+          IComponentStore applicationStore = CompilerTestUtil.getApplicationStore();
+          pathMacroManager.setMacro(fakeMacroName, fakeMacroName);
+          applicationStore.saveApplicationComponent((PersistentStateComponent<?>)pathMacroManager);
+          pathMacroManager.removeMacro(fakeMacroName);
+          applicationStore.saveApplicationComponent((PersistentStateComponent<?>)pathMacroManager);
+          if (!Files.exists(macroFilePath)) {
+            throw new AssertionError(message);
+          }
+        }
+      }
       runnable.consume(callback);
     });
 
-    //tests run in awt
+    // tests run in awt
     while (!semaphore.waitFor(100)) {
       if (SwingUtilities.isEventDispatchThread()) {
         //noinspection TestOnlyProblems
@@ -203,7 +253,7 @@ public class CompilerTester {
     private Throwable myError;
     private final List<CompilerMessage> myMessages = new ArrayList<>();
 
-    ErrorReportingCallback(Semaphore semaphore) {
+    ErrorReportingCallback(@NotNull Semaphore semaphore) {
       mySemaphore = semaphore;
     }
 
@@ -234,14 +284,13 @@ public class CompilerTester {
 
     void throwException() {
       if (myError != null) {
-        throw new RuntimeException(myError);
+        ExceptionUtilRt.rethrow(myError);
       }
     }
 
+    @NotNull
     public List<CompilerMessage> getMessages() {
       return myMessages;
     }
   }
-
-
 }

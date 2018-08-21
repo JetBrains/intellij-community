@@ -103,7 +103,7 @@ object GuiTestLocalLauncher {
                        args: List<String>) {
     LOG.info("Running $ide locally \n with args: ${args.joinToString(" ")}")
     //do not limit IDE starting if we are using debug mode to not miss the debug listening period
-    val conditionalTimeout = if (GuiTestOptions.isDebug()) 0 else timeOut
+    val conditionalTimeout = if (GuiTestOptions.isDebug) 0 else timeOut
     val startLatch = CountDownLatch(1)
     thread(start = true, name = "IdeaThread") {
       val ideaStartTest = ProcessBuilder().inheritIO().command(args)
@@ -227,29 +227,30 @@ object GuiTestLocalLauncher {
    */
   private fun getDefaultAndCustomVmOptions(ide: Ide, customVmOptions: List<String> = emptyList()): List<String> {
     return listOf<String>()
-      .plus("-Xmx${GuiTestOptions.getXmxSize()}m")
+      .plus("-Xmx${GuiTestOptions.xmxSize}m")
       .plus("-XX:ReservedCodeCacheSize=240m")
       .plus("-XX:+UseConcMarkSweepGC")
       .plus("-XX:SoftRefLRUPolicyMSPerMB=50")
       .plus("-XX:MaxJavaStackTraceDepth=10000")
       .plus("-ea")
-      .plus("-Xbootclasspath/p:${GuiTestOptions.getBootClasspath()}")
+      .plus("-Xbootclasspath/p:${GuiTestOptions.bootClasspath}")
       .plus("-Dsun.awt.disablegrab=true")
       .plus("-Dsun.io.useCanonCaches=false")
       .plus("-Djava.net.preferIPv4Stack=true")
-      .plus("-Dapple.laf.useScreenMenuBar=${GuiTestOptions.useAppleScreenMenuBar()}")
-      .plus("-Didea.is.internal=${GuiTestOptions.isInternal()}")
+      .plus("-Dapple.laf.useScreenMenuBar=${GuiTestOptions.useAppleScreenMenuBar}")
+      .plus("-Didea.is.internal=${GuiTestOptions.isInternal}")
       .plus("-Didea.debug.mode=true")
       .plus("-Dnative.mac.file.chooser.enabled=false")
-      .plus("-Didea.config.path=${GuiTestOptions.getConfigPath()}")
-      .plus("-Didea.system.path=${GuiTestOptions.getSystemPath()}")
-      .plus("-Dfile.encoding=${GuiTestOptions.getEncoding()}")
+      .plus("-Didea.config.path=${GuiTestOptions.configPath}")
+      .plus("-Didea.system.path=${GuiTestOptions.systemPath}")
+      .plus("-Dfile.encoding=${GuiTestOptions.encoding}")
       .plusIf(!ide.ideType.platformPrefix.isNullOrEmpty(), "-Didea.platform.prefix=${ide.ideType.platformPrefix}")
       .plus(customVmOptions)
       .plus("-Xdebug")
-      .plus("-Xrunjdwp:transport=dt_socket,server=y,suspend=${GuiTestOptions.suspendDebug()},address=${GuiTestOptions.getDebugPort()}")
+      .plus("-Xrunjdwp:transport=dt_socket,server=y,suspend=${GuiTestOptions.suspendDebug},address=${GuiTestOptions.debugPort}")
       .plus("-Duse.linux.keychain=false")
       .plus("-Didea.suppress.statistics.report")
+      .plus("-Djava.io.tmpdir=${GuiTestOptions.tempDirPath}")
   }
 
   private fun getCurrentJavaExec(): String {

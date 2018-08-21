@@ -40,6 +40,7 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     addIDEALibraries(classpath);
     addAdditionalClassPath(classpath);
     addParentClasspath(classpath, true);
+    addSAJDIJar(classpath);
 
     UrlClassLoader.Builder builder = UrlClassLoader.build()
       .urls(filterClassPath(new ArrayList<>(classpath)))
@@ -132,6 +133,16 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
 
   private static void addAdditionalClassPath(Collection<URL> classpath) {
     parseClassPathString(System.getProperty(PROPERTY_ADDITIONAL_CLASSPATH), classpath);
+  }
+
+  /**
+   * search and add sa-jdi.jar if available, currently works only for IDEA updated from sources
+   */
+  private static void addSAJDIJar(Collection<URL> classpath) throws MalformedURLException {
+    File saJdiJar = new File(System.getProperty("java.home"), "../lib/sa-jdi.jar");
+    if (saJdiJar.exists()) {
+      classpath.add(saJdiJar.toURI().normalize().toURL());
+    }
   }
 
   private static void parseClassPathString(String pathString, Collection<URL> classpath) {

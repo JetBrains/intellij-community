@@ -58,17 +58,17 @@ public class ObjectUtils {
     }
   }
 
-  @Contract(value = "!null, _ -> !null; _, !null -> !null; _, _ -> null", pure = true)
+  @Contract(value = "!null, _ -> !null; _, !null -> !null; null, null -> null", pure = true)
   public static <T> T chooseNotNull(@Nullable T t1, @Nullable T t2) {
     return t1 == null? t2 : t1;
   }
 
-  @Contract(value = "!null, _ -> !null; _, !null -> !null; _, _ -> null", pure = true)
+  @Contract(value = "!null, _ -> !null; _, !null -> !null; null, null -> null", pure = true)
   public static <T> T coalesce(@Nullable T t1, @Nullable T t2) {
     return chooseNotNull(t1, t2);
   }
 
-  @Contract(value = "!null, _, _ -> !null; _, !null, _ -> !null; _, _, !null -> !null; _,_,_ -> null", pure = true)
+  @Contract(value = "!null, _, _ -> !null; _, !null, _ -> !null; _, _, !null -> !null; null,null,null -> null", pure = true)
   public static <T> T coalesce(@Nullable T t1, @Nullable T t2, @Nullable T t3) {
     return t1 != null ? t1 : t2 != null ? t2 : t3;
   }
@@ -130,7 +130,7 @@ public class ObjectUtils {
 
   @Nullable
   @Contract("null, _ -> null")
-  public static <T> T nullizeByCondition(@Nullable final T obj, @NotNull final Condition<T> condition) {
+  public static <T> T nullizeByCondition(@Nullable final T obj, @NotNull final Condition<? super T> condition) {
     if (condition.value(obj)) {
       return null;
     }

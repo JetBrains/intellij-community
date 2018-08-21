@@ -23,6 +23,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -859,7 +860,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
 
     if (isEffectivelyNaN(dfaLeft) || isEffectivelyNaN(dfaRight)) {
-      applyEquivalenceRelation(dfaRelation, dfaLeft, dfaRight);
+      applyEquivalenceRelation(relationType, dfaLeft, dfaRight);
       return relationType == RelationType.NE;
     }
     if ((canBeNaN(dfaLeft) && !isNull(dfaRight)) || (canBeNaN(dfaRight) && !isNull(dfaLeft))) {
@@ -869,11 +870,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         return !dfaRelation.isNonEquality();
       }
 
-      applyEquivalenceRelation(dfaRelation, dfaLeft, dfaRight);
+      applyEquivalenceRelation(relationType, dfaLeft, dfaRight);
       return true;
     }
 
-    return applyEquivalenceRelation(dfaRelation, dfaLeft, dfaRight);
+    return applyEquivalenceRelation(relationType, dfaLeft, dfaRight);
   }
 
   private void updateVarStateOnComparison(@NotNull DfaVariableValue dfaVar, DfaValue value) {
@@ -897,9 +898,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
   }
 
-  private boolean applyEquivalenceRelation(@NotNull DfaRelationValue dfaRelation, DfaValue dfaLeft, DfaValue dfaRight) {
-    boolean isNegated = dfaRelation.isNonEquality();
-    if (!isNegated && !dfaRelation.isEquality()) {
+  private boolean applyEquivalenceRelation(RelationType type, DfaValue dfaLeft, DfaValue dfaRight) {
+    boolean isNegated = type == RelationType.NE || type == RelationType.GT || type == RelationType.LT;
+    if (!isNegated && type != RelationType.EQ) {
       return true;
     }
 
@@ -920,11 +921,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
     }
 
-    if (dfaRelation.getRelation() == RelationType.LT) {
+    if (type == RelationType.LT) {
       if (!applyLessThanRelation(dfaLeft, dfaRight)) return false;
-    } else if (dfaRelation.getRelation() == RelationType.GT) {
+    } else if (type == RelationType.GT) {
       if (!applyLessThanRelation(dfaRight, dfaLeft)) return false;
     } else {
+      if (!isNegated && !applyDependentFieldsEquivalence(dfaLeft, dfaRight)) {
+        return false;
+      }
       if (!applyRelation(dfaLeft, dfaRight, isNegated)) return false;
     }
     if (!checkCompareWithBooleanLiteral(dfaLeft, dfaRight, isNegated)) {
@@ -935,6 +939,32 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
              applyBoxedRelation((DfaVariableValue)dfaLeft, dfaRight, isNegated);
     }
 
+    return true;
+  }
+
+  @NotNull
+  private List<Couple<DfaValue>> getDependentPairs(DfaValue left, DfaValue right) {
+    StreamEx<Couple<DfaValue>> stream = StreamEx.empty();
+    if (left instanceof DfaVariableValue) {
+      stream = stream.append(StreamEx.of(new ArrayList<>(((DfaVariableValue)left).getDependentVariables()))
+        .filter(leftVar -> leftVar.getQualifier() == left && leftVar.getSource() instanceof SpecialField)
+        .map(leftVar -> Couple.of(leftVar, ((SpecialField)leftVar.getSource()).createValue(myFactory, right))));
+    }
+    if (right instanceof DfaVariableValue) {
+      stream = stream.append(StreamEx.of(new ArrayList<>(((DfaVariableValue)right).getDependentVariables()))
+        .filter(rightVar -> rightVar.getQualifier() == right && rightVar.getSource() instanceof SpecialField)
+        .map(rightVar -> Couple.of(((SpecialField)rightVar.getSource()).createValue(myFactory, left), rightVar)));
+    }
+    return stream.distinct().toList();
+  }
+
+  private boolean applyDependentFieldsEquivalence(@NotNull DfaValue left, @NotNull DfaValue right) {
+    List<Couple<DfaValue>> pairs = getDependentPairs(left, right);
+    for (Couple<DfaValue> pair : pairs) {
+      if (!applyCondition(myFactory.createCondition(pair.getFirst(), RelationType.EQ, pair.getSecond()))) {
+        return false;
+      }
+    }
     return true;
   }
 

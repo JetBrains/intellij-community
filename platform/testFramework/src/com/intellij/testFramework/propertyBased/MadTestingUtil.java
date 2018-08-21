@@ -306,9 +306,12 @@ public class MadTestingUtil {
    */
   @NotNull
   public static Generator<MadTestingAction> randomEditsWithReparseChecks(PsiFile file) {
-    return Generator.sampledFrom(new DeleteRange(file),
-                                 new CheckPsiTextConsistency(file),
-                                 new InsertString(file));
+    return Generator.sampledFrom(
+      new InsertString(file),
+      new DeleteRange(file),
+      new CommitDocumentAction(file),
+      new CheckPsiTextConsistency(file)
+    );
   }
 
   /**
@@ -321,6 +324,7 @@ public class MadTestingUtil {
     return file -> Generator.sampledFrom(
       new InsertString(file),
       new DeleteRange(file),
+      new CommitDocumentAction(file),
       new CheckPsiReadAccessors(file, skipCondition)
     );
   }

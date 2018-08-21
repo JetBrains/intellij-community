@@ -1182,7 +1182,9 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
         val factory = settings.factory
         @Suppress("UNCHECKED_CAST")
         (factory as? ConfigurationFactoryEx<RunConfiguration>)?.onConfigurationCopied(settings.configuration)
-        val configurable = createNewConfiguration(settings, typeNode, selectedNode)
+        val parentNode = selectedNode?.parent
+        val node = (if ((parentNode as? DefaultMutableTreeNode)?.userObject is String) parentNode else typeNode) as DefaultMutableTreeNode
+        val configurable = createNewConfiguration(settings, node, selectedNode)
         IdeFocusManager.getInstance(project).requestFocus(configurable.nameTextField, true)
         configurable.nameTextField.selectionStart = 0
         configurable.nameTextField.selectionEnd = copyName.length

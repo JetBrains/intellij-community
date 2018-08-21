@@ -958,8 +958,27 @@ public class TypeMigrationLabeler {
 
   private static PsiElement getContainingStatement(final PsiElement root) {
     final PsiStatement statement = PsiTreeUtil.getParentOfType(root, PsiStatement.class);
+    PsiExpression condition = getContainingCondition(root, statement);
+    if (condition != null) return condition;
     final PsiField field = PsiTreeUtil.getParentOfType(root, PsiField.class);
     return statement != null ? statement : field != null ? field : root;
+  }
+
+  private static PsiExpression getContainingCondition(PsiElement root, PsiStatement statement) {
+    PsiExpression condition = null;
+    if (statement instanceof PsiWhileStatement) {
+      condition = ((PsiWhileStatement)statement).getCondition();
+    }
+    else if (statement instanceof PsiDoWhileStatement) {
+      condition = ((PsiDoWhileStatement)statement).getCondition();
+    }
+    else if (statement instanceof PsiForStatement) {
+      condition = ((PsiForStatement)statement).getCondition();
+    }
+    else if (statement instanceof PsiIfStatement) {
+      condition = ((PsiIfStatement)statement).getCondition();
+    }
+    return PsiTreeUtil.isAncestor(condition, root, false) ? condition : null;
   }
 
   void migrateRootUsageExpression(final PsiReference usage, final Set<PsiElement> processed) {

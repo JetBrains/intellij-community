@@ -321,6 +321,7 @@
     <debugger.nodeNameAdjuster implementation="com.intellij.debugger.ui.impl.watch.FieldOuterLocalNameAdjuster"/>
 
     <programRunner id="defaultDebugRunner" implementation="com.intellij.debugger.impl.GenericDebuggerRunner" order="last"/>
+    <programRunner implementation="com.intellij.debugger.engine.JavaAttachDebuggerProvider$ProcessAttachDebuggerRunner" order="last"/>
     <programRunner implementation="com.intellij.execution.jar.JarApplicationDebuggerRunner"/>
 
     <iconLayerProvider implementation="com.intellij.compiler.CompilerIconLayerProvider"/>
