@@ -215,7 +215,9 @@ fun NewProjectDialogModel.createJavaProject(projectPath: String, libs: Libraries
       else {
         button(buttonNext).click()
         if(template.isNotEmpty()){
-          checkbox(checkCreateProjectFromTemplate).isSelected = true
+          val templateCheckbox = checkbox(checkCreateProjectFromTemplate)
+          if(!templateCheckbox.isSelected)
+            templateCheckbox.click()
           jList(template).clickItem(template)
         }
       }
