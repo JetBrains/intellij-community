@@ -17,8 +17,10 @@ import java.util.Map;
  */
 public class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
   @NotNull private final ContentRevision myContentRevision;
-  private byte[] myContent;
-  private boolean myContentLoadFailed;
+
+  private volatile byte[] myContent;
+  private volatile boolean myContentLoadFailed;
+  private final Object LOCK = new Object();
 
   private static final Map<ContentRevision, ContentRevisionVirtualFile> ourMap = ContainerUtil.createWeakMap();
 
@@ -58,7 +60,7 @@ public class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
 
   private void loadContent() {
     try {
-      byte[] bytes = null;
+      byte[] bytes;
       if (myContentRevision instanceof ByteBackedContentRevision) {
         bytes = ((ByteBackedContentRevision)myContentRevision).getContentAsBytes();
       }
@@ -71,13 +73,18 @@ public class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
         throw new VcsException("Could not load content");
       }
 
-      myContent = bytes;
-      setRevision(myContentRevision.getRevisionNumber().asString());
+      synchronized (LOCK) {
+        myContent = bytes;
+        myContentLoadFailed = false;
+        setRevision(myContentRevision.getRevisionNumber().asString());
+      }
     }
     catch (VcsException e) {
-      myContentLoadFailed = true;
-      myContent = ArrayUtil.EMPTY_BYTE_ARRAY;
-      setRevision("0");
+      synchronized (LOCK) {
+        myContentLoadFailed = true;
+        myContent = ArrayUtil.EMPTY_BYTE_ARRAY;
+        setRevision("0");
+      }
       showLoadingContentFailedMessage(e);
     }
   }
