@@ -283,9 +283,13 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
     File baseDir = MavenServerUtil.findMavenBasedir(workingDir);
 
     Map<String, String> result = new HashMap<String, String>();
+    readConfigFiles(baseDir, result);
+    return result.isEmpty() ? Collections.<String, String>emptyMap() : result;
+  }
+
+  static void readConfigFiles(File baseDir, Map<String, String> result) {
     readConfigFile(baseDir, File.separator + ".mvn" + File.separator + "jvm.config", result);
     readConfigFile(baseDir, File.separator + ".mvn" + File.separator + "maven.config", result);
-    return result.isEmpty() ? Collections.<String, String>emptyMap() : result;
   }
 
   private static void readConfigFile(File baseDir, String relativePath, Map<String, String> result) {

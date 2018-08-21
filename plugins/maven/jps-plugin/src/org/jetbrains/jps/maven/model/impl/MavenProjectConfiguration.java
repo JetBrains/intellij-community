@@ -224,11 +224,16 @@ public class MavenProjectConfiguration {
   // adapted from org.jetbrains.idea.maven.server.Maven3ServerEmbedder
   private static Map<String, String> getMavenAndJvmConfig(MavenModuleResourceConfiguration moduleResourceConfig) {
     return ourMavenAndJvmConfigs.computeIfAbsent(getBaseDir(moduleResourceConfig.directory), baseDir -> {
-      Map<String, String> result = new HashMap<>();
-      readConfigFile(baseDir, File.separator + ".mvn" + File.separator + "jvm.config", result);
-      readConfigFile(baseDir, File.separator + ".mvn" + File.separator + "maven.config", result);
-      return result.isEmpty() ? emptyMap() : result;
+      return readConfigFiles(baseDir);
     });
+  }
+
+  @NotNull
+  public static Map<String, String> readConfigFiles(File baseDir) {
+    Map<String, String> result = new HashMap<>();
+    readConfigFile(baseDir, File.separator + ".mvn" + File.separator + "jvm.config", result);
+    readConfigFile(baseDir, File.separator + ".mvn" + File.separator + "maven.config", result);
+    return result.isEmpty() ? emptyMap() : result;
   }
 
   private static void readConfigFile(File baseDir, String relativePath, Map<String, String> result) {
