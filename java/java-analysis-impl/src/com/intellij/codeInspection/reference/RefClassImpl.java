@@ -385,20 +385,6 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
   }
 
   @Override
-  @NotNull
-  public synchronized Set<RefElement> getInstanceReferences() {
-    if (myInstanceReferences == null) return EMPTY_SET;
-    return myInstanceReferences;
-  }
-
-  synchronized void addInstanceReference(RefElement from) {
-    if (myInstanceReferences == null){
-      myInstanceReferences = new THashSet<>(1);
-    }
-    myInstanceReferences.add(from);
-  }
-
-  @Override
   public synchronized RefMethod getDefaultConstructor() {
     return myDefaultConstructor;
   }
