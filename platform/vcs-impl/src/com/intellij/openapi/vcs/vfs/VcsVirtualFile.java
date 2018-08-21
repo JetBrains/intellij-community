@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.vfs;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
@@ -22,10 +21,12 @@ import java.nio.charset.Charset;
 public class VcsVirtualFile extends AbstractVcsVirtualFile {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.vfs.VcsVirtualFile");
 
-  private byte[] myContent;
   private final VcsFileRevision myFileRevision;
-  private boolean myContentLoadFailed = false;
-  private Charset myCharset;
+
+  private volatile byte[] myContent;
+  private volatile boolean myContentLoadFailed;
+  private volatile Charset myCharset;
+  private final Object LOCK = new Object();
 
   public VcsVirtualFile(@NotNull String path,
                         @Nullable VcsFileRevision revision,
@@ -61,19 +62,27 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
   }
 
   private void loadContent() throws IOException {
-    if (myContent != null) return;
     assert myFileRevision != null;
+    if (myContent != null) return;
 
     try {
-      final VcsRevisionNumber revisionNumber = myFileRevision.getRevisionNumber();
-      setRevision(VcsUtil.getShortRevisionString(revisionNumber));
-      myContent = myFileRevision.loadContent();
-      myCharset = new CharsetToolkit(myContent).guessEncoding(myContent.length);
+      byte[] content = myFileRevision.loadContent();
+
+      synchronized (LOCK) {
+        setRevision(VcsUtil.getShortRevisionString(myFileRevision.getRevisionNumber()));
+        myContent = content;
+        myContentLoadFailed = false;
+        if (myContent != null) {
+          myCharset = new CharsetToolkit(myContent).guessEncoding(myContent.length);
+        }
+      }
     }
     catch (VcsException e) {
-      myContentLoadFailed = true;
-      myContent = ArrayUtil.EMPTY_BYTE_ARRAY;
-      setRevision("0");
+      synchronized (LOCK) {
+        myContentLoadFailed = true;
+        myContent = ArrayUtil.EMPTY_BYTE_ARRAY;
+        setRevision("0");
+      }
 
       showLoadingContentFailedMessage(e);
     }
