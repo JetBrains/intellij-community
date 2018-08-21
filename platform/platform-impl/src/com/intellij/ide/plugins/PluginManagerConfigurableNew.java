@@ -902,6 +902,11 @@ public class PluginManagerConfigurableNew
       }
 
       @Override
+      protected void handleAppendToQuery() {
+        showPopupForQuery();
+      }
+
+      @Override
       protected void handleAppendAttributeValue() {
         showPopupForQuery();
       }
@@ -915,6 +920,7 @@ public class PluginManagerConfigurableNew
       new SearchResultPanel(installedController, createLocalSearchPanelComponent(false), INSTALLED_SEARCH_TAB, INSTALLED_TAB) {
         @Override
         protected void handleQuery(@NotNull String query, @NotNull PluginsGroup result) {
+          InstalledPluginsState state = InstalledPluginsState.getInstance();
           SearchQueryParser.Installed parser = new SearchQueryParser.Installed(query);
 
           for (UIPluginGroup uiGroup : myInstalledPanel.getGroups()) {
@@ -939,8 +945,15 @@ public class PluginManagerConfigurableNew
                     continue;
                   }
                 }
-                // XXX: needUpdate
-                // XXX: needRestart
+                PluginId pluginId = plugin.myPlugin.getPluginId();
+                if (parser.needUpdate != null && parser.needUpdate != state.hasNewerVersion(pluginId)) {
+                  continue;
+                }
+                if (parser.needRestart != null) {
+                  if (parser.needRestart != (state.wasInstalled(pluginId) || state.wasUpdated(pluginId))) {
+                    continue;
+                  }
+                }
               }
               if (parser.searchQuery != null && !StringUtil.containsIgnoreCase(plugin.myPlugin.getName(), parser.searchQuery)) {
                 continue;
