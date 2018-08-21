@@ -134,13 +134,13 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   }
 
   fun testOpens() {
-    addFile("pkg/empty/package-info.java", "package pkg.empty;")
     addFile("pkg/main/C.java", "package pkg.main;\nclass C { }")
+    addFile("pkg/resources/resource.txt", "...")
     highlight("""
         module M {
           opens <warning descr="Package not found: pkg.missing.unknown">pkg.missing.unknown</warning>;
-          opens <warning descr="Package is empty: pkg.empty">pkg.empty</warning>;
           opens pkg.main to <warning descr="Module not found: M.missing">M.missing</warning>, M2, <error descr="Duplicate 'opens' target: M2">M2</error>;
+          opens pkg.resources;
         }""".trimIndent())
 
     addTestFile("pkg/tests/T.java", "package pkg.tests;\nclass T { }", M_TEST)
