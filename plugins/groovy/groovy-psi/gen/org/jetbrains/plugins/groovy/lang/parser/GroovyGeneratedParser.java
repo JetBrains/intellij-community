@@ -6926,7 +6926,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '<' type_parameters '>'
+  // '<' mb_nl type_parameters mb_nl '>'
   public static boolean type_parameter_list(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_parameter_list")) return false;
     if (!nextTokenIsFast(b, T_LT)) return false;
@@ -6934,7 +6934,9 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, TYPE_PARAMETER_LIST, null);
     r = consumeTokenFast(b, T_LT);
     p = r; // pin = 1
-    r = r && report_error_(b, type_parameters(b, l + 1));
+    r = r && report_error_(b, mb_nl(b, l + 1));
+    r = p && report_error_(b, type_parameters(b, l + 1)) && r;
+    r = p && report_error_(b, mb_nl(b, l + 1)) && r;
     r = p && consumeToken(b, T_GT) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
@@ -6965,7 +6967,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // ',' type_parameter
+  // ',' mb_nl type_parameter
   static boolean type_parameters_tail(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_parameters_tail")) return false;
     if (!nextTokenIs(b, T_COMMA)) return false;
@@ -6973,7 +6975,8 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_);
     r = consumeToken(b, T_COMMA);
     p = r; // pin = 1
-    r = r && type_parameter(b, l + 1);
+    r = r && report_error_(b, mb_nl(b, l + 1));
+    r = p && type_parameter(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
