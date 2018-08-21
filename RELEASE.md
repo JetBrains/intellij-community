@@ -212,3 +212,24 @@ For AOSP push:
  Change-Id: Ic60a95a21ea0e483d82f6013539d112b89a7d0c0 (AOSP)
  Change-Id: I42bcad10589b8172a46a3f74aa1e7a5826ea52fc (AOSP)
 
+ 1. Remove all references to `tools/vendor/google` from
+ `tools/base/bazel/toplevel.WORKSPACE`:
+
+```
+--- a/bazel/toplevel.WORKSPACE
++++ b/bazel/toplevel.WORKSPACE
+@@ -1,13 +1,6 @@
+ load("//tools/base/bazel:repositories.bzl", "setup_external_repositories")
+ setup_external_repositories()
+
+-local_repository(
+-      name = "blaze",
+-      path = "tools/vendor/google3/blaze",
+-)
+-load("@blaze//:binds.bzl", "blaze_binds")
+-blaze_binds()
+-
+ http_archive(
+   name = "bazel_toolchains",
+   urls = [
+```
