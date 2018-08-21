@@ -178,6 +178,10 @@ public class UITheme {
     return patcher;
   }
 
+  public SVGLoader.SvgColorPatcher getColorPatcher() {
+    return colorPatcher;
+  }
+
   @NotNull
   public ClassLoader getProviderClassLoader() {
     return providerClassLoader;

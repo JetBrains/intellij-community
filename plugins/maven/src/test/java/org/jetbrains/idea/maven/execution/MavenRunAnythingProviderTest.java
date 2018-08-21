@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.execution;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenConstants;
@@ -103,5 +104,23 @@ public class MavenRunAnythingProviderTest extends MavenImportingTestCase {
 
     assertContain((List<String>)moduleValues, "mvn m1 war:help", "mvn m1 war:inplace", "mvn m1 war:exploded", "mvn m1 war:war");
     assertDoNotContain((List<String>)projectValues, "mvn m2 war:war");
+
+    projectValues = myProvider.getValues(myDataContext, "mvn m2 compiler:compile ");
+    assertContain((List<String>)projectValues, "mvn m2 compiler:compile compiler:help");
+    assertDoNotContain((List<String>)projectValues, "mvn m2 compiler:compile compiler:compile");
+  }
+
+  public void testOptions() {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    Collection<String> values = myProvider.getValues(myDataContext, "mvn -");
+    assertEquals(37, values.size());
+    assertFalse(values.stream().map(value -> trimStart(value,"mvn ")).anyMatch(option -> option.startsWith("--")));
+
+    values = myProvider.getValues(myDataContext, "mvn --");
+    assertEquals(37, values.size());
+    assertTrue(values.stream().map(value -> trimStart(value,"mvn ")).allMatch(option -> option.startsWith("--")));
   }
 }

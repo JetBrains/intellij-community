@@ -10,7 +10,7 @@ import com.intellij.facet.pointers.FacetPointer;
 import com.intellij.facet.pointers.FacetPointerListener;
 import com.intellij.facet.pointers.FacetPointersManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.ModuleListener;
@@ -20,7 +20,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
 import com.intellij.util.messages.MessageBusConnection;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -28,7 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class FacetPointersManagerImpl extends FacetPointersManager implements ProjectComponent {
+public class FacetPointersManagerImpl extends FacetPointersManager implements BaseComponent {
   private final Map<String, FacetPointerImpl> myPointers = new HashMap<>();
   private final Map<Class<? extends Facet>, EventDispatcher<FacetPointerListener>> myDispatchers = new HashMap<>();
   @NotNull private final Project myProject;
@@ -65,13 +64,6 @@ public class FacetPointersManagerImpl extends FacetPointersManager implements Pr
 
   <F extends Facet> void dispose(final FacetPointer<F> pointer) {
     myPointers.remove(pointer.getId());
-  }
-
-  @Override
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "FacetPointersManager";
   }
 
   @Override

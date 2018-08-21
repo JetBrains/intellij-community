@@ -230,7 +230,7 @@ public class DefaultActionGroup extends ActionGroup {
     remove(action, id);
   }
 
-  public final void remove(@NotNull AnAction action, String id) {
+  public final void remove(@NotNull AnAction action, @Nullable String id) {
     if (!mySortedChildren.remove(action) &&
         !mySortedChildren.removeIf(oldAction ->
                                      oldAction instanceof ActionStub && ((ActionStub) oldAction).getId().equals(id))) {

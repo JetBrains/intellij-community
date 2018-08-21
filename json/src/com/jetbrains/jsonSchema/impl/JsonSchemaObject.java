@@ -9,9 +9,13 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.jetbrains.jsonSchema.JsonSchemaVfsListener;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.remote.JsonFileResolver;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
@@ -39,6 +44,7 @@ public class JsonSchemaObject {
   @Nullable private Map<String, JsonSchemaObject> myDefinitionsMap;
   @NotNull private static final JsonSchemaObject NULL_OBJ = new JsonSchemaObject();
   @NotNull private final ConcurrentMap<String, JsonSchemaObject> myComputedRefs = new ConcurrentHashMap<>();
+  @NotNull private final AtomicBoolean mySubscribed = new AtomicBoolean(false);
   @NotNull private Map<String, JsonSchemaObject> myProperties;
 
   @Nullable private PatternProperties myPatternProperties;
@@ -839,6 +845,23 @@ public class JsonSchemaObject {
     assert !StringUtil.isEmptyOrSpaces(ref);
     if (!myComputedRefs.containsKey(ref)){
       JsonSchemaObject value = fetchSchemaFromRefDefinition(ref, this, service);
+      if (!mySubscribed.get()) {
+        getJsonObject().getProject().getMessageBus().connect().subscribe(JsonSchemaVfsListener.JSON_DEPS_CHANGED, () -> myComputedRefs.clear());
+        mySubscribed.set(true);
+      }
+      if (!JsonFileResolver.isHttpPath(ref)) {
+        service.registerReference(ref);
+      }
+      else if (value != null) {
+        // our aliases - if http ref actually refers to a local file with specific ID
+        PsiFile file = value.getJsonObject().getContainingFile();
+        if (file != null) {
+          VirtualFile virtualFile = file.getVirtualFile();
+          if (virtualFile != null && !(virtualFile instanceof HttpVirtualFile)) {
+            service.registerReference(virtualFile.getName());
+          }
+        }
+      }
       myComputedRefs.put(ref, value == null ? NULL_OBJ : value);
     }
     JsonSchemaObject object = myComputedRefs.getOrDefault(ref, null);

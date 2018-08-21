@@ -6,15 +6,21 @@ import com.intellij.execution.configurations.RemoteConnection;
 /**
  * @author egor
  */
-public class PidRemoteConnection extends RemoteConnection {
+public class SAPidRemoteConnection extends RemoteConnection {
   private final String myPid;
+  private final String mySAJarPath;
 
-  public PidRemoteConnection(String pid) {
+  public SAPidRemoteConnection(String pid, String saJarPath) {
     super(false, null, null, false);
     myPid = pid;
+    mySAJarPath = saJarPath;
   }
 
   public String getPid() {
     return myPid;
+  }
+
+  public String getSAJarPath() {
+    return mySAJarPath;
   }
 }

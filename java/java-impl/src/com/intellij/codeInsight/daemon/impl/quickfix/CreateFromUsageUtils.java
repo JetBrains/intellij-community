@@ -24,8 +24,8 @@ import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.codeInsight.intention.impl.CreateClassDialog;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.ExpressionUtil;
+import com.intellij.codeInsight.template.*;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
@@ -625,7 +625,7 @@ public class CreateFromUsageUtils {
         continue;
       }
 
-      PsiElement pparent = parent.getParent();
+      PsiElement pparent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
       if (pparent instanceof PsiMethodCallExpression) {
         expectedMethodNames.add(refName);
         if (refName.equals("equals")) {

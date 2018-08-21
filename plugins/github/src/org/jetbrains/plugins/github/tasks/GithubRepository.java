@@ -22,7 +22,9 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor;
 import org.jetbrains.plugins.github.api.GithubApiRequests;
 import org.jetbrains.plugins.github.api.GithubServerPath;
 import org.jetbrains.plugins.github.api.data.GithubIssue;
+import org.jetbrains.plugins.github.api.data.GithubIssueBase;
 import org.jetbrains.plugins.github.api.data.GithubIssueComment;
+import org.jetbrains.plugins.github.api.data.GithubIssueState;
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader;
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException;
 import org.jetbrains.plugins.github.exceptions.GithubJsonException;
@@ -142,7 +144,7 @@ public class GithubRepository extends BaseRepositoryImpl {
       assigned = myUser;
     }
 
-    List<GithubIssue> issues;
+    List<? extends GithubIssueBase> issues;
     if (StringUtil.isEmptyOrSpaces(query)) {
       // search queries have way smaller request number limit
       issues = GithubIssuesLoadingHelper.load(executor, indicator, server, getRepoAuthor(), getRepoName(), withClosed, max, assigned);
@@ -155,7 +157,7 @@ public class GithubRepository extends BaseRepositoryImpl {
   }
 
   @NotNull
-  private Task createTask(final GithubIssue issue) {
+  private Task createTask(final GithubIssueBase issue) {
     return new Task() {
       @NotNull String myRepoName = getRepoName();
 
@@ -222,7 +224,7 @@ public class GithubRepository extends BaseRepositoryImpl {
 
       @Override
       public boolean isClosed() {
-        return !"open".equals(issue.getState());
+        return issue.getState() == GithubIssueState.closed;
       }
 
       @Override

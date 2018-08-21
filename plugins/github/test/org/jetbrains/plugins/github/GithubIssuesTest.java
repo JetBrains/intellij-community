@@ -19,6 +19,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.plugins.github.api.data.GithubIssue;
+import org.jetbrains.plugins.github.api.data.GithubSearchedIssue;
 import org.jetbrains.plugins.github.issue.GithubIssuesLoadingHelper;
 import org.jetbrains.plugins.github.test.GithubTest;
 
@@ -92,8 +93,8 @@ public class GithubIssuesTest extends GithubTest {
   }
 
   public void testQueriedIssues1() throws Exception {
-    List<GithubIssue> result = GithubIssuesLoadingHelper.search(myExecutor, new EmptyProgressIndicator(), myAccount.getServer(),
-                                                                myUsername2, REPO_NAME, true, null, "abracadabra");
+    List<GithubSearchedIssue> result = GithubIssuesLoadingHelper.search(myExecutor, new EmptyProgressIndicator(), myAccount.getServer(),
+                                                                        myUsername2, REPO_NAME, true, null, "abracadabra");
     List<Long> issues = ContainerUtil.map(result, githubIssue -> githubIssue.getNumber());
 
     List<Long> expected = Arrays.asList(10L, 12L);
@@ -102,8 +103,8 @@ public class GithubIssuesTest extends GithubTest {
   }
 
   public void testQueriedIssues2() throws Exception {
-    List<GithubIssue> result = GithubIssuesLoadingHelper.search(myExecutor, new EmptyProgressIndicator(), myAccount.getServer(),
-                                                                myUsername2, REPO_NAME, true, null, "commentary");
+    List<GithubSearchedIssue> result = GithubIssuesLoadingHelper.search(myExecutor, new EmptyProgressIndicator(), myAccount.getServer(),
+                                                                        myUsername2, REPO_NAME, true, null, "commentary");
     List<Long> issues = ContainerUtil.map(result, githubIssue -> githubIssue.getNumber());
 
     List<Long> expected = Arrays.asList(11L);
@@ -112,8 +113,8 @@ public class GithubIssuesTest extends GithubTest {
   }
 
   public void testQueriedIssues3() throws Exception {
-    List<GithubIssue> result = GithubIssuesLoadingHelper.search(myExecutor, new EmptyProgressIndicator(), myAccount.getServer(),
-                                                                myUsername2, REPO_NAME, false, null, "abracadabra");
+    List<GithubSearchedIssue> result = GithubIssuesLoadingHelper.search(myExecutor, new EmptyProgressIndicator(), myAccount.getServer(),
+                                                                        myUsername2, REPO_NAME, false, null, "abracadabra");
     List<Long> issues = ContainerUtil.map(result, githubIssue -> githubIssue.getNumber());
 
     List<Long> expected = Arrays.asList(10L);

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing;
 
 import com.google.common.collect.ObjectArrays;
@@ -15,7 +13,6 @@ import com.jetbrains.python.testing.doctest.PythonDocTestRunConfiguration;
 import com.jetbrains.python.testing.nosetestLegacy.PythonNoseTestRunConfiguration;
 import com.jetbrains.python.testing.pytestLegacy.PyTestRunConfiguration;
 import com.jetbrains.python.testing.unittestLegacy.PythonUnitTestRunConfiguration;
-import com.jetbrains.python.testing.PyTestLegacyInteropKt;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,7 +62,7 @@ public final class PythonTestConfigurationType implements ConfigurationType {
 
     @NotNull
     @Override
-    public RunConfiguration createTemplateConfiguration(Project project) {
+    public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
       return new PythonUnitTestRunConfiguration(project, this);
     }
 
@@ -82,7 +79,7 @@ public final class PythonTestConfigurationType implements ConfigurationType {
 
     @NotNull
     @Override
-    public RunConfiguration createTemplateConfiguration(Project project) {
+    public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
       return new PythonDocTestRunConfiguration(project, this);
     }
 
@@ -99,7 +96,7 @@ public final class PythonTestConfigurationType implements ConfigurationType {
 
     @NotNull
     @Override
-    public RunConfiguration createTemplateConfiguration(Project project) {
+    public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
       return new PyTestRunConfiguration(project, this);
     }
 
@@ -116,7 +113,7 @@ public final class PythonTestConfigurationType implements ConfigurationType {
 
     @NotNull
     @Override
-    public RunConfiguration createTemplateConfiguration(Project project) {
+    public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
       return new PythonNoseTestRunConfiguration(project, this);
     }
 

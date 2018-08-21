@@ -30,7 +30,7 @@ public class PythonConfigurationType implements ConfigurationType {
 
     @Override
     @NotNull
-    public RunConfiguration createTemplateConfiguration(Project project) {
+    public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
       return new PythonRunConfiguration(project, this);
     }
   }

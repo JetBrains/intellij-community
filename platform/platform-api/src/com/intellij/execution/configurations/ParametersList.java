@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.openapi.application.Application;
@@ -375,10 +375,10 @@ public final class ParametersList implements Cloneable {
       return ObjectUtils.notNull(ourTestMacros, Collections.emptyMap());
     }
     Map<String, String> map = ContainerUtil.newTroveMap(CaseInsensitiveStringHashingStrategy.INSTANCE);
-    PathMacros pathMacros = PathMacros.getInstance();
-    if (pathMacros != null) {
-      for (String name : pathMacros.getUserMacroNames()) {
-        ContainerUtil.putIfNotNull(name, pathMacros.getValue(name), map);
+    Map<String, String> pathMacros = PathMacros.getInstance().getUserMacros();
+    if (!pathMacros.isEmpty()) {
+      for (String name : pathMacros.keySet()) {
+        ContainerUtil.putIfNotNull(name, pathMacros.get(name), map);
       }
     }
     Map<String, String> env = EnvironmentUtil.getEnvironmentMap();

@@ -2,10 +2,10 @@
 package org.jetbrains.plugins.github.api.util
 
 @DslMarker
-private annotation class SearchTermDsl
+private annotation class SearchQueryDsl
 
-@SearchTermDsl
-class GithubApiSearchTermBuilder {
+@SearchQueryDsl
+class GithubApiSearchQueryBuilder {
   private val builder = StringBuilder()
 
   fun qualifier(name: String, value: String?) {
@@ -17,14 +17,14 @@ class GithubApiSearchTermBuilder {
   }
 
   private fun append(part: String) {
-    if (builder.isNotEmpty()) builder.append("+")
+    if (builder.isNotEmpty()) builder.append(" ")
     builder.append(part)
   }
 
   companion object {
     @JvmStatic
-    fun searchQuery(init: GithubApiSearchTermBuilder.() -> Unit): String {
-      val query = GithubApiSearchTermBuilder()
+    fun searchQuery(init: GithubApiSearchQueryBuilder.() -> Unit): String {
+      val query = GithubApiSearchQueryBuilder()
       init(query)
       return query.builder.toString()
     }

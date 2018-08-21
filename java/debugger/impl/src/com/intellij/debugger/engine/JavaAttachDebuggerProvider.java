@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -175,8 +176,14 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
                                            command,
                                            pid);
       }
+
+      // sa pid attach if sa-jdi.jar is available
       if (SA_PID_ATTACH_AVAILABLE) {
-        return new LocalAttachInfo(command, pid);
+        Properties systemProperties = vm.getSystemProperties();
+        File saJdiJar = new File(systemProperties.getProperty("java.home"), "../lib/sa-jdi.jar"); // java 8 only for now
+        if (saJdiJar.exists()) {
+          return new LocalAttachInfo(command, pid, saJdiJar.getCanonicalPath());
+        }
       }
     }
     catch (AttachNotSupportedException | IOException ignored) {
@@ -198,7 +205,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     final String myAddress;
 
     public DebuggerLocalAttachInfo(boolean socket, @NotNull String address, String aClass, String pid) {
-      super(aClass, pid);
+      super(aClass, pid, "");
       myUseSocket = socket;
       myAddress = address;
     }
@@ -222,14 +229,16 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
   private static class LocalAttachInfo {
     final String myClass;
     final String myPid;
+    final String mySAJarPath;
 
-    private LocalAttachInfo(String aClass, String pid) {
+    private LocalAttachInfo(String aClass, String pid, String SAJarPath) {
       myClass = aClass;
       myPid = pid;
+      mySAJarPath = SAJarPath;
     }
 
     RemoteConnection createConnection() {
-      return new PidRemoteConnection(myPid);
+      return new SAPidRemoteConnection(myPid, mySAJarPath);
     }
 
     String getSessionName() {
@@ -237,7 +246,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     }
 
     String getProcessDisplayText(String text) {
-      return text;
+      return text + " (read only)";
     }
   }
 

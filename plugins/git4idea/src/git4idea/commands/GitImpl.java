@@ -144,7 +144,8 @@ public class GitImpl extends GitImplBase {
                                 @NotNull final String clonedDirectoryName, @NotNull final GitLineHandlerListener... listeners) {
     return runCommand(() -> {
       GitLineHandler handler = new GitLineHandler(project, parentDirectory, GitCommand.CLONE);
-      handler.setStdoutSuppressed(false);
+      handler.setSilent(false);
+      handler.setStderrSuppressed(false);
       handler.setUrl(url);
       handler.addParameters("--progress");
       if (GitVersionSpecialty.CLONE_RECURSE_SUBMODULES.existsIn(project) && Registry.is("git.clone.recurse.submodules")) {

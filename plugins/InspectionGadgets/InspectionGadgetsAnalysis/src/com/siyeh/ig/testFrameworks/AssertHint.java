@@ -195,7 +195,7 @@ public class AssertHint {
     if (!objectType.equals(parameterType1) || !objectType.equals(parameterType2)) {
       return null;
     }
-    if (TypeUtils.areConvertible(type1, type2)) {
+    if (TypeUtils.areConvertible(type1, type2) || TypeUtils.mayBeEqualByContract(type1, type2)) {
       return null;
     }
     final String comparedTypeText = type1.getPresentableText();

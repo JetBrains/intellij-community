@@ -71,7 +71,7 @@ public class XsltRunConfigType implements ConfigurationType {
 
     @Override
     @NotNull
-    public RunConfiguration createTemplateConfiguration(final Project project) {
+    public RunConfiguration createTemplateConfiguration(@NotNull final Project project) {
       return new XsltRunConfiguration(project, this);
     }
   }
