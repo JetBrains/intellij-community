@@ -23,6 +23,11 @@ public abstract class ReadConfigFilesTestCase extends UsefulTestCase {
     doTestBothConfigFiles("-Da=b -Dc=d\n-De=f", ContainerUtil.stringMap("a", "b", "c", "d", "e", "f"));
   }
 
+  public void testPropertiesWithoutValue() throws IOException {
+    doTestBothConfigFiles("-DmyProperty", ContainerUtil.stringMap("myProperty", ""));
+    doTestBothConfigFiles("-Da -Dc=d\n-De", ContainerUtil.stringMap("a", "", "c", "d", "e", ""));
+  }
+
   public void testSpacesInValues() throws IOException {
     doTestJvmConfig("\"-DmyProperty=long value\"", ContainerUtil.stringMap("myProperty", "long value"));
     doTestJvmConfig("-Da=b \"-DmyProperty=long value\"\n-Dc=d", ContainerUtil.stringMap("myProperty", "long value", "a", "b", "c", "d"));
