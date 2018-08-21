@@ -134,7 +134,7 @@ public class IJSwingUtilities extends JBSwingUtilities {
   public static void updateComponentTreeUI(@Nullable Component c) {
     if (c == null) return;
 
-    if (c instanceof RootPaneContainer) {
+    if (c instanceof RootPaneContainer && ((RootPaneContainer)c).getRootPane() != null) { // Android Studio b/112725215
       UIUtil.decorateWindowHeader(((RootPaneContainer)c).getRootPane());
     }
 
