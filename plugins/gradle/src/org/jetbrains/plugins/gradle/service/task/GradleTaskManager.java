@@ -128,7 +128,9 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
         throw projectResolverChain.getUserFriendlyError(e, projectPath, null);
       }
     };
-    myHelper.ensureInstalledWrapper(id, determineRootProject(projectPath), effectiveSettings, listener, cancellationTokenSource.token());
+    if (effectiveSettings.getDistributionType() == DistributionType.WRAPPED) {
+      myHelper.ensureInstalledWrapper(id, determineRootProject(projectPath), effectiveSettings, listener, cancellationTokenSource.token());
+    }
     myHelper.execute(projectPath, effectiveSettings, f);
   }
 
