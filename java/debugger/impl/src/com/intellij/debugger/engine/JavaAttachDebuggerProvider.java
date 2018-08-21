@@ -178,10 +178,12 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       }
 
       // sa pid attach if sa-jdi.jar is available
-      Properties systemProperties = vm.getSystemProperties();
-      File saJdiJar = new File(systemProperties.getProperty("java.home"), "../lib/sa-jdi.jar"); // java 8 only for now
-      if (saJdiJar.exists()) {
-        return new LocalAttachInfo(command, pid, saJdiJar.getCanonicalPath());
+      if (SA_PID_ATTACH_AVAILABLE) {
+        Properties systemProperties = vm.getSystemProperties();
+        File saJdiJar = new File(systemProperties.getProperty("java.home"), "../lib/sa-jdi.jar"); // java 8 only for now
+        if (saJdiJar.exists()) {
+          return new LocalAttachInfo(command, pid, saJdiJar.getCanonicalPath());
+        }
       }
     }
     catch (AttachNotSupportedException | IOException ignored) {
