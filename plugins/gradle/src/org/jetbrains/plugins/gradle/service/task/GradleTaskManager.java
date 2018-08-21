@@ -74,8 +74,6 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
                            @Nullable GradleExecutionSettings settings,
                            @Nullable final String jvmAgentSetup,
                            @NotNull final ExternalSystemTaskNotificationListener listener) throws ExternalSystemException {
-
-    // TODO add support for external process mode
     if (ExternalSystemApiUtil.isInProcessMode(GradleConstants.SYSTEM_ID)) {
       for (GradleTaskManagerExtension gradleTaskManagerExtension : GradleTaskManagerExtension.EP_NAME.getExtensions()) {
         if (gradleTaskManagerExtension.executeTasks(id, taskNames, projectPath, settings, jvmAgentSetup, listener)) {
