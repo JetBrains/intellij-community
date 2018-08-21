@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -65,7 +66,7 @@ public class TouchBarsManager {
           }
         }
 
-        pd.get(BarType.DEFAULT).show();
+        StartupManager.getInstance(project).registerPostStartupActivity(() -> pd.get(BarType.DEFAULT).show());
 
         project.getMessageBus().connect().subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
           @Override
