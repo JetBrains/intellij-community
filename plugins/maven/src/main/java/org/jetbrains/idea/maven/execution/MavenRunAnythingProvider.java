@@ -96,6 +96,8 @@ public class MavenRunAnythingProvider extends RunAnythingProviderBase<String> {
               values.add(prefix + option.getName(longName));
             }
           }
+
+          Collections.sort(values, String::compareToIgnoreCase);
         }
         else {
           Set<String> goals = new HashSet<>(params.subList(onlyOneMavenProject ? 0 : 1, params.size()));
@@ -175,14 +177,14 @@ public class MavenRunAnythingProvider extends RunAnythingProviderBase<String> {
       MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
       if (projectsManager.isMavenizedProject()) {
         if (projectsManager.getRootProjects().size() > 1) {
-          return "mvn <moduleName> <goal...>";
+          return "mvn <rootModuleName> <goals...> <options...>";
         }
         else {
-          return "mvn <goal...>";
+          return "mvn <goals...> <options...>";
         }
       }
     }
-    return "mvn <moduleName?> <goal...>";
+    return "mvn <rootModuleName?> <goals...> <options...>";
   }
 
   @Override
@@ -220,7 +222,8 @@ public class MavenRunAnythingProvider extends RunAnythingProviderBase<String> {
                                                                  explicitProfiles.getEnabledProfiles(),
                                                                  explicitProfiles.getDisabledProfiles());
 
-        MavenRunner.getInstance(project).run(params, null, null);
+        MavenRunner mavenRunner = MavenRunner.getInstance(project);
+        mavenRunner.run(params, mavenRunner.getSettings(), null);
       }
     }
   }
