@@ -16,4 +16,29 @@ public final class LineColumn {
   public static LineColumn of(int line, int column) {
     return new LineColumn(line, column);
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    LineColumn other = (LineColumn)o;
+
+    if (line != other.line) return false;
+    if (column != other.column) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = line;
+    result = 31 * result + column;
+    return result;
+  }
+
+  @Override
+  public String toString() {
+    return "LineColumn{line=" + line + ", column=" + column + '}';
+  }
 }
