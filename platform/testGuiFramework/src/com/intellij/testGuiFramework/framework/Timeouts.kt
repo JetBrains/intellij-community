@@ -23,8 +23,6 @@ object Timeouts {
 
 }
 
-fun Timeout.toSec(): Long = duration() / 1000
-
 fun Timeout.toPrintable(): String {
   return when {
     this.duration() > 60000 -> "${this.duration() / 60000}(m)"
