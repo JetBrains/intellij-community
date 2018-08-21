@@ -12,7 +12,7 @@ public final class UnknownConfigurationType extends ConfigurationTypeBase {
   public static final UnknownConfigurationType INSTANCE = new UnknownConfigurationType();
 
   private UnknownConfigurationType() {
-    super(NAME, NAME, ExecutionBundle.message("run.configuration.unknown.description"), LazyUtil.create(() -> AllIcons.RunConfigurations.Unknown));
+    super(NAME, NAME, ExecutionBundle.message("run.configuration.unknown.description"), LazyUtil.create(() -> AllIcons.Actions.Help));
 
     addFactory(new ConfigurationFactory(this) {
       @NotNull

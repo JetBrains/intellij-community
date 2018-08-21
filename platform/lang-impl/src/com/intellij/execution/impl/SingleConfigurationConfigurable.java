@@ -326,7 +326,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
       getEditor().addSettingsEditorListener(settingsEditor -> updateWarning());
       myWarningLabel.setCopyable(true);
-      myWarningLabel.setIcon(AllIcons.RunConfigurations.ConfigurationWarning);
+      myWarningLabel.setIcon(AllIcons.General.BalloonError);
 
       myComponentPlace.setLayout(new GridBagLayout());
       myComponentPlace.add(getEditorComponent(),
