@@ -19,7 +19,7 @@ import java.util.*;
 import java.util.stream.Stream;
 
 public abstract class PartiallyExcludedFilesStateHolder<T> implements Disposable {
-  @NotNull private final MergingUpdateQueue myUpdateQueue =
+  @NotNull protected final MergingUpdateQueue myUpdateQueue =
     new MergingUpdateQueue(PartiallyExcludedFilesStateHolder.class.getName(), 300, true, MergingUpdateQueue.ANY_COMPONENT, this);
 
   private final Set<T> myIncludedElements = new THashSet<>();

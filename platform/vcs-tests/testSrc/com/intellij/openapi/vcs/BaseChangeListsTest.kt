@@ -21,7 +21,6 @@ import com.intellij.testFramework.RunAll
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.VcsUtil
-import java.lang.IllegalStateException
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 
@@ -164,6 +163,8 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
 
 
   protected val String.toFilePath: FilePath get() = VcsUtil.getFilePath(testRoot, this)
+  protected fun Array<out String>.toFilePaths() = this.asList().toFilePaths()
+  protected fun List<String>.toFilePaths() = this.map { it.toFilePath }
   protected val VirtualFile.change: Change? get() = clm.getChange(this)
   protected val VirtualFile.document: Document get() = FileDocumentManager.getInstance().getDocument(this)!!
 
