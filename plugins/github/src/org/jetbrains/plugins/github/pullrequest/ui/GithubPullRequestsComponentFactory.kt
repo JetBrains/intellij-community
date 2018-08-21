@@ -23,22 +23,25 @@ class GithubPullRequestsComponentFactory(private val project: Project,
                                          private val popupFactory: JBPopupFactory) {
 
   fun createComponent(remoteUrl: String, account: GithubAccount): JComponent? {
-    val loader = GithubPullRequestsLoader.create(project, progressManager, requestExecutorManager,
-                                                 account, GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(remoteUrl)!!) ?: return null
-    val list = GithubPullRequestsListComponent(project, actionManager, autoPopupController, popupFactory, loader)
-    Disposer.register(list, loader)
 
-    return GithubPullRequestsComponent(list)
+    val requestExecutorHolder = requestExecutorManager.getManagedHolder(account, project) ?: return null
+    val loader = GithubPullRequestsLoader(progressManager, requestExecutorHolder,
+                                          account.server, GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(remoteUrl)!!)
+    val list = GithubPullRequestsListComponent(project, actionManager, autoPopupController, popupFactory, loader)
+
+    val wrapper = DisposableWrapper(list)
+    Disposer.register(wrapper, Disposable {
+      Disposer.dispose(list)
+      Disposer.dispose(loader)
+      Disposer.dispose(requestExecutorHolder)
+    })
+    return wrapper
   }
 
   companion object {
-    private class GithubPullRequestsComponent(list: GithubPullRequestsListComponent)
-      : Wrapper(), Disposable {
-
+    private class DisposableWrapper(wrapped: JComponent) : Wrapper(wrapped), Disposable {
       init {
         isFocusCycleRoot = true
-        Disposer.register(this, list)
-        setContent(list)
       }
 
       override fun dispose() {}

@@ -42,20 +42,21 @@ class GithubPullRequestsListComponent(project: Project,
     verticalScrollBar.model.addChangeListener { potentiallyLoadMore() }
   }
   private var loadOnScrollThreshold = true
+  private var isDisposed = false
   private val errorPanel = HtmlErrorPanel()
   private val progressStripe = ProgressStripe(scrollPane, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
   private val searchModel = GithubPullRequestSearchModel()
   private val search = GithubPullRequestSearchComponent(project, autoPopupController, popupFactory, searchModel)
 
   init {
-    loader.addStateListener(this)
+    loader.addStateListener(this, this)
 
-    searchModel.addStateListener(object : GithubPullRequestSearchModel.StateListener {
+    searchModel.addListener(object : GithubPullRequestSearchModel.StateListener {
       override fun queryChanged() {
         loader.setSearchQuery(searchModel.query)
         loader.reset()
       }
-    })
+    }, this)
 
     val refreshAction = object : DumbAwareAction("Refresh", null, AllIcons.Actions.Refresh) {
       override fun actionPerformed(e: AnActionEvent) = loader.reset()
@@ -83,6 +84,7 @@ class GithubPullRequestsListComponent(project: Project,
   }
 
   private fun loadMore() {
+    if(isDisposed) return
     loadOnScrollThreshold = false
     loader.requestLoadMore()
   }
@@ -167,6 +169,6 @@ class GithubPullRequestsListComponent(project: Project,
   private fun addSpaceIfNeeded(line: String) = if (line.endsWith(' ')) line else "$line "
 
   override fun dispose() {
-    loader.removeStateListener(this)
+    isDisposed = true
   }
 }
