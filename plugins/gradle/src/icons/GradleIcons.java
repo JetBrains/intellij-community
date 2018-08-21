@@ -25,7 +25,7 @@ public class GradleIcons {
 
   /** @deprecated to be removed in IDEA 2020 - use GradleIcons.Gradle */
   @Deprecated
-  public static final Icon GradlePlugin = load("/icons/gradle.svg"); // 16x16
+  public static final Icon GradlePlugin = GradleIcons.Gradle;
   public static final Icon GradleSync = load("/icons/gradleSync.png"); // 16x16
 
   /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.OfflineMode */

@@ -28,5 +28,5 @@ public class VcsLogIcons {
 
   /** @deprecated to be removed in IDEA 2020 - use VcsLogIcons.Branch */
   @Deprecated
-  public static final Icon ShowOtherBranches = load("/icons/branch.svg"); // 16x16
+  public static final Icon ShowOtherBranches = VcsLogIcons.Branch;
 }
