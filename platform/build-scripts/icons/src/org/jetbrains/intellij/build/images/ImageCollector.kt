@@ -26,7 +26,6 @@ internal class ImagePaths(val id: String,
     flags = mergeImageFlags(flags, fileFlags, file.path)
   }
 
-
   val files: List<File> get() = images
   fun getFiles(vararg types: ImageType): List<File> = files.filter { ImageType.fromFile(it) in types }
 
@@ -172,11 +171,12 @@ internal class ImageCollector(private val projectHome: File, private val iconsOn
     }
   }
 
+  private data class DeprecatedEntry(val matcher: Matcher, val data: DeprecationData)
 
   private inner class IconRobotsData(private val parent: IconRobotsData? = null) {
     private val skip: MutableList<Matcher> = ArrayList()
     private val used: MutableList<Matcher> = ArrayList()
-    private val deprecated: MutableList<Pair<Matcher, DeprecationData>> = ArrayList()
+    private val deprecated: MutableList<DeprecatedEntry> = ArrayList()
 
     private val ownDeprecatedIcons: MutableList<Pair<String, DeprecationData>> = ArrayList()
 
@@ -216,7 +216,7 @@ internal class ImageCollector(private val projectHome: File, private val iconsOn
               val replacementContextClazz = StringUtil.nullize(replacementString?.substringBefore('@', "")?.trim())
 
               val deprecatedData = DeprecationData(comment, replacement, replacementContextClazz)
-              answer.deprecated += Pair(compilePattern(dir, root, pattern), deprecatedData)
+              answer.deprecated += DeprecatedEntry(compilePattern(dir, root, pattern), deprecatedData)
 
               if (!pattern.contains('*') && !pattern.startsWith('/')) {
                 answer.ownDeprecatedIcons.add(Pair(pattern, deprecatedData))
@@ -262,7 +262,7 @@ internal class ImageCollector(private val projectHome: File, private val iconsOn
 
     private fun findDeprecatedData(file: File): DeprecationData? {
       val basicPath = getBasicPath(file)
-      return deprecated.find { it.first.reset(basicPath).matches() }?.second
+      return deprecated.find { it.matcher.reset(basicPath).matches() }?.data
     }
 
     private fun matches(file: File, matcher: List<Matcher>): Boolean {
