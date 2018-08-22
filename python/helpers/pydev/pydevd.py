@@ -826,14 +826,16 @@ class PyDB:
         Upon running, processes any outstanding Stepping commands.
         """
         self.process_internal_commands()
-
+        thread_stack_str = ''   # @UnusedVariable -- this is here so that `make_get_thread_stack_message`
+                                # can retrieve it later.
+        
         if send_suspend_message:
             message = thread.additional_info.pydev_message
             cmd = self.cmd_factory.make_thread_suspend_message(get_thread_id(thread), frame, thread.stop_reason, message, suspend_type)
+            thread_stack_str = cmd.thread_stack_str
             self.writer.add_command(cmd)
 
-        CustomFramesContainer.custom_frames_lock.acquire()  # @UndefinedVariable
-        try:
+        with CustomFramesContainer.custom_frames_lock:  # @UndefinedVariable
             from_this_thread = []
 
             for frame_id, custom_frame in dict_iter_items(CustomFramesContainer.custom_frames):
