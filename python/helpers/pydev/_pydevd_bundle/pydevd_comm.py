@@ -663,11 +663,15 @@ class NetCommandFactory:
         """ returns thread listing as XML """
         try:
             t = threading.enumerate()
+            threads = threading.enumerate()
             cmd_text = ["<xml>"]
             append = cmd_text.append
             for i in t:
-                if t.isAlive():
+                if is_thread_alive(i):
                     append(self._thread_to_xml(i))
+            for thread in threads:
+                if is_thread_alive(thread) and not getattr(thread, 'is_pydev_daemon_thread', False):
+                    append(self._thread_to_xml(thread))
             append("</xml>")
             return NetCommand(CMD_RETURN, seq, ''.join(cmd_text))
         except:

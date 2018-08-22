@@ -51,7 +51,7 @@ CMD_SMART_STEP_INTO = 128
 CMD_EXIT = 129
 CMD_SIGNATURE_CALL_TRACE = 130
 
-
+CMD_RETURN = 502
 
 CMD_SET_PY_EXCEPTION = 131
 CMD_GET_FILE_CONTENTS = 132
@@ -453,24 +453,24 @@ class AbstractWriterThread(threading.Thread):
         splitted = last.split('"')
         suspend_type = splitted[7]
         thread_id = splitted[1]
-        frameId = splitted[9]
+        frame_id = splitted[9]
         name = splitted[11]
         if get_line:
             self.log.append('End(0): wait_for_breakpoint_hit: %s' % (last,))
             try:
                 if not get_name:
-                    return thread_id, frameId, int(splitted[15]), suspend_type
+                    return thread_id, frame_id, int(splitted[15]), suspend_type
                 else:
-                    return thread_id, frameId, int(splitted[15]), name, suspend_type
+                    return thread_id, frame_id, int(splitted[15]), name, suspend_type
             except:
                 raise AssertionError('Error with: %s, %s, %s.\nLast: %s.\n\nAll: %s\n\nSplitted: %s' % (
-                    thread_id, frameId, splitted[13], last, '\n'.join(self.reader_thread.all_received), splitted))
+                    thread_id, frame_id, splitted[13], last, '\n'.join(self.reader_thread.all_received), splitted))
 
         self.log.append('End(1): wait_for_breakpoint_hit: %s' % (last,))
         if not get_name:
-            return thread_id, frameId, suspend_type
+            return thread_id, frame_id, suspend_type
         else:
-            return thread_id, frameId, name, suspend_type
+            return thread_id, frame_id, name, suspend_type
 
     def wait_for_get_next_statement_targets(self):
         last = ''
@@ -565,7 +565,7 @@ class AbstractWriterThread(threading.Thread):
         return breakpoint_id
 
     def write_add_exception_breakpoint(self, exception):
-        self.write("122\t%s\t%s" % (self.next_seq(), exception))
+        self.write("%s\t%s\t%s" % (CMD_ADD_EXCEPTION_BREAK, self.next_seq(), exception))
         self.log.append('write_add_exception_breakpoint: %s' % (exception,))
 
     def write_set_py_exception_globals(
@@ -595,40 +595,42 @@ class AbstractWriterThread(threading.Thread):
         self.write("%s\t%s\t%s" % (CMD_SET_PROJECT_ROOTS, self.next_seq(), '\t'.join(str(x) for x in project_roots)))
         
     def write_add_exception_breakpoint_with_policy(self, exception, notify_on_handled_exceptions, notify_on_unhandled_exceptions, ignore_libraries):
-        self.write("122\t%s\t%s" % (self.next_seq(), '\t'.join(str(x) for x in [exception, notify_on_handled_exceptions, notify_on_unhandled_exceptions, ignore_libraries])))
+        self.write("%s\t%s\t%s" % (CMD_ADD_EXCEPTION_BREAK, self.next_seq(), '\t'.join(str(x) for x in [exception, notify_on_handled_exceptions, notify_on_unhandled_exceptions, ignore_libraries])))
         self.log.append('write_add_exception_breakpoint: %s' % (exception,))
 
     def write_remove_breakpoint(self, breakpoint_id):
-        self.write("112\t%s\t%s\t%s\t%s" % (self.next_seq(), 'python-line', self.get_main_filename(), breakpoint_id))
+        self.write("%s\t%s\t%s\t%s\t%s" % (
+            CMD_REMOVE_BREAK, self.next_seq(), 'python-line', self.get_main_filename(), breakpoint_id))
 
     def write_change_variable(self, thread_id, frame_id, varname, value):
-        self.write("117\t%s\t%s\t%s\t%s\t%s\t%s" % (self.next_seq(), thread_id, frame_id, 'FRAME', varname, value))
+        self.write("%s\t%s\t%s\t%s\t%s\t%s\t%s" % (
+            CMD_CHANGE_VARIABLE, self.next_seq(), thread_id, frame_id, 'FRAME', varname, value))
 
     def write_get_frame(self, thread_id, frame_id):
-        self.write("114\t%s\t%s\t%s\tFRAME" % (self.next_seq(), thread_id, frame_id))
+        self.write("%s\t%s\t%s\t%s\tFRAME" % (CMD_GET_FRAME, self.next_seq(), thread_id, frame_id))
         self.log.append('write_get_frame')
 
     def write_get_variable(self, thread_id, frame_id, var_attrs):
-        self.write("110\t%s\t%s\t%s\tFRAME\t%s" % (self.next_seq(), thread_id, frame_id, var_attrs))
+        self.write("%s\t%s\t%s\t%s\tFRAME\t%s" % (CMD_GET_VARIABLE, self.next_seq(), thread_id, frame_id, var_attrs))
 
     def write_step_over(self, thread_id):
-        self.write("108\t%s\t%s" % (self.next_seq(), thread_id,))
+        self.write("%s\t%s\t%s" % (CMD_STEP_OVER, self.next_seq(), thread_id,))
 
     def write_step_in(self, thread_id):
-        self.write("107\t%s\t%s" % (self.next_seq(), thread_id,))
+        self.write("%s\t%s\t%s" % (CMD_STEP_INTO, self.next_seq(), thread_id,))
 
     def write_step_return(self, thread_id):
-        self.write("109\t%s\t%s" % (self.next_seq(), thread_id,))
+        self.write("%s\t%s\t%s" % (CMD_STEP_RETURN, self.next_seq(), thread_id,))
 
     def write_suspend_thread(self, thread_id):
-        self.write("105\t%s\t%s" % (self.next_seq(), thread_id,))
+        self.write("%s\t%s\t%s" % (CMD_THREAD_SUSPEND, self.next_seq(), thread_id,))
 
     def write_run_thread(self, thread_id):
         self.log.append('write_run_thread')
-        self.write("106\t%s\t%s" % (self.next_seq(), thread_id,))
+        self.write("%s\t%s\t%s" % (CMD_THREAD_RUN, self.next_seq(), thread_id,))
 
     def write_kill_thread(self, thread_id):
-        self.write("104\t%s\t%s" % (self.next_seq(), thread_id,))
+        self.write("%s\t%s\t%s" % (CMD_THREAD_KILL, self.next_seq(), thread_id,))
 
     def write_set_next_statement(self, thread_id, line, func_name):
         self.write("%s\t%s\t%s\t%s\t%s" % (CMD_SET_NEXT_STATEMENT, self.next_seq(), thread_id, line, func_name,))
@@ -637,10 +639,11 @@ class AbstractWriterThread(threading.Thread):
         self.write("%s\t%s\t%s" % (CMD_EVALUATE_CONSOLE_EXPRESSION, self.next_seq(), locator))
 
     def write_custom_operation(self, locator, style, codeOrFile, operation_fn_name):
-        self.write("%s\t%s\t%s||%s\t%s\t%s" % (CMD_RUN_CUSTOM_OPERATION, self.next_seq(), locator, style, codeOrFile, operation_fn_name))
+        self.write("%s\t%s\t%s||%s\t%s\t%s" % (
+            CMD_RUN_CUSTOM_OPERATION, self.next_seq(), locator, style, codeOrFile, operation_fn_name))
 
     def write_evaluate_expression(self, locator, expression):
-        self.write("113\t%s\t%s\t%s\t1" % (self.next_seq(), locator, expression))
+        self.write("%s\t%s\t%s\t%s\t1" % (CMD_EVALUATE_EXPRESSION, self.next_seq(), locator, expression))
 
     def write_enable_dont_trace(self, enable):
         if enable:
@@ -652,6 +655,20 @@ class AbstractWriterThread(threading.Thread):
     def write_get_next_statement_targets(self, thread_id, frame_id):
         self.write("201\t%s\t%s\t%s" % (self.next_seq(), thread_id, frame_id))
         self.log.append('write_get_next_statement_targets')
+        
+    def write_list_threads(self):
+        seq = self.next_seq()
+        self.write("%s\t%s\t" % (CMD_LIST_THREADS, seq))
+        return seq
+        
+    def wait_for_list_threads(self, seq):
+        while True: 
+            # Note: get_next_message would timeout if there's no message.
+            last = self.reader_thread.get_next_message('wait_list_threads')
+            if last.startswith('502\t%s' % (seq,)):
+                return re.findall(r'\bid=\"(\w+)\"', last)
+                
+
 
 def _get_debugger_test_file(filename):
     try:
