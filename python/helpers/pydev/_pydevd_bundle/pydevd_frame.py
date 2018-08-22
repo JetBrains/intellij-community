@@ -408,6 +408,8 @@ class PyDBFrame:
     #     cdef bint is_line;
     #     cdef bint is_call;
     #     cdef bint is_return;
+    #     cdef bint should_stop;
+    #     cdef dict breakpoints_for_file;
     #     cdef str curr_func_name;
     #     cdef bint exist_result;
     #     cdef bint stop;
