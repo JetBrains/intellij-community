@@ -22,7 +22,7 @@ from _pydevd_bundle.pydevd_comm import CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, C
     InternalGetNextStatementTargets, CMD_SET_PROJECT_ROOTS
 from _pydevd_bundle.pydevd_constants import get_thread_id, IS_PY3K, DebugInfoHolder, dict_keys, STATE_RUN, \
     NEXT_VALUE_SEPARATOR
-
+from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
 
 def process_net_command(py_db, cmd_id, seq, text):
     '''Processes a command received from the Java side
@@ -87,16 +87,10 @@ def process_net_command(py_db, cmd_id, seq, text):
                 # Yes, thread suspend is still done at this point, not through an internal command!
                 t = pydevd_find_thread_by_id(text)
                 if t and not getattr(t, 'pydev_do_not_trace', None):
-                    additional_info = None
-                    try:
-                        additional_info = t.additional_info
-                    except AttributeError:
-                        pass  # that's ok, no info currently set
-
-                    if additional_info is not None:
-                        for frame in additional_info.iter_frames(t):
-                            py_db.set_trace_for_frame_and_parents(frame, overwrite_prev_trace=True)
-                            del frame
+                    additional_info = set_additional_thread_info(t)
+                    for frame in additional_info.iter_frames(t):
+                        py_db.set_trace_for_frame_and_parents(frame, overwrite_prev_trace=True)
+                        del frame
 
                     py_db.set_suspend(t, CMD_THREAD_SUSPEND)
                 elif text.startswith('__frame__:'):
