@@ -17,7 +17,6 @@ package org.jetbrains.jps.maven.model.impl;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.execution.ParametersListUtil;
@@ -30,9 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
@@ -241,9 +238,9 @@ public class MavenProjectConfiguration {
   private static void readConfigFile(File baseDir, String relativePath, Map<String, String> result, String valueIfMissing) {
     File configFile = new File(baseDir, relativePath);
 
-    if (configFile.exists() && configFile.isFile()) {
-      try (InputStream in = new FileInputStream(configFile)) {
-        for (String parameter : ParametersListUtil.parse(StreamUtil.readText(in, CharsetToolkit.UTF8))) {
+    if (configFile.isFile()) {
+      try {
+        for (String parameter : ParametersListUtil.parse(FileUtil.loadFile(configFile, CharsetToolkit.UTF8))) {
           Matcher matcher = MAVEN_PROPERTY_PATTERN.matcher(parameter);
           if (matcher.matches()) {
             result.put(matcher.group(1), StringUtil.notNullize(matcher.group(2), valueIfMissing));

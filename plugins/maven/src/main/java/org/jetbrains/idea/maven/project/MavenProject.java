@@ -27,7 +27,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -46,6 +45,7 @@ import org.jetbrains.idea.maven.plugins.api.MavenModelPropertiesPatcher;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.*;
+import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.*;
@@ -1124,9 +1124,9 @@ public class MavenProject {
     File configFile = new File(baseDir + FileUtil.toSystemDependentName(kind.myRelativeFilePath));
 
     ParametersList parametersList = new ParametersList();
-    if (configFile.exists() && configFile.isFile()) {
-      try (InputStream in = new FileInputStream(configFile)) {
-        parametersList.addParametersString(StreamUtil.readText(in, CharsetToolkit.UTF8));
+    if (configFile.isFile()) {
+      try {
+        parametersList.addParametersString(FileUtil.loadFile(configFile, CharsetToolkit.UTF8));
       }
       catch (IOException ignore) {
       }
