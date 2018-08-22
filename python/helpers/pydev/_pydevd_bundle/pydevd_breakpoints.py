@@ -11,8 +11,8 @@ class ExceptionBreakpoint:
             qname,
             condition,
             expression,
-            notify_always,
-            notify_on_terminate,
+            notify_on_handled_exceptions,
+            notify_on_unhandled_exceptions,
             notify_on_first_raise_only,
             ignore_libraries
     ):
@@ -25,8 +25,8 @@ class ExceptionBreakpoint:
 
         self.condition = condition
         self.expression = expression
-        self.notify_on_terminate = notify_on_terminate
-        self.notify_always = notify_always
+        self.notify_on_unhandled_exceptions = notify_on_unhandled_exceptions
+        self.notify_on_handled_exceptions = notify_on_handled_exceptions
         self.notify_on_first_raise_only = notify_on_first_raise_only
         self.ignore_libraries = ignore_libraries
 
@@ -97,7 +97,7 @@ def stop_on_unhandled_exception(py_db, thread, additional_info, exctype, value, 
 
     while tb:
         frame = tb.tb_frame
-        if exception_breakpoint.ignore_libraries and not py_db.not_in_scope(frame.f_code.co_filename):
+        if exception_breakpoint.ignore_libraries and py_db.in_project_scope(frame.f_code.co_filename):
             user_frame = tb.tb_frame
         frames.append(tb.tb_frame)
         tb = tb.tb_next

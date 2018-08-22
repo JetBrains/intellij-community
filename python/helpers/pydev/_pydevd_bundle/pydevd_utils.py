@@ -142,10 +142,10 @@ def _get_library_roots(library_roots_cache=[]):
     return library_roots_cache[-1] # returns the project roots with case normalized
 
 
-def not_in_project_roots(filename, filename_to_not_in_scope_cache={}):
-    # Note: the filename_to_not_in_scope_cache is the same instance among the many calls to the method
+def in_project_roots(filename, filename_to_in_scope_cache={}):
+    # Note: the filename_to_in_scope_cache is the same instance among the many calls to the method
     try:
-        return filename_to_not_in_scope_cache[filename]
+        return filename_to_in_scope_cache[filename]
     except:
         project_roots = _get_project_roots()
         original_filename = filename
@@ -153,21 +153,22 @@ def not_in_project_roots(filename, filename_to_not_in_scope_cache={}):
             filename = os.path.abspath(filename)
         filename = os.path.normcase(filename)
         for root in project_roots:
-            if len(root) > 0 and filename.startswith(root):
-                filename_to_not_in_scope_cache[original_filename] = False
+            if root and filename.startswith(root):
+                filename_to_in_scope_cache[original_filename] = True
                 break
         else: # for else (only called if the break wasn't reached).
-            filename_to_not_in_scope_cache[original_filename] = True
+            filename_to_in_scope_cache[original_filename] = False
 
-        if not filename_to_not_in_scope_cache[original_filename]:
+        if filename_to_in_scope_cache[original_filename]:
             # additional check if interpreter is situated in a project directory
             library_roots = _get_library_roots()
             for root in library_roots:
-                if root != '' and filename.startswith(root):
-                    filename_to_not_in_scope_cache[original_filename] = True
+                if root and filename.startswith(root):
+                    filename_to_in_scope_cache[original_filename] = False
+                    break
 
         # at this point it must be loaded.
-        return filename_to_not_in_scope_cache[original_filename]
+        return filename_to_in_scope_cache[original_filename]
 
 
 def is_filter_enabled():

@@ -421,7 +421,7 @@ def process_net_command(py_db, cmd_id, seq, text):
                 py_db.break_on_uncaught_exceptions = {}
                 py_db.break_on_caught_exceptions = {}
                 added = []
-                if len(splitted) >= 4:
+                if len(splitted) >= 5:
                     if splitted[0] == 'true':
                         break_on_uncaught = True
                     else:
@@ -442,6 +442,11 @@ def process_net_command(py_db, cmd_id, seq, text):
                     else:
                         py_db.ignore_exceptions_thrown_in_lines_with_ignore_exception = False
 
+                    if splitted[4] == 'true':
+                        ignore_libraries = True
+                    else:
+                        ignore_libraries = False
+
                     for exception_type in splitted[4:]:
                         exception_type = exception_type.strip()
                         if not exception_type:
@@ -451,9 +456,10 @@ def process_net_command(py_db, cmd_id, seq, text):
                             exception_type,
                             condition=None,
                             expression=None,
-                            notify_always=break_on_caught,
-                            notify_on_terminate=break_on_uncaught,
-                            notify_on_first_raise_only=False,
+                            notify_on_handled_exceptions=break_on_caught,
+                            notify_on_unhandled_exceptions=break_on_uncaught,
+                            notify_on_first_raise_only=True,
+                            ignore_libraries=ignore_libraries,
                         )
                         if exception_breakpoint is None:
                             continue
@@ -512,11 +518,11 @@ def process_net_command(py_db, cmd_id, seq, text):
                 expression = ""
                 if text.find('\t') != -1:
                     try:
-                        exception, condition, expression, notify_always, notify_on_terminate, ignore_libraries = text.split('\t', 5)
+                        exception, condition, expression, notify_on_handled_exceptions, notify_on_unhandled_exceptions, ignore_libraries = text.split('\t', 5)
                     except:
-                        exception, notify_always, notify_on_terminate, ignore_libraries = text.split('\t', 3)
+                        exception, notify_on_handled_exceptions, notify_on_unhandled_exceptions, ignore_libraries = text.split('\t', 3)
                 else:
-                    exception, notify_always, notify_on_terminate, ignore_libraries = text, 0, 0, 0
+                    exception, notify_on_handled_exceptions, notify_on_unhandled_exceptions, ignore_libraries = text, 0, 0, 0
 
                 condition = condition.replace("@_@NEW_LINE_CHAR@_@", '\n').replace("@_@TAB_CHAR@_@", '\t').strip()
 
@@ -534,15 +540,13 @@ def process_net_command(py_db, cmd_id, seq, text):
                     breakpoint_type = 'python'
 
                 if breakpoint_type == 'python':
-                    if int(notify_always) == 1:
-                        pydev_log.warn("Deprecated parameter: 'notify always' policy removed in PyCharm\n")
                     exception_breakpoint = py_db.add_break_on_exception(
                         exception,
                         condition=condition,
                         expression=expression,
-                        notify_always=int(notify_always) > 0,
-                        notify_on_terminate=int(notify_on_terminate) == 1,
-                        notify_on_first_raise_only=int(notify_always) == 2,
+                        notify_on_handled_exceptions=int(notify_on_handled_exceptions) > 0,
+                        notify_on_unhandled_exceptions=int(notify_on_unhandled_exceptions) == 1,
+                        notify_on_first_raise_only=int(notify_on_handled_exceptions) == 2,
                         ignore_libraries=int(ignore_libraries) > 0
                     )
 

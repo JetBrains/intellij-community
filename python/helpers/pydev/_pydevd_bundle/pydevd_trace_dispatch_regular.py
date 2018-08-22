@@ -275,7 +275,7 @@ class ThreadTracer:
 
             if file_type is not None:
                 if file_type == 1: # inlining LIB_FILE = 1
-                    if py_db.not_in_scope(filename):
+                    if not py_db.in_project_scope(filename):
                         # print('skipped: trace_dispatch (not in scope)', abs_path_real_path_and_base[-1], frame.f_lineno, event, frame.f_code.co_name, file_type)
                         cache_skips[frame_cache_key] = 1
                         return None
@@ -288,7 +288,7 @@ class ThreadTracer:
                 if py_db.is_filter_enabled and py_db.is_ignored_by_filters(filename):
                     # ignore files matching stepping filters
                     return None
-                if py_db.is_filter_libraries and py_db.not_in_scope(filename):
+                if py_db.is_filter_libraries and not py_db.in_project_scope(filename):
                     # ignore library files while stepping
                     return None
 

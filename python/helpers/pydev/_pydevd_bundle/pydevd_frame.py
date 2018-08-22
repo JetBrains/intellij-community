@@ -13,7 +13,7 @@ from _pydevd_bundle.pydevd_comm import CMD_STEP_CAUGHT_EXCEPTION, CMD_STEP_RETUR
 from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, get_thread_id, STATE_RUN, dict_iter_values, IS_PY3K, \
     dict_keys, RETURN_VALUES_DICT
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE, PYDEV_FILE
-from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, just_raised, remove_exception_from_frame
+from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, just_raised, remove_exception_from_frame, ignore_exception_trace
 from _pydevd_bundle.pydevd_utils import get_clsname_for_code
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame
 
@@ -131,12 +131,12 @@ class PyDBFrame:
     def trace_exception(self, frame, event, arg):
     # ENDIF
         if event == 'exception':
-            flag, frame = self.should_stop_on_exception(frame, event, arg)
+            should_stop, frame = self.should_stop_on_exception(frame, event, arg)
 
-            if flag:
+            if should_stop:
                 self.handle_exception(frame, event, arg)
                 return self.trace_dispatch
-
+    
         return self.trace_exception
 
     def trace_return(self, frame, event, arg):
@@ -156,80 +156,88 @@ class PyDBFrame:
         # main_debugger, _filename, info, _thread = self._args
         main_debugger = self._args[0]
         info = self._args[2]
-        flag = False
+        should_stop = False
 
         # STATE_SUSPEND = 2
         if info.pydev_state != 2:  #and breakpoint is not None:
             exception, value, trace = arg
 
-            if trace is not None: #on jython trace is None on the first event
+            if trace is not None and hasattr(trace, 'tb_next'): 
+                # on jython trace is None on the first event and it may not have a tb_next.
+
                 exception_breakpoint = get_exception_breakpoint(
                     exception, main_debugger.break_on_caught_exceptions)
 
                 if exception_breakpoint is not None:
-                    add_exception_to_frame(frame, (exception, value, trace))
                     if exception_breakpoint.condition is not None:
                         eval_result = handle_breakpoint_condition(main_debugger, info, exception_breakpoint, frame)
                         if not eval_result:
                             return False, frame
 
                     if exception_breakpoint.ignore_libraries:
-                        if exception_breakpoint.notify_on_first_raise_only:
-                            if main_debugger.first_appearance_in_scope(trace):
-                                add_exception_to_frame(frame, (exception, value, trace))
-                                try:
-                                    info.pydev_message = exception_breakpoint.qname
-                                except:
-                                    info.pydev_message = exception_breakpoint.qname.encode('utf-8')
-                                flag = True
-                            else:
-                                pydev_log.debug("Ignore exception %s in library %s" % (exception, frame.f_code.co_filename))
-                                flag = False
-                    else:
-                        if not exception_breakpoint.notify_on_first_raise_only or just_raised(trace):
-                            add_exception_to_frame(frame, (exception, value, trace))
-                            try:
-                                info.pydev_message = exception_breakpoint.qname
-                            except:
-                                info.pydev_message = exception_breakpoint.qname.encode('utf-8')
-                            flag = True
+                        if not main_debugger.is_exception_trace_in_project_scope(trace):
+                            pydev_log.debug("Ignore exception %s in library %s -- (%s)" % (exception, frame.f_code.co_filename, frame.f_code.co_name))
+                            return False, frame
+                    
+                    if ignore_exception_trace(trace):
+                        return False, frame
+                    
+                    was_just_raised = just_raised(trace)
+                    if was_just_raised:
+                        add_exception_to_frame(frame, (exception, value, trace))
+                    
+                    if was_just_raised:
+        
+                        if main_debugger.break_on_exceptions_thrown_in_same_context:
+                            # Option: Don't break if an exception is caught in the same function from which it is thrown
+                            return False, frame
+
+                    if exception_breakpoint.notify_on_first_raise_only:
+                        if main_debugger.break_on_exceptions_thrown_in_same_context:
+                            # In this case we never stop if it was just raised, so, to know if it was the first we
+                            # need to check if we're in the 2nd method.
+                            if not was_just_raised and not just_raised(trace.tb_next):
+                                return False, frame  # I.e.: we stop only when we'r
+                                
                         else:
-                            flag = False
+                            if not was_just_raised:
+                                return False, frame  # I.e.: we stop only when it was just raised
+                            
+                    # If it got here we should stop.
+                    should_stop = True                    
+                    try:
+                        info.pydev_message = exception_breakpoint.qname
+                    except:
+                        info.pydev_message = exception_breakpoint.qname.encode('utf-8')
+
                 else:
+                    # No regular exception breakpoint, let's see if some plugin handles it.
                     try:
                         if main_debugger.plugin is not None:
                             result = main_debugger.plugin.exception_break(main_debugger, self, frame, self._args, arg)
                             if result:
-                                flag, frame = result
+                                should_stop, frame = result
                     except:
-                        flag = False
+                        should_stop = False
 
-                if flag:
+                if should_stop:
                     if exception_breakpoint is not None and exception_breakpoint.expression is not None:
                         handle_breakpoint_expression(exception_breakpoint, info, frame)
-                else:
-                    remove_exception_from_frame(frame)
 
-        return flag, frame
+        return should_stop, frame
 
     def handle_exception(self, frame, event, arg):
         try:
-            # print 'handle_exception', frame.f_lineno, frame.f_code.co_name
+            # print('handle_exception', frame.f_lineno, frame.f_code.co_name)
 
             # We have 3 things in arg: exception type, description, traceback object
             trace_obj = arg[2]
             main_debugger = self._args[0]
 
-            if not hasattr(trace_obj, 'tb_next'):
-                return  #Not always there on Jython...
-
             initial_trace_obj = trace_obj
             if trace_obj.tb_next is None and trace_obj.tb_frame is frame:
                 #I.e.: tb_next should be only None in the context it was thrown (trace_obj.tb_frame is frame is just a double check).
-
-                if main_debugger.break_on_exceptions_thrown_in_same_context:
-                    #Option: Don't break if an exception is caught in the same function from which it is thrown
-                    return
+                pass
             else:
                 #Get the trace_obj from where the exception was raised...
                 while trace_obj.tb_next is not None:
@@ -425,8 +433,8 @@ class PyDBFrame:
 
             if is_exception_event:
                 if has_exception_breakpoints:
-                    flag, frame = self.should_stop_on_exception(frame, event, arg)
-                    if flag:
+                    should_stop, frame = self.should_stop_on_exception(frame, event, arg)
+                    if should_stop:
                         self.handle_exception(frame, event, arg)
                         return self.trace_dispatch
                 is_line = False
@@ -602,7 +610,7 @@ class PyDBFrame:
                         if main_debugger.is_filter_enabled and main_debugger.is_ignored_by_filters(filename):
                             # ignore files matching stepping filters
                             return self.trace_dispatch
-                        if main_debugger.is_filter_libraries and main_debugger.not_in_scope(filename):
+                        if main_debugger.is_filter_libraries and not main_debugger.in_project_scope(filename):
                             # ignore library files while stepping
                             return self.trace_dispatch
 
@@ -659,7 +667,7 @@ class PyDBFrame:
                             stop, plugin_stop = result
 
                 elif step_cmd == CMD_STEP_INTO_MY_CODE:
-                    if not main_debugger.not_in_scope(frame.f_code.co_filename):
+                    if main_debugger.in_project_scope(frame.f_code.co_filename):
                         stop = is_line
 
                 elif step_cmd == CMD_STEP_OVER:
