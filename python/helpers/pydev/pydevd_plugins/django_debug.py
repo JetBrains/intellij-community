@@ -6,7 +6,7 @@ from _pydevd_bundle.pydevd_breakpoints import LineBreakpoint, get_exception_name
 from _pydevd_bundle import pydevd_vars
 import traceback
 from _pydev_bundle import pydev_log
-from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, FCode, just_raised
+from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, FCode, just_raised, ignore_exception_trace
 
 IS_DJANGO18 = False
 IS_DJANGO19 = False
@@ -428,7 +428,7 @@ def exception_break(plugin, main_debugger, pydb_frame, frame, args, arg):
     exception, value, trace = arg
     if main_debugger.django_exception_break and \
             get_exception_name(exception) in ['VariableDoesNotExist', 'TemplateDoesNotExist', 'TemplateSyntaxError'] and \
-            just_raised(trace) and _is_django_exception_break_context(frame):
+            just_raised(trace) and not ignore_exception_trace(trace) and _is_django_exception_break_context(frame):
         render_frame = _find_django_render_frame(frame)
         if render_frame:
             suspend_frame = suspend_django(main_debugger, thread, render_frame, CMD_ADD_EXCEPTION_BREAK)
