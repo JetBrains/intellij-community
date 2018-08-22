@@ -12,9 +12,8 @@ fun newEvent(recorderId: String,
              bucket: String = "-1",
              count: Int = 1,
              data: Map<String, Any> = emptyMap()): LogEvent {
-  val action = LogEventAction(type)
-  action.count = count
-  val event = newLogEvent(session, build, bucket, time, recorderId, recorderVersion, action)
+  val event = newLogEvent(session, build, bucket, time, recorderId, recorderVersion, type, false)
+  (event.event as LogEventAction).count = count
   for (datum in data) {
     event.event.addData(datum.key, datum.value)
   }

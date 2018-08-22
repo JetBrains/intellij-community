@@ -8,6 +8,7 @@ import com.intellij.openapi.util.io.FileUtil
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class FeatureEventLogSerializationTest {
 
@@ -403,55 +404,55 @@ class FeatureEventLogSerializationTest {
   }
 
   private fun assertLogEventContentIsValid(json: JsonObject, isState: Boolean) {
-    assert(json.get("user").isJsonPrimitive)
-    assert(json.get("product").isJsonPrimitive)
+    assertTrue(json.get("user").isJsonPrimitive)
+    assertTrue(json.get("product").isJsonPrimitive)
 
-    assert(json.get("records").isJsonArray)
+    assertTrue(json.get("records").isJsonArray)
     val records = json.get("records").asJsonArray
     for (record in records) {
-      assert(record.isJsonObject)
-      assert(record.asJsonObject.get("events").isJsonArray)
+      assertTrue(record.isJsonObject)
+      assertTrue(record.asJsonObject.get("events").isJsonArray)
       val events = record.asJsonObject.get("events").asJsonArray
       for (event in events) {
-        assert(event.isJsonObject)
+        assertTrue(event.isJsonObject)
         assertLogEventIsValid(event.asJsonObject, isState)
       }
     }
   }
 
   private fun assertLogEventIsValid(json: JsonObject, isState: Boolean, vararg dataOptions: String) {
-    assert(json.get("time").isJsonPrimitive)
+    assertTrue(json.get("time").isJsonPrimitive)
 
-    assert(json.get("session").isJsonPrimitive)
-    assert(noTabsOrSpacesOrQuotes(json.get("session").asString))
+    assertTrue(json.get("session").isJsonPrimitive)
+    assertTrue(noTabsOrSpacesOrQuotes(json.get("session").asString))
 
-    assert(json.get("bucket").isJsonPrimitive)
-    assert(noTabsOrSpacesOrQuotes(json.get("bucket").asString))
+    assertTrue(json.get("bucket").isJsonPrimitive)
+    assertTrue(noTabsOrSpacesOrQuotes(json.get("bucket").asString))
 
-    assert(json.get("build").isJsonPrimitive)
-    assert(noTabsOrSpacesOrQuotes(json.get("build").asString))
+    assertTrue(json.get("build").isJsonPrimitive)
+    assertTrue(noTabsOrSpacesOrQuotes(json.get("build").asString))
 
-    assert(json.get("group").isJsonObject)
-    assert(json.getAsJsonObject("group").get("id").isJsonPrimitive)
-    assert(json.getAsJsonObject("group").get("version").isJsonPrimitive)
-    assert(noTabsOrSpacesOrQuotes(json.getAsJsonObject("group").get("id").asString))
-    assert(noTabsOrSpacesOrQuotes(json.getAsJsonObject("group").get("version").asString))
+    assertTrue(json.get("group").isJsonObject)
+    assertTrue(json.getAsJsonObject("group").get("id").isJsonPrimitive)
+    assertTrue(json.getAsJsonObject("group").get("version").isJsonPrimitive)
+    assertTrue(noTabsOrSpacesOrQuotes(json.getAsJsonObject("group").get("id").asString))
+    assertTrue(noTabsOrSpacesOrQuotes(json.getAsJsonObject("group").get("version").asString))
 
-    assert(json.get("event").isJsonObject)
-    assert(json.getAsJsonObject("event").get("id").isJsonPrimitive)
+    assertTrue(json.get("event").isJsonObject)
+    assertTrue(json.getAsJsonObject("event").get("id").isJsonPrimitive)
     assertEquals(!isState, json.getAsJsonObject("event").has("count"))
     if (!isState) {
-      assert(json.getAsJsonObject("event").get("count").asJsonPrimitive.isNumber)
+      assertTrue(json.getAsJsonObject("event").get("count").asJsonPrimitive.isNumber)
     }
 
-    assert(json.getAsJsonObject("event").get("data").isJsonObject)
-    assert(noTabsOrSpacesOrQuotes(json.getAsJsonObject("event").get("id").asString))
+    assertTrue(json.getAsJsonObject("event").get("data").isJsonObject)
+    assertTrue(noTabsOrSpacesOrQuotes(json.getAsJsonObject("event").get("id").asString))
 
     val obj = json.getAsJsonObject("event").get("data").asJsonObject
     for (option in dataOptions) {
-      assert(noTabsOrSpacesOrQuotes(option))
-      assert(obj.get(option).isJsonPrimitive)
-      assert(noTabsOrSpacesOrQuotes(obj.get(option).asString))
+      assertTrue(noTabsOrSpacesOrQuotes(option))
+      assertTrue(obj.get(option).isJsonPrimitive)
+      assertTrue(noTabsOrSpacesOrQuotes(obj.get(option).asString))
     }
   }
 
