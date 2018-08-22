@@ -543,3 +543,11 @@ def get_fullname(mod_name):
             if meth is not None:
                 return meth(mod_name)
     return None
+
+
+def get_package_dir(mod_name):
+    for path in sys.path:
+        mod_path = join(path, mod_name)
+        if os.path.isdir(mod_path):
+            return mod_path
+    return None
