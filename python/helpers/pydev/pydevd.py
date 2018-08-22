@@ -46,7 +46,7 @@ from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads, wra
 from pydevd_file_utils import get_fullname, rPath
 
 
-__version_info__ = (1, 2, 0)
+__version_info__ = (1, 3, 0)
 __version_info_str__ = []
 for v in __version_info__:
     __version_info_str__.append(str(v))
@@ -112,7 +112,7 @@ class PyDBCommandThread(PyDBDaemonThread):
     def _on_run(self):
         # Delay a bit this initialization to wait for the main program to start.
         time.sleep(0.3)
-        
+
         if self.killReceived:
             return
 
@@ -395,7 +395,7 @@ class PyDB:
     def enable_output_redirection(self, redirect_stdout, redirect_stderr):
         global bufferStdOutToServer
         global bufferStdErrToServer
-        
+
         bufferStdOutToServer = redirect_stdout
         bufferStdErrToServer = redirect_stderr
         self.redirect_output = redirect_stdout or redirect_stderr
@@ -691,7 +691,7 @@ class PyDB:
 
         breakpoints[file] = break_dict
         self.clear_skip_caches()
-        
+
     def clear_skip_caches(self):
         global_cache_skips.clear()
         global_cache_frame_skips.clear()
@@ -1120,7 +1120,7 @@ class PyDB:
             self.prepare_to_run()
 
         t = threadingCurrentThread()
-        
+
         if self.thread_analyser is not None:
             wrap_threads()
             self.thread_analyser.set_start_time(cur_time())
@@ -1142,7 +1142,7 @@ class PyDB:
         if hasattr(sys, 'exc_clear'):
             # we should clean exception information in Python 2, before user's code execution
             sys.exc_clear()
-            
+
         # Notify that the main thread is created.
         thread_id = get_thread_id(t)
         self.notify_thread_created(thread_id, t)
@@ -1150,9 +1150,9 @@ class PyDB:
         # Note: important: set the tracing right before calling _exec.
         if set_trace:
             pydevd_tracing.SetTrace(self.trace_dispatch, self.frame_eval_func, self.dummy_trace_dispatch)
-        
+
         return self._exec(is_module, entry_point_fn, module_name, file, globals, locals)
-        
+
     def _exec(self, is_module, entry_point_fn, module_name, file, globals, locals):
         '''
         This function should have frames tracked by unhandled exceptions (the `_exec` name is important).

@@ -1,20 +1,9 @@
 r'''
-Creating the needed environments for creating the pre-compiled distribution on Windods:
+Creating the needed environments for creating the pre-compiled distribution on Windows:
 
-1. Download:
+See:
 
-* conda32 at C:\tools\Miniconda32
-
-* conda64 at C:\tools\Miniconda
-
-Create the environments:
-
-C:\tools\Miniconda32\Scripts\conda create -y -f -n py27_32 python=2.7 cython numpy nose ipython pip
-C:\tools\Miniconda32\Scripts\activate py27_32
-pip install "django>=1.7,<1.8"
-pip install -U "setuptools>=0.9"
-pip install -U "pip>=1.4" "wheel>=0.21" twine
-deactivate
+build_tools\pydevd_release_process.txt
 
 C:\tools\Miniconda32\Scripts\conda create -y -f -n py34_32 python=3.4 cython numpy nose ipython pip
 C:\tools\Miniconda32\Scripts\activate py34_32
@@ -68,23 +57,18 @@ import os
 import subprocess
 import sys
 
-miniconda32_envs = os.getenv('MINICONDA32_ENVS', r'C:\tools\Miniconda32\envs')
-miniconda64_envs = os.getenv('MINICONDA64_ENVS', r'C:\tools\Miniconda\envs')
+miniconda_envs = os.getenv('MINICONDA_ENVS', r'C:\bin\Miniconda\envs')
 
 python_installations = [
-    r'%s\py26_32\Scripts\python.exe' % miniconda32_envs,
-    r'%s\py27_32\Scripts\python.exe' % miniconda32_envs,
-    r'%s\py34_32\Scripts\python.exe' % miniconda32_envs,
-    r'%s\py35_32\Scripts\python.exe' % miniconda32_envs,
-    r'%s\py36_32\Scripts\python.exe' % miniconda32_envs,
-    r'%s\py37_32\Scripts\python.exe' % miniconda32_envs,
+    r'%s\py27_32\python.exe' % miniconda_envs,
+    r'%s\py34_32\python.exe' % miniconda_envs,
+    r'%s\py35_32\python.exe' % miniconda_envs,
+    r'%s\py36_32\python.exe' % miniconda_envs,
 
-    r'%s\py26_64\Scripts\python.exe' % miniconda64_envs,
-    r'%s\py27_64\Scripts\python.exe' % miniconda64_envs,
-    r'%s\py34_64\Scripts\python.exe' % miniconda64_envs,
-    r'%s\py35_64\Scripts\python.exe' % miniconda64_envs,
-    r'%s\py36_64\Scripts\python.exe' % miniconda64_envs,
-    r'%s\py37_64\Scripts\python.exe' % miniconda64_envs,
+    r'%s\py27_64\python.exe' % miniconda_envs,
+    r'%s\py34_64\python.exe' % miniconda_envs,
+    r'%s\py35_64\python.exe' % miniconda_envs,
+    r'%s\py36_64\python.exe' % miniconda_envs,
 ]
 
 root_dir = os.path.dirname(os.path.dirname(__file__))
@@ -134,9 +118,9 @@ def main():
 if __name__ == '__main__':
     main()
 
-'''
-To run do:
-cd /D x:\PyDev.Debugger
-set PYTHONPATH=x:\PyDev.Debugger
-C:\tools\Miniconda32\envs\py27_32\python build_tools\build_binaries_windows.py
-'''
+# To run do:
+# See:
+#
+# build_tools\pydevd_release_process.txt
+#
+# for building binaries/release process.
