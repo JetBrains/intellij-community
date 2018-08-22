@@ -62,18 +62,27 @@ public class JDOMXIncluder {
     myPathResolver = pathResolver;
   }
 
+  @NotNull
   public static Document resolve(Document original, String base) throws XIncludeException {
     return resolve(original, base, false);
   }
 
+  @NotNull
   public static Document resolve(Document original, String base, boolean ignoreMissing) throws XIncludeException {
     return resolve(original, base, ignoreMissing, DEFAULT_PATH_RESOLVER);
   }
 
+  @NotNull
   public static Document resolve(Document original, String base, boolean ignoreMissing, PathResolver pathResolver) throws XIncludeException {
     return new JDOMXIncluder(ignoreMissing, pathResolver).doResolve(original, base);
   }
 
+  @NotNull
+  public static List<Content> resolve(@NotNull Element original, String base, boolean ignoreMissing, PathResolver pathResolver) throws XIncludeException {
+    return new JDOMXIncluder(ignoreMissing, pathResolver).doResolve(original, base);
+  }
+
+  @NotNull
   public static List<Content> resolve(@NotNull Element original, String base) throws XIncludeException {
     return new JDOMXIncluder(false, DEFAULT_PATH_RESOLVER).doResolve(original, base);
   }
@@ -176,19 +185,19 @@ public class JDOMXIncluder {
     return element.getName().equals(INCLUDE) && element.getNamespace().equals(XINCLUDE_NAMESPACE);
   }
 
-  private List<Content> resolve(Element original, Stack<String> bases) throws XIncludeException {
+  @NotNull
+  private List<Content> resolve(@NotNull Element original, @NotNull Stack<String> bases) throws XIncludeException {
     if (isIncludeElement(original)) {
       return resolveXIncludeElement(original, bases);
     }
     else {
       Element resolvedElement = resolveNonXIncludeElement(original, bases);
-      List<Content> resultList = new ArrayList<Content>(1);
-      resultList.add(resolvedElement);
-      return resultList;
+      return Collections.<Content>singletonList(resolvedElement);
     }
   }
 
-  private List<Content> resolveXIncludeElement(Element element, Stack<String> bases) throws XIncludeException {
+  @NotNull
+  private List<Content> resolveXIncludeElement(@NotNull Element element, @NotNull Stack<String> bases) throws XIncludeException {
     String base = "";
     if (!bases.isEmpty()) base = bases.peek();
 
@@ -226,11 +235,10 @@ public class JDOMXIncluder {
       }
 
       for (int i = 0; i < remoteParsed.size(); i++) {
-        Object o = remoteParsed.get(i);
-
+        Content o = remoteParsed.get(i);
         if (o instanceof Element) {
           Element e = (Element)o;
-          List<? extends Content> nodes = resolve(e, bases);
+          List<Content> nodes = resolve(e, bases);
           remoteParsed.addAll(i, nodes);
           i += nodes.size();
           remoteParsed.remove(i);
@@ -239,21 +247,15 @@ public class JDOMXIncluder {
         }
       }
 
-      for (Object o : remoteParsed) {
-        if (o instanceof Content) {
-          Content content = (Content)o;
-          content.detach();
-        }
+      for (Content content : remoteParsed) {
+        content.detach();
       }
       return remoteParsed;
     }
     else {
       try {
         String encoding = element.getAttributeValue(ENCODING);
-        String s = StreamUtil.readText(URLUtil.openResourceStream(remote), encoding);
-        List<Content> resultList = new ArrayList<Content>(1);
-        resultList.add(new Text(s));
-        return resultList;
+        return Collections.<Content>singletonList(new Text(StreamUtil.readText(URLUtil.openResourceStream(remote), encoding)));
       }
       catch (IOException e) {
         throw new XIncludeException(e);
@@ -267,56 +269,53 @@ public class JDOMXIncluder {
   // /$1(/$2)?/*
   public static final Pattern CHILDREN_PATTERN = Pattern.compile("/([^/]*)(/[^/]*)?/\\*");
 
-  @Nullable
-  private static List<Content> extractNeededChildren(final Element element, List<Content> remoteElements) {
+  @NotNull
+  private static List<Content> extractNeededChildren(@NotNull Element element, @NotNull List<Content> remoteElements) {
     final String xpointer = element.getAttributeValue(XPOINTER);
-    if (xpointer != null) {
+    if (xpointer == null) {
+      return remoteElements;
+    }
 
-      Matcher matcher = XPOINTER_PATTERN.matcher(xpointer);
-      boolean b = matcher.matches();
-      assert b : "Unsupported XPointer: " + xpointer;
+    Matcher matcher = XPOINTER_PATTERN.matcher(xpointer);
+    boolean b = matcher.matches();
+    assert b : "Unsupported XPointer: " + xpointer;
 
-      String pointer = matcher.group(1);
+    String pointer = matcher.group(1);
 
-      matcher = CHILDREN_PATTERN.matcher(pointer);
+    matcher = CHILDREN_PATTERN.matcher(pointer);
 
-      b = matcher.matches();
-      assert b : "Unsupported pointer: " + pointer;
+    b = matcher.matches();
+    assert b : "Unsupported pointer: " + pointer;
 
-      final String rootTagName = matcher.group(1);
+    final String rootTagName = matcher.group(1);
 
-      assert remoteElements.size() == 1;
-      assert remoteElements.get(0) instanceof Element;
+    assert remoteElements.size() == 1;
+    assert remoteElements.get(0) instanceof Element;
 
-      Element e = (Element)remoteElements.get(0);
+    Element e = (Element)remoteElements.get(0);
 
-      if (e.getName().equals(rootTagName)) {
-        String subTagName = matcher.group(2);
-        if (subTagName != null) {
-          e = e.getChild(subTagName.substring(1));    // cut off the slash
-        }
-        return new ArrayList<Content>(e.getContent());
+    if (e.getName().equals(rootTagName)) {
+      String subTagName = matcher.group(2);
+      if (subTagName != null) {
+        // cut off the slash
+        e = e.getChild(subTagName.substring(1));
       }
-      else
-        return Collections.emptyList();
+      assert e != null;
+      return new ArrayList<Content>(e.getContent());
     }
     else {
-      return remoteElements;
+      return Collections.emptyList();
     }
   }
 
   @NotNull
-  private List<Content> parseRemote(Stack<String> bases,
-                                    URL remote,
-                                    @Nullable Element fallbackElement) {
+  private List<Content> parseRemote(@NotNull Stack<String> bases, @NotNull URL remote, @Nullable Element fallbackElement) {
     try {
       Document doc = JDOMUtil.loadResourceDocument(remote);
       bases.push(remote.toExternalForm());
 
       Element root = doc.getRootElement();
-
       List<Content> list = resolve(root, bases);
-
       bases.pop();
       return list;
     }
@@ -336,7 +335,8 @@ public class JDOMXIncluder {
     }
   }
 
-  private Element resolveNonXIncludeElement(Element original, Stack<String> bases) throws XIncludeException {
+  @NotNull
+  private Element resolveNonXIncludeElement(@NotNull Element original, @NotNull Stack<String> bases) throws XIncludeException {
     Element result = new Element(original.getName(), original.getNamespace());
     for (Attribute a : original.getAttributes()) {
       result.setAttribute(a.clone());
