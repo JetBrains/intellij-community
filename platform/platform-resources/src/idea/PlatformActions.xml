@@ -784,7 +784,8 @@
         <action id="NotificationTestAction" internal="true" class="com.intellij.notification.impl.actions.NotificationTestAction"
                 text="Add Test Notification"/>
         <action id="TestMessageBoxAction" internal="true" class="com.intellij.diagnostic.TestMessageBoxAction" text="Show Test Dialog"/>
-        <action id="ComponentPanelTestAction" internal="true" class="com.intellij.internal.ui.ComponentPanelTestAction" text="Show standard panels"/>
+        <action id="ComponentPanelTestAction" internal="true" class="com.intellij.internal.ui.ComponentPanelTestAction"
+                text="Show Standard Panels"/>
         <separator/>
         <action id="EditorRenderingBenchmarkAction" internal="true" class="com.intellij.internal.performance.EditorRenderingBenchmarkAction"
                 text="Editor Rendering Benchmark"/>

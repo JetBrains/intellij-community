@@ -25,7 +25,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeListener;
 import java.util.Optional;
-import java.util.function.Supplier;
+import java.util.function.Consumer;
 
 public class ComponentValidator {
   private static final String PROPERTY_NAME = "JComponent.componentValidator";
@@ -38,20 +38,27 @@ public class ComponentValidator {
   private static final Color WARNING_BACKGROUND_COLOR = JBColor.namedColor("ValidationTooltip.warningBackgroundColor", 0xF5F0E6);
 
   private final Disposable parentDisposable;
+  private Consumer<ComponentValidator> validator;
+
   private ValidationInfo validationInfo;
 
-  private Supplier<ValidationInfo> infoSupplier;
   private ComponentPopupBuilder popupBuilder;
   private JBPopup popup;
   private RelativePoint popupLocation;
   private Dimension popupSize;
+  private boolean disableValidation;
 
   public ComponentValidator(@NotNull Disposable parentDisposable) {
     this.parentDisposable = parentDisposable;
   }
 
-  public ComponentValidator withFocusValidation(Supplier<ValidationInfo> infoSupplier) {
-    this.infoSupplier = infoSupplier;
+  public ComponentValidator withValidator(@NotNull Consumer<ComponentValidator> validator) {
+    this.validator = validator;
+    return this;
+  }
+
+  public ComponentValidator andStartOnFocusLost() {
+    disableValidation = true;
     return this;
   }
 
@@ -106,6 +113,12 @@ public class ComponentValidator {
     }
   }
 
+  public void revalidate() {
+    if (validator != null) {
+      validator.accept(this);
+    }
+  }
+
   public static Optional<ComponentValidator> getInstance(@NotNull JComponent component) {
     return Optional.ofNullable((ComponentValidator)component.getClientProperty(PROPERTY_NAME));
   }
@@ -124,6 +137,8 @@ public class ComponentValidator {
   }
 
   public void updateInfo(@Nullable ValidationInfo info) {
+    if (disableValidation) return;
+
     boolean resetInfo = info == null && validationInfo != null;
     boolean newInfo = info != null && !info.equals(validationInfo);
     if (resetInfo || newInfo) {
@@ -218,8 +233,9 @@ public class ComponentValidator {
     public void focusLost(FocusEvent e) {
       hidePopup();
 
-      if(infoSupplier != null) {
-        updateInfo(infoSupplier.get());
+      if (disableValidation) {
+        disableValidation = false;
+        revalidate();
       }
     }
   }
