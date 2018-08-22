@@ -60,8 +60,8 @@ IS_PY36 = False
 if sys.version_info[0] == 3 and sys.version_info[1] == 6:
     IS_PY36 = True
 
-TEST_CYTHON = os.getenv('PYDEVD_USE_CYTHON', None) == 'YES'
-TEST_JYTHON = os.getenv('TEST_JYTHON', None) == 'YES'
+from tests_python.debug_constants import TEST_CYTHON
+from tests_python.debug_constants import TEST_JYTHON
 
 #=======================================================================================================================
 # WriterThreadCaseSetNextStatement
