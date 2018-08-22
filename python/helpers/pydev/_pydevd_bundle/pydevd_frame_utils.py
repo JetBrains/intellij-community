@@ -56,6 +56,8 @@ def ignore_exception_trace(trace):
 
         trace = trace.tb_next
 
+    return False
+
 def cached_call(obj, func, *args):
     cached_name = '_cached_' + func.__name__
     if not hasattr(obj, cached_name):
