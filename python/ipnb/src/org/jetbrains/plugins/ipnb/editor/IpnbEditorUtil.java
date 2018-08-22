@@ -61,7 +61,7 @@ public class IpnbEditorUtil {
     assert document != null;
     EditorEx editor = (EditorEx)editorFactory.createEditor(document, project, fragment.getVirtualFile(), false);
     editor.setFile(fragment.getVirtualFile());
-    setupEditor(editor);
+    //setupEditor(editor);
     return editor;
   }
 
