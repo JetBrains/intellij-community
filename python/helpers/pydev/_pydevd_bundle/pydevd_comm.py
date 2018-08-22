@@ -72,7 +72,8 @@ from _pydev_imps._pydev_saved_modules import time
 from _pydev_imps._pydev_saved_modules import socket
 from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR, SOL_SOCKET, SO_REUSEADDR, SHUT_RDWR, timeout
 from _pydevd_bundle.pydevd_constants import DebugInfoHolder, get_thread_id, IS_JYTHON, IS_PY2, IS_PY3K, \
-    IS_PY36_OR_GREATER, STATE_RUN, dict_keys, ASYNC_EVAL_TIMEOUT_SEC, IS_IRONPYTHON
+    IS_PY36_OR_GREATER, STATE_RUN, dict_keys, ASYNC_EVAL_TIMEOUT_SEC, IS_IRONPYTHON, GlobalDebuggerHolder, \
+    get_global_debugger, GetGlobalDebugger, set_global_debugger # Keep for backward compatibility @UnusedImport
 
 try:
     from urllib import quote_plus, unquote, unquote_plus
@@ -280,29 +281,6 @@ def pydevd_log(level, *args):
             sys.stderr.write('%s\n' % (args,))
         except:
             pass
-
-#=======================================================================================================================
-# GlobalDebuggerHolder
-#=======================================================================================================================
-class GlobalDebuggerHolder:
-    '''
-        Holder for the global debugger.
-    '''
-    global_dbg = None  # Note: don't rename (the name is used in our attach to process)
-
-#=======================================================================================================================
-# get_global_debugger
-#=======================================================================================================================
-def get_global_debugger():
-    return GlobalDebuggerHolder.global_dbg
-
-GetGlobalDebugger = get_global_debugger # Backward-compatibility
-
-#=======================================================================================================================
-# set_global_debugger
-#=======================================================================================================================
-def set_global_debugger(dbg):
-    GlobalDebuggerHolder.global_dbg = dbg
 
 
 #------------------------------------------------------------------- ACTUAL COMM

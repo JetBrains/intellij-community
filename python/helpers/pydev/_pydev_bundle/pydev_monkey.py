@@ -3,6 +3,8 @@ import os
 import sys
 import traceback
 from _pydev_imps._pydev_saved_modules import threading
+from _pydevd_bundle.pydevd_constants import get_thread_id, get_global_debugger
+from _pydev_bundle import pydev_log
 
 try:
     xrange
@@ -14,12 +16,10 @@ except:
 # Things that are dependent on having the pydevd debugger
 #===============================================================================
 def log_debug(msg):
-    from _pydev_bundle import pydev_log
     pydev_log.debug(msg)
 
 
 def log_error_once(msg):
-    from _pydev_bundle import pydev_log
     pydev_log.error_once(msg)
 
 
@@ -130,7 +130,6 @@ def patch_args(args):
         args = remove_quotes_from_args(args)
 
         from pydevd import SetupHolder
-        import sys
         new_args = []
         if len(args) == 0:
             return args
@@ -503,7 +502,6 @@ def create_fork(original_name):
 
 
 def send_process_created_message():
-    from _pydevd_bundle.pydevd_comm import get_global_debugger
     debugger = get_global_debugger()
     if debugger is not None:
         debugger.send_process_created_message()
@@ -616,8 +614,6 @@ class _NewThreadStartupWithTrace:
     def __call__(self):
         # We monkey-patch the thread creation so that this function is called in the new thread. At this point
         # we notify of its creation and start tracing it.
-        from _pydevd_bundle.pydevd_constants import get_thread_id
-        from _pydevd_bundle.pydevd_comm import get_global_debugger
         global_debugger = get_global_debugger()
 
         thread_id = None
