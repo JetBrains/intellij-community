@@ -1265,6 +1265,51 @@ class WriterThreadCaseRemoteDebuggerUnhandledExceptions(debugger_unittest.Abstra
         self.finished_ok = True
 
 #=======================================================================================================================
+# WriterThreadCaseRemoteDebuggerUnhandledExceptions2
+#=======================================================================================================================
+class WriterThreadCaseRemoteDebuggerUnhandledExceptions2(debugger_unittest.AbstractWriterThread):
+
+    TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case_remote_unhandled_exceptions2.py')
+
+    @overrides(debugger_unittest.AbstractWriterThread.check_test_suceeded_msg)
+    def check_test_suceeded_msg(self, stdout, stderr):
+        return 'TEST SUCEEDED' in ''.join(stderr)
+
+    @overrides(debugger_unittest.AbstractWriterThread.additional_output_checks)
+    def additional_output_checks(self, stdout, stderr):
+        # Don't call super as we have an expected exception
+        assert 'ValueError: TEST SUCEEDED' in stderr
+
+    def run(self):
+        self.start_socket(8787)  # Wait for it to connect back at this port.
+
+        self.log.append('making initial run')
+        self.write_make_initial_run()
+
+        self.log.append('waiting for breakpoint hit')
+        thread_id, frame_id = self.wait_for_breakpoint_hit(REASON_THREAD_SUSPEND)
+
+        self.write_add_exception_breakpoint_with_policy('ValueError', '0', '1', '0')
+
+        self.log.append('run thread')
+        self.write_run_thread(thread_id)
+
+        self.log.append('waiting for uncaught exception')
+        for _ in range(3):
+            # Note: this isn't ideal, but in the remote attach case, if the
+            # exception is raised at the topmost frame, we consider the exception to
+            # be an uncaught exception even if it'll be handled at that point.
+            # See: https://github.com/Microsoft/ptvsd/issues/580
+            # To properly fix this, we'll need to identify that this exception
+            # will be handled later on with the information we have at hand (so,
+            # no back frame but within a try..except block).
+            thread_id, frame_id = self.wait_for_breakpoint_hit(REASON_UNCAUGHT_EXCEPTION)
+            self.write_run_thread(thread_id)
+
+        self.log.append('finished ok')
+        self.finished_ok = True
+
+#=======================================================================================================================
 # _SecondaryMultiProcProcessWriterThread
 #=======================================================================================================================
 class _SecondaryMultiProcProcessWriterThread(debugger_unittest.AbstractWriterThread):
