@@ -71,6 +71,7 @@ CMD_GET_ARRAY = 143
 CMD_STEP_INTO_MY_CODE = 144
 CMD_GET_CONCURRENCY_EVENT = 145
 
+CMD_REDIRECT_OUTPUT = 200
 CMD_GET_NEXT_STATEMENT_TARGETS = 201
 CMD_SET_PROJECT_ROOTS = 202
 
@@ -237,7 +238,7 @@ class DebuggerRunner(object):
                     if finish[0]:
                         return
                     if IS_PY3K:
-                        line = line.decode('utf-8')
+                        line = line.decode('utf-8', errors='replace')
 
                     if SHOW_STDOUT:
                         sys.stdout.write('stdout: %s' % (line,))
@@ -416,6 +417,23 @@ class AbstractWriterThread(threading.Thread):
         thread_id = splitted[3]
         return thread_id
 
+    def wait_for_output(self):
+        # Something as:
+        # <xml><io s="TEST SUCEEDED%2521" ctx="1"/></xml>
+        while True:
+            msg = self.reader_thread.get_next_message('wait_output')
+            if "<xml><io s=" in msg:
+                if 'ctx="1"' in msg:
+                    ctx='stdout'
+                elif 'ctx="2"' in msg:
+                    ctx='stderr'
+                else:
+                    raise AssertionError('IO message without ctx.')
+                    
+                msg = unquote_plus(unquote_plus(msg.split('"')[1]))
+                return msg, ctx
+
+        
     def wait_for_breakpoint_hit(self, *args, **kwargs):
         return self.wait_for_breakpoint_hit_with_suspend_type(*args, **kwargs)[:-1]
 
@@ -569,6 +587,9 @@ class AbstractWriterThread(threading.Thread):
             ';'.join(exceptions)
         )))
         self.log.append('write_set_py_exception_globals')
+
+    def write_start_redirect(self):
+        self.write("%s\t%s\t%s" % (CMD_REDIRECT_OUTPUT, self.next_seq(), 'STDERR STDOUT'))
 
     def write_set_project_roots(self, project_roots):
         self.write("%s\t%s\t%s" % (CMD_SET_PROJECT_ROOTS, self.next_seq(), '\t'.join(str(x) for x in project_roots)))

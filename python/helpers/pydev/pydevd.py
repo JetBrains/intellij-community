@@ -12,9 +12,9 @@ import atexit
 import os
 import traceback
 
-from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PY34_OR_GREATER, IS_PY36_OR_GREATER, IS_PYCHARM, get_thread_id, \
+from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PYCHARM, get_thread_id, \
     dict_keys, dict_iter_items, DebugInfoHolder, PYTHON_SUSPEND, STATE_SUSPEND, STATE_RUN, get_frame, xrange, \
-    clear_cached_thread_id, INTERACTIVE_MODE_AVAILABLE, SHOW_DEBUG_INFO_ENV
+    clear_cached_thread_id, INTERACTIVE_MODE_AVAILABLE, SHOW_DEBUG_INFO_ENV, IS_PY34_OR_GREATER, IS_PY2
 from _pydev_bundle import fix_getpass
 from _pydev_bundle import pydev_imports, pydev_log
 from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
@@ -164,8 +164,7 @@ class CheckOutputThread(PyDBDaemonThread):
 
         while not self.killReceived:
             time.sleep(0.3)
-            if not self.py_db.has_threads_alive() and self.py_db.writer.empty() \
-                    and not has_data_to_redirect():
+            if not self.py_db.has_threads_alive() and self.py_db.writer.empty():
                 try:
                     pydev_log.debug("No alive threads, finishing debug session")
                     self.py_db.finish_debugging_session()
@@ -411,27 +410,9 @@ class PyDB:
 
         if bufferStdOutToServer:
             init_stdout_redirect()
-            self.check_output(sys.stdoutBuf, 1) #@UndefinedVariable
 
         if bufferStdErrToServer:
             init_stderr_redirect()
-            self.check_output(sys.stderrBuf, 2) #@UndefinedVariable
-
-    def check_output(self, out, outCtx):
-        '''Checks the output to see if we have to send some buffered output to the debug server
-
-        @param out: sys.stdout or sys.stderr
-        @param outCtx: the context indicating: 1=stdout and 2=stderr (to know the colors to write it)
-        '''
-
-        try:
-            v = out.getvalue()
-
-            if v:
-                cmd = self.cmd_factory.make_io_message(v, outCtx)
-                self.writer.add_command(cmd)
-        except:
-            traceback.print_exc()
 
 
     def init_matplotlib_in_debug_console(self):
@@ -1249,28 +1230,62 @@ def usage(doExit=0):
         sys.exit(0)
 
 
+class _CustomWriter(object):
+
+    def __init__(self, out_ctx, wrap_stream, wrap_buffer):
+        '''
+        :param out_ctx:
+            1=stdout and 2=stderr
+
+        :param wrap_stream:
+            Either sys.stdout or sys.stderr.
+
+        :param bool wrap_buffer:
+            If True the buffer attribute (which wraps writing bytes) should be
+            wrapped.
+        '''
+        self.encoding = getattr(wrap_stream, 'encoding', os.environ.get('PYTHONIOENCODING', 'utf-8'))
+        self._out_ctx = out_ctx
+        if wrap_buffer:
+            self.buffer = _CustomWriter(out_ctx, wrap_stream, wrap_buffer=False)
+
+    def flush(self):
+        pass  # no-op here
+
+    def write(self, s):
+        if s:
+            if IS_PY2:
+                # Need s in bytes
+                if isinstance(s, unicode):
+                    s = s.encode('utf-8', errors='replace')
+            else:
+                # Need s in str
+                if isinstance(s, bytes):
+                    s = s.decode(self.encoding, errors='replace')
+
+            py_db = get_global_debugger()
+            # Note that the actual message contents will be a xml with utf-8, although
+            # the entry is str on py3 and bytes on py2.
+            cmd = py_db.cmd_factory.make_io_message(s, self._out_ctx)
+            py_db.writer.add_command(cmd)
+
+
 def init_stdout_redirect():
-    if not getattr(sys, 'stdoutBuf', None):
-        sys.stdoutBuf = pydevd_io.IOBuf()
-        sys.stdout_original = sys.stdout
-        sys.stdout = pydevd_io.IORedirector(sys.stdout, sys.stdoutBuf) #@UndefinedVariable
+    if not hasattr(sys, '_pydevd_out_buffer_'):
+        wrap_buffer = True if not IS_PY2 else False
+        original = sys.stdout
+        sys._pydevd_out_buffer_ = _CustomWriter(1, original, wrap_buffer)
+        sys.stdout_original = original
+        sys.stdout = pydevd_io.IORedirector(original, sys._pydevd_out_buffer_, wrap_buffer) #@UndefinedVariable
 
 def init_stderr_redirect():
-    if not getattr(sys, 'stderrBuf', None):
-        sys.stderrBuf = pydevd_io.IOBuf()
-        sys.stderr_original = sys.stderr
-        sys.stderr = pydevd_io.IORedirector(sys.stderr, sys.stderrBuf) #@UndefinedVariable
+    if not hasattr(sys, '_pydevd_err_buffer_'):
+        wrap_buffer = True if not IS_PY2 else False
+        original = sys.stderr
+        sys._pydevd_err_buffer_ = _CustomWriter(2, original, wrap_buffer)
+        sys.stderr_original = original
+        sys.stderr = pydevd_io.IORedirector(original, sys._pydevd_err_buffer_, wrap_buffer) #@UndefinedVariable
 
-
-def has_data_to_redirect():
-    if getattr(sys, 'stdoutBuf', None):
-        if not sys.stdoutBuf.empty():
-            return True
-    if getattr(sys, 'stderrBuf', None):
-        if not sys.stderrBuf.empty():
-            return True
-
-    return False
 
 #=======================================================================================================================
 # settrace
