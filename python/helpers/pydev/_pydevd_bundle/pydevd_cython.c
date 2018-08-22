@@ -3,12 +3,12 @@
 /* BEGIN: Cython Metadata
 {
     "distutils": {
-        "depends": [],
-        "name": "_pydevd_bundle.pydevd_cython",
+        "depends": [], 
+        "name": "_pydevd_bundle.pydevd_cython", 
         "sources": [
             "_pydevd_bundle/pydevd_cython.pyx"
         ]
-    },
+    }, 
     "module_name": "_pydevd_bundle.pydevd_cython"
 }
 END: Cython Metadata */
