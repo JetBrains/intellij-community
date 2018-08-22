@@ -40,8 +40,21 @@ public class ObjectUtils {
    *             it's recommended to supply that field name (possibly qualified with the class name).
    * @return a new sentinel object
    */
-  public static Object sentinel(final String name) {
+  @NotNull
+  public static Object sentinel(@NotNull String name) {
     return new Sentinel(name);
+  }
+  private static class Sentinel {
+    private final String myName;
+
+    Sentinel(@NotNull String name) {
+      myName = name;
+    }
+
+    @Override
+    public String toString() {
+      return myName;
+    }
   }
 
   @NotNull
@@ -148,16 +161,5 @@ public class ObjectUtils {
       else return mid;
     }
     return -(low + 1);
-  }
-
-  private static class Sentinel {
-    private final String myName;
-
-    public Sentinel(String name) {myName = name;}
-
-    @Override
-    public String toString() {
-      return myName;
-    }
   }
 }
