@@ -3,22 +3,31 @@ from _pydevd_bundle import pydevd_constants
 IS_PY3K = pydevd_constants.IS_PY3K
 
 class IORedirector:
-    '''This class works to redirect the write function to many streams
+    '''
+    This class works to wrap a stream (stdout/stderr) with an additional redirect.
     '''
 
     def __init__(self, original, new_redirect, wrap_buffer=False):
+        '''
+        :param stream original:
+            The stream to be wrapped (usually stdout/stderr).
+
+        :param stream new_redirect:
+            Usually IOBuf (below).
+
+        :param bool wrap_buffer:
+            Whether to create a buffer attribute (needed to mimick python 3 s
+            tdout/stderr which has a buffer to write binary data).
+        '''
         self._redirect_to = (original, new_redirect)
         if wrap_buffer:
             self.buffer = IORedirector(original.buffer, new_redirect.buffer, False)
 
     def write(self, s):
-        # The original one may fail if the user tries to write a number to the stream, etc.
-        self._redirect_to[0].write(s)
-        try:
-            # This one should not fail.
-            self._redirect_to[1].write(s)
-        except:
-            pass
+        # Note that writing to the original stream may fail for some reasons
+        # (such as trying to write something that's not a string or having it closed).
+        for r in self._redirect_to:
+            r.write(s)
 
     def isatty(self):
         return self._redirect_to[0].isatty()
