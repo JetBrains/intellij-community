@@ -1128,7 +1128,7 @@ class WriterThreadCase1(debugger_unittest.AbstractWriterThread):
 #=======================================================================================================================
 class WriterThreadCaseMSwitch(debugger_unittest.AbstractWriterThread):
 
-    TEST_FILE = 'tests_pydevd_python._debugger_case_m_switch'
+    TEST_FILE = 'tests_python.resources._debugger_case_m_switch'
     IS_MODULE = True
 
     def get_environ(self):
@@ -1176,7 +1176,7 @@ class WriterThreadCaseMSwitch(debugger_unittest.AbstractWriterThread):
 # WriterThreadCaseModuleWithEntryPoint
 # =======================================================================================================================
 class WriterThreadCaseModuleWithEntryPoint(WriterThreadCaseMSwitch):
-    TEST_FILE = 'tests_pydevd_python._debugger_case_module_entry_point:main'
+    TEST_FILE = 'tests_python.resources._debugger_case_module_entry_point:main'
     IS_MODULE = True
 
     def get_main_filename(self):
@@ -1600,7 +1600,7 @@ class WriterThreadCasePathTranslation(debugger_unittest.AbstractWriterThread):
     def __get_file_in_client(self):
         # Instead of using: test_python/_debugger_case_path_translation.py
         # we'll set the breakpoints at foo/_debugger_case_path_translation.py
-        file_in_client = os.path.dirname(self.TEST_FILE)
+        file_in_client = os.path.dirname(os.path.dirname(self.TEST_FILE))
         return os.path.join(os.path.dirname(file_in_client), 'foo', '_debugger_case_path_translation.py')
     
     def get_environ(self):
