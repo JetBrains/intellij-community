@@ -1607,6 +1607,46 @@ class WriterThreadCaseListThreads(debugger_unittest.AbstractWriterThread):
         self.write_run_thread(thread_id)
         self.finished_ok = True
 
+#=======================================================================================================================
+# WriterCasePrint
+#======================================================================================================================
+class WriterCasePrint(debugger_unittest.AbstractWriterThread):
+
+    TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case_print.py')
+
+    def run(self):
+        self.start_socket()
+        self.write_add_breakpoint(1, 'None')
+        self.write_make_initial_run()
+
+        thread_id, _frame_id = self.wait_for_breakpoint_hit()
+
+        self.write_run_thread(thread_id)
+
+        thread_id, _frame_id = self.wait_for_breakpoint_hit()
+
+        self.write_run_thread(thread_id)
+        self.finished_ok = True
+
+#=======================================================================================================================
+# WriterCaseLamda
+#======================================================================================================================
+class WriterCaseLamda(debugger_unittest.AbstractWriterThread):
+
+    TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case_lamda.py')
+
+    def run(self):
+        self.start_socket()
+        self.write_add_breakpoint(1, 'None')
+        self.write_make_initial_run()
+
+        for _ in range(3): # We'll hit the same breakpoint 3 times.
+            thread_id, _frame_id = self.wait_for_breakpoint_hit()
+
+            self.write_run_thread(thread_id)
+
+        self.finished_ok = True
+
 
 #=======================================================================================================================
 # Test
@@ -1811,6 +1851,12 @@ class Test(unittest.TestCase, debugger_unittest.DebuggerRunner):
 
     def test_list_threads(self):
         self.check_case(WriterThreadCaseListThreads)
+
+    def test_case_print(self):
+        self.check_case(WriterCasePrint)
+
+    def test_case_lamdda(self):
+        self.check_case(WriterCaseLamda)
 
 
 
