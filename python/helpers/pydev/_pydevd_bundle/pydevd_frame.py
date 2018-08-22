@@ -596,7 +596,9 @@ class PyDBFrame:
 
                         if breakpoint.expression is not None:
                             handle_breakpoint_expression(breakpoint, info, new_frame)
-                            if breakpoint.is_logpoint:
+                            if breakpoint.is_logpoint and info.pydev_message is not None and len(info.pydev_message) > 0:
+                                cmd = main_debugger.cmd_factory.make_io_message(info.pydev_message + os.linesep, '1')
+                                main_debugger.writer.add_command(cmd)
                                 return self.trace_dispatch
                             
                     if is_call and frame.f_code.co_name in ('<module>', '<lambda>'):
