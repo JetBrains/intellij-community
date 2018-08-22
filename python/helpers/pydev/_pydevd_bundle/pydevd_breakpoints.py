@@ -104,8 +104,9 @@ def get_exception_breakpoint(exctype, exceptions):
     return exc
 
 
-def stop_on_unhandled_exception(py_db, thread, additional_info, exctype, value, tb):
+def stop_on_unhandled_exception(py_db, thread, additional_info, arg):
     from _pydevd_bundle.pydevd_frame import handle_breakpoint_condition, handle_breakpoint_expression
+    exctype, value, tb = arg
     break_on_uncaught_exceptions = py_db.break_on_uncaught_exceptions
     if break_on_uncaught_exceptions:
         exception_breakpoint = get_exception_breakpoint(exctype, break_on_uncaught_exceptions)
@@ -136,8 +137,7 @@ def stop_on_unhandled_exception(py_db, thread, additional_info, exctype, value, 
         frame = user_frame
     else:
         frame = frames[-1]
-    exception = (exctype, value, tb)
-    add_exception_to_frame(frame, exception)
+    add_exception_to_frame(frame, arg)
     if exception_breakpoint.condition is not None:
         eval_result = handle_breakpoint_condition(py_db, additional_info, exception_breakpoint, frame)
         if not eval_result:
@@ -153,7 +153,7 @@ def stop_on_unhandled_exception(py_db, thread, additional_info, exctype, value, 
 
     pydev_log.debug('Handling post-mortem stop on exception breakpoint %s' % (exception_breakpoint.qname,))
 
-    py_db.stop_on_unhandled_exception(thread, frame, frames_byid, exception)
+    py_db.stop_on_unhandled_exception(thread, frame, frames_byid, arg)
 
 
 def _get_class(kls):

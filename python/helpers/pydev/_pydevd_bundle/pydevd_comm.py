@@ -175,8 +175,15 @@ CMD_SHOW_CYTHON_WARNING = 150
 CMD_LOAD_FULL_VALUE = 151
 
 CMD_GET_THREAD_STACK = 152
-CMD_THREAD_DUMP_TO_STDERR = 153  # This is mostly for unit-tests to diagnose errors on ci.
+
+# This is mostly for unit-tests to diagnose errors on ci.
+CMD_THREAD_DUMP_TO_STDERR = 153
+
+# Sent from the client to signal that we should stop when we start executing user code.
 CMD_STOP_ON_START = 154
+
+# When the debugger is stopped in an exception, this command will provide the details of the current exception (in the current thread).
+CMD_GET_EXCEPTION_DETAILS = 155
 
 CMD_PROCESS_CREATED_MSG_RECEIVED = 159
 
@@ -246,6 +253,7 @@ ID_TO_MEANING = {
     '152': 'CMD_GET_THREAD_STACK',
     '153': 'CMD_THREAD_DUMP_TO_STDERR',
     '154': 'CMD_STOP_ON_START',
+    '155': 'CMD_GET_EXCEPTION_DETAILS',
 
     '159': 'CMD_PROCESS_CREATED_MSG_RECEIVED',
 
@@ -891,21 +899,55 @@ class NetCommandFactory:
         except Exception:
             return self.make_error_message(seq, get_exception_traceback_str())
 
+    def _make_send_curr_exception_trace_str(self, thread_id, exc_type, exc_desc, trace_obj):
+        while trace_obj.tb_next is not None:
+            trace_obj = trace_obj.tb_next
+
+        exc_type = pydevd_xml.make_valid_xml_value(str(exc_type)).replace('\t', '  ') or 'exception: type unknown'
+        exc_desc = pydevd_xml.make_valid_xml_value(str(exc_desc)).replace('\t', '  ') or 'exception: no description'
+
+        thread_suspend_str, thread_stack_str = self.make_thread_suspend_str(
+            thread_id, trace_obj.tb_frame, CMD_SEND_CURR_EXCEPTION_TRACE, '')
+        return exc_type, exc_desc, thread_suspend_str, thread_stack_str
+
     def make_send_curr_exception_trace_message(self, seq, thread_id, curr_frame_id, exc_type, exc_desc, trace_obj):
         try:
-            while trace_obj.tb_next is not None:
-                trace_obj = trace_obj.tb_next
-
-            exc_type = pydevd_xml.make_valid_xml_value(str(exc_type)).replace('\t', '  ') or 'exception: type unknown'
-            exc_desc = pydevd_xml.make_valid_xml_value(str(exc_desc)).replace('\t', '  ') or 'exception: no description'
-            
-            thread_suspend_str, _thread_stack_str = self.make_thread_suspend_str(
-                thread_id, trace_obj.tb_frame, CMD_SEND_CURR_EXCEPTION_TRACE, '')
-
+            exc_type, exc_desc, thread_suspend_str, _thread_stack_str = self._make_send_curr_exception_trace_str(
+                thread_id, exc_type, exc_desc, trace_obj)
             payload = str(curr_frame_id) + '\t' + exc_type + "\t" + exc_desc + "\t" + thread_suspend_str
-
             return NetCommand(CMD_SEND_CURR_EXCEPTION_TRACE, seq, payload)
         except Exception:
+            return self.make_error_message(seq, get_exception_traceback_str())
+
+    def make_get_exception_details_message(self, seq, thread_id, topmost_frame):
+        """Returns exception details as XML """
+        try:
+            # If the debugger is not suspended, just return the thread and its id.
+            cmd_text = ['<xml><thread id="%s" ' % (thread_id,)]
+
+            if topmost_frame is not None:
+                try:
+                    frame = topmost_frame
+                    topmost_frame = None
+                    while frame is not None:
+                        if frame.f_code.co_name == 'do_wait_suspend' and frame.f_code.co_filename.endswith('pydevd.py'):
+                            arg = frame.f_locals.get('arg', None)
+                            if arg is not None:
+                                exc_type, exc_desc, _thread_suspend_str, thread_stack_str = self._make_send_curr_exception_trace_str(
+                                    thread_id, *arg)
+                                cmd_text.append('exc_type="%s" ' % (exc_type,))
+                                cmd_text.append('exc_desc="%s" ' % (exc_desc,))
+                                cmd_text.append('>')
+                                cmd_text.append(thread_stack_str)
+                                break
+                        frame = frame.f_back
+                    else:
+                        cmd_text.append('>')
+                finally:
+                    frame = None
+            cmd_text.append('</thread></xml>')
+            return NetCommand(CMD_GET_EXCEPTION_DETAILS, seq, ''.join(cmd_text))
+        except:
             return self.make_error_message(seq, get_exception_traceback_str())
 
     def make_send_curr_exception_trace_proceeded_message(self, seq, thread_id):
