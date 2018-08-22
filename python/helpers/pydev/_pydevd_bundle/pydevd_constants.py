@@ -167,7 +167,7 @@ if USE_LIB_COPY:
     protect_libraries_from_patching()
 
 from _pydev_imps._pydev_saved_modules import thread
-_nextThreadIdLock = thread.allocate_lock()
+_thread_id_lock = thread.allocate_lock()
 
 if IS_PY3K:
 
@@ -266,17 +266,19 @@ def get_pid():
 
 
 def clear_cached_thread_id(thread):
-    try:
-        del thread.__pydevd_id__
-    except AttributeError:
-        pass
+    with _thread_id_lock:
+        try:
+            if thread.__pydevd_id__ != 'console_main':
+                # The console_main is a special thread id used in the console and its id should never be reset
+                # (otherwise we may no longer be able to get its variables -- see: https://www.brainwy.com/tracker/PyDev/776).
+                del thread.__pydevd_id__
+        except AttributeError:
+            pass
 
 
-#=======================================================================================================================
-# get_thread_id
-#=======================================================================================================================
 def get_thread_id(thread):
     try:
+        # Fast path without getting lock.
         tid = thread.__pydevd_id__
         if tid is None:
             # Fix for https://www.brainwy.com/tracker/PyDev/645
@@ -284,8 +286,7 @@ def get_thread_id(thread):
             # that gives us always the same id for the thread (using thread.ident or id(thread)).
             raise AttributeError()
     except AttributeError:
-        _nextThreadIdLock.acquire()
-        try:
+        with _thread_id_lock:
             # We do a new check with the lock in place just to be sure that nothing changed
             tid = getattr(thread, '__pydevd_id__', None)
             if tid is None:
@@ -293,10 +294,13 @@ def get_thread_id(thread):
                 # Note: don't use the thread ident because if we're too early in the
                 # thread bootstrap process, the thread id could be still unset.
                 tid = thread.__pydevd_id__ = 'pid_%s_id_%s' % (pid, id(thread))
-        finally:
-            _nextThreadIdLock.release()
 
     return tid
+
+
+def set_thread_id(thread, thread_id):
+    with _thread_id_lock:
+        thread.__pydevd_id__ = thread_id
 
 
 #=======================================================================================================================
@@ -311,6 +315,12 @@ class Null:
         return None
 
     def __call__(self, *args, **kwargs):
+        return self
+    
+    def __enter__(self, *args, **kwargs):
+        return self
+    
+    def __exit__(self, *args, **kwargs):
         return self
 
     def __getattr__(self, mname):
@@ -348,6 +358,9 @@ class Null:
 
     def __iter__(self):
         return iter(())
+    
+# Default instance
+NULL = Null()
 
 
 def call_only_once(func):
