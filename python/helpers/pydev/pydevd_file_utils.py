@@ -201,6 +201,8 @@ def _NormPaths(filename):
     try:
         return NORM_PATHS_CONTAINER[filename]
     except KeyError:
+        if filename.__class__ != str:
+            raise AssertionError('Paths passed to _NormPaths must be str. Found; %s (%s)' % (filename, type(filename)))
         abs_path = _NormPath(filename, os.path.abspath)
         real_path = _NormPath(filename, rPath)
 
@@ -363,8 +365,14 @@ def setup_client_server_paths(paths):
 
     # Apply normcase to the existing paths to follow the os preferences.
 
-    for i, path in enumerate(paths_from_eclipse_to_python[:]):
-        paths_from_eclipse_to_python[i] = (normcase(path[0]), normcase(path[1]))
+    for i, (path0, path1) in enumerate(paths_from_eclipse_to_python[:]):
+        if IS_PY2:
+            if isinstance(path0, unicode):
+                path0 = path0.encode(sys.getfilesystemencoding())
+            if isinstance(path1, unicode):
+                path1 = path1.encode(sys.getfilesystemencoding())
+
+        paths_from_eclipse_to_python[i] = (normcase(path0), normcase(path1))
 
     if not paths_from_eclipse_to_python:
         # no translation step needed (just inline the calls)
