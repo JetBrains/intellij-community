@@ -8,10 +8,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.newui.*;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.IdeaApplication;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
@@ -143,6 +140,9 @@ public class PluginManagerConfigurableNew
         if (keyCode == KeyEvent.VK_ENTER || event.getKeyChar() == '\n') {
           if (id == KeyEvent.KEY_PRESSED &&
               (myCurrentSearchPanel.controller == null || !myCurrentSearchPanel.controller.handleEnter(event))) {
+            if (myCurrentSearchPanel.controller != null) {
+              myCurrentSearchPanel.controller.hidePopup();
+            }
             showSearchPanel(mySearchTextField.getText());
           }
           return true;
@@ -152,6 +152,31 @@ public class PluginManagerConfigurableNew
           return true;
         }
         return super.preprocessEventForTextField(event);
+      }
+
+      @Override
+      protected boolean toClearTextOnEscape() {
+        new AnAction() {
+          {
+            setEnabledInModalContext(true);
+          }
+
+          @Override
+          public void update(@NotNull AnActionEvent e) {
+            e.getPresentation().setEnabled(!getText().isEmpty());
+          }
+
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            if (myCurrentSearchPanel.controller != null && myCurrentSearchPanel.controller.isPopupShow()) {
+              myCurrentSearchPanel.controller.hidePopup();
+            }
+            else {
+              setText("");
+            }
+          }
+        }.registerCustomShortcutSet(CommonShortcuts.ESCAPE, this);
+        return false;
       }
 
       @Override
@@ -825,6 +850,8 @@ public class PluginManagerConfigurableNew
           createPopup(new CollectionListModel<>(result), SearchPopup.Type.SearchQuery);
         }
 
+        myPopup.data = query;
+
         if (update) {
           myPopup.update();
           return;
@@ -839,7 +866,14 @@ public class PluginManagerConfigurableNew
           @Override
           protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
             IdeaPluginDescriptor descriptor = (IdeaPluginDescriptor)value;
-            append(descriptor.getName());
+
+            String splitter = (String)myPopup.data;
+            for (String partName : SearchQueryParser.split(descriptor.getName(), splitter)) {
+              append(partName, partName.equalsIgnoreCase(splitter)
+                               ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
+                               : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            }
+
             if (isJBPlugin(descriptor)) {
               append(" by JetBrains", SimpleTextAttributes.GRAY_ATTRIBUTES);
             }
@@ -856,14 +890,36 @@ public class PluginManagerConfigurableNew
       }
 
       @NotNull
-      private List<IdeaPluginDescriptor> localSearchPlugins(String query) {
-        List<IdeaPluginDescriptor> descriptors = new ArrayList<>();
+      private List<IdeaPluginDescriptor> localSearchPlugins(@NotNull String query) {
+        IdeaPluginDescriptor descriptorEquals = null;
+        List<IdeaPluginDescriptor> descriptorsStartWith = new ArrayList<>();
+        List<IdeaPluginDescriptor> descriptorsContains = new ArrayList<>();
+
         for (IdeaPluginDescriptor descriptor : getJBRepositoryList()) {
-          if (StringUtil.containsIgnoreCase(descriptor.getName(), query)) {
-            descriptors.add(descriptor);
+          String name = descriptor.getName();
+          if (descriptorEquals == null && name.equalsIgnoreCase(query)) {
+            descriptorEquals = descriptor;
+          }
+          else if (StringUtil.startsWithIgnoreCase(name, query)) {
+            descriptorsStartWith.add(descriptor);
+          }
+          else if (StringUtil.containsIgnoreCase(name, query)) {
+            descriptorsContains.add(descriptor);
           }
         }
-        return descriptors;
+
+        List<IdeaPluginDescriptor> result = new ArrayList<>();
+        if (descriptorEquals != null) {
+          result.add(descriptorEquals);
+        }
+
+        PluginsGroup.sortByName(descriptorsStartWith);
+        result.addAll(descriptorsStartWith);
+
+        PluginsGroup.sortByName(descriptorsContains);
+        result.addAll(descriptorsContains);
+
+        return result;
       }
     };
     myTrendingSearchPanel =

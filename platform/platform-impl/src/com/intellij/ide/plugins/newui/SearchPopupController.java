@@ -227,6 +227,10 @@ public abstract class SearchPopupController {
   protected void handleAppendAttributeValue() {
   }
 
+  public boolean isPopupShow() {
+    return myPopup != null && myPopup.isValid();
+  }
+
   public void hidePopup() {
     if (myPopup != null) {
       myPopup.hide();

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,6 +15,31 @@ import java.util.Set;
  */
 public abstract class SearchQueryParser {
   public String searchQuery;
+
+  @NotNull
+  public static List<String> split(@NotNull String name, @NotNull String query) {
+    List<String> result = new ArrayList<>();
+
+    int length = name.length();
+    int queryLength = query.length();
+    int index = 0;
+
+    while (true) {
+      int end = StringUtil.indexOfIgnoreCase(name, query, index);
+      if (end == -1) {
+        break;
+      }
+      result.add(name.substring(index, end));
+      index = end + queryLength;
+      result.add(name.substring(end, index));
+    }
+
+    if (index < length) {
+      result.add(name.substring(index));
+    }
+
+    return result;
+  }
 
   @NotNull
   private static List<String> splitQuery(@NotNull String query) {
