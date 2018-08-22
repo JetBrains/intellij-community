@@ -2,7 +2,6 @@
 
 package com.intellij.openapi.vcs.vfs;
 
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -80,9 +79,6 @@ public class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
       myContent = ArrayUtil.EMPTY_BYTE_ARRAY;
       setRevision("0");
       showLoadingContentFailedMessage(e);
-    }
-    catch (ProcessCanceledException ex) {
-      myContent = ArrayUtil.EMPTY_BYTE_ARRAY;
     }
   }
 
