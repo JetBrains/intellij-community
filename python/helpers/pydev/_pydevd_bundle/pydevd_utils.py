@@ -205,7 +205,7 @@ def _get_default_library_roots():
 
     if hasattr(site, 'getusersitepackages'):
         site_paths = site.getusersitepackages()
-        if isinstance(site_paths, list):
+        if isinstance(site_paths, (list, tuple)):
             for site_path in site_paths:
                 roots.append(site_path)
         else:
@@ -213,7 +213,7 @@ def _get_default_library_roots():
 
     if hasattr(site, 'getsitepackages'):
         site_paths = site.getsitepackages()
-        if isinstance(site_paths, list):
+        if isinstance(site_paths, (list, tuple)):
             for site_path in site_paths:
                 roots.append(site_path)
         else:
@@ -268,7 +268,7 @@ def in_project_roots(filename, filename_to_in_scope_cache=_FILENAME_TO_IN_SCOPE_
             if not found_in_library:
                 in_project = True
             else:
-                # found in both, let's see which one has the higher path
+                # Found in both, let's see which one has the bigger path matched.
                 if max(len(x) for x in found_in_project) > max(len(x) for x in found_in_library):
                     in_project = True
 
