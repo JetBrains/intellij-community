@@ -188,7 +188,10 @@ class DebuggerRunner(object):
         return ret
 
     def check_case(self, writer_thread_class):
-        writer_thread = writer_thread_class()
+        if callable(writer_thread_class):
+            writer_thread = writer_thread_class()
+        else:
+            writer_thread = writer_thread_class
         try:
             writer_thread.start()
             for _i in xrange(40000):
@@ -557,7 +560,8 @@ class AbstractWriterThread(threading.Thread):
         '''
             @param line: starts at 1
         '''
-        filename = self.get_main_filename()
+        if filename is None:
+            filename = self.get_main_filename()
         breakpoint_id = self.next_breakpoint_id()
         self.write("111\t%s\t%s\t%s\t%s\t%s\t%s\tNone\tNone" % (self.next_seq(), breakpoint_id, 'python-line', filename, line, func))
         self.log.append('write_add_breakpoint: %s line: %s func: %s' % (breakpoint_id, line, func))
