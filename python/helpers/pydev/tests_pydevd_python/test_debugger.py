@@ -1589,6 +1589,72 @@ class WriterThreadCaseRedirectOutput(debugger_unittest.AbstractWriterThread):
         assert msgs == new_expected
         self.finished_ok = True
 
+#=======================================================================================================================
+# WriterThreadCasePathTranslation
+#======================================================================================================================
+class WriterThreadCasePathTranslation(debugger_unittest.AbstractWriterThread):
+
+    TEST_FILE = debugger_unittest._get_debugger_test_file(
+        os.path.join('_debugger_case_path_translation.py'))
+
+    def __get_file_in_client(self):
+        # Instead of using: test_python/_debugger_case_path_translation.py
+        # we'll set the breakpoints at foo/_debugger_case_path_translation.py
+        file_in_client = os.path.dirname(self.TEST_FILE)
+        return os.path.join(os.path.dirname(file_in_client), 'foo', '_debugger_case_path_translation.py')
+    
+    def get_environ(self):
+        import json
+        env = os.environ.copy()
+
+        env["PYTHONIOENCODING"] = 'utf-8'
+        
+        env["PATHS_FROM_ECLIPSE_TO_PYTHON"] = json.dumps([
+            (
+                os.path.dirname(self.__get_file_in_client()),
+                os.path.dirname(self.TEST_FILE)
+            )
+        ])
+        return env
+    
+    def run(self):
+        from tests_python.debugger_unittest import CMD_LOAD_SOURCE
+        self.start_socket()
+        self.write_start_redirect()
+        
+        file_in_client = self.__get_file_in_client()
+        assert 'tests_python' not in file_in_client
+        self.write_add_breakpoint(2, 'main', filename=file_in_client)
+        self.write_make_initial_run()
+        
+        xml = self.wait_for_message(lambda msg:'stop_reason="111"' in msg) 
+        assert xml.thread.frame[0]['file'] == file_in_client
+        thread_id = xml.thread['id']
+        
+        # Request a file that exists
+        files_to_match = [file_in_client]
+        if sys.platform == 'win32':
+            files_to_match.append(file_in_client.upper())
+        for f in files_to_match:
+            self.write_load_source(f)
+            self.wait_for_message(
+                lambda msg:
+                    '%s\t' % CMD_LOAD_SOURCE in msg and \
+                    "def main():" in msg and \
+                    "print('break here')" in msg and \
+                    "print('TEST SUCEEDED!')" in msg
+                , expect_xml=False)
+        
+        # Request a file that does not exist
+        self.write_load_source(file_in_client+'not_existent.py')
+        self.wait_for_message(
+            lambda msg:'901\t' in msg and ('FileNotFoundError' in msg or 'IOError' in msg), 
+            expect_xml=False)
+        
+        self.write_run_thread(thread_id)
+
+        self.finished_ok = True
+
 
 #=======================================================================================================================
 # WriterThreadCaseEvaluateErrors
@@ -1867,6 +1933,9 @@ class Test(unittest.TestCase, debugger_unittest.DebuggerRunner):
 
     def test_redirect_output(self):
         self.check_case(WriterThreadCaseRedirectOutput)
+
+    def test_path_translation(self):
+        self.check_case(WriterThreadCasePathTranslation)
 
     def test_evaluate_errors(self):
         self.check_case(WriterThreadCaseEvaluateErrors)

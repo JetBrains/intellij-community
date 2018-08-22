@@ -124,7 +124,7 @@ class ReaderThread(threading.Thread):
             frame_info = ' --  File "%s", line %s, in %s\n' % (frame.f_code.co_filename, frame.f_lineno, frame.f_code.co_name)
             frame_info += ' --  File "%s", line %s, in %s\n' % (frame.f_back.f_code.co_filename, frame.f_back.f_lineno, frame.f_back.f_code.co_name)
             frame = None
-            sys.stdout.write('Message returned in get_next_message(): %s --  ctx: %s, returned to:\n%s\n' % (msg, context_messag, frame_info))
+            sys.stdout.write('Message returned in get_next_message(): %s --  ctx: %s, returned to:\n%s\n' % (unquote_plus(unquote_plus(msg)), context_messag, frame_info))
         return msg
 
     def run(self):
@@ -383,13 +383,13 @@ class AbstractWriterThread(threading.Thread):
         if SHOW_WRITES_AND_READS:
             print('Waiting in socket.accept()')
         self.server_socket = s
-        newSock, addr = s.accept()
+        new_sock, addr = s.accept()
         if SHOW_WRITES_AND_READS:
-            print('Test Writer Thread Socket:', newSock, addr)
+            print('Test Writer Thread Socket:', new_sock, addr)
 
-        reader_thread = self.reader_thread = ReaderThread(newSock)
+        reader_thread = self.reader_thread = ReaderThread(new_sock)
         reader_thread.start()
-        self.sock = newSock
+        self.sock = new_sock
 
         self._sequence = -1
         # initial command is always the version
@@ -553,12 +553,13 @@ class AbstractWriterThread(threading.Thread):
     def get_main_filename(self):
         return self.TEST_FILE
 
-    def write_add_breakpoint(self, line, func):
+    def write_add_breakpoint(self, line, func, filename=None):
         '''
             @param line: starts at 1
         '''
+        filename = self.get_main_filename()
         breakpoint_id = self.next_breakpoint_id()
-        self.write("111\t%s\t%s\t%s\t%s\t%s\t%s\tNone\tNone" % (self.next_seq(), breakpoint_id, 'python-line', self.get_main_filename(), line, func))
+        self.write("111\t%s\t%s\t%s\t%s\t%s\t%s\tNone\tNone" % (self.next_seq(), breakpoint_id, 'python-line', filename, line, func))
         self.log.append('write_add_breakpoint: %s line: %s func: %s' % (breakpoint_id, line, func))
         return breakpoint_id
 
@@ -626,6 +627,10 @@ class AbstractWriterThread(threading.Thread):
     def write_run_thread(self, thread_id):
         self.log.append('write_run_thread')
         self.write("%s\t%s\t%s" % (CMD_THREAD_RUN, self.next_seq(), thread_id,))
+        
+    def write_load_source(self, filename):
+        self.log.append('write_load_source')
+        self.write("%s\t%s\t%s" % (CMD_LOAD_SOURCE, self.next_seq(), filename,))
 
     def write_kill_thread(self, thread_id):
         self.write("%s\t%s\t%s" % (CMD_THREAD_KILL, self.next_seq(), thread_id,))
@@ -666,7 +671,32 @@ class AbstractWriterThread(threading.Thread):
             if last.startswith('502\t%s' % (seq,)):
                 return re.findall(r'\bid=\"(\w+)\"', last)
                 
-
+    def wait_for_message(self, accept_message, unquote_msg=True, expect_xml=True):
+        import untangle
+        from io import StringIO
+        prev = None
+        while True:
+            last = self.reader_thread.get_next_message('wait_for_message')
+            if unquote_msg:
+                last = unquote_plus(unquote_plus(last))
+            if accept_message(last):
+                if expect_xml:
+                    # Extract xml and return untangled.
+                    try:
+                        xml = last[last.index('<xml>'):]
+                        if isinstance(xml, bytes):
+                            xml = xml.decode('utf-8')
+                        xml = untangle.parse(StringIO(xml))
+                    except:
+                        import traceback;traceback.print_exc()
+                        raise AssertionError('Unable to parse:\n%s\nxml:\n%s' % (last, xml))
+                    return xml.xml
+                else:
+                    return last
+            if prev != last:
+                print('Ignored message: %r' % (last,))
+                
+            prev = last
 
 def _get_debugger_test_file(filename):
     try:
