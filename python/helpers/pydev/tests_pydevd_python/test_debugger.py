@@ -1623,9 +1623,6 @@ class WriterCasePrint(debugger_unittest.AbstractWriterThread):
 
         self.write_run_thread(thread_id)
 
-        thread_id, _frame_id = self.wait_for_breakpoint_hit()
-
-        self.write_run_thread(thread_id)
         self.finished_ok = True
 
 #=======================================================================================================================

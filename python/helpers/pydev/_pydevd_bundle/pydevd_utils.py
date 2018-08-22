@@ -1,6 +1,7 @@
 from __future__ import nested_scopes
 import traceback
 import os
+import warnings
 
 try:
     from urllib import quote
@@ -21,7 +22,11 @@ def save_main_module(file, module_name):
     # convince the file to be debugged that it was loaded as main
     sys.modules[module_name] = sys.modules['__main__']
     sys.modules[module_name].__name__ = module_name
-    from imp import new_module
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=DeprecationWarning)
+        warnings.simplefilter("ignore", category=PendingDeprecationWarning)
+        from imp import new_module
 
     m = new_module('__main__')
     sys.modules['__main__'] = m
