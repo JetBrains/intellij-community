@@ -378,8 +378,13 @@ public class DebugProcessEvents extends DebugProcessImpl {
       LOG.debug("leave: processVMStartEvent()");
 
       if (!machineProxy.canBeModified()) {
+        XDebugSessionImpl session = (XDebugSessionImpl)getSession().getXDebugSession();
+        if (session != null) {
+          session.setReadOnly(true);
+          session.setPauseActionSupported(false);
+        }
         myDebugProcessDispatcher.getMulticaster().paused(getSuspendManager().pushSuspendContext(EventRequest.SUSPEND_ALL, 0));
-        UIUtil.invokeLaterIfNeeded(() -> XDebugSessionTab.showFramesView((XDebugSessionImpl)getSession().getXDebugSession()));
+        UIUtil.invokeLaterIfNeeded(() -> XDebugSessionTab.showFramesView(session));
       }
     }
   }
