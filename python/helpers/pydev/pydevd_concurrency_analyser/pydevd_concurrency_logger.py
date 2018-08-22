@@ -111,8 +111,7 @@ def send_message(event_class, time, name, thread_id, type, event, file, line, fr
         dbg.writer.add_command(NetCommand(145, 0, text))
 
 
-def log_new_thread(global_debugger):
-    t = threadingCurrentThread()
+def log_new_thread(global_debugger, t):
     event_time = cur_time() - global_debugger.thread_analyser.start_time
     send_message("threading_event", event_time, t.getName(), get_thread_id(t), "thread",
              "start", "code_name", 0, None, parent=get_thread_id(t))

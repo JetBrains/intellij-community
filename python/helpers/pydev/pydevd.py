@@ -491,6 +491,43 @@ class PyDB:
                     self.set_suspend(t, CMD_THREAD_SUSPEND)
                 else:
                     sys.stderr.write("Can't suspend thread: %s\n" % (t,))
+                    
+    def notify_thread_created(self, thread_id, thread, use_lock=True):
+        if use_lock:
+            self._lock_running_thread_ids.acquire()
+        try:
+            if thread_id in self._running_thread_ids:
+                return
+            
+            if not hasattr(thread, 'additional_info'):
+                # see http://sourceforge.net/tracker/index.php?func=detail&aid=1955428&group_id=85796&atid=577329
+                # Let's create the additional info right away!
+                thread.additional_info = PyDBAdditionalThreadInfo()
+            self._running_thread_ids[thread_id] = thread
+            self.writer.add_command(self.cmd_factory.make_thread_created_message(thread))
+        finally:
+            if use_lock:
+                self._lock_running_thread_ids.release()
+                
+    def notify_thread_not_alive(self, thread_id, use_lock=True):
+        """ if thread is not alive, cancel trace_dispatch processing """
+        if use_lock:
+            self._lock_running_thread_ids.acquire()
+            
+        try:
+            thread = self._running_thread_ids.pop(thread_id, None)
+            if thread is None:
+                return
+
+            was_notified = thread.additional_info.pydev_notify_kill
+            if not was_notified:
+                thread.additional_info.pydev_notify_kill = True
+                cmd = self.cmd_factory.make_thread_killed_message(thread_id)
+                self.writer.add_command(cmd)
+        finally:
+            if use_lock:
+                self._lock_running_thread_ids.release()
+
 
     def process_internal_commands(self):
         '''This function processes internal commands
@@ -538,14 +575,7 @@ class PyDB:
                             thread_id = get_thread_id(t)
                         program_threads_alive[thread_id] = t
 
-                        if thread_id not in self._running_thread_ids:
-                            if not hasattr(t, 'additional_info'):
-                                # see http://sourceforge.net/tracker/index.php?func=detail&aid=1955428&group_id=85796&atid=577329
-                                # Let's create the additional info right away!
-                                t.additional_info = PyDBAdditionalThreadInfo()
-                            self._running_thread_ids[thread_id] = t
-                            self.writer.add_command(self.cmd_factory.make_thread_created_message(t))
-
+                        self.notify_thread_created(thread_id, t, use_lock=False)
 
                         queue = self.get_internal_queue(thread_id)
                         cmdsToReadd = []  # some commands must be processed by the thread itself... if that's the case,
@@ -578,20 +608,19 @@ class PyDB:
 
 
                 thread_ids = list(self._running_thread_ids.keys())
-                for tId in thread_ids:
-                    if tId not in program_threads_alive:
-                        program_threads_dead.append(tId)
+                for thread_id in thread_ids:
+                    if thread_id not in program_threads_alive:
+                        program_threads_dead.append(thread_id)
+                        
+                for thread_id in program_threads_dead:
+                    try:
+                        self.notify_thread_not_alive(thread_id, use_lock=False)
+                    except:
+                        sys.stderr.write('Error iterating through %s (%s) - %s\n' % (
+                            program_threads_alive, program_threads_alive.__class__, dir(program_threads_alive)))
+                        raise
             finally:
                 self._lock_running_thread_ids.release()
-
-            for tId in program_threads_dead:
-                try:
-                    self._process_thread_not_alive(tId)
-                except:
-                    sys.stderr.write('Error iterating through %s (%s) - %s\n' % (
-                        program_threads_alive, program_threads_alive.__class__, dir(program_threads_alive)))
-                    raise
-
 
             if len(program_threads_alive) == 0:
                 self.finish_debugging_session()
@@ -704,24 +733,6 @@ class PyDB:
             if not updated_on_caught and eb.notify_always:
                 updated_on_caught = True
                 self.set_tracing_for_untraced_contexts_if_not_frame_eval()
-
-    def _process_thread_not_alive(self, threadId):
-        """ if thread is not alive, cancel trace_dispatch processing """
-        self._lock_running_thread_ids.acquire()
-        try:
-            thread = self._running_thread_ids.pop(threadId, None)
-            if thread is None:
-                return
-
-            wasNotified = thread.additional_info.pydev_notify_kill
-            if not wasNotified:
-                thread.additional_info.pydev_notify_kill = True
-
-        finally:
-            self._lock_running_thread_ids.release()
-
-        cmd = self.cmd_factory.make_thread_killed_message(threadId)
-        self.writer.add_command(cmd)
 
 
     def set_suspend(self, thread, stop_reason):
@@ -1108,9 +1119,10 @@ class PyDB:
             # call prepare_to_run when we already have all information about breakpoints
             self.prepare_to_run()
 
+        t = threadingCurrentThread()
+        
         if self.thread_analyser is not None:
             wrap_threads()
-            t = threadingCurrentThread()
             self.thread_analyser.set_start_time(cur_time())
             send_message("threading_event", 0, t.getName(), get_thread_id(t), "thread", "start", file, 1, None, parent=get_thread_id(t))
 
@@ -1130,11 +1142,16 @@ class PyDB:
         if hasattr(sys, 'exc_clear'):
             # we should clean exception information in Python 2, before user's code execution
             sys.exc_clear()
+            
+        # Notify that the main thread is created.
+        thread_id = get_thread_id(t)
+        self.notify_thread_created(thread_id, t)
+
 
         if not is_module:
             pydev_imports.execfile(file, globals, locals)  # execute the script
         else:
-            # treat ':' as a seperator between module and entry point function
+            # treat ':' as a separator between module and entry point function
             # if there is no entry point we run we same as with -m switch. Otherwise we perform
             # an import and execute the entry point
             if entry_point_fn:

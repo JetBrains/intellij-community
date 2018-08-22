@@ -267,6 +267,7 @@ def clear_cached_thread_id(thread):
     except AttributeError:
         pass
 
+
 #=======================================================================================================================
 # get_thread_id
 #=======================================================================================================================
@@ -274,22 +275,20 @@ def get_thread_id(thread):
     try:
         tid = thread.__pydevd_id__
         if tid is None:
-            # Fix for https://sw-brainwy.rhcloud.com/tracker/PyDev/645
+            # Fix for https://www.brainwy.com/tracker/PyDev/645
             # if __pydevd_id__ is None, recalculate it... also, use an heuristic
             # that gives us always the same id for the thread (using thread.ident or id(thread)).
             raise AttributeError()
     except AttributeError:
         _nextThreadIdLock.acquire()
         try:
-            #We do a new check with the lock in place just to be sure that nothing changed
+            # We do a new check with the lock in place just to be sure that nothing changed
             tid = getattr(thread, '__pydevd_id__', None)
             if tid is None:
                 pid = get_pid()
-                try:
-                    tid = thread.__pydevd_id__ = 'pid_%s_id_%s' % (pid, thread.get_ident())
-                except:
-                    # thread.ident isn't always there... (use id(thread) instead if it's not there).
-                    tid = thread.__pydevd_id__ = 'pid_%s_id_%s' % (pid, id(thread))
+                # Note: don't use the thread ident because if we're too early in the
+                # thread bootstrap process, the thread id could be still unset.
+                tid = thread.__pydevd_id__ = 'pid_%s_id_%s' % (pid, id(thread))
         finally:
             _nextThreadIdLock.release()
 

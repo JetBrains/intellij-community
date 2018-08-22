@@ -2,6 +2,7 @@
 import os
 import sys
 import traceback
+from _pydev_imps._pydev_saved_modules import threading
 
 try:
     xrange
@@ -611,25 +612,45 @@ class _NewThreadStartupWithTrace:
         self.original_func = original_func
         self.args = args
         self.kwargs = kwargs
-        self.global_debugger = self.get_debugger()
-
-    def get_debugger(self):
-        from _pydevd_bundle.pydevd_comm import get_global_debugger
-        return get_global_debugger()
 
     def __call__(self):
-        _on_set_trace_for_new_thread(self.global_debugger)
-        global_debugger = self.global_debugger
+        # We monkey-patch the thread creation so that this function is called in the new thread. At this point
+        # we notify of its creation and start tracing it.
+        from _pydevd_bundle.pydevd_constants import get_thread_id
+        from _pydevd_bundle.pydevd_comm import get_global_debugger
+        global_debugger = get_global_debugger()
 
-        if global_debugger is not None and global_debugger.thread_analyser is not None:
-            # we can detect start_new_thread only here
-            try:
-                from pydevd_concurrency_analyser.pydevd_concurrency_logger import log_new_thread
-                log_new_thread(global_debugger)
-            except:
-                sys.stderr.write("Failed to detect new thread for visualization")
-
-        return self.original_func(*self.args, **self.kwargs)
+        thread_id = None
+        if global_debugger is not None:
+            # Note: if this is a thread from threading.py, we're too early in the boostrap process (because we mocked
+            # the start_new_thread internal machinery and thread._bootstrap has not finished), so, the code below needs
+            # to make sure that we use the current thread bound to the original function and not use
+            # threading.currentThread() unless we're sure it's a dummy thread.
+            t = getattr(self.original_func, '__self__', getattr(self.original_func, 'im_self', None))
+            if not isinstance(t, threading.Thread):
+                # This is not a threading.Thread but a Dummy thread (so, get it as a dummy thread using
+                # currentThread).
+                t = threading.currentThread()
+                
+            if not getattr(t, 'is_pydev_daemon_thread', False):
+                thread_id = get_thread_id(t)
+                global_debugger.notify_thread_created(thread_id, t)
+            else:
+                _on_set_trace_for_new_thread(global_debugger)
+            
+            if global_debugger.thread_analyser is not None:
+                try:
+                    from pydevd_concurrency_analyser.pydevd_concurrency_logger import log_new_thread
+                    log_new_thread(global_debugger, t)
+                except:
+                    sys.stderr.write("Failed to detect new thread for visualization")
+        try:
+            ret = self.original_func(*self.args, **self.kwargs)
+        finally:
+            if thread_id is not None:
+                global_debugger.notify_thread_not_alive(thread_id)
+        
+        return ret
 
 
 class _NewThreadStartupWithoutTrace:
@@ -653,31 +674,35 @@ def _get_threading_modules_to_patch():
     except:
         import _thread
     threading_modules_to_patch.append(_thread)
+    threading_modules_to_patch.append(threading)
 
     return threading_modules_to_patch
 
 threading_modules_to_patch = _get_threading_modules_to_patch()
 
 
-def patch_thread_module(thread):
+def patch_thread_module(thread_module):
 
-    if getattr(thread, '_original_start_new_thread', None) is None:
-        _original_start_new_thread = thread._original_start_new_thread = thread.start_new_thread
+    if getattr(thread_module, '_original_start_new_thread', None) is None:
+        if thread_module is threading:
+            _original_start_new_thread = thread_module._original_start_new_thread = thread_module._start_new_thread
+        else:
+            _original_start_new_thread = thread_module._original_start_new_thread = thread_module.start_new_thread
     else:
-        _original_start_new_thread = thread._original_start_new_thread
+        _original_start_new_thread = thread_module._original_start_new_thread
 
     class ClassWithPydevStartNewThread:
 
         def pydev_start_new_thread(self, function, args=(), kwargs={}):
             '''
-            We need to replace the original thread.start_new_thread with this function so that threads started
+            We need to replace the original thread_module.start_new_thread with this function so that threads started
             through it and not through the threading module are properly traced.
             '''
             return _original_start_new_thread(_UseNewThreadStartup(function, args, kwargs), ())
 
-    # This is a hack for the situation where the thread.start_new_thread is declared inside a class, such as the one below
+    # This is a hack for the situation where the thread_module.start_new_thread is declared inside a class, such as the one below
     # class F(object):
-    #    start_new_thread = thread.start_new_thread
+    #    start_new_thread = thread_module.start_new_thread
     #
     #    def start_it(self):
     #        self.start_new_thread(self.function, args, kwargs)
@@ -686,10 +711,13 @@ def patch_thread_module(thread):
     pydev_start_new_thread = ClassWithPydevStartNewThread().pydev_start_new_thread
 
     try:
-        # We need to replace the original thread.start_new_thread with this function so that threads started through
+        # We need to replace the original thread_module.start_new_thread with this function so that threads started through
         # it and not through the threading module are properly traced.
-        thread.start_new_thread = pydev_start_new_thread
-        thread.start_new = pydev_start_new_thread
+        if thread_module is threading:
+            thread_module._start_new_thread = pydev_start_new_thread
+        else:
+            thread_module.start_new_thread = pydev_start_new_thread
+            thread_module.start_new = pydev_start_new_thread
     except:
         pass
 
@@ -708,6 +736,11 @@ def undo_patch_thread_modules():
 
         try:
             t.start_new = t._original_start_new_thread
+        except:
+            pass
+
+        try:
+            t._start_new_thread = t._original_start_new_thread
         except:
             pass
 
