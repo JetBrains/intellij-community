@@ -14,7 +14,8 @@ import traceback
 
 from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PYCHARM, get_thread_id, \
     dict_keys, dict_iter_items, DebugInfoHolder, PYTHON_SUSPEND, STATE_SUSPEND, STATE_RUN, get_frame, xrange, \
-    clear_cached_thread_id, INTERACTIVE_MODE_AVAILABLE, SHOW_DEBUG_INFO_ENV, IS_PY34_OR_GREATER, IS_PY2, NULL
+    clear_cached_thread_id, INTERACTIVE_MODE_AVAILABLE, SHOW_DEBUG_INFO_ENV, IS_PY34_OR_GREATER, IS_PY36_OR_GREATER, \
+    IS_PY2, NULL
 from _pydev_bundle import fix_getpass
 from _pydev_bundle import pydev_imports, pydev_log
 from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
@@ -334,7 +335,7 @@ class PyDB:
 
             if isinstance(t, PyDBDaemonThread):
                 pydev_log.error_once(
-                        'Error in debugger: Found PyDBDaemonThread not marked with is_pydev_daemon_thread=True.\n')
+                    'Error in debugger: Found PyDBDaemonThread not marked with is_pydev_daemon_thread=True.\n')
 
             if is_thread_alive(t):
                 if not t.isDaemon() or hasattr(t, "__pydevd_main_thread"):
@@ -674,13 +675,13 @@ class PyDB:
     ):
         try:
             eb = ExceptionBreakpoint(
-                    exception,
-                    condition,
-                    expression,
-                    notify_on_handled_exceptions,
-                    notify_on_unhandled_exceptions,
-                    notify_on_first_raise_only,
-                    ignore_libraries
+                exception,
+                condition,
+                expression,
+                notify_on_handled_exceptions,
+                notify_on_unhandled_exceptions,
+                notify_on_first_raise_only,
+                ignore_libraries
             )
         except ImportError:
             pydev_log.error("Error unable to add break on exception for: %s (exception could not be imported)\n" % (exception,))
@@ -816,7 +817,7 @@ class PyDB:
                         t.frame_id == frame_id:
                     t.cancel_event.set()
         except:
-            pass
+            import traceback;traceback.print_exc()
         finally:
             self._main_lock.release()
 
@@ -827,8 +828,8 @@ class PyDB:
         """
         self.process_internal_commands()
         thread_stack_str = ''   # @UnusedVariable -- this is here so that `make_get_thread_stack_message`
-                                # can retrieve it later.
-        
+        # can retrieve it later.
+
         if send_suspend_message:
             message = thread.additional_info.pydev_message
             cmd = self.cmd_factory.make_thread_suspend_message(get_thread_id(thread), frame, thread.stop_reason, message, suspend_type)
@@ -845,9 +846,6 @@ class PyDB:
                     self.writer.add_command(self.cmd_factory.make_thread_suspend_message(frame_id, custom_frame.frame, CMD_THREAD_SUSPEND, "", suspend_type))
 
                 from_this_thread.append(frame_id)
-
-        finally:
-            CustomFramesContainer.custom_frames_lock.release()  # @UndefinedVariable
 
         info = thread.additional_info
 
@@ -1005,20 +1003,18 @@ class PyDB:
 
     def prepare_to_run(self):
         ''' Shared code to prepare debugging by installing traces and registering threads '''
+        self.patch_threads()
+
+        PyDBCommandThread(self).start()
         if self.redirect_output or self.signature_factory is not None or self.thread_analyser is not None:
             # we need all data to be sent to IDE even after program finishes
             CheckOutputThread(self).start()
             # turn off frame evaluation for concurrency visualization
             self.frame_eval_func = None
 
-        self.patch_threads()
-
-        PyDBCommandThread(self).start()
-
         if show_tracing_warning or show_frame_eval_warning:
             cmd = self.cmd_factory.make_show_cython_warning_message()
             self.writer.add_command(cmd)
-
 
     def patch_threads(self):
         try:
@@ -1124,7 +1120,7 @@ class PyDB:
         if self.stop_on_start:
             info = set_additional_thread_info(t)
             t.additional_info.pydev_step_cmd = CMD_STEP_INTO_MY_CODE
-            
+
         # Note: important: set the tracing right before calling _exec.
         if set_trace:
             pydevd_tracing.SetTrace(self.trace_dispatch, self.frame_eval_func, self.dummy_trace_dispatch)
@@ -1173,7 +1169,6 @@ class PyDB:
         frame = pydevd_frame_utils.Frame(None, -1, pydevd_frame_utils.FCode("Console",
                                                                             os.path.abspath(os.path.dirname(__file__))), globals, globals)
         thread_id = get_thread_id(thread)
-        from _pydevd_bundle import pydevd_vars
         pydevd_vars.add_additional_frame_by_id(thread_id, {id(frame): frame})
 
         cmd = self.cmd_factory.make_show_console_message(thread_id, frame)
@@ -1200,6 +1195,7 @@ def set_debug(setup):
 def enable_qt_support(qt_support_mode):
     from _pydev_bundle import pydev_monkey_qt
     pydev_monkey_qt.patch_qt(qt_support_mode)
+
 
 def dump_threads(stream=None):
     '''
@@ -1327,15 +1323,15 @@ def settrace(
     _set_trace_lock.acquire()
     try:
         _locked_settrace(
-                host,
-                stdoutToServer,
-                stderrToServer,
-                port,
-                suspend,
-                trace_only_current_thread,
-                overwrite_prev_trace,
-                patch_multiprocessing,
-                stop_at_frame,
+            host,
+            stdoutToServer,
+            stderrToServer,
+            port,
+            suspend,
+            trace_only_current_thread,
+            overwrite_prev_trace,
+            patch_multiprocessing,
+            stop_at_frame,
         )
     finally:
         _set_trace_lock.release()
@@ -1482,7 +1478,7 @@ def stoptrace():
         if debugger:
 
             debugger.set_trace_for_frame_and_parents(
-                    get_frame(), also_add_to_passed_frame=True, overwrite_prev_trace=True, dispatch_func=lambda *args:None)
+                get_frame(), also_add_to_passed_frame=True, overwrite_prev_trace=True, dispatch_func=lambda *args:None)
             debugger.exiting()
 
             kill_all_pydev_threads()
@@ -1562,12 +1558,12 @@ def settrace_forked():
         custom_frames_container_init()
 
         settrace(
-                host,
-                port=port,
-                suspend=False,
-                trace_only_current_thread=False,
-                overwrite_prev_trace=True,
-                patch_multiprocessing=True,
+            host,
+            port=port,
+            suspend=False,
+            trace_only_current_thread=False,
+            overwrite_prev_trace=True,
+            patch_multiprocessing=True,
         )
 
 #=======================================================================================================================
