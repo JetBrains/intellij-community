@@ -103,6 +103,11 @@ public abstract class PartiallyExcludedFilesStateHolder<T> implements Disposable
     public void onExcludedFromCommitChange(@NotNull PartialLocalLineStatusTracker tracker) {
       scheduleExclusionStatesUpdate();
     }
+
+    @Override
+    public void onChangeListMarkerChange(@NotNull PartialLocalLineStatusTracker tracker) {
+      scheduleExclusionStatesUpdate();
+    }
   }
 
   private class MyTrackerManagerListener extends LineStatusTrackerManager.ListenerAdapter {
