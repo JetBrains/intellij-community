@@ -25,7 +25,7 @@ from _pydev_imps._pydev_saved_modules import thread
 from _pydevd_bundle import pydevd_io, pydevd_vm_type, pydevd_tracing
 from _pydevd_bundle import pydevd_utils
 from _pydevd_bundle import pydevd_vars
-from _pydevd_bundle.pydevd_additional_thread_info import PyDBAdditionalThreadInfo
+from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
 from _pydevd_bundle.pydevd_breakpoints import ExceptionBreakpoint
 from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_SET_NEXT_STATEMENT, CMD_STEP_INTO, CMD_STEP_OVER, \
     CMD_STEP_RETURN, CMD_STEP_INTO_MY_CODE, CMD_THREAD_SUSPEND, CMD_RUN_TO_LINE, \
@@ -471,20 +471,12 @@ class PyDB:
             else:
                 if t is thread_suspended_at_bp:
                     continue
-                additional_info = None
-                try:
-                    additional_info = t.additional_info
-                except AttributeError:
-                    pass  # that's ok, no info currently set
+                additional_info = set_additional_thread_info(t)
+                for frame in additional_info.iter_frames(t):
+                    self.set_trace_for_frame_and_parents(frame, overwrite_prev_trace=True)
+                    del frame
 
-                if additional_info is not None:
-                    for frame in additional_info.iter_frames(t):
-                        self.set_trace_for_frame_and_parents(frame, overwrite_prev_trace=True)
-                        del frame
-
-                    self.set_suspend(t, CMD_THREAD_SUSPEND)
-                else:
-                    sys.stderr.write("Can't suspend thread: %s\n" % (t,))
+                self.set_suspend(t, CMD_THREAD_SUSPEND)
 
     def notify_thread_created(self, thread_id, thread, use_lock=True):
         if self.writer is None:
@@ -500,12 +492,8 @@ class PyDB:
             if thread_id in self._running_thread_ids:
                 return
 
-            if not hasattr(thread, 'additional_info'):
-                # see http://sourceforge.net/tracker/index.php?func=detail&aid=1955428&group_id=85796&atid=577329
-                # Let's create the additional info right away!
-                thread.additional_info = PyDBAdditionalThreadInfo()
-
-            elif thread.additional_info.pydev_notify_kill:
+            additional_info = set_additional_thread_info(thread)
+            if additional_info.pydev_notify_kill:
                 # After we notify it should be killed, make sure we don't notify it's alive (on a racing condition
                 # this could happen as we may notify before the thread is stopped internally).
                 return
@@ -667,16 +655,10 @@ class PyDB:
 
                 # TODO: optimize so that we only actually add that tracing if it's in
                 # the new breakpoint context.
-                additional_info = None
-                try:
-                    additional_info = t.additional_info
-                except AttributeError:
-                    pass  # that's ok, no info currently set
-
-                if additional_info is not None:
-                    for frame in additional_info.iter_frames(t):
-                        if frame is not ignore_frame:
-                            self.set_trace_for_frame_and_parents(frame, overwrite_prev_trace=overwrite_prev_trace)
+                additional_info = set_additional_thread_info(t)
+                for frame in additional_info.iter_frames(t):
+                    if frame is not ignore_frame:
+                        self.set_trace_for_frame_and_parents(frame, overwrite_prev_trace=overwrite_prev_trace)
         finally:
             frame = None
             t = None
@@ -738,7 +720,7 @@ class PyDB:
 
 
     def set_suspend(self, thread, stop_reason):
-        info = thread.additional_info
+        info = set_additional_thread_info(thread)
         info.suspend_type = PYTHON_SUSPEND
         info.pydev_state = STATE_SUSPEND
         if info.pydev_step_cmd == -1:
@@ -1428,11 +1410,7 @@ def _locked_settrace(
 
 
         t = threadingCurrentThread()
-        try:
-            additional_info = t.additional_info
-        except AttributeError:
-            additional_info = PyDBAdditionalThreadInfo()
-            t.additional_info = additional_info
+        additional_info = set_additional_thread_info(t)
 
         while not debugger.ready_to_run:
             time.sleep(0.1)  # busy wait until we receive run command
@@ -1467,11 +1445,7 @@ def _locked_settrace(
         debugger.set_trace_for_frame_and_parents(get_frame(), also_add_to_passed_frame=True, overwrite_prev_trace=True)
 
         t = threadingCurrentThread()
-        try:
-            additional_info = t.additional_info
-        except AttributeError:
-            additional_info = PyDBAdditionalThreadInfo()
-            t.additional_info = additional_info
+        additional_info = set_additional_thread_info(t)
 
         pydevd_tracing.SetTrace(debugger.trace_dispatch, debugger.frame_eval_func, debugger.dummy_trace_dispatch)
 

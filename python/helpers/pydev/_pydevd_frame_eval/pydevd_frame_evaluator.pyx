@@ -1,6 +1,6 @@
 import dis
 from _pydev_imps._pydev_saved_modules import threading
-from _pydevd_bundle.pydevd_additional_thread_info import PyDBAdditionalThreadInfo
+from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
 from _pydevd_bundle.pydevd_comm import get_global_debugger
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
 from _pydevd_frame_eval.pydevd_frame_tracing import pydev_trace_code_wrapper, update_globals_dict, dummy_tracing_holder
@@ -82,7 +82,7 @@ cdef PyObject* get_bytecode_while_frame_eval(PyFrameObject *frame_obj, int exc):
             if additional_info is None:
                 raise AttributeError()
         except:
-            additional_info = t.additional_info = PyDBAdditionalThreadInfo()
+            additional_info = set_additional_thread_info(t)
             # request `co_extra` inside every new thread
             thread_index = _PyEval_RequestCodeExtraIndex(PyMem_Free)
             UseCodeExtraHolder.local.index = thread_index
