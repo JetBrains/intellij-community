@@ -532,8 +532,8 @@ class AbstractWriterThread(threading.Thread):
         self.write("122\t%s\t%s" % (self.next_seq(), exception))
         self.log.append('write_add_exception_breakpoint: %s' % (exception,))
 
-    def write_add_exception_breakpoint_with_policy(self, exception, notify_always, notify_on_terminate, ignore_libraries):
-        self.write("122\t%s\t%s" % (self.next_seq(), '\t'.join([exception, notify_always, notify_on_terminate, ignore_libraries])))
+    def write_add_exception_breakpoint_with_policy(self, exception, notify_on_handled_exceptions, notify_on_unhandled_exceptions, ignore_libraries):
+        self.write("122\t%s\t%s" % (self.next_seq(), '\t'.join([exception, notify_on_handled_exceptions, notify_on_unhandled_exceptions, ignore_libraries])))
         self.log.append('write_add_exception_breakpoint: %s' % (exception,))
 
     def write_remove_breakpoint(self, breakpoint_id):
