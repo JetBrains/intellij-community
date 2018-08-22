@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.editorHeaderActions;
 
 import com.intellij.find.SearchSession;
@@ -19,8 +20,9 @@ public abstract class EditorHeaderToggleAction extends CheckboxAction implements
     return true;
   }
 
+  @NotNull
   @Override
-  public JComponent createCustomComponent(Presentation presentation) {
+  public JComponent createCustomComponent(@NotNull Presentation presentation) {
     final JComponent customComponent = super.createCustomComponent(presentation);
     customComponent.setFocusable(false);
     customComponent.setOpaque(false);

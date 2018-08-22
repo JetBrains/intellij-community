@@ -56,9 +56,9 @@ public interface JsonLikePsiWalker {
       .orElse(null);
   }
 
-  default String getDefaultObjectValue(boolean includeWhitespaces) { return "{}"; }
+  default String getDefaultObjectValue() { return "{}"; }
   @Nullable default String defaultObjectValueDescription() { return null; }
-  default String getDefaultArrayValue(boolean includeWhitespaces) { return "[]"; }
+  default String getDefaultArrayValue() { return "[]"; }
   @Nullable default String defaultArrayValueDescription() { return null; }
 
   default boolean invokeEnterBeforeObjectAndArray() { return false; }

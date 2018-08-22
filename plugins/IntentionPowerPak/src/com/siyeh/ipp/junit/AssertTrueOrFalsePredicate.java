@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NonNls;
 
 class AssertTrueOrFalsePredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof PsiMethodCallExpression)) {
       return false;

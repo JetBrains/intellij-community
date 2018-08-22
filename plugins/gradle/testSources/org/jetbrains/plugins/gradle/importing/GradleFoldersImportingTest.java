@@ -15,20 +15,12 @@
  */
 package org.jetbrains.plugins.gradle.importing;
 
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.SystemIndependent;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.junit.Test;
@@ -319,42 +311,6 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
 
     assertTestSources("project", "test-src/java");
   }
-
-  @Test
-  public void testRootsListenersRestoredWhenProjectOpen() throws Exception {
-    createProjectSubFile("src/main/java/A.java");
-    importProjectUsingSingeModulePerGradleProject("apply plugin: 'java'");
-
-    @SystemIndependent final String path = myProject.getProjectFilePath();
-
-    edt(() -> {
-      VirtualFileManager.getInstance().syncRefresh();
-      UIUtil.dispatchAllInvocationEvents();
-      PlatformTestUtil.saveProject(myProject);
-      ProjectManagerEx.getInstanceEx().closeProject(myProject);
-      UIUtil.dispatchAllInvocationEvents();
-    });
-
-    final ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
-    final Ref<Project> projectRef = new Ref<>();
-    try {
-      projectRef.set(projectManager.loadProject(path));
-      edt(() -> projectManager.openTestProject(projectRef.get()));
-      createProjectSubFile("src/test/java/ATest.java");
-
-      edt(() -> UIUtil.dispatchAllInvocationEvents());
-      assertTestSources(projectRef.get(), "project", "src/test/java");
-    }
-    finally {
-      if (!projectRef.isNull()) {
-        edt(() -> {
-          projectManager.closeTestProject(projectRef.get());
-          WriteAction.run(() -> Disposer.dispose(projectRef.get()));
-        });
-      }
-    }
-  }
-
 
   protected void assertDefaultGradleJavaProjectFolders(@NotNull String mainModuleName) {
     assertExcludes(mainModuleName, ".gradle", "build", "out");

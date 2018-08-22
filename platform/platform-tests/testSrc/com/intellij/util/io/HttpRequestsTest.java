@@ -13,6 +13,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.zip.GZIPOutputStream;
@@ -134,11 +135,17 @@ public class HttpRequestsTest {
       ex.close();
     });
 
+    //noinspection SpellCheckingInspection
     try {
       HttpRequests
         .post(myUrl, null)
         .write("hello");
       fail();
+    }
+    catch (SocketException e) {
+      // java.net.SocketException: Software caused connection abort: recv failed
+      //noinspection SpellCheckingInspection
+      assertThat(e.getMessage()).contains("recv failed");
     }
     catch (HttpRequests.HttpStatusException e) {
       assertThat(e.getMessage()).isEqualTo("Request failed with status code 404");

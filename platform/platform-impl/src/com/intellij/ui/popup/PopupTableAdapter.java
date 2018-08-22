@@ -65,6 +65,7 @@ class PopupTableAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<
       myTable.addMouseMotionListener(new MouseMotionAdapter() {
         boolean myIsEngaged = false;
 
+        @Override
         public void mouseMoved(MouseEvent e) {
           if (myIsEngaged) {
             int index = myTable.rowAtPoint(e.getPoint());

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -82,6 +82,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     }
   }
 
+  @Override
   public void run(@NotNull final ProgressIndicator indicator) {
     myHandler.setProgressIndicator(ProgressManager.getInstance().getProgressIndicator());
     myResolveWorker = new ResolveWorker(myInfo.isUnderProjectRoot(), myProject);
@@ -148,6 +149,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     onTaskFinished(true);
   }
 
+  @Override
   public void onSuccess() {
     onTaskFinished(false);
   }

@@ -59,11 +59,13 @@ public class HtmlLexer extends BaseHtmlLexer {
     super.start(buffer, startOffset, endOffset, initialState);
   }
 
+  @Override
   public void advance() {
     myTokenType = null;
     super.advance();
   }
 
+  @Override
   public IElementType getTokenType() {
     if (myTokenType!=null) return myTokenType;
     IElementType tokenType = super.getTokenType();
@@ -107,7 +109,8 @@ public class HtmlLexer extends BaseHtmlLexer {
     return (tokenType == XmlTokenType.XML_DATA_CHARACTERS ||
             tokenType == XmlTokenType.XML_CDATA_START ||
             tokenType == XmlTokenType.XML_COMMENT_START ||
-            tokenType == XmlTokenType.XML_REAL_WHITE_SPACE || tokenType == TokenType.WHITE_SPACE
+            tokenType == XmlTokenType.XML_REAL_WHITE_SPACE || tokenType == TokenType.WHITE_SPACE ||
+            tokenType == XmlTokenType.XML_ENTITY_REF_TOKEN || tokenType == XmlTokenType.XML_CHAR_ENTITY_REF
     );
   }
 
@@ -119,10 +122,12 @@ public class HtmlLexer extends BaseHtmlLexer {
     super(_baseLexer,_caseInsensitive);
   }
 
+  @Override
   protected boolean isHtmlTagState(int state) {
     return state == _HtmlLexer.START_TAG_NAME || state == _HtmlLexer.END_TAG_NAME;
   }
 
+  @Override
   public int getTokenStart() {
     if (myTokenType!=null) {
       return myTokenStart;
@@ -130,6 +135,7 @@ public class HtmlLexer extends BaseHtmlLexer {
     return super.getTokenStart();
   }
 
+  @Override
   public int getTokenEnd() {
     if (myTokenType!=null) {
       return myTokenEnd;

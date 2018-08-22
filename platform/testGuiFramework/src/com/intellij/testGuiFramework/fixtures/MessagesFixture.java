@@ -16,7 +16,9 @@
 package com.intellij.testGuiFramework.fixtures;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.messages.MessageDialog;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import com.intellij.testGuiFramework.framework.Timeouts;
@@ -24,40 +26,60 @@ import com.intellij.ui.messages.SheetController;
 import com.intellij.util.JdomKt;
 import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.Robot;
+import org.fest.swing.edt.GuiQuery;
 import org.fest.swing.exception.WaitTimedOutError;
 import org.fest.swing.fixture.ContainerFixture;
-import org.fest.swing.fixture.JPanelFixture;
 import org.fest.swing.timing.Timeout;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.annotation.Nonnull;
 import javax.swing.*;
 import java.awt.*;
 
+import static com.intellij.testGuiFramework.fixtures.IdeaDialogFixture.getDialogWrapperFrom;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.fest.reflect.core.Reflection.field;
+import static org.fest.swing.edt.GuiActionRunner.execute;
 import static org.junit.Assert.assertNotNull;
 
-public class MessagesFixture {
-  @NotNull private final ContainerFixture<? extends Container> myDelegate;
+public class MessagesFixture<C extends Container> implements ContainerFixture<C> {
+
+  /**
+   * Could be a dialog (JDialog) or Mac message panel
+   */
+  private final C myTarget;
+  private final Robot myRobot;
+
+  @Nonnull
+  @Override
+  public C target() {
+    return myTarget;
+  }
+
+  @Nonnull
+  @Override
+  public Robot robot() {
+    return myRobot;
+  }
 
   @NotNull
   public static MessagesFixture findByTitle(@NotNull Robot robot, @NotNull Container root, @NotNull String title) {
       if (Messages.canShowMacSheetPanel()) {
-        return new MessagesFixture(findMacSheetByTitle(robot, root, title));
+        return findMacMessageByTitle(robot, root, title);
       }
-      MessageDialogFixture dialog = MessageDialogFixture.findByTitle(robot, title);
-      return new MessagesFixture(dialog);
+      JDialog dialog = findByTitle(robot, title);
+      return new MessagesFixture<>(robot, dialog);
   }
 
   @NotNull
   public static MessagesFixture findByTitle(@NotNull Robot robot, @NotNull Container root, @NotNull String title, @NotNull Timeout timeout) {
     if (Messages.canShowMacSheetPanel()) {
-      return new MessagesFixture(findMacSheetByTitle(robot, root, title, timeout));
+      return findMacMessageByTitle(robot, root, title, timeout);
     }
-    MessageDialogFixture dialog = MessageDialogFixture.findByTitle(robot, title, timeout);
-    return new MessagesFixture(dialog);
+    JDialog dialog = findByTitle(robot, title, timeout);
+    return new MessagesFixture<>(robot, dialog);
   }
 
   @NotNull
@@ -68,10 +90,10 @@ public class MessagesFixture {
   @NotNull
   public static MessagesFixture findAny(@NotNull Robot robot, @NotNull Container root, @NotNull Timeout timeout) {
     if (Messages.canShowMacSheetPanel()) {
-      return new MessagesFixture(findMacSheetAny(robot, root, timeout));
+      return findMacMessageAny(robot, root, timeout);
     }
-    MessageDialogFixture dialog = MessageDialogFixture.findAny(robot, timeout);
-    return new MessagesFixture(dialog);
+    JDialog dialog = findAny(robot, timeout);
+    return new MessagesFixture<>(robot, dialog);
   }
 
 
@@ -85,14 +107,17 @@ public class MessagesFixture {
     }
   }
 
-  private MessagesFixture(@NotNull ContainerFixture<? extends Container> delegate) {
-    myDelegate = delegate;
+  /**
+   * @param messageContainer could be dialog (for Windows/Linux) or panel (for Mac)
+   */
+  private MessagesFixture(Robot robot, C messageContainer) {
+    myTarget = messageContainer;
+    myRobot = robot;
   }
 
   @NotNull
   public MessagesFixture clickOk() {
-    GuiTestUtil.INSTANCE.findAndClickOkButton(myDelegate);
-    return this;
+    return click("OK");
   }
 
 
@@ -103,49 +128,84 @@ public class MessagesFixture {
 
   @NotNull
   public MessagesFixture click(@NotNull String text) {
-    GuiTestUtil.INSTANCE.findAndClickButton(myDelegate, text);
+    GuiTestUtil.INSTANCE.findAndClickButton(this, text);
     return this;
   }
 
-  @NotNull
-  public String getMessage() {
-    return ((Delegate)myDelegate).getMessage();
-  }
 
   @NotNull
   public MessagesFixture requireMessageContains(@NotNull String message) {
-    String actual = ((Delegate)myDelegate).getMessage();
+    String actual = getMessage();
     assertThat(actual).contains(message);
     return this;
   }
 
   public void clickCancel() {
-    GuiTestUtil.INSTANCE.findAndClickCancelButton(myDelegate);
+    click("Cancel");
+  }
+
+  public static boolean isMessageDialog(@NotNull JDialog dialog) {
+    DialogWrapper wrapper = getDialogWrapperFrom(dialog, DialogWrapper.class);
+    if (wrapper != null) {
+      if(wrapper instanceof MessageDialog){
+        return true;
+      }
+    }
+    return false;
   }
 
   @NotNull
-  static JPanelFixture findMacSheetByTitle(@NotNull Robot robot, @NotNull Container root, @NotNull String title) {
-    return findMacSheetByTitle(robot, root, title, Timeouts.INSTANCE.getMinutes05());
+  static JDialog findByTitle(@NotNull Robot robot, @NotNull final String title) {
+    return findByTitle(robot, title, Timeouts.INSTANCE.getMinutes05());
   }
 
   @NotNull
-  static JPanelFixture findMacSheetByTitle(@NotNull Robot robot, @NotNull Container root, @NotNull String title, @NotNull Timeout timeout) {
+  static JDialog findByTitle(@NotNull Robot robot, @NotNull final String title, @NotNull Timeout timeout) {
+    return GuiTestUtil.INSTANCE.waitUntilFound(robot, null, new GenericTypeMatcher<JDialog>(JDialog.class) {
+      @Override
+      protected boolean isMatching(@NotNull JDialog dialog) {
+        if (!title.equals(dialog.getTitle()) || !dialog.isShowing()) {
+          return false;
+        }
+        return isMessageDialog(dialog);
+      }
+    }, timeout);
+  }
+
+  @NotNull
+  static JDialog findAny(@NotNull Robot robot, @NotNull Timeout timeout) {
+    return GuiTestUtil.INSTANCE.waitUntilFound(robot, null, new GenericTypeMatcher<JDialog>(JDialog.class) {
+      @Override
+      protected boolean isMatching(@NotNull JDialog dialog) {
+        return isMessageDialog(dialog);
+      }
+    }, timeout);
+  }
+
+
+  @NotNull
+  static MacMessageFixture findMacMessageByTitle(@NotNull Robot robot, @NotNull Container root, @NotNull String title) {
+    return findMacMessageByTitle(robot, root, title, Timeouts.INSTANCE.getMinutes05());
+  }
+
+  @NotNull
+  static MacMessageFixture findMacMessageByTitle(@NotNull Robot robot, @NotNull Container root, @NotNull String title, @NotNull Timeout timeout) {
     JPanel sheetPanel = getSheetPanel(robot, root, timeout);
 
     String sheetTitle = getTitle(sheetPanel, robot);
     assertThat(sheetTitle).as("Sheet title").isEqualTo(title);
 
-    return new MacSheetPanelFixture(robot, sheetPanel);
+    return new MacMessageFixture(robot, sheetPanel);
   }
 
 
-  private static JPanelFixture findMacSheetAny(@NotNull Robot robot, @NotNull Container root) {
-    return findMacSheetAny(robot, root, Timeouts.INSTANCE.getMinutes05());
+  private static MacMessageFixture findMacMessageAny(@NotNull Robot robot, @NotNull Container root) {
+    return findMacMessageAny(robot, root, Timeouts.INSTANCE.getMinutes05());
   }
 
-  private static JPanelFixture findMacSheetAny(@NotNull Robot robot, @NotNull Container root, @NotNull Timeout timeout) {
+  private static MacMessageFixture findMacMessageAny(@NotNull Robot robot, @NotNull Container root, @NotNull Timeout timeout) {
     JPanel sheetPanel = getSheetPanel(robot, root, timeout);
-    return new MacSheetPanelFixture(robot, sheetPanel);
+    return new MacMessageFixture(robot, sheetPanel);
   }
 
   @NotNull
@@ -172,8 +232,7 @@ public class MessagesFixture {
 
   @Nullable
   public String getTitle() {
-    if (myDelegate instanceof MacSheetPanelFixture) return ((MacSheetPanelFixture)myDelegate).getTitle();
-    return ((MessageDialogFixture)myDelegate).target().getTitle();
+    return ((JDialog)myTarget).getTitle();
   }
 
   @Nullable
@@ -190,21 +249,25 @@ public class MessagesFixture {
     return getHtmlBody(titleTextPane.getText());
   }
 
-  @Nullable
-  public <T extends JComponent> T find(GenericTypeMatcher<T> matcher) {
-    return myDelegate.robot().finder().find(myDelegate.target(), matcher);
+  @NotNull
+  public String getMessage() {
+    final JTextPane textPane = robot().finder().findByType(target(), JTextPane.class);
+    //noinspection ConstantConditions
+    return execute(new GuiQuery<String>() {
+      @Override
+      protected String executeInEDT() throws Throwable {
+        return StringUtil.notNullize(textPane.getText());
+      }
+    });
   }
 
-  interface Delegate {
-    @NotNull String getMessage();
-  }
+  private static class MacMessageFixture extends MessagesFixture<JPanel> {
 
-  private static class MacSheetPanelFixture extends JPanelFixture implements Delegate {
-    public MacSheetPanelFixture(@NotNull Robot robot, @NotNull JPanel target) {
+    public MacMessageFixture(@NotNull Robot robot, @NotNull JPanel target) {
       super(robot, target);
     }
 
-
+    @Override
     @Nullable
     public String getTitle(){
       final JEditorPane messageTextPane = getMessageTextPane(target());

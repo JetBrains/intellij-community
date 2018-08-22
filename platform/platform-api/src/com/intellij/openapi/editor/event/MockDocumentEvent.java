@@ -28,33 +28,40 @@ public class MockDocumentEvent extends DocumentEvent {
     myTimestamp = document.getModificationStamp();
   }
 
+  @Override
   @NotNull
   public Document getDocument() {
     return (Document)getSource();
   }
 
+  @Override
   public int getOffset() {
     return myOffset;
   }
 
+  @Override
   public int getOldLength() {
     return 0;
   }
 
+  @Override
   public int getNewLength() {
     return 0;
   }
 
+  @Override
   @NotNull
   public CharSequence getOldFragment() {
     return "";
   }
 
+  @Override
   @NotNull
   public CharSequence getNewFragment() {
     return "";
   }
 
+  @Override
   public long getOldTimeStamp() {
     return myTimestamp;
   }

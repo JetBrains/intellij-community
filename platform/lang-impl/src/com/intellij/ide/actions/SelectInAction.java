@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.actions;
 
@@ -30,8 +16,10 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.*;
 
 public class SelectInAction extends AnAction implements DumbAware {
@@ -89,7 +77,21 @@ public class SelectInAction extends AnAction implements DumbAware {
     public SelectInActionsStep(@NotNull final Collection<SelectInTarget> targetVector, @NotNull SelectInContext selectInContext) {
       mySelectInContext = selectInContext;
       myVisibleTargets = ContainerUtil.newArrayList(targetVector);
-      init(IdeBundle.message("title.popup.select.target"), myVisibleTargets, null);
+      List<Icon> icons = fillInIcons(targetVector, selectInContext);
+      init(IdeBundle.message("title.popup.select.target"), myVisibleTargets, icons);
+    }
+
+    @NotNull
+    private static List<Icon> fillInIcons(@NotNull Collection<SelectInTarget> targets, @NotNull SelectInContext selectInContext) {
+      ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(selectInContext.getProject());
+      List<Icon> list = new ArrayList<>();
+      for (SelectInTarget target : targets) {
+        String id = target.getMinorViewId() != null ? null : target.getToolWindowId();
+        ToolWindow toolWindow = toolWindowManager.getToolWindow(id);
+        Icon icon = toolWindow != null ? toolWindow.getIcon() : EmptyIcon.ICON_13;
+        list.add(icon);
+      }
+      return list;
     }
 
     @Override

@@ -89,7 +89,7 @@ public class PyAssignmentMappingTest extends LightMarkedTestCase {
     PsiElement src = marks.get("<src>").getParent(); // const -> expr;
     PsiElement[] dsts = new PsiElement[TARGET_NUM];
     for (int i=0; i<TARGET_NUM; i+=1) {
-      PsiElement dst = marks.get("<dst" + String.valueOf(i+1) +">").getParent(); // ident -> target expr
+      PsiElement dst = marks.get("<dst" + (i + 1) + ">").getParent(); // ident -> target expr
       Assert.assertTrue(dst instanceof PyTargetExpression);
       dsts[i] = dst;
     }
@@ -110,10 +110,10 @@ public class PyAssignmentMappingTest extends LightMarkedTestCase {
     PsiElement[] srcs = new PsiElement[PAIR_NUM];
     PsiElement[] dsts = new PsiElement[PAIR_NUM];
     for (int i=0; i<PAIR_NUM; i+=1) {
-      PsiElement dst = marks.get("<dst" + String.valueOf(i+1) +">").getParent(); // ident -> target expr
+      PsiElement dst = marks.get("<dst" + (i + 1) + ">").getParent(); // ident -> target expr
       Assert.assertTrue(dst instanceof PyTargetExpression);
       dsts[i] = dst;
-      PsiElement src = marks.get("<src" + String.valueOf(i+1) +">").getParent(); // ident -> target expr
+      PsiElement src = marks.get("<src" + (i + 1) + ">").getParent(); // ident -> target expr
       Assert.assertTrue(src instanceof PyExpression);
       srcs[i] = src;
     }
@@ -134,10 +134,10 @@ public class PyAssignmentMappingTest extends LightMarkedTestCase {
     PsiElement[] srcs = new PsiElement[PAIR_NUM];
     PsiElement[] dsts = new PsiElement[PAIR_NUM];
     for (int i=0; i<PAIR_NUM; i+=1) {
-      PsiElement dst = marks.get("<dst" + String.valueOf(i + 1) + ">").getParent(); // ident -> target expr
+      PsiElement dst = marks.get("<dst" + (i + 1) + ">").getParent(); // ident -> target expr
       Assert.assertTrue(dst instanceof PyTargetExpression);
       dsts[i] = dst;
-      PsiElement src = marks.get("<src" + String.valueOf(i + 1) + ">").getParent(); // ident -> target expr
+      PsiElement src = marks.get("<src" + (i + 1) + ">").getParent(); // ident -> target expr
       Assert.assertTrue(src instanceof PyExpression);
       srcs[i] = src;
     }
@@ -157,7 +157,7 @@ public class PyAssignmentMappingTest extends LightMarkedTestCase {
     Assert.assertEquals(SRC_NUM + 1, marks.size());
     PsiElement[] srcs = new PsiElement[SRC_NUM];
     for (int i=0; i<SRC_NUM; i+=1) {
-      PsiElement src = marks.get("<src" + String.valueOf(i+1) +">").getParent(); // ident -> target expr
+      PsiElement src = marks.get("<src" + (i + 1) + ">").getParent(); // ident -> target expr
       Assert.assertTrue(src instanceof PyExpression);
       srcs[i] = src;
     }
@@ -179,13 +179,13 @@ public class PyAssignmentMappingTest extends LightMarkedTestCase {
     Assert.assertEquals(DST_NUM + 3, marks.size());
     PsiElement[] dsts = new PsiElement[DST_NUM];
     for (int i=0; i<DST_NUM; i+=1) {
-      PsiElement dst = marks.get("<dst" + String.valueOf(i+1) +">").getParent(); // ident -> target expr
+      PsiElement dst = marks.get("<dst" + (i + 1) + ">").getParent(); // ident -> target expr
       Assert.assertTrue(dst instanceof PyTargetExpression);
       dsts[i] = dst;
     }
     PsiElement[] srcs = new PsiElement[DST_NUM];
     for (int i=0; i<DST_NUM; i+=1) {
-      PsiElement src = marks.get("<src" + String.valueOf(i+1) +">").getParent().getParent().getParent(); // ident -> target expr
+      PsiElement src = marks.get("<src" + (i + 1) + ">").getParent().getParent().getParent(); // ident -> target expr
       Assert.assertTrue(src instanceof PyExpression);
       srcs[i] = src;
     }

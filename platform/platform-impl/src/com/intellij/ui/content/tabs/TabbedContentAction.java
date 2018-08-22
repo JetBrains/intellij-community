@@ -41,6 +41,7 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
       myContent = content;
     }
 
+    @Override
     public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabled(myManager.getIndexOfContent(myContent) >= 0);
@@ -52,10 +53,12 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
       super(content, ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE_ACTIVE_TAB));
     }
 
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       myManager.removeContent(myContent, true);
     }
 
+    @Override
     public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
       presentation.setEnabledAndVisible(myManager.canCloseContents() && myContent.isCloseable());
@@ -68,6 +71,7 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
       super(content, ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE_ALL_EDITORS_BUT_THIS), UIBundle.message("tabbed.pane.close.all.but.this.action.name"));
     }
 
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       Content[] contents = myManager.getContents();
       for (Content content : contents) {
@@ -78,6 +82,7 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
       myManager.setSelectedContent(myContent);
     }
 
+    @Override
     public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
       presentation.setText(myManager.getCloseAllButThisActionName());
@@ -100,6 +105,7 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
       super(manager, ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE_ALL_EDITORS), UIBundle.message("tabbed.pane.close.all.action.name"), manager);
     }
 
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       Content[] contents = myManager.getContents();
       for (Content content : contents) {
@@ -109,6 +115,7 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
       }
     }
 
+    @Override
     public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
       presentation.setEnabledAndVisible(myManager.getContentCount() > 1 && myManager.canCloseAllContents());
@@ -119,10 +126,12 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
       super(manager, ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_TAB), manager);
     }
 
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       myManager.selectNextContent();
     }
 
+    @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(myManager.getContentCount() > 1);
       e.getPresentation().setText(myManager.getNextContentActionName());
@@ -134,10 +143,12 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
       super(manager, ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_TAB), manager);
     }
 
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       myManager.selectPreviousContent();
     }
 
+    @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(myManager.getContentCount() > 1);
       e.getPresentation().setText(myManager.getPreviousContentActionName());

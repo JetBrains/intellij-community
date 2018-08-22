@@ -307,8 +307,16 @@ public class LocalVariablesUtil {
     }
     catch (UnsupportedOperationException ignored) {
     }
+    catch (VMDisconnectedException e) {
+      throw e;
+    }
     catch (Exception e) {
-      LOG.error(e);
+      if (vm.canBeModified()) { // do not care in read only vms
+        LOG.error(e);
+      }
+      else {
+        LOG.warn(e);
+      }
     }
     return Collections.emptyList();
   }
@@ -382,6 +390,7 @@ public class LocalVariablesUtil {
       }
     }
 
+    @Override
     public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
       if (shouldVisit(statement)) {
         myIndexStack.push(myCurrentSlotIndex);

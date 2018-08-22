@@ -8,18 +8,18 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NullableLazyValue;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -86,7 +86,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private boolean myDeleted;
   private ClassLoader myLoader;
   private HelpSetPath[] myHelpSets;
-  @Nullable private MultiMap<String, Pair<String, Element>> myExtensions; // extension point name -> list of (extension default NS, extension element)
+  @Nullable private MultiMap<String, Element> myExtensions; // extension point name -> list of extension elements
   @Nullable private MultiMap<String, Element> myExtensionsPoints;
   private String myDescriptionChildText;
   private boolean myUseIdeaClassLoader;
@@ -112,20 +112,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     List<Element> result = new SmartList<>();
     for (Element extensionsRoot : elements) {
       result.addAll(extensionsRoot.getChildren());
-    }
-    return result;
-  }
-
-  @Nullable
-  private static List<Pair<String, Element>> copyChildrenAndNs(@Nullable Element[] elements) {
-    if (elements == null || elements.length == 0) {
-      return null;
-    }
-
-    List<Pair<String, Element>> result = new SmartList<>();
-    for (Element extensionsRoot : elements) {
-      String ns = extensionsRoot.getAttributeValue("defaultExtensionNs");
-      result.addAll(ContainerUtil.map(extensionsRoot.getChildren(), e->Pair.create(ns, e)));
     }
     return result;
   }
@@ -270,21 +256,22 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     if (myProjectComponents == null) myProjectComponents = ComponentConfig.EMPTY_ARRAY;
     if (myModuleComponents == null) myModuleComponents = ComponentConfig.EMPTY_ARRAY;
 
-    List<Pair<String, Element>> extensions = copyChildrenAndNs(pluginBean.extensions);
-    if (extensions != null) {
+    if (!ArrayUtil.isEmpty(pluginBean.extensions)) {
       myExtensions = MultiMap.createSmart();
-      for (Pair<String, Element> pair : extensions) {
-        String ns = pair.first;
-        Element extension = pair.second;
-        myExtensions.putValue(ExtensionsAreaImpl.extractEPName(extension, ns), Pair.create(ns, extension));
+      for (Element extensionsRoot : pluginBean.extensions) {
+        String ns = extensionsRoot.getAttributeValue("defaultExtensionNs");
+        for (Element extension : extensionsRoot.getChildren()) {
+          myExtensions.putValue(ExtensionsAreaImpl.extractEPName(extension, ns), extension);
+        }
       }
     }
 
-    List<Element> extensionPoints = copyChildren(pluginBean.extensionPoints);
-    if (extensionPoints != null) {
+    if (!ArrayUtil.isEmpty(pluginBean.extensionPoints)) {
       myExtensionsPoints = MultiMap.createSmart();
-      for (Element extensionPoint : extensionPoints) {
-        myExtensionsPoints.putValue(StringUtil.notNullize(extensionPoint.getAttributeValue(ExtensionsAreaImpl.ATTRIBUTE_AREA)), extensionPoint);
+      for (Element extensionsRoot : pluginBean.extensionPoints) {
+        for (Element extensionPoint : extensionsRoot.getChildren()) {
+          myExtensionsPoints.putValue(StringUtilRt.notNullize(extensionPoint.getAttributeValue(ExtensionsAreaImpl.ATTRIBUTE_AREA)), extensionPoint);
+        }
       }
     }
 
@@ -335,10 +322,14 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   // made public for Upsource
   public void registerExtensions(@NotNull ExtensionsArea area, @NotNull String epName) {
     if (myExtensions != null) {
-      for (Pair<String, Element> pair : myExtensions.get(epName)) {
-        Element element = pair.second;
-        String ns = pair.first;
-        area.registerExtension(this, element, ns);
+      Collection<Element> elements = myExtensions.get(epName);
+      if (elements.isEmpty()) {
+        return;
+      }
+
+      ExtensionPoint<Object> extensionPoint = area.getExtensionPoint(epName);
+      for (Element element : elements) {
+        area.registerExtension(extensionPoint, this, element);
       }
     }
   }
@@ -429,10 +420,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   public MultiMap<String, Element> getExtensions() {
     if (myExtensions == null) return null;
     MultiMap<String, Element> result = MultiMap.create();
-
-    for (Map.Entry<String, Collection<Pair<String, Element>>> entry : myExtensions.entrySet()) {
-      result.put(entry.getKey(), ContainerUtil.map(entry.getValue(), p->p.second));
-    }
+    result.putAllValues(myExtensions);
     return result;
   }
 

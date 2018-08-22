@@ -25,7 +25,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.JBColor;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
-import java.util.HashMap;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -33,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.HashMap;
 import java.util.Map;
 
 public class HighlightDisplayLevel {
@@ -158,6 +158,7 @@ public class HighlightDisplayLevel {
       myKey = key;
     }
 
+    @Override
     @NotNull
     public Color getColor() {
       return ObjectUtils.notNull(getColorInner(), JBColor.GRAY);

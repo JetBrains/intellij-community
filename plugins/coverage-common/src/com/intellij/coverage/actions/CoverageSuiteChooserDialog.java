@@ -30,8 +30,8 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class CoverageSuiteChooserDialog extends DialogWrapper {
   @NonNls private static final String LOCAL = "Local";
@@ -50,6 +50,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
     myRootNode = new CheckedTreeNode("");
     initTree();
     mySuitesTree = new CheckboxTree(new SuitesRenderer(), myRootNode) {
+      @Override
       protected void installSpeedSearch() {
         new TreeSpeedSearch(this, path -> {
           final DefaultMutableTreeNode component = (DefaultMutableTreeNode)path.getLastPathComponent();
@@ -271,7 +272,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
       if (file != null) {
         //ensure timestamp in vfs is updated
         VfsUtil.markDirtyAndRefresh(false, false, false, file);
-        
+
         final CoverageRunner coverageRunner = getCoverageRunner(file);
         if (coverageRunner == null) {
           Messages.showErrorDialog(myProject, "No coverage runner available for " + file.getName(), CommonBundle.getErrorTitle());

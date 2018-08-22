@@ -36,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 
 public class CvsCheckoutProvider implements CheckoutProvider {
+  @Override
   public void doCheckout(@NotNull final Project project, final CheckoutProvider.Listener listener) {
 
     final CheckoutWizard checkoutWizard = new CheckoutWizard(project);
@@ -56,6 +57,7 @@ public class CvsCheckoutProvider implements CheckoutProvider {
 
     final CvsOperationExecutor executor = new CvsOperationExecutor(null);
     executor.performActionSync(checkoutHandler, new CvsOperationExecutorCallback() {
+      @Override
       public void executionFinished(boolean successfully) {
         if (!executor.hasNoErrors()) {
           Messages.showErrorDialog(CvsBundle.message("message.error.checkout", executor.getResult().composeError().getLocalizedMessage()),
@@ -65,9 +67,11 @@ public class CvsCheckoutProvider implements CheckoutProvider {
         refreshAfterCheckout(listener, selectedElements, checkoutDirectory, useAlternateCheckoutPath);
       }
 
+      @Override
       public void executionFinishedSuccessfully() {
       }
 
+      @Override
       public void executeInProgressAfterAction(ModalityContext modaityContext) {
       }
     });
@@ -94,6 +98,7 @@ public class CvsCheckoutProvider implements CheckoutProvider {
     return checkoutPaths;
   }
 
+  @Override
   public String getVcsName() {
     return "_CVS";
   }

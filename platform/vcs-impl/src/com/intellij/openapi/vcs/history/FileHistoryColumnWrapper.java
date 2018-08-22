@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.ui.dualView.DualView;
@@ -38,6 +24,7 @@ abstract class FileHistoryColumnWrapper<T> extends DualViewColumnInfo<TreeNodeOn
     myBaseColumn = additionalColumn;
   }
 
+  @Override
   public Comparator<TreeNodeOnVcsRevision> getComparator() {
     final Comparator<VcsFileRevision> comparator = myBaseColumn.getComparator();
     if (comparator == null) return null;
@@ -50,35 +37,43 @@ abstract class FileHistoryColumnWrapper<T> extends DualViewColumnInfo<TreeNodeOn
     };
   }
 
+  @Override
   public String getName() {
     return myBaseColumn.getName();
   }
 
+  @Override
   public void setName(String s) {
     myBaseColumn.setName(s);
   }
 
+  @Override
   public Class getColumnClass() {
     return myBaseColumn.getColumnClass();
   }
 
+  @Override
   public boolean isCellEditable(TreeNodeOnVcsRevision o) {
     return myBaseColumn.isCellEditable(o.getRevision());
   }
 
+  @Override
   public void setValue(TreeNodeOnVcsRevision o, T aValue) {
     //noinspection unchecked
     myBaseColumn.setValue(o.getRevision(), aValue);
   }
 
+  @Override
   public TableCellRenderer getRenderer(TreeNodeOnVcsRevision p0) {
     return myBaseColumn.getRenderer(p0.getRevision());
   }
 
+  @Override
   public TableCellEditor getEditor(TreeNodeOnVcsRevision item) {
     return myBaseColumn.getEditor(item.getRevision());
   }
 
+  @Override
   public String getMaxStringValue() {
     final String superValue = myBaseColumn.getMaxStringValue();
     if (superValue != null) return superValue;
@@ -116,22 +111,27 @@ abstract class FileHistoryColumnWrapper<T> extends DualViewColumnInfo<TreeNodeOn
     return value + "ww";
   }
 
+  @Override
   public int getAdditionalWidth() {
     return myBaseColumn.getAdditionalWidth();
   }
 
+  @Override
   public int getWidth(JTable table) {
     return myBaseColumn.getWidth(table);
   }
 
+  @Override
   public boolean shouldBeShownIsTheTree() {
     return true;
   }
 
+  @Override
   public boolean shouldBeShownIsTheTable() {
     return true;
   }
 
+  @Override
   public T valueOf(TreeNodeOnVcsRevision o) {
     return myBaseColumn.valueOf(o.getRevision());
   }

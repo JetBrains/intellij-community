@@ -74,6 +74,7 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
                                                              GridBagConstraints.NONE, JBUI.insets(2, 0, 10, 5), 0, 0));
 
     configureButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
 
         final Project project = getProject(context, type);

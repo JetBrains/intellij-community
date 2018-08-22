@@ -44,6 +44,7 @@ public class AddConstructorFix implements LocalQuickFix, IntentionAction {
     name = QuickFixBundle.message("model.create.constructor.quickfix.message", signature);
   }
 
+  @Override
   @NotNull
   public String getName() {
     return name;
@@ -56,6 +57,7 @@ public class AddConstructorFix implements LocalQuickFix, IntentionAction {
     return name;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("model.create.constructor.quickfix.message.family.name");
@@ -95,6 +97,7 @@ public class AddConstructorFix implements LocalQuickFix, IntentionAction {
     return true;
   }
 
+  @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     applyFix();
   }

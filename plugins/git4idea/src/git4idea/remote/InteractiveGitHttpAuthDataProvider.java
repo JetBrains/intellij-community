@@ -6,13 +6,13 @@ import com.intellij.util.AuthData;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import java.awt.*;
 
 /**
  * Provides authentication information to the {@link git4idea.commands.GitHttpAuthenticator} for a single run.
  * Main use-case is to show a button in git login dialog which will allow user to manually select data that will be used for the current run.
  * Generally it will be shown when {@link GitHttpAuthDataProvider} could not provide appropriate auth data silently.
- *
+ * <p>
  * It is advised to configure related {@link GitHttpAuthDataProvider} for the continuous use when data is selected.
  *
  * @see GitRepositoryHostingService#getInteractiveAuthDataProvider(Project, String)
@@ -21,5 +21,5 @@ import javax.swing.*;
 public interface InteractiveGitHttpAuthDataProvider {
   @CalledInAwt
   @Nullable
-  AuthData getAuthData(@Nullable JComponent parentComponent);
+  AuthData getAuthData(@Nullable Component parentComponent);
 }

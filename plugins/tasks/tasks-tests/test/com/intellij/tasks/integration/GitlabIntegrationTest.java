@@ -90,7 +90,6 @@ public class GitlabIntegrationTest extends TaskManagerTestCase {
     assertEquals("#1 First issue with iid = 1", myRepository.getTaskComment(task));
   }
 
-
   @Override
   public void setUp() throws Exception {
     super.setUp();

@@ -8,12 +8,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -44,6 +44,7 @@ public class DependsOnMethodInspection extends AbstractBaseJavaLocalInspectionTo
     return "dependsOnMethodTestNG";
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }

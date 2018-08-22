@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.parser;
 
 import com.intellij.lang.ASTNode;
@@ -27,6 +28,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
 
   private final Stack<TokenSet> myStopTokensStack = new Stack<>();
 
+  @Override
   @NotNull
   public ASTNode parse(@NotNull final IElementType root, @NotNull final PsiBuilder builder) {
     myBuilder = builder;
@@ -81,7 +83,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
     IElementType nodeType = null;
 
 
-    // It looks like tag for a block node should be located on a separate line 
+    // It looks like tag for a block node should be located on a separate line
     if (getTokenType() == YAMLTokenTypes.TAG && myBuilder.lookAhead(1) == YAMLTokenTypes.EOL) {
       advanceLexer();
     }

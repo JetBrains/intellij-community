@@ -17,10 +17,10 @@ import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -32,6 +32,7 @@ class PreviewDiffRequest extends SimpleDiffRequest {
   private final Map<FragmentNode, Couple<TextRange>> myLinesBounds;
   private final Consumer<FragmentNode> mySelectNode;
   private CaretTracker myCaretTracker; // accessed in EDT
+  private boolean myInitialized; // accessed in EDT
 
   public PreviewDiffRequest(@NotNull Map<FragmentNode, Couple<TextRange>> linesBounds,
                             @NotNull DiffContent content1,
@@ -65,6 +66,12 @@ class PreviewDiffRequest extends SimpleDiffRequest {
     }
   }
 
+  public void onInitialized() {
+    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread(), "EDT only");
+
+    myInitialized = true;
+  }
+
   abstract class CaretTracker<V extends DiffViewerBase> extends DiffViewerListener {
     protected final V myViewer;
     protected boolean myMoveCaret = true;
@@ -93,14 +100,15 @@ class PreviewDiffRequest extends SimpleDiffRequest {
       }
 
       @Override
-      public void caretPositionChanged(CaretEvent e) {
+      public void caretPositionChanged(@NotNull CaretEvent e) {
+        if (!myInitialized) return;
         myMoveCaret = false;
         try {
           int newOffset = e.getEditor().logicalPositionToOffset(e.getNewPosition());
           for (Map.Entry<FragmentNode, Couple<TextRange>> entry : myLinesBounds.entrySet()) {
             TextRange range = mySideGetter.apply(entry.getValue());
             if (range.containsOffset(newOffset)) {
-              mySelectNode.consume(entry.getKey());
+              mySelectNode.accept(entry.getKey());
               break;
             }
           }

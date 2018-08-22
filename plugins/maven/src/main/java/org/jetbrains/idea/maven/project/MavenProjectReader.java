@@ -427,6 +427,7 @@ public class MavenProjectReader {
 
       Pair<VirtualFile, RawModelReadResult> parentModelWithProblems =
         new MavenParentProjectFileProcessor<Pair<VirtualFile, RawModelReadResult>>() {
+          @Override
           @Nullable
           protected VirtualFile findManagedFile(@NotNull MavenId id) {
             return locator.findProjectFile(id);
@@ -585,11 +586,13 @@ public class MavenProjectReader {
                                  final Collection<MavenProjectProblem> problems,
                                  final MavenProjectProblem.ProblemType type) {
     return MavenJDOMUtil.read(file, new MavenJDOMUtil.ErrorHandler() {
+      @Override
       public void onReadError(IOException e) {
         MavenLog.LOG.warn("Cannot read the pom file: " + e);
         problems.add(MavenProjectProblem.createProblem(file.getPath(), e.getMessage(), type));
       }
 
+      @Override
       public void onSyntaxError() {
         problems.add(MavenProjectProblem.createSyntaxProblem(file.getPath(), type));
       }

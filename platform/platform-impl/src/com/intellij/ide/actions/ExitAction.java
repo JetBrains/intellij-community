@@ -10,10 +10,12 @@ import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
 public class ExitAction extends AnAction implements DumbAware {
+  @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(!SystemInfo.isMacSystemMenu || !ActionPlaces.MAIN_MENU.equals(e.getPlace()));
   }
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     ApplicationManager.getApplication().exit();
   }

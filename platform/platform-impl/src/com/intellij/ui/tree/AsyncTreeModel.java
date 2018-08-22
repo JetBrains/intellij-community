@@ -44,6 +44,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
   private final TreeModel model;
   private final boolean showLoadingNode;
   private final TreeModelListener listener = new TreeModelAdapter() {
+    @Override
     protected void process(TreeModelEvent event, EventType type) {
       TreePath path = event.getTreePath();
       if (path == null) {
@@ -234,6 +235,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
    * @param visitor an object that controls visiting a tree structure
    * @return a promise that will be resolved when visiting is finished
    */
+  @Override
   @NotNull
   public Promise<TreePath> accept(@NotNull TreeVisitor visitor) {
     return accept(visitor, true);

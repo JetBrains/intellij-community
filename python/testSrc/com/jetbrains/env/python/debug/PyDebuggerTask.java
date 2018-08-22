@@ -125,6 +125,7 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
 
       mySession = XDebuggerManager.getInstance(getProject()).
         startSession(env, new XDebugProcessStarter() {
+          @Override
           @NotNull
           public XDebugProcess start(@NotNull final XDebugSession session) {
             myDebugProcess =

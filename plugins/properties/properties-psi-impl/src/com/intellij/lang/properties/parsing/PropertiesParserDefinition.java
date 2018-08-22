@@ -35,43 +35,52 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class PropertiesParserDefinition implements ParserDefinition {
+  @Override
   @NotNull
   public Lexer createLexer(Project project) {
     return new PropertiesLexer();
   }
 
+  @Override
   public IFileElementType getFileNodeType() {
     return PropertiesElementTypes.FILE;
   }
 
+  @Override
   @NotNull
   public TokenSet getWhitespaceTokens() {
     return PropertiesTokenTypes.WHITESPACES;
   }
 
+  @Override
   @NotNull
   public TokenSet getCommentTokens() {
     return PropertiesTokenTypes.COMMENTS;
   }
 
+  @Override
   @NotNull
   public TokenSet getStringLiteralElements() {
     return TokenSet.EMPTY;
   }
 
+  @Override
   @NotNull
   public PsiParser createParser(final Project project) {
     return new PropertiesParser();
   }
 
+  @Override
   public PsiFile createFile(FileViewProvider viewProvider) {
     return new PropertiesFileImpl(viewProvider);
   }
 
+  @Override
   public SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
     return SpaceRequirements.MAY;
   }
 
+  @Override
   @NotNull
   public PsiElement createElement(ASTNode node) {
     final IElementType type = node.getElementType();

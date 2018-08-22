@@ -23,16 +23,19 @@ public abstract class MavenRunnerParametersConfigurable extends MavenRunnerParam
     return null;
   }
 
+  @Override
   public boolean isModified() {
     MavenRunnerParameters formParameters = new MavenRunnerParameters();
     setData(formParameters);
     return !formParameters.equals(getParameters());
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     setData(getParameters());
   }
 
+  @Override
   public void reset() {
     getData(getParameters());
   }

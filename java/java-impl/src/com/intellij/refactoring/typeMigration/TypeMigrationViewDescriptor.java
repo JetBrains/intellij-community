@@ -29,19 +29,23 @@ class TypeMigrationViewDescriptor implements UsageViewDescriptor {
     myElement = elements;
   }
 
+  @Override
   @NotNull
   public PsiElement[] getElements() {
     return new PsiElement[]{myElement};
   }
 
+  @Override
   public String getProcessedElementsHeader() {
     return "Root for type migration";
   }
 
+  @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("occurences.to.be.migrated", UsageViewBundle.getReferencesString(usagesCount, filesCount));
   }
 
+  @Override
   public String getCommentReferencesText(int usagesCount, int filesCount) {
     return null;
   }

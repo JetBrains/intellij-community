@@ -9,9 +9,9 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,21 +20,19 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.util.LowMemoryWatcher.LowMemoryWatcherType.ONLY_AFTER_GC;
 
-public class LowMemoryNotifier implements ApplicationComponent {
+public class LowMemoryNotifier implements Disposable {
   private final LowMemoryWatcher myWatcher = LowMemoryWatcher.register(this::onLowMemorySignalReceived, ONLY_AFTER_GC);
   private final AtomicBoolean myNotificationShown = new AtomicBoolean();
 
-  @Override
-  public void initComponent() {
-    IdePerformanceListener.Adapter handler = new IdePerformanceListener.Adapter() {
+  public LowMemoryNotifier() {
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(IdePerformanceListener.TOPIC, new IdePerformanceListener() {
       @Override
       public void uiFreezeFinished(int lengthInSeconds) {
         FUSApplicationUsageTrigger.getInstance().trigger(AppLifecycleUsageTriggerCollector.class, "ide.freeze." + lengthInSeconds);
         FeatureUsageLogger.INSTANCE.log("lifecycle",
                                         "ide.freeze", Collections.singletonMap("durationSeconds", lengthInSeconds));
       }
-    };
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(IdePerformanceListener.TOPIC, handler);
+    });
   }
 
   private void onLowMemorySignalReceived() {
@@ -56,7 +54,7 @@ public class LowMemoryNotifier implements ApplicationComponent {
   }
 
   @Override
-  public void disposeComponent() {
+  public void dispose() {
     myWatcher.stop();
   }
 }

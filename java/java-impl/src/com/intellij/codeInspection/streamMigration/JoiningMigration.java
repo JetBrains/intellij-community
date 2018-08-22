@@ -921,6 +921,7 @@ List<PsiExpression> builderStrInitializers = null;
         myTruncateIfStatement = truncateIfStatement;
       }
 
+      @Override
       void preCleanUp(CommentTracker ct) {
         super.preCleanUp(ct);
         ct.delete(myTruncateIfStatement);
@@ -1034,6 +1035,7 @@ List<PsiExpression> builderStrInitializers = null;
         myDelimiterVariable = delimiterVariable;
       }
 
+      @Override
       void preCleanUp(CommentTracker ct) {
         super.preCleanUp(ct);
         ct.delete(myDelimiterVariable);

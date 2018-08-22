@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -61,6 +47,7 @@ public class ExtractMethodHelper {
     }
     final Project project = callElement.getProject();
     ProgressManager.getInstance().run(new Task.Backgroundable(project, RefactoringBundle.message("searching.for.duplicates"), true) {
+      @Override
       public void run(@NotNull ProgressIndicator indicator) {
         if (myProject == null || myProject.isDisposed()) return;
         final List<SimpleMatch> duplicates = ReadAction.compute(() -> finder.findDuplicates(scope, generatedMethod));
@@ -73,14 +60,14 @@ public class ExtractMethodHelper {
 
   /**
    * Finds duplicates of the code fragment specified in the finder in given scopes.
-   * Note that in contrast to {@link #processDuplicates} the search is performed synchronously because normally you need the results in 
+   * Note that in contrast to {@link #processDuplicates} the search is performed synchronously because normally you need the results in
    * order to complete the refactoring. If user cancels it, empty list will be returned.
    *
    * @param finder          finder object to seek for duplicates
    * @param searchScopes    scopes where to look them in
    * @param generatedMethod new method that should be excluded from the search
-   * @return list of discovered duplicate code fragments or empty list if user interrupted the search 
-   * @see #replaceDuplicates(PsiElement, Editor, Consumer, List)  
+   * @return list of discovered duplicate code fragments or empty list if user interrupted the search
+   * @see #replaceDuplicates(PsiElement, Editor, Consumer, List)
    */
   @NotNull
   public static List<SimpleMatch> collectDuplicates(@NotNull SimpleDuplicatesFinder finder,
@@ -99,7 +86,7 @@ public class ExtractMethodHelper {
       return Collections.emptyList();
     }
   }
-  
+
 
   /**
    * Notifies user about found duplicates and then highlights each of them in the editor and asks user how to proceed.

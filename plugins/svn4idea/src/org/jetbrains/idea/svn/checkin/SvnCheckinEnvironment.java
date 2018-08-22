@@ -40,8 +40,8 @@ import org.jetbrains.idea.svn.status.StatusType;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class SvnCheckinEnvironment implements CheckinEnvironment {
 
@@ -52,16 +52,19 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     mySvnVcs = svnVcs;
   }
 
+  @Override
   public RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel,
                                                              PairConsumer<Object, Object> additionalDataConsumer) {
     return new KeepLocksComponent();
   }
 
+  @Override
   @Nullable
   public String getDefaultMessageFor(FilePath[] filesToCheckin) {
     return null;
   }
 
+  @Override
   @Nullable
   public String getHelpId() {
     return null;
@@ -163,10 +166,12 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     return result;
   }
 
+  @Override
   public String getCheckinOperationName() {
     return SvnBundle.message("checkin.operation.name");
   }
 
+  @Override
   public List<VcsException> commit(List<Change> changes,
                                    final String preparedComment,
                                    @NotNull NullableFunction<Object, Object> parametersHolder,
@@ -190,10 +195,12 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     return exception;
   }
 
+  @Override
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
     return commit(changes, preparedComment, FunctionUtil.nullConstant(), null);
   }
 
+  @Override
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> filePaths) {
     List<VcsException> exceptions = new ArrayList<>();
     List<File> files = ChangesUtil.filePathsToFiles(filePaths);
@@ -210,6 +217,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     return exceptions;
   }
 
+  @Override
   public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
     return scheduleUnversionedFilesForAddition(mySvnVcs, files);
   }
@@ -273,6 +281,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       myPanel.add(myKeepLocksBox, BorderLayout.CENTER);
     }
 
+    @Override
     public JComponent getComponent() {
       return myPanel;
     }
@@ -285,15 +294,18 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       return myAutoUpdate.isSelected();
     }
 
+    @Override
     public void refresh() {
     }
 
+    @Override
     public void saveState() {
       final SvnConfiguration configuration = mySvnVcs.getSvnConfiguration();
       configuration.setKeepLocks(isKeepLocks());
       configuration.setAutoUpdateAfterCommit(isAutoUpdate());
     }
 
+    @Override
     public void restoreState() {
       final SvnConfiguration configuration = mySvnVcs.getSvnConfiguration();
       myIsKeepLocks = configuration.isKeepLocks();

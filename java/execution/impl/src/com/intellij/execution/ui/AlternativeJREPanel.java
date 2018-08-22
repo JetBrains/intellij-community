@@ -98,6 +98,7 @@ public class AlternativeJREPanel extends JPanel implements PanelWithAnchor {
     InsertPathAction.addTo(myFieldWithHistory.getTextEditor());
 
     myCbEnabled.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         enabledChanged();
       }

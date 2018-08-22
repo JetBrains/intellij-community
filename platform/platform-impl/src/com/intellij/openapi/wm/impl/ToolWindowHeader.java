@@ -17,7 +17,6 @@ import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.util.Producer;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
@@ -86,7 +85,8 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     myToolbar.setReservePlaceAutoPopupIcon(false);
     
     JComponent component = myToolbar.getComponent();
-    component.setBorder(JBUI.Borders.empty());
+    int padding = JBUI.CurrentTheme.ToolWindow.tabVerticalPadding();
+    component.setBorder(BorderFactory.createEmptyBorder(padding, 0, padding, 0));
     component.setOpaque(false);
     add(component, BorderLayout.EAST);
 
@@ -123,7 +123,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     });
 
     setOpaque(true);
-    setBorder(BorderFactory.createEmptyBorder(TabsUtil.TABS_BORDER, 1, TabsUtil.TABS_BORDER, 1));
+    setBorder(JBUI.CurrentTheme.ToolWindow.tabBorder());
 
     new DoubleClickListener(){
       @Override
@@ -248,18 +248,6 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   protected abstract void sideHidden();
 
   protected abstract void toolWindowTypeChanged(@NotNull ToolWindowType type);
-
-  @Override
-  public Dimension getPreferredSize() {
-    Dimension size = super.getPreferredSize();
-    return new Dimension(size.width, TabsUtil.getTabsHeight(JBUI.CurrentTheme.ToolWindow.tabVerticalPadding()));
-  }
-
-  @Override
-  public Dimension getMinimumSize() {
-    Dimension size = super.getMinimumSize();
-    return new Dimension(size.width, TabsUtil.getTabsHeight(JBUI.CurrentTheme.ToolWindow.tabVerticalPadding()));
-  }
 
   private class ShowOptionsAction extends DumbAwareAction {
     ShowOptionsAction() {

@@ -94,6 +94,7 @@ public class BreakpointEditor {
         e.getPresentation().setEnabled(!disabled && (editor == null || StringUtil.isEmpty(editor.getSelectionModel().getSelectedText())) );
       }
 
+      @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         done();
       }

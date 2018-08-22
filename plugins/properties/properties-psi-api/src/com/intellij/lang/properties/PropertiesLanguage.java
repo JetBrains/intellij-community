@@ -30,6 +30,7 @@ public class PropertiesLanguage extends Language {
   public PropertiesLanguage() {
     super("Properties", "text/properties");
     SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExplicitExtension(this, new SingleLazyInstanceSyntaxHighlighterFactory() {
+      @Override
       @NotNull
       protected SyntaxHighlighter createHighlighter() {
         return new PropertiesHighlighter();

@@ -55,6 +55,7 @@ public class DefaultEditorTabsPainter extends JBEditorTabsPainter {
     g.fill(clip);
   }
 
+  @Override
   public void fillSelectionAndBorder(Graphics2D g, JBTabsImpl.ShapeInfo selectedShape, Color tabColor, int x, int y, int height) {
     g.setColor(tabColor != null ? tabColor : getDefaultTabColor());
     g.fill(selectedShape.fillPath.getShape());

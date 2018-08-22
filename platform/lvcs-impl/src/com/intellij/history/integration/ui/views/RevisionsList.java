@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.history.integration.ui.views;
 
@@ -47,8 +33,8 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class RevisionsList {
   public static final int RECENT_PERIOD = 12;
@@ -84,6 +70,7 @@ public class RevisionsList {
       private int mySelectedRow2 = 0;
       private final SelectionListener mySelectionListener = l;
 
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         if (e.getValueIsAdjusting()) return;
 
@@ -165,14 +152,17 @@ public class RevisionsList {
       myPeriods = periods;
     }
 
+    @Override
     public int getColumnCount() {
       return 1;
     }
 
+    @Override
     public int getRowCount() {
       return myRevisions.size();
     }
 
+    @Override
     public RevisionItem getValueAt(int rowIndex, int columnIndex) {
       return myRevisions.get(rowIndex);
     }
@@ -290,6 +280,7 @@ public class RevisionsList {
       myTitleLabel.setComponentStyle(UIUtil.ComponentStyle.REGULAR);
     }
 
+    @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       if (value == null) return myWrapperPanel; // null erroneously comes from JPanel.getAccessibleChild
 

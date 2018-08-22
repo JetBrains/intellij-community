@@ -63,10 +63,12 @@ public class TurnRefsToSuperDialog extends RefactoringDialog {
     return myCbReplaceInstanceOf.isSelected();
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.TURN_REFS_TO_SUPER);
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return mySuperClassesList;
   }

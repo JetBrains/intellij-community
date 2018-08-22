@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class CloseTaskAction extends BaseTaskAction {
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     assert project != null;

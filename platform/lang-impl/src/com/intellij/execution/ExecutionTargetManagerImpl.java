@@ -14,6 +14,7 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -50,7 +51,7 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
       return true;
     }
   };
-  
+
   @NotNull private final Project myProject;
   @NotNull private final Object myActiveTargetLock = new Object();
   @Nullable private ExecutionTarget myActiveTarget;
@@ -176,17 +177,23 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
     return null;
   }
 
+  @Override
   protected boolean doCanRun(@Nullable RunnerAndConfigurationSettings settings, @NotNull ExecutionTarget target) {
     if (settings == null) return false;
 
     boolean isCompound = settings.getConfiguration() instanceof CompoundRunConfiguration;
     if (isCompound && target == MULTIPLE_TARGETS) return true;
 
+    boolean useCache = ApplicationManager.getApplication().isInternal() || Registry.is("update.run.configuration.actions.from.cache");
+
     ExecutionTarget defaultTarget = DefaultExecutionTarget.INSTANCE;
     boolean checkFallbackToDefault = isCompound
                                      && !target.equals(defaultTarget);
 
     return doWithEachNonCompoundWithSpecifiedTarget(settings, each -> {
+      if (useCache && RunManagerImpl.getInstanceImpl(myProject).isInvalidInCache(each.first)) {
+        return false;
+      }
       RunConfiguration configuration = each.first.getConfiguration();
       if (!(configuration instanceof TargetAwareRunProfile)) return true;
       TargetAwareRunProfile targetAwareProfile = (TargetAwareRunProfile)configuration;
@@ -276,7 +283,7 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
     ApplicationManager.getApplication().assertIsDispatchThread();
     updateActiveTarget();
   }
-  
+
   @TestOnly
   public void reset() {
     mySavedActiveTargetId = null;

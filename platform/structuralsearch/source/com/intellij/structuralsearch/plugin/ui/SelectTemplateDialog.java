@@ -101,12 +101,14 @@ public class SelectTemplateDialog extends DialogWrapper {
   }
 
   class MySelectionListener implements TreeSelectionListener, ListSelectionListener {
+    @Override
     public void valueChanged(TreeSelectionEvent e) {
       if (e.getNewLeadSelectionPath() != null) {
         setPatternFromNode((DefaultMutableTreeNode)e.getNewLeadSelectionPath().getLastPathComponent());
       }
     }
 
+    @Override
     public void valueChanged(ListSelectionEvent e) {
       if (e.getValueIsAdjusting() || e.getLastIndex() == -1) return;
       int selectionIndex = existingTemplatesComponent.getHistoryList().getSelectedIndex();
@@ -122,6 +124,7 @@ public class SelectTemplateDialog extends DialogWrapper {
     );
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     final JPanel centerPanel = new JPanel(new BorderLayout());
     Splitter splitter;
@@ -185,6 +188,7 @@ public class SelectTemplateDialog extends DialogWrapper {
     return centerPanel;
   }
 
+  @Override
   public void dispose() {
     EditorFactory.getInstance().releaseEditor(searchPatternEditor);
     if (replacePatternEditor != null) EditorFactory.getInstance().releaseEditor(replacePatternEditor);
@@ -192,12 +196,14 @@ public class SelectTemplateDialog extends DialogWrapper {
     super.dispose();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return showHistory ?
            existingTemplatesComponent.getHistoryList() :
            existingTemplatesComponent.getPatternTree();
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.structuralsearch.plugin.ui.SelectTemplateDialog";
   }

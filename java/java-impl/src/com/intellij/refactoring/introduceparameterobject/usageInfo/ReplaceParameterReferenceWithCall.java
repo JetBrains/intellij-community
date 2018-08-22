@@ -32,6 +32,7 @@ public class ReplaceParameterReferenceWithCall extends FixableUsageInfo {
     expression = element;
   }
 
+  @Override
   public void fixUsage() throws IncorrectOperationException {
     final String newExpression = newParameterName + '.' + parameterGetterName + "()";
     if (expression.isValid()) {

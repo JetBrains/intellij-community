@@ -87,19 +87,23 @@ class CopyClassDialog extends DialogWrapper{
     myNameField.selectAll();
   }
 
+  @Override
   @NotNull
   protected Action[] createActions(){
     return new Action[]{getOKAction(),getCancelAction(),getHelpAction()};
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myNameField;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return new JPanel(new BorderLayout());
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     myNameField = new EditorTextField("");
 
@@ -148,11 +152,12 @@ class CopyClassDialog extends DialogWrapper{
   public String getClassName() {
     return myNameField.getText();
   }
-  
+
   public boolean openInEditor() {
     return myOpenInEditorCb.isSelected();
   }
 
+  @Override
   protected void doOKAction(){
     final String packageName = myTfPackage.getText();
     final String className = getClassName();
@@ -192,6 +197,7 @@ class CopyClassDialog extends DialogWrapper{
     super.doOKAction();
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.COPY_CLASS);
   }

@@ -182,6 +182,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
       graphics.dispose();
       myDragButtonImage = new JLabel(IconUtil.createImageIcon((Image)image)) {
 
+        @Override
         public String toString() {
           return "Image for: " + StripeButton.this.toString();
         }
@@ -385,6 +386,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
   }
 
 
+  @Override
   public String toString() {
     return StringUtil.getShortName(getClass().getName()) + " text: " + getText();
   }

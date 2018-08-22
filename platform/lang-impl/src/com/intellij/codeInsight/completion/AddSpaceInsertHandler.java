@@ -30,6 +30,7 @@ public class AddSpaceInsertHandler implements InsertHandler<LookupElement> {
     myTriggerAutoPopup = triggerAutoPopup;
   }
 
+  @Override
   public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
     Editor editor = context.getEditor();
     char completionChar = context.getCompletionChar();

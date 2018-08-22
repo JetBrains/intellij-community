@@ -362,6 +362,7 @@ abstract class TerminalOperation extends Operation {
     abstract String initAccumulator(StreamVariable inVar, StreamToLoopReplacementContext context);
     abstract String getAccumulatorUpdater(StreamVariable inVar, String acc);
 
+    @Override
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
       String acc = initAccumulator(inVar, context);
       return getAccumulatorUpdater(inVar, acc);

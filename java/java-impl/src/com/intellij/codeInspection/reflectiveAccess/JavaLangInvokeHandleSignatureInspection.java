@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.reflectiveAccess;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
@@ -479,7 +479,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
       if (lookup != null) {
         lookup.addLookupListener(new LookupListener() {
           @Override
-          public void itemSelected(LookupEvent event) {
+          public void itemSelected(@NotNull LookupEvent event) {
             final LookupElement item = event.getItem();
             if (item != null) {
               final PsiElement element = myStartElement.getElement();

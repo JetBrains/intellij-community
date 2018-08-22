@@ -41,18 +41,22 @@ public class CurrentRevision implements VcsFileRevision {
     myRevisionNumber = revision;
   }
 
+  @Override
   public String getCommitMessage() {
     return "[" + CURRENT + "]";
   }
 
+  @Override
   public byte[] loadContent() throws IOException, VcsException {
     return getContent();
   }
 
+  @Override
   public Date getRevisionDate() {
     return new Date(myFile.getTimeStamp());
   }
 
+  @Override
   public byte[] getContent() {
     try {
       Document document = ReadAction.compute(() -> FileDocumentManager.getInstance().getDocument(myFile));
@@ -69,15 +73,18 @@ public class CurrentRevision implements VcsFileRevision {
     }
   }
 
+  @Override
   public String getAuthor() {
     return "";
   }
 
+  @Override
   @NotNull
   public VcsRevisionNumber getRevisionNumber() {
     return myRevisionNumber;
   }
 
+  @Override
   public String getBranchName() {
     return null;
   }

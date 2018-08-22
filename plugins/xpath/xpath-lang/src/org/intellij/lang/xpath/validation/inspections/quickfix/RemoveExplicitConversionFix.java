@@ -32,11 +32,13 @@ public class RemoveExplicitConversionFix extends ReplaceElementFix<XPathExpressi
         super(ExpectedTypeUtil.unparenthesize(expression));
     }
 
+    @Override
     @NotNull
     public String getText() {
         return "Remove Explicit Type Conversion";
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
         return "ImplicitTypeConversion";

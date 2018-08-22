@@ -29,6 +29,7 @@ public class SameHeightPanel extends NonOpaquePanel {
     myOriginalHeightComponent = originalHeightComponent;
   }
 
+  @Override
   public Dimension getPreferredSize() {
     final Dimension preferredSize = super.getPreferredSize();
     final int originalHeight = myOriginalHeightComponent.getPreferredSize().height;

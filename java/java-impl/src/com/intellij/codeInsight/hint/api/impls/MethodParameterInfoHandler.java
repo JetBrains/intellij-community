@@ -135,7 +135,8 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       context.setPreservedOnHintHidden(false);
       return null;
     }
-    PsiExpressionList expressionList = findArgumentList(context.getFile(), context.getOffset(), context.getParameterListStart(), false);
+    PsiExpressionList expressionList = findArgumentList(context.getFile(), context.getOffset(), context.getParameterListStart(),
+                                                        !context.isSingleParameterInfo());
     if (expressionList != null) {
       Object[] candidates = context.getObjectsToView();
       if (candidates != null && candidates.length != 0) {

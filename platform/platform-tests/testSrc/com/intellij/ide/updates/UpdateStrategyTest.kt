@@ -7,9 +7,6 @@ import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.util.loadElement
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 
 // unless stated otherwise, the behavior described in cases is true for 162+
 class UpdateStrategyTest : BareTestFixtureTestCase() {

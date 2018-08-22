@@ -153,8 +153,8 @@ class CommunityRepositoryModules {
       withResource("maven3-server-common/lib", "lib/maven3-server-lib")
       withResource("maven2-server-impl/lib/maven2", "lib/maven2")
       withModuleLibrary("JAXB", "intellij.maven.server.m2.impl", "maven2-server-lib")
+      withModuleLibrary("javax-activation", "intellij.maven.server.m2.impl", "maven2-server-lib")
       [
-        "activation-1.1.jar",
         "archetype-common-2.0-alpha-4-SNAPSHOT.jar",
         "commons-beanutils.jar",
         "maven-dependency-tree-1.2.jar",
@@ -308,6 +308,9 @@ class CommunityRepositoryModules {
       withResourceFromModule("intellij.android","lib/androidWidgets", "lib/androidWidgets")
       withResourceFromModule("intellij.android.artwork","resources/device-art-resources", "lib/device-art-resources")
       withResourceFromModule("intellij.android","lib/sampleData", "lib/sampleData")
+      withResourceFromModule("intellij.android.adt.ui", "lib/libwebp/linux", "lib/libwebp/linux")
+      withResourceFromModule("intellij.android.adt.ui", "lib/libwebp/mac", "lib/libwebp/mac")
+      withResourceFromModule("intellij.android.adt.ui", "lib/libwebp/win", "lib/libwebp/win")
       withResourceArchive("../android/annotations", "lib/androidAnnotations.jar")
 
       // here go some differences from original Android Studio layout

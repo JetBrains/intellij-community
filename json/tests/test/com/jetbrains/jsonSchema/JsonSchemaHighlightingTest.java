@@ -946,4 +946,33 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
                        "  \n" +
                        "}</warning>");
   }
+
+  public void testValidateEnumVsPattern() throws Exception {
+    doTest("{\n" +
+           "  \"oneOf\": [\n" +
+           "        {\n" +
+           "            \"properties\": {\n" +
+           "                \"type\": {\n" +
+           "                    \"enum\": [\"library\"],\n" +
+           "                    \"pattern\": \".*\"\n" +
+           "                }\n" +
+           "            },\n" +
+           "            \"required\": [\"type\", \"name\", \"description\"]\n" +
+           "        },\n" +
+           "        {\n" +
+           "            \"properties\": {\n" +
+           "                \"type\": {\n" +
+           "                    \"not\": {\n" +
+           "                        \"enum\": [\"library\"]\n" +
+           "                    }\n" +
+           "                }\n" +
+           "            }\n" +
+           "        }\n" +
+           "    ]\n" +
+           "}", "{\n" +
+                "  \"type\": \"project\",\n" +
+                "  \"name\": \"asd\",\n" +
+                "  \"description\": \"asdasdqwdqw\"\n" +
+                "}");
+  }
 }

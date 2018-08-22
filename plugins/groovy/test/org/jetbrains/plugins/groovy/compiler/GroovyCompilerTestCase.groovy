@@ -39,7 +39,7 @@ import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.config.GroovyFacetUtil
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType
-import org.jetbrains.plugins.groovy.util.Slow 
+import org.jetbrains.plugins.groovy.util.Slow
 /**
  * @author aalmiray
  * @author peter
@@ -55,8 +55,9 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
     return super.getProject()
   }
 
+  @NotNull
   @Override
-  Disposable disposeOnTearDown(Disposable disposable) {
+  Disposable disposeOnTearDown(@NotNull Disposable disposable) {
     return super.disposeOnTearDown(disposable)
   }
 

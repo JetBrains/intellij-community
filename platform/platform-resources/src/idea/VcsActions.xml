@@ -216,7 +216,7 @@
       <action id="CommittedChanges.Filter" class="com.intellij.openapi.vcs.changes.committed.FilterCommittedAction"
               icon="AllIcons.General.Filter"/>
       <action id="CommittedChanges.Details" class="com.intellij.openapi.vcs.changes.committed.ChangeListDetailsAction"
-              icon="AllIcons.Actions.ShowChangesOnly"/>
+              icon="AllIcons.Actions.Preview"/>
       <reference ref="ChangesView.CreatePatchFromChanges"/>
       <action id="CommittedChanges.Revert" class="com.intellij.openapi.vcs.changes.actions.RevertChangeListAction"
               icon="AllIcons.Actions.Rollback"/>
@@ -266,11 +266,6 @@
     </group>
 
     <action id="ChangesView.Browse" class="com.intellij.openapi.vcs.changes.actions.BrowseChangesAction"/>
-
-    <action id="Diff.PrevChange" class="com.intellij.openapi.actionSystem.EmptyAction"
-            icon="AllIcons.Actions.Back" use-shortcut-of="PreviousTab"/>
-    <action id="Diff.NextChange" class="com.intellij.openapi.actionSystem.EmptyAction"
-            icon="AllIcons.Actions.Forward" use-shortcut-of="NextTab"/>
 
     <group id="EditorGutterVcsPopupMenu">
       <reference ref="Annotate"/>
@@ -444,9 +439,6 @@
       <reference ref="Compare.Specified"/>
       <reference ref="Vcs.ShowDiffWithLocal.Before"/>
       <reference ref="Vcs.ShowDiffWithLocal"/>
-      <separator/>
-      <reference ref="Diff.PrevChange"/>
-      <reference ref="Diff.NextChange"/>
       <separator/>
 
       <add-to-group group-id="Diff.KeymapGroup" anchor="after" relative-to-action="CompareClipboardWithSelection"/>

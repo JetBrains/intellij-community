@@ -667,9 +667,15 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
   public static class GotoActionListCellRenderer extends DefaultListCellRenderer {
     private final Function<OptionDescription, String> myGroupNamer;
+    private final boolean myUseListFont;
 
     public GotoActionListCellRenderer(Function<OptionDescription, String> groupNamer) {
+      this(groupNamer, false);
+    }
+
+    public GotoActionListCellRenderer(Function<OptionDescription, String> groupNamer, boolean useListFont) {
       myGroupNamer = groupNamer;
+      myUseListFont = useListFont;
     }
 
     @NotNull
@@ -685,6 +691,9 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       panel.setBackground(bg);
 
       SimpleColoredComponent nameComponent = new SimpleColoredComponent();
+      if (myUseListFont) {
+        nameComponent.setFont(list.getFont());
+      }
       nameComponent.setBackground(bg);
       panel.add(nameComponent, BorderLayout.CENTER);
       

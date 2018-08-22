@@ -314,7 +314,8 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
     if (processor instanceof ClassResolverProcessor &&
         isPhysical() &&
-        (getUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING) == Boolean.TRUE || myResolveCache.hasUpToDateValue())) {
+        (getUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING) == Boolean.TRUE || myResolveCache.hasUpToDateValue()) &&
+        !PsiUtil.isInsideJavadocComment(place)) {
       final ClassResolverProcessor hint = (ClassResolverProcessor)processor;
       String name = hint.getName(state);
       MostlySingularMultiMap<String, SymbolCollectingProcessor.ResultWithContext> cache = myResolveCache.getValue();

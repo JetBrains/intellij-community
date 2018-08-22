@@ -21,6 +21,7 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenProjectProblem;
+import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 
@@ -104,7 +105,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                    "Module 'foo' not found");
   }
 
-  public void testMissingModules() {
+  public void testMissingModules() throws IOException {
     importProjectWithErrors("<groupId>test</groupId>" +
                             "<artifactId>project</artifactId>" +
                             "<version>1</version>" +
@@ -113,11 +114,34 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                             "<modules>" +
                             "  <module>foo</module>" +
                             "</modules>");
+    resolvePlugins();
 
     assertModules("project");
 
     MavenProject root = getRootProjects().get(0);
     assertProblems(root, "Module 'foo' not found");
+  }
+
+  private static String toString(MavenGeneralSettings settings) {
+    return "MavenGeneralSettings{" +
+           "workOffline=" + settings.isWorkOffline() +
+           ", mavenHome='" + settings.getMavenHome() + '\'' +
+           ", mavenSettingsFile='" + settings.getUserSettingsFile() + '\'' +
+           ", overriddenLocalRepository='" + settings.getLocalRepository() + '\'' +
+           ", printErrorStackTraces=" + settings.isPrintErrorStackTraces() +
+           ", usePluginRegistry=" + settings.isUsePluginRegistry() +
+           ", nonRecursive=" + settings.isNonRecursive() +
+           ", alwaysUpdateSnapshots=" + settings.isAlwaysUpdateSnapshots() +
+           ", threads='" + settings.getThreads() + '\'' +
+           ", outputLevel=" + settings.getOutputLevel() +
+           ", checksumPolicy=" + settings.getChecksumPolicy() +
+           ", failureBehavior=" + settings.getFailureBehavior() +
+           ", pluginUpdatePolicy=" + settings.getPluginUpdatePolicy() +
+           ", myEffectiveLocalRepositoryCache=" + settings.getEffectiveLocalRepository() +
+           //", myDefaultPluginsCache=" + settings.myDefaultPluginsCache +
+           //", myBulkUpdateLevel=" + settings.myBulkUpdateLevel +
+           //", myListeners=" + settings.myListeners +
+           '}';
   }
 
   @Bombed(user = "Vladislav.Soroka", year=2020, month = Calendar.APRIL, day = 1, description = "temporary disabled")
@@ -157,6 +181,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                            "<version>1"); //  invalid tag
 
     importProjectWithErrors();
+    resolvePlugins();
     assertModules("project", "foo");
 
     MavenProject root = getRootProjects().get(0);
@@ -273,6 +298,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                             "   <layout/>" +
                             " </pluginRepository>" +
                             "</pluginRepositories>");
+    resolvePlugins();
 
     MavenProject root = getRootProjects().get(0);
     assertProblems(root);
@@ -290,6 +316,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                             "   <layout/>" +
                             "  </repository>" +
                             "</distributionManagement>");
+    resolvePlugins();
 
     MavenProject root = getRootProjects().get(0);
     assertProblems(root);
@@ -337,6 +364,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                           "</dependencies>");
 
     importProjectWithErrors();
+    resolvePlugins();
 
     MavenProject root = getRootProjects().get(0);
 
@@ -364,6 +392,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                      "</dependencies>");
 
     importProjectWithErrors();
+    resolvePlugins();
 
     assertModuleLibDeps("project");
 
@@ -399,6 +428,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                           "<version>1</version>");
 
     importProjectWithErrors();
+    resolvePlugins();
 
     MavenProject root = getRootProjects().get(0);
     assertProblems(root);
@@ -524,6 +554,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                             "    </extension>" +
                             "  </extensions>" +
                             "</build>");
+    resolvePlugins();
 
     assertProblems(getRootProjects().get(0));
 
@@ -547,6 +578,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                             "    </extension>" +
                             "  </extensions>" +
                             "</build>");
+    resolvePlugins();
 
     assertProblems(getRootProjects().get(0));
 
@@ -629,6 +661,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                             "    </plugin>" +
                             "  </plugins>" +
                             "</build>");
+    resolvePlugins();
 
     MavenProject root = getRootProjects().get(0);
     assertProblems(root, "Unresolved plugin: 'xxx:yyy:1'");
@@ -672,6 +705,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                             "    </plugin>" +
                             "  </plugins>" +
                             "</build>");
+    resolvePlugins();
 
     assertModules("project");
 

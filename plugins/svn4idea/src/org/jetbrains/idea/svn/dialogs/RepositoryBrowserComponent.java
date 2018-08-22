@@ -251,6 +251,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
     }
   }
 
+  @Override
   @Nullable
   public Object getData(@NotNull @NonNls String dataId) {
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
@@ -278,6 +279,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
     return null;
   }
 
+  @Override
   public void dispose() {
   }
 

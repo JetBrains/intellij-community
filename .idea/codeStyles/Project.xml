@@ -265,17 +265,6 @@
                 <AND>
                   <FIELD>true</FIELD>
                   <FINAL>true</FINAL>
-                  <PUBLIC>true</PUBLIC>
-                </AND>
-              </match>
-            </rule>
-          </section>
-          <section>
-            <rule>
-              <match>
-                <AND>
-                  <FIELD>true</FIELD>
-                  <FINAL>true</FINAL>
                   <PROTECTED>true</PROTECTED>
                 </AND>
               </match>

@@ -49,17 +49,19 @@ class ClassFilterEditorAddDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new GridBagLayout());
     final JLabel header = new JLabel(UIBundle.message("label.class.filter.editor.add.dialog.filter.pattern"));
     myClassName = new TextFieldWithBrowseButton(new JTextField(35));
     final JLabel iconLabel = new JLabel(Messages.getQuestionIcon());
-    
+
     panel.add(header, new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(5, 10, 0, 0), 0, 0));
     panel.add(myClassName, new GridBagConstraints(1, 1, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(5, 10, 0, 0), 0, 0));
     panel.add(iconLabel, new GridBagConstraints(0, 0, 1, 2, 0.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(15, 0, 0, 0), 0, 0));
 
     myClassName.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         PsiClass currentClass = getSelectedClass();
         TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createNoInnerClassesScopeChooser(
@@ -95,6 +97,7 @@ class ClassFilterEditorAddDialog extends DialogWrapper {
     return JavaPsiFacade.getInstance(psiManager.getProject()).findClass(classQName, GlobalSearchScope.allScope(myProject));
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myClassName.getTextField();
   }
@@ -103,6 +106,7 @@ class ClassFilterEditorAddDialog extends DialogWrapper {
     return myClassName.getText();
   }
 
+  @Override
   protected String getDimensionServiceKey(){
     return "#com.intellij.debugger.ui.breakpoints.BreakpointsConfigurationDialogFactory.BreakpointsConfigurationDialog.AddFieldBreakpointDialog";
   }

@@ -56,15 +56,18 @@ public class MigrationDialog extends DialogWrapper{
     init();
   }
 
+  @Override
   @NotNull
   protected Action[] createActions(){
     return new Action[]{getOKAction(),getCancelAction(),getHelpAction()};
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myMapComboBox;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     class MyTextArea extends JTextArea {
       public MyTextArea(String s, int a, int b) {
@@ -88,6 +91,7 @@ public class MigrationDialog extends DialogWrapper{
 
     myMapComboBox.addActionListener(
       new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent event) {
           updateDescription();
         }
@@ -96,6 +100,7 @@ public class MigrationDialog extends DialogWrapper{
 
     myEditMapButton.addActionListener(
       new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent event) {
           editMap();
         }
@@ -104,6 +109,7 @@ public class MigrationDialog extends DialogWrapper{
 
     myRemoveMapButton.addActionListener(
       new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent event) {
           removeMap();
         }
@@ -112,6 +118,7 @@ public class MigrationDialog extends DialogWrapper{
 
     myNewMapButton.addActionListener(
       new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent event) {
           addNewMap();
         }
@@ -120,6 +127,7 @@ public class MigrationDialog extends DialogWrapper{
 
     myMapComboBox.registerKeyboardAction(
       new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           if (myMapComboBox.isPopupVisible()){
             myMapComboBox.setPopupVisible(false);
@@ -217,6 +225,7 @@ public class MigrationDialog extends DialogWrapper{
     return (MigrationMap)myMapComboBox.getSelectedItem();
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.MIGRATION);
   }

@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Map;
 
-public class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Void> {
+public class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Void, VcsFullCommitDetails> {
   public static final String TRIGRAMS = "trigrams";
 
   public VcsLogMessagesTrigramIndex(@NotNull StorageId storageId,

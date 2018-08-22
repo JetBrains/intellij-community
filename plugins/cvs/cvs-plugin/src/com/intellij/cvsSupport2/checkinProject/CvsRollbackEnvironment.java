@@ -51,6 +51,7 @@ public class CvsRollbackEnvironment extends DefaultRollbackEnvironment {
     myProject = project;
   }
 
+  @Override
   public void rollbackChanges(List<Change> changes, final List<VcsException> exceptions,
                               @NotNull final RollbackProgressListener listener) {
     listener.determinate();
@@ -80,6 +81,7 @@ public class CvsRollbackEnvironment extends DefaultRollbackEnvironment {
     }
   }
 
+  @Override
   public void rollbackMissingFileDeletion(List<FilePath> filePaths, final List<VcsException> exceptions,
                                           final RollbackProgressListener listener) {
     final CvsHandler cvsHandler = CommandCvsHandler.createCheckoutFileHandler(filePaths.toArray(new FilePath[0]),
@@ -94,6 +96,7 @@ public class CvsRollbackEnvironment extends DefaultRollbackEnvironment {
     }
     try {
       new RestoreFileAction(parent, name).actionPerformed(new CvsContextAdapter() {
+        @Override
         public Project getProject() {
           return myProject;
         }

@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public final class UpFolderAction extends AnAction {
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
         ThumbnailView view = ThumbnailViewActionUtil.getVisibleThumbnailView(e);
         if (view != null) {
@@ -44,6 +45,7 @@ public final class UpFolderAction extends AnAction {
         }
     }
 
+    @Override
     public void update(@NotNull AnActionEvent e) {
         super.update(e);
         if (ThumbnailViewActionUtil.setEnabled(e)) {

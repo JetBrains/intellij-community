@@ -45,14 +45,17 @@ class AttributeIterator implements Iterator {
     /**
      * @see Iterator#remove
      */
+    @Override
     public void remove() {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public boolean hasNext() {
         return theIterator.hasNext();
     }
 
+    @Override
     public Object next() {
         return theIterator.next();
     }

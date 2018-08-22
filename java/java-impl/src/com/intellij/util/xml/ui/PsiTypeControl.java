@@ -15,14 +15,12 @@
  */
 package com.intellij.util.xml.ui;
 
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiType;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.JavaReferenceEditorUtil;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.AbstractConvertContext;
 import com.intellij.util.xml.DomElement;
@@ -38,6 +36,7 @@ public class PsiTypeControl extends EditorTextFieldControl<PsiTypePanel> {
     super(domWrapper, commitOnEveryChange);
   }
 
+  @Override
   @NotNull
   protected String getValue() {
     final String rawValue = super.getValue();
@@ -53,8 +52,10 @@ public class PsiTypeControl extends EditorTextFieldControl<PsiTypePanel> {
     return rawValue;
   }
 
+  @Override
   protected void setValue(String value) {
     final PsiType type = JvmPsiTypeConverterImpl.convertFromString(value, new AbstractConvertContext() {
+      @Override
       @NotNull
       public DomElement getInvocationElement() {
         return getDomElement();
@@ -66,10 +67,12 @@ public class PsiTypeControl extends EditorTextFieldControl<PsiTypePanel> {
     super.setValue(value);
   }
 
+  @Override
   protected EditorTextField getEditorTextField(@NotNull final PsiTypePanel component) {
     return ((ReferenceEditorWithBrowseButton)component.getComponent(0)).getEditorTextField();
   }
 
+  @Override
   protected PsiTypePanel createMainComponent(PsiTypePanel boundedComponent, final Project project) {
     if (boundedComponent == null) {
       boundedComponent = new PsiTypePanel();

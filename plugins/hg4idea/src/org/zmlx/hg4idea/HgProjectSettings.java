@@ -53,10 +53,12 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
     public DvcsBranchSettings FAVORITE_BRANCH_SETTINGS = new DvcsBranchSettings();
   }
 
+  @Override
   public State getState() {
     return myState;
   }
 
+  @Override
   public void loadState(@NotNull State state) {
     myState = state;
     if (state.CHECK_INCOMING_OUTGOING == null) {

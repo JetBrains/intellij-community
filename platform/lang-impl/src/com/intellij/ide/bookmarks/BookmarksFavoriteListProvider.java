@@ -67,11 +67,6 @@ public class BookmarksFavoriteListProvider extends AbstractFavoritesListProvider
     updateChildren();
   }
 
-  @Override
-  public String getListName(Project project) {
-    return "Bookmarks";
-  }
-
   private void updateChildren() {
     if (myProject.isDisposed()) return;
     myChildren.clear();
@@ -149,27 +144,25 @@ public class BookmarksFavoriteListProvider extends AbstractFavoritesListProvider
   public void handle(@NotNull CommonActionsPanel.Buttons type, Project project, @NotNull Set<Object> selectedObjects, JComponent component) {
     switch (type) {
       case EDIT:
-
         if (selectedObjects.size() != 1) {
-          return;
+          break;
         }
         Object toEdit = selectedObjects.iterator().next();
         if (toEdit instanceof AbstractTreeNode && ((AbstractTreeNode)toEdit).getValue() instanceof Bookmark) {
           Bookmark bookmark = (Bookmark)((AbstractTreeNode)toEdit).getValue();
           if (bookmark == null) {
-            return;
+            break;
           }
           BookmarkManager.getInstance(project).editDescription(bookmark, component);
         }
-        return;
+        break;
       case REMOVE:
         for (Object toRemove : selectedObjects) {
           Bookmark bookmark = (Bookmark)((AbstractTreeNode)toRemove).getValue();
           BookmarkManager.getInstance(project).removeBookmark(bookmark);
         }
-        return;
-      default: {
-      }
+        break;
+      default:
     }
   }
 

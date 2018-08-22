@@ -53,6 +53,7 @@ public abstract class ActionOnSelectedElement extends AbstractAction {
 
   protected static CvsActionVisibility.Condition FILES_HAVE_PARENT_UNDER_CVS =
     new CvsActionVisibility.Condition() {
+      @Override
       public boolean isPerformedOn(CvsContext context) {
         return CvsUtil.filesHaveParentUnderCvs(getAllSelectedFiles(context));
       }
@@ -60,6 +61,7 @@ public abstract class ActionOnSelectedElement extends AbstractAction {
 
   protected final static CvsActionVisibility.Condition FILES_ARENT_UNDER_CVS =
     new CvsActionVisibility.Condition() {
+      @Override
       public boolean isPerformedOn(CvsContext context) {
         return CvsUtil.filesArentUnderCvs(getAllSelectedFiles(context));
       }
@@ -67,6 +69,7 @@ public abstract class ActionOnSelectedElement extends AbstractAction {
 
   public static final CvsActionVisibility.Condition FILES_ARE_UNDER_CVS =
     new CvsActionVisibility.Condition() {
+      @Override
       public boolean isPerformedOn(CvsContext context) {
         return CvsUtil.filesAreUnderCvs(getAllSelectedFiles(context));
       }
@@ -74,6 +77,7 @@ public abstract class ActionOnSelectedElement extends AbstractAction {
 
   public static final CvsActionVisibility.Condition FILES_EXIST_IN_CVS =
     new CvsActionVisibility.Condition() {
+      @Override
       public boolean isPerformedOn(CvsContext context) {
         return CvsUtil.filesExistInCvs(getAllSelectedFiles(context));
       }
@@ -81,12 +85,14 @@ public abstract class ActionOnSelectedElement extends AbstractAction {
 
   public static final CvsActionVisibility.Condition FILES_ARE_NOT_DELETED =
     new CvsActionVisibility.Condition() {
+      @Override
       public boolean isPerformedOn(CvsContext context) {
         return CvsUtil.filesAreNotDeleted(getAllSelectedFiles(context));
       }
     };
 
   public static final CvsActionVisibility.Condition FILES_ARE_CHANGED = new CvsActionVisibility.Condition() {
+    @Override
     public boolean isPerformedOn(CvsContext context) {
       VirtualFile[] selectedFiles = context.getSelectedFiles();
       if (selectedFiles == null) return false;
@@ -101,6 +107,7 @@ public abstract class ActionOnSelectedElement extends AbstractAction {
   };
 
   public static final CvsActionVisibility.Condition FILES_ARE_NOT_IGNORED = new CvsActionVisibility.Condition() {
+    @Override
     public boolean isPerformedOn(CvsContext context) {
       VirtualFile[] selectedFiles = context.getSelectedFiles();
       if (selectedFiles == null) return false;
@@ -113,6 +120,7 @@ public abstract class ActionOnSelectedElement extends AbstractAction {
   };
 
   public static final CvsActionVisibility.Condition FILES_ARE_LOCALLY_ADDED = new CvsActionVisibility.Condition() {
+    @Override
     public boolean isPerformedOn(CvsContext context) {
       VirtualFile[] selectedFiles = context.getSelectedFiles();
       if (selectedFiles == null) return false;
@@ -144,6 +152,7 @@ public abstract class ActionOnSelectedElement extends AbstractAction {
   }
 
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     getVisibility().applyToEvent(e);
   }

@@ -18,6 +18,7 @@ package com.intellij.java.refactoring;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.memberPushDown.PushDownProcessor;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
@@ -66,6 +67,7 @@ public class PushDownTest extends LightRefactoringTestCase {
   public void testFunctionalExpression() { doTest(true);}
   public void testFunctionalInterface() { doTest(true);}
   public void testFunctionalExpressionDefaultMethod() { doTest();}
+  public void testInlineSuperMethodCall() { BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest());}
   public void testRenameTypeParametersToAvoidHiding() { doTest();}
   public void testNoRenameTypeParametersToAvoidHidingForStatic() { doTest();}
 

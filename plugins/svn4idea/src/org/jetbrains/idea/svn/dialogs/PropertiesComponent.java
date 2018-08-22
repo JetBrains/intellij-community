@@ -70,6 +70,7 @@ public class PropertiesComponent extends JPanel {
     add(mySplitPane, BorderLayout.CENTER);
     add(createToolbar(), BorderLayout.WEST);
     final DefaultTableModel model = new DefaultTableModel(createTableModel(new HashMap<>()), new Object[]{"Name", "Value"}) {
+      @Override
       public boolean isCellEditable(final int row, final int column) {
         return false;
       }
@@ -110,6 +111,7 @@ public class PropertiesComponent extends JPanel {
 
     myTable.getColumnModel().setColumnSelectionAllowed(false);
     myTable.getColumnModel().getColumn(1).setCellRenderer(new DefaultTableCellRenderer() {
+      @Override
       protected void setValue(Object value) {
         if (value != null) {
           if (value.toString().indexOf('\r') >= 0) {
@@ -133,6 +135,7 @@ public class PropertiesComponent extends JPanel {
   private static void collectProperties(@NotNull SvnVcs vcs, @NotNull File file, @NotNull final Map<String, String> props) {
     try {
       PropertyConsumer handler = new PropertyConsumer() {
+        @Override
         public void handleProperty(File path, PropertyData property) {
           final PropertyValue value = property.getValue();
           if (value != null) {
@@ -140,9 +143,11 @@ public class PropertiesComponent extends JPanel {
           }
         }
 
+        @Override
         public void handleProperty(Url url, PropertyData property) {
         }
 
+        @Override
         public void handleProperty(long revision, PropertyData property) {
         }
       };
@@ -221,12 +226,14 @@ public class PropertiesComponent extends JPanel {
 
   private static class CloseAction extends DumbAwareAction {
 
+    @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setText("Close");
       e.getPresentation().setDescription("Close this tool window");
       e.getPresentation().setIcon(AllIcons.Actions.Cancel);
     }
 
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project p = e.getData(CommonDataKeys.PROJECT);
       ToolWindowManager.getInstance(p).unregisterToolWindow(ID);
@@ -234,6 +241,7 @@ public class PropertiesComponent extends JPanel {
   }
 
   private class RefreshAction extends DumbAwareAction {
+    @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setText("Refresh");
       e.getPresentation().setDescription("Reload properties");
@@ -241,6 +249,7 @@ public class PropertiesComponent extends JPanel {
       e.getPresentation().setEnabled(myFile != null);
     }
 
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       setFile(myVcs, myFile);
       updateFileStatus(false);
@@ -271,6 +280,7 @@ public class PropertiesComponent extends JPanel {
 
   private class SetKeywordsAction extends BasePropertyAction {
 
+    @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setText("Edit Keywords");
       e.getPresentation().setDescription("Manage svn:keywords property");
@@ -278,6 +288,7 @@ public class PropertiesComponent extends JPanel {
       e.getPresentation().setEnabled(myFile != null && myFile.isFile());
     }
 
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       PropertyValue propValue = null;
@@ -298,6 +309,7 @@ public class PropertiesComponent extends JPanel {
   }
 
   private class DeletePropertyAction extends BasePropertyAction {
+    @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setText("Delete Property");
       e.getPresentation().setDescription("Delete selected property");
@@ -305,6 +317,7 @@ public class PropertiesComponent extends JPanel {
       e.getPresentation().setEnabled(myFile != null && getSelectedPropertyName() != null);
     }
 
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       setProperty(getSelectedPropertyName(), null, false, true);
       updateFileView(false);
@@ -313,6 +326,7 @@ public class PropertiesComponent extends JPanel {
 
   private class AddPropertyAction extends BasePropertyAction {
 
+    @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setText("Add Property");
       e.getPresentation().setDescription("Add new property");
@@ -320,6 +334,7 @@ public class PropertiesComponent extends JPanel {
       e.getPresentation().setEnabled(myFile != null);
     }
 
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       SetPropertyDialog dialog = new SetPropertyDialog(project, new File[]{myFile}, null,
@@ -334,6 +349,7 @@ public class PropertiesComponent extends JPanel {
   }
 
   private class EditPropertyAction extends BasePropertyAction {
+    @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setText("Edit Property");
       e.getPresentation().setDescription("Edit selected property value");
@@ -341,6 +357,7 @@ public class PropertiesComponent extends JPanel {
       e.getPresentation().setEnabled(myFile != null && getSelectedPropertyName() != null);
     }
 
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       SetPropertyDialog dialog = new SetPropertyDialog(project, new File[]{myFile}, getSelectedPropertyName(), myFile.isDirectory());
@@ -355,16 +372,19 @@ public class PropertiesComponent extends JPanel {
 
   private class FollowSelectionAction extends DumbAwareToggleAction {
 
+    @Override
     public boolean isSelected(AnActionEvent e) {
       return myIsFollowSelection;
     }
+    @Override
     public void setSelected(AnActionEvent e, boolean state) {
       if (state && !myIsFollowSelection) {
-        updateSelection(e);        
+        updateSelection(e);
       }
       myIsFollowSelection = state;
     }
 
+    @Override
     public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       e.getPresentation().setIcon(AllIcons.General.AutoscrollFromSource);

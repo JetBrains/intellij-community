@@ -43,11 +43,13 @@ abstract class SuppressInspectionAction extends SuppressIntentionAction {
         myMsg = msg;
     }
 
+    @Override
     @NotNull
     public String getText() {
         return myMsg;
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
         return "Suppress Inspection";
@@ -56,10 +58,12 @@ abstract class SuppressInspectionAction extends SuppressIntentionAction {
     @Nullable
     protected abstract XmlTag getAnchor(@NotNull PsiElement element);
 
+    @Override
     public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
         return getAnchor(element) != null;
     }
 
+    @Override
     public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
         final XmlTag anchor = getAnchor(element);
         if (anchor == null) return;

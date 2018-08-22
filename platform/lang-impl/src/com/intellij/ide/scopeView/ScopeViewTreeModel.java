@@ -2,9 +2,11 @@
 package com.intellij.ide.scopeView;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.CopyPasteUtil;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ProjectViewNodeDecorator;
+import com.intellij.ide.projectView.ProjectViewSettings;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
@@ -17,6 +19,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.AreaInstance;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
@@ -42,6 +45,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.search.scope.ProblemsScope;
 import com.intellij.psi.search.scope.ProjectFilesScope;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.RowIcon;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.stripe.ErrorStripe;
@@ -137,6 +141,10 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
         invalidate(null); // TODO: visit all loaded nodes
       }
     }, this);
+    CopyPasteUtil.addDefaultListener(this, element -> {
+      VirtualFile file = PsiUtilCore.getVirtualFile(element);
+      if (file != null) notifyPresentationChanged(file);
+    });
   }
 
   public void setStructureProvider(TreeStructureProvider provider) {
@@ -214,7 +222,9 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
     model.onValidThread(() -> {
       root.childrenValid = false;
       LOG.debug("whole structure changed");
-      model.setShowModules(hasModules() && root.getSettings().isShowModules());
+      ViewSettings settings = root.getSettings();
+      model.setSettings(settings instanceof ProjectViewSettings && ((ProjectViewSettings)settings).isShowExcludedFiles(),
+                        hasModules() && settings.isShowModules());
       treeStructureChanged(null, null, null);
       if (onDone != null) onDone.run();
     });
@@ -668,6 +678,11 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
       }
       presentation.setIcon(icon);
       decorate(presentation);
+    }
+
+    @Override
+    protected boolean valueIsCut() {
+      return CopyPasteManager.getInstance().isCutElement(findFileSystemItem(getVirtualFile()));
     }
 
     @NotNull

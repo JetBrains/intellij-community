@@ -98,6 +98,7 @@ public class TaskSearchSupport {
     Notifications.Bus.notify(new Notification(TASKS_NOTIFICATION_GROUP, "Cannot connect to " + repository.getUrl(),
                                               content, NotificationType.WARNING,
                                               new NotificationListener() {
+                                                @Override
                                                 public void hyperlinkUpdate(@NotNull Notification notification,
                                                                             @NotNull HyperlinkEvent event) {
                                                   TaskRepositoriesConfigurable configurable =

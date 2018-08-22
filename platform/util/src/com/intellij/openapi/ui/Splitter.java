@@ -381,6 +381,7 @@ public class Splitter extends JPanel implements Splittable {
     return myProportion;
   }
 
+  @Override
   public void setProportion(float proportion) {
     if (myProportion == proportion) {
       return;
@@ -411,6 +412,7 @@ public class Splitter extends JPanel implements Splittable {
   /**
    * @return {@code true} if splitter has vertical orientation, {@code false} otherwise
    */
+  @Override
   public boolean getOrientation() {
     return myVerticalSplit;
   }
@@ -425,6 +427,7 @@ public class Splitter extends JPanel implements Splittable {
   /**
    * @param verticalSplit {@code true} means that splitter will have vertical split
    */
+  @Override
   public void setOrientation(boolean verticalSplit) {
     boolean changed = myVerticalSplit != verticalSplit;
     myVerticalSplit = verticalSplit;
@@ -485,6 +488,7 @@ public class Splitter extends JPanel implements Splittable {
     }
   }
 
+  @Override
   public float getMinProportion(boolean first) {
     JComponent component = first? myFirstComponent : mySecondComponent;
     if (isHonorMinimumSize()) {
@@ -531,6 +535,7 @@ public class Splitter extends JPanel implements Splittable {
       setOrientation(myVerticalSplit);
     }
 
+    @Override
     public void setOrientation(boolean isVerticalSplit) {
       removeAll();
 
@@ -653,6 +658,7 @@ public class Splitter extends JPanel implements Splittable {
       }
     }
 
+    @Override
     public void setResizeEnabled(boolean resizeEnabled) {
       myResizeEnabled = resizeEnabled;
       if (!myResizeEnabled) {
@@ -665,6 +671,7 @@ public class Splitter extends JPanel implements Splittable {
       }
     }
 
+    @Override
     public void setSwitchOrientationEnabled(boolean switchOrientationEnabled) {
       mySwitchOrientationEnabled = switchOrientationEnabled;
     }

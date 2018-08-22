@@ -141,7 +141,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
                           @NotNull Set<VirtualFile> readOnlyFiles,
                           @NotNull GlobalInspectionContextImpl context) {
     if (!FileModificationService.getInstance().prepareVirtualFilesForWrite(project, readOnlyFiles)) return;
-    
+
     final RefManagerImpl refManager = (RefManagerImpl)context.getRefManager();
     final boolean initial = refManager.isInProcess();
 
@@ -161,7 +161,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
   protected boolean startInWriteAction() {
     return false;
   }
-  
+
   protected void performFixesInBatch(@NotNull Project project,
                                      @NotNull List<CommonProblemDescriptor[]> descriptors,
                                      @NotNull GlobalInspectionContextImpl context,
@@ -277,8 +277,9 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     return true;
   }
 
+  @NotNull
   @Override
-  public JComponent createCustomComponent(Presentation presentation) {
+  public JComponent createCustomComponent(@NotNull Presentation presentation) {
     final JButton button = new JButton(presentation.getText());
     Icon icon = presentation.getIcon();
     if (icon == null) {
@@ -320,7 +321,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
 
     @Override
     protected void applyFix(Project project, CommonProblemDescriptor descriptor) {
-      if (descriptor instanceof ProblemDescriptor && 
+      if (descriptor instanceof ProblemDescriptor &&
           ((ProblemDescriptor)descriptor).getStartElement() == null &&
           ((ProblemDescriptor)descriptor).getEndElement() == null) {
         if (LOG.isDebugEnabled()) {

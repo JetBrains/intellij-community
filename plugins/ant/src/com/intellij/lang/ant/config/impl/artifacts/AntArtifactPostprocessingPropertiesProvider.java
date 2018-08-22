@@ -32,6 +32,7 @@ public class AntArtifactPostprocessingPropertiesProvider extends ArtifactPropert
     super("ant-postprocessing");
   }
 
+  @Override
   @NotNull
   public ArtifactProperties<?> createProperties(@NotNull ArtifactType artifactType) {
     return new AntArtifactProperties(true);

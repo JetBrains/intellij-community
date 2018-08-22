@@ -68,6 +68,8 @@ public abstract class TypeConstraint {
 
   public abstract boolean isExact();
 
+  public abstract boolean isExact(String typeName);
+
 
   static final class Exact extends TypeConstraint {
     final @NotNull DfaPsiType myType;
@@ -157,6 +159,11 @@ public abstract class TypeConstraint {
     @Override
     public boolean isExact() {
       return true;
+    }
+
+    @Override
+    public boolean isExact(String typeName) {
+      return myType.getPsiType().equalsToText(typeName);
     }
 
     @Override
@@ -401,6 +408,11 @@ public abstract class TypeConstraint {
 
     @Override
     public boolean isExact() {
+      return false;
+    }
+
+    @Override
+    public boolean isExact(String typeName) {
       return false;
     }
 

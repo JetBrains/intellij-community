@@ -93,7 +93,9 @@ public class TypeEvaluator {
 
   @Nullable
   public PsiType getType(PsiElement element) {
-    VirtualFile file = element.getContainingFile().getVirtualFile();
+    PsiFile psiFile = element.getContainingFile();
+    if (psiFile == null) return null;
+    VirtualFile file = psiFile.getVirtualFile();
     if (file == null || !myProjectFileIndex.isInContent(file)) {
       return TypeMigrationLabeler.getElementType(element);
     }

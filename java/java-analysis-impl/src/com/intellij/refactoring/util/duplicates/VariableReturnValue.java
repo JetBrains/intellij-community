@@ -33,6 +33,7 @@ public class VariableReturnValue implements ReturnValue {
     myVariable = variable;
   }
 
+  @Override
   public boolean isEquivalent(ReturnValue other) {
     if (!(other instanceof VariableReturnValue)) return false;
     return myVariable == ((VariableReturnValue)other).myVariable;
@@ -42,6 +43,7 @@ public class VariableReturnValue implements ReturnValue {
     return myVariable;
   }
 
+  @Override
   @Nullable
   public PsiStatement createReplacement(@NotNull final PsiMethod extractedMethod, @NotNull final PsiMethodCallExpression methodCallExpression, @Nullable final PsiType returnType) throws IncorrectOperationException {
     final PsiDeclarationStatement statement;

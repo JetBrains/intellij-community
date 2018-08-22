@@ -36,6 +36,7 @@
   <depends optional="true" config-file="groovy-support.xml">org.intellij.groovy</depends>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationInitializedListener implementation="org.jetbrains.idea.maven.utils.MavenEnvironmentRegistrar"/>
     <customJavadocTagProvider implementation="org.jetbrains.idea.maven.javadoc.MojoClassAnnotationTagProvider"/>
     <fileTypeFactory implementation="org.jetbrains.idea.maven.utils.MavenFileTypeFactory"/>
     <projectImportProvider implementation="org.jetbrains.idea.maven.wizards.MavenProjectImportProvider"/>
@@ -189,6 +190,8 @@
     <compiler.updateResourcesBuildContributor implementation="org.jetbrains.idea.maven.execution.MavenUpdateResourcesBuildContributor"/>
 
     <projectTaskRunner implementation="org.jetbrains.idea.maven.execution.build.MavenProjectTaskRunner"/>
+    <runAnything.executionProvider implementation="org.jetbrains.idea.maven.execution.MavenRunAnythingProvider"/>
+    <runAnything.helpGroup implementation="org.jetbrains.idea.maven.execution.MavenRunAnythingHelpGroup"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">
@@ -315,12 +318,6 @@
     <importer implementation="org.jetbrains.idea.maven.importing.MavenCompilerAnnotationProcessorPathsImporter"/>
     <executionEnvironmentProvider implementation="org.jetbrains.idea.maven.execution.MavenApplicationConfigurationExecutionEnvironmentProvider"/>
   </extensions>
-
-  <application-components>
-    <component>
-      <implementation-class>org.jetbrains.idea.maven.utils.MavenEnvironmentRegistrar</implementation-class>
-    </component>
-  </application-components>
 
   <project-components>
     <component>

@@ -37,6 +37,7 @@ import java.util.Properties;
 public class PropertiesElementFactory {
   private static final UserDataCache<PropertiesFile,Project,Void> PROPERTIES = new UserDataCache<PropertiesFile, Project, Void>("system.properties.file") {
 
+    @Override
     protected PropertiesFile compute(Project project, Void p) {
       return createPropertiesFile(project, System.getProperties(), "system");
     }
@@ -69,7 +70,7 @@ public class PropertiesElementFactory {
     if (delimiter == null) {
       delimiter = project == null ? '=' : PropertiesCodeStyleSettings.getInstance(project).getDelimiter();
     }
-    return (escape ? escape(name) : name) + String.valueOf(delimiter) + (escape ? escapeValue(value, delimiter) : value);
+    return (escape ? escape(name) : name) + delimiter + (escape ? escapeValue(value, delimiter) : value);
   }
 
   @NotNull

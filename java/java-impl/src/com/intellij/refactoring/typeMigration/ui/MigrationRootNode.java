@@ -24,7 +24,6 @@ import com.intellij.psi.PsiType;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
 import com.intellij.ui.DuplicateNodeRenderer;
-import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -40,7 +39,7 @@ public class MigrationRootNode extends AbstractTreeNode<TypeMigrationLabeler> im
   private final boolean myPreviewUsages;
 
   protected MigrationRootNode(Project project,
-                              TypeMigrationLabeler labeler, 
+                              TypeMigrationLabeler labeler,
                               final PsiElement[] roots,
                               final boolean previewUsages) {
     super(project, labeler);
@@ -49,6 +48,7 @@ public class MigrationRootNode extends AbstractTreeNode<TypeMigrationLabeler> im
     myPreviewUsages = previewUsages;
   }
 
+  @Override
   @NotNull
   public Collection<? extends AbstractTreeNode> getChildren() {
     if (myCachedChildren == null) {
@@ -76,10 +76,12 @@ public class MigrationRootNode extends AbstractTreeNode<TypeMigrationLabeler> im
     myCachedChildren.add(migrationNode);
   }
 
+  @Override
   protected void update(final PresentationData presentation) {
 
   }
 
+  @Override
   public DefaultMutableTreeNode getDuplicate() {
     return null;
   }

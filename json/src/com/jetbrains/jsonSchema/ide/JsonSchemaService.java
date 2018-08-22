@@ -43,6 +43,9 @@ public interface JsonSchemaService {
   void registerResetAction(Runnable action);
   void unregisterResetAction(Runnable action);
 
+  void registerReference(String ref);
+  boolean possiblyHasReference(String ref);
+
   void triggerUpdateRemote();
 
   @Nullable

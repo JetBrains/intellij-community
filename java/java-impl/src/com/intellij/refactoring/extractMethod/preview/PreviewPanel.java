@@ -143,6 +143,7 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
 
   void onTreeUpdated() {
     myTree.repaint();
+    myDiffPanel.updateLater();
   }
 
   private void updateLater() {

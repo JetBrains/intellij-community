@@ -100,9 +100,9 @@
       <action id="EditorPageDown" class="com.intellij.openapi.editor.actions.PageDownAction"/>
       <action id="EditorPageUpWithSelection" class="com.intellij.openapi.editor.actions.PageUpWithSelectionAction"/>
       <action id="EditorPageDownWithSelection" class="com.intellij.openapi.editor.actions.PageDownWithSelectionAction"/>
-      <action id="EditorCopy" class="com.intellij.openapi.editor.actions.CopyAction" use-shortcut-of="$Copy"/>
-      <action id="EditorCut" class="com.intellij.openapi.editor.actions.CutAction" use-shortcut-of="$Cut"/>
-      <action id="EditorPaste" class="com.intellij.openapi.editor.actions.PasteAction" use-shortcut-of="$Paste"/>
+      <action id="EditorCopy" class="com.intellij.openapi.editor.actions.CopyAction" use-shortcut-of="$Copy" icon="AllIcons.Actions.Copy"/>
+      <action id="EditorCut" class="com.intellij.openapi.editor.actions.CutAction" use-shortcut-of="$Cut" icon="AllIcons.Actions.Menu_cut"/>
+      <action id="EditorPaste" class="com.intellij.openapi.editor.actions.PasteAction" use-shortcut-of="$Paste" icon="AllIcons.Actions.Menu_paste"/>
       <action id="EditorPasteSimple" class="com.intellij.openapi.editor.actions.SimplePasteAction"/>
       <action id="EditorPasteFromX11" class="com.intellij.openapi.editor.actions.PasteFromX11Action"/>
       <action id="EditorHungryBackSpace" class="com.intellij.openapi.editor.actions.HungryBackspaceAction"/>
@@ -219,6 +219,9 @@
       <action id="Diff.ShowInExternalTool" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.General.ExternalToolsSmall"
               text="Show Diff in External Tool"/>
       <separator/>
+
+      <action id="Diff.PrevChange" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Actions.Back"/>
+      <action id="Diff.NextChange" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Actions.Forward"/>
 
       <action id="NextDiff" class="com.intellij.openapi.diff.actions.NextDiffAction" icon="AllIcons.Actions.NextOccurence"/>
       <action id="PreviousDiff" class="com.intellij.openapi.diff.actions.PreviousDiffAction" icon="AllIcons.Actions.PreviousOccurence"/>
@@ -759,7 +762,7 @@
       <action id="Console.History.Browse" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.General.MessageHistory"/>
     </group>
 
-    <group id="Internal" text="&amp;Internal Actions" internal="true" popup="true">
+    <group id="Internal" text="&amp;Internal Actions" internal="true" popup="true" compact="true">
       <group id="Internal.Errors" popup="true" text="Exceptions">
         <action id="DropAnError" internal="true" class="com.intellij.diagnostic.DropAnErrorAction"/>
         <action id="DropAnErrorWithAttachments" internal="true" class="com.intellij.diagnostic.DropAnErrorWithAttachmentsAction"/>
@@ -770,8 +773,12 @@
       <action internal="true" id="ReloadProjectAction" class="com.intellij.internal.ReloadProjectAction"/>
       <action internal="true" id="ShowMainMenu" class="com.intellij.internal.ui.ShowMainMenuAction"/>
       <action id="DumbMode" internal="true" class="com.intellij.internal.ToggleDumbModeAction" text="Dumb Mode"/>
-      <action id="LaggingMode" internal="true" class="com.intellij.internal.ToggleLaggingModeAction" text="Lagging mode"/>
-      <action internal="true" id="TestTransferToEDT" text="Test TransferToEDTQueue performance" class="com.intellij.diagnostic.TransferToEDTQueueTestAction"/>
+      <action id="DisablePCE" internal="true" class="com.intellij.internal.DisablePCEAction" text="Disable ProcessCanceledException"
+              description="Disable ProcessCanceledException thrown in a background thread during read action, to simplify debugging"/>
+      <group id="Internal.Performance" text="Performance" popup="true">
+        <action id="LaggingMode" internal="true" class="com.intellij.internal.ToggleLaggingModeAction" text="Lagging mode"/>
+        <action internal="true" id="TestTransferToEDT" text="Test TransferToEDTQueue performance" class="com.intellij.diagnostic.TransferToEDTQueueTestAction"/>
+      </group>
       <separator/>
       <group id="Internal.UI" popup="true" text="&amp;UI">
         <action id="NotificationTestAction" internal="true" class="com.intellij.notification.impl.actions.NotificationTestAction"
@@ -839,8 +846,10 @@
       <separator/>
       <reference ref="MaintenanceGroup"/>
 
-      <action internal="true" id="SendFUStatistics" class="com.intellij.internal.statistic.actions.SendFUStatisticsAction" text="Collect And Send Statistics"/>
-      <action internal="true" id="SendEventLogStatistics" class="com.intellij.internal.statistic.actions.SendEventLogAction" text="Send Feature Usage Event Log"/>
+      <group id="FeatureUsage.Internal" popup="true" compact="true" text="Feature Usages Statistics">
+        <action internal="true" id="SendFUStatistics" class="com.intellij.internal.statistic.actions.SendFUStatisticsAction" text="Collect And Send Statistics"/>
+        <action internal="true" id="SendEventLogStatistics" class="com.intellij.internal.statistic.actions.SendEventLogAction" text="Send Feature Usage Event Log"/>
+      </group>
 
       <action internal="true" id="ShowEditorHighlighterTokens" class="com.intellij.openapi.editor.actions.ShowEditorHighlighterTokensAction"
               text="Show Editor Highlighter Tokens"/>

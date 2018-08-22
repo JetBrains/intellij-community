@@ -67,20 +67,24 @@ public class BaseListPopupStep<T> extends BaseStep<T> implements ListPopupStep<T
     myIcons = icons;
   }
 
+  @Override
   @Nullable
   public final String getTitle() {
     return myTitle;
   }
 
+  @Override
   @NotNull
   public final List<T> getValues() {
     return myValues;
   }
 
+  @Override
   public PopupStep onChosen(T selectedValue, final boolean finalChoice) {
     return FINAL_CHOICE;
   }
 
+  @Override
   public Icon getIconFor(T value) {
     int index = myValues.indexOf(value);
     if (index != -1 && myIcons != null && index < myIcons.size()) {
@@ -101,24 +105,29 @@ public class BaseListPopupStep<T> extends BaseStep<T> implements ListPopupStep<T
     return null;
   }
 
+  @Override
   @NotNull
   public String getTextFor(T value) {
     return value.toString();
   }
 
+  @Override
   @Nullable
   public ListSeparator getSeparatorAbove(T value) {
     return null;
   }
 
+  @Override
   public boolean isSelectable(T value) {
     return true;
   }
 
+  @Override
   public boolean hasSubstep(T selectedValue) {
     return false;
   }
 
+  @Override
   public void canceled() {
   }
 
@@ -126,6 +135,7 @@ public class BaseListPopupStep<T> extends BaseStep<T> implements ListPopupStep<T
     myDefaultOptionIndex = aDefaultOptionIndex;
   }
 
+  @Override
   public int getDefaultOptionIndex() {
     return myDefaultOptionIndex;
   }

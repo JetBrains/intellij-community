@@ -34,6 +34,7 @@ class AddAssociationAction extends AnAction {
         myManager = manager;
     }
 
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
         final PsiFile psiFile = AssociationsGroup.getPsiFile(e);
         if (psiFile == null) return;
@@ -48,6 +49,7 @@ class AddAssociationAction extends AnAction {
         assert virtualFile != null;
 
         final FileChooserDescriptor descriptor = new AnyXMLDescriptor(true) {
+            @Override
             public boolean isFileSelectable(VirtualFile file) {
                 return super.isFileSelectable(file) && !file.equals(virtualFile);
             }

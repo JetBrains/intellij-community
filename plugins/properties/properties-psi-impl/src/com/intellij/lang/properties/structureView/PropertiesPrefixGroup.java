@@ -69,23 +69,28 @@ public class PropertiesPrefixGroup implements Group, ResourceBundleEditorViewEle
     return myPrefix;
   }
 
+  @Override
   @NotNull
   public ItemPresentation getPresentation() {
     return new ItemPresentation() {
+      @Override
       public String getPresentableText() {
         return myPresentableName;
       }
 
+      @Override
       public String getLocationString() {
         return null;
       }
 
+      @Override
       public Icon getIcon(boolean open) {
         return AllIcons.Nodes.Advice;
       }
     };
   }
 
+  @Override
   @NotNull
   public Collection<TreeElement> getChildren() {
     Collection<TreeElement> result = new ArrayList<>();

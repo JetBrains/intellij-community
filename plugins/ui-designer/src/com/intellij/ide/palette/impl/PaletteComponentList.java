@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.palette.impl;
 
 import com.intellij.ide.dnd.*;
@@ -56,10 +42,12 @@ public class PaletteComponentList extends JBList {
     myPalette = palette;
     myGroup = group;
     setModel(new AbstractListModel() {
+      @Override
       public int getSize() {
         return myGroup.getItems().length;
       }
 
+      @Override
       public Object getElementAt(int index) {
         return myGroup.getItems() [index];
       }
@@ -92,6 +80,7 @@ public class PaletteComponentList extends JBList {
     });
 
     addMouseListener(new PopupHandler() {
+      @Override
       public void invokePopup(final Component comp, final int x, final int y) {
         requestFocusInWindow();
         SwingUtilities.invokeLater(() -> {
@@ -113,20 +102,24 @@ public class PaletteComponentList extends JBList {
     });
 
     addMouseMotionListener(new MouseMotionAdapter() {
+      @Override
       public void mouseMoved(MouseEvent e) {
         setHoverIndex(locationToIndex(e.getPoint()));
       }
     });
 
     addKeyListener(new KeyListener() {
+      @Override
       public void keyPressed(KeyEvent e) {
         myPalette.notifyKeyEvent(e);
       }
 
+      @Override
       public void keyReleased(KeyEvent e) {
         myPalette.notifyKeyEvent(e);
       }
 
+      @Override
       public void keyTyped(KeyEvent e) {
         myPalette.notifyKeyEvent(e);
       }
@@ -175,6 +168,7 @@ public class PaletteComponentList extends JBList {
 
   Integer myTempWidth;
 
+  @Override
   public int getWidth () {
       return (myTempWidth == null) ? super.getWidth () : myTempWidth.intValue ();
   }
@@ -266,6 +260,7 @@ public class PaletteComponentList extends JBList {
   }
 
   private static class ComponentCellRenderer extends ColoredListCellRenderer {
+    @Override
     protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
       PaletteItem paletteItem = (PaletteItem) value;
       clear();
@@ -282,6 +277,7 @@ public class PaletteComponentList extends JBList {
       this.focusNext = focusNext;
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       int selIndexBefore = getSelectedIndex();
       defaultAction.actionPerformed(e);
@@ -316,6 +312,7 @@ public class PaletteComponentList extends JBList {
       this.selectNext = selectNext;
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       int selIndexBefore = getSelectedIndex();
       defaultAction.actionPerformed(e);
@@ -340,6 +337,7 @@ public class PaletteComponentList extends JBList {
 
   private class MyDnDTarget implements DnDTarget {
 
+    @Override
     public boolean update(DnDEvent aEvent) {
       setHoverIndex(-1);
       if (aEvent.getAttachedObject() instanceof PaletteItem) {
@@ -353,6 +351,7 @@ public class PaletteComponentList extends JBList {
       return false;
     }
 
+    @Override
     public void drop(DnDEvent aEvent) {
       setDropTargetIndex(-1);
       if (aEvent.getAttachedObject() instanceof PaletteItem) {
@@ -363,6 +362,7 @@ public class PaletteComponentList extends JBList {
       }
     }
 
+    @Override
     public void cleanUpOnLeave() {
       setDropTargetIndex(-1);
     }
@@ -376,30 +376,36 @@ public class PaletteComponentList extends JBList {
       return location.y < rc.getCenterY() ? row : row + 1;
     }
 
+    @Override
     public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
     }
   }
 
   private class MyDnDSource implements DnDSource {
+    @Override
     public boolean canStartDragging(DnDAction action, Point dragOrigin) {
       int index = locationToIndex(dragOrigin);
       return index >= 0 && myGroup.getItems() [index].startDragging() != null;
     }
 
+    @Override
     public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
       int index = locationToIndex(dragOrigin);
       if (index < 0) return null;
       return myGroup.getItems() [index].startDragging();
     }
 
+    @Override
     @Nullable
     public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
       return null;
     }
 
+    @Override
     public void dragDropEnd() {
     }
 
+    @Override
     public void dropActionChanged(final int gestureModifiers) {
       myPalette.notifyDropActionChanged(gestureModifiers);
     }

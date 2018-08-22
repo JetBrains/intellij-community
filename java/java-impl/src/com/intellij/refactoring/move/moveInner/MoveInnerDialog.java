@@ -135,6 +135,7 @@ public class MoveInnerDialog extends MoveDialogBase {
     return myInnerClass;
   }
 
+  @Override
   protected void init() {
     myClassNameField.setText(myInnerClass.getName());
     myClassNameField.selectAll();
@@ -142,6 +143,7 @@ public class MoveInnerDialog extends MoveDialogBase {
     if (!myInnerClass.hasModifierProperty(PsiModifier.STATIC)) {
       myCbPassOuterClass.setSelected(true);
       myCbPassOuterClass.addItemListener(new ItemListener() {
+        @Override
         public void itemStateChanged(ItemEvent e) {
           myParameterField.setEnabled(myCbPassOuterClass.isSelected());
         }
@@ -160,6 +162,7 @@ public class MoveInnerDialog extends MoveDialogBase {
     }
 
     myCbPassOuterClass.addItemListener(new ItemListener() {
+      @Override
       public void itemStateChanged(ItemEvent e) {
         boolean selected = myCbPassOuterClass.isSelected();
         myParameterField.getComponent().setEnabled(selected);
@@ -184,18 +187,22 @@ public class MoveInnerDialog extends MoveDialogBase {
     return false;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myClassNameField;
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.refactoring.move.moveInner.MoveInnerDialog";
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     return myPanel;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return null;
   }
@@ -249,6 +256,7 @@ public class MoveInnerDialog extends MoveDialogBase {
     return myTargetContainer;
   }
 
+  @Override
   protected void doAction() {
     String message = null;
     final String className = getClassName();
@@ -334,6 +342,7 @@ public class MoveInnerDialog extends MoveDialogBase {
     return myPackageNameField.getText().trim();
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.MOVE_INNER_UPPER);
   }

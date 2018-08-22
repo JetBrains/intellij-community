@@ -4,9 +4,9 @@ package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintManagerImpl;
-import com.intellij.codeInsight.lookup.LookupAdapter;
 import com.intellij.codeInsight.lookup.LookupEvent;
 import com.intellij.codeInsight.lookup.LookupEx;
+import com.intellij.codeInsight.lookup.LookupListener;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -20,8 +20,10 @@ import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,6 +35,7 @@ import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
@@ -92,8 +95,8 @@ import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class DocumentationComponent extends JPanel implements Disposable, DataProvider {
 
@@ -143,7 +146,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private final MyScrollPane myScrollPane;
   private final JEditorPane myEditorPane;
   private String myText; // myEditorPane.getText() surprisingly crashes.., let's cache the text
-  private final JPanel myControlPanel;
+  private final JComponent myControlPanel;
   private boolean myControlPanelVisible;
   private int myHighlightedLink = -1;
   private Object myHighlightingTag;
@@ -246,12 +249,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         }
       }
     };
-    DataProvider helpDataProvider = new DataProvider() {
-      @Override
-      public Object getData(@NotNull @NonNls String dataId) {
-        return PlatformDataKeys.HELP_ID.is(dataId) ? DOCUMENTATION_TOPIC_ID : null;
-      }
-    };
+    DataProvider helpDataProvider = dataId -> PlatformDataKeys.HELP_ID.is(dataId) ? DOCUMENTATION_TOPIC_ID : null;
     myEditorPane.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, helpDataProvider);
     myText = "";
     myEditorPane.setEditable(false);
@@ -382,7 +380,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
                                                                    KeymapUtil.parseMouseShortcut("button5"));
       back.registerCustomShortcutSet(backShortcutSet, this);
       forward.registerCustomShortcutSet(forwardShortcutSet, this);
-      // mouse actions are checked only for exact component over which click was performed, 
+      // mouse actions are checked only for exact component over which click was performed,
       // so we need to register shortcuts for myEditorPane as well
       back.registerCustomShortcutSet(backShortcutSet, myEditorPane);
       forward.registerCustomShortcutSet(forwardShortcutSet, myEditorPane);
@@ -409,7 +407,35 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     new PreviousLinkAction().registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), this);
     new ActivateLinkAction().registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER"), this);
 
-    myToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.JAVADOC_TOOLBAR, actions, true);
+    DefaultActionGroup toolbarActions = new DefaultActionGroup();
+    toolbarActions.add(actions);
+    toolbarActions.addAction(new ShowAsToolwindowAction()).setAsSecondary(true);
+    toolbarActions.addAction(new MyShowSettingsAction()).setAsSecondary(true);
+    toolbarActions.addAction(new ShowToolbarAction()).setAsSecondary(true);
+    toolbarActions.addAction(new RestoreDefaultSizeAction()).setAsSecondary(true);
+    myToolBar = new ActionToolbarImpl(ActionPlaces.JAVADOC_TOOLBAR, toolbarActions, true,
+                                      DataManager.getInstance(), ActionManagerEx.getInstanceEx(), KeymapManagerEx.getInstanceEx()) {
+      Point initialClick;
+
+      @Override
+      protected void processMouseEvent(MouseEvent e) {
+        if (e.getID() == MouseEvent.MOUSE_PRESSED && myHint != null) {
+          initialClick = e.getPoint();
+        }
+        super.processMouseEvent(e);
+      }
+
+      @Override
+      protected void processMouseMotionEvent(MouseEvent e) {
+        if (e.getID() == MouseEvent.MOUSE_DRAGGED && myHint != null && initialClick != null) {
+          Point location = myHint.getLocationOnScreen();
+          myHint.setLocation(new Point(location.x + e.getX() - initialClick.x, location.y + e.getY() - initialClick.y));
+          e.consume();
+          return;
+        }
+        super.processMouseMotionEvent(e);
+      }
+    };
 
     JLayeredPane layeredPane = new JBLayeredPane() {
       @Override
@@ -461,11 +487,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     layeredPane.setLayer(myCorner, JLayeredPane.POPUP_LAYER);
     add(layeredPane, BorderLayout.CENTER);
 
-    myControlPanel = new JPanel(new BorderLayout(5, 5));
+    myControlPanel = myToolBar.getComponent();
     myControlPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
-
-    myControlPanel.add(myToolBar.getComponent(), BorderLayout.WEST);
-    myControlPanel.add(new MyShowSettingsButton(), BorderLayout.EAST);
     myControlPanelVisible = false;
 
     HyperlinkListener hyperlinkListener = new HyperlinkListener() {
@@ -869,9 +892,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
           myHint.show(point);
           LookupEx lookup = LookupManager.getActiveLookup(editor);
           if (lookup != null) {
-            lookup.addLookupListener(new LookupAdapter() {
+            lookup.addLookupListener(new LookupListener() {
               @Override
-              public void lookupCanceled(LookupEvent event) {
+              public void lookupCanceled(@NotNull LookupEvent event) {
                 AbstractPopup hint = myHint;
                 if (hint != null && hint.canClose() && hint.isVisible()) {
                   hint.cancel();
@@ -1518,22 +1541,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     Context withText(@NotNull String text) {
       return new Context(element, text, externalUrl, provider,
                          viewRect, caretPosition, highlightedLink);
-    }
-  }
-
-  private class MyShowSettingsButton extends ActionButton {
-
-    MyShowSettingsButton() {
-      this(new MyGearActionGroup(new ShowAsToolwindowAction(),
-                                 new MyShowSettingsAction(),
-                                 new ShowToolbarAction(),
-                                 new RestoreDefaultSizeAction()),
-           new Presentation(), ActionPlaces.JAVADOC_INPLACE_SETTINGS, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
-    }
-
-    private MyShowSettingsButton(AnAction action, Presentation presentation, String place, @NotNull Dimension minimumSize) {
-      super(action, presentation, place, minimumSize);
-      myPresentation.setIcon(AllIcons.General.GearPlain);
     }
   }
 

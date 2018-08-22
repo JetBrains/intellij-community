@@ -37,6 +37,7 @@ public final class FilterByTagActionGroup extends ActionGroup implements PopupAc
         setPopup(true);
     }
 
+    @Override
     public void update(@NotNull final AnActionEvent e) {
         Project project = e.getProject();
         if (project == null) {

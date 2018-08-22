@@ -27,7 +27,6 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
@@ -122,14 +121,12 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       return;
     }
     myEditor.getCaretModel().doWithCaretMerging(() -> {
-      List<Inlay> inlaysAtOffset = myEditor.getInlayModel().getInlineElementsInRange(offset, offset);
-      boolean leanForward = ContainerUtil.find(inlaysAtOffset, inlay -> !inlay.isRelatedToPrecedingText()) != null;
-      LogicalPosition logicalPosition = myEditor.offsetToLogicalPosition(offset).leanForward(leanForward);
-      CaretEvent event = moveToLogicalPosition(logicalPosition, locateBeforeSoftWrap, null, false);
+      LogicalPosition logicalPosition = myEditor.offsetToLogicalPosition(offset);
+      CaretEvent event = moveToLogicalPosition(logicalPosition, locateBeforeSoftWrap, null, true, false);
       final LogicalPosition positionByOffsetAfterMove = myEditor.offsetToLogicalPosition(getOffset());
       if (!positionByOffsetAfterMove.equals(logicalPosition)) {
         StringBuilder debugBuffer = new StringBuilder();
-        moveToLogicalPosition(logicalPosition, locateBeforeSoftWrap, debugBuffer, true);
+        moveToLogicalPosition(logicalPosition, locateBeforeSoftWrap, debugBuffer, true, true);
         int actualOffset = getOffset();
         int textStart = Math.max(0, Math.min(offset, actualOffset) - 1);
         final DocumentEx document = myEditor.getDocument();
@@ -348,13 +345,14 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
   @Override
   public void moveToLogicalPosition(@NotNull final LogicalPosition pos) {
-    myEditor.getCaretModel().doWithCaretMerging(() -> moveToLogicalPosition(pos, false, null, true));
+    myEditor.getCaretModel().doWithCaretMerging(() -> moveToLogicalPosition(pos, false, null, false, true));
   }
 
 
   private CaretEvent doMoveToLogicalPosition(@NotNull LogicalPosition pos,
                                              boolean locateBeforeSoftWrap,
                                              @NonNls @Nullable StringBuilder debugBuffer,
+                                             boolean adjustForInlays,
                                              boolean fireListeners) {
     assertIsDispatchThread();
     updateCachedStateIfNeeded();
@@ -447,6 +445,13 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     int newOffset = getOffset();
     if (debugBuffer != null) {
       debugBuffer.append("Storing offset ").append(newOffset).append(" (mapped from logical position ").append(myLogicalCaret).append(")\n");
+    }
+
+    if (adjustForInlays) {
+      VisualPosition correctPosition = EditorUtil.inlayAwareOffsetToVisualPosition(myEditor, newOffset);
+      assert correctPosition.line == myVisibleCaret.line;
+      myVisualColumnAdjustment = correctPosition.column - myVisibleCaret.column;
+      myVisibleCaret = correctPosition;
     }
 
     updateVisualLineInfo();
@@ -604,6 +609,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   CaretEvent moveToLogicalPosition(@NotNull LogicalPosition pos,
                                            boolean locateBeforeSoftWrap,
                                            @Nullable StringBuilder debugBuffer,
+                                           boolean adjustForInlays,
                                            boolean fireListeners) {
     if (mySkipChangeRequests) {
       return null;
@@ -617,7 +623,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
     myReportCaretMoves = true;
     try {
-      return doMoveToLogicalPosition(pos, locateBeforeSoftWrap, debugBuffer, fireListeners);
+      return doMoveToLogicalPosition(pos, locateBeforeSoftWrap, debugBuffer, adjustForInlays, fireListeners);
     }
     finally {
       myReportCaretMoves = false;
@@ -859,7 +865,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       newSelectionStartColumn = -1;
       newSelectionEndColumn = -1;
     }
-    clone.moveToLogicalPosition(new LogicalPosition(newLine, myLastColumnNumber), false, null, false);
+    clone.moveToLogicalPosition(new LogicalPosition(newLine, myLastColumnNumber), false, null, false, false);
     clone.myLastColumnNumber = myLastColumnNumber;
     clone.myDesiredX = myDesiredX >= 0 ? myDesiredX : getCurrentX();
     clone.myDesiredSelectionStartColumn = newSelectionStartColumn;

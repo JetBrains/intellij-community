@@ -172,18 +172,16 @@ public interface RunnerAndConfigurationSettings {
   boolean isActivateToolWindowBeforeRun();
 
   /**
+   * Returns the "Single instance only" flag (meaning that only one instance of this run configuration can be run at the same time).
+   */
+  boolean isSingleton();
+
+  /**
    * Sets the "Single instance only" flag (meaning that only one instance of this run configuration can be run at the same time).
    *
    * @param singleton the "Single instance" flag.
    */
   void setSingleton(boolean singleton);
-
-  /**
-   * Returns the "Single instance only" flag (meaning that only one instance of this run configuration can be run at the same time).
-   *
-   * @return the "Single instance" flag.
-   */
-  boolean isSingleton();
 
   /**
    * Sets the name of the folder under which the configuration is displayed in the "Run/Debug Configurations" dialog.

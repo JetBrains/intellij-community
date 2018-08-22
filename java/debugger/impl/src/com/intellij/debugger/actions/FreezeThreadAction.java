@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
  * @author lex
  */
 public class FreezeThreadAction extends DebuggerAction {
+  @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     DebuggerTreeNodeImpl[] selectedNode = getSelectedNodes(e.getDataContext());
     if (selectedNode == null) {
@@ -53,6 +54,7 @@ public class FreezeThreadAction extends DebuggerAction {
     }
   }
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     DebuggerTreeNodeImpl[] selectedNode = getSelectedNodes(e.getDataContext());
     if (selectedNode == null) {

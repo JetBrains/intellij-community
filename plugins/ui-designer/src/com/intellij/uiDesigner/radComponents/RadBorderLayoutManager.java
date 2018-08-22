@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.radComponents;
 
@@ -24,14 +10,14 @@ import com.intellij.uiDesigner.designSurface.ComponentDragObject;
 import com.intellij.uiDesigner.designSurface.ComponentDropLocation;
 import com.intellij.uiDesigner.designSurface.FeedbackLayer;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.propertyInspector.Property;
-import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
-import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.InplaceContext;
+import com.intellij.uiDesigner.propertyInspector.Property;
+import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
+import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.ComboBoxPropertyEditor;
-import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.properties.HGapProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.VGapProperty;
+import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
 import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -45,20 +31,24 @@ import java.util.ArrayList;
  * @author yole
  */
 public class RadBorderLayoutManager extends RadLayoutManager {
+  @Override
   public String getName() {
     return UIFormXmlConstants.LAYOUT_BORDER;
   }
 
+  @Override
   public LayoutManager createLayout() {
     return new BorderLayout();
   }
 
+  @Override
   public void writeLayout(final XmlWriter writer, final RadContainer radContainer) {
     BorderLayout layout = (BorderLayout) radContainer.getLayout();
     writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_HGAP, layout.getHgap());
     writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_VGAP, layout.getVgap());
   }
 
+  @Override
   public void addComponentToContainer(final RadContainer container, final RadComponent component, final int index) {
     if (component.getCustomLayoutConstraints() == null) {
       if (container.getDelegee().getComponentCount() == 0) {
@@ -71,6 +61,7 @@ public class RadBorderLayoutManager extends RadLayoutManager {
     container.getDelegee().add(component.getDelegee(), component.getCustomLayoutConstraints(), index);
   }
 
+  @Override
   public void writeChildConstraints(final XmlWriter writer, final RadComponent child) {
     writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_BORDER_CONSTRAINT, (String) child.getCustomLayoutConstraints());
   }
@@ -175,12 +166,14 @@ public class RadBorderLayoutManager extends RadLayoutManager {
     };
   }
 
+  @Override
   public Property[] getComponentProperties(final Project project, final RadComponent component) {
     return new Property[] {
       BorderSideProperty.INSTANCE
     };
   }
 
+  @Override
   public boolean canMoveComponent(final RadComponent c, final int rowDelta, final int colDelta, final int rowSpanDelta, final int colSpanDelta) {
     if (rowSpanDelta != 0 || colSpanDelta != 0) {
       return false;
@@ -190,6 +183,7 @@ public class RadBorderLayoutManager extends RadLayoutManager {
     return adjSide != null && c.getParent().findComponentWithConstraints(adjSide) == null;
   }
 
+  @Override
   public void moveComponent(final RadComponent c, final int rowDelta, final int colDelta, final int rowSpanDelta, final int colSpanDelta) {
     String side = (String) c.getCustomLayoutConstraints();
     String adjSide = getAdjacentSide(side, rowDelta, colDelta);
@@ -257,15 +251,18 @@ public class RadBorderLayoutManager extends RadLayoutManager {
       myContainer = container;
     }
 
+    @Override
     public RadContainer getContainer() {
       return myContainer;
     }
 
+    @Override
     public boolean canDrop(ComponentDragObject dragObject) {
       return dragObject.getComponentCount() == 1 &&
              ((BorderLayout) myContainer.getLayout()).getLayoutComponent(myQuadrant) == null;
     }
 
+    @Override
     public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
       Dimension initialSize = dragObject.getInitialSize(myContainer);
       feedbackLayer.putFeedback(myContainer.getDelegee(), getFeedbackRect(myQuadrant, initialSize),
@@ -304,6 +301,7 @@ public class RadBorderLayoutManager extends RadLayoutManager {
       return c.getBounds().height;
     }
 
+    @Override
     public void processDrop(GuiEditor editor,
                             RadComponent[] components,
                             GridConstraints[] constraintsToAdjust,
@@ -312,6 +310,7 @@ public class RadBorderLayoutManager extends RadLayoutManager {
       myContainer.addComponent(components [0]);
     }
 
+    @Override
     @Nullable
     public ComponentDropLocation getAdjacentLocation(Direction direction) {
       String side = null;
@@ -346,10 +345,12 @@ public class RadBorderLayoutManager extends RadLayoutManager {
       super(null, "Border Side");
     }
 
+    @Override
     public String getValue(RadComponent component) {
       return (String) component.getCustomLayoutConstraints();
     }
 
+    @Override
     protected void setValueImpl(RadComponent component, String value) throws Exception {
       if (!value.equals(component.getCustomLayoutConstraints())) {
         if (component.getParent().findComponentWithConstraints(value) != null) {
@@ -359,6 +360,7 @@ public class RadBorderLayoutManager extends RadLayoutManager {
       }
     }
 
+    @Override
     @NotNull
     public PropertyRenderer<String> getRenderer() {
       if (myRenderer == null) {
@@ -367,6 +369,7 @@ public class RadBorderLayoutManager extends RadLayoutManager {
       return myRenderer;
     }
 
+    @Override
     public PropertyEditor<String> getEditor() {
       if (myEditor == null) {
         myEditor = new BorderSideEditor();
@@ -384,6 +387,7 @@ public class RadBorderLayoutManager extends RadLayoutManager {
       myCbx.setModel(new DefaultComboBoxModel(sides));
     }
 
+    @Override
     public JComponent getComponent(RadComponent component, String value, InplaceContext inplaceContext) {
       myCbx.setSelectedItem(value);
       return myCbx;

@@ -21,7 +21,7 @@ class Doo {
 
   int foo() {
     if (<warning descr="Condition 'myB != null' is always 'true'">myB != null</warning> &&
-    myA.<warning descr="Method invocation 'equals' may produce 'java.lang.NullPointerException'">equals</warning>(myB)) {
+    myA.<warning descr="Method invocation 'equals' may produce 'NullPointerException'">equals</warning>(myB)) {
       return 2;
     }
 

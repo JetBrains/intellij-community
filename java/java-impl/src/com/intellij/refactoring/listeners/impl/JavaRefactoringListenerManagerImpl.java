@@ -29,10 +29,12 @@ import java.util.List;
 public class JavaRefactoringListenerManagerImpl extends JavaRefactoringListenerManager {
   private final List<MoveMemberListener> myMoveMemberListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
+  @Override
   public void addMoveMembersListener(MoveMemberListener moveMembersListener) {
     myMoveMemberListeners.add(moveMembersListener);
   }
 
+  @Override
   public void removeMoveMembersListener(MoveMemberListener moveMembersListener) {
     myMoveMemberListeners.remove(moveMembersListener);
   }

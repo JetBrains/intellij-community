@@ -44,6 +44,7 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
 
   private static final Logger LOG = Logger.getInstance(JavaChangeSignatureHandler.class);
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     PsiElement element = findTargetMember(file, editor);
@@ -66,6 +67,7 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
     }
   }
 
+  @Override
   public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, @Nullable final DataContext dataContext) {
     if (elements.length != 1) return;
     Editor editor = dataContext != null ? CommonDataKeys.EDITOR.getData(dataContext) : null;

@@ -208,6 +208,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     myHonorMinimumSize = honorMinimumSize;
   }
 
+  @Override
   public boolean isVisible() {
     return super.isVisible() && (firstVisible() || innerVisible() || lastVisible());
   }
@@ -239,6 +240,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     return innerVisible() && lastVisible();
   }
 
+  @Override
   public Dimension getMinimumSize() {
     if (isHonorMinimumSize()) {
       final int dividerWidth = getDividerWidth();
@@ -265,6 +267,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     return super.getMinimumSize();
   }
 
+  @Override
   public void doLayout() {
     final int width = getWidth();
     final int height = getHeight();
@@ -670,6 +673,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
       myGlassPane.addMousePreprocessor(myListener, this);
     }
 
+    @Override
     public void dispose() {
     }
 
@@ -770,6 +774,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
       }
     }
 
+    @Override
     protected void processMouseMotionEvent(MouseEvent e) {
       super.processMouseMotionEvent(e);
 
@@ -822,6 +827,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
       }
     }
 
+    @Override
     protected void processMouseEvent(MouseEvent e) {
       super.processMouseEvent(e);
       if (!isShowing()) {

@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
  * @author lex
  */
 public class EditFrameSourceAction extends GotoFrameSourceAction{
+  @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     e.getPresentation().setText(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getTemplatePresentation().getText());

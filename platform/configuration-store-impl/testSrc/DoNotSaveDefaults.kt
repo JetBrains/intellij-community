@@ -18,6 +18,7 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.createOrLoadProject
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.io.delete
+import com.intellij.util.io.getDirectoryTree
 import com.intellij.util.io.move
 import org.junit.ClassRule
 import org.junit.Rule
@@ -104,8 +105,7 @@ internal class DoNotSaveDefaultsTest {
       return
     }
 
-    val directoryTree = printDirectoryTree(Paths.get(
-      componentManager.stateStore.storageManager.expandMacros(APP_CONFIG)), setOf(
+    val directoryTree = Paths.get(componentManager.stateStore.storageManager.expandMacros(APP_CONFIG)).getDirectoryTree(setOf(
       "path.macros.xml" /* todo EP to register (provide) macro dynamically */,
       "stubIndex.xml" /* low-level non-roamable stuff */,
       UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML /* SHOW_NOTIFICATION_ATTR in internal mode */,

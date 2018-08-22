@@ -27,8 +27,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocumentListener, Dumpable, ModificationTracker {
@@ -365,7 +365,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     for (Caret caret : carets) {
       LogicalPosition caretPosition = caret.getLogicalPosition();
       int caretOffset = myEditor.logicalPositionToOffset(caretPosition);
-      
+
       if (FoldRegionsTree.containsStrict(region, caretOffset)) {
         if (myDoNotCollapseCaret) return;
       }
@@ -413,7 +413,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
       FoldRegion collapsed = myFoldTree.fetchOutermost(caretOffset);
       SavedCaretPosition savedPosition = caret.getUserData(SAVED_CARET_POSITION);
       boolean markedForUpdate = caret.getUserData(MARK_FOR_UPDATE) != null;
-      
+
       if (savedPosition != null && savedPosition.isUpToDate(myEditor)) {
         int savedOffset = myEditor.logicalPositionToOffset(savedPosition.position);
         FoldRegion collapsedAtSaved = myFoldTree.fetchOutermost(savedOffset);
@@ -477,7 +477,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
   public int getFoldedLinesCountBefore(int offset) {
     if (!myDocumentChangeProcessed && myEditor.getDocument().isInEventsHandling()) {
       // There is a possible case that this method is called on document update before fold regions are recalculated.
-      // We return zero in such situations then. 
+      // We return zero in such situations then.
       return 0;
     }
     return myFoldTree.getFoldedLinesCountBefore(offset);
@@ -540,13 +540,13 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
   }
 
   @Override
-  public void beforeDocumentChange(DocumentEvent event) {
+  public void beforeDocumentChange(@NotNull DocumentEvent event) {
     if (myIsBatchFoldingProcessing) LOG.error("Document changes are not allowed during batch folding update");
     myDocumentChangeProcessed = false;
   }
 
   @Override
-  public void documentChanged(DocumentEvent event) {
+  public void documentChanged(@NotNull DocumentEvent event) {
     try {
       if (!((DocumentEx)event.getDocument()).isInBulkUpdate()) {
         updateCachedOffsets();
@@ -650,9 +650,9 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
         int r1e = r1.getEndOffset();
         int r2s = r2.getStartOffset();
         int r2e = r2.getEndOffset();
-        LOG.assertTrue(r1s < r2s && (r1e <= r2s || r1e >= r2e) || 
-                       r1s == r2s && r1e != r2e || 
-                       r1s > r2s && r1s < r2e && r1e <= r2e || 
+        LOG.assertTrue(r1s < r2s && (r1e <= r2s || r1e >= r2e) ||
+                       r1s == r2s && r1e != r2e ||
+                       r1s > r2s && r1s < r2e && r1e <= r2e ||
                        r1s >= r2e,
                        "Disallowed relative position of regions");
         if (!r1.isExpanded() && r1s <= r2s && r1e >= r2e) invisibleRegions[j] = true;
@@ -682,7 +682,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     if (actualTopLevels != null) {
       LOG.assertTrue(actualTopLevels.length == topLevelRegions.size(), "Wrong number of top-level regions");
       for (int i = 0; i < actualTopLevels.length; i++) {
-        LOG.assertTrue(FoldRegionsTree.OFFSET_BASED_HASHING_STRATEGY.equals(actualTopLevels[i], topLevelRegions.get(i)), 
+        LOG.assertTrue(FoldRegionsTree.OFFSET_BASED_HASHING_STRATEGY.equals(actualTopLevels[i], topLevelRegions.get(i)),
                        "Unexpected top-level region");
       }
     }

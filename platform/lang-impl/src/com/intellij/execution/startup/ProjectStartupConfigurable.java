@@ -1,21 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.startup;
 
-import com.intellij.execution.*;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.Executor;
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ChooseRunConfigurationPopup;
 import com.intellij.execution.actions.ExecutorProvider;
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -24,6 +13,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.execution.impl.NewRunConfigurationPopup;
 import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -59,8 +49,8 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Irina.Chernushina on 8/19/2015.
@@ -215,13 +205,11 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
       public void perform(@NotNull final Project project, @NotNull final Executor executor, @NotNull DataContext context) {
         final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
         final Condition<ConfigurationType> filter = new Condition<ConfigurationType>() {
-          private final RunnerRegistry myRegistry = RunnerRegistry.getInstance();
-
           @Override
           public boolean value(ConfigurationType configurationType) {
             ConfigurationFactory factory;
             return ((factory = runManager.getFactory(configurationType.getId(), null)) != null) &&
-                   myRegistry.getRunner(executor.getId(), runManager.getConfigurationTemplate(factory).getConfiguration()) != null;
+                   ProgramRunner.getRunner(executor.getId(), runManager.getConfigurationTemplate(factory).getConfiguration()) != null;
           }
         };
         final ListPopup popup = NewRunConfigurationPopup.createAddPopup(ContainerUtil.filter(runManager.getConfigurationFactoriesWithoutUnknown(), filter), "",

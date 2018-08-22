@@ -16,22 +16,27 @@ public class HexRenderer extends NodeRendererImpl {
     super(DEFAULT_NAME, false);
   }
 
+  @Override
   public String getUniqueId() {
     return UNIQUE_ID;
   }
 
+  @Override
   public @NonNls String getName() {
     return "Hex";
   }
 
+  @Override
   public void setName(String name) {
     // prohibit change
   }
 
+  @Override
   public HexRenderer clone() {
     return (HexRenderer) super.clone();
   }
 
+  @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String calcLabel(ValueDescriptor valueDescriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener) {
     Value value = valueDescriptor.getValue();
@@ -83,6 +88,7 @@ public class HexRenderer extends NodeRendererImpl {
   }
 
   //returns whether this renderer is apllicable to this type or it's supertypes
+  @Override
   public boolean isApplicable(Type t) {
     if(t == null) {
       return false;

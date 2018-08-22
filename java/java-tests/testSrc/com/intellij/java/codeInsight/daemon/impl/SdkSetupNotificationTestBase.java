@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class SdkSetupNotificationTestBase extends JavaCodeInsightFixtureTestCase {
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
 

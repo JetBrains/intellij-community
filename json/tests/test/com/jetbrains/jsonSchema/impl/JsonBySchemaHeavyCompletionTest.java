@@ -109,6 +109,20 @@ public class JsonBySchemaHeavyCompletionTest extends JsonBySchemaHeavyCompletion
     baseCompletionTest("oneOfWithEnumValue", "oneOfWithEmptyPropertyValue", "\"business\"", "\"home\"");
   }
 
+  public void testRequiredPropsFirst() throws Exception {
+    baseTestNoSchema("requiredProps", "requiredPropsFirst", () -> {
+      complete();
+      assertStringItems("a", "b");
+    });
+  }
+
+  public void testRequiredPropsLast() throws Exception {
+    baseTestNoSchema("requiredProps", "requiredPropsLast", () -> {
+      complete();
+      assertStringItems("b");
+    });
+  }
+
   public void testEditingSchemaAffectsCompletion() throws Exception {
     baseTest(getTestName(true), "testEditing", () -> {
       complete();

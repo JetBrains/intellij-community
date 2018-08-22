@@ -67,6 +67,7 @@ public final class AdminWriter implements IAdminWriter {
 
   // Implemented ============================================================
 
+  @Override
   public void ensureCvsDirectory(DirectoryObject directoryObject, String repositoryPath, CvsRoot cvsRoot, ICvsFileSystem cvsFileSystem)
     throws IOException {
     final File cvsDirectory = ensureCvsDirectory(directoryObject, cvsFileSystem);
@@ -76,6 +77,7 @@ public final class AdminWriter implements IAdminWriter {
     ensureExistingEntriesFile(cvsDirectory);
   }
 
+  @Override
   public void removeEntryForFile(AbstractFileObject fileObject, ICvsFileSystem cvsFileSystem) throws IOException {
     final File file = cvsFileSystem.getAdminFileSystem().getFile(fileObject);
     final File directory = file.getParentFile();
@@ -91,11 +93,13 @@ public final class AdminWriter implements IAdminWriter {
     }
   }
 
+  @Override
   public void pruneDirectory(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) {
     deleteDirectoryRecursively(cvsFileSystem.getLocalFileSystem().getFile(directoryObject));
     deleteDirectoryRecursively(cvsFileSystem.getAdminFileSystem().getFile(directoryObject));
   }
 
+  @Override
   public void setStickyTagForDirectory(DirectoryObject directoryObject, String tag, ICvsFileSystem cvsFileSystem) throws IOException {
     final File cvsDirectory = new File(cvsFileSystem.getAdminFileSystem().getFile(directoryObject), CVS_DIR_NAME);
     if (!cvsDirectory.isDirectory()) {
@@ -111,6 +115,7 @@ public final class AdminWriter implements IAdminWriter {
     }
   }
 
+  @Override
   public void editFile(FileObject fileObject, Entry entry, ICvsFileSystem cvsFileSystem, IFileReadOnlyHandler fileReadOnlyHandler)
     throws IOException {
     createBaserevEntry(fileObject, cvsFileSystem, entry);
@@ -120,6 +125,7 @@ public final class AdminWriter implements IAdminWriter {
     fileReadOnlyHandler.setFileReadOnly(localFile, false);
   }
 
+  @Override
   public void uneditFile(FileObject fileObject, ICvsFileSystem cvsFileSystem, IFileReadOnlyHandler fileReadOnlyHandler) throws IOException {
     final File editBackupFile = getEditBackupFile(fileObject, cvsFileSystem);
     if (!editBackupFile.isFile()) {
@@ -132,6 +138,7 @@ public final class AdminWriter implements IAdminWriter {
     fileReadOnlyHandler.setFileReadOnly(cvsFileSystem.getLocalFileSystem().getFile(fileObject), true);
   }
 
+  @Override
   public void setEntriesDotStatic(DirectoryObject directoryObject, boolean set, ICvsFileSystem cvsFileSystem) {
     final File localDirectory = cvsFileSystem.getAdminFileSystem().getFile(directoryObject);
     if (set) {
@@ -154,6 +161,7 @@ public final class AdminWriter implements IAdminWriter {
    *
    * @throws IOException if an error occurs writing the details
    */
+  @Override
   public void setEntry(DirectoryObject directoryObject, Entry entry, ICvsFileSystem cvsFileSystem) throws IOException {
     BugLog.getInstance().assertNotNull(entry);
 
@@ -162,6 +170,7 @@ public final class AdminWriter implements IAdminWriter {
     myEntriesWriter.addEntry(directory, entry);
   }
 
+  @Override
   public void writeTemplateFile(DirectoryObject directoryObject,
                                 int fileLength,
                                 InputStream inputStream,
@@ -179,6 +188,7 @@ public final class AdminWriter implements IAdminWriter {
                      null);
   }
 
+  @Override
   public void directoryAdded(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) throws IOException {
     final DirectoryObject parent = directoryObject.getParent();
     final String cvsRoot = getCvsRoot(parent, cvsFileSystem);
@@ -403,6 +413,7 @@ public final class AdminWriter implements IAdminWriter {
       myLineSeparator = lineSeparator;
     }
 
+    @Override
     public void addEntry(final File directory, final Entry entry) throws IOException {
       final EntriesHandler entriesHandler = new EntriesHandler(directory);
       entriesHandler.read(myCharset);

@@ -31,6 +31,7 @@ public class AntInstallationClassLoaderHolder extends ClassLoaderHolder {
     super(options);
   }
 
+  @Override
   protected ClassLoader buildClasspath() {
     final ArrayList<File> files = new ArrayList<>();
     // ant installation jars

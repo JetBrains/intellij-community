@@ -23,14 +23,18 @@ public abstract class JiraTask extends Task {
     myRepository = repository;
   }
 
+  @Override
   @NotNull
   public abstract String getId();
 
+  @Override
   @NotNull
   public abstract String getSummary();
 
+  @Override
   public abstract String getDescription();
 
+  @Override
   @NotNull
   public abstract Comment[] getComments();
 
@@ -74,6 +78,7 @@ public abstract class JiraTask extends Task {
     return getState() == TaskState.RESOLVED;
   }
 
+  @Override
   public final boolean isIssue() {
     return true;
   }

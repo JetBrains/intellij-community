@@ -88,6 +88,7 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> impleme
     }
   }
 
+  @Override
   public String getTooltip() {
     return getUserObject().getDescription();
   }
@@ -102,10 +103,12 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> impleme
     return FileUtil.toSystemDependentName(ChangesUtil.getFilePath(getUserObject()).getPath());
   }
 
+  @Override
   public int getSortWeight() {
     return CHANGE_SORT_WEIGHT;
   }
 
+  @Override
   public int compareUserObjects(final Change o2) {
     return ChangesComparator.getInstance(true).compare(getUserObject(), o2);
   }

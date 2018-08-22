@@ -575,6 +575,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
   }
 
 
+  @Override
   protected Patch createPatch() throws IOException {
     assertFalse(myFile.exists());
     Patch patch = PatchFileCreator.create(myPatchSpec, myFile, TEST_UI);

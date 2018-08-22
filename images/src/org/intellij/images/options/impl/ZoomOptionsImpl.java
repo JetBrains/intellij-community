@@ -38,14 +38,17 @@ final class ZoomOptionsImpl implements ZoomOptions, JDOMExternalizable {
     this.propertyChangeSupport = propertyChangeSupport;
   }
 
+  @Override
   public boolean isWheelZooming() {
     return wheelZooming;
   }
 
+  @Override
   public boolean isSmartZooming() {
     return smartZooming;
   }
 
+  @Override
   public Dimension getPrefferedSize() {
     return new Dimension(prefferedWidth, prefferedHeight);
   }
@@ -90,12 +93,14 @@ final class ZoomOptionsImpl implements ZoomOptions, JDOMExternalizable {
     }
   }
 
+  @Override
   public void inject(ZoomOptions options) {
     setWheelZooming(options.isWheelZooming());
     setSmartZooming(options.isSmartZooming());
     setPrefferedSize(options.getPrefferedSize());
   }
 
+  @Override
   public boolean setOption(String name, Object value) {
     if (ATTR_WHEEL_ZOOMING.equals(name)) {
       setWheelZooming((Boolean)value);
@@ -115,6 +120,7 @@ final class ZoomOptionsImpl implements ZoomOptions, JDOMExternalizable {
     return true;
   }
 
+  @Override
   public void readExternal(Element element) {
     setWheelZooming(JDOMExternalizer.readBoolean(element, ATTR_WHEEL_ZOOMING));
     setSmartZooming(JDOMExternalizer.readBoolean(element, ATTR_SMART_ZOOMING));
@@ -122,6 +128,7 @@ final class ZoomOptionsImpl implements ZoomOptions, JDOMExternalizable {
     setPrefferedHeight(JDOMExternalizer.readInteger(element, ATTR_PREFFERED_HEIGHT, DEFAULT_PREFFERED_SIZE.height));
   }
 
+  @Override
   public void writeExternal(Element element) {
     JdomKt.addOptionTag(element, ATTR_WHEEL_ZOOMING, Boolean.toString(wheelZooming), "setting");
     JdomKt.addOptionTag(element, ATTR_SMART_ZOOMING, Boolean.toString(smartZooming), "setting");

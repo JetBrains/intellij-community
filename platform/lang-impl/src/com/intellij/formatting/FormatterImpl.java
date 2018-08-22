@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.formatting;
 
@@ -273,6 +259,7 @@ public class FormatterImpl extends FormatterEx
     format(model, settings, indentOptions, affectedRanges, false);
   }
 
+  @Override
   public void format(final FormattingModel model,
                      final CodeStyleSettings settings,
                      final CommonCodeStyleSettings.IndentOptions indentOptions,
@@ -492,7 +479,7 @@ public class FormatterImpl extends FormatterEx
                                                              @Nullable FormatTextRanges affectedRanges) {
     return buildProcessorAndWrapBlocks(docModel, rootBlock, settings, indentOptions, affectedRanges, -1);
   }
-  
+
   private static FormatProcessor buildProcessorAndWrapBlocks(final FormattingDocumentModel docModel,
                                                              Block rootBlock,
                                                              CodeStyleSettings settings,
@@ -573,7 +560,7 @@ public class FormatterImpl extends FormatterEx
     }
     return null;
   }
-  
+
   @Nullable
   private static WhiteSpace getWhiteSpaceAtOffset(int offset,
                                                   @NotNull FormatProcessor formatProcessor) {

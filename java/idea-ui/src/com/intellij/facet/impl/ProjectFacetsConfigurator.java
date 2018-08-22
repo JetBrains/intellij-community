@@ -177,7 +177,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
   public FacetEditorImpl getEditor(Facet facet) {
     return myEditors.get(facet);
   }
-  
+
   @NotNull
   public FacetEditorImpl getOrCreateEditor(Facet facet) {
     FacetEditorImpl editor = myEditors.get(facet);
@@ -304,16 +304,19 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
     myProjectData = null;
   }
 
+  @Override
   @NotNull
   public Facet[] getAllFacets(final Module module) {
     return getFacetModel(module).getAllFacets();
   }
 
+  @Override
   @NotNull
   public <F extends Facet> Collection<F> getFacetsByType(final Module module, final FacetTypeId<F> type) {
     return getFacetModel(module).getFacetsByType(type);
   }
 
+  @Override
   @Nullable
   public <F extends Facet> F findFacet(final Module module, final FacetTypeId<F> type, final String name) {
     return getFacetModel(module).findFacet(type, name);
@@ -367,6 +370,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
       myContainer = LibrariesContainerFactory.createContainer(myContext);
     }
 
+    @Override
     public LibrariesContainer getContainer() {
       return myContainer;
     }

@@ -120,6 +120,7 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
     return editor != null ? editor.getContentComponent() : null;
   }
 
+  @Override
   public void setEnabled(boolean enable) {
     if (enable == myComponent.isEnabled()) return;
     UIUtil.setEnabled(myComponent, enable, true);

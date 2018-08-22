@@ -6,7 +6,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiEnumConstantImpl;
-import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
@@ -106,7 +105,7 @@ public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
     PropertyChecker.checkScenarios(actionsOnJavaFiles(
       MadTestingUtil.randomEditsWithPsiAccessorChecks(
         method ->
-          method.getName().equals("getReferences") && method.getDeclaringClass().equals(PsiLiteralExpressionImpl.class) ||
+          //method.getName().equals("getReferences") && method.getDeclaringClass().equals(PsiLiteralExpressionImpl.class) ||
           method.getName().equals("getOrCreateInitializingClass") && method.getDeclaringClass().equals(PsiEnumConstantImpl.class)
       )
     ));

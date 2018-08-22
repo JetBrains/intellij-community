@@ -22,7 +22,7 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable, Configura
   private JTextField myEndIndex;
   private boolean myEntriesLimitUpdateEnabled = true;
   private boolean myIndexUpdateEnabled = true;
-  
+
   private final ArrayRenderer myRenderer;
   private JComponent myPanel;
 
@@ -34,12 +34,14 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable, Configura
     return myRenderer;
   }
 
+  @Override
   public void reset() {
     myStartIndex.setText(String.valueOf(myRenderer.START_INDEX));
     myEndIndex.setText(String.valueOf(myRenderer.END_INDEX));
     myEntriesLimit.setText(String.valueOf(myRenderer.ENTRIES_LIMIT));
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     applyTo(myRenderer, true);
   }
@@ -85,6 +87,7 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable, Configura
     renderer.ENTRIES_LIMIT = newLimit;
   }
 
+  @Override
   public JComponent createComponent() {
     myPanel = new JPanel(new GridBagLayout());
 
@@ -134,12 +137,15 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable, Configura
           myIndexUpdateEnabled = state;
         }
       }
+      @Override
       public void changedUpdate(DocumentEvent e) {
         updateEntriesLimit();
       }
+      @Override
       public void insertUpdate (DocumentEvent e) {
         updateEntriesLimit();
       }
+      @Override
       public void removeUpdate (DocumentEvent e) {
         updateEntriesLimit();
       }
@@ -159,14 +165,17 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable, Configura
           myEntriesLimitUpdateEnabled = state;
         }
       }
+      @Override
       public void insertUpdate(DocumentEvent e) {
         updateEndIndex();
       }
 
+      @Override
       public void removeUpdate(DocumentEvent e) {
         updateEndIndex();
       }
 
+      @Override
       public void changedUpdate(DocumentEvent e) {
         updateEndIndex();
       }
@@ -178,6 +187,7 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable, Configura
     return StringUtil.parseInt(textField.getText().trim(), 0);
   }
 
+  @Override
   public boolean isModified() {
     ArrayRenderer cloneRenderer = myRenderer.clone();
     try {

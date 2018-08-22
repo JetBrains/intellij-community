@@ -94,6 +94,7 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
     return new ByteCodeViewerComponent(myProject);
   }
 
+  @Override
   @Nullable
   protected String getTitle(PsiElement element) {
     PsiClass aClass = getContainingClass(element);

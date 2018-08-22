@@ -23,6 +23,7 @@ import java.util.Collection;
 final class Banner extends SimpleBanner {
   private final JLabel myProjectIcon = new JLabel();
   private final Breadcrumbs myBreadcrumbs = new Breadcrumbs() {
+    @Override
     protected int getFontStyle(Crumb crumb) {
       return Font.BOLD;
     }
@@ -30,7 +31,7 @@ final class Banner extends SimpleBanner {
 
   Banner(Action action) {
     myProjectIcon.setMinimumSize(new Dimension(0, 0));
-    myProjectIcon.setIcon(AllIcons.General.ProjectConfigurableBanner);
+    myProjectIcon.setIcon(AllIcons.General.ProjectConfigurable);
     myProjectIcon.setForeground(JBColor.GRAY);
     myProjectIcon.setVisible(false);
     myLeftPanel.add(myBreadcrumbs, 0);

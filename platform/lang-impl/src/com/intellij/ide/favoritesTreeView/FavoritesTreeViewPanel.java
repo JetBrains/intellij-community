@@ -28,6 +28,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -46,10 +47,7 @@ import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.EditSourceOnEnterKeyHandler;
-import com.intellij.util.PlatformUtils;
+import com.intellij.util.*;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -64,8 +62,9 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseListener;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author anna
@@ -381,7 +380,13 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
       return selectedNodeDescriptors.length == 1 ? selectedNodeDescriptors[0].getElement() : null;
     }
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-      final List<Navigatable> selectedElements = getSelectedElements(Navigatable.class);
+      List<String> listNames = getSelectedElements(String.class);
+      final List<Navigatable> selectedElements = new SmartList<>();
+      for (String listname : listNames) {
+        selectedElements.addAll(myFavoritesManager.getVirtualFiles(listname, false)
+                                  .stream().map(file -> new OpenFileDescriptor(myProject, file)).collect(Collectors.toList()));
+      }
+      selectedElements.addAll(getSelectedElements(Navigatable.class));
       return selectedElements.isEmpty() ? null : selectedElements.toArray(new Navigatable[0]);
     }
 

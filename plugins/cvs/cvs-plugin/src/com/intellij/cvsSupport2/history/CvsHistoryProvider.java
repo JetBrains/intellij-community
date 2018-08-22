@@ -32,7 +32,6 @@ import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -50,17 +49,19 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class CvsHistoryProvider implements VcsHistoryProvider {
   public static final ColumnInfo<VcsFileRevision, String> STATE = new ColumnInfo<VcsFileRevision, String>(
     CvsBundle.message("file.history.state.column.name")) {
+    @Override
     public String valueOf(VcsFileRevision vcsFileRevision) {
       if (!(vcsFileRevision instanceof CvsFileRevision)) return "";
       return ((CvsFileRevision)vcsFileRevision).getState();
     }
 
+    @Override
     public Comparator<VcsFileRevision> getComparator() {
       return (r1, r2) -> {
         if (!(r1 instanceof CvsFileRevision)) return 1;
@@ -75,6 +76,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
       super(name);
     }
 
+    @Override
     public TableCellRenderer getRenderer(Object object) {
       final TableCellRenderer rendererFromSuper = super.getRenderer(object);
       if (!(object instanceof CvsFileRevision)) return rendererFromSuper;
@@ -83,18 +85,22 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
       return new TagsPanel(getName());
     }
 
+    @Override
     public boolean isCellEditable(Object object) {
       if (!(object instanceof CvsFileRevision)) return false;
       return getValues(((CvsFileRevision)object)).size() > 1;
     }
 
+    @Override
     public TableCellEditor getEditor(final Object object) {
       if (!(object instanceof CvsFileRevision)) return null;
       return new AbstractTableCellEditor() {
+        @Override
         public Object getCellEditorValue() {
           return "";
         }
 
+        @Override
         public Component getTableCellEditorComponent(JTable table,
                                                      Object value,
                                                      boolean isSelected,
@@ -110,6 +116,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
 
     protected abstract Collection<String> getValues(CvsFileRevision revision);
 
+    @Override
     public Object valueOf(Object object) {
       if (!(object instanceof CvsFileRevision)) return "";
       final Collection values = getValues(((CvsFileRevision)object));
@@ -122,12 +129,14 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
   }
 
   private final ColumnInfo TAG = new TagOrBranchColumn(CvsBundle.message("file.history.tag.column.name")) {
+    @Override
     protected Collection<String> getValues(CvsFileRevision revision) {
       return revision.getTags();
     }
   };
 
   public final ColumnInfo BRANCHES = new TagOrBranchColumn(CvsBundle.message("file.history.branches.column.name")) {
+    @Override
     protected Collection<String> getValues(CvsFileRevision revision) {
       return revision.getBranches();
     }
@@ -140,20 +149,24 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
     myProject = project;
   }
 
+  @Override
   public boolean isDateOmittable() {
     return false;
   }
 
+  @Override
   public VcsDependentHistoryComponents getUICustomization(final VcsHistorySession session, JComponent forShortcutRegistration) {
     return VcsDependentHistoryComponents.createOnlyColumns(new ColumnInfo[]{
       STATE, TAG, BRANCHES
     });
   }
 
+  @Override
   public String getHelpId() {
     return null;
   }
 
+  @Override
   @Nullable
   public VcsHistorySession createSessionFor(final FilePath filePath) {
     final List<VcsFileRevision> fileRevisionList = createRevisions(filePath);
@@ -169,6 +182,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
       myFilePath = filePath;
     }
 
+    @Override
     @Nullable
     public VcsRevisionNumber calcCurrentRevisionNumber() {
       return myFilePath == null ? null : getCurrentRevision(myFilePath);
@@ -183,6 +197,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
       return super.shouldBeRefreshed();
     }
 
+    @Override
     public boolean isContentAvailable(final VcsFileRevision revision) {
       if (revision instanceof CvsFileRevision) {
         final CvsFileRevision cvsFileRevision = (CvsFileRevision)revision;
@@ -191,6 +206,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
       return super.isContentAvailable(revision);
     }
 
+    @Override
     public HistoryAsTreeProvider getHistoryAsTreeProvider() {
       return MyHistoryAsTreeProvider.getInstance();
     }
@@ -201,6 +217,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
     }
   }
 
+  @Override
   public void reportAppendableHistory(FilePath path, VcsAppendableHistorySessionPartner partner) {
     final VcsHistorySession session;
     if (path instanceof CvsFilePath) {
@@ -259,10 +276,12 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
     return result;
   }
 
+  @Override
   public AnAction[] getAdditionalActions(final Runnable refresher) {
     return new AnAction[]{ ShowAllAffectedGenericAction.getInstance() };
   }
 
+  @Override
   public boolean supportsHistoryForDirectories() {
     return false;
   }
@@ -284,6 +303,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
       return ourInstance;
     }
 
+    @Override
     public List<TreeItem<VcsFileRevision>> createTreeOn(List<VcsFileRevision> allRevisions) {
       Collections.sort(allRevisions, VcsFileRevisionComparator.INSTANCE);
 
@@ -329,6 +349,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
 
     private VcsFileRevisionComparator() {}
 
+    @Override
     public int compare(VcsFileRevision rev1, VcsFileRevision rev2) {
       return VcsHistoryUtil.compare(rev1, rev2);
     }

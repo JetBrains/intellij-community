@@ -217,7 +217,13 @@ class TestingTasksImpl extends TestingTasks {
     def testObject = System.getProperty("teamcity.remote-debug.junit.type")
     def junitClass = System.getProperty("teamcity.remote-debug.junit.class")
     if (testObject != "class") {
-      context.messages.error("Remote debugging supports debugging all test methods in a class for now, debugging isn't supported for '$testObject'")
+      def message = "Remote debugging supports debugging all test methods in a class for now, debugging isn't supported for '$testObject'"
+      if (testObject == "method") {
+        context.messages.warning(message)
+        context.messages.warning("Launching all test methods in the class $junitClass")
+      } else {
+        context.messages.error(message)
+      }
     }
     if (junitClass == null) {
       context.messages.error("Remote debugging supports debugging all test methods in a class for now, but target class isn't specified")
@@ -282,6 +288,7 @@ class TestingTasksImpl extends TestingTasks {
       "java.io.tmpdir"                         : tempDir,
       "teamcity.build.tempDir"                 : tempDir,
       "teamcity.tests.recentlyFailedTests.file": System.getProperty("teamcity.tests.recentlyFailedTests.file"),
+      "teamcity.build.branch.is_default"       : System.getProperty("teamcity.build.branch.is_default"),
       "jna.nosys"                              : "true",
       "file.encoding"                          : "UTF-8",
       "io.netty.leakDetectionLevel"            : "PARANOID",

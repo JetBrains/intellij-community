@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileChooser.actions;
 
 import com.intellij.ide.IdeBundle;
@@ -15,12 +15,14 @@ public class  TogglePathShowingAction extends AnAction implements DumbAware {
     setEnabledInModalContext(true);
   }
 
+  @Override
   public void update(@NotNull final AnActionEvent e) {
     e.getPresentation().setText(IdeBundle.message("file.chooser.hide.path.tooltip.text"));
     DialogWrapper dialog = DialogWrapper.findInstance(e.getData(PlatformDataKeys.CONTEXT_COMPONENT));
     e.getPresentation().setEnabled(dialog instanceof FileChooserDialogImpl);
   }
 
+  @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     FileChooserDialogImpl dialog = (FileChooserDialogImpl)DialogWrapper.findInstance(e.getData(PlatformDataKeys.CONTEXT_COMPONENT));
     if (dialog != null) {

@@ -77,8 +77,8 @@ public interface ProjectViewSettings extends ViewSettings {
 
     @Override
     public boolean isShowExcludedFiles() {
-      ProjectViewSettings settings = getProjectViewSettings();
-      return settings != null && settings.isUseFileNestingRules();
+      ProjectView view = getProjectView();
+      return view != null && view.isShowExcludedFiles(getPaneID(view));
     }
 
     @Override

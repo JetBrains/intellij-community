@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
@@ -50,35 +36,42 @@ public class PythonParserDefinition implements ParserDefinition {
     myStringLiteralTokens = TokenSet.orSet(PyTokenTypes.STRING_NODES, TokenSet.create(PyElementTypes.STRING_LITERAL_EXPRESSION));
   }
 
+  @Override
   @NotNull
   public Lexer createLexer(Project project) {
     return new PythonIndentingLexer();
   }
 
+  @Override
   public IFileElementType getFileNodeType() {
     return PyFileElementType.INSTANCE;
   }
 
+  @Override
   @NotNull
   public TokenSet getWhitespaceTokens() {
     return myWhitespaceTokens;
   }
 
+  @Override
   @NotNull
   public TokenSet getCommentTokens() {
     return myCommentTokens;
   }
 
+  @Override
   @NotNull
   public TokenSet getStringLiteralElements() {
     return myStringLiteralTokens;
   }
 
+  @Override
   @NotNull
   public PsiParser createParser(Project project) {
     return new PyParser();
   }
 
+  @Override
   @NotNull
   public PsiElement createElement(@NotNull ASTNode node) {
     final IElementType type = node.getElementType();
@@ -92,10 +85,12 @@ public class PythonParserDefinition implements ParserDefinition {
     return new ASTWrapperPsiElement(node);
   }
 
+  @Override
   public PsiFile createFile(FileViewProvider viewProvider) {
     return new PyFileImpl(viewProvider);
   }
 
+  @Override
   public SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
     // see LanguageTokenSeparatorGenerator instead
     return SpaceRequirements.MAY;

@@ -49,7 +49,9 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.text.Normalizer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -137,7 +139,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
 
     myPropertiesFile.addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         propertiesFileChanged();
         somethingChanged();
       }
@@ -145,14 +147,14 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
 
     getKeyTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         somethingChanged();
       }
     });
 
     myValue.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         somethingChanged();
       }
     });

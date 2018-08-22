@@ -60,6 +60,7 @@ public abstract class AbstractBatchSuppressByNoInspectionCommentFix implements C
     myReplaceOtherSuppressionIds = replaceOtherSuppressionIds;
   }
 
+  @Override
   public void setShouldBeAppliedToInjectionHost(@NotNull ThreeState shouldBeAppliedToInjectionHost) {
     myShouldBeAppliedToInjectionHost = shouldBeAppliedToInjectionHost;
   }

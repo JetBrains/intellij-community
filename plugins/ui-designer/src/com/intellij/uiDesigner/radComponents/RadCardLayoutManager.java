@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.radComponents;
 
@@ -43,18 +29,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.CardLayout;
-import java.awt.LayoutManager;
-import java.awt.Point;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.lang.reflect.Field;
-import java.util.Vector;
 import java.util.List;
+import java.util.Vector;
 
 /**
  * @author yole
  */
 public class RadCardLayoutManager extends RadLayoutManager {
+  @Override
   @Nullable
   public String getName() {
     return UIFormXmlConstants.LAYOUT_CARD;
@@ -71,6 +55,7 @@ public class RadCardLayoutManager extends RadLayoutManager {
     DefaultCardProperty.INSTANCE.setValue(radContainer, defaultCard);
   }
 
+  @Override
   public void writeChildConstraints(final XmlWriter writer, final RadComponent child) {
     writer.startElement(UIFormXmlConstants.ELEMENT_CARD);
     try {
@@ -84,7 +69,7 @@ public class RadCardLayoutManager extends RadLayoutManager {
   @Override
   public void writeLayout(final XmlWriter writer, final RadContainer radContainer) {
     CardLayout layout = (CardLayout) radContainer.getLayout();
-    
+
     writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_HGAP, layout.getHgap());
     writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_VGAP, layout.getVgap());
 
@@ -94,6 +79,7 @@ public class RadCardLayoutManager extends RadLayoutManager {
     }
   }
 
+  @Override
   public void addComponentToContainer(final RadContainer container, final RadComponent component, final int index) {
     container.getDelegee().add(component.getDelegee(), component.getCustomLayoutConstraints());
   }
@@ -200,19 +186,23 @@ public class RadCardLayoutManager extends RadLayoutManager {
       myContainer = container;
     }
 
+    @Override
     public RadContainer getContainer() {
       return myContainer;
     }
 
+    @Override
     public boolean canDrop(ComponentDragObject dragObject) {
       return dragObject.getComponentCount() == 1;
     }
 
+    @Override
     public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
       Rectangle rc = myContainer.getBounds();
       feedbackLayer.putFeedback(myContainer.getParent().getDelegee(), rc, null);
     }
 
+    @Override
     public void processDrop(GuiEditor editor,
                             RadComponent[] components,
                             GridConstraints[] constraintsToAdjust,
@@ -225,6 +215,7 @@ public class RadCardLayoutManager extends RadLayoutManager {
       myContainer.addComponent(components [0]);
     }
 
+    @Override
     @Nullable
     public ComponentDropLocation getAdjacentLocation(Direction direction) {
       return null;
@@ -235,10 +226,12 @@ public class RadCardLayoutManager extends RadLayoutManager {
     private final LabelPropertyRenderer<String> myRenderer = new LabelPropertyRenderer<>();
 
     private final AbstractTextFieldEditor<String> myEditor = new AbstractTextFieldEditor<String>() {
+      @Override
       protected void setValueFromComponent(RadComponent component, String value) {
         myTf.setText((String) component.getCustomLayoutConstraints());
       }
 
+      @Override
       public String getValue() throws Exception {
         return myTf.getText();
       }
@@ -250,10 +243,12 @@ public class RadCardLayoutManager extends RadLayoutManager {
       super(null, "Card Name");
     }
 
+    @Override
     public String getValue(final RadComponent component) {
       return (String) component.getCustomLayoutConstraints();
     }
 
+    @Override
     protected void setValueImpl(final RadComponent component, final String value) throws Exception {
       if (!value.equals(component.getCustomLayoutConstraints())) {
         if (component.getParent().findComponentWithConstraints(value) != null) {
@@ -266,11 +261,13 @@ public class RadCardLayoutManager extends RadLayoutManager {
       }
     }
 
+    @Override
     @NotNull
     public PropertyRenderer<String> getRenderer() {
       return myRenderer;
     }
 
+    @Override
     public PropertyEditor<String> getEditor() {
       return myEditor;
     }

@@ -12,7 +12,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
-import com.intellij.openapi.editor.event.EditorMouseMotionAdapter;
+import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.fileEditor.impl.text.CodeFoldingState;
@@ -60,7 +60,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
   @Override
   public void projectOpened() {
-    final EditorMouseMotionAdapter myMouseMotionListener = new EditorMouseMotionAdapter() {
+    final EditorMouseMotionListener myMouseMotionListener = new EditorMouseMotionListener() {
       LightweightHint myCurrentHint;
       FoldRegion myCurrentFold;
 

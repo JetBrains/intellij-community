@@ -27,7 +27,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -38,7 +37,6 @@ import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.SystemIndependent;
 import org.jetbrains.idea.maven.importing.MavenAnnotationProcessorsModuleService;
 import org.jetbrains.idea.maven.importing.MavenExtraArtifactType;
 import org.jetbrains.idea.maven.importing.MavenImporter;
@@ -47,6 +45,7 @@ import org.jetbrains.idea.maven.plugins.api.MavenModelPropertiesPatcher;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.*;
+import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.*;
@@ -58,9 +57,20 @@ import static com.intellij.openapi.roots.OrderEnumerator.orderEntries;
 public class MavenProject {
 
   private static final Key<MavenArtifactIndex> DEPENDENCIES_CACHE_KEY = Key.create("MavenProject.DEPENDENCIES_CACHE_KEY");
-  private static final Key<Map<String, String>> MAVEN_CONFIG_CACHE_KEY = Key.create("MavenProject.MAVEN_CONFIG_CACHE_KEY");
-  private static final Key<Map<String, String>> JVM_CONFIG_CACHE_KEY = Key.create("MavenProject.JVM_CONFIG_CACHE_KEY");
   private static final Key<List<String>> FILTERS_CACHE_KEY = Key.create("MavenProject.FILTERS_CACHE_KEY");
+
+  public enum ConfigFileKind {
+    MAVEN_CONFIG(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH, "true"),
+    JVM_CONFIG(MavenConstants.JVM_CONFIG_RELATIVE_PATH, "");
+    final Key<Map<String, String>> CACHE_KEY = Key.create("MavenProject." + name());
+    final String myRelativeFilePath;
+    final String myValueIfMissing;
+
+    ConfigFileKind(String relativeFilePath, String valueIfMissing) {
+      myRelativeFilePath = relativeFilePath;
+      myValueIfMissing = valueIfMissing;
+    }
+  }
 
   @NotNull private final VirtualFile myFile;
   @NotNull private volatile State myState = new State();
@@ -1090,10 +1100,15 @@ public class MavenProject {
 
   @NotNull
   public Map<String, String> getMavenConfig() {
-    Map<String, String> mavenConfig = getCachedValue(MAVEN_CONFIG_CACHE_KEY);
+    return getPropertiesFromConfig(ConfigFileKind.MAVEN_CONFIG);
+  }
+
+  @NotNull
+  private Map<String, String> getPropertiesFromConfig(ConfigFileKind kind) {
+    Map<String, String> mavenConfig = getCachedValue(kind.CACHE_KEY);
     if (mavenConfig == null) {
-      mavenConfig = readConfigFile(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH);
-      putCachedValue(MAVEN_CONFIG_CACHE_KEY, mavenConfig);
+      mavenConfig = readConfigFile(MavenUtil.getBaseDir(getDirectoryFile()), kind);
+      putCachedValue(kind.CACHE_KEY, mavenConfig);
     }
 
     return mavenConfig;
@@ -1101,29 +1116,22 @@ public class MavenProject {
 
   @NotNull
   public Map<String, String> getJvmConfig() {
-    Map<String, String> jvmConfig = getCachedValue(JVM_CONFIG_CACHE_KEY);
-    if (jvmConfig == null) {
-      jvmConfig = readConfigFile(MavenConstants.JVM_CONFIG_RELATIVE_PATH);
-      putCachedValue(JVM_CONFIG_CACHE_KEY, jvmConfig);
-    }
-
-    return jvmConfig;
+    return getPropertiesFromConfig(ConfigFileKind.JVM_CONFIG);
   }
 
   @NotNull
-  private Map<String, String> readConfigFile(@SystemIndependent String relativePath) {
-    File baseDir = MavenUtil.getBaseDir(getDirectoryFile());
-    File configFile = new File(baseDir + FileUtil.toSystemDependentName(relativePath));
+  public static Map<String, String> readConfigFile(final File baseDir, ConfigFileKind kind) {
+    File configFile = new File(baseDir + FileUtil.toSystemDependentName(kind.myRelativeFilePath));
 
     ParametersList parametersList = new ParametersList();
-    if (configFile.exists() && configFile.isFile()) {
-      try (InputStream in = new FileInputStream(configFile)) {
-        parametersList.addParametersString(StreamUtil.readText(in, CharsetToolkit.UTF8));
+    if (configFile.isFile()) {
+      try {
+        parametersList.addParametersString(FileUtil.loadFile(configFile, CharsetToolkit.UTF8));
       }
       catch (IOException ignore) {
       }
     }
-    Map<String, String> config = parametersList.getProperties();
+    Map<String, String> config = parametersList.getProperties(kind.myValueIfMissing);
     return config.isEmpty() ? Collections.emptyMap() : config;
   }
 

@@ -100,7 +100,7 @@ public class MadTestingUtil {
     Disposable disposable = Disposer.newDisposable();
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent event) {
+      public void documentChanged(@NotNull DocumentEvent event) {
         eventHandler.accept(event);
       }
     }, disposable);
@@ -237,7 +237,7 @@ public class MadTestingUtil {
   /**
    * Finds files under {@code rootPath} (e.g. test data root) satisfying {@code fileFilter condition} (e.g. correct extension) and uses {@code actions} to generate actions those files (e.g. invoke completion/intentions or random editing).
    * Almost: the files with same paths and contents are created inside the test project, then the actions are executed on them.
-   * Note that the test project contains only one file at each moment, so it's best to test actions that don't require much environment. 
+   * Note that the test project contains only one file at each moment, so it's best to test actions that don't require much environment.
    * @return
    */
   @NotNull
@@ -306,9 +306,12 @@ public class MadTestingUtil {
    */
   @NotNull
   public static Generator<MadTestingAction> randomEditsWithReparseChecks(PsiFile file) {
-    return Generator.sampledFrom(new DeleteRange(file),
-                                 new CheckPsiTextConsistency(file),
-                                 new InsertString(file));
+    return Generator.sampledFrom(
+      new InsertString(file),
+      new DeleteRange(file),
+      new CommitDocumentAction(file),
+      new CheckPsiTextConsistency(file)
+    );
   }
 
   /**
@@ -321,6 +324,7 @@ public class MadTestingUtil {
     return file -> Generator.sampledFrom(
       new InsertString(file),
       new DeleteRange(file),
+      new CommitDocumentAction(file),
       new CheckPsiReadAccessors(file, skipCondition)
     );
   }

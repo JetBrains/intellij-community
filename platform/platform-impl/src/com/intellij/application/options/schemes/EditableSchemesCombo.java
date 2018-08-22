@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.schemes;
 
 import com.intellij.openapi.options.Scheme;
@@ -35,14 +21,14 @@ import java.util.function.Consumer;
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 
 public class EditableSchemesCombo<T extends Scheme> {
-  
+
   // region Message constants
   public static final String EMPTY_NAME_MESSAGE = "The name must not be empty";
   public static final String NAME_ALREADY_EXISTS_MESSAGE = "Name is already in use. Please change to unique name.";
   public static final String EDITING_HINT = "Enter to save, Esc to cancel";
   public static final int COMBO_WIDTH = 200;
   // endregion
-  
+
   private SchemesCombo<T> myComboBox;
   private final JPanel myRootPanel;
   private final AbstractSchemesPanel<T, ?> mySchemesPanel;
@@ -88,7 +74,7 @@ public class EditableSchemesCombo<T extends Scheme> {
     });
     nameEditorField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         validateOnTyping();
       }
     });
@@ -137,7 +123,7 @@ public class EditableSchemesCombo<T extends Scheme> {
       cancelEdit();
     }
   }
-  
+
   public void cancelEdit() {
     mySchemesPanel.clearInfo();
     myLayout.first(myRootPanel);
@@ -205,7 +191,7 @@ public class EditableSchemesCombo<T extends Scheme> {
   public void selectScheme(@Nullable T scheme) {
     myComboBox.selectScheme(scheme);
   }
-  
+
   public JComponent getComponent() {
     return myRootPanel;
   }

@@ -193,6 +193,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
   private Frame<BasicValue> nextFrame;
   private PResult subResult;
 
+  @Override
   @NotNull
   protected Equation analyze() throws AnalyzerException {
     pendingPush(new ProceedState(createStartState()));
@@ -415,6 +416,7 @@ class NullableInAnalysis extends Analysis<PResult> {
   private PResult subResult = Identity;
   private boolean top;
 
+  @Override
   @NotNull
   protected Equation analyze() throws AnalyzerException {
     pendingPush(createStartState());

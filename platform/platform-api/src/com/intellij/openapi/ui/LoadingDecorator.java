@@ -60,6 +60,7 @@ public class LoadingDecorator {
 
 
     myFadeOutAnimator = new Animator("Loading", 10, RemoteDesktopService.isRemoteSession()? 2500 : 500, false) {
+      @Override
       public void paintNow(final int frame, final int totalFrames, final int cycle) {
         myLoadingLayer.setAlpha(1f - ((float)frame) / ((float)totalFrames));
       }

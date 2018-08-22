@@ -50,6 +50,7 @@ public class PlatformProjectViewOpener implements DirectoryProjectConfigurator {
       myProject = project;
     }
 
+    @Override
     public void toolWindowRegistered(@NotNull final String id) {
       if (id.equals(ToolWindowId.PROJECT_VIEW)) {
         myManager.removeToolWindowManagerListener(this);

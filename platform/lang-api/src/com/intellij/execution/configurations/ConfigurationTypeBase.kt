@@ -10,6 +10,19 @@ import javax.swing.Icon
 
 private val EMPTY_FACTORIES = arrayOf<ConfigurationFactory>()
 
+enum class RunConfigurationSingletonPolicy {
+  SINGLE_INSTANCE,
+  MULTIPLE_INSTANCE,
+  SINGLE_INSTANCE_ONLY,
+  MULTIPLE_INSTANCE_ONLY;
+
+  val isPolicyConfigurable: Boolean
+    get() = this != SINGLE_INSTANCE_ONLY && this != MULTIPLE_INSTANCE_ONLY
+
+  val isSingleton: Boolean
+    get() = this == SINGLE_INSTANCE || this == SINGLE_INSTANCE_ONLY
+}
+
 abstract class ConfigurationTypeBase protected constructor(private val id: String, private val displayName: String, description: String? = null, private val icon: NotNullLazyValue<Icon>?) : ConfigurationType {
   companion object {
     @JvmStatic

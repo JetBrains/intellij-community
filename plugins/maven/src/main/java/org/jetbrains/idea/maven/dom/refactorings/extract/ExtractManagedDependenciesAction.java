@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.dom.refactorings.extract;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -51,10 +50,12 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
     setInjectedContext(true);
   }
 
+  @Override
   protected boolean isAvailableInEditorOnly() {
     return true;
   }
 
+  @Override
   protected boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
     return false;
   }
@@ -64,6 +65,7 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
     return true;
   }
 
+  @Override
   protected RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     return new MyRefactoringActionHandler();
   }
@@ -103,6 +105,7 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
   }
 
   private static class MyRefactoringActionHandler implements RefactoringActionHandler {
+    @Override
     public void invoke(@NotNull final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
       Pair<MavenDomDependency, Set<MavenDomProjectModel>> depAndParents = findDependencyAndParent(file, editor);
       if (depAndParents == null) return;
@@ -221,6 +224,7 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
       };
     }
 
+    @Override
     public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     }
   }

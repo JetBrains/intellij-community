@@ -33,11 +33,13 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.SmartList;
 import com.intellij.util.TreeItem;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
@@ -46,6 +48,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.*;
 
 import static com.intellij.ide.favoritesTreeView.FavoritesListProvider.EP_NAME;
@@ -570,6 +573,49 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
         queue.addAll(children);
       }
     }
+  }
+
+  protected Collection<VirtualFile> getVirtualFiles(String listName, boolean recursively) {
+    if (getListProvider(listName) != null) return Collections.emptyList();
+    Collection<VirtualFile> result = new SmartList<>();
+    final List<TreeItem<Pair<AbstractUrl, String>>> roots = myName2FavoritesRoots.get(listName);
+    if (!recursively) {
+      for (TreeItem<Pair<AbstractUrl, String>> item : roots) {
+        VirtualFile file = getVirtualFile(item);
+        if (file != null) {
+          result.add(file);
+        }
+      }
+    } else {
+      iterateTreeItems(roots, item -> {
+        VirtualFile file = getVirtualFile(item);
+        if (file != null) {
+          result.add(file);
+        }
+      });
+    }
+    return result;
+  }
+
+  @Nullable
+  private VirtualFile getVirtualFile(TreeItem<Pair<AbstractUrl, String>> item) {
+    Pair<AbstractUrl, String> data = item.getData();
+    Object[] path = data.first.createPath(myProject);
+    if (path != null && path.length == 1) {
+      if (path[0] instanceof PsiFile) {
+        VirtualFile virtualFile = ((PsiFile)path[0]).getVirtualFile();
+        if (virtualFile != null && !virtualFile.isDirectory()) {
+          return virtualFile;
+        }
+      }
+      if (path[0] instanceof File) {
+        VirtualFile virtualFile = VfsUtil.findFileByIoFile((File)path[0], false);
+        if (virtualFile != null && !virtualFile.isDirectory()) {
+          return virtualFile;
+        }
+      }
+    }
+    return null;
   }
 
   private class MyRootsChangeAdapter extends PsiTreeChangeAdapter {

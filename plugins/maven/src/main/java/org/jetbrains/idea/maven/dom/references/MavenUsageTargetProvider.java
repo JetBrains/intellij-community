@@ -24,12 +24,14 @@ import com.intellij.usages.UsageTargetProvider;
 import org.jetbrains.annotations.NotNull;
 
 public class MavenUsageTargetProvider implements UsageTargetProvider {
+  @Override
   public UsageTarget[] getTargets(@NotNull Editor editor, @NotNull PsiFile file) {
     PsiElement target = MavenTargetUtil.getFindTarget(editor, file);
     if (target == null) return UsageTarget.EMPTY_ARRAY;
     return new UsageTarget[]{new PsiElement2UsageTargetAdapter(target)};
   }
 
+  @Override
   public UsageTarget[] getTargets(@NotNull PsiElement psiElement) {
     return UsageTarget.EMPTY_ARRAY;
   }

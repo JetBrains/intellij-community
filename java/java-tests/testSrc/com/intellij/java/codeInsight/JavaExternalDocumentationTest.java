@@ -203,6 +203,7 @@ public class JavaExternalDocumentationTest extends PlatformTestCase {
       myText = text;
     }
 
+    @Override
     public String getText() {
       return myText;
     }

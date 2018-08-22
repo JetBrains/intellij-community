@@ -132,6 +132,8 @@
     <java.externalAnnotation implementation="com.intellij.codeInsight.externalAnnotation.NullableAnnotationProvider"/>
     <java.externalAnnotation implementation="com.intellij.codeInsight.externalAnnotation.UnmodifiableAnnotationProvider"/>
     <java.externalAnnotation implementation="com.intellij.codeInsight.externalAnnotation.UnmodifiableViewAnnotationProvider"/>
+    <java.externalAnnotation implementation="com.intellij.codeInsight.externalAnnotation.BlockingMethodAnnotationProvider"/>
+    <java.externalAnnotation implementation="com.intellij.codeInsight.externalAnnotation.NonblockingMethodAnnotationProvider"/>
     <refactoring.pushDown language="JAVA" implementationClass="com.intellij.refactoring.memberPushDown.JavaPushDownDelegate" id="java"/>
     <refactoring.introduceParameterObject language="JAVA"
                                           implementationClass="com.intellij.refactoring.introduceparameterobject.JavaIntroduceParameterObjectDelegate"/>
@@ -174,6 +176,7 @@
     <psi.referenceContributor language="JAVA" implementation="com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceContributor"/>
     <implicitUsageProvider implementation="com.intellij.psi.impl.source.resolve.reference.impl.AtomicReferenceImplicitUsageProvider"/>
     <projectTemplateParameterFactory implementation="com.intellij.openapi.module.BasePackageParameterFactory"/>
+    <projectTemplateParameterFactory implementation="com.intellij.openapi.module.LanguageLevelParameterFactory"/>
     <java.elementFinder implementation="com.intellij.psi.impl.migration.MigrationElementFinder"/>
     <java.elementFinder implementation="com.intellij.psi.impl.PackagePrefixElementFinder"/>
     <treeCopyHandler implementation="com.intellij.psi.impl.source.tree.JavaTreeCopyHandler"/>
@@ -447,7 +450,6 @@
     <lang.lineWrapStrategy language="JAVA" implementationClass="com.intellij.psi.formatter.java.JavaLineWrapPositionStrategy"/>
     <langCodeStyleSettingsProvider implementation="com.intellij.ide.JavaLanguageCodeStyleSettingsProvider"/>
     <codeStyleSettingsProvider implementation="com.intellij.application.options.GenerationSettingsProvider"/>
-    <codeStyleSettingsProvider implementation="com.intellij.application.options.JavaCodeStyleSettingsProvider"/>
     <externalSystem.codeStyleConfigurationImporter implementation="com.intellij.psi.codeStyle.JavaCodeStyleImporter" />
     <iconProvider implementation="com.intellij.psi.impl.JavaDirectoryIconProvider" id="javaDirectory"/>
     <codeStyle.ReferenceAdjuster language="JAVA" implementationClass="com.intellij.psi.impl.source.codeStyle.JavaReferenceAdjuster"/>
@@ -584,7 +586,7 @@
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ReplaceInefficientStreamCountInspection"
-                     displayName="Replace inefficient Stream API call chains ending with count()"/>
+                     displayName="Replace inefficient Stream API call chains ending with count()" since="2016.3"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="ComparatorCombinators"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"

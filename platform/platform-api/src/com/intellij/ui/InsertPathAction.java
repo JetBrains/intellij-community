@@ -51,6 +51,7 @@ public class InsertPathAction extends AnAction {
     myDescriptor = descriptor;
   }
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     String selectedText = myTextField.getSelectedText();
     VirtualFile virtualFile;
@@ -96,7 +97,7 @@ public class InsertPathAction extends AnAction {
   public static void addTo(JTextComponent textField, FileChooserDescriptor descriptor) {
     addTo(textField, descriptor, true);
   }
-  
+
   public static void addTo(JTextComponent textField, FileChooserDescriptor descriptor, boolean insertSystemDependentPaths) {
     if (ApplicationManager.getApplication() != null) { //NPE fixed when another class loader works
       removeFrom(textField);

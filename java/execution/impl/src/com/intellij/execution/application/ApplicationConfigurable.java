@@ -52,6 +52,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     myCommonProgramParameters.setModuleContext(myModuleSelector.getModule());
     ProgramParametersConfigurator.addMacroSupport(myCommonProgramParameters.getProgramParametersComponent().getComponent().getEditorField());
     myModule.getComponent().addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         myCommonProgramParameters.setModuleContext(myModuleSelector.getModule());
       }
@@ -65,6 +66,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
                                                 myShortenClasspathModeCombo, myIncludeProvidedDeps);
   }
 
+  @Override
   public void applyEditorTo(@NotNull final ApplicationConfiguration configuration) throws ConfigurationException {
     myCommonProgramParameters.applyTo(configuration);
     myModuleSelector.applyTo(configuration);
@@ -80,6 +82,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     updateShowSwingInspector(configuration);
   }
 
+  @Override
   public void resetEditorFrom(@NotNull final ApplicationConfiguration configuration) {
     myCommonProgramParameters.reset(configuration);
     myModuleSelector.reset(configuration);
@@ -113,6 +116,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     return myCommonProgramParameters;
   }
 
+  @Override
   @NotNull
   public JComponent createEditor() {
     return myWholePanel;

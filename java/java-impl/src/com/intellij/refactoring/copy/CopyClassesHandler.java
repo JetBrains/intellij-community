@@ -155,6 +155,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     }
   }
 
+  @Override
   public void doCopy(PsiElement[] elements, PsiDirectory defaultTargetDirectory) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.copyClass");
     final HashMap<PsiFile, String> relativePathsMap = new HashMap<>();
@@ -241,6 +242,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     return false;
   }
 
+  @Override
   public void doClone(PsiElement element) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.copyClass");
     PsiClass[] classes = getTopLevelClasses(element);
@@ -267,7 +269,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
                                       final Object targetDirectory,
                                       final PsiDirectory defaultTargetDirectory,
                                       final String commandName,
-                                      final boolean selectInActivePanel, 
+                                      final boolean selectInActivePanel,
                                       final boolean openInEditor) {
     final boolean[] result = new boolean[] {false};
     Runnable command = () -> {
@@ -361,7 +363,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       }
     }
 
-    
+
     for (PsiFile file : files) {
       try {
         PsiDirectory finalTarget = targetDirectory;

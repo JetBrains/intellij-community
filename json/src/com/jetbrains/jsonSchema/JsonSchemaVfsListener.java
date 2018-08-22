@@ -34,6 +34,7 @@ import java.util.concurrent.ExecutorService;
  */
 public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
   public static final Topic<Runnable> JSON_SCHEMA_CHANGED = Topic.create("JsonSchemaVfsListener.Json.Schema.Changed", Runnable.class);
+  public static final Topic<Runnable> JSON_DEPS_CHANGED = Topic.create("JsonSchemaVfsListener.Json.Deps.Changed", Runnable.class);
 
   public static void startListening(@NotNull Project project, @NotNull final JsonSchemaService service) {
     final MyUpdater updater = new MyUpdater(project, service);
@@ -49,8 +50,8 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
 
   private JsonSchemaVfsListener(@NotNull MyUpdater updater) {
     super(new VirtualFileContentsChangedAdapter() {
-      private final MyUpdater myUpdater = updater;
-
+      @NotNull private final MyUpdater myUpdater = updater;
+      @Override
       protected void onFileChange(@NotNull final VirtualFile schemaFile) {
         myUpdater.onFileChange(schemaFile);
       }
@@ -78,7 +79,11 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
       myRunnable = () -> {
         if (myProject.isDisposed()) return;
         Collection<VirtualFile> scope = new HashSet<>(myDirtySchemas);
+        if (scope.stream().anyMatch(f -> service.possiblyHasReference(f.getName()))) {
+          myProject.getMessageBus().syncPublisher(JSON_DEPS_CHANGED).run();
+        }
         myDirtySchemas.removeAll(scope);
+        if (scope.isEmpty()) return;
 
         Collection<VirtualFile> finalScope = ContainerUtil.filter(scope, file -> myService.isApplicableToFile(file) && ((JsonSchemaServiceImpl)myService).isMappedSchema(file));
         if (finalScope.isEmpty()) return;

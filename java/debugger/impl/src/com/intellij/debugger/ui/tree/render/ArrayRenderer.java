@@ -69,22 +69,27 @@ public class ArrayRenderer extends NodeRendererImpl{
     super(DEFAULT_NAME, true);
   }
 
+  @Override
   public String getUniqueId() {
     return UNIQUE_ID;
   }
 
+  @Override
   public @NonNls String getName() {
     return "Array";
   }
 
+  @Override
   public void setName(String text) {
     LOG.assertTrue(false);
   }
 
+  @Override
   public ArrayRenderer clone() {
     return (ArrayRenderer)super.clone();
   }
 
+  @Override
   public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
     return ClassRenderer.calcLabel(descriptor);
   }
@@ -93,6 +98,7 @@ public class ArrayRenderer extends NodeRendererImpl{
     myForced = forced;
   }
 
+  @Override
   public void buildChildren(Value value, ChildrenBuilder builder, EvaluationContext evaluationContext) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     NodeManagerImpl nodeManager = (NodeManagerImpl)builder.getNodeManager();
@@ -162,16 +168,19 @@ public class ArrayRenderer extends NodeRendererImpl{
     }
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
     DefaultJDOMExternalizer.readExternal(this, element);
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
 
+  @Override
   public PsiExpression getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) {
     LOG.assertTrue(node.getDescriptor() instanceof ArrayElementDescriptorImpl, node.getDescriptor().getClass().getName());
     ArrayElementDescriptorImpl descriptor = (ArrayElementDescriptorImpl)node.getDescriptor();
@@ -187,10 +196,12 @@ public class ArrayRenderer extends NodeRendererImpl{
     }
   }
 
+  @Override
   public boolean isExpandable(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
     return value instanceof ArrayReference && ((ArrayReference)value).length() > 0;
   }
 
+  @Override
   public boolean isApplicable(Type type) {
     return type instanceof ArrayType;
   }

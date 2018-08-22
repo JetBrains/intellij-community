@@ -19,6 +19,7 @@ public interface PsiMember extends PsiModifierListOwner, NavigatablePsiElement, 
    *
    * @return the containing class.
    */
+  @Override
   @Nullable
   PsiClass getContainingClass();
 }

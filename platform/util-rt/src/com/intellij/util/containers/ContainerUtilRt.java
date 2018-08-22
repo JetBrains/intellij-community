@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
@@ -23,6 +24,12 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public class ContainerUtilRt {
   private static final int ARRAY_COPY_THRESHOLD = 20;
+
+  @NotNull
+  @Contract(pure=true)
+  public static <T> T[] ar(@NotNull T... elements) {
+    return elements;
+  }
 
   @NotNull
   @Contract(value = " -> new", pure = true)
@@ -381,6 +388,28 @@ public class ContainerUtilRt {
   }
 
   /**
+   * @param collection an input collection to process
+   * @param mapping a side-effect free function which transforms collection elements
+   * @return read-only list consisting of the elements from the array converted by mapping with nulls filtered out
+   */
+  @NotNull
+  @Contract(pure=true)
+  public static <T, V> List<V> mapNotNull(@NotNull Collection<? extends T> collection, @NotNull Function<T, V> mapping) {
+    if (collection.isEmpty()) {
+      return emptyList();
+    }
+
+    List<V> result = new ArrayList<V>(collection.size());
+    for (T t : collection) {
+      final V o = mapping.fun(t);
+      if (o != null) {
+        result.add(o);
+      }
+    }
+    return result.isEmpty() ? ContainerUtilRt.<V>emptyList() : result;
+  }
+
+  /**
    * @return read-only list consisting of the elements from collection converted by mapper
    */
   @NotNull
@@ -460,4 +489,48 @@ public class ContainerUtilRt {
 
     return c.toArray(sample);
   }
+
+  @Nullable
+  @Contract(pure=true)
+  public static <T, L extends List<T>> T getLastItem(@Nullable L list, @Nullable T def) {
+    return isEmpty(list) ? def : list.get(list.size() - 1);
+  }
+
+  @Nullable
+  @Contract(pure=true)
+  public static <T, L extends List<T>> T getLastItem(@Nullable L list) {
+    return getLastItem(list, null);
+  }
+
+  @Contract(value = "null -> true", pure = true)
+  public static <T> boolean isEmpty(@Nullable Collection<T> collection) {
+    return collection == null || collection.isEmpty();
+  }
+
+  @Nullable
+  @Contract(pure=true)
+  public static <T, V extends T> V find(@NotNull Iterable<V> iterable, @NotNull Condition<T> condition) {
+    return find(iterable.iterator(), condition);
+  }
+
+  @Nullable
+  public static <T, V extends T> V find(@NotNull Iterator<V> iterator, @NotNull Condition<T> condition) {
+    while (iterator.hasNext()) {
+      V value = iterator.next();
+      if (condition.value(value)) return value;
+    }
+    return null;
+  }
+
+  @Contract(pure=true)
+  public static <T> int indexOf(@NotNull List<T> list, @NotNull Condition<? super T> condition) {
+    for (int i = 0, listSize = list.size(); i < listSize; i++) {
+      T t = list.get(i);
+      if (condition.value(t)) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
 }

@@ -300,6 +300,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     return !Comparing.strEqual(data.TEST_OBJECT, TEST_PACKAGE) ? null : data.getPackageName();
   }
 
+  @Override
   public void beClassConfiguration(final PsiClass testClass) {
     if (FORK_KLASS.equals(getForkMode())) {
       setForkMode(FORK_NONE);
@@ -358,6 +359,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     if (shouldUpdateName) setGeneratedName();
   }
 
+  @Override
   public void beMethodConfiguration(final Location<PsiMethod> methodLocation) {
     setForkMode(FORK_NONE);
     setModule(myData.setTestMethod(methodLocation));
@@ -531,6 +533,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     return false;
   }
 
+  @Override
   public void bePatternConfiguration(List<PsiClass> classes, PsiMethod method) {
     myData.TEST_OBJECT = TEST_PATTERN;
     final LinkedHashSet<String> patterns = new LinkedHashSet<>();

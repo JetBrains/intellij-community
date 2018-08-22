@@ -38,14 +38,17 @@ public class LwButtonGroup implements IButtonGroup {
     }
   }
 
+  @Override
   public String getName() {
     return myName;
   }
 
+  @Override
   public String[] getComponentIds() {
     return (String[])myComponentIds.toArray(new String[0]);
   }
 
+  @Override
   public boolean isBound() {
     return myBound;
   }

@@ -47,6 +47,7 @@ public class MarkLocallyDeletedTreeConflictResolvedAction extends DumbAwareActio
     if (result == Messages.YES) {
       final Ref<VcsException> exception = new Ref<>();
       ProgressManager.getInstance().run(new Task.Backgroundable(project, markText, true) {
+        @Override
         public void run(@NotNull ProgressIndicator indicator) {
           resolveLocallyDeletedTextConflict(locallyDeletedChecker, exception);
         }

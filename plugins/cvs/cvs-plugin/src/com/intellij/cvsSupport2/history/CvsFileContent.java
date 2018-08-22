@@ -40,6 +40,7 @@ public abstract class CvsFileContent implements VcsFileContent{
     return myComparableCvsRevisionOnOperation.isLoaded();
   }
 
+  @Override
   @Nullable
   public byte[] getContent() throws IOException, VcsException {
     if (! isLoaded()) return null;
@@ -48,6 +49,7 @@ public abstract class CvsFileContent implements VcsFileContent{
 
   public abstract VcsRevisionNumber getRevisionNumber();
 
+  @Override
   public byte[] loadContent() throws IOException, VcsException {
     myComparableCvsRevisionOnOperation.loadContent();
     if (!isLoaded()) {

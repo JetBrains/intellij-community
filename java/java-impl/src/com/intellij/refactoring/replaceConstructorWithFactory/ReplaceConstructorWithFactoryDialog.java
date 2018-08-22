@@ -65,6 +65,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
     init();
   }
 
+  @Override
   protected void dispose() {
     myNameField.removeDataChangedListener(myNameChangedListener);
     super.dispose();
@@ -74,10 +75,12 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
     return myNameField.getEnteredName();
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY);
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myNameField.getFocusableComponent();
   }
@@ -91,6 +94,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
     }
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbc = new GridBagConstraints();
@@ -154,11 +158,13 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
     return targetClassPanel;
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.refactoring.replaceConstructorWithFactory.ReplaceConstructorWithFactoryDialog";
   }
 
   private class ChooseClassAction implements ActionListener {
+    @Override
     public void actionPerformed(ActionEvent e) {
       TreeClassChooser chooser = TreeClassChooserFactory.getInstance(getProject()).createProjectScopeChooser(
         RefactoringBundle.message("choose.destination.class"));
@@ -172,10 +178,12 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
   }
 
 
+  @Override
   protected JComponent createCenterPanel() {
     return null;
   }
 
+  @Override
   protected void doAction() {
     final Project project = getProject();
     final PsiManager manager = PsiManager.getInstance(project);

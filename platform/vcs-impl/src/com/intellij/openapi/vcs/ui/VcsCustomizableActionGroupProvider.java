@@ -16,6 +16,8 @@
 package com.intellij.openapi.vcs.ui;
 
 import com.intellij.ide.ui.customization.CustomizableActionGroupProvider;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.vcs.VcsActions;
 
 /**
  * @author gregsh
@@ -23,8 +25,8 @@ import com.intellij.ide.ui.customization.CustomizableActionGroupProvider;
 public class VcsCustomizableActionGroupProvider extends CustomizableActionGroupProvider {
   @Override
   public void registerGroups(CustomizableActionGroupRegistrar registrar) {
-    registrar.addCustomizableActionGroup("Vcs.Operations.Popup", "VCS Operations Popup");
-    registrar.addCustomizableActionGroup("ChangesViewToolbar", "Local Changes Toolbar");
-    registrar.addCustomizableActionGroup("Vcs.Log.ChangesBrowser.Toolbar", "VCS Log Changes Browser Toolbar");
+    registrar.addCustomizableActionGroup(VcsActions.VCS_OPERATIONS_POPUP, "VCS Operations Popup");
+    registrar.addCustomizableActionGroup(ActionPlaces.CHANGES_VIEW_TOOLBAR, "Local Changes Toolbar");
+    registrar.addCustomizableActionGroup(VcsActions.VCS_LOG_CHANGES_BROWSER_TOOLBAR, "VCS Log Changes Browser Toolbar");
   }
 }

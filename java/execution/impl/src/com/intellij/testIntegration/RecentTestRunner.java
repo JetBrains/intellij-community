@@ -30,13 +30,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface RecentTestRunner {
-  enum Mode { 
-    RUN, 
-    DEBUG 
+  enum Mode {
+    RUN,
+    DEBUG
   }
-  
+
   void setMode(Mode mode);
-  
+
   void run(RecentTestsPopupEntry entry);
 }
 
@@ -47,7 +47,8 @@ class RecentTestRunnerImpl implements RecentTestRunner {
   private final TestLocator myTestLocator;
 
   protected AnAction myCurrentAction = RUN;
-  
+
+  @Override
   public void setMode(Mode mode) {
     switch (mode) {
       case RUN:
@@ -84,9 +85,9 @@ class RecentTestRunnerImpl implements RecentTestRunner {
   }
 
   private void run(RunnerAndConfigurationSettings configuration) {
-    Executor executor = myCurrentAction == RUN ? DefaultRunExecutor.getRunExecutorInstance() 
+    Executor executor = myCurrentAction == RUN ? DefaultRunExecutor.getRunExecutorInstance()
                                                : DefaultDebugExecutor.getDebugExecutorInstance();
-    
+
     ProgramRunnerUtil.executeConfiguration(configuration, executor);
   }
 
@@ -106,7 +107,7 @@ class RecentTestRunnerImpl implements RecentTestRunner {
         return null;
       }
     };
-    
+
     myCurrentAction.actionPerformed(AnActionEvent.createFromAnAction(myCurrentAction, null, "", data));
   }
 }

@@ -2,6 +2,8 @@
 
 package com.intellij.codeInsight.lookup;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.EventListener;
 
 /**
@@ -13,12 +15,12 @@ public interface LookupListener extends EventListener {
   /*
    * Note: this event comes inside the command that performs inserting of text into the editor.
    */
-  default void itemSelected(LookupEvent event) {
+  default void itemSelected(@NotNull LookupEvent event) {
   }
 
-  default void lookupCanceled(LookupEvent event) {
+  default void lookupCanceled(@NotNull LookupEvent event) {
   }
 
-  default void currentItemChanged(LookupEvent event) {
+  default void currentItemChanged(@NotNull LookupEvent event) {
   }
 }

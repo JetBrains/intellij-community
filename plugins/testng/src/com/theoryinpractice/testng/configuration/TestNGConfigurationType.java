@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.theoryinpractice.testng.configuration;
 
@@ -29,7 +27,7 @@ public class TestNGConfigurationType implements ConfigurationType {
         {
             @NotNull
             @Override
-            public RunConfiguration createTemplateConfiguration(Project project) {
+            public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
                 return new TestNGConfiguration("", project, this);
             }
 
@@ -68,22 +66,27 @@ public class TestNGConfigurationType implements ConfigurationType {
         }
     }
 
+    @Override
     public String getDisplayName() {
         return "TestNG";
     }
 
+    @Override
     public String getConfigurationTypeDescription() {
         return "TestNG Configuration";
     }
 
+    @Override
     public Icon getIcon() {
         return TestngIcons.TestNG;
     }
 
+    @Override
     public ConfigurationFactory[] getConfigurationFactories() {
         return new ConfigurationFactory[] {myFactory};
     }
 
+    @Override
     @NotNull
     public String getId() {
         return "TestNG";

@@ -88,6 +88,7 @@ public class ShowPropertiesDiffAction extends AnAction implements DumbAware {
       myErrorTitle = errorTitle;
     }
 
+    @Override
     public void run(@NotNull ProgressIndicator indicator) {
       SvnVcs vcs = SvnVcs.getInstance(myProject);
 
@@ -246,14 +247,17 @@ public class ShowPropertiesDiffAction extends AnAction implements DumbAware {
     }
 
     return new PropertyConsumer() {
+      @Override
       public void handleProperty(File path, PropertyData property) {
         registerProperty(property);
       }
 
+      @Override
       public void handleProperty(Url url, PropertyData property) {
         registerProperty(property);
       }
 
+      @Override
       public void handleProperty(long revision, PropertyData property) {
         // revision properties here
       }

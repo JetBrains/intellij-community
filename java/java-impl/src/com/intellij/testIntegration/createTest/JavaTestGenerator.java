@@ -55,9 +55,11 @@ public class JavaTestGenerator implements TestGenerator {
   public JavaTestGenerator() {
   }
 
+  @Override
   public PsiElement generateTest(final Project project, final CreateTestDialog d) {
     return PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(
       () -> ApplicationManager.getApplication().runWriteAction(new Computable<PsiElement>() {
+        @Override
         public PsiElement compute() {
           try {
             IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();

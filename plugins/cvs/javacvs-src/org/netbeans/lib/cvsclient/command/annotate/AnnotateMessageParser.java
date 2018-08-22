@@ -58,7 +58,8 @@ final class AnnotateMessageParser extends AbstractMessageParser {
 
 	// Implemented ============================================================
 
-	protected void outputDone() {
+	@Override
+        protected void outputDone() {
 		if (annotateInformation == null) {
 			return;
 		}
@@ -67,7 +68,8 @@ final class AnnotateMessageParser extends AbstractMessageParser {
 		annotateInformation = null;
 	}
 
-	public void parseLine(String line, boolean isErrorMessage) {
+	@Override
+        public void parseLine(String line, boolean isErrorMessage) {
 		if (isErrorMessage) {
 			if (line.startsWith(ANNOTATING)) {
 				outputDone();

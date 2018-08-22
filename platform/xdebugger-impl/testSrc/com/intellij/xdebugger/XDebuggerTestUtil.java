@@ -36,8 +36,8 @@ import org.jetbrains.concurrency.Promise;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -618,6 +618,7 @@ public class XDebuggerTestUtil {
   public static class XTestStackFrameContainer extends XTestContainer<XStackFrame> implements XStackFrameContainerEx {
     public volatile XStackFrame frameToSelect;
 
+    @Override
     public void addStackFrames(@NotNull List<? extends XStackFrame> stackFrames, boolean last) {
       addChildren(stackFrames, last);
     }

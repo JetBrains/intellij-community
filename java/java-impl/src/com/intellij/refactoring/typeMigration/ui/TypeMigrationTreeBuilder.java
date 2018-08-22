@@ -21,6 +21,7 @@ public class TypeMigrationTreeBuilder extends AbstractTreeBuilder{
     initRootNode();
   }
 
+  @Override
   protected boolean isAutoExpandNode(final NodeDescriptor nodeDescriptor) {
     return false;
   }

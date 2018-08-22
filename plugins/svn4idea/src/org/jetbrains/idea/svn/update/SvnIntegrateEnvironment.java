@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.options.Configurable;
@@ -35,6 +21,7 @@ public class SvnIntegrateEnvironment extends AbstractSvnUpdateIntegrateEnvironme
     super(vcs);
   }
 
+  @Override
   protected AbstractUpdateIntegrateCrawler createCrawler(UpdateEventHandler eventHandler,
                                                          boolean totalUpdate,
                                                          ArrayList<VcsException> exceptions,
@@ -42,13 +29,16 @@ public class SvnIntegrateEnvironment extends AbstractSvnUpdateIntegrateEnvironme
     return new IntegrateCrawler(myVcs, eventHandler, totalUpdate, exceptions, updatedFiles);
   }
 
+  @Override
   public Configurable createConfigurable(final Collection<FilePath> collection) {
     if (collection.isEmpty()) return null;
     return new SvnUpdateConfigurable(myVcs.getProject()){
+      @Override
       protected AbstractSvnUpdatePanel createPanel() {
         return new SvnIntegratePanel(myVcs, collection);
       }
 
+      @Override
       public String getDisplayName() {
         return SvnBundle.message("integrate.display.name");
       }
@@ -78,6 +68,7 @@ public class SvnIntegrateEnvironment extends AbstractSvnUpdateIntegrateEnvironme
             handler, vcs);
     }
 
+    @Override
     protected void showProgressMessage(final ProgressIndicator progress, final File root) {
       if (myVcs.getSvnConfiguration().isMergeDryRun()) {
         progress.setText(SvnBundle.message("progress.text.merging.dry.run.changes", root.getAbsolutePath()));
@@ -87,6 +78,7 @@ public class SvnIntegrateEnvironment extends AbstractSvnUpdateIntegrateEnvironme
       }
     }
 
+    @Override
     protected long doUpdate(final File root) throws VcsException {
       SvnConfiguration svnConfig = myVcs.getSvnConfiguration();
       MergeRootInfo info = svnConfig.getMergeRootInfo(root, myVcs);
@@ -104,11 +96,13 @@ public class SvnIntegrateEnvironment extends AbstractSvnUpdateIntegrateEnvironme
       return info.getResultRevision();
     }
 
+    @Override
     protected boolean isMerge() {
       return true;
     }
   }
 
+  @Override
   public boolean validateOptions(final Collection<FilePath> roots) {
     return true;
   }

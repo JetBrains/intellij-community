@@ -113,7 +113,7 @@ public class CreatePatchFromDirectoryAction implements AnActionExtensionProvider
       VcsVirtualFile vf = new VcsVirtualFile(changedRepositoryPath.toPresentableString(), myRevision, VcsFileSystem.getInstance());
 
       try {
-        myList = AbstractVcsHelperImpl.getRemoteList(myVcs, myRevision.getRevisionNumber(), vf);
+        myList = AbstractVcsHelperImpl.getRemoteList(provider, myRevision.getRevisionNumber(), vf);
         //myList = provider.getOneList(vf, myRevision.getRevisionNumber());
       }
       catch (VcsException e1) {

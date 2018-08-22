@@ -21,6 +21,8 @@ import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -41,7 +43,7 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
-public class DirtyScopeHolder extends UserDataHolderBase {
+class DirtyScopeHolder extends UserDataHolderBase implements BulkFileListener {
   private final CompilerReferenceServiceBase<?> myService;
   private final FileDocumentManager myFileDocManager;
   private final PsiDocumentManager myPsiDocManager;
@@ -56,11 +58,10 @@ public class DirtyScopeHolder extends UserDataHolderBase {
   private final FileTypeRegistry myFileTypeRegistry = FileTypeRegistry.getInstance();
 
 
-  public DirtyScopeHolder(@NotNull CompilerReferenceServiceBase<?> service,
-                          FileDocumentManager fileDocumentManager,
-                          PsiDocumentManager psiDocumentManager,
-                          BiConsumer<MessageBusConnection, Set<String>> compilationAffectedModulesSubscription
-                          ){
+  DirtyScopeHolder(@NotNull CompilerReferenceServiceBase<?> service,
+                   @NotNull FileDocumentManager fileDocumentManager,
+                   @NotNull PsiDocumentManager psiDocumentManager,
+                   @NotNull BiConsumer<? super MessageBusConnection, ? super Set<String>> compilationAffectedModulesSubscription) {
     myService = service;
     myFileDocManager = fileDocumentManager;
     myPsiDocManager = psiDocumentManager;
@@ -103,7 +104,7 @@ public class DirtyScopeHolder extends UserDataHolderBase {
     }
   }
 
-  public void upToDateChecked(boolean isUpToDate) {
+  void upToDateChecked(boolean isUpToDate) {
     final Module[] modules = ReadAction.compute(() -> {
       final Project project = myService.getProject();
       if (project.isDisposed()) {
@@ -134,7 +135,7 @@ public class DirtyScopeHolder extends UserDataHolderBase {
     });
   }
 
-  private void compilationFinished(Runnable action) {
+  private void compilationFinished(@NotNull Runnable action) {
     ExcludeEntryDescription[] descriptions;
     synchronized (myLock) {
       myCompilationPhase = false;
@@ -148,7 +149,8 @@ public class DirtyScopeHolder extends UserDataHolderBase {
     myExcludedFilesScope = ExcludedFromCompileFilesUtil.getExcludedFilesScope(descriptions, myService.getFileTypes(), myService.getProject(), myService.getFileIndex());
   }
 
-  public GlobalSearchScope getDirtyScope() {
+  @NotNull
+  GlobalSearchScope getDirtyScope() {
     final Project project = myService.getProject();
     return ReadAction.compute(() -> {
       synchronized (myLock) {
@@ -163,6 +165,7 @@ public class DirtyScopeHolder extends UserDataHolderBase {
     });
   }
 
+  @NotNull
   private GlobalSearchScope calculateDirtyScope() {
     final Set<Module> dirtyModules = getAllDirtyModules();
     if (dirtyModules.isEmpty()) return myExcludedFilesScope;
@@ -174,7 +177,7 @@ public class DirtyScopeHolder extends UserDataHolderBase {
   }
 
   @NotNull
-  public Set<Module> getAllDirtyModules() {
+  Set<Module> getAllDirtyModules() {
     final Set<Module> dirtyModules = new THashSet<>(myVFSChangedModules);
     for (Document document : myFileDocManager.getUnsavedDocuments()) {
       final VirtualFile file = myFileDocManager.getFile(document);
@@ -193,31 +196,41 @@ public class DirtyScopeHolder extends UserDataHolderBase {
     return dirtyModules;
   }
 
-  public boolean contains(VirtualFile file) {
+  public boolean contains(@NotNull VirtualFile file) {
     return getDirtyScope().contains(file);
   }
 
-  public void installVFSListener() {
-    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
-      @Override
-      public void fileCreated(@NotNull VirtualFileEvent event) {
-        fileChanged(event.getFile());
+  @Override
+  public void after(@NotNull List<? extends VFileEvent> events) {
+    for (VFileEvent event : events) {
+      if (event instanceof VFileCreateEvent || event instanceof VFileCopyEvent || event instanceof VFileMoveEvent) {
+        VirtualFile file = event.getFile();
+        if (file != null) {
+          fileChanged(file);
+        }
       }
-
-      @Override
-      public void fileCopied(@NotNull VirtualFileCopyEvent event) {
-        fileChanged(event.getFile());
+      else if (event instanceof VFilePropertyChangeEvent) {
+        VFilePropertyChangeEvent pce = (VFilePropertyChangeEvent)event;
+        String propertyName = pce.getPropertyName();
+        if (VirtualFile.PROP_NAME.equals(propertyName) || VirtualFile.PROP_SYMLINK_TARGET.equals(propertyName)) {
+          fileChanged(pce.getFile());
+        }
       }
+    }
+  }
 
-      @Override
-      public void fileMoved(@NotNull VirtualFileMoveEvent event) {
-        fileChanged(event.getFile());
+  @Override
+  public void before(@NotNull List<? extends VFileEvent> events) {
+    for (VFileEvent event : events) {
+      if (event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent || event instanceof VFileContentChangeEvent) {
+        VirtualFile file = event.getFile();
+        fileChanged(file);
       }
-
-      @Override
-      public void beforePropertyChange(@NotNull VirtualFilePropertyEvent event) {
-        if (VirtualFile.PROP_NAME.equals(event.getPropertyName()) && event.getFile().isDirectory() && event.getFile().isInLocalFileSystem()) {
-          final String path = event.getFile().getPath();
+      else if (event instanceof VFilePropertyChangeEvent) {
+        VFilePropertyChangeEvent pce = (VFilePropertyChangeEvent)event;
+        String propertyName = pce.getPropertyName();
+        if (VirtualFile.PROP_NAME.equals(propertyName) || VirtualFile.PROP_SYMLINK_TARGET.equals(propertyName)) {
+          final String path = pce.getFile().getPath();
           for (Module module : ModuleManager.getInstance(myService.getProject()).getModules()) {
             if (FileUtil.isAncestor(path, module.getModuleFilePath(), true)) {
               addToDirtyModules(module);
@@ -225,46 +238,28 @@ public class DirtyScopeHolder extends UserDataHolderBase {
           }
         }
       }
+    }
+  }
 
-      @Override
-      public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
-        if (VirtualFile.PROP_NAME.equals(event.getPropertyName()) || VirtualFile.PROP_SYMLINK_TARGET.equals(event.getPropertyName())) {
-          fileChanged(event.getFile());
-        }
-      }
+  void installVFSListener() {
+    myService.getProject().getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, this);
+  }
 
-      @Override
-      public void beforeContentsChange(@NotNull VirtualFileEvent event) {
-        fileChanged(event.getFile());
+  private void fileChanged(@NotNull VirtualFile file) {
+    final Module module = getModuleForSourceContentFile(file);
+    if (module != null) {
+      addToDirtyModules(module);
+    }
+  }
+  private void addToDirtyModules(@NotNull Module module) {
+    synchronized (myLock) {
+      if (myCompilationPhase) {
+        myChangedModulesDuringCompilation.add(module);
       }
-
-      @Override
-      public void beforeFileDeletion(@NotNull VirtualFileEvent event) {
-        fileChanged(event.getFile());
+      else {
+        myVFSChangedModules.add(module);
       }
-
-      @Override
-      public void beforeFileMovement(@NotNull VirtualFileMoveEvent event) {
-        fileChanged(event.getFile());
-      }
-
-      private void fileChanged(VirtualFile file) {
-        final Module module = getModuleForSourceContentFile(file);
-        if (module != null) {
-          addToDirtyModules(module);
-        }
-      }
-
-      private void addToDirtyModules(Module module) {
-        synchronized (myLock) {
-          if (myCompilationPhase) {
-            myChangedModulesDuringCompilation.add(module);
-          } else {
-            myVFSChangedModules.add(module);
-          }
-        }
-      }
-    }, myService.getProject());
+    }
   }
 
   private Module getModuleForSourceContentFile(@NotNull VirtualFile file) {
@@ -277,7 +272,7 @@ public class DirtyScopeHolder extends UserDataHolderBase {
 
   @TestOnly
   @NotNull
-  public Set<Module> getAllDirtyModulesForTest() {
+  Set<Module> getAllDirtyModulesForTest() {
     synchronized (myLock) {
       return getAllDirtyModules();
     }

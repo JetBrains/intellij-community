@@ -162,8 +162,8 @@ public class LongRangeKnownMethods {
 
   void testStringComparison(String name) {
     // Parentheses misplaced -- found in AndroidStudio
-    if (!(name.equals("layout_width") && <warning descr="Condition '!(name.equals(\"layout_height\"))' is always 'true'">!(<warning descr="Condition 'name.equals(\"layout_height\")' is always 'false'">name.equals("layout_height")</warning>)</warning> &&
-          <warning descr="Condition '!(name.equals(\"id\"))' is always 'true'">!(<warning descr="Condition 'name.equals(\"id\")' is always 'false'">name.equals("id")</warning>)</warning>)) {
+    if (!(name.equals("layout_width") && <warning descr="Condition '!(name.equals(\"layout_height\"))' is always 'true'">!(<warning descr="Result of 'name.equals(\"layout_height\")' is always 'false'">name.equals("layout_height")</warning>)</warning> &&
+          <warning descr="Condition '!(name.equals(\"id\"))' is always 'true'">!(<warning descr="Result of 'name.equals(\"id\")' is always 'false'">name.equals("id")</warning>)</warning>)) {
       System.out.println("ok");
     }
   }

@@ -24,6 +24,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 
 class CommentOnLineWithSourcePredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof PsiComment) || element instanceof PsiDocComment || element.getTextOffset() == 0) {
       return false;

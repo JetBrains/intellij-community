@@ -5,11 +5,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
-import com.intellij.refactoring.extractMethod.ParametrizedDuplicates;
 import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
@@ -44,7 +42,7 @@ class PreviewTreeModel extends DefaultTreeModel {
     myPatternNode = new PatternNode(elements);
     originalGroup.add(myPatternNode);
 
-    List<Match> duplicates = getDuplicates(processor);
+    List<Match> duplicates = processor.getAnyDuplicates();
     if (!ContainerUtil.isEmpty(duplicates)) {
       myDuplicatesGroup = new DefaultMutableTreeNode(RefactoringBundle.message("refactoring.extract.method.preview.group.duplicates"));
       root.add(myDuplicatesGroup);
@@ -115,18 +113,6 @@ class PreviewTreeModel extends DefaultTreeModel {
 
   private synchronized void setValidImpl(boolean valid) {
     myValid = valid;
-  }
-
-  @Nullable
-  public static List<Match> getDuplicates(@NotNull ExtractMethodProcessor processor) {
-    List<Match> duplicates = processor.getDuplicates();
-    if (ContainerUtil.isEmpty(duplicates)) {
-      ParametrizedDuplicates parametrizedDuplicates = processor.getParametrizedDuplicates();
-      if (parametrizedDuplicates != null) {
-        duplicates = parametrizedDuplicates.getDuplicates();
-      }
-    }
-    return duplicates;
   }
 
   public void setValid(boolean valid) {

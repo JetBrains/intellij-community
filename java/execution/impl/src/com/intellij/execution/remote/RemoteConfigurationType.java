@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class RemoteConfigurationFactory
@@ -25,26 +23,31 @@ public class RemoteConfigurationType implements ConfigurationType {
   /**reflection*/
   public RemoteConfigurationType() {
     myFactory = new ConfigurationFactory(this) {
+      @Override
       @NotNull
-      public RunConfiguration createTemplateConfiguration(Project project) {
+      public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
         return new RemoteConfiguration(project, this);
       }
 
     };
   }
 
+  @Override
   public String getDisplayName() {
     return ExecutionBundle.message("remote.debug.configuration.display.name");
   }
 
+  @Override
   public String getConfigurationTypeDescription() {
     return ExecutionBundle.message("remote.debug.configuration.description");
   }
 
+  @Override
   public Icon getIcon() {
     return AllIcons.RunConfigurations.Remote;
   }
 
+  @Override
   public ConfigurationFactory[] getConfigurationFactories() {
     return new ConfigurationFactory[]{myFactory};
   }
@@ -54,6 +57,7 @@ public class RemoteConfigurationType implements ConfigurationType {
     return myFactory;
   }
 
+  @Override
   @NotNull
   public String getId() {
     return "Remote";

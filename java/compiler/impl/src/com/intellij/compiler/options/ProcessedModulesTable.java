@@ -37,8 +37,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class ProcessedModulesTable extends JPanel {
   private JBTable myTable = null;
@@ -79,6 +79,7 @@ public class ProcessedModulesTable extends JPanel {
     add(panel, BorderLayout.CENTER);
 
     final SpeedSearchBase<JBTable> speedSearch = new SpeedSearchBase<JBTable>(myTable) {
+      @Override
       public int getSelectedIndex() {
         return myTable.getSelectedRow();
       }
@@ -99,6 +100,7 @@ public class ProcessedModulesTable extends JPanel {
         return elements;
       }
 
+      @Override
       public String getElementText(Object element) {
         return ((Module)element).getName() + " (" + FileUtil.toSystemDependentName(((Module)element).getModuleFilePath()) + ")";
       }
@@ -241,6 +243,7 @@ public class ProcessedModulesTable extends JPanel {
     myTableModel.sort(comparator);
   }
 
+  @Override
   public void setEnabled(boolean enabled) {
     super.setEnabled(enabled);
     myTable.setRowSelectionAllowed(enabled);
@@ -321,6 +324,7 @@ public class ProcessedModulesTable extends JPanel {
       }
     }
 
+    @Override
     public void removeRow(int idx) {
       final Module element = myElements.remove(idx);
       myDirNameMap.remove(element);
@@ -353,14 +357,17 @@ public class ProcessedModulesTable extends JPanel {
       fireTableDataChanged();
     }
 
+    @Override
     public int getRowCount() {
       return myElements.size();
     }
 
+    @Override
     public int getColumnCount() {
       return 2;
     }
 
+    @Override
     @Nullable
     public Object getValueAt(int rowIndex, int columnIndex) {
       Module element = myElements.get(rowIndex);
@@ -373,6 +380,7 @@ public class ProcessedModulesTable extends JPanel {
       return null;
     }
 
+    @Override
     public void setValueAt(Object value, int rowIndex, int columnIndex) {
       if (columnIndex == DIRNAME_COLUMN_INDEX) {
         final Module module = myElements.get(rowIndex);
@@ -395,6 +403,7 @@ public class ProcessedModulesTable extends JPanel {
       }
     }
 
+    @Override
     public Class getColumnClass(int columnIndex) {
       if (columnIndex == DIRNAME_COLUMN_INDEX) {
         return String.class;
@@ -402,6 +411,7 @@ public class ProcessedModulesTable extends JPanel {
       return super.getColumnClass(columnIndex);
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
       if (!ProcessedModulesTable.this.isEnabled()) {
         return false;
@@ -420,6 +430,7 @@ public class ProcessedModulesTable extends JPanel {
   }
 
   private class MyElementColumnCellRenderer extends DefaultTableCellRenderer {
+    @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       final Color color = UIUtil.getTableFocusCellBackground();
       Component component;

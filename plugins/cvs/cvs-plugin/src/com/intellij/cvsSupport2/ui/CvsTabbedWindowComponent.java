@@ -63,6 +63,7 @@ public class CvsTabbedWindowComponent extends JPanel implements DataProvider, Cv
   }
 
 
+  @Override
   public Object getData(@NotNull String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return myHelpId;
@@ -87,6 +88,7 @@ public class CvsTabbedWindowComponent extends JPanel implements DataProvider, Cv
       super(com.intellij.CvsBundle.message("close.tab.action.name"), "", AllIcons.Actions.Cancel);
     }
 
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       myContentManager.removeContent(myContent, true);
 
@@ -94,6 +96,7 @@ public class CvsTabbedWindowComponent extends JPanel implements DataProvider, Cv
     }
   }
 
+  @Override
   public void deactivated() {
     if (myComponent instanceof CvsTabbedWindow.DeactivateListener) {
       ((CvsTabbedWindow.DeactivateListener) myComponent).deactivated();

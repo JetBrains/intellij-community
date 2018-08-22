@@ -9,7 +9,6 @@ import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,7 +19,10 @@ import java.util.Set;
 public class CommonInjectedFileChangesHandler extends BaseInjectedFileChangesHandler {
   private final List<Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer>> myMarkers = ContainerUtil.newLinkedList();
 
-  public CommonInjectedFileChangesHandler(Place shreds, Editor editor, Document newDocument, PsiFile injectedFile) {
+  public CommonInjectedFileChangesHandler(List<PsiLanguageInjectionHost.Shred> shreds,
+                                          Editor editor,
+                                          Document newDocument,
+                                          PsiFile injectedFile) {
     super(editor, newDocument, injectedFile);
 
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(myProject);
@@ -95,9 +97,13 @@ public class CommonInjectedFileChangesHandler extends BaseInjectedFileChangesHan
         insideHost = insideHost == null ? localInsideHost : insideHost.union(localInsideHost);
       }
       assert insideHost != null;
-      ElementManipulators.getManipulator(host).handleContentChange(host, insideHost, sb.toString());
+      updateInjectionHostElement(host, insideHost, sb.toString());
       documentManager.commitDocument(myOrigDocument);
     }
+  }
+
+  protected void updateInjectionHostElement(PsiLanguageInjectionHost host, ProperTextRange insideHost, String content) {
+    ElementManipulators.getManipulator(host).handleContentChange(host, insideHost, content);
   }
 
   @Override

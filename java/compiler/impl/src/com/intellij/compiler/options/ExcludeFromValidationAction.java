@@ -27,6 +27,7 @@ public class ExcludeFromValidationAction extends AnAction {
     super(CompilerBundle.message("action.name.exclude.from.validation"));
   }
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     final Pair<ExcludesConfiguration, VirtualFile> pair = getExcludedConfigurationAndFile(e, project);
@@ -47,6 +48,7 @@ public class ExcludeFromValidationAction extends AnAction {
   }
 
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     final boolean applicable = getExcludedConfigurationAndFile(e, project) != null;

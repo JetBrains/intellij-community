@@ -46,6 +46,7 @@ public class YesNoPreviewUsagesDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     JLabel label = new JLabel(myMessage);
     label.setUI(new MultiLineLabelUI());
@@ -59,6 +60,7 @@ public class YesNoPreviewUsagesDialog extends DialogWrapper {
     return panel;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return null;
   }
@@ -67,6 +69,7 @@ public class YesNoPreviewUsagesDialog extends DialogWrapper {
     return myCbPreviewResults.isSelected();
   }
 
+  @Override
   protected JComponent createSouthPanel() {
     myCbPreviewResults = new JCheckBox();
     myCbPreviewResults.setSelected(myToPreviewUsages);
@@ -77,6 +80,7 @@ public class YesNoPreviewUsagesDialog extends DialogWrapper {
     return panel;
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     if(myHelpID != null){
@@ -87,6 +91,7 @@ public class YesNoPreviewUsagesDialog extends DialogWrapper {
     }
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(myHelpID);
   }

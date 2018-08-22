@@ -48,7 +48,6 @@ public abstract class NullableNotNullManager {
   static final String[] DEFAULT_NOT_NULLS = {
     NotNull.class.getName(),
     "javax.annotation.Nonnull",
-    "javax.validation.constraints.NotNull",
     "edu.umd.cs.findbugs.annotations.NonNull",
     "android.support.annotation.NonNull",
     "androidx.annotation.NonNull",

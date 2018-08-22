@@ -41,6 +41,7 @@ public class XBreakpointFileGroupingRule<B> extends XBreakpointGroupingRule<B, X
     return XBreakpointsGroupingPriorities.BY_FILE;
   }
 
+  @Override
   public XBreakpointFileGroup getGroup(@NotNull final B breakpoint, @NotNull final Collection<XBreakpointFileGroup> groups) {
     if (!(breakpoint instanceof XLineBreakpoint)) {
       return null;

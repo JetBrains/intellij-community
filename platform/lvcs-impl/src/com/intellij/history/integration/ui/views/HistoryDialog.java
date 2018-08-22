@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.history.integration.ui.views;
 
@@ -117,6 +103,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     myUpdateQueue.setRestartTimerOnAdd(true);
 
     facade.addListener(new LocalHistoryFacade.Listener() {
+      @Override
       public void changeSetFinished() {
         scheduleRevisionsUpdate(null);
       }
@@ -190,6 +177,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
 
     myToolBar = createRevisionsToolbar(actions);
     myRevisionsList = new RevisionsList(new RevisionsList.SelectionListener() {
+      @Override
       public void revisionsSelected(final int first, final int last) {
         scheduleDiffUpdate(Couple.of(first, last));
       }
@@ -227,6 +215,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
 
   private void addPopupMenuToComponent(JComponent comp, final ActionGroup ag) {
     comp.addMouseListener(new PopupHandler() {
+      @Override
       public void invokePopup(Component c, int x, int y) {
         ActionPopupMenu m = createPopupMenu(ag);
         m.getComponent().show(c, x, y);
@@ -260,6 +249,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
         return getPriority() >= update1.getPriority();
       }
 
+      @Override
       public void run() {
         if (isDisposed() || myProject.isDisposed()) return;
 
@@ -325,6 +315,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     final Ref<ContentDiffRequest> requestRef = new Ref<>();
 
     new Task.Modal(myProject, message("message.processing.revisions"), false) {
+      @Override
       public void run(@NotNull final ProgressIndicator i) {
         i.setIndeterminate(false);
         ApplicationManager.getApplication().runReadAction(() -> {
@@ -555,14 +546,17 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
       myIndicator = i;
     }
 
+    @Override
     public void processingLeftRevision() {
       myIndicator.setText(message("message.processing.left.revision"));
     }
 
+    @Override
     public void processingRightRevision() {
       myIndicator.setText(message("message.processing.right.revision"));
     }
 
+    @Override
     public void processed(int percentage) {
       myIndicator.setFraction(percentage / 100.0);
     }

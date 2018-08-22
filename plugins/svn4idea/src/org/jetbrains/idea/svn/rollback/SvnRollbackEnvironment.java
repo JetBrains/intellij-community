@@ -42,6 +42,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
     return SvnBundle.message("action.name.revert");
   }
 
+  @Override
   public void rollbackChanges(@NotNull List<Change> changes,
                               @NotNull List<VcsException> exceptions,
                               @NotNull RollbackProgressListener listener) {
@@ -78,6 +79,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
     }
   }
 
+  @Override
   public void rollbackMissingFileDeletion(@NotNull List<FilePath> filePaths,
                                           @NotNull List<VcsException> exceptions,
                                           @NotNull RollbackProgressListener listener) {

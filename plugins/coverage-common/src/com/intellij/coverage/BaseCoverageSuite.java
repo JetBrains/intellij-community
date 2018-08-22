@@ -56,7 +56,7 @@ public abstract class BaseCoverageSuite  implements CoverageSuite, JDOMExternali
   private boolean myTrackTestFolders;
   private boolean myTracingEnabled;
   private Project myProject;
-  
+
   private RunConfigurationBase myConfiguration;
 
   protected BaseCoverageSuite() {
@@ -113,37 +113,45 @@ public abstract class BaseCoverageSuite  implements CoverageSuite, JDOMExternali
                                                                    : DefaultCoverageFileProvider.class.getName());
   }
 
+  @Override
   public boolean isValid() {
     return myCoverageDataFileProvider.isValid();
   }
 
+  @Override
   @NotNull
   public String getCoverageDataFileName() {
     return myCoverageDataFileProvider.getCoverageDataFilePath();
   }
 
+  @Override
   public
   @NotNull
   CoverageFileProvider getCoverageDataFileProvider() {
     return myCoverageDataFileProvider;
   }
 
+  @Override
   public String getPresentableName() {
     return myName;
   }
 
+  @Override
   public long getLastCoverageTimeStamp() {
     return myLastCoverageTimeStamp;
   }
 
+  @Override
   public boolean isTrackTestFolders() {
     return myTrackTestFolders;
   }
 
+  @Override
   public boolean isTracingEnabled() {
     return myTracingEnabled;
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     myCoverageDataFileProvider = readDataFileProviderAttribute(element);
 
@@ -167,6 +175,7 @@ public abstract class BaseCoverageSuite  implements CoverageSuite, JDOMExternali
     myTracingEnabled = tracingEnabled != null && Boolean.valueOf(tracingEnabled).booleanValue();
   }
 
+  @Override
   public void writeExternal(final Element element) throws WriteExternalException {
     final String fileName =
       FileUtil.getRelativePath(new File(PathManager.getSystemPath()), new File(myCoverageDataFileProvider.getCoverageDataFilePath()));
@@ -188,6 +197,7 @@ public abstract class BaseCoverageSuite  implements CoverageSuite, JDOMExternali
     element.setAttribute(TRACING_ENABLED_ATTRIBUTE_NAME, String.valueOf(myTracingEnabled));
   }
 
+  @Override
   public void setCoverageData(final ProjectData projectData) {
     myCoverageData = new SoftReference<>(projectData);
   }
@@ -196,18 +206,22 @@ public abstract class BaseCoverageSuite  implements CoverageSuite, JDOMExternali
     return myCoverageData.get();
   }
 
+  @Override
   public void restoreCoverageData() {
     setCoverageData(loadProjectInfo());
   }
 
+  @Override
   public boolean isCoverageByTestApplicable() {
     return getRunner().isCoverageByTestApplicable();
   }
 
+  @Override
   public boolean isCoverageByTestEnabled() {
     return myCoverageByTestEnabled;
   }
 
+  @Override
   @Nullable
   public ProjectData getCoverageData(final CoverageDataManager coverageDataManager) {
     final ProjectData data = getCoverageData();
@@ -245,6 +259,7 @@ public abstract class BaseCoverageSuite  implements CoverageSuite, JDOMExternali
     return myRunner.loadCoverageData(sessionDataFile, this);
   }
 
+  @Override
   public CoverageRunner getRunner() {
     return myRunner;
   }
@@ -262,6 +277,7 @@ public abstract class BaseCoverageSuite  implements CoverageSuite, JDOMExternali
     return text;
   }
 
+  @Override
   public Project getProject() {
     return myProject;
   }

@@ -79,6 +79,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
     return new IntroduceVariableFix(true);
   }
 
+  @Override
   protected LocalQuickFixOnPsiElement createSimplifyBooleanFix(PsiElement element, boolean value) {
     if (!(element instanceof PsiExpression)) return null;
     if (PsiTreeUtil.findChildOfType(element, PsiAssignmentExpression.class) != null) return null;
@@ -115,6 +116,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
     return new DeleteSideEffectsAwareFix((PsiStatement)assignment.getParent(), assignment.getRExpression());
   }
 
+  @Override
   @NotNull
   protected List<LocalQuickFix> createNPEFixes(PsiExpression qualifier, PsiExpression expression, boolean onTheFly) {
     qualifier = PsiUtil.deparenthesizeExpression(qualifier);

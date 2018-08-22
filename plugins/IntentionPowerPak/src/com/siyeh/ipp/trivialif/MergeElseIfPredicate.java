@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NonNls;
 
 class MergeElseIfPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof PsiJavaToken)) {
       return false;

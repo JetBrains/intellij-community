@@ -110,6 +110,7 @@ public class SpellcheckingStrategy {
   }
 
   protected static class XmlAttributeValueTokenizer extends Tokenizer<XmlAttributeValue> {
+    @Override
     public void tokenize(@NotNull final XmlAttributeValue element, final TokenConsumer consumer) {
       if (element instanceof PsiLanguageInjectionHost && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)element)) return;
 

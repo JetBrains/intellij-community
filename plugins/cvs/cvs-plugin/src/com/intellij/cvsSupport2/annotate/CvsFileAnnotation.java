@@ -23,7 +23,6 @@ import com.intellij.cvsSupport2.cvsstatuses.CvsEntriesListener;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsKey;
-import com.intellij.openapi.vcs.annotate.AnnotationSourceSwitcher;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspectAdapter;
@@ -44,6 +43,7 @@ public class CvsFileAnnotation extends FileAnnotation{
   private final String myCurrentRevision;
 
   private final LineAnnotationAspect USER = new CvsAnnotationAspect(CvsAnnotationAspect.AUTHOR, true) {
+    @Override
     public String getValue(int lineNumber) {
       if (lineNumber < 0 || lineNumber >= myAnnotations.length)  {
         return "";
@@ -55,6 +55,7 @@ public class CvsFileAnnotation extends FileAnnotation{
   };
 
   private final LineAnnotationAspect DATE = new CvsAnnotationAspect(CvsAnnotationAspect.DATE, true) {
+    @Override
     public String getValue(int lineNumber) {
       if (lineNumber < 0 || lineNumber >= myAnnotations.length)  {
         return "";
@@ -66,6 +67,7 @@ public class CvsFileAnnotation extends FileAnnotation{
   };
 
   private final LineAnnotationAspect REVISION = new CvsAnnotationAspect(CvsAnnotationAspect.REVISION, false) {
+    @Override
     public String getValue(int lineNumber) {
       if (lineNumber < 0 || lineNumber >= myAnnotations.length)  {
         return "";
@@ -93,11 +95,13 @@ public class CvsFileAnnotation extends FileAnnotation{
     }
 
     myCvsEntriesListener = new CvsEntriesListener() {
+      @Override
       public void entriesChanged(VirtualFile parent) {
         /*if (myFile == null) return;
         fireAnnotationChanged();*/
       }
 
+      @Override
       public void entryChanged(VirtualFile file) {
         if (myFile == null) return;
         CvsFileAnnotation.this.close();
@@ -108,15 +112,18 @@ public class CvsFileAnnotation extends FileAnnotation{
 
   }
 
+  @Override
   public void dispose() {
     CvsEntriesManager.getInstance().removeCvsEntriesListener(myCvsEntriesListener);
 
   }
 
+  @Override
   public LineAnnotationAspect[] getAspects() {
     return new LineAnnotationAspect[]{REVISION, DATE, USER};
   }
 
+  @Override
   public String getToolTip(final int lineNumber) {
     if (lineNumber < 0 || lineNumber >= myAnnotations.length)  {
       return "";
@@ -132,10 +139,12 @@ public class CvsFileAnnotation extends FileAnnotation{
     return CvsBundle.message("annotation.tooltip", revision, date, author, comment);
   }
 
+  @Override
   public String getAnnotatedContent() {
     return myContent;
   }
 
+  @Override
   public VcsRevisionNumber getLineRevisionNumber(final int lineNumber) {
     if (lineNumber < 0 || lineNumber >= myAnnotations.length)  {
       return null;
@@ -155,6 +164,7 @@ public class CvsFileAnnotation extends FileAnnotation{
     return myAnnotations[lineNumber].getDate();
   }
 
+  @Override
   @Nullable
   public List<VcsFileRevision> getRevisions() {
     return myRevisions;

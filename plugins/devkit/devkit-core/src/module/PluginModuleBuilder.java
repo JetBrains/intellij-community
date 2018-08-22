@@ -29,10 +29,12 @@ import org.jetbrains.jps.model.java.JavaResourceRootType;
 public class PluginModuleBuilder extends JavaModuleBuilder{
 
 
+  @Override
   public ModuleType getModuleType() {
     return PluginModuleType.getInstance();
   }
 
+  @Override
   public void setupRootModel(final ModifiableRootModel rootModel) throws ConfigurationException {
     super.setupRootModel(rootModel);
     String contentEntryPath = getContentEntryPath();
@@ -92,6 +94,7 @@ public class PluginModuleBuilder extends JavaModuleBuilder{
     return 0;
   }
 
+  @Override
   public ModuleWizardStep modifyProjectTypeStep(@NotNull SettingsStep settingsStep) {
     return StdModuleTypes.JAVA.modifyProjectTypeStep(settingsStep, this);
   }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.ex
 
 import com.intellij.diff.util.Side
@@ -93,7 +79,7 @@ class PartialLocalLineStatusTracker(project: Project,
 
     if (undoStateRecordingEnabled) {
       document.addDocumentListener(MyUndoDocumentListener(), disposable)
-      CommandProcessor.getInstance().addCommandListener(MyUndoCommandListener(), disposable)
+      project.messageBus.connect(disposable).subscribe(CommandListener.TOPIC, MyUndoCommandListener())
       Disposer.register(disposable, Disposable { dropExistingUndoActions() })
     }
 
@@ -268,7 +254,7 @@ class PartialLocalLineStatusTracker(project: Project,
 
 
   private inner class MyUndoDocumentListener : DocumentListener {
-    override fun beforeDocumentChange(event: DocumentEvent?) {
+    override fun beforeDocumentChange(event: DocumentEvent) {
       if (hasUndoInCommand) return
       if (undoManager.isRedoInProgress || undoManager.isUndoInProgress) return
       hasUndoInCommand = true
@@ -334,14 +320,6 @@ class PartialLocalLineStatusTracker(project: Project,
   }
 
   private inner class PartialDocumentTrackerHandler : LineStatusTrackerBase<LocalRange>.MyDocumentTrackerHandler() {
-    override fun onRangeAdded(block: Block) {
-      super.onRangeAdded(block)
-
-      if (block.ourData.marker == null) { // do not override markers, that are set via other methods of this listener
-        block.marker = defaultMarker
-      }
-    }
-
     override fun onRangeRefreshed(before: Block, after: List<Block>) {
       super.onRangeRefreshed(before, after)
 
@@ -408,13 +386,6 @@ class PartialLocalLineStatusTracker(project: Project,
       return false
     }
 
-    override fun afterRefresh() {
-      super.afterRefresh()
-
-      updateAffectedChangeLists()
-      fireExcludedFromCommitChanged()
-    }
-
     override fun afterRangeChange() {
       super.afterRangeChange()
 
@@ -422,8 +393,15 @@ class PartialLocalLineStatusTracker(project: Project,
       fireExcludedFromCommitChanged()
     }
 
-    override fun afterExplicitChange() {
-      super.afterExplicitChange()
+    override fun afterBulkRangeChange() {
+      super.afterBulkRangeChange()
+
+      blocks.forEach {
+        // do not override markers, that are set via other methods of this listener
+        if (it.ourData.marker == null) {
+          it.marker = defaultMarker
+        }
+      }
 
       updateAffectedChangeLists()
       fireExcludedFromCommitChanged()
@@ -749,7 +727,7 @@ class PartialLocalLineStatusTracker(project: Project,
 
   private fun restoreChangelistsState(states: List<RangeState>) {
     val changelistIds = changeListManager.changeLists.map { it.id }
-    val idToMarker = ContainerUtil.newMapFromKeys(changelistIds.iterator(), { ChangeListMarker(it) })
+    val idToMarker = ContainerUtil.newMapFromKeys(changelistIds.iterator()) { ChangeListMarker(it) }
 
     assert(blocks.size == states.size)
     blocks.forEachIndexed { i, block ->

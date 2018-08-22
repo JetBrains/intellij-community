@@ -390,6 +390,7 @@ public class DataManagerImpl extends DataManager {
       return ((DataManagerImpl)DataManager.getInstance()).getData(dataId, component);
     }
 
+    @Override
     @NonNls
     public String toString() {
       return "component=" + SoftReference.dereference(myRef);

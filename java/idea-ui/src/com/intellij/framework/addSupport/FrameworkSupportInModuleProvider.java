@@ -54,6 +54,7 @@ public abstract class FrameworkSupportInModuleProvider implements FrameworkOrGro
     return !isSupportAlreadyAdded(module, facetsProvider);
   }
 
+  @Override
   public String getPresentableName() {
     return getFrameworkType().getPresentableName();
   }

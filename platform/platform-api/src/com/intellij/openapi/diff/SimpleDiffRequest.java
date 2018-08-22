@@ -33,11 +33,14 @@ public class SimpleDiffRequest extends DiffRequest {
     myWindowTitle = windowTitle;
   }
 
+  @Override
   @NotNull
   public DiffContent[] getContents() { return myContents; }
 
+  @Override
   public String[] getContentTitles() { return myContentTitles; }
 
+  @Override
   public String getWindowTitle() { return myWindowTitle; }
 
   public void setContents(@NotNull DiffContent content1, @NotNull DiffContent content2) {
@@ -76,6 +79,7 @@ public class SimpleDiffRequest extends DiffRequest {
       super(project, title);
     }
 
+    @Override
     @NotNull
     public DiffContent[] getContents() {
       return new DiffContent[]{
@@ -84,6 +88,7 @@ public class SimpleDiffRequest extends DiffRequest {
       };
     }
 
+    @Override
     public String[] getContentTitles() {
       return myContentTitles;
     }

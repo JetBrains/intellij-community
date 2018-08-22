@@ -60,6 +60,7 @@ public class MacIntelliJSpinnerUI extends DarculaSpinnerUI {
 
   @Override protected void paintArrowButton(Graphics g, BasicArrowButton button, int direction) {}
 
+  @Override
   protected Dimension getSizeWithButtons(Insets i, Dimension size) {
     int iconWidth = DEFAULT_ICON.getIconWidth() + i.right;
     int iconHeight = DEFAULT_ICON.getIconHeight() + i.top + i.bottom;

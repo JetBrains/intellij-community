@@ -45,10 +45,12 @@ public class IssueNavigationConfiguration extends SimpleModificationTracker
     incModificationCount();
   }
 
+  @Override
   public IssueNavigationConfiguration getState() {
     return this;
   }
 
+  @Override
   public void loadState(@NotNull IssueNavigationConfiguration state) {
     XmlSerializerUtil.copyBean(state, this);
   }
@@ -70,6 +72,7 @@ public class IssueNavigationConfiguration extends SimpleModificationTracker
       return myTargetUrl;
     }
 
+    @Override
     public int compareTo(Object o) {
       if (!(o instanceof LinkMatch)) {
         return 0;

@@ -189,6 +189,7 @@ public class CustomDictionariesPanel extends JPanel {
       return new TableCellRenderer() {
         final SimpleColoredComponent myLabel = new SimpleColoredComponent();
 
+        @Override
         public Component getTableCellRendererComponent(final JTable table,
                                                        final Object value,
                                                        final boolean isSelected,

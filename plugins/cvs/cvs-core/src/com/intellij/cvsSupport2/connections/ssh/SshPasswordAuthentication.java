@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.connections.ssh;
 
 import com.trilead.ssh2.Connection;
@@ -37,6 +23,7 @@ public class SshPasswordAuthentication implements SshAuthentication {
     myCvsRootAsString = cvsRootAsString;
   }
 
+  @Override
   public void authenticate(final Connection connection) throws AuthenticationException, SolveableAuthenticationException {
     final String password = myPasswordProvider.getPasswordForCvsRoot(myCvsRootAsString);
     if (password == null) {
@@ -53,6 +40,7 @@ public class SshPasswordAuthentication implements SshAuthentication {
 
       if (methods.contains(KEYBOARD_METHOD)) {
         final boolean wasAuthenticated = connection.authenticateWithKeyboardInteractive(myLogin, new InteractiveCallback() {
+          @Override
           public String[] replyToChallenge(String s, String instruction, int numPrompts, String[] strings, boolean[] booleans) {
             final String[] result = new String[numPrompts];
             if (numPrompts > 0) {
@@ -61,7 +49,7 @@ public class SshPasswordAuthentication implements SshAuthentication {
             return result;
           }
         });
-        if (wasAuthenticated) return;       
+        if (wasAuthenticated) return;
       }
 
       throw new SolveableAuthenticationException("Authentication rejected.");

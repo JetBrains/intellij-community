@@ -41,6 +41,7 @@ public class MergeAction extends AnAction {
     myVisibility.shouldNotBePerformedOnDirectory();
     myVisibility.canBePerformedOnSeveralFiles();
     myVisibility.addCondition(new CvsActionVisibility.Condition() {
+      @Override
       public boolean isPerformedOn(CvsContext context) {
         VirtualFile[] files = context.getSelectedFiles();
         for(VirtualFile file: files) {
@@ -54,6 +55,7 @@ public class MergeAction extends AnAction {
     });
   }
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     try {
 
@@ -73,6 +75,7 @@ public class MergeAction extends AnAction {
     }
   }
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     myVisibility.applyToEvent(e);
   }

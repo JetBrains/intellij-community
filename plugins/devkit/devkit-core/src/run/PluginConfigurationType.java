@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.run;
 
 import com.intellij.diagnostic.VMOptions;
@@ -45,11 +43,6 @@ public class PluginConfigurationType implements ConfigurationType {
       @Override
       public boolean isApplicable(@NotNull Project project) {
         return ModuleUtil.hasModulesOfType(project, PluginModuleType.getInstance());
-      }
-
-      @Override
-      public boolean isConfigurationSingletonByDefault() {
-        return true;
       }
 
       @Override

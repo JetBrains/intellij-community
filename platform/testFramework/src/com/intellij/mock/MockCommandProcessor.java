@@ -1,12 +1,11 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.mock;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,21 +71,12 @@ public class MockCommandProcessor extends CommandProcessor {
   }
 
   @Override
-  public void addCommandListener(@NotNull CommandListener listener, @NotNull Disposable parentDisposable) {
-  }
-
-  @Override
   public void removeCommandListener(@NotNull CommandListener listener) {
   }
 
   @Override
   public boolean isUndoTransparentActionInProgress() {
     return false;
-  }
-
-  @Override
-  public void markCurrentCommandAsGlobal(Project project) {
-
   }
 
   @Override
@@ -101,13 +91,5 @@ public class MockCommandProcessor extends CommandProcessor {
   @Override
   public void executeCommand(Project project, @NotNull Runnable runnable, @Nls String name, Object groupId, @Nullable Document document) {
 
-  }
-
-  @Override
-  public void addAffectedDocuments(Project project, @NotNull Document... docs) {
-  }
-
-  @Override
-  public void addAffectedFiles(Project project, @NotNull VirtualFile... files) {
   }
 }

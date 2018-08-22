@@ -35,6 +35,7 @@ import java.util.Set;
  */
 public class AntDomRefIdConverter extends Converter<AntDomElement> implements CustomReferenceConverter<AntDomElement>{
 
+  @Override
   public AntDomElement fromString(@Nullable @NonNls String s, ConvertContext context) {
     if (s != null) {
       final AntDomElement element = AntSupport.getInvocationAntDomElement(context);
@@ -45,14 +46,17 @@ public class AntDomRefIdConverter extends Converter<AntDomElement> implements Cu
     return null;
   }
 
+  @Override
   public String toString(@Nullable AntDomElement antDomElement, ConvertContext context) {
     return antDomElement != null? antDomElement.getId().getRawText() : null;
   }
 
+  @Override
   @NotNull
   public PsiReference[] createReferences(final GenericDomValue<AntDomElement> genericDomValue, final PsiElement element, ConvertContext context) {
     final AntDomElement invocationElement = AntSupport.getInvocationAntDomElement(context);
     return new PsiReference[] {new AntDomReferenceBase(element, true) {
+      @Override
       public PsiElement resolve() {
         final AntDomElement value = genericDomValue.getValue();
         if (value == null) {
@@ -64,13 +68,15 @@ public class AntDomRefIdConverter extends Converter<AntDomElement> implements Cu
         }
         return PomService.convertToPsi(element.getProject(), target);
       }
-      @NotNull 
+      @Override
+      @NotNull
       public Object[] getVariants() {
         if (invocationElement == null) {
           return ArrayUtil.EMPTY_OBJECT_ARRAY;
         }
         final Set<String> variants = new LinkedHashSet<>();
         invocationElement.getContextAntProject().accept(new AntDomRecursiveVisitor() {
+          @Override
           public void visitAntDomElement(AntDomElement element) {
             final String variant = element.getId().getRawText();
             if (variant != null) {
@@ -82,6 +88,7 @@ public class AntDomRefIdConverter extends Converter<AntDomElement> implements Cu
         return variants.size() > 0 ? ArrayUtil.toObjectArray(variants) : ArrayUtil.EMPTY_OBJECT_ARRAY;
       }
 
+      @Override
       public String getUnresolvedMessagePattern() {
         return AntBundle.message("cannot.resolve.refid", getCanonicalText());
       }
@@ -95,12 +102,14 @@ public class AntDomRefIdConverter extends Converter<AntDomElement> implements Cu
     }
     final Ref<AntDomElement> result = new Ref<>(null);
     from.accept(new AntDomRecursiveVisitor() {
+      @Override
       public void visitAntDomCustomElement(AntDomCustomElement custom) {
         if (!skipCustomTags) {
           super.visitAntDomCustomElement(custom);
         }
       }
 
+      @Override
       public void visitAntDomElement(AntDomElement element) {
         if (result.get() != null) {
           return;
@@ -112,7 +121,7 @@ public class AntDomRefIdConverter extends Converter<AntDomElement> implements Cu
         super.visitAntDomElement(element);
       }
     });
-    
+
     return result.get();
   }
 }

@@ -80,7 +80,8 @@ final class StatusMessageParser extends AbstractMessageParser {
 
 	// Implemented ============================================================
 
-	protected void outputDone() {
+	@Override
+        protected void outputDone() {
 		if (statusInformation != null) {
 			eventSender.notifyFileInfoListeners(statusInformation);
 			statusInformation = null;
@@ -89,7 +90,8 @@ final class StatusMessageParser extends AbstractMessageParser {
 		}
 	}
 
-	public void parseLine(String line, boolean isErrorMessage) {
+	@Override
+        public void parseLine(String line, boolean isErrorMessage) {
 		if (readingTags) {
 			if (line.startsWith(NO_TAGS)) {
 				outputDone();

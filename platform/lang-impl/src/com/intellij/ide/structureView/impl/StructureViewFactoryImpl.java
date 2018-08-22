@@ -76,7 +76,7 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
     myState = state;
   }
 
-  public void initToolWindow(ToolWindowEx toolWindow) {
+  public void initToolWindow(@NotNull ToolWindowEx toolWindow) {
     myStructureViewWrapperImpl = new StructureViewWrapperImpl(myProject, toolWindow);
     if (myRunWhenInitialized != null) {
       myRunWhenInitialized.run();

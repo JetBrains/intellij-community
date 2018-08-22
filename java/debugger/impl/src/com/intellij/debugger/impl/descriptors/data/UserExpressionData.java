@@ -37,6 +37,7 @@ public class UserExpressionData extends DescriptorData<UserExpressionDescriptor>
     myText = text;
   }
 
+  @Override
   protected UserExpressionDescriptorImpl createDescriptorImpl(@NotNull Project project) {
     return new UserExpressionDescriptorImpl(project, myParentDescriptor, myTypeName, myName, myText, myEnumerationIndex);
   }
@@ -51,6 +52,7 @@ public class UserExpressionData extends DescriptorData<UserExpressionDescriptor>
     return myName.hashCode();
   }
 
+  @Override
   public DisplayKey<UserExpressionDescriptor> getDisplayKey() {
     return new SimpleDisplayKey<>(myTypeName + myName);
   }

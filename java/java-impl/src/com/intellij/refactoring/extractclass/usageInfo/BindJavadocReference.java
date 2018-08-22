@@ -32,6 +32,7 @@ public class BindJavadocReference extends FixableUsageInfo {
     myFieldName = fieldName;
   }
 
+  @Override
   public void fixUsage() throws IncorrectOperationException {
     final PsiElement element = getElement();
     if (element != null && element.isValid()) {

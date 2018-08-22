@@ -328,6 +328,9 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
               null, entry.getKey(), entry.getValue()), evaluationContext, myNodeManager));
           }
         }
+        catch (VMDisconnectedException ex) {
+          throw ex;
+        }
         catch (Exception ex) {
           LOG.info(ex);
         }

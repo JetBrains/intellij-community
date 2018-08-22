@@ -57,7 +57,12 @@ public class CaptureSettingsProvider {
         else {
           return;
         }
-        String className = JVMNameUtil.getNonAnonymousClassName(method.getContainingClass()).replaceAll("\\.", "/");
+        String classVMName = JVMNameUtil.getClassVMName(method.getContainingClass());
+        if (classVMName == null) {
+          LOG.warn("Unable to find VM class name for annotated method: " + method.getName());
+          return;
+        }
+        String className = classVMName.replaceAll("\\.", "/");
         String methodName = JVMNameUtil.getJVMMethodName(method);
         String methodDesc = ANY;
         try {

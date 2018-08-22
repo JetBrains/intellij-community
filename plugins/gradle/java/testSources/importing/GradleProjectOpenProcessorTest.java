@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
+import com.intellij.testFramework.EdtTestUtilKt;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
@@ -209,7 +210,11 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
 
     Project fooProject = null;
     try {
-      fooProject = executeOnEdt(() -> ProjectUtil.openOrImport(foo.getPath(), null, true));
+      fooProject = EdtTestUtilKt.runInEdtAndGet(() -> {
+        final Project project = ProjectUtil.openOrImport(foo.getPath(), null, true);
+        UIUtil.dispatchAllInvocationEvents();
+        return project;
+      });
       assertTrue(fooProject.isOpen());
       InspectionProfileImpl currentProfile = getCurrentProfile(fooProject);
       assertEquals("myInspections", currentProfile.getName());

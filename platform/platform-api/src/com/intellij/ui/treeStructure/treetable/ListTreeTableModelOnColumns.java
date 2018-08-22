@@ -40,18 +40,22 @@ public class ListTreeTableModelOnColumns extends DefaultTreeModel
     myTree = tree;
   }
 
+  @Override
   public int getColumnCount() {
     return myColumns.length;
   }
 
+  @Override
   public String getColumnName(int column) {
     return myColumns[column].getName();
   }
 
+  @Override
   public Object getValueAt(Object value, int column) {
     return myColumns[column].valueOf(value);
   }
 
+  @Override
   public Object getChild(Object parent, int index) {
     return ((TreeNode) parent).getChildAt(index);
   }
@@ -71,10 +75,12 @@ public class ListTreeTableModelOnColumns extends DefaultTreeModel
     return null;
   }
 
+  @Override
   public int getChildCount(Object parent) {
     return ((TreeNode) parent).getChildCount();
   }
 
+  @Override
   public Class getColumnClass(int column) {
     return myColumns[column].getColumnClass();
   }
@@ -83,10 +89,12 @@ public class ListTreeTableModelOnColumns extends DefaultTreeModel
     return myColumns;
   }
 
+  @Override
   public boolean isCellEditable(Object node, int column) {
     return myColumns[column].isCellEditable(node);
   }
 
+  @Override
   public void setValueAt(Object aValue, Object node, int column) {
     myColumns[column].setValue(node, aValue);
   }
@@ -103,6 +111,7 @@ public class ListTreeTableModelOnColumns extends DefaultTreeModel
     return true;
   }
 
+  @Override
   public ColumnInfo[] getColumnInfos() {
     return myColumns;
   }
@@ -126,9 +135,11 @@ public class ListTreeTableModelOnColumns extends DefaultTreeModel
     }
   }
 
+  @Override
   public void setSortable(boolean aBoolean) {
   }
 
+  @Override
   public boolean isSortable() {
     return false;
   }

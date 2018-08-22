@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
 
 public class SelectInTreeAction extends AnAction {
+  @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     final TestContext context = TestContext.from(e);
     if (!shouldBeEnabled(context))
@@ -28,6 +29,7 @@ public class SelectInTreeAction extends AnAction {
     context.getModel().getTreeBuilder().select(context.getSelection());
   }
 
+  @Override
   public void update(@NotNull final AnActionEvent e) {
     e.getPresentation().setEnabled(shouldBeEnabled(TestContext.from(e)));
   }

@@ -3,7 +3,7 @@ package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -13,10 +13,7 @@ import com.intellij.util.containers.ContainerUtil;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author yole
- */
-public class DefaultJdkConfigurator implements ApplicationComponent {
+public class DefaultJdkConfigurator implements BaseComponent {
   private final JavaSdk myJavaSdk;
   private final PropertiesComponent myPropertiesComponent;
   private final ProjectJdkTable myProjectJdkTable;

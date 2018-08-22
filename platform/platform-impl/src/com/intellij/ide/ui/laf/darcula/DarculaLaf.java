@@ -201,6 +201,7 @@ public class DarculaLaf extends BasicLookAndFeel {
     return getPrefix() + "_" + osSuffix;
   }
 
+  @Override
   public void initComponentDefaults(UIDefaults defaults) {
     callInit("initComponentDefaults", defaults);
   }

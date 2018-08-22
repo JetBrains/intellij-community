@@ -4,9 +4,10 @@ package com.intellij.packaging.impl.artifacts;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,7 +41,7 @@ import java.util.*;
  * @author nik
  */
 @State(name = ArtifactManagerImpl.COMPONENT_NAME, storages = @Storage(value = "artifacts", stateSplitter = ArtifactManagerStateSplitter.class))
-public class ArtifactManagerImpl extends ArtifactManager implements ProjectComponent, PersistentStateComponent<ArtifactManagerState>,
+public class ArtifactManagerImpl extends ArtifactManager implements BaseComponent, PersistentStateComponent<ArtifactManagerState>,
                                                                     Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.packaging.impl.artifacts.ArtifactManagerImpl");
   @NonNls public static final String COMPONENT_NAME = "ArtifactManager";

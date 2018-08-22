@@ -40,10 +40,12 @@ import java.util.regex.Pattern;
 public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameJavaClassProcessor");
 
+  @Override
   public boolean canProcessElement(@NotNull final PsiElement element) {
     return element instanceof PsiClass;
   }
 
+  @Override
   public void renameElement(@NotNull final PsiElement element,
                             @NotNull final String newName,
                             @NotNull final UsageInfo[] usages,
@@ -118,6 +120,7 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
     }
   }
 
+  @Override
   @Nullable
   public Pair<String, String> getTextOccurrenceSearchStrings(@NotNull final PsiElement element, @NotNull final String newName) {
     if (element instanceof PsiClass) {
@@ -133,6 +136,7 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
     return null;
   }
 
+  @Override
   public String getQualifiedNameAfterRename(@NotNull final PsiElement element, @NotNull final String newName, final boolean nonJava) {
     if (nonJava) {
       final PsiClass aClass = (PsiClass)element;
@@ -159,6 +163,7 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
     }
   }
 
+  @Override
   public void findCollisions(@NotNull final PsiElement element, @NotNull final String newName, @NotNull final Map<? extends PsiElement, String> allRenames, @NotNull final List<UsageInfo> result) {
     final PsiClass aClass = (PsiClass)element;
     final ClassCollisionsDetector classCollisionsDetector = new ClassCollisionsDetector(aClass);
@@ -289,6 +294,7 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
     return WHITE_SPACE_PATTERN.matcher(s).replaceAll("");
   }
 
+  @Override
   public void findExistingNameConflicts(@NotNull final PsiElement element, @NotNull final String newName, @NotNull final MultiMap<PsiElement,String> conflicts) {
     if (element instanceof PsiCompiledElement) return;
     final PsiClass aClass = (PsiClass)element;
@@ -314,24 +320,29 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
     }
   }
 
+  @Override
   @Nullable
   @NonNls
   public String getHelpID(final PsiElement element) {
     return HelpID.RENAME_CLASS;
   }
 
+  @Override
   public boolean isToSearchInComments(@NotNull final PsiElement psiElement) {
     return JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_CLASS;
   }
 
+  @Override
   public void setToSearchInComments(@NotNull final PsiElement element, final boolean enabled) {
     JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_CLASS = enabled;
   }
 
+  @Override
   public boolean isToSearchForTextOccurrences(@NotNull final PsiElement element) {
     return JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_CLASS;
   }
 
+  @Override
   public void setToSearchForTextOccurrences(@NotNull final PsiElement element, final boolean enabled) {
     JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_CLASS = enabled;
   }

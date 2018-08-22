@@ -519,6 +519,7 @@ final class Stripe extends JPanel implements UISettingsListener {
     }
   }
 
+  @Override
   public String toString() {
     String anchor = null;
     switch (myAnchor) {

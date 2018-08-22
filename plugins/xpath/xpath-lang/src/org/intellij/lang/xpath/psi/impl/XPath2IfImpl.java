@@ -28,6 +28,7 @@ public class XPath2IfImpl extends XPath2ElementImpl implements XPath2If {
     super(node);
   }
 
+  @Override
   @NotNull
   public XPathType getType() {
     final XPathExpression then = getThenBranch();
@@ -50,6 +51,7 @@ public class XPath2IfImpl extends XPath2ElementImpl implements XPath2If {
     return null;
   }
 
+  @Override
   public void accept(XPath2ElementVisitor visitor) {
     visitor.visitXPath2If(this);
   }

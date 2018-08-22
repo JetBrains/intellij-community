@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogFileHistoryProvider;
+import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsLogContentUtil;
@@ -29,8 +30,6 @@ import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.impl.VcsProjectLog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Objects;
 
 public class VcsLogFileHistoryProviderImpl implements VcsLogFileHistoryProvider {
   @NotNull
@@ -52,12 +51,18 @@ public class VcsLogFileHistoryProviderImpl implements VcsLogFileHistoryProvider 
   @Override
   public void showFileHistory(@NotNull Project project, @NotNull FilePath path, @Nullable String revisionNumber) {
     Hash hash = (revisionNumber != null) ? HashImpl.build(revisionNumber) : null;
-    if (!VcsLogContentUtil.findAndSelectContent(project, FileHistoryUi.class,
-                                                ui -> ui.getPath().equals(path) && Objects.equals(ui.getRevision(), hash))) {
+    FileHistoryUi fileHistoryUi = VcsLogContentUtil.findAndSelect(project, FileHistoryUi.class,
+                                                                  ui -> ui.matches(path, hash));
+    if (fileHistoryUi == null) {
       VcsLogManager logManager = VcsProjectLog.getInstance(project).getLogManager();
       assert logManager != null;
       String suffix = hash != null ? " (" + hash.toShortString() + ")" : "";
-      VcsLogContentUtil.openLogTab(project, logManager, TAB_NAME, path.getName() + suffix, new FileHistoryUiFactory(path, hash), true);
+      fileHistoryUi = VcsLogContentUtil.openLogTab(project, logManager, TAB_NAME, path.getName() + suffix,
+                                                   new FileHistoryUiFactory(path, hash), true);
+    }
+
+    if (hash != null && fileHistoryUi.getFilterUi().getFilters().get(VcsLogFilterCollection.REVISION_FILTER) == null) {
+      fileHistoryUi.jumpToNearestCommit(hash);
     }
   }
 }

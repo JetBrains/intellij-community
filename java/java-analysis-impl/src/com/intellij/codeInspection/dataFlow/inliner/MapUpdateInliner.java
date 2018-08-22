@@ -54,6 +54,7 @@ public class MapUpdateInliner implements CallInliner {
         default:
           throw new IllegalStateException("Unsupported name: " + name);
       }
+      builder.resultOf(call);
       return true;
     }
     if (MAP_MERGE.test(call)) {
@@ -81,7 +82,8 @@ public class MapUpdateInliner implements CallInliner {
         .swap()
         .invokeFunction(2, function)
         .end()
-        .chain(b -> flushSize(qualifier, b));
+        .chain(b -> flushSize(qualifier, b))
+        .resultOf(call);
       return true;
     }
     return false;

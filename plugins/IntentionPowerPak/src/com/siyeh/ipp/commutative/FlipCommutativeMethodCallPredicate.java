@@ -22,6 +22,7 @@ import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class FlipCommutativeMethodCallPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof PsiMethodCallExpression)) {
       return false;

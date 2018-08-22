@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find;
 
 import com.intellij.find.editorHeaderActions.*;
@@ -325,7 +323,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
 
     mySearchTextComponent.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         ApplicationManager.getApplication().invokeLater(() -> searchFieldDocumentChanged());
       }
     });
@@ -360,7 +358,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
 
     myReplaceTextComponent.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         ApplicationManager.getApplication().invokeLater(() -> replaceFieldDocumentChanged());
       }
     });

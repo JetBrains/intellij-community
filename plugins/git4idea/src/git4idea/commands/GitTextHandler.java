@@ -75,6 +75,7 @@ public abstract class GitTextHandler extends GitHandler {
     }
   }
 
+  @Override
   protected void startHandlingStreams() {
     myHandler.addProcessListener(new ProcessListener() {
       @Override
@@ -82,6 +83,7 @@ public abstract class GitTextHandler extends GitHandler {
         // do nothing
       }
 
+      @Override
       public void processTerminated(@NotNull final ProcessEvent event) {
         final int exitCode = event.getExitCode();
         try {
@@ -98,6 +100,7 @@ public abstract class GitTextHandler extends GitHandler {
         // do nothing
       }
 
+      @Override
       public void onTextAvailable(@NotNull final ProcessEvent event, @NotNull final Key outputType) {
         GitTextHandler.this.onTextAvailable(event.getText(), outputType);
       }
@@ -120,6 +123,7 @@ public abstract class GitTextHandler extends GitHandler {
    */
   protected abstract void onTextAvailable(final String text, final Key outputType);
 
+  @Override
   public void destroyProcess() {
     synchronized (myProcessStateLock) {
       myIsDestroyed = true;
@@ -129,6 +133,7 @@ public abstract class GitTextHandler extends GitHandler {
     }
   }
 
+  @Override
   protected void waitForProcess() {
     if (myHandler != null) {
       ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();

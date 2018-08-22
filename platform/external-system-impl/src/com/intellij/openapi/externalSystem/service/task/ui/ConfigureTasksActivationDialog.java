@@ -147,6 +147,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
     return treeBuilder;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTree).
       setAddAction(new AnActionButtonRunnable() {

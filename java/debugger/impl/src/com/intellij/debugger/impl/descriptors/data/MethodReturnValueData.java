@@ -31,6 +31,7 @@ public final class MethodReturnValueData extends DescriptorData<MethodReturnValu
     return myMethod;
   }
 
+  @Override
   protected MethodReturnValueDescriptorImpl createDescriptorImpl(@NotNull Project project) {
     return new MethodReturnValueDescriptorImpl(project, myMethod, myReturnValue);
   }
@@ -52,6 +53,7 @@ public final class MethodReturnValueData extends DescriptorData<MethodReturnValu
     return Objects.hash(myReturnValue, myMethod);
   }
 
+  @Override
   public DisplayKey<MethodReturnValueDescriptorImpl> getDisplayKey() {
     return new MethodReturnValueDisplayKey(myMethod, myReturnValue);
   }

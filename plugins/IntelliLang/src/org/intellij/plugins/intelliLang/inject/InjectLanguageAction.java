@@ -90,16 +90,19 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
     return list;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return INJECT_LANGUAGE_FAMILY;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return INJECT_LANGUAGE_FAMILY;
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     PsiLanguageInjectionHost host = findInjectionHost(editor, file);
     if (host == null) return false;
@@ -125,6 +128,7 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
     return null;
   }
 
+  @Override
   public void invoke(@NotNull Project project,
                      @NotNull Editor editor,
                      @NotNull PsiFile file) throws IncorrectOperationException {
@@ -255,6 +259,7 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
     return true;
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

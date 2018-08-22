@@ -119,7 +119,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
     }
     textField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         ApplicationManager.getApplication().invokeLater(() -> {
           if (myProgressIcon.isDisposed()) return;
           ApplicationManager.getApplication().invokeLater(() -> {
@@ -355,6 +355,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
     return null;
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     return myPanel;
   }

@@ -35,7 +35,7 @@ Groovy script
             Arguments
               PsiElement(()('(')
               Literal
-                PsiElement(Gstring)('""')
+                PsiElement(double quoted string)('""')
               PsiErrorElement:')' or ',' expected, got 'aaa'
                 <empty list>
               Reference expression
@@ -115,7 +115,7 @@ Groovy script
             Arguments
               PsiElement(()('(')
               Literal
-                PsiElement(Gstring)('"aaa"')
+                PsiElement(double quoted string)('"aaa"')
               PsiElement())(')')
           PsiElement(new line)('\n  ')
           PsiElement(})('}')

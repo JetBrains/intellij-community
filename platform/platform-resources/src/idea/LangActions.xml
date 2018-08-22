@@ -35,6 +35,7 @@
       <action id="ImplementMethods" class="com.intellij.codeInsight.generation.actions.ImplementMethodsAction"/>
       <action id="DelegateMethods" class="com.intellij.codeInsight.generation.actions.DelegateMethodsAction"/>
       <action id="GeneratePattern" class="com.intellij.codeInsight.generation.GenerateByPatternAction" text="Generate by Pattern..."/>
+      <group id="GenerateFromTestCreatorsGroup" class="com.intellij.testIntegration.GenerateFromTestCreatorsGroup"/>
     </group>
 
     <action id="ShowIntentionActions" class="com.intellij.codeInsight.intention.actions.ShowIntentionActionsAction"/>
@@ -1070,12 +1071,10 @@
       <action id="RunDashboard.Run" class="com.intellij.execution.dashboard.actions.RunAction" use-shortcut-of="RunClass"/>
       <!--suppress PluginXmlValidity -->
       <action id="RunDashboard.Debug" class="com.intellij.execution.dashboard.actions.DebugAction" use-shortcut-of="DebugClass"/>
+      <action id="RunDashboard.Stop" class="com.intellij.execution.dashboard.actions.StopAction" use-shortcut-of="Stop"/>
+      <separator/>
+      <action id="RunDashboard.ShowConfigurations" class="com.intellij.execution.dashboard.actions.ShowConfigurationsAction"/>
     </group>
-    <action id="RunDashboard.Stop" class="com.intellij.execution.dashboard.actions.StopAction" use-shortcut-of="Stop"/>
-
-    <action id="RunDashboard.ShowConfigurations" class="com.intellij.execution.dashboard.actions.ShowConfigurationsAction">
-      <add-to-group group-id="Runner.Layout" anchor="before" relative-to-action="Runner.RestoreLayout"/>
-    </action>
     <group id="RunDashboardTreeToolbar"/>
     <group id="RunDashboardPopup">
       <action id="RunDashboard.EditConfiguration" class="com.intellij.execution.dashboard.actions.EditConfigurationAction"
@@ -1168,10 +1167,10 @@
     </group>
 
     <action class="com.intellij.internal.performance.TypingLatencyReportAction" id="TypingLatencyReport" internal="true" text="Typing Latency Report">
-      <add-to-group group-id="Internal" anchor="last"/>
+      <add-to-group group-id="Internal.Performance" anchor="last"/>
     </action>
     <action id="RetypeFile" text="Retype Current File" class="com.intellij.internal.retype.RetypeFileAction" internal="true">
-      <add-to-group group-id="Internal" anchor="last"/>
+      <add-to-group group-id="Internal.Performance" anchor="last"/>
     </action>
   </actions>
 </idea-plugin>

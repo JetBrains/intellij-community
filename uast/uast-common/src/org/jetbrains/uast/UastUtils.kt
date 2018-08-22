@@ -86,11 +86,11 @@ fun UElement?.getUCallExpression(): UCallExpression? = this?.withContainingEleme
 @Deprecated(message = "This function is deprecated, use getContainingUFile", replaceWith = ReplaceWith("getContainingUFile()"))
 fun UElement.getContainingFile(): UFile? = getContainingUFile()
 
-fun UElement.getContainingUFile(): UFile? = getParentOfType<UFile>(UFile::class.java)
+fun UElement.getContainingUFile(): UFile? = getParentOfType(UFile::class.java)
 
-fun UElement.getContainingUClass(): UClass? = getParentOfType<UClass>(UClass::class.java)
-fun UElement.getContainingUMethod(): UMethod? = getParentOfType<UMethod>(UMethod::class.java)
-fun UElement.getContainingUVariable(): UVariable? = getParentOfType<UVariable>(UVariable::class.java)
+fun UElement.getContainingUClass(): UClass? = getParentOfType(UClass::class.java)
+fun UElement.getContainingUMethod(): UMethod? = getParentOfType(UMethod::class.java)
+fun UElement.getContainingUVariable(): UVariable? = getParentOfType(UVariable::class.java)
 
 @Deprecated(message = "Useless function, will be removed in IDEA 2019.1", replaceWith = ReplaceWith("getContainingMethod()?.javaPsi"))
 fun UElement.getContainingMethod(): PsiMethod? = getContainingUMethod()?.psi

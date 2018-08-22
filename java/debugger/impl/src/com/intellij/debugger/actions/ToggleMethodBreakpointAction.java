@@ -43,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class ToggleMethodBreakpointAction extends AnAction {
 
+  @Override
   public void update(@NotNull AnActionEvent event){
     boolean toEnable = getPlace(event) != null;
 
@@ -55,6 +56,7 @@ public class ToggleMethodBreakpointAction extends AnAction {
   }
 
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {

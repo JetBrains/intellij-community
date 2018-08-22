@@ -52,6 +52,7 @@ public abstract class ShowSuggestions implements LocalQuickFix, Iconable {
     return suggestions;
   }
 
+  @Override
   public Icon getIcon(int flags) {
     return SpellcheckerIcons.Spellcheck;
   }
@@ -62,7 +63,7 @@ public abstract class ShowSuggestions implements LocalQuickFix, Iconable {
            ? InjectedLanguageUtil.openEditorFor(element.getContainingFile(), project)
            : FileEditorManager.getInstance(project).getSelectedTextEditor();
   }
-  
+
   @Override
   public boolean startInWriteAction() {
     return false;

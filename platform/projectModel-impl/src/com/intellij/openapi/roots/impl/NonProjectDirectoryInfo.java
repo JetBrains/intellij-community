@@ -52,19 +52,23 @@ class NonProjectDirectoryInfo extends DirectoryInfo {
     return System.identityHashCode(this);
   }
 
+  @Override
   public boolean isIgnored() {
     return false;
   }
 
+  @Override
   @Nullable
   public VirtualFile getSourceRoot() {
     return null;
   }
 
+  @Override
   public VirtualFile getLibraryClassRoot() {
     return null;
   }
 
+  @Override
   @Nullable
   public VirtualFile getContentRoot() {
     return null;
@@ -89,6 +93,7 @@ class NonProjectDirectoryInfo extends DirectoryInfo {
     return false;
   }
 
+  @Override
   public Module getModule() {
     return null;
   }

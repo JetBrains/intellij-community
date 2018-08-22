@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ui.popup;
 
@@ -48,6 +34,7 @@ public class FramelessNotificationPopup {
   private final static int FADE_OUT_TICKS = SHOW_TIME_TICKS + 60;
 
   private final ActionListener myFadeTracker = new ActionListener() {
+    @Override
     public void actionPerformed(ActionEvent e) {
       Window popupWindow = SwingUtilities.windowForComponent(myContent);
       if (popupWindow != null) {
@@ -86,6 +73,7 @@ public class FramelessNotificationPopup {
       .setMovable(true)
       .setLocateWithinScreenBounds(false)
       .setAlpha(0.2f).addListener(new JBPopupAdapter() {
+      @Override
       public void onClosed(LightweightWindowEvent event) {
         if (myFadeInTimer.isRunning()) {
           myFadeInTimer.stop();
@@ -158,6 +146,7 @@ public class FramelessNotificationPopup {
       ListenerUtil.removeMouseListener(this, myMouseListener);
     }
 
+    @Override
     public Dimension getPreferredSize() {
       if (myUseDefaultPreferredSize) {
         return myPreferredContentSize;

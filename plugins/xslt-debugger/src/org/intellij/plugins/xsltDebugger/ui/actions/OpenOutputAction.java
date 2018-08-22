@@ -40,6 +40,7 @@ public class OpenOutputAction extends AnAction {
     getTemplatePresentation().setIcon(AllIcons.ToolbarDecorator.Export);
   }
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Editor editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(myConsole.getComponent()));
     if (editor != null) {
@@ -55,6 +56,7 @@ public class OpenOutputAction extends AnAction {
     }
   }
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     final Editor editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(myConsole.getComponent()));
     e.getPresentation().setEnabled(editor != null && editor.getDocument().getTextLength() > 0);

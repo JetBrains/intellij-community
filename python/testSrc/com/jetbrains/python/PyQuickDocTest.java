@@ -552,6 +552,10 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     checkByHTML(myProvider.generateDoc(init, init));
   }
 
+  public void testSingleLetterInheritedDocstring() {
+    checkHTMLOnly();
+  }
+
   // PY-30432
   public void testNoExternalDocumentationSection() {
     doMultiFileCheckByHTML("numpy.py");
@@ -569,6 +573,11 @@ public class PyQuickDocTest extends LightMarkedTestCase {
 
   // PY-31033
   public void testDefaultValues() {
+    checkHTMLOnly();
+  }
+
+  // PY-31074
+  public void testClassDocumentationTakenFromConstructor() {
     checkHTMLOnly();
   }
 

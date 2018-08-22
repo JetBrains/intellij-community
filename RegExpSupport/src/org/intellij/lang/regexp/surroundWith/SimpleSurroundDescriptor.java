@@ -38,6 +38,7 @@ public class SimpleSurroundDescriptor implements SurroundDescriptor {
     new GroupSurrounder("Non-Capturing Group (?:pattern)", "(?:"),
   };
 
+  @Override
   @NotNull
   public PsiElement[] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
     // adjust start/end
@@ -78,6 +79,7 @@ public class SimpleSurroundDescriptor implements SurroundDescriptor {
     return PsiElement.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public Surrounder[] getSurrounders() {
     return SURROUNDERS;

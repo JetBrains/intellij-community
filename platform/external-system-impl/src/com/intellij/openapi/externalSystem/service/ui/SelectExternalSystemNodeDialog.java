@@ -135,6 +135,7 @@ public class SelectExternalSystemNodeDialog extends DialogWrapper {
       if (mySelector != null) {
         final SimpleNode[] selection = new SimpleNode[]{null};
         treeStructure.accept(new SimpleNodeVisitor() {
+          @Override
           public boolean accept(SimpleNode each) {
             if (!mySelector.shouldSelect(each)) return false;
             selection[0] = each;
@@ -167,6 +168,7 @@ public class SelectExternalSystemNodeDialog extends DialogWrapper {
     return myTree.getNodeFor(myTree.getSelectionPath());
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
     final JScrollPane pane = ScrollPaneFactory.createScrollPane(myTree);

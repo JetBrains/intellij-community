@@ -48,6 +48,7 @@ public class ActionUtil {
   @NonNls private static final String WAS_ENABLED_BEFORE_DUMB = "WAS_ENABLED_BEFORE_DUMB";
   @NonNls public static final String WOULD_BE_ENABLED_IF_NOT_DUMB_MODE = "WOULD_BE_ENABLED_IF_NOT_DUMB_MODE";
   @NonNls private static final String WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE = "WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE";
+  @NonNls private static final String ACTION_UPDATE_DATA = ActionUtil.class.getName() + "ACTION_UPDATE_DATA";
 
   private ActionUtil() {
   }
@@ -98,6 +99,40 @@ public class ActionUtil {
   public static String getUnavailableMessage(@NotNull String action, boolean plural) {
     return action + (plural ? " are" : " is")
            + " not available while " + ApplicationNamesInfo.getInstance().getProductName() + " is updating indices";
+  }
+
+  /**
+   * Calculates time spent for update,
+   * remember average time (with exponential smoothing) and caches update results inside action.getTemplatePresentation().getClientProperty(ACTION_UPDATE_DATA),
+   * if average time is quite big then skip update invocation and use cached presentation.
+   * @param forceUseCached use cached results for slow actions if presented (relax time doesn't take into account)
+   */
+  public static void performFastUpdate(boolean isInModalContext, @NotNull AnAction action, @NotNull AnActionEvent event, boolean forceUseCached) {
+    final Presentation templatePresentation = action.getTemplatePresentation();
+    ActionUpdateData ud = (ActionUpdateData)templatePresentation.getClientProperty(ACTION_UPDATE_DATA);
+    if (ud == null)
+      templatePresentation.putClientProperty(ACTION_UPDATE_DATA, ud = new ActionUpdateData());
+
+    final boolean isSlow = ud.averageUpdateDurationMs > 10;// empiric val: 10 ms
+    final long startTimeNs = System.nanoTime();
+    final long relaxMs = Math.min(ud.averageUpdateDurationMs*100, 10000); // empiric vals: min 1 sec, max 10 sec
+    if (isSlow && ud.lastUpdateEvent != null && (forceUseCached || (startTimeNs - ud.lastUpdateTimeNs)/1000000l < relaxMs)) {
+      // System.out.println("use cached presentation for action '" + String.valueOf(action) + "', averageUpdateDuration=" + ud.averageUpdateDurationMs + " ms, " + (startTimeNs - ud.lastUpdateTimeNs)/1000000l + " ms elapsed from last update");
+      event.getPresentation().copyFrom(ud.lastUpdateEvent.getPresentation());
+      return;
+    }
+
+    performDumbAwareUpdate(isInModalContext, action, event, false);
+    final long finishUpdateNs = System.nanoTime();
+
+    ud.lastUpdateTimeNs = finishUpdateNs;
+    ud.lastUpdateEvent = event;
+
+    final float smoothAlpha = isSlow ? 0.8f : 0.3f;
+    final float smoothCoAlpha = 1 - smoothAlpha;
+    final long spentMs = (finishUpdateNs - startTimeNs)/1000000l;
+
+    ud.averageUpdateDurationMs = Math.round(spentMs*smoothAlpha + ud.averageUpdateDurationMs*smoothCoAlpha);
   }
 
   private static int insidePerformDumbAwareUpdate;
@@ -369,5 +404,11 @@ public class ActionUtil {
   @NotNull
   public static ActionListener createActionListener(@NotNull AnAction action, @NotNull Component component, @NotNull String place) {
     return e -> invokeAction(action, component, place, null, null);
+  }
+
+  private static class ActionUpdateData {
+    AnActionEvent lastUpdateEvent;
+    long lastUpdateTimeNs = 0;
+    long averageUpdateDurationMs = 0;
   }
 }

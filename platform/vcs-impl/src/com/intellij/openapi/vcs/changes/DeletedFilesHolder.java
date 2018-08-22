@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -16,15 +16,17 @@ import java.util.Map;
 public class DeletedFilesHolder implements FileHolder {
   private final Map<String, LocallyDeletedChange> myFiles = new HashMap<>();
 
+  @Override
   public void cleanAll() {
     myFiles.clear();
   }
-  
+
   public void takeFrom(final DeletedFilesHolder holder) {
     myFiles.clear();
     myFiles.putAll(holder.myFiles);
   }
 
+  @Override
   public void cleanAndAdjustScope(@NotNull final VcsModifiableDirtyScope scope) {
     final List<LocallyDeletedChange> currentFiles = new ArrayList<>(myFiles.values());
     for (LocallyDeletedChange change : currentFiles) {
@@ -34,6 +36,7 @@ public class DeletedFilesHolder implements FileHolder {
     }
   }
 
+  @Override
   public HolderType getType() {
     return HolderType.DELETED;
   }
@@ -55,6 +58,7 @@ public class DeletedFilesHolder implements FileHolder {
     return myFiles.containsKey(url);
   }
 
+  @Override
   public DeletedFilesHolder copy() {
     final DeletedFilesHolder copyHolder = new DeletedFilesHolder();
     copyHolder.myFiles.putAll(myFiles);

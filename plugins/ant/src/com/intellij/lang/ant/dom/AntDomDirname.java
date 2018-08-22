@@ -31,6 +31,7 @@ public abstract class AntDomDirname extends AntDomPropertyDefiningTask {
   @Convert(value = AntPathConverter.class)
   public abstract GenericAttributeValue<PsiFileSystemItem> getFile();
 
+  @Override
   @Nullable
   protected final String calcPropertyValue(String propertyName) {
     final PsiFileSystemItem fsItem = getFile().getValue();

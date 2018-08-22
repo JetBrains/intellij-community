@@ -439,7 +439,10 @@ def console_exec(thread_id, frame_id, expression, dbg):
     frame = pydevd_vars.find_frame(thread_id, frame_id)
 
     is_multiline = expression.count('@LINE@') > 1
-    expression = str(expression.replace('@LINE@', '\n'))
+    try:
+        expression = str(expression.replace('@LINE@', '\n'))
+    except UnicodeEncodeError as e:
+        expression = expression.replace('@LINE@', '\n')
 
     #Not using frame.f_globals because of https://sourceforge.net/tracker2/?func=detail&aid=2541355&group_id=85796&atid=577329
     #(Names not resolved in generator expression in method)

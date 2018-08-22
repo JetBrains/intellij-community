@@ -75,10 +75,12 @@ public class CvsEntriesManager implements VirtualFileListener {
   }
 
   private class MyVirtualFileManagerListener implements VirtualFileManagerListener {
+    @Override
     public void afterRefreshFinish(boolean asynchonous) {
       ensureFilesCached(); //to cache for next refreshes
     }
 
+    @Override
     public void beforeRefreshStart(boolean asynchonous) {
     }
   }

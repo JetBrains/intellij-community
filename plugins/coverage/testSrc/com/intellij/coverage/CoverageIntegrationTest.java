@@ -92,22 +92,27 @@ public class CoverageIntegrationTest extends ModuleTestCase {
     private final Map<String, PackageAnnotator.ClassCoverageInfo> myClassCoverageInfo =
       new HashMap<>();
 
+    @Override
     public void annotateSourceDirectory(VirtualFile virtualFile, PackageAnnotator.PackageCoverageInfo packageCoverageInfo, Module module) {
       myDirectoryCoverage.put(virtualFile, packageCoverageInfo);
     }
 
+    @Override
     public void annotateTestDirectory(VirtualFile virtualFile, PackageAnnotator.PackageCoverageInfo packageCoverageInfo, Module module) {
       myDirectoryCoverage.put(virtualFile, packageCoverageInfo);
     }
 
+    @Override
     public void annotatePackage(String packageQualifiedName, PackageAnnotator.PackageCoverageInfo packageCoverageInfo) {
       myPackageCoverage.put(packageQualifiedName, packageCoverageInfo);
     }
 
+    @Override
     public void annotatePackage(String packageQualifiedName, PackageAnnotator.PackageCoverageInfo packageCoverageInfo, boolean flatten) {
       (flatten ? myFlatPackageCoverage : myPackageCoverage).put(packageQualifiedName, packageCoverageInfo);
     }
 
+    @Override
     public void annotateClass(String classQualifiedName, PackageAnnotator.ClassCoverageInfo classCoverageInfo) {
       myClassCoverageInfo.put(classQualifiedName, classCoverageInfo);
     }

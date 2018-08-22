@@ -36,62 +36,77 @@ public abstract class AbstractMavenLogger implements Logger {
 
   protected abstract void printMessage(int level, String message, Throwable throwable);
 
+  @Override
   public void debug(String string, Throwable throwable) {
     doPrint(LEVEL_DEBUG, string, throwable);
   }
 
+  @Override
   public void info(String string, Throwable throwable) {
     doPrint(LEVEL_INFO, string, throwable);
   }
 
+  @Override
   public void warn(String string, Throwable throwable) {
     doPrint(LEVEL_WARN, string, throwable);
   }
 
+  @Override
   public void error(String string, Throwable throwable) {
     doPrint(LEVEL_ERROR, string, throwable);
   }
 
+  @Override
   public void fatalError(String string, Throwable throwable) {
     doPrint(LEVEL_FATAL, string, throwable);
   }
 
+  @Override
   public void debug(String message) {
     debug(message, null);
   }
 
+  @Override
   public boolean isDebugEnabled() {
     return getThreshold() <= LEVEL_DEBUG;
   }
 
+  @Override
   public void info(String message) {
     info(message, null);
   }
 
+  @Override
   public boolean isInfoEnabled() {
     return getThreshold() <= LEVEL_INFO;
   }
 
+  @Override
   public void warn(String message) {
     warn(message, null);
   }
 
+  @Override
   public boolean isWarnEnabled() {
     return getThreshold() <= LEVEL_WARN;
   }
 
+  @Override
   public void error(String message) {
     error(message, null);
   }
 
+  @Override
   public boolean isErrorEnabled() {
     return getThreshold() <= LEVEL_ERROR;
   }
 
+  @Override
   public void fatalError(String message) {
     fatalError(message, null);
   }
 
+  @Override
   public boolean isFatalErrorEnabled() {
     return getThreshold() <= LEVEL_FATAL;
   }
@@ -100,14 +115,17 @@ public abstract class AbstractMavenLogger implements Logger {
     this.myThreshold = threshold;
   }
 
+  @Override
   public int getThreshold() {
     return myThreshold;
   }
 
+  @Override
   public Logger getChildLogger(String s) {
     return null;
   }
 
+  @Override
   public String getName() {
     return toString();
   }

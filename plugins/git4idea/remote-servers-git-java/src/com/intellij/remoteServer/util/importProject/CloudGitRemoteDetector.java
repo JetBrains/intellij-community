@@ -13,7 +13,7 @@ import com.intellij.ide.util.newProjectWizard.StepSequence;
 import com.intellij.ide.util.projectWizard.ImportFromSourcesProvider;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
-import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -42,11 +42,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author michael.golubev
- */
-public class CloudGitRemoteDetector extends AbstractProjectComponent implements GitRepositoryChangeListener {
-
+public class CloudGitRemoteDetector implements GitRepositoryChangeListener, ProjectComponent {
+  private final Project myProject;
   private final GitRepositoryManager myRepositoryManager;
 
   private final CloudNotifier myNotifier;
@@ -54,7 +51,7 @@ public class CloudGitRemoteDetector extends AbstractProjectComponent implements 
   private final List<CloudTypeDelegate> myDelegates;
 
   public CloudGitRemoteDetector(Project project, GitRepositoryManager repositoryManager) {
-    super(project);
+    myProject = project;
     myRepositoryManager = repositoryManager;
 
     myNotifier = new CloudNotifier("Git remotes detector");

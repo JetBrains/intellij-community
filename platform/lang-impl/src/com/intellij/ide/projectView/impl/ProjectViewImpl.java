@@ -120,6 +120,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private static final boolean ourShowModulesDefaults = true;
   private final Map<String, Boolean> myFlattenModules = new THashMap<>();
   private static final boolean ourFlattenModulesDefaults = false;
+  private final Map<String, Boolean> myShowExcludedFiles = new THashMap<>();
+  private static final boolean ourShowExcludedFilesDefaults = true;
   private final Map<String, Boolean> myShowLibraryContents = new THashMap<>();
   private static final boolean ourShowLibraryContentsDefaults = true;
   private final Map<String, Boolean> myHideEmptyPackages = new THashMap<>();
@@ -162,6 +164,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @NonNls private static final String ELEMENT_FLATTEN_PACKAGES = "flattenPackages";
   @NonNls private static final String ELEMENT_SHOW_MEMBERS = "showMembers";
   @NonNls private static final String ELEMENT_SHOW_MODULES = "showModules";
+  @NonNls private static final String ELEMENT_SHOW_EXCLUDED_FILES = "showExcludedFiles";
   @NonNls private static final String ELEMENT_SHOW_LIBRARY_CONTENTS = "showLibraryContents";
   @NonNls private static final String ELEMENT_HIDE_EMPTY_PACKAGES = "hideEmptyPackages";
   @NonNls private static final String ELEMENT_COMPACT_DIRECTORIES = "compactDirectories";
@@ -690,6 +693,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     myActionGroup.addAction(new ManualOrderAction()).setAsSecondary(true);
     myActionGroup.addAction(new SortByTypeAction()).setAsSecondary(true);
     myActionGroup.addAction(new FoldersAlwaysOnTopAction()).setAsSecondary(true);
+    myActionGroup.addAction(ShowExcludedFilesAction.INSTANCE).setAsSecondary(true);
 
     if (!myAutoScrollFromSourceHandler.isAutoScrollEnabled()) {
       titleActions.add(new ScrollFromSourceAction());
@@ -1370,6 +1374,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       readOption(navigatorElement.getChild(ELEMENT_FLATTEN_PACKAGES), myFlattenPackages);
       readOption(navigatorElement.getChild(ELEMENT_SHOW_MEMBERS), myShowMembers);
       readOption(navigatorElement.getChild(ELEMENT_SHOW_MODULES), myShowModules);
+      readOption(navigatorElement.getChild(ELEMENT_SHOW_EXCLUDED_FILES), myShowExcludedFiles);
       readOption(navigatorElement.getChild(ELEMENT_SHOW_LIBRARY_CONTENTS), myShowLibraryContents);
       readOption(navigatorElement.getChild(ELEMENT_HIDE_EMPTY_PACKAGES), myHideEmptyPackages);
       readOption(navigatorElement.getChild(ELEMENT_COMPACT_DIRECTORIES), myCompactDirectories);
@@ -1449,6 +1454,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     writeOption(navigatorElement, myFlattenPackages, ELEMENT_FLATTEN_PACKAGES);
     writeOption(navigatorElement, myShowMembers, ELEMENT_SHOW_MEMBERS);
     writeOption(navigatorElement, myShowModules, ELEMENT_SHOW_MODULES);
+    writeOption(navigatorElement, myShowExcludedFiles, ELEMENT_SHOW_EXCLUDED_FILES);
     writeOption(navigatorElement, myShowLibraryContents, ELEMENT_SHOW_LIBRARY_CONTENTS);
     writeOption(navigatorElement, myHideEmptyPackages, ELEMENT_HIDE_EMPTY_PACKAGES);
     writeOption(navigatorElement, myCompactDirectories, ELEMENT_COMPACT_DIRECTORIES);
@@ -1618,6 +1624,41 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
 
     return getPaneOptionValue(myAbbreviatePackageNames, paneId, ourAbbreviatePackagesDefaults);
+  }
+
+  @Override
+  public boolean isShowExcludedFiles(String paneId) {
+    boolean showExcludedFiles = isGlobalOptions()
+                                ? getGlobalOptions().getShowExcludedFiles()
+                                : getPaneOptionValue(myShowExcludedFiles, paneId, ourShowExcludedFilesDefaults);
+
+    if (showExcludedFiles == ourShowExcludedFilesDefaults) {
+      AbstractProjectViewPane pane = getProjectViewPaneById(ProjectViewPane.ID);
+      if (pane instanceof ProjectViewPane) {
+        ProjectViewPane old = (ProjectViewPane)pane;
+        showExcludedFiles = old.myShowExcludedFiles;
+        if (showExcludedFiles != ourShowExcludedFilesDefaults) {
+          setShowExcludedFiles(showExcludedFiles, paneId, false);
+          setPaneOption(myShowExcludedFiles, showExcludedFiles, ProjectViewPane.ID, false);
+          old.myShowExcludedFiles = ourShowExcludedFilesDefaults; // reset old state after copying it
+        }
+      }
+    }
+    return showExcludedFiles;
+  }
+
+  void setShowExcludedFiles(boolean showExcludedFiles, @NotNull String paneId, boolean updatePane) {
+    if (isGlobalOptions()) {
+      getGlobalOptions().setShowExcludedFiles(showExcludedFiles);
+      for (String id : getPaneIds()) {
+        if (ShowExcludedFilesAction.INSTANCE.isSupported(this, id)) {
+          setPaneOption(myShowExcludedFiles, showExcludedFiles, id, updatePane);
+        }
+      }
+    }
+    else if (ShowExcludedFilesAction.INSTANCE.isSupported(this, paneId)) {
+      setPaneOption(myShowExcludedFiles, showExcludedFiles, paneId, updatePane);
+    }
   }
 
   @Override

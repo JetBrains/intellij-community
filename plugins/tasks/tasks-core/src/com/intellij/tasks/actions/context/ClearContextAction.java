@@ -28,13 +28,16 @@ import org.jetbrains.annotations.NotNull;
  * @author Dmitry Avdeev
  */
 public class ClearContextAction extends BaseTaskAction {
+  @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     final Project project = getProject(e);
     GlobalUndoableAction action = new GlobalUndoableAction() {
+      @Override
       public void undo() throws UnexpectedUndoException {
 
       }
 
+      @Override
       public void redo() throws UnexpectedUndoException {
         WorkingContextManager.getInstance(project).clearContext();
       }

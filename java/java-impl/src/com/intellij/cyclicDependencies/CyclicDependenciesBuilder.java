@@ -49,10 +49,12 @@ public class CyclicDependenciesBuilder{
     myProject = project;
     myScope = scope;
     myForwardBuilder = new ForwardDependenciesBuilder(myProject, myScope){
+      @Override
       public String getRootNodeNameInUsageView() {
         return CyclicDependenciesBuilder.this.getRootNodeNameInUsageView();
       }
 
+      @Override
       public String getInitialUsagesPosition() {
         return AnalysisScopeBundle.message("cyclic.dependencies.usage.view.initial.text");
       }

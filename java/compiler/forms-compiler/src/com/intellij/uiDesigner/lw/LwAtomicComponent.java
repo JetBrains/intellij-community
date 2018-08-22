@@ -26,6 +26,7 @@ public class LwAtomicComponent extends LwComponent {
     super(className);
   }
 
+  @Override
   public void read(final Element element, final PropertiesProvider provider) throws Exception{
     readBase(element);
     readConstraints(element);

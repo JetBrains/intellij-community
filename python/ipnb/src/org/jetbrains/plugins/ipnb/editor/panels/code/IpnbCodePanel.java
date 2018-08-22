@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.ipnb.editor.panels.code;
 
 import com.intellij.icons.AllIcons;
@@ -72,6 +73,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
     return myCodeSourcePanel.getEditor();
   }
 
+  @Override
   public void addPromptPanel(@NotNull final JComponent parent, Integer promptNumber,
                              @NotNull final IpnbEditorUtil.PromptType promptType,
                              @NotNull final JComponent component) {
@@ -103,6 +105,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
     });
   }
 
+  @Override
   public void dispose() {
     removeAll();
     myLastAddedPanel = null;

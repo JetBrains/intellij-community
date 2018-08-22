@@ -240,6 +240,7 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
     return new ExternalSystemNodeDescriptor<>(element, element.toString(), description, icon);
   }
 
+  @Override
   @NotNull
   public ExternalSystemNode<?> getRoot() {
     return (ExternalSystemNode<?>)super.getRoot();
@@ -250,6 +251,7 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
     super.insertNodeInto(child, parent, index);
   }
 
+  @Override
   public void insertNodeInto(MutableTreeNode child, MutableTreeNode parent, int i) {
     insertNodeInto(child, parent);
   }

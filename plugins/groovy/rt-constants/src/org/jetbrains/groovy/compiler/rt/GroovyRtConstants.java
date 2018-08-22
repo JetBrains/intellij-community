@@ -43,4 +43,5 @@ public class GroovyRtConstants {
 
   public static final String GROOVYC_ASM_RESOLVING_ONLY = "groovyc.asm.resolving.only";
   public static final String GROOVYC_CONFIG_SCRIPT = "groovyc.config.script";
+  public static final String GROOVY_TARGET_BYTECODE = "groovy.target.bytecode";
 }

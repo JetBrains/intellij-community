@@ -45,7 +45,7 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
     return wrap(list, scrollPane, namer, false);
   }
 
-  public static <T> JComponent wrap(@NotNull JList<T> list, @NotNull JScrollPane scrollPane, @Nullable Function<T, String> namer, 
+  public static <T> JComponent wrap(@NotNull JList<T> list, @NotNull JScrollPane scrollPane, @Nullable Function<T, String> namer,
                                     boolean highlightAllOccurrences) {
     return new ListWithFilter<>(list, scrollPane, namer, highlightAllOccurrences);
   }
@@ -115,7 +115,7 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
       // native mac "clear button" is not captured by SearchTextField.onFieldCleared
       mySearchField.addDocumentListener(new DocumentAdapter() {
         @Override
-        protected void textChanged(DocumentEvent e) {
+        protected void textChanged(@NotNull DocumentEvent e) {
           if (myInUpdate) return;
           if (mySearchField.getText().isEmpty()) {
             mySpeedSearch.reset();
@@ -125,6 +125,7 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
       installSupplyTo(myList);
     }
 
+    @Override
     public void update() {
       myInUpdate = true;
       mySearchField.getTextEditor().setBackground(UIUtil.getTextFieldBackground());

@@ -30,8 +30,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 import static com.intellij.util.ArrayUtil.toObjectArray;
@@ -256,7 +256,7 @@ public class FoldingModelSupport {
 
   private class MyDocumentListener implements DocumentListener {
     @Override
-    public void documentChanged(DocumentEvent e) {
+    public void documentChanged(@NotNull DocumentEvent e) {
       if (StringUtil.indexOf(e.getOldFragment(), '\n') != -1 ||
           StringUtil.indexOf(e.getNewFragment(), '\n') != -1) {
         for (int i = 0; i < myCount; i++) {

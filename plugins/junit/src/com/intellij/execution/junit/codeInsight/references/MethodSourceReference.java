@@ -51,6 +51,7 @@ public class MethodSourceReference extends PsiReferenceBase<PsiLiteral> {
     return super.handleElementRename(selfClassReference ? newElementName : className + '#' + newElementName);
   }
 
+  @Override
   @Nullable
   public PsiElement resolve() {
     PsiClass cls = PsiTreeUtil.getParentOfType(getElement(), PsiClass.class);
@@ -73,6 +74,7 @@ public class MethodSourceReference extends PsiReferenceBase<PsiLiteral> {
     return null;
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     final List<Object> list = new ArrayList<>();

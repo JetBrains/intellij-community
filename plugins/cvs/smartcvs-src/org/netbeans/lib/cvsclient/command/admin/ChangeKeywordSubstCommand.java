@@ -12,10 +12,11 @@
  */
 package org.netbeans.lib.cvsclient.command.admin;
 
+import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IRequestProcessor;
-import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.command.*;
+import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.event.ICvsListenerRegistry;
 import org.netbeans.lib.cvsclient.event.IEventSender;
 import org.netbeans.lib.cvsclient.progress.IProgressViewer;
@@ -23,7 +24,6 @@ import org.netbeans.lib.cvsclient.progress.sending.FileStateRequestsProgressHand
 import org.netbeans.lib.cvsclient.request.CommandRequest;
 import org.netbeans.lib.cvsclient.request.Requests;
 import org.netbeans.lib.cvsclient.util.BugLog;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 
@@ -43,12 +43,14 @@ public class ChangeKeywordSubstCommand extends AbstractCommand {
 
 	// Implemented ============================================================
 
-	protected void resetCvsCommand() {
+	@Override
+        protected void resetCvsCommand() {
 		super.resetCvsCommand();
 		setKeywordSubstitution(null);
 	}
 
-	public boolean execute(IRequestProcessor requestProcessor, IEventSender eventManager, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException,
+	@Override
+        public boolean execute(IRequestProcessor requestProcessor, IEventSender eventManager, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException,
                                                                                                                                                                                                                   AuthenticationException {
 		BugLog.getInstance().assertNotNull(keywordSubstitution);
 
@@ -69,7 +71,8 @@ public class ChangeKeywordSubstCommand extends AbstractCommand {
 		return requestProcessor.processRequests(requests, FileStateRequestsProgressHandler.create(progressViewer, cvsFiles));
 	}
 
-	public String getCvsCommandLine() {
+	@Override
+        public String getCvsCommandLine() {
 		@NonNls final StringBuffer cvsCommandLine = new StringBuffer("admin ");
 		cvsCommandLine.append(getCvsArguments());
 		appendFileArguments(cvsCommandLine);

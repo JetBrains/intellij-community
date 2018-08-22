@@ -18,7 +18,6 @@ package com.intellij.openapi.wm;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Expirable;
 import com.intellij.openapi.util.ExpirableRunnable;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,16 +33,19 @@ public class PassThroughIdeFocusManager extends IdeFocusManager {
     return ourInstance;
   }
 
+  @Override
   @NotNull
   public ActionCallback requestFocus(@NotNull Component c, boolean forced) {
     c.requestFocus();
     return ActionCallback.DONE;
   }
 
+  @Override
   public JComponent getFocusTargetFor(@NotNull JComponent comp) {
     return comp;
   }
 
+  @Override
   public void doWhenFocusSettlesDown(@NotNull Runnable runnable) {
     runnable.run();
   }
@@ -60,6 +62,7 @@ public class PassThroughIdeFocusManager extends IdeFocusManager {
     }
   }
 
+  @Override
   public Component getFocusedDescendantFor(Component comp) {
     final Component focused = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     if (focused == null) return null;
@@ -73,6 +76,7 @@ public class PassThroughIdeFocusManager extends IdeFocusManager {
     return false;
   }
 
+  @Override
   @NotNull
   public ActionCallback requestDefaultFocus(boolean forced) {
     return ActionCallback.DONE;

@@ -144,7 +144,7 @@ public class CheckRegExpForm {
         updater = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable);
         DocumentListener documentListener = new DocumentListener() {
           @Override
-          public void documentChanged(DocumentEvent e) {
+          public void documentChanged(@NotNull DocumentEvent e) {
             update();
           }
         };

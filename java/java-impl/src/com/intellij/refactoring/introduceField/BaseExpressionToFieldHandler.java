@@ -18,6 +18,7 @@ package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.daemon.impl.quickfix.AnonymousTargetClassPreselectionUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -57,6 +58,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.EnumConstantsUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.occurrences.OccurrenceManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
@@ -85,6 +87,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     myIsConstant = isConstant;
   }
 
+  @Override
   protected boolean invokeImpl(final Project project, @NotNull final PsiExpression selectedExpr, final Editor editor) {
     final PsiElement element = getPhysicalElement(selectedExpr);
 
@@ -180,8 +183,12 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
     PsiElement tempAnchorElement = RefactoringUtil.getParentExpressionAnchorElement(selectedExpr);
     if (!Comparing.strEqual(IntroduceConstantHandler.REFACTORING_NAME, getRefactoringName()) &&
-        IntroduceVariableBase.checkAnchorBeforeThisOrSuper(project, editor, tempAnchorElement, getRefactoringName(), getHelpID()))
+        IntroduceFieldHandler.isInSuperOrThis(selectedExpr) &&
+        isStaticFinalInitializer(selectedExpr) != null) {
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("invalid.expression.context"));
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), getHelpID());
       return true;
+    }
 
     final Settings settings =
       showRefactoringDialog(project, editor, myParentClass, selectedExpr, tempType,
@@ -242,6 +249,15 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(
                 EditorColors.SEARCH_RESULT_ATTRIBUTES
               );
+  }
+
+  @Nullable
+  protected PsiElement isStaticFinalInitializer(PsiExpression expr) {
+    PsiClass parentClass = expr != null ? getParentClass(expr) : null;
+    if (parentClass == null) return null;
+    IsStaticFinalInitializerExpression visitor = new IsStaticFinalInitializerExpression(parentClass, expr);
+    expr.accept(visitor);
+    return visitor.getElementReference();
   }
 
   protected abstract OccurrenceManager createOccurrenceManager(PsiExpression selectedExpr, PsiClass parentClass);
@@ -693,6 +709,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       myParentClass = parentClass;
     }
 
+    @Override
     public void run() {
       try {
         InitializationPlace initializerPlace = mySettings.getInitializerPlace();
@@ -921,6 +938,76 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
     public PsiField getField() {
       return myField;
+    }
+  }
+
+  private static class IsStaticFinalInitializerExpression extends ClassMemberReferencesVisitor {
+    private PsiElement myElementReference;
+    private final PsiExpression myInitializer;
+    private boolean myCheckThrowables = true;
+
+    public IsStaticFinalInitializerExpression(PsiClass aClass, PsiExpression initializer) {
+      super(aClass);
+      myInitializer = initializer;
+    }
+
+    @Override
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
+      final PsiElement psiElement = expression.resolve();
+      if ((psiElement instanceof PsiLocalVariable || psiElement instanceof PsiParameter) &&
+          !PsiTreeUtil.isAncestor(myInitializer, psiElement, false)) {
+        myElementReference = expression;
+      }
+      else {
+        super.visitReferenceExpression(expression);
+      }
+    }
+
+    @Override
+    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+      if (!PsiMethodReferenceUtil.isResolvedBySecondSearch(expression)) {
+        super.visitMethodReferenceExpression(expression);
+      }
+    }
+
+    @Override
+    public void visitCallExpression(PsiCallExpression callExpression) {
+      super.visitCallExpression(callExpression);
+      if (!myCheckThrowables) return;
+      final List<PsiClassType> checkedExceptions = ExceptionUtil.getThrownCheckedExceptions(callExpression);
+      if (!checkedExceptions.isEmpty()) {
+        myElementReference = callExpression;
+      }
+    }
+
+    @Override
+    public void visitClass(PsiClass aClass) {
+      myCheckThrowables = false;
+      super.visitClass(aClass);
+    }
+
+    @Override
+    public void visitLambdaExpression(PsiLambdaExpression expression) {
+      myCheckThrowables = false;
+      super.visitLambdaExpression(expression);
+    }
+
+    @Override
+    protected void visitClassMemberReferenceElement(PsiMember classMember, PsiJavaCodeReferenceElement classMemberReference) {
+      if (!classMember.hasModifierProperty(PsiModifier.STATIC)) {
+        myElementReference = classMemberReference;
+      }
+    }
+
+    @Override
+    public void visitElement(PsiElement element) {
+      if (myElementReference != null) return;
+      super.visitElement(element);
+    }
+
+    @Nullable
+    public PsiElement getElementReference() {
+      return myElementReference;
     }
   }
 }

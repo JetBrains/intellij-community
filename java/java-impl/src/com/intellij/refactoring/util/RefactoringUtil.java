@@ -932,7 +932,7 @@ public class RefactoringUtil {
       if (PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression))) {
         if (replaceBody) {
           lastBodyStatement = null;
-        } else {  
+        } else {
           lastBodyStatement = elementFactory.createStatementFromText("a;", lambdaExpression);
           ((PsiExpressionStatement)lastBodyStatement).getExpression().replace(lambdaExpressionBody);
         }
@@ -1360,6 +1360,7 @@ public class RefactoringUtil {
       myCondition = condition;
     }
 
+    @Override
     public boolean value(T object) {
       if (!myProcessedSet.contains(object)) {
         myProcessedSet.add(object);
@@ -1383,6 +1384,7 @@ public class RefactoringUtil {
       myConditionCache = new ConditionCache<>(aClass1 -> InheritanceUtil.isInheritorOrSelf(aClass1, myClass, true));
     }
 
+    @Override
     public boolean value(PsiClass aClass) {
       return myConditionCache.value(aClass);
     }
@@ -1412,7 +1414,7 @@ public class RefactoringUtil {
     }
 
     collectTypeParametersInDependencies(filter, used);
-    
+
     if (fromList != null) {
       used.retainAll(Arrays.asList(fromList.getTypeParameters()));
     }

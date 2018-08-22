@@ -38,18 +38,22 @@ public class VariableLookup extends AbstractLookup implements Lookup, Iconable, 
         myPsiElement = psiElement;
     }
 
+    @Override
     public String getTypeHint() {
         return myType;
     }
 
+    @Override
     public Icon getIcon(int flags) {
         return myIcon != null ? myIcon : PlatformIcons.VARIABLE_ICON;
     }
 
+    @Override
     public int getPriority() {
         return HIGH;
     }
 
+    @Override
     public PsiElement getElement() {
         return myPsiElement;
     }

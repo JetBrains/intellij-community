@@ -20,8 +20,8 @@ import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.impl.source.tree.java.PsiEmptyExpressionImpl;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.callMatcher.CallHandler;
@@ -245,6 +245,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       return true;
     }
 
+    @Override
     default void applyFix(@NotNull Project project, PsiElement element) {
       PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class, false);
       if (call != null) {
@@ -320,6 +321,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       myMethodName = methodName;
     }
 
+    @Override
     @NotNull
     public String getMessage() {
       return myQualifierCall + ".stream() can be replaced with " + ClassUtil.extractClassName(myClassName) + "." + myMethodName + "()";
@@ -454,6 +456,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
              (myChangeSemantics ? " (may change semantics)" : "");
     }
 
+    @Override
     @NotNull
     public String getMessage() {
       return "The 'stream()." + myStreamMethod +
@@ -633,6 +636,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       return "Replace "+myFrom+" with "+myTo+"(...)";
     }
 
+    @Override
     public String getMessage() {
       return myFrom+" can be replaced with "+myTo+"(...)";
     }

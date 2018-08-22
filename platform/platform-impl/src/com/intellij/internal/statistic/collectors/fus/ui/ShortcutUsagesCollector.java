@@ -5,14 +5,13 @@ import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.collectors.fus.ui.persistence.ShortcutsCollector;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import com.intellij.internal.statistic.service.fus.collectors.FUStatisticsDifferenceSender;
-import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-import static com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator.*;
+import static com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator.ensureProperKey;
 
 public final class ShortcutUsagesCollector extends ApplicationUsagesCollector implements FUStatisticsDifferenceSender {
 
@@ -23,12 +22,14 @@ public final class ShortcutUsagesCollector extends ApplicationUsagesCollector im
     return "statistics.ui.shortcuts.on.other.os";
   }
 
+  @Override
   @NotNull
   public Set<UsageDescriptor> getUsages() {
     ShortcutsCollector.MyState state = ShortcutsCollector.getInstance().getState();
     return ContainerUtil.map2Set(state.myValues.entrySet(), e -> new UsageDescriptor(ensureProperKey(e.getKey()), e.getValue()));
   }
 
+  @Override
   @NotNull
   public String getGroupId() {
     return getGroupName();

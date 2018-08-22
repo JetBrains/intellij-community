@@ -70,10 +70,12 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
     reader.accept(new ClassVisitor(Opcodes.API_VERSION) {
       private String myClassName = null;
 
+      @Override
       public void visit(final int version, final int access, final String name, final String signature, final String superName, final String[] interfaces) {
         myClassName = name;
       }
 
+      @Override
       public MethodVisitor visitMethod(final int access, final String name, final String desc, final String signature, final String[] exceptions) {
         final String methodName = myClassName + '.' + name + desc;
         final Map<Integer, String> names = new LinkedHashMap<Integer, String>();
@@ -201,6 +203,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
         return av;
       }
 
+      @Override
       public AnnotationVisitor visitParameterAnnotation(final int parameter, final String anno, final boolean visible) {
         AnnotationVisitor base = mv.visitParameterAnnotation(parameter, anno, visible);
         if (parameter < paramAnnotationOffset) return base;
@@ -252,7 +255,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
           String paramName = paramNames == null ? null : paramNames.get(param);
           String descrPattern = state.getNullParamMessage(paramName);
           String[] args = state.message != null
-                          ? EMPTY_STRING_ARRAY 
+                          ? EMPTY_STRING_ARRAY
                           : new String[]{paramName != null ? paramName : String.valueOf(param - syntheticCount), myClassName, name};
           reportError(state.exceptionType, end, descrPattern, args);
         }
@@ -332,16 +335,16 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
       }
       final StringBuilder message = new StringBuilder();
       message.append("Operation '").append(operationName).append("' failed for ").append(myClassName).append(".").append(methodName).append("(): ");
-      
+
       final String errMessage = err.getMessage();
       if (errMessage != null) {
         message.append(errMessage);
       }
-      
+
       final ByteArrayOutputStream out = new ByteArrayOutputStream();
       err.printStackTrace(new PrintStream(out));
       message.append('\n').append(out.toString());
-      
+
       myPostponedError = new RuntimeException(message.toString(), err);
     }
     if (myIsModification) {

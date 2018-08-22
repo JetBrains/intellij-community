@@ -63,6 +63,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
 
   public static final String REFACTORING_NAME = RefactoringBundle.message("extract.method.title");
 
+  @Override
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     if (dataContext != null) {
       final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
@@ -73,8 +74,10 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
     }
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
     final Pass<PsiElement[]> callback = new Pass<PsiElement[]>() {
+      @Override
       public void pass(final PsiElement[] selectedValue) {
         invokeOnElements(project, editor, file, selectedValue);
       }
@@ -173,7 +176,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
   }
 
   private static void previewExtractMethod(@NotNull ExtractMethodProcessor processor) {
-    processor.previewRefactoring();
+    processor.previewRefactoring(null);
     ExtractMethodPreviewManager.getInstance(processor.getProject()).showPreview(processor);
   }
 

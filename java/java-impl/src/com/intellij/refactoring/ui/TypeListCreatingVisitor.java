@@ -15,7 +15,9 @@
  */
 package com.intellij.refactoring.ui;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiType;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 
 import java.util.ArrayList;
@@ -32,6 +34,7 @@ class TypeListCreatingVisitor implements RefactoringHierarchyUtil.SuperTypeVisit
     mySet = new HashSet<>();
   }
 
+  @Override
   public void visitType(PsiType aType) {
     if (!mySet.contains(aType)) {
       myList.add(aType);
@@ -39,6 +42,7 @@ class TypeListCreatingVisitor implements RefactoringHierarchyUtil.SuperTypeVisit
     }
   }
 
+  @Override
   public void visitClass(PsiClass aClass) {
     final PsiType type = myFactory.createType(aClass);
     if (!mySet.contains(type)) {

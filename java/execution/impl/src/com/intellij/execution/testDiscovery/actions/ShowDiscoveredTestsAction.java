@@ -58,9 +58,7 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.UFile;
-import org.jetbrains.uast.UMethod;
-import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.*;
 import org.jetbrains.uast.visitor.AbstractUastVisitor;
 
 import javax.swing.*;
@@ -80,7 +78,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(
       isEnabled(e.getProject()) &&
-      (findMethodAtCaret(e) != null || e.getData(VcsDataKeys.CHANGES) != null)
+      (findMethodAtCaret(e) != null || findClassAtCaret(e) != null || e.getData(VcsDataKeys.CHANGES) != null)
     );
   }
 
@@ -90,23 +88,51 @@ public class ShowDiscoveredTestsAction extends AnAction {
     assert project != null;
 
     PsiMethod method = findMethodAtCaret(e);
-
     if (method != null) {
-      showDiscoveredTestsByPsi(e, project, method);
+      showDiscoveredTestsByPsiMethod(project, method, e);
+      return;
     }
-    else {
-      showDiscoveredTestsByChanges(e);
+
+    PsiClass psiClass = findClassAtCaret(e);
+    if (psiClass != null) {
+      showDiscoveredTestsByPsiClass(project, psiClass, e);
+      return;
     }
+
+    showDiscoveredTestsByChanges(e);
   }
 
-  private static void showDiscoveredTestsByPsi(AnActionEvent e, Project project, PsiMethod method) {
+  private static void showDiscoveredTestsByPsiClass(@NotNull Project project, @NotNull PsiClass psiClass, @NotNull AnActionEvent e) {
+    if (DumbService.isDumb(project)) return;
+    DataContext dataContext = DataManager.getInstance().getDataContext(e.getRequiredData(EDITOR).getContentComponent());
+    FeatureUsageTracker.getInstance().triggerFeatureUsed("test.discovery");
+    String presentableName = PsiFormatUtil.formatClass(psiClass, PsiFormatUtilBase.SHOW_NAME);
+    DiscoveredTestsTree tree = showTree(project, dataContext, presentableName);
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      if (DumbService.isDumb(project)) return;
+      String className = ReadAction.compute(() -> getClassName(psiClass));
+      if (className == null) return;
+      processTestDiscovery(project, createTreeProcessor(tree), className, null);
+      EdtInvocationManager.getInstance().invokeLater(() -> tree.setPaintBusy(false));
+    });
+  }
+
+  @NotNull
+  private static TestDiscoveryProducer.PsiTestProcessor createTreeProcessor(@NotNull DiscoveredTestsTree tree) {
+    return (clazz, method, parameter) -> {
+      tree.addTest(clazz, method, parameter);
+      return true;
+    };
+  }
+
+  private static void showDiscoveredTestsByPsiMethod(@NotNull Project project, @NotNull PsiMethod method, @NotNull AnActionEvent e) {
     Couple<String> key = getMethodKey(method);
     if (key == null) return;
     DataContext dataContext = DataManager.getInstance().getDataContext(e.getRequiredData(EDITOR).getContentComponent());
     FeatureUsageTracker.getInstance().triggerFeatureUsed("test.discovery");
     String presentableName =
       PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME, 0);
-    showDiscoveredTests(project, dataContext, presentableName, method);
+    showDiscoveredTestsByMethods(project, dataContext, presentableName, method);
   }
 
   private static void showDiscoveredTestsByChanges(@NotNull AnActionEvent e) {
@@ -122,7 +148,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
                                                   @NotNull DataContext dataContext) {
     PsiMethod[] asJavaMethods = findMethods(project, changes);
     FeatureUsageTracker.getInstance().triggerFeatureUsed("test.discovery.selected.changes");
-    showDiscoveredTests(project, dataContext, title, asJavaMethods);
+    showDiscoveredTestsByMethods(project, dataContext, title, asJavaMethods);
   }
 
   @NotNull
@@ -168,20 +194,43 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
   @Nullable
   private static PsiMethod findMethodAtCaret(@NotNull AnActionEvent e) {
-    Editor editor = e.getData(EDITOR);
-    PsiFile file = e.getData(PSI_FILE);
-    if (editor == null || file == null) return null;
-    PsiElement at = file.findElementAt(editor.getCaretModel().getOffset());
-    PsiElement prev = at == null ? null : PsiTreeUtil.prevVisibleLeaf(at);
-    UMethod uMethod = UastContextKt.getUastParentOfType(prev, UMethod.class);
+    UMethod uMethod = UastUtils.findContaining(findElementAtCaret(e), UMethod.class);
     return uMethod == null ? null : ObjectUtils.tryCast(uMethod.getJavaPsi(), PsiMethod.class);
   }
 
-  static void showDiscoveredTests(@NotNull Project project,
-                                  @NotNull DataContext dataContext,
-                                  @NotNull String title,
-                                  @NotNull PsiMethod... methods) {
-    final DiscoveredTestsTree tree = new DiscoveredTestsTree(title);
+  @Nullable
+  private static PsiClass findClassAtCaret(@NotNull AnActionEvent e) {
+    UClass uClass = UastUtils.findContainingUClass(findElementAtCaret(e));
+    return uClass == null ? null : ObjectUtils.tryCast(uClass.getJavaPsi(), PsiClass.class);
+  }
+
+  @Nullable
+  private static PsiElement findElementAtCaret(@NotNull AnActionEvent e) {
+    Editor editor = e.getData(EDITOR);
+    PsiFile file = e.getData(PSI_FILE);
+    if (editor == null || file == null) return null;
+    int offset = editor.getCaretModel().getOffset();
+    PsiElement at = file.findElementAt(offset);
+    if (at instanceof PsiWhiteSpace && offset > 0) {
+      PsiElement prev = file.findElementAt(offset - 1);
+      if (!(prev instanceof PsiWhiteSpace)) return prev;
+    }
+    return at;
+  }
+
+  private static void showDiscoveredTestsByMethods(@NotNull Project project,
+                                                   @NotNull DataContext dataContext,
+                                                   @NotNull String title,
+                                                   @NotNull PsiMethod... methods) {
+    DiscoveredTestsTree tree = showTree(project, dataContext, title);
+    processMethods(project, methods, createTreeProcessor(tree), () -> tree.setPaintBusy(false));
+  }
+
+  @NotNull
+  private static DiscoveredTestsTree showTree(@NotNull Project project,
+                                              @NotNull DataContext dataContext,
+                                              @NotNull String title) {
+    DiscoveredTestsTree tree = new DiscoveredTestsTree(title);
     String initTitle = "Tests for " + title;
 
     Ref<JBPopup> ref = new Ref<>();
@@ -218,7 +267,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
       "Open Find Usages Toolwindow" + (findUsageKeyStroke == null ? "" : " " + KeymapUtil.getKeystrokeText(findUsageKeyStroke));
     ActiveComponent pinButton = createButton(pinTooltip, AllIcons.General.Pin_tab, pinActionListener, tree);
 
-    final PopupChooserBuilder builder =
+    PopupChooserBuilder builder =
       new PopupChooserBuilder(tree)
         .setTitle(initTitle)
         .setMovable(true)
@@ -228,8 +277,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
         .setItemChoosenCallback(() -> PsiNavigateUtil.navigate(tree.getSelectedElement()))
         .registerKeyboardAction(findUsageKeyStroke, __ -> pinActionListener.run())
         .setMinSize(new JBDimension(500, 300))
-        .setDimensionServiceKey(ShowDiscoveredTestsAction.class.getSimpleName())
-      ;
+        .setDimensionServiceKey(ShowDiscoveredTestsAction.class.getSimpleName());
 
     JBPopup popup = builder.createPopup();
     ref.set(popup);
@@ -253,17 +301,14 @@ public class ShowDiscoveredTestsAction extends AnAction {
     });
 
     popup.showInBestPositionFor(dataContext);
-
-    processMethods(project, methods, (clazz, method, parameter) -> {
-      tree.addTest(clazz, method, parameter);
-      return true;
-    }, () -> tree.setPaintBusy(false));
+    return tree;
   }
 
   public static void processMethods(@NotNull Project project,
                                     @NotNull PsiMethod[] methods,
                                     @NotNull TestDiscoveryProducer.PsiTestProcessor consumer,
                                     @Nullable Runnable doWhenDone) {
+    if (DumbService.isDumb(project)) return;
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       processMethodsInner(project, methods, consumer);
       if (doWhenDone != null) {
@@ -276,32 +321,39 @@ public class ShowDiscoveredTestsAction extends AnAction {
                                           @NotNull PsiMethod[] methods,
                                           @NotNull TestDiscoveryProducer.PsiTestProcessor processor) {
     if (DumbService.isDumb(project)) return;
-    GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
     for (PsiMethod method : methods) {
       Couple<String> methodFqnName = ReadAction.compute(() -> getMethodKey(method));
       if (methodFqnName == null) continue;
       String fqn = methodFqnName.first;
       String methodName = methodFqnName.second;
+      processTestDiscovery(project, processor, fqn, methodName);
+    }
+  }
 
-      for (TestDiscoveryConfigurationProducer producer : getRunConfigurationProducers(project)) {
-        byte frameworkId =
-          ((JavaTestConfigurationWithDiscoverySupport)producer.getConfigurationFactory().createTemplateConfiguration(project)).getTestFrameworkId();
-        TestDiscoveryProducer.consumeDiscoveredTests(project, fqn, methodName, frameworkId, (testClass, testMethod, parameter) -> {
-          PsiClass[] testClassPsi = {null};
-          PsiMethod[] testMethodPsi = {null};
-          ReadAction.run(() -> DumbService.getInstance(project).runWithAlternativeResolveEnabled(() -> {
-            testClassPsi[0] = ClassUtil.findPsiClass(PsiManager.getInstance(project), testClass, null, true, scope);
-            boolean checkBases = parameter != null; // check bases for parameterized tests
-            if (testClassPsi[0] != null) {
-              testMethodPsi[0] = ArrayUtil.getFirstElement(testClassPsi[0].findMethodsByName(testMethod, checkBases));
-            }
-          }));
-          if (testMethodPsi[0] != null) {
-            if (!processor.process(testClassPsi[0], testMethodPsi[0], parameter)) return false;
+  private static void processTestDiscovery(@NotNull Project project,
+                                           @NotNull TestDiscoveryProducer.PsiTestProcessor processor,
+                                           @NotNull String classFqn,
+                                           @Nullable String methodName) {
+    GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
+    for (TestDiscoveryConfigurationProducer producer : getRunConfigurationProducers(project)) {
+      byte frameworkId =
+        ((JavaTestConfigurationWithDiscoverySupport)producer.getConfigurationFactory().createTemplateConfiguration(project))
+          .getTestFrameworkId();
+      TestDiscoveryProducer.consumeDiscoveredTests(project, classFqn, methodName, frameworkId, (testClass, testMethod, parameter) -> {
+        PsiClass[] testClassPsi = {null};
+        PsiMethod[] testMethodPsi = {null};
+        ReadAction.run(() -> DumbService.getInstance(project).runWithAlternativeResolveEnabled(() -> {
+          testClassPsi[0] = ClassUtil.findPsiClass(PsiManager.getInstance(project), testClass, null, true, scope);
+          boolean checkBases = parameter != null; // check bases for parameterized tests
+          if (testClassPsi[0] != null) {
+            testMethodPsi[0] = ArrayUtil.getFirstElement(testClassPsi[0].findMethodsByName(testMethod, checkBases));
           }
-          return true;
-        });
-      }
+        }));
+        if (testMethodPsi[0] != null) {
+          if (!processor.process(testClassPsi[0], testMethodPsi[0], parameter)) return false;
+        }
+        return true;
+      });
     }
   }
 
@@ -311,6 +363,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
                                               @NotNull Runnable listener,
                                               @NotNull DiscoveredTestsTree tree) {
     return new ActiveComponent.Adapter() {
+      @NotNull
       @Override
       public JComponent getComponent() {
         Presentation presentation = new Presentation();
@@ -339,10 +392,10 @@ public class ShowDiscoveredTestsAction extends AnAction {
   }
 
   private static void runAllDiscoveredTests(@NotNull Project project,
-                                            DiscoveredTestsTree tree,
-                                            Ref<JBPopup> ref,
-                                            ConfigurationContext context,
-                                            String title) {
+                                            @NotNull DiscoveredTestsTree tree,
+                                            @NotNull Ref<JBPopup> ref,
+                                            @NotNull ConfigurationContext context,
+                                            @NotNull String title) {
     Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     Module targetModule = TestDiscoveryConfigurationProducer.detectTargetModule(tree.getContainingModules(), project);
     //first producer with results will be picked
@@ -380,7 +433,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
   @Nullable
   private static Couple<String> getMethodKey(@NotNull PsiMethod method) {
     PsiClass c = method.getContainingClass();
-    String fqn = c != null ? getName(c) : null;
+    String fqn = c != null ? getClassName(c) : null;
     return fqn == null ? null : Couple.of(fqn, methodSignature(method));
   }
 
@@ -390,7 +443,8 @@ public class ShowDiscoveredTestsAction extends AnAction {
     return (method.isConstructor() ? "<init>" : method.getName()) + tail;
   }
 
-  private static String getName(PsiClass c) {
+  @Nullable
+  private static String getClassName(@NotNull PsiClass c) {
     if (c instanceof PsiAnonymousClass) {
       PsiClass containingClass = PsiTreeUtil.getParentOfType(c, PsiClass.class);
       if (containingClass != null) {
@@ -401,17 +455,18 @@ public class ShowDiscoveredTestsAction extends AnAction {
   }
 
   @Nullable
-  protected static KeyStroke findUsagesKeyStroke() {
+  private static KeyStroke findUsagesKeyStroke() {
     AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_USAGES);
     ShortcutSet shortcutSet = action == null ? null : action.getShortcutSet();
     return shortcutSet == null ? null : KeymapUtil.getKeyStroke(shortcutSet);
   }
 
-  private static List<TestDiscoveryConfigurationProducer> getRunConfigurationProducers(Project project) {
+  @NotNull
+  private static List<TestDiscoveryConfigurationProducer> getRunConfigurationProducers(@NotNull Project project) {
     return RunConfigurationProducer.getProducers(project)
-                                   .stream()
-                                   .filter(producer -> producer instanceof TestDiscoveryConfigurationProducer)
-                                   .map(producer -> (TestDiscoveryConfigurationProducer)producer)
-                                   .collect(Collectors.toList());
+      .stream()
+      .filter(producer -> producer instanceof TestDiscoveryConfigurationProducer)
+      .map(producer -> (TestDiscoveryConfigurationProducer)producer)
+      .collect(Collectors.toList());
   }
 }

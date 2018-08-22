@@ -451,7 +451,7 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
       additionalTagsPanel.setPreferredSize(new Dimension(150, additionalTagsPanel.getPreferredSize().height));
       additionalTagsPanel.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
-        protected void textChanged(DocumentEvent e) {
+        protected void textChanged(@NotNull DocumentEvent e) {
           Document document = e.getDocument();
           try {
             String text = document.getText(0, document.getLength());

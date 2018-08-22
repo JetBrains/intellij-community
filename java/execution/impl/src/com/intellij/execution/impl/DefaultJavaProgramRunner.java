@@ -1,30 +1,13 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
+import com.intellij.debugger.impl.attach.JavaDebuggerAttachUtil;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.RunnerRegistry;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.process.CapturingProcessAdapter;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.*;
 import com.intellij.execution.runners.*;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -37,6 +20,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.unscramble.AnalyzeStacktraceUtil;
 import com.intellij.unscramble.ThreadDumpConsoleFactory;
 import com.intellij.unscramble.ThreadDumpParser;
@@ -49,6 +34,7 @@ import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author spleaner
@@ -59,7 +45,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
   public static final String DEFAULT_JAVA_RUNNER_ID = "Run";
 
   public static ProgramRunner getInstance() {
-    return RunnerRegistry.getInstance().findRunnerById(DEFAULT_JAVA_RUNNER_ID);
+    return ProgramRunner.findRunnerById(DEFAULT_JAVA_RUNNER_ID);
   }
 
   @Override
@@ -75,6 +61,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
            !(profile instanceof RunConfigurationWithSuppressedDefaultRunAction);
   }
 
+  @SuppressWarnings("RedundantThrows")
   @Override
   public void patch(JavaParameters javaParameters, RunnerSettings settings, RunProfile runProfile, boolean beforeExecution) throws ExecutionException {
     runCustomPatchers(javaParameters, DefaultRunExecutor.getRunExecutorInstance(), runProfile);
@@ -132,11 +119,11 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
   private static void addDefaultActions(@NotNull RunContentBuilder contentBuilder, @NotNull ExecutionResult executionResult) {
     final ExecutionConsole executionConsole = executionResult.getExecutionConsole();
     final JComponent consoleComponent = executionConsole != null ? executionConsole.getComponent() : null;
-    final ControlBreakAction controlBreakAction = new ControlBreakAction(executionResult.getProcessHandler());
+    ProcessHandler processHandler = executionResult.getProcessHandler();
+    assert processHandler != null : executionResult;
+    final ControlBreakAction controlBreakAction = new ControlBreakAction(processHandler);
     if (consoleComponent != null) {
       controlBreakAction.registerCustomShortcutSet(controlBreakAction.getShortcutSet(), consoleComponent);
-      final ProcessHandler processHandler = executionResult.getProcessHandler();
-      assert processHandler != null : executionResult;
       processHandler.addProcessListener(new ProcessAdapter() {
         @Override
         public void processTerminated(@NotNull final ProcessEvent event) {
@@ -146,7 +133,8 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
       });
     }
     contentBuilder.addAction(controlBreakAction);
-    contentBuilder.addAction(new SoftExitAction(executionResult.getProcessHandler()));
+    AttachDebuggerAction.add(contentBuilder, processHandler);
+    contentBuilder.addAction(new SoftExitAction(processHandler));
   }
 
   private abstract static class ProxyBasedAction extends AnAction {
@@ -204,6 +192,46 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
 
       if (wiseListener != null) {
         wiseListener.after();
+      }
+    }
+  }
+
+  protected static class AttachDebuggerAction extends AnAction {
+    static final Key<Boolean> DEBUGGER_ATTACHED_KEY = Key.create("DEBUGGER_ATTACHED_KEY");
+    private final AtomicBoolean myEnabled = new AtomicBoolean();
+    private final BaseProcessHandler myProcessHandler;
+
+    public AttachDebuggerAction(BaseProcessHandler processHandler) {
+      super(ExecutionBundle.message("run.configuration.attach.debugger.action.name"), null, AllIcons.Debugger.AttachToProcess);
+      myProcessHandler = processHandler;
+      myProcessHandler.addProcessListener(new ProcessAdapter() {
+        @Override
+        public void startNotified(@NotNull ProcessEvent event) {
+          ApplicationManager.getApplication().executeOnPooledThread(
+            () -> myEnabled.set(JavaDebuggerAttachUtil.canAttach(myProcessHandler.getProcess())));
+        }
+      });
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      if (DEBUGGER_ATTACHED_KEY.isIn(myProcessHandler) || myProcessHandler.isProcessTerminated()) {
+        e.getPresentation().setEnabled(false);
+        return;
+      }
+      e.getPresentation().setEnabledAndVisible(Boolean.TRUE.equals(myEnabled.get()));
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      JavaDebuggerAttachUtil.attach(myProcessHandler.getProcess(), e.getProject());
+      DEBUGGER_ATTACHED_KEY.set(myProcessHandler, true);
+    }
+
+    public static void add(RunContentBuilder contentBuilder, ProcessHandler processHandler) {
+      if (Registry.is("debugger.attach.to.process.action") && processHandler instanceof BaseProcessHandler) {
+        contentBuilder.addAction(new AttachDebuggerAction((BaseProcessHandler)processHandler));
       }
     }
   }

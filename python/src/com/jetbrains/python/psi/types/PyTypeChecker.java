@@ -860,6 +860,9 @@ public class PyTypeChecker {
     if (type instanceof PyStructuralType && ((PyStructuralType)type).isInferredFromUsages()) {
       return true;
     }
+    if (type instanceof PyGenericType) {
+      return ((PyGenericType)type).isDefinition();
+    }
     return false;
   }
 

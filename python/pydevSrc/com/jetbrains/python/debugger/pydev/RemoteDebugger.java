@@ -1,3 +1,5 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
 /*
  * Author: atotic
  * Created on Mar 23, 2004
@@ -206,6 +208,7 @@ public class RemoteDebugger implements ProcessDebugger {
     return command.getNewValue();
   }
 
+  @Override
   public void loadFullVariableValues(@NotNull String threadId,
                                      @NotNull String frameId,
                                      @NotNull List<PyFrameAccessor.PyAsyncValue<String>> vars) throws PyDebuggerException {
@@ -668,6 +671,7 @@ public class RemoteDebugger implements ProcessDebugger {
     }
   }
 
+  @Override
   public void addCloseListener(RemoteDebuggerCloseListener listener) {
     myCloseListeners.add(listener);
   }

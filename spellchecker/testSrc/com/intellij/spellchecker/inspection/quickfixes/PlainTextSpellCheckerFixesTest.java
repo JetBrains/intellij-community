@@ -20,6 +20,7 @@ import com.intellij.spellchecker.quickfixes.RenameTo;
 import com.intellij.spellchecker.quickfixes.SaveTo;
 
 public class PlainTextSpellCheckerFixesTest extends AbstractSpellCheckerFixesTest {
+  @Override
   protected String getExtension() {
     return ".txt";
   }

@@ -199,6 +199,7 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
 
     public abstract void apply(@NotNull Editor editor, boolean value);
 
+    @Override
     public void applyDefaults(@NotNull List<? extends Editor> editors) {
       for (Editor editor : editors) {
         apply(editor, isSelected());

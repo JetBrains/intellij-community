@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.messages;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -93,6 +94,15 @@ public interface MessagesService {
                           Function<List<String>, String> lineJoiner);
 
   static MessagesService getInstance() {
+    if (ApplicationManager.getApplication() != null) {
       return ServiceManager.getService(MessagesService.class);
     }
+
+    try {
+      return (MessagesService) MessagesService.class.getClassLoader().loadClass("com.intellij.ui.messages.MessagesServiceImpl").newInstance();
+    }
+    catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+      throw new RuntimeException(e);
+    }
+  }
 }

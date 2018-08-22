@@ -43,6 +43,7 @@ public abstract class BaseTaskAction extends AnAction implements DumbAware {
     super(text, description, icon);
   }
 
+  @Override
   public void update(@NotNull AnActionEvent event){
     event.getPresentation().setEnabled(getProject(event) != null);
   }
@@ -60,7 +61,7 @@ public abstract class BaseTaskAction extends AnAction implements DumbAware {
     }
     return TaskManager.getManager(project);
   }
-  
+
   @Nullable
   public static LocalTask getActiveTask(AnActionEvent event) {
     TaskManager manager = getTaskManager(event);

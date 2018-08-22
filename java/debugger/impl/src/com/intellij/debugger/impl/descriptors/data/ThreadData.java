@@ -27,6 +27,7 @@ public class ThreadData extends DescriptorData<ThreadDescriptorImpl> {
     myThread = thread;
   }
 
+  @Override
   protected ThreadDescriptorImpl createDescriptorImpl(@NotNull Project project) {
     return new ThreadDescriptorImpl(myThread);
   }
@@ -42,6 +43,7 @@ public class ThreadData extends DescriptorData<ThreadDescriptorImpl> {
     return myThread.hashCode();
   }
 
+  @Override
   public DisplayKey<ThreadDescriptorImpl> getDisplayKey() {
     return new SimpleDisplayKey<>(myThread);
   }

@@ -290,7 +290,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   @TestOnly
   public List<HighlightInfo> runPasses(@NotNull PsiFile file,
                                        @NotNull Document document,
-                                       @NotNull List<TextEditor> textEditors,
+                                       @NotNull List<? extends TextEditor> textEditors,
                                        @NotNull int[] toIgnore,
                                        boolean canChangeDocument,
                                        @Nullable final Runnable callbackWhileWaiting) throws ProcessCanceledException {
@@ -636,7 +636,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
                                              @NotNull final HighlightSeverity minSeverity,
                                              final int offset,
                                              final boolean includeFixRange,
-                                             @NotNull final Processor<HighlightInfo> processor) {
+                                             @NotNull final Processor<? super HighlightInfo> processor) {
     return processHighlights(document, project, null, 0, document.getTextLength(), info -> {
       if (!isOffsetInsideHighlightInfo(offset, info, includeFixRange)) return true;
 
@@ -815,9 +815,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
         }
       }
 
-      boolean hasPasses = false;
       // wait for heavy processing to stop, re-schedule daemon but not too soon
       if (HeavyProcessLatch.INSTANCE.isRunning()) {
+        boolean hasPasses = false;
         for (Map.Entry<FileEditor, HighlightingPass[]> entry : passes.entrySet()) {
           HighlightingPass[] filtered = Arrays.stream(entry.getValue()).filter(DumbService::isDumbAware).toArray(HighlightingPass[]::new);
           entry.setValue(filtered);
@@ -860,7 +860,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     private final Project myProject;
     private Collection<FileEditor> myFileEditors;
 
-    public MyDaemonProgressIndicator(Project project, Collection<FileEditor> fileEditors) {
+    MyDaemonProgressIndicator(@NotNull Project project, @NotNull Collection<FileEditor> fileEditors) {
       myFileEditors = fileEditors;
       myProject = project;
     }

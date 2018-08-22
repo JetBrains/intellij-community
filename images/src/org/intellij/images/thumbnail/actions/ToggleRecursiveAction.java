@@ -30,11 +30,13 @@ import org.jetbrains.annotations.NotNull;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public final class ToggleRecursiveAction extends ToggleAction {
+    @Override
     public boolean isSelected(AnActionEvent e) {
         ThumbnailView view = ThumbnailViewActionUtil.getVisibleThumbnailView(e);
         return view != null && view.isRecursive();
     }
 
+    @Override
     public void setSelected(AnActionEvent e, boolean state) {
         ThumbnailView view = ThumbnailViewActionUtil.getVisibleThumbnailView(e);
         if (view != null) {
@@ -42,6 +44,7 @@ public final class ToggleRecursiveAction extends ToggleAction {
         }
     }
 
+    @Override
     public void update(@NotNull final AnActionEvent e) {
         super.update(e);
         ThumbnailViewActionUtil.setEnabled(e);

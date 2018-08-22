@@ -163,6 +163,7 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
       myContext = context;
     }
 
+    @Override
     public void replace(ReplacementInfo info, ReplaceOptions options) {
       final PsiElement elementToReplace = StructuralSearchUtil.getPresentableElement(info.getMatch(0));
       assert elementToReplace != null;

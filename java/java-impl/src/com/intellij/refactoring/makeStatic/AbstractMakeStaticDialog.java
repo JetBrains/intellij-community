@@ -37,6 +37,7 @@ public abstract class AbstractMakeStaticDialog extends RefactoringDialog {
     myMemberName = member.getName();
   }
 
+  @Override
   protected void doAction() {
     if (!validateData())
       return;

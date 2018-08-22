@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics.actions;
 
 import com.intellij.CommonBundle;
@@ -56,40 +42,48 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
     (fd1, fd2) -> new Date(fd2.getLastTimeUsed()).compareTo(new Date(fd1.getLastTimeUsed()));
 
   private static final ColumnInfo<FeatureDescriptor, String> DISPLAY_NAME = new ColumnInfo<FeatureDescriptor, String>(FeatureStatisticsBundle.message("feature.statistics.column.feature")) {
+    @Override
     public String valueOf(FeatureDescriptor featureDescriptor) {
       return featureDescriptor.getDisplayName();
     }
 
+    @Override
     public Comparator<FeatureDescriptor> getComparator() {
       return DISPLAY_NAME_COMPARATOR;
     }
   };
   private static final ColumnInfo<FeatureDescriptor, String> GROUP_NAME = new ColumnInfo<FeatureDescriptor, String>(FeatureStatisticsBundle.message("feature.statistics.column.group")) {
+    @Override
     public String valueOf(FeatureDescriptor featureDescriptor) {
       return getGroupName(featureDescriptor);
     }
 
+    @Override
     public Comparator<FeatureDescriptor> getComparator() {
       return GROUP_NAME_COMPARATOR;
     }
   };
   private static final ColumnInfo<FeatureDescriptor, String> USED_TOTAL = new ColumnInfo<FeatureDescriptor, String>(FeatureStatisticsBundle.message("feature.statistics.column.usage.count")) {
+    @Override
     public String valueOf(FeatureDescriptor featureDescriptor) {
       int count = featureDescriptor.getUsageCount();
       return FeatureStatisticsBundle.message("feature.statistics.usage.count", count);
     }
 
+    @Override
     public Comparator<FeatureDescriptor> getComparator() {
       return USAGE_COUNT_COMPARATOR;
     }
   };
   private static final ColumnInfo<FeatureDescriptor, String> LAST_USED = new ColumnInfo<FeatureDescriptor, String>(FeatureStatisticsBundle.message("feature.statistics.column.last.used")) {
+    @Override
     public String valueOf(FeatureDescriptor featureDescriptor) {
       long tm = featureDescriptor.getLastTimeUsed();
       if (tm <= 0) return FeatureStatisticsBundle.message("feature.statistics.not.applicable");
       return DateFormatUtil.formatBetweenDates(tm, System.currentTimeMillis());
     }
 
+    @Override
     public Comparator<FeatureDescriptor> getComparator() {
       return LAST_USED_COMPARATOR;
     }
@@ -105,19 +99,23 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.featureStatistics.actions.ShowFeatureUsageStatisticsDialog";
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[] {getCancelAction(), getHelpAction()};
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp("editing.productivityGuide");
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     Splitter splitter = new Splitter(true);
     splitter.setShowDividerControls(true);
@@ -178,6 +176,7 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
 
     table.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         Collection selection = table.getSelection();
         if (selection.isEmpty()) {
@@ -205,7 +204,7 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
   }
 
   private static String getGroupName(FeatureDescriptor featureDescriptor) {
-    final ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();    
+    final ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
     final GroupDescriptor groupDescriptor = registry.getGroupDescriptor(featureDescriptor.getGroupId());
     return groupDescriptor != null ? groupDescriptor.getDisplayName() : "";
   }

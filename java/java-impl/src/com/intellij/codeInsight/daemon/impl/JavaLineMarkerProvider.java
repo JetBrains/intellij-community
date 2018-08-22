@@ -68,6 +68,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
   private final Option myImplementedOption = new Option("java.implemented", "Implemented method", AllIcons.Gutter.ImplementedMethod);
   private final Option myOverridingOption = new Option("java.overriding", "Overriding method", AllIcons.Gutter.OverridingMethod);
   private final Option myImplementingOption = new Option("java.implementing", "Implementing method", AllIcons.Gutter.ImplementingMethod);
+  private final Option mySiblingsOption = new Option("java.sibling.inherited", "Sibling inherited method", AllIcons.Gutter.SiblingInheritedMethod);
   private final Option myServiceOption = new Option("java.service", "Service", AllIcons.Gutter.Java9Service);
 
   private static final CallMatcher SERVICE_LOADER_LOAD = CallMatcher.staticCall("java.util.ServiceLoader", "load", "loadInstalled");
@@ -198,7 +199,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
         if (containingClass != null && PsiUtil.canBeOverridden(method)) {
           canbeOverridden.putValue(containingClass, method);
         }
-        if (FindSuperElementsHelper.canHaveSiblingSuper(method, containingClass)) {
+        if (mySiblingsOption.isEnabled() && FindSuperElementsHelper.canHaveSiblingSuper(method, containingClass)) {
           canHaveSiblings.putValue(containingClass, method);
         }
         if (isServiceProviderMethod(method)) {
@@ -353,7 +354,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
   @NotNull
   @Override
   public Option[] getOptions() {
-    return new Option[]{myLambdaOption, myOverriddenOption, myImplementedOption, myOverridingOption, myImplementingOption, myServiceOption};
+    return new Option[]{myLambdaOption, myOverriddenOption, myImplementedOption, myOverridingOption, myImplementingOption, mySiblingsOption, myServiceOption};
   }
 
   private static boolean isServiceProviderMethod(@NotNull PsiMethod method) {

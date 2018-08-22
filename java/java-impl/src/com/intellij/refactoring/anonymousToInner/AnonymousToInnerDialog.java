@@ -107,11 +107,13 @@ class AnonymousToInnerDialog extends DialogWrapper{
     myNameField.selectNameWithoutExtension();
   }
 
+  @Override
   @NotNull
   protected Action[] createActions(){
     return new Action[]{getOKAction(),getCancelAction(),getHelpAction()};
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myNameField.getFocusableComponent();
   }
@@ -142,6 +144,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
     return infos;
   }
 
+  @Override
   protected void doOKAction(){
     String errorString = null;
     final String innerClassName = getClassName();
@@ -184,6 +187,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
     myNameField.requestFocusInWindow();
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     myNameField = new NameSuggestionsField(myProject);
 
@@ -201,13 +205,16 @@ class AnonymousToInnerDialog extends DialogWrapper{
 
   private JComponent createParametersPanel() {
     JPanel panel = new ParameterTablePanel(myProject, myVariableData, myAnonClass) {
+      @Override
       protected void updateSignature() {
       }
 
+      @Override
       protected void doEnterAction() {
         clickDefaultButton();
       }
 
+      @Override
       protected void doCancelAction() {
         AnonymousToInnerDialog.this.doCancelAction();
       }
@@ -217,12 +224,14 @@ class AnonymousToInnerDialog extends DialogWrapper{
     return panel;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(createParametersPanel(), BorderLayout.CENTER);
     return panel;
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.ANONYMOUS_TO_INNER);
   }

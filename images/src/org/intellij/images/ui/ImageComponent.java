@@ -235,10 +235,12 @@ public class ImageComponent extends JComponent {
         return new Dimension(size.width - IMAGE_INSETS * 2, size.height - IMAGE_INSETS * 2);
     }
 
+    @Override
     public String getUIClassID() {
         return uiClassID;
     }
 
+    @Override
     public void updateUI() {
       boolean customUI = UIManager.getDefaults().get(uiClassID) != null;
       setUI(customUI ? UIManager.getUI(this) : new ImageComponentUI(this));
@@ -267,6 +269,7 @@ public class ImageComponent extends JComponent {
             });
         }
 
+        @Override
         public Image getRenderer() {
             return renderer;
         }
@@ -294,6 +297,7 @@ public class ImageComponent extends JComponent {
             return imageProvider != null ? imageProvider.apply(scale, myComponent) : null;
         }
 
+        @Override
         public void setValue(BufferedImage image) {
             this.renderer = image != null ? Toolkit.getDefaultToolkit().createImage(image.getSource()) : null;
             setValue(image != null ? (scale, anchor) -> image : null);
@@ -310,11 +314,13 @@ public class ImageComponent extends JComponent {
             fireChangeEvent(new ChangeEvent(this));
         }
 
+        @Override
         public String getFormat() {
             return format;
         }
 
 
+        @Override
         public void setFormat(String format) {
             this.format = format;
             fireChangeEvent(new ChangeEvent(this));
@@ -326,10 +332,12 @@ public class ImageComponent extends JComponent {
             }
         }
 
+        @Override
         public void addChangeListener(ChangeListener listener) {
             listeners.add(listener);
         }
 
+        @Override
         public void removeChangeListener(ChangeListener listener) {
             listeners.remove(listener);
         }

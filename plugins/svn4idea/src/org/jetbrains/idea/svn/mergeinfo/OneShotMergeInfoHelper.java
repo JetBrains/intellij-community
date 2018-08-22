@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.mergeinfo;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -57,11 +57,13 @@ public class OneShotMergeInfoHelper implements MergeChecker {
       .getProperty(Target.on(file), SvnPropertyKeys.MERGE_INFO, Revision.WORKING, depth, createPropertyHandler());
   }
 
+  @Override
   @Nullable
   public Collection<String> getNotMergedPaths(@NotNull SvnChangeList changeList) {
     return myPartiallyMerged.get(changeList.getNumber());
   }
 
+  @Override
   @NotNull
   public MergeCheckResult checkList(@NotNull SvnChangeList changeList) {
     Set<String> notMergedPaths = newHashSet();
@@ -140,6 +142,7 @@ public class OneShotMergeInfoHelper implements MergeChecker {
     }
 
     // TODO: Try to unify with BranchInfo.processMergeinfoProperty()
+    @Override
     public boolean process(@NotNull String workingCopyRelativePath, @NotNull Map<String, MergeRangeList> mergedPathsMap) {
       boolean processed = false;
       boolean isCurrentPath = workingCopyRelativePath.equals(mySourceRelativePath);
@@ -168,6 +171,7 @@ public class OneShotMergeInfoHelper implements MergeChecker {
   @NotNull
   private PropertyConsumer createPropertyHandler() {
     return new PropertyConsumer() {
+      @Override
       public void handleProperty(@NotNull File path, @NotNull PropertyData property) throws SvnBindException {
         String workingCopyRelativePath = getWorkingCopyRelativePath(path);
         Map<String, MergeRangeList> mergeInfo = MergeRangeList.parseMergeInfo(notNull(property.getValue()).toString());
@@ -177,9 +181,11 @@ public class OneShotMergeInfoHelper implements MergeChecker {
         }
       }
 
+      @Override
       public void handleProperty(Url url, PropertyData property) {
       }
 
+      @Override
       public void handleProperty(long revision, PropertyData property) {
       }
     };

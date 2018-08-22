@@ -14,7 +14,7 @@ import java.util.*;
 
 /**
  * An in-house and immutable version of {@code com.google.common.collect.FluentIterable}
- * with some insights from Clojure. Added bonus is that the JBIterator instances are preserved 
+ * with some insights from Clojure. Added bonus is that the JBIterator instances are preserved
  * during most transformations, a feature employed by {@link JBTreeTraverser}.
  *
  * <p/>
@@ -97,6 +97,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   private static final class Multi<E> extends JBIterable<E> {
     Multi(Iterable<? extends E> iterable) { super(iterable);}
 
+    @Override
     public Iterator<E> iterator() {
       return JBIterator.from(((Iterable<E>)content).iterator());
     }
@@ -939,6 +940,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
       return (T)((Stateful)o).clone();
     }
 
+    @Override
     public Self clone() {
       try {
         return (Self)super.clone();

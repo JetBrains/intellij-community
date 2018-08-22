@@ -135,10 +135,6 @@ mDOUBLE_QUOTED_LITERAL = \" {mDOUBLE_QUOTED_CONTENT}* \"
 
 mTRIPLE_DOUBLE_QUOTED_CONTENT = {mDOUBLE_QUOTED_CONTENT} | {mSTRING_NL} | \"(\")?[^\"\\$]
 mTRIPLE_DOUBLE_QUOTED_LITERAL = \"\"\" {mTRIPLE_DOUBLE_QUOTED_CONTENT}* \"\"\"
-
-mSTRING_LITERAL = {mSINGLE_QUOTED_LITERAL} | {mTRIPLE_SINGLE_QUOTED_LITERAL}
-mGSTRING_LITERAL = {mDOUBLE_QUOTED_LITERAL} | {mTRIPLE_DOUBLE_QUOTED_LITERAL}
-
 %%
 <YYINITIAL, IN_PARENS_BRACKETS, IN_BRACES, IN_INJECTION, IN_GSTRING_DOLLAR> {
   "package"       { return storeToken(KW_PACKAGE); }
@@ -419,8 +415,10 @@ mGSTRING_LITERAL = {mDOUBLE_QUOTED_LITERAL} | {mTRIPLE_DOUBLE_QUOTED_LITERAL}
 ///////////////////////// Strings & regular expressions ////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-{mSTRING_LITERAL}                         { return storeToken(STR_SQ); }
-{mGSTRING_LITERAL}                        { return storeToken(STR_DQ); }
+{mSINGLE_QUOTED_LITERAL}                  { return storeToken(STRING_SQ); }
+{mTRIPLE_SINGLE_QUOTED_LITERAL}           { return storeToken(STRING_TSQ); }
+{mDOUBLE_QUOTED_LITERAL}                  { return storeToken(STRING_DQ); }
+{mTRIPLE_DOUBLE_QUOTED_LITERAL}           { return storeToken(STRING_TDQ); }
 \"\"\"                                    {
                                             yybeginstate(IN_TRIPLE_GSTRING);
                                             return storeToken(GSTRING_BEGIN);

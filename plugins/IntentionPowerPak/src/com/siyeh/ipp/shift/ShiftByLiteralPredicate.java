@@ -22,6 +22,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 
 class ShiftByLiteralPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (element instanceof PsiBinaryExpression) {
       return isBinaryShiftByLiteral((PsiBinaryExpression)element);

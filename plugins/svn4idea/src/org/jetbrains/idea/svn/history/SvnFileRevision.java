@@ -99,11 +99,13 @@ public class SvnFileRevision implements VcsFileRevision {
     return myPegRevision;
   }
 
+  @Override
   @NotNull
   public SvnRevisionNumber getRevisionNumber() {
     return myRevisionNumber;
   }
 
+  @Override
   public String getBranchName() {
     return null;
   }
@@ -114,14 +116,17 @@ public class SvnFileRevision implements VcsFileRevision {
     return new SvnRepositoryLocation(myURL);
   }
 
+  @Override
   public Date getRevisionDate() {
     return myDate;
   }
 
+  @Override
   public String getAuthor() {
     return myAuthor;
   }
 
+  @Override
   public String getCommitMessage() {
     return myCommitMessage;
   }
@@ -135,6 +140,7 @@ public class SvnFileRevision implements VcsFileRevision {
     return myMergeSources;
   }
 
+  @Override
   public byte[] loadContent() throws VcsException {
     ContentLoader loader = new ContentLoader();
     if (ApplicationManager.getApplication().isDispatchThread() && !getRevision().isLocal()) {
@@ -159,6 +165,7 @@ public class SvnFileRevision implements VcsFileRevision {
     }
   }
 
+  @Override
   public byte[] getContent() throws IOException, VcsException {
     byte[] result;
 
@@ -194,6 +201,7 @@ public class SvnFileRevision implements VcsFileRevision {
       return myContents;
     }
 
+    @Override
     public void run() {
       progress(message("progress.text.loading.contents", myURL.toDecodedString()),
                message("progress.text2.revision.information", getRevision()));

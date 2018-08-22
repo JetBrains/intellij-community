@@ -24,10 +24,12 @@ import org.jetbrains.annotations.NotNull;
  */
 public class SwitchCoverageSuiteAction extends AnAction {
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     new CoverageSuiteChooserDialog(e.getProject()).show();
   }
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(e.getProject() != null);
   }

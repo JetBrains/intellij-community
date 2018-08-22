@@ -93,7 +93,7 @@ class ForkedGroovyc implements GroovycFlavor {
     }
 
     if (byteCodeTargetLevel != null) {
-      vmParams.add("-Dgroovy.target.bytecode=" + byteCodeTargetLevel);
+      vmParams.add("-D" + GroovyRtConstants.GROOVY_TARGET_BYTECODE + "=" + byteCodeTargetLevel);
     }
 
     final List<String> cmd = ExternalProcessUtil.buildJavaCommandLine(

@@ -12,11 +12,11 @@ public class StreamInlining {
     list.stream().flatMap(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>).forEach(System.out::println);
     list.stream().filter(x -> x != null).forEach(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
     List<String> l = null;
-    l.<warning descr="Method invocation 'stream' may produce 'java.lang.NullPointerException'">stream</warning>().count();
+    l.<warning descr="Method invocation 'stream' will produce 'NullPointerException'">stream</warning>().count();
     int[] arr = null;
     Arrays.stream(<warning descr="Argument 'arr' might be null">arr</warning>).count();
     Stream<String> stream = null;
-    stream.<warning descr="Method invocation 'filter' may produce 'java.lang.NullPointerException'">filter</warning>(x -> x != null).forEach(System.out::println);
+    stream.<warning descr="Method invocation 'filter' will produce 'NullPointerException'">filter</warning>(x -> x != null).forEach(System.out::println);
   }
 
   void testMethodRef(List<String> list, int[] data) {
@@ -26,7 +26,7 @@ public class StreamInlining {
     if(<warning descr="Condition 'Arrays.stream(data).mapToObj(int[]::new).anyMatch(x -> x == null)' is always 'false'">Arrays.stream(data).mapToObj(int[]::new).anyMatch(x -> <warning descr="Condition 'x == null' is always 'false'">x == null</warning>)</warning>) {
       System.out.println("never");
     }
-    list.stream().filter(Objects::isNull).map(<warning descr="Method reference invocation 'String::trim' may produce 'java.lang.NullPointerException'">String::trim</warning>).forEach(System.out::println);
+    list.stream().filter(Objects::isNull).map(<warning descr="Method reference invocation 'String::trim' may produce 'NullPointerException'">String::trim</warning>).forEach(System.out::println);
     if(<warning descr="Condition 'list.stream().filter(Objects::nonNull).anyMatch(x -> x == null)' is always 'false'">list.stream().filter(Objects::nonNull).anyMatch(x -> <warning descr="Condition 'x == null' is always 'false'">x == null</warning>)</warning>) {
       System.out.println("never");
     }
@@ -42,7 +42,7 @@ public class StreamInlining {
   }
 
   int hash(List<Holder> holders) {
-    return holders.stream().filter(h -> h.obj == null).mapToInt(h -> h.obj.<warning descr="Method invocation 'hashCode' may produce 'java.lang.NullPointerException'">hashCode</warning>()).sum();
+    return holders.stream().filter(h -> h.obj == null).mapToInt(h -> h.obj.<warning descr="Method invocation 'hashCode' may produce 'NullPointerException'">hashCode</warning>()).sum();
   }
 
   void test2(int[] array) {
@@ -61,7 +61,7 @@ public class StreamInlining {
   void testIsInstanceIncomplete(List<?> objects) {
     IntStream is = objects.stream()
       .filter(String.class::isInstance)
-      .mapToInt(x -> (<warning descr="Casting 'x' to 'Integer' may produce 'java.lang.ClassCastException'">Integer</warning>)x);
+      .mapToInt(x -> (<warning descr="Casting 'x' to 'Integer' may produce 'ClassCastException'">Integer</warning>)x);
 
     objects.stream()
       .filter(String.class::isInstance)
@@ -125,10 +125,10 @@ public class StreamInlining {
 
   boolean flatMap(List<String> list, List<List<String>> ll) {
     System.out.println(ll.stream().flatMap(l -> l.stream()).count());
-    return list.stream().map(s -> s.isEmpty() ? null : s)
-               .flatMap(s -> Stream.of(s, s.<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>())
+    return <warning descr="Result of 'list.stream().map(s -> s.isEmpty() ? null : s) .flatMap(s -> Stream.of(s, s.trim()) ...' is always 'false'">list.stream().map(s -> s.isEmpty() ? null : s)
+               .flatMap(s -> Stream.of(s, s.<warning descr="Method invocation 'trim' may produce 'NullPointerException'">trim</warning>())
                     .filter(r -> <warning descr="Condition 'r != null' is always 'true'">r != null</warning>))
-      .anyMatch(x -> <warning descr="Condition 'x == null' is always 'false'">x == null</warning>);
+      .anyMatch(x -> <warning descr="Condition 'x == null' is always 'false'">x == null</warning>)</warning>;
   }
 
   String blockLambda(List<String> list) {
@@ -169,7 +169,7 @@ public class StreamInlining {
 
   void testGenerate() {
     List<String> list1 = Stream.generate(() -> Math.random() > 0.5 ? "foo" : "baz")
-      .limit(10).filter((xyz -> <warning descr="Condition '\"bar\".equals(xyz)' is always 'false'">"bar".equals(xyz)</warning>)).collect(Collectors.toList());
+      .limit(10).filter((xyz -> <warning descr="Result of '\"bar\".equals(xyz)' is always 'false'">"bar".equals(xyz)</warning>)).collect(Collectors.toList());
     List<String> list2 = Stream.generate(() -> "xyz").limit(20).filter(<warning descr="Method reference result is always 'false'">"bar"::equals</warning>).collect(Collectors.toList());
     Stream.generate(() -> Optional.of("xyz")).filter(<warning descr="Method reference result is always 'true'">Optional::isPresent</warning>).forEach(System.out::println);
     LongStream.generate(() -> 5).limit(10).filter(x -> <warning descr="Condition 'x > 6' is always 'false'">x > 6</warning>).forEach(s -> System.out.println(s));

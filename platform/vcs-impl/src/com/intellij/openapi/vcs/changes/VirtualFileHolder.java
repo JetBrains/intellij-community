@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ReadAction;
@@ -24,6 +24,7 @@ public class VirtualFileHolder implements FileHolder {
     myType = type;
   }
 
+  @Override
   public HolderType getType() {
     return myType;
   }
@@ -32,6 +33,7 @@ public class VirtualFileHolder implements FileHolder {
   public void notifyVcsStarted(AbstractVcs vcs) {
   }
 
+  @Override
   public void cleanAll() {
     myFiles.clear();
   }
@@ -78,6 +80,7 @@ public class VirtualFileHolder implements FileHolder {
     });
   }
 
+  @Override
   public void cleanAndAdjustScope(@NotNull final VcsModifiableDirtyScope scope) {
     cleanScope(myProject, myFiles, scope);
   }
@@ -100,6 +103,7 @@ public class VirtualFileHolder implements FileHolder {
     return new ArrayList<>(myFiles);
   }
 
+  @Override
   public VirtualFileHolder copy() {
     final VirtualFileHolder copyHolder = new VirtualFileHolder(myProject, myType);
     copyHolder.myFiles.addAll(myFiles);

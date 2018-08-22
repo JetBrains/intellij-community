@@ -16,12 +16,11 @@ import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -91,6 +90,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     });
 
     VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(), project);
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new MyDocumentListener(), project);
   }
 
   private void notifyAfterAnnotationChanging(@NotNull PsiModifierListOwner owner, @NotNull String annotationFQName, boolean successful) {
@@ -845,6 +845,19 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     @Override
     public void fileCopied(@NotNull VirtualFileCopyEvent event) {
       processEvent(event);
+    }
+  }
+
+  private class MyDocumentListener implements DocumentListener {
+
+    final FileDocumentManager myFileDocumentManager = FileDocumentManager.getInstance();
+
+    @Override
+    public void documentChanged(@NotNull DocumentEvent event) {
+      final VirtualFile file = myFileDocumentManager.getFile(event.getDocument());
+      if (file != null && ANNOTATIONS_XML.equals(file.getName()) && isUnderAnnotationRoot(file)) {
+        dropCache();
+      }
     }
   }
 }

@@ -31,6 +31,7 @@ public class SSBasedInspectionOptions {
     myConfigurations = configurations;
     myTemplatesList  = new JBList<>(new MyListModel());
     myTemplatesList.setCellRenderer(new DefaultListCellRenderer() {
+      @Override
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         JLabel component = (JLabel)super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         Configuration configuration = myConfigurations.get(index);

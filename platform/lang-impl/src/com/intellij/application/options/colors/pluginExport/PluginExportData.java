@@ -99,7 +99,7 @@ public class PluginExportData {
   }
 
   public String getSinceBuild() {
-    return Integer.toString(AbstractColorsScheme.CURR_VERSION) + ".0";
+    return AbstractColorsScheme.CURR_VERSION + ".0";
   }
 
   private static String normalize(@Nullable String value, @NotNull String defaultValue) {

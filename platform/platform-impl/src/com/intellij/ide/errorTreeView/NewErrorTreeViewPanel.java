@@ -681,7 +681,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     }
 
     @Override
-    protected Navigatable createDescriptorForNode(DefaultMutableTreeNode node) {
+    protected Navigatable createDescriptorForNode(@NotNull DefaultMutableTreeNode node) {
       Object userObject = node.getUserObject();
       if (!(userObject instanceof ErrorTreeNodeDescriptor)) {
         return null;

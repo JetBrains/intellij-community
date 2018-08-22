@@ -132,6 +132,6 @@ public class DifferenceReverter extends Reverter {
   private void setContent(Entry l, VirtualFile file) throws IOException {
     Content c = l.getContent();
     if (!c.isAvailable()) return;
-    file.setBinaryContent(c.getBytes(), -1, l.getTimestamp());
+    file.setBinaryContent(c.getBytes());
   }
 }

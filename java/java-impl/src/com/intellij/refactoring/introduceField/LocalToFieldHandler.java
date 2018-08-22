@@ -302,6 +302,7 @@ public abstract class LocalToFieldHandler {
       myOccurences = occurrences;
     }
 
+    @Override
     public void run() {
       try {
         ChangeContextUtil.encodeContextInfo(myDestinationClass, true);

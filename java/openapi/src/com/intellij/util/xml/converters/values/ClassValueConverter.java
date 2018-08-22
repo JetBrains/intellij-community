@@ -38,6 +38,7 @@ public abstract class ClassValueConverter extends Converter<PsiClass> implements
     return ServiceManager.getService(ClassValueConverter.class);
   }
 
+  @Override
   public PsiClass fromString(@Nullable @NonNls String s, final ConvertContext context) {
     if (s == null) return null;
     final Module module = context.getModule();
@@ -46,10 +47,12 @@ public abstract class ClassValueConverter extends Converter<PsiClass> implements
     return DomJavaUtil.findClass(s, context.getFile(), context.getModule(), getScope(project, module, psiFile));
   }
 
+  @Override
   public String toString(@Nullable PsiClass psiClass, final ConvertContext context) {
     return psiClass == null ? null : psiClass.getQualifiedName();
   }
 
+  @Override
   @NotNull
   public abstract PsiReference[] createReferences(GenericDomValue genericDomValue, PsiElement element, ConvertContext context);
 

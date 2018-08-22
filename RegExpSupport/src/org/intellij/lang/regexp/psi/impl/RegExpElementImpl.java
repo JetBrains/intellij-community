@@ -38,6 +38,7 @@ public abstract class RegExpElementImpl extends ASTWrapperPsiElement implements 
         super(node);
     }
 
+    @Override
     @NotNull
     public Language getLanguage() {
         return RegExpLanguage.INSTANCE;
@@ -47,6 +48,7 @@ public abstract class RegExpElementImpl extends ASTWrapperPsiElement implements 
         return getClass().getSimpleName() + ": <" + getText() + ">";
     }
 
+    @Override
     public void accept(@NotNull PsiElementVisitor visitor) {
         if (visitor instanceof RegExpElementVisitor) {
             accept((RegExpElementVisitor)visitor);
@@ -59,6 +61,7 @@ public abstract class RegExpElementImpl extends ASTWrapperPsiElement implements 
         visitor.visitRegExpElement(this);
     }
 
+    @Override
     public PsiElement replace(@NotNull PsiElement psiElement) throws IncorrectOperationException {
         final ASTNode node = psiElement.getNode();
         assert node != null;
@@ -66,10 +69,12 @@ public abstract class RegExpElementImpl extends ASTWrapperPsiElement implements 
         return psiElement;
     }
 
+    @Override
     public void delete() throws IncorrectOperationException {
         getNode().getTreeParent().removeChild(getNode());
     }
 
+    @Override
     public final String getUnescapedText() {
         if (InjectedLanguageUtil.isInInjectedLanguagePrefixSuffix(this)) {
             // do not attempt to decode text if PsiElement is part of prefix/suffix

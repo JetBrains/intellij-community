@@ -46,6 +46,7 @@ class UnaryExpressionEvaluator implements Evaluator {
     myOperationText = operationText;
   }
 
+  @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     Value operand = (Value)myOperandEvaluator.evaluate(context);
     VirtualMachineProxyImpl vm = context.getDebugProcess().getVirtualMachineProxy();
@@ -80,7 +81,7 @@ class UnaryExpressionEvaluator implements Evaluator {
       }
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.boolean.expected"));
     }
-    
+
     throw EvaluateExceptionUtil.createEvaluateException(
       DebuggerBundle.message("evaluation.error.operation.not.supported", myOperationText)
     );

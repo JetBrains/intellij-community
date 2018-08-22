@@ -47,36 +47,44 @@ class PsiMethodListPopupStep implements ListPopupStep<SmartStepTarget> {
     return myScopeHighlighter;
   }
 
+  @Override
   @NotNull
   public List<SmartStepTarget> getValues() {
     return myTargets;
   }
 
+  @Override
   public boolean isSelectable(SmartStepTarget value) {
     return true;
   }
 
+  @Override
   public Icon getIconFor(SmartStepTarget avalue) {
     return avalue.getIcon();
   }
 
+  @Override
   @NotNull
   public String getTextFor(SmartStepTarget value) {
     return value.getPresentation();
   }
 
+  @Override
   public ListSeparator getSeparatorAbove(SmartStepTarget value) {
     return null;
   }
 
+  @Override
   public int getDefaultOptionIndex() {
     return 0;
   }
 
+  @Override
   public String getTitle() {
     return DebuggerBundle.message("title.smart.step.popup");
   }
 
+  @Override
   public PopupStep onChosen(SmartStepTarget selectedValue, final boolean finalChoice) {
     if (finalChoice) {
       myScopeHighlighter.dropHighlight();
@@ -85,30 +93,37 @@ class PsiMethodListPopupStep implements ListPopupStep<SmartStepTarget> {
     return FINAL_CHOICE;
   }
 
+  @Override
   public Runnable getFinalRunnable() {
     return null;
   }
 
+  @Override
   public boolean hasSubstep(SmartStepTarget selectedValue) {
     return false;
   }
 
+  @Override
   public void canceled() {
     myScopeHighlighter.dropHighlight();
   }
 
+  @Override
   public boolean isMnemonicsNavigationEnabled() {
     return false;
   }
 
+  @Override
   public MnemonicNavigationFilter<SmartStepTarget> getMnemonicNavigationFilter() {
     return null;
   }
 
+  @Override
   public boolean isSpeedSearchEnabled() {
     return true;
   }
 
+  @Override
   public SpeedSearchFilter<SmartStepTarget> getSpeedSearchFilter() {
     return new SpeedSearchFilter<SmartStepTarget>() {
       @Override
@@ -123,6 +138,7 @@ class PsiMethodListPopupStep implements ListPopupStep<SmartStepTarget> {
     };
   }
 
+  @Override
   public boolean isAutoSelectionEnabled() {
     return false;
   }

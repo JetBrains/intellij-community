@@ -163,10 +163,12 @@ public class TreeBasedMap<T> {
       findNextNode();
     }
 
+    @Override
     public boolean hasNext() {
       return myCurrentNodePath.size() > 0;
     }
 
+    @Override
     public String next() {
       final String key = myCurrentName.toString();
       popNode();
@@ -174,6 +176,7 @@ public class TreeBasedMap<T> {
       return key;
     }
 
+    @Override
     public void remove() {
       throw new UnsupportedOperationException("Remove not supported");
     }
@@ -184,7 +187,7 @@ public class TreeBasedMap<T> {
       if (hasChildren || node.mappingExists()) {
         myCurrentNodePath.push(new PathElement<>(node, hasChildren ? childrenMap.keySet().iterator() : EmptyIterator.getInstance()));
         if (myCurrentNodePath.size() > 2) {
-          // do not add separator before the Root and its direct child nodes 
+          // do not add separator before the Root and its direct child nodes
           myCurrentName.append(mySeparator);
         }
         myCurrentName.append(name);

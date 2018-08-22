@@ -2,7 +2,10 @@
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerManager;
-import com.intellij.debugger.engine.*;
+import com.intellij.debugger.engine.DebugProcess;
+import com.intellij.debugger.engine.DebugProcessListener;
+import com.intellij.debugger.engine.JVMNameUtil;
+import com.intellij.debugger.engine.SuspendContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
@@ -35,6 +38,7 @@ public class BatchEvaluator {
   private BatchEvaluator(DebugProcess process) {
     myDebugProcess = process;
     myDebugProcess.addDebugProcessListener(new DebugProcessListener() {
+      @Override
       public void processDetached(DebugProcess process, boolean closedByUser) {
         myBatchEvaluatorChecked = false;
         myBatchEvaluatorObject= null;
@@ -108,10 +112,12 @@ public class BatchEvaluator {
         myBuffer.put(suspendContext, commands);
 
         myDebugProcess.getManagerThread().invokeCommand(new SuspendContextCommand() {
+          @Override
           public SuspendContext getSuspendContext() {
             return suspendContext;
           }
 
+          @Override
           public void action() {
             myBuffer.remove(suspendContext);
 
@@ -120,6 +126,7 @@ public class BatchEvaluator {
             }
           }
 
+          @Override
           public void commandCancelled() {
             myBuffer.remove(suspendContext);
           }
@@ -177,10 +184,10 @@ public class BatchEvaluator {
             catch (ObjectCollectedException e) {
               // ignored
             }
-          } 
+          }
           else if(strValue instanceof ObjectReference){
             request.evaluationError(EvaluateExceptionUtil.createEvaluateException(new InvocationException((ObjectReference)strValue)).getMessage());
-          } 
+          }
           else {
             LOG.assertTrue(false);
           }

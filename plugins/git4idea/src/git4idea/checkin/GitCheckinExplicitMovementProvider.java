@@ -3,6 +3,7 @@ package git4idea.checkin;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.FilePath;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -38,27 +39,19 @@ public abstract class GitCheckinExplicitMovementProvider {
   @NotNull
   public abstract String getCommitMessage(@NotNull String originalCommitMessage);
 
-
-  @Deprecated
-  @NotNull
-  public Collection<Movement> collectExplicitMovements(@NotNull Project project,
-                                                       @NotNull List<FilePath> beforePaths,
-                                                       @NotNull List<FilePath> afterPaths) {
-    throw new UnsupportedOperationException();
-  }
-
   /**
-   * @param isActualCommit Whether actual commit will be performed or it's an intermediate check to update UI
-   *
    * @return file movements, that should be committed explicitly
    */
   @NotNull
-  public Collection<Movement> collectExplicitMovements(@NotNull Project project,
-                                                       @NotNull List<FilePath> beforePaths,
-                                                       @NotNull List<FilePath> afterPaths,
-                                                       boolean isActualCommit) {
-    return collectExplicitMovements(project, beforePaths, afterPaths);
-  }
+  public abstract Collection<Movement> collectExplicitMovements(@NotNull Project project,
+                                                                @NotNull List<FilePath> beforePaths,
+                                                                @NotNull List<FilePath> afterPaths);
+
+  /**
+   * Notifies that commit with explicit movements was created
+   */
+  public void afterMovementsCommitted(@NotNull Project project,
+                                      @NotNull List<Couple<FilePath>> movedPaths) { }
 
   public static class Movement {
     @NotNull private final FilePath myBeforePath;

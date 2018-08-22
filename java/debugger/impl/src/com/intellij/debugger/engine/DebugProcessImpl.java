@@ -13,6 +13,7 @@ import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 import com.intellij.debugger.engine.requests.MethodReturnValueWatcher;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.*;
+import com.intellij.debugger.impl.attach.SAPidRemoteConnection;
 import com.intellij.debugger.jdi.EmptyConnectorArgument;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
@@ -83,6 +84,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -440,7 +442,28 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
 
       final String address = myConnection.getAddress();
-      if (myConnection.isServerMode()) {
+
+      if (myConnection instanceof SAPidRemoteConnection) {
+        SAPidRemoteConnection pidRemoteConnection = (SAPidRemoteConnection)myConnection;
+        AttachingConnector connector = pidRemoteConnection.getConnector();
+        String pid = pidRemoteConnection.getPid();
+        if (StringUtil.isEmpty(pid)) {
+          throw new CantRunException(DebuggerBundle.message("error.no.pid"));
+        }
+        myArguments = connector.defaultArguments();
+        Connector.Argument pidArg = myArguments.get("pid");
+        if (pidArg != null) {
+          pidArg.setValue(pid);
+        }
+        myDebugProcessDispatcher.getMulticaster().connectorIsReady();
+        try {
+          return connector.attach(myArguments);
+        }
+        catch (IllegalArgumentException e) {
+          throw new CantRunException(e.getLocalizedMessage());
+        }
+      }
+      else if (myConnection.isServerMode()) {
         ListeningConnector connector = (ListeningConnector)findConnector(myConnection.isUseSockets(), true);
         myArguments = connector.defaultArguments();
         if (myArguments == null) {
@@ -567,7 +590,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   @NotNull
-  private static Connector findConnector(String connectorName) throws ExecutionException {
+  static Connector findConnector(String connectorName) throws ExecutionException {
     VirtualMachineManager virtualMachineManager;
     try {
       virtualMachineManager = Bootstrap.virtualMachineManager();
@@ -576,11 +599,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       throw new ExecutionException(DebuggerBundle.message("debugger.jdi.bootstrap.error",
                                                           e.getClass().getName() + " : " + e.getLocalizedMessage()));
     }
-    Connector connector = StreamEx.of(virtualMachineManager.allConnectors()).findFirst(c -> connectorName.equals(c.name())).orElse(null);
-    if (connector == null) {
-      throw new CantRunException(DebuggerBundle.message("error.debug.connector.not.found", connectorName));
-    }
-    return connector;
+    return StreamEx.of(virtualMachineManager.allConnectors())
+      .findFirst(c -> connectorName.equals(c.name()))
+      .orElseThrow(() -> new CantRunException(DebuggerBundle.message("error.debug.connector.not.found", connectorName)));
   }
 
   private void checkVirtualMachineVersion(VirtualMachine vm) {
@@ -836,6 +857,14 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   public static String processIOException(@NotNull IOException e, @Nullable String address) {
     if (e instanceof UnknownHostException) {
       return DebuggerBundle.message("error.unknown.host") + (address != null ? " (" + address + ")" : "") + ":\n" + e.getLocalizedMessage();
+    }
+
+    // Failed SA attach
+    Throwable cause = e.getCause();
+    if (cause instanceof InvocationTargetException) {
+      if (cause.getCause() != null) {
+        return cause.getCause().getLocalizedMessage();
+      }
     }
 
     String message;
@@ -1451,7 +1480,13 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     @Override
     protected void action() {
       if (isAttached()) {
-        final VirtualMachineProxyImpl virtualMachineProxy = getVirtualMachineProxy();
+        VirtualMachineProxyImpl virtualMachineProxy = getVirtualMachineProxy();
+
+        if (!virtualMachineProxy.canBeModified()) {
+          closeProcess(false);
+          return;
+        }
+
         if (myIsTerminateTargetVM) {
           virtualMachineProxy.exit(-1);
         }
