@@ -1148,7 +1148,8 @@ class PyDB:
         self.notify_thread_created(thread_id, t)
 
         # Note: important: set the tracing right before calling _exec.
-        pydevd_tracing.SetTrace(self.trace_dispatch, self.frame_eval_func, self.dummy_trace_dispatch)
+        if set_trace:
+            pydevd_tracing.SetTrace(self.trace_dispatch, self.frame_eval_func, self.dummy_trace_dispatch)
         
         return self._exec(is_module, entry_point_fn, module_name, file, globals, locals)
         
@@ -1232,7 +1233,7 @@ def usage(doExit=0):
 
 class _CustomWriter(object):
 
-    def __init__(self, out_ctx, wrap_stream, wrap_buffer):
+    def __init__(self, out_ctx, wrap_stream, wrap_buffer, on_write=None):
         '''
         :param out_ctx:
             1=stdout and 2=stderr
@@ -1243,16 +1244,26 @@ class _CustomWriter(object):
         :param bool wrap_buffer:
             If True the buffer attribute (which wraps writing bytes) should be
             wrapped.
+
+        :param callable(str) on_write:
+            May be a custom callable to be called when to write something.
+            If not passed the default implementation will create an io message
+            and send it through the debugger.
         '''
         self.encoding = getattr(wrap_stream, 'encoding', os.environ.get('PYTHONIOENCODING', 'utf-8'))
         self._out_ctx = out_ctx
         if wrap_buffer:
-            self.buffer = _CustomWriter(out_ctx, wrap_stream, wrap_buffer=False)
+            self.buffer = _CustomWriter(out_ctx, wrap_stream, wrap_buffer=False, on_write=on_write)
+        self._on_write = on_write
 
     def flush(self):
         pass  # no-op here
 
     def write(self, s):
+        if self._on_write is not None:
+            self._on_write(s)
+            return
+
         if s:
             if IS_PY2:
                 # Need s in bytes
@@ -1264,25 +1275,26 @@ class _CustomWriter(object):
                     s = s.decode(self.encoding, errors='replace')
 
             py_db = get_global_debugger()
-            # Note that the actual message contents will be a xml with utf-8, although
-            # the entry is str on py3 and bytes on py2.
-            cmd = py_db.cmd_factory.make_io_message(s, self._out_ctx)
-            py_db.writer.add_command(cmd)
+            if py_db is not None:
+                # Note that the actual message contents will be a xml with utf-8, although
+                # the entry is str on py3 and bytes on py2.
+                cmd = py_db.cmd_factory.make_io_message(s, self._out_ctx)
+                py_db.writer.add_command(cmd)
 
 
-def init_stdout_redirect():
+def init_stdout_redirect(on_write=None):
     if not hasattr(sys, '_pydevd_out_buffer_'):
         wrap_buffer = True if not IS_PY2 else False
         original = sys.stdout
-        sys._pydevd_out_buffer_ = _CustomWriter(1, original, wrap_buffer)
+        sys._pydevd_out_buffer_ = _CustomWriter(1, original, wrap_buffer, on_write)
         sys.stdout_original = original
         sys.stdout = pydevd_io.IORedirector(original, sys._pydevd_out_buffer_, wrap_buffer) #@UndefinedVariable
 
-def init_stderr_redirect():
+def init_stderr_redirect(on_write=None):
     if not hasattr(sys, '_pydevd_err_buffer_'):
         wrap_buffer = True if not IS_PY2 else False
         original = sys.stderr
-        sys._pydevd_err_buffer_ = _CustomWriter(2, original, wrap_buffer)
+        sys._pydevd_err_buffer_ = _CustomWriter(2, original, wrap_buffer, on_write)
         sys.stderr_original = original
         sys.stderr = pydevd_io.IORedirector(original, sys._pydevd_err_buffer_, wrap_buffer) #@UndefinedVariable
 
