@@ -1407,6 +1407,7 @@ class WriterThreadCaseHandledExceptions(debugger_unittest.AbstractWriterThread):
 
     def run(self):
         self.start_socket()
+        self.write_set_project_roots([os.path.dirname(self.TEST_FILE)])
         self.write_add_exception_breakpoint_with_policy(
             'IndexError',
             notify_on_handled_exceptions=2,  # Notify only once
