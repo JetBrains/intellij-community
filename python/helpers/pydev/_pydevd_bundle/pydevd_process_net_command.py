@@ -443,7 +443,7 @@ def process_net_command(py_db, cmd_id, seq, text):
                 #
                 # break_on_uncaught;
                 # break_on_caught;
-                # break_on_exceptions_thrown_in_same_context;
+                # skip_on_exceptions_thrown_in_same_context;
                 # ignore_exceptions_thrown_in_lines_with_ignore_exception;
                 # ignore_libraries;
                 # TypeError;ImportError;zipimport.ZipImportError;
@@ -469,9 +469,9 @@ def process_net_command(py_db, cmd_id, seq, text):
                         break_on_caught = False
 
                     if splitted[2] == 'true':
-                        py_db.break_on_exceptions_thrown_in_same_context = True
+                        py_db.skip_on_exceptions_thrown_in_same_context = True
                     else:
-                        py_db.break_on_exceptions_thrown_in_same_context = False
+                        py_db.skip_on_exceptions_thrown_in_same_context = False
 
                     if splitted[3] == 'true':
                         py_db.ignore_exceptions_thrown_in_lines_with_ignore_exception = True
@@ -564,7 +564,7 @@ def process_net_command(py_db, cmd_id, seq, text):
                 #
                 # There are 2 global settings which can only be set in CMD_SET_PY_EXCEPTION. Namely:
                 #
-                # py_db.break_on_exceptions_thrown_in_same_context
+                # py_db.skip_on_exceptions_thrown_in_same_context
                 # - If True, we should only show the exception in a caller, not where it was first raised.
                 #
                 # py_db.ignore_exceptions_thrown_in_lines_with_ignore_exception
