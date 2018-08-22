@@ -83,6 +83,17 @@ public class JDOMXIncluder {
   }
 
   @NotNull
+  public static Element resolveNonXIncludeElement(@NotNull Element original, @Nullable String base, boolean ignoreMissing, PathResolver pathResolver) throws XIncludeException {
+    LOG.assertTrue(!isIncludeElement(original));
+
+    Stack<String> bases = new Stack<String>();
+    if (base != null) {
+      bases.push(base);
+    }
+    return new JDOMXIncluder(ignoreMissing, pathResolver).resolveNonXIncludeElement(original, bases);
+  }
+
+  @NotNull
   public static List<Content> resolve(@NotNull Element original, String base) throws XIncludeException {
     return new JDOMXIncluder(false, DEFAULT_PATH_RESOLVER).doResolve(original, base);
   }
@@ -176,9 +187,7 @@ public class JDOMXIncluder {
       bases.push(base);
     }
 
-    List<Content> result = resolve(original, bases);
-    bases.pop();
-    return result;
+    return resolve(original, bases);
   }
 
   private static boolean isIncludeElement(Element element) {
