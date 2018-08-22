@@ -202,7 +202,7 @@ def _NormPaths(filename):
         return NORM_PATHS_CONTAINER[filename]
     except KeyError:
         if filename.__class__ != str:
-            raise AssertionError('Paths passed to _NormPaths must be str. Found; %s (%s)' % (filename, type(filename)))
+            raise AssertionError('Paths passed to _NormPaths must be str. Found: %s (%s)' % (filename, type(filename)))
         abs_path = _NormPath(filename, os.path.abspath)
         real_path = _NormPath(filename, rPath)
 
