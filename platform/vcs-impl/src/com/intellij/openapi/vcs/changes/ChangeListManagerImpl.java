@@ -1669,6 +1669,16 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     return true;
   }
 
+  public void replaceCommitMessage(@NotNull String oldMessage, @NotNull String newMessage) {
+    myConfig.replaceMessage(oldMessage, newMessage);
+
+    for (LocalChangeList changeList : getChangeLists()) {
+      if (oldMessage.equals(changeList.getComment())) {
+        editComment(changeList.getName(), newMessage);
+      }
+    }
+  }
+
   static class Scheduler {
     private final ScheduledExecutorService myExecutor =
       AppExecutorUtil.createBoundedScheduledExecutorService("ChangeListManagerImpl Pool", 1);
