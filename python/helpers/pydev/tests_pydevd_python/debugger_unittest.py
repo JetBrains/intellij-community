@@ -5,6 +5,7 @@ except ImportError:
 
 
 import os
+import re
 import socket
 import subprocess
 import sys
@@ -69,6 +70,8 @@ CMD_SHOW_CONSOLE = 142
 CMD_GET_ARRAY = 143
 CMD_STEP_INTO_MY_CODE = 144
 CMD_GET_CONCURRENCY_EVENT = 145
+
+CMD_GET_NEXT_STATEMENT_TARGETS = 201
 
 CMD_VERSION = 501
 CMD_RETURN = 502
@@ -450,6 +453,20 @@ class AbstractWriterThread(threading.Thread):
         else:
             return thread_id, frameId, name, suspend_type
 
+    def wait_for_get_next_statement_targets(self):
+        last = ''
+        while not '<xml><line>' in last:
+            last = self.reader_thread.get_next_message('wait_for_get_next_statement_targets')
+
+        matches = re.finditer(r"(<line>([0-9]*)<\/line>)", last, re.IGNORECASE)
+        lines = []
+        for _, match in enumerate(matches):
+            try:
+                lines.append(int(match.group(2)))
+            except ValueError:
+                pass
+        return set(lines)
+
     def wait_for_custom_operation(self, expected):
         # wait for custom operation response, the response is double encoded
         expected_encoded = quote(quote_plus(expected))
@@ -562,12 +579,12 @@ class AbstractWriterThread(threading.Thread):
     def write_change_variable(self, thread_id, frame_id, varname, value):
         self.write("117\t%s\t%s\t%s\t%s\t%s\t%s" % (self.next_seq(), thread_id, frame_id, 'FRAME', varname, value))
 
-    def write_get_frame(self, thread_id, frameId):
-        self.write("114\t%s\t%s\t%s\tFRAME" % (self.next_seq(), thread_id, frameId))
+    def write_get_frame(self, thread_id, frame_id):
+        self.write("114\t%s\t%s\t%s\tFRAME" % (self.next_seq(), thread_id, frame_id))
         self.log.append('write_get_frame')
 
-    def write_get_variable(self, thread_id, frameId, var_attrs):
-        self.write("110\t%s\t%s\t%s\tFRAME\t%s" % (self.next_seq(), thread_id, frameId, var_attrs))
+    def write_get_variable(self, thread_id, frame_id, var_attrs):
+        self.write("110\t%s\t%s\t%s\tFRAME\t%s" % (self.next_seq(), thread_id, frame_id, var_attrs))
 
     def write_step_over(self, thread_id):
         self.write("108\t%s\t%s" % (self.next_seq(), thread_id,))
@@ -606,6 +623,10 @@ class AbstractWriterThread(threading.Thread):
         else:
             enable = 'false'
         self.write("%s\t%s\t%s" % (CMD_ENABLE_DONT_TRACE, self.next_seq(), enable))
+
+    def write_get_next_statement_targets(self, thread_id, frame_id):
+        self.write("201\t%s\t%s\t%s" % (self.next_seq(), thread_id, frame_id))
+        self.log.append('write_get_next_statement_targets')
 
 def _get_debugger_test_file(filename):
     try:

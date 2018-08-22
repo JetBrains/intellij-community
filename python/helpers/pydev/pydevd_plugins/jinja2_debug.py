@@ -8,9 +8,9 @@ from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, FCode
 
 class Jinja2LineBreakpoint(LineBreakpoint):
 
-    def __init__(self, file, line, condition, func_name, expression):
+    def __init__(self, file, line, condition, func_name, expression, hit_condition=None, is_logpoint=False):
         self.file = file
-        LineBreakpoint.__init__(self, line, condition, func_name, expression)
+        LineBreakpoint.__init__(self, line, condition, func_name, expression, hit_condition=hit_condition, is_logpoint=is_logpoint)
 
     def is_triggered(self, template_frame_file, template_frame_line):
         return self.file == template_frame_file and self.line == template_frame_line
@@ -19,10 +19,10 @@ class Jinja2LineBreakpoint(LineBreakpoint):
         return "Jinja2LineBreakpoint: %s-%d" %(self.file, self.line)
 
 
-def add_line_breakpoint(plugin, pydb, type, file, line, condition, expression, func_name):
+def add_line_breakpoint(plugin, pydb, type, file, line, condition, expression, func_name, hit_condition=None, is_logpoint=False):
     result = None
     if type == 'jinja2-line':
-        breakpoint = Jinja2LineBreakpoint(file, line, condition, func_name, expression)
+        breakpoint = Jinja2LineBreakpoint(file, line, condition, func_name, expression, hit_condition=hit_condition, is_logpoint=is_logpoint)
         if not hasattr(pydb, 'jinja2_breakpoints'):
             _init_plugin_breaks(pydb)
         result = breakpoint, pydb.jinja2_breakpoints
