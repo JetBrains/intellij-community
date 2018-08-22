@@ -22,16 +22,9 @@ try:
 except:
     frame_type = None
 
-try:
-    from xml.sax.saxutils import escape
-
-
-    def make_valid_xml_value(s):
-        return escape(s, {'"': '&quot;'})
-except:
-    # Simple replacement if it's not there.
-    def make_valid_xml_value(s):
-        return s.replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
+def make_valid_xml_value(s):
+    # Same thing as xml.sax.saxutils.escape but also escaping double quotes.
+    return s.replace("&", "&amp;").replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
 
 
 class ExceptionOnEvaluate:
