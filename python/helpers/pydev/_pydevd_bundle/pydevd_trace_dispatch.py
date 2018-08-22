@@ -63,7 +63,6 @@ elif use_cython is None:
             raise ImportError()
 
     except ImportError:
-        from _pydevd_bundle.pydevd_additional_thread_info_regular import PyDBAdditionalThreadInfo  # @UnusedImport
         from _pydevd_bundle.pydevd_trace_dispatch_regular import trace_dispatch, global_cache_skips, global_cache_frame_skips  # @UnusedImport
         from _pydev_bundle.pydev_monkey import log_error_once
 
