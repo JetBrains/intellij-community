@@ -6,25 +6,29 @@ class IORedirector:
     '''This class works to redirect the write function to many streams
     '''
 
-    def __init__(self, *args):
-        self._redirectTo = args
+    def __init__(self, original, new_redirect, wrap_buffer=False):
+        self._redirect_to = (original, new_redirect)
+        if wrap_buffer:
+            self.buffer = IORedirector(original.buffer, new_redirect.buffer, False)
 
     def write(self, s):
-        for r in self._redirectTo:
-            try:
-                r.write(s)
-            except:
-                pass
+        # The original one may fail if the user tries to write a number to the stream, etc.
+        self._redirect_to[0].write(s)
+        try:
+            # This one should not fail.
+            self._redirect_to[1].write(s)
+        except:
+            pass
 
     def isatty(self):
-        return False
+        return self._redirect_to[0].isatty()
 
     def flush(self):
-        for r in self._redirectTo:
+        for r in self._redirect_to:
             r.flush()
 
     def __getattr__(self, name):
-        for r in self._redirectTo:
+        for r in self._redirect_to:
             if hasattr(r, name):
                 return r.__getattribute__(name)
         raise AttributeError(name)
@@ -41,13 +45,17 @@ class IOBuf:
 
     def getvalue(self):
         b = self.buflist
-        self.buflist = [] #clear it
-        return ''.join(b)
+        self.buflist = []  # clear it
+        return ''.join(b)  # bytes on py2, str on py3.
     
     def write(self, s):
         if not IS_PY3K:
             if isinstance(s, unicode):
-                s = s.encode(self.encoding)
+                # can't use 'errors' as kwargs in py 2.6
+                s = s.encode(self.encoding, 'replace')
+        else:
+            if isinstance(s, bytes):
+                s = s.decode(self.encoding, errors='replace')
         self.buflist.append(s)
 
     def isatty(self):
@@ -82,7 +90,7 @@ def start_redirect(keep_original_redirection=False, std='stdout'):
         stack.append(original)
 
         if keep_original_redirection:
-            setattr(sys, std, IORedirector(buf, getattr(sys, std)))
+            setattr(sys, std, IORedirector(getattr(sys, std), buf))
         else:
             setattr(sys, std, buf)
     return buf
