@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.util.SystemProperties;
 import com.sun.jdi.connect.AttachingConnector;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -38,7 +39,7 @@ public class SAPidRemoteConnection extends RemoteConnection {
     try {
       Class<?> connectorClass = Class.forName(SA_PID_ATTACHING_CONNECTOR_NAME,
                                               true,
-                                              new JBSAJDIClassLoader(getBaseSAJDIClassLoader(), mySAJarPath));
+                                              new JBSAJDIClassLoader(getBaseSAJDIClassLoader(mySAJarPath), mySAJarPath));
       return (AttachingConnector)connectorClass.newInstance();
     }
     catch (Exception e) {
@@ -47,20 +48,22 @@ public class SAPidRemoteConnection extends RemoteConnection {
   }
 
   public static boolean isSAPidAttachAvailable() {
-    return getBaseSAJDIClassLoader() != null;
+    return true;
+    //return getBaseSAJDIClassLoader() != null;
   }
 
-  @Nullable
-  private static synchronized ClassLoader getBaseSAJDIClassLoader() {
+  @NotNull
+  private static synchronized ClassLoader getBaseSAJDIClassLoader(String saJarPath) {
     if (BASE_SA_JDI_CLASS_LOADER == null) {
       File saJdiJar = new File(SystemProperties.getJavaHome(), "../lib/sa-jdi.jar");
       if (saJdiJar.exists()) {
         try {
-          BASE_SA_JDI_CLASS_LOADER = new JBSAJDIClassLoader(SAPidRemoteConnection.class.getClassLoader(), saJdiJar.getCanonicalPath());
+          saJarPath = saJdiJar.getCanonicalPath();
         }
         catch (IOException ignored) {
         }
       }
+      BASE_SA_JDI_CLASS_LOADER = new JBSAJDIClassLoader(SAPidRemoteConnection.class.getClassLoader(), saJarPath);
     }
     return BASE_SA_JDI_CLASS_LOADER;
   }
