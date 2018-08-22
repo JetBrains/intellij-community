@@ -246,6 +246,7 @@ public class JDOMUtil {
           return new InputSource(new CharArrayReader(ArrayUtil.EMPTY_CHAR_ARRAY));
         }
       });
+      saxBuilder.setIgnoringBoundaryWhitespace(true);
       ourSaxBuilder.set(new SoftReference<SAXBuilder>(saxBuilder));
     }
     return saxBuilder;
