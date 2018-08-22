@@ -11,9 +11,11 @@ import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsag
 import com.intellij.json.psi.*;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.actionSystem.CaretSpecificDataContext;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
@@ -261,11 +263,13 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       } else if (JsonSchemaType._null.equals(type)) {
         addValueVariant("null", null);
       } else if (JsonSchemaType._array.equals(type)) {
-        addValueVariant(myWalker.getDefaultArrayValue(true), null,
-                        myWalker.defaultArrayValueDescription(), createArrayOrObjectLiteralInsertHandler(myWalker.invokeEnterBeforeObjectAndArray()));
+        String value = myWalker.getDefaultArrayValue();
+        addValueVariant(value, null,
+                        myWalker.defaultArrayValueDescription(), createArrayOrObjectLiteralInsertHandler(myWalker.invokeEnterBeforeObjectAndArray(), value.length()));
       } else if (JsonSchemaType._object.equals(type)) {
-        addValueVariant(myWalker.getDefaultObjectValue(true), null,
-                        myWalker.defaultObjectValueDescription(), createArrayOrObjectLiteralInsertHandler(myWalker.invokeEnterBeforeObjectAndArray()));
+        String value = myWalker.getDefaultObjectValue();
+        addValueVariant(value, null,
+                        myWalker.defaultObjectValueDescription(), createArrayOrObjectLiteralInsertHandler(myWalker.invokeEnterBeforeObjectAndArray(), value.length()));
       }
     }
 
@@ -380,7 +384,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       return variants.stream().map(JsonSchemaObject::getType).filter(Objects::nonNull).distinct().count() <= 1;
     }
 
-    private static InsertHandler<LookupElement> createArrayOrObjectLiteralInsertHandler(boolean newline) {
+    private static InsertHandler<LookupElement> createArrayOrObjectLiteralInsertHandler(boolean newline, int insertedTextSize) {
       return new InsertHandler<LookupElement>() {
         @Override
         public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
@@ -390,6 +394,8 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
             EditorModificationUtil.moveCaretRelatively(editor, -1);
           }
           else {
+            EditorModificationUtil.moveCaretRelatively(editor, -insertedTextSize);
+            invokeEnterHandler(editor);
             EditorActionUtil.moveCaretToLineEnd(editor, false, false);
           }
           AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(editor, null);
@@ -464,7 +470,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
                   invokeEnterHandler(editor);
                   hadEnter = true;
                 }
-                stringToInsert = myWalker.getDefaultObjectValue(false) + comma;
+                stringToInsert = myWalker.getDefaultObjectValue() + comma;
                 EditorModificationUtil.insertStringAtCaret(editor, stringToInsert,
                                                            false, true,
                                                            hadEnter ? 0 : 1);
@@ -474,7 +480,9 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
                 }
 
                 PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-                formatInsertedString(context, stringToInsert.length());
+                if (!hadEnter) {
+                  formatInsertedString(context, stringToInsert.length());
+                }
                 if (!invokeEnter) {
                   invokeEnterHandler(editor);
                 }
@@ -499,13 +507,15 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
                   invokeEnterHandler(editor);
                   hadEnter = true;
                 }
-                stringToInsert = myWalker.getDefaultArrayValue(false) + comma;
+                stringToInsert = myWalker.getDefaultArrayValue() + comma;
                 EditorModificationUtil.insertStringAtCaret(editor, stringToInsert,
                                                            false, true,
                                                            hadEnter ? 0 : 1);
                 if (hadEnter) {
                   EditorActionUtil.moveCaretToLineEnd(editor, false, false);
                 }
+
+                PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
 
                 formatInsertedString(context, stringToInsert.length());
                 break;
@@ -525,8 +535,9 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
 
     private static void invokeEnterHandler(Editor editor) {
       EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER);
-      handler.execute(editor, editor.getCaretModel().getCurrentCaret(),
-                      DataManager.getInstance().getDataContext(editor.getContentComponent()));
+      Caret caret = editor.getCaretModel().getCurrentCaret();
+      handler.execute(editor, caret,
+                      new CaretSpecificDataContext(DataManager.getInstance().getDataContext(editor.getContentComponent()), caret));
     }
 
     private boolean handleInsideQuotesInsertion(@NotNull InsertionContext context, @NotNull Editor editor, boolean hasValue) {
