@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
@@ -38,6 +39,7 @@ import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.XCollection;
@@ -65,10 +67,12 @@ import static com.intellij.openapi.actionSystem.EmptyAction.registerWithShortcut
 import static com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.unshelveSilentlyWithDnd;
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_KEYS;
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.GROUP_BY_ACTION_GROUP;
+import static com.intellij.ui.IdeBorderFactory.createBorder;
 import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
 import static com.intellij.util.containers.ContainerUtil.newHashSet;
 import static com.intellij.util.containers.ContainerUtil.set;
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
+import static com.intellij.util.ui.UIUtil.addBorder;
 import static com.intellij.vcsUtil.VcsImplUtil.isNonModalCommit;
 import static java.util.stream.Collectors.toList;
 
@@ -172,23 +176,29 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   }
 
   private JComponent createChangeViewComponent() {
-    SimpleToolWindowPanel panel = new SimpleToolWindowPanel(false, true);
-    ActionToolbar toolbar = createChangesToolbar();
-    JPanel wrapper = simplePanel(createScrollPane(myView));
+    ActionToolbar changesToolbar = createChangesToolbar();
+    addBorder(changesToolbar.getComponent(), createBorder(JBColor.border(), SideBorder.RIGHT));
+    BorderLayoutPanel changesPanel = simplePanel(createScrollPane(myView)).addToLeft(changesToolbar.getComponent());
     MyChangeProcessor changeProcessor = new MyChangeProcessor(myProject);
-    mySplitterComponent = new PreviewDiffSplitterComponent(wrapper, changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION,
+    mySplitterComponent = new PreviewDiffSplitterComponent(changesPanel, changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION,
                                                            myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
-    myProgressLabel = simplePanel();
-    panel.setContent(simplePanel(mySplitterComponent).addToBottom(myProgressLabel));
-    panel.setToolbar(toolbar.getComponent());
 
-    registerShortcuts(panel);
     myView.installPopupHandler((DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewPopupMenu"));
     myView.getGroupingSupport().setGroupingKeysOrSkip(myState.groupingKeys);
     ChangesDnDSupport.install(myProject, myView);
     myView.addTreeSelectionListener(myTsl);
     myView.addGroupingChangeListener(myGroupingChangeListener);
 
+    SimpleToolWindowPanel panel = new SimpleToolWindowPanel(false, true) {
+      @NotNull
+      @Override
+      public List<AnAction> getActions(boolean originalProvider) {
+        return changesToolbar.getActions();
+      }
+    };
+    myProgressLabel = simplePanel();
+    panel.setContent(simplePanel(mySplitterComponent).addToBottom(myProgressLabel));
+    registerShortcuts(panel);
     return panel;
   }
 
