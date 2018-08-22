@@ -26,6 +26,10 @@ import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 
 abstract class BaseChangeListsTest : LightPlatformTestCase() {
+  companion object {
+    val DEFAULT = LocalChangeList.DEFAULT_NAME
+  }
+
   protected lateinit var vcs: MyMockVcs
   protected lateinit var changeProvider: MyMockChangeProvider
 
