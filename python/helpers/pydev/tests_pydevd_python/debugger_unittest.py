@@ -171,7 +171,7 @@ class DebuggerRunner(object):
         port = int(writer_thread.port)
 
         localhost = pydev_localhost.get_localhost()
-        ret = args + [
+        ret = [
             writer_thread.get_pydevd_file(),
             '--DEBUG_RECORD_SOCKET_READS',
             '--qt-support',
@@ -184,8 +184,9 @@ class DebuggerRunner(object):
         if writer_thread.IS_MODULE:
             ret += ['--module']
         
-        ret = ret + ['--file'] + writer_thread.get_command_line_args()
-        return ret
+        ret += ['--file'] + writer_thread.get_command_line_args()
+        ret = writer_thread.update_command_line_args(ret)  # Provide a hook for the writer
+        return args + ret
 
     def check_case(self, writer_thread_class):
         if callable(writer_thread_class):
@@ -293,10 +294,10 @@ class DebuggerRunner(object):
                             "The other process may still be running -- and didn't give any output.", stdout, stderr, writer_thread)
 
                     check = 0
-                    while 'TEST SUCEEDED' not in ''.join(stdout):
+                    while writer_thread.check_test_suceeded_msg(stdout, stderr):
                         check += 1
                         if check == 50:
-                            self.fail_with_message("TEST SUCEEDED not found in stdout.", stdout, stderr, writer_thread)
+                            self.fail_with_message("TEST SUCEEDED not found.", stdout, stderr, writer_thread)
                         time.sleep(.1)
 
                 for _i in xrange(100):
@@ -333,6 +334,12 @@ class AbstractWriterThread(threading.Thread):
         self.finished_ok = False
         self._next_breakpoint_id = 0
         self.log = []
+        
+    def check_test_suceeded_msg(self, stdout, stderr):
+        return 'TEST SUCEEDED' not in ''.join(stdout)
+    
+    def update_command_line_args(self, args):
+        return args
         
     def _ignore_stderr_line(self, line):
         if line.startswith((
@@ -619,7 +626,8 @@ class AbstractWriterThread(threading.Thread):
     def write_set_project_roots(self, project_roots):
         self.write("%s\t%s\t%s" % (CMD_SET_PROJECT_ROOTS, self.next_seq(), '\t'.join(str(x) for x in project_roots)))
         
-    def write_add_exception_breakpoint_with_policy(self, exception, notify_on_handled_exceptions, notify_on_unhandled_exceptions, ignore_libraries):
+    def write_add_exception_breakpoint_with_policy(
+            self, exception, notify_on_handled_exceptions, notify_on_unhandled_exceptions, ignore_libraries):
         self.write("%s\t%s\t%s" % (CMD_ADD_EXCEPTION_BREAK, self.next_seq(), '\t'.join(str(x) for x in [exception, notify_on_handled_exceptions, notify_on_unhandled_exceptions, ignore_libraries])))
         self.log.append('write_add_exception_breakpoint: %s' % (exception,))
 

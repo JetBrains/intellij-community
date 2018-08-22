@@ -1767,6 +1767,77 @@ class WriterCaseLamda(debugger_unittest.AbstractWriterThread):
             self.write_run_thread(thread_id)
 
         self.finished_ok = True
+
+#=======================================================================================================================
+# WriterThreadCaseUnhandledExceptionsOnTopLevel
+#=======================================================================================================================
+class WriterThreadCaseUnhandledExceptionsOnTopLevel(debugger_unittest.AbstractWriterThread):
+
+    # Note: expecting unhandled exceptions to be printed to stderr.
+    TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case_unhandled_exceptions_on_top_level.py')
+
+    def check_test_suceeded_msg(self, stdout, stderr):
+        return 'TEST SUCEEDED' not in ''.join(stderr)
+    
+    def additional_output_checks(self, stdout, stderr):
+        # Don't call super as we have an expected exception
+        assert 'ValueError: TEST SUCEEDED' in stderr
+
+    def run(self):
+        self.start_socket()
+        self.write_add_exception_breakpoint_with_policy('Exception', "0", "1", "0")
+        self.write_make_initial_run()
+
+        # Will stop in main thread
+        thread_id3, frame_id = self.wait_for_breakpoint_hit('122')
+        self.write_run_thread(thread_id3)
+
+        self.log.append('Marking finished ok.')
+        self.finished_ok = True
+
+#=======================================================================================================================
+# WriterThreadCaseUnhandledExceptionsOnTopLevel2
+#=======================================================================================================================
+class WriterThreadCaseUnhandledExceptionsOnTopLevel2(debugger_unittest.AbstractWriterThread):
+
+    # Note: expecting unhandled exceptions to be printed to stderr.
+    TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case_unhandled_exceptions_on_top_level.py')
+
+    def check_test_suceeded_msg(self, stdout, stderr):
+        return 'TEST SUCEEDED' not in ''.join(stderr)
+    
+    def additional_output_checks(self, stdout, stderr):
+        # Don't call super as we have an expected exception
+        assert 'ValueError: TEST SUCEEDED' in stderr
+        
+    def get_environ(self):
+        env = os.environ.copy()
+        curr_pythonpath = env.get('PYTHONPATH', '')
+
+        pydevd_dirname = os.path.dirname(self.get_pydevd_file())
+
+        curr_pythonpath = pydevd_dirname + os.pathsep + curr_pythonpath
+        env['PYTHONPATH'] = curr_pythonpath
+        return env
+        
+    def update_command_line_args(self, args):
+        # Start pydevd with '-m' to see how it deal with being called with
+        # runpy at the start.
+        assert args[0].endswith('pydevd.py')
+        args = ['-m', 'pydevd'] + args[1:]
+        return args
+
+    def run(self):
+        self.start_socket()
+        self.write_add_exception_breakpoint_with_policy('Exception', "0", "1", "0")
+        self.write_make_initial_run()
+
+        # Should stop (only once) in the main thread.
+        thread_id3, frame_id = self.wait_for_breakpoint_hit('122')
+        self.write_run_thread(thread_id3)
+
+        self.log.append('Marking finished ok.')
+        self.finished_ok = True
         
 
 #=======================================================================================================================
@@ -1988,6 +2059,12 @@ class Test(unittest.TestCase, debugger_unittest.DebuggerRunner):
 
     def test_unhandled_exceptions(self):
         self.check_case(WriterThreadCaseUnhandledExceptions)
+        
+    def test_unhandled_exceptions_in_top_level(self):
+        self.check_case(WriterThreadCaseUnhandledExceptionsOnTopLevel)
+        
+    def test_unhandled_exceptions_in_top_level2(self):
+        self.check_case(WriterThreadCaseUnhandledExceptionsOnTopLevel2)
 
     @unittest.skip('New behaviour differs from PyDev -- needs to be investigated).')
     def test_case_set_next_statement(self):
