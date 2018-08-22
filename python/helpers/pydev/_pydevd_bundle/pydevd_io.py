@@ -32,7 +32,6 @@ class IORedirector:
 class IOBuf:
     '''This class works as a replacement for stdio and stderr.
     It is a buffer and when its contents are requested, it will erase what
-    
     it has so far so that the next return will not return the same contents again.
     '''
     def __init__(self):

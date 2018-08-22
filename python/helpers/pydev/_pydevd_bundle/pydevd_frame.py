@@ -40,6 +40,12 @@ get_file_type = DONT_TRACE.get
 def handle_breakpoint_condition(py_db, info, breakpoint, new_frame):
     condition = breakpoint.condition
     try:
+        if breakpoint.handle_hit_condition(new_frame):
+            return True
+
+        if condition is None:
+            return False
+
         return eval(condition, new_frame.f_globals, new_frame.f_locals)
 
     except:
@@ -583,14 +589,15 @@ class PyDBFrame:
                     #ok, hit breakpoint, now, we have to discover if it is a conditional breakpoint
                     # lets do the conditional stuff here
                     if stop or exist_result:
-                        condition = breakpoint.condition
-                        if condition is not None:
+                        if breakpoint.has_condition:
                             eval_result = handle_breakpoint_condition(main_debugger, info, breakpoint, new_frame)
                             if not eval_result:
                                 return self.trace_dispatch
 
                         if breakpoint.expression is not None:
                             handle_breakpoint_expression(breakpoint, info, new_frame)
+                            if breakpoint.is_logpoint:
+                                return self.trace_dispatch
 
                         if not main_debugger.first_breakpoint_reached:
                             if is_call:
@@ -777,4 +784,3 @@ class PyDBFrame:
             info.is_tracing = False
 
         #end trace_dispatch
-

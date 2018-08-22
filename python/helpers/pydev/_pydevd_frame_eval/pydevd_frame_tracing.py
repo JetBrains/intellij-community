@@ -25,15 +25,16 @@ def update_globals_dict(globals_dict):
 def handle_breakpoint(frame, thread, global_debugger, breakpoint):
     # ok, hit breakpoint, now, we have to discover if it is a conditional breakpoint
     new_frame = frame
-    condition = breakpoint.condition
     info = thread.additional_info
-    if condition is not None:
+    if breakpoint.has_condition:
         eval_result = handle_breakpoint_condition(global_debugger, info, breakpoint, new_frame)
         if not eval_result:
             return False
 
     if breakpoint.expression is not None:
         handle_breakpoint_expression(breakpoint, info, new_frame)
+        if breakpoint.is_logpoint:
+            return False
 
     if breakpoint.suspend_policy == "ALL":
         global_debugger.suspend_all_other_threads(thread)

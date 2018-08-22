@@ -291,6 +291,7 @@ class PyDB:
         self.is_filter_libraries = pydevd_utils.is_filter_libraries()
         self.show_return_values = False
         self.remove_return_values_flag = False
+        self.redirect_output = False
 
         # this flag disables frame evaluation even if it's available
         self.do_not_use_frame_eval = False
@@ -392,6 +393,18 @@ class PyDB:
             queue = self.get_internal_queue(thread_id)
             queue.put(int_cmd)
 
+    def enable_output_redirection(self, redirect_stdout, redirect_stderr):
+        global bufferStdOutToServer
+        global bufferStdErrToServer
+        
+        bufferStdOutToServer = redirect_stdout
+        bufferStdErrToServer = redirect_stderr
+        self.redirect_output = redirect_stdout or redirect_stderr
+        if bufferStdOutToServer:
+            init_stdout_redirect()
+        if bufferStdErrToServer:
+            init_stderr_redirect()
+
     def check_output_redirect(self):
         global bufferStdOutToServer
         global bufferStdErrToServer
@@ -415,7 +428,8 @@ class PyDB:
             v = out.getvalue()
 
             if v:
-                self.cmd_factory.make_io_message(v, outCtx, self)
+                cmd = self.cmd_factory.make_io_message(v, outCtx)
+                self.writer.add_command(cmd)
         except:
             traceback.print_exc()
 
@@ -1033,7 +1047,7 @@ class PyDB:
 
     def prepare_to_run(self):
         ''' Shared code to prepare debugging by installing traces and registering threads '''
-        if self.signature_factory is not None or self.thread_analyser is not None:
+        if self.redirect_output or self.signature_factory is not None or self.thread_analyser is not None:
             # we need all data to be sent to IDE even after program finishes
             CheckOutputThread(self).start()
             # turn off frame evaluation for concurrency visualization
@@ -1099,7 +1113,7 @@ class PyDB:
 
             # I think this is an ugly hack, bug it works (seems to) for the bug that says that sys.path should be the same in
             # debug and run.
-            if m.__file__.startswith(sys.path[0]):
+            if sys.path[0] != '' and m.__file__.startswith(sys.path[0]):
                 # print >> sys.stderr, 'Deleting: ', sys.path[0]
                 del sys.path[0]
 

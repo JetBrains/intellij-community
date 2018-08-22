@@ -18,7 +18,8 @@ from _pydevd_bundle.pydevd_comm import CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, C
     CMD_EVALUATE_CONSOLE_EXPRESSION, InternalEvaluateConsoleExpression, InternalConsoleGetCompletions, \
     CMD_RUN_CUSTOM_OPERATION, InternalRunCustomOperation, CMD_IGNORE_THROWN_EXCEPTION_AT, CMD_ENABLE_DONT_TRACE, \
     CMD_SHOW_RETURN_VALUES, ID_TO_MEANING, CMD_GET_DESCRIPTION, InternalGetDescription, InternalLoadFullValue, \
-    CMD_LOAD_FULL_VALUE, CMD_PROCESS_CREATED_MSG_RECEIVED
+    CMD_LOAD_FULL_VALUE, CMD_PROCESS_CREATED_MSG_RECEIVED, CMD_REDIRECT_OUTPUT, CMD_GET_NEXT_STATEMENT_TARGETS, \
+    InternalGetNextStatementTargets
 from _pydevd_bundle.pydevd_constants import get_thread_id, IS_PY3K, DebugInfoHolder, dict_keys, STATE_RUN, \
     NEXT_VALUE_SEPARATOR
 
@@ -262,8 +263,14 @@ def process_net_command(py_db, cmd_id, seq, text):
                 # command to add some breakpoint.
                 # text is file\tline. Add to breakpoints dictionary
                 suspend_policy = "NONE"
+                is_logpoint = False
+                hit_condition = None
                 if py_db._set_breakpoints_with_id:
-                    breakpoint_id, type, file, line, func_name, condition, expression = text.split('\t', 6)
+                    try:
+                        breakpoint_id, type, file, line, func_name, condition, expression, hit_condition, is_logpoint = text.split('\t', 8)
+                        is_logpoint = is_logpoint == 'True'
+                    except Exception:
+                        breakpoint_id, type, file, line, func_name, condition, expression = text.split('\t', 6)
 
                     breakpoint_id = int(breakpoint_id)
                     line = int(line)
@@ -300,14 +307,17 @@ def process_net_command(py_db, cmd_id, seq, text):
                     sys.stderr.flush()
 
 
-                if len(condition) <= 0 or condition is None or condition == "None":
+                if condition is not None and (len(condition) <= 0 or condition == "None"):
                     condition = None
 
-                if len(expression) <= 0 or expression is None or expression == "None":
+                if expression is None and (len(expression) <= 0 or expression == "None"):
                     expression = None
 
+                if hit_condition is not None and (len(hit_condition) <= 0 or hit_condition == "None"):
+                    hit_condition = None
+
                 if type == 'python-line':
-                    breakpoint = LineBreakpoint(line, condition, func_name, expression, suspend_policy)
+                    breakpoint = LineBreakpoint(line, condition, func_name, expression, suspend_policy, hit_condition=hit_condition, is_logpoint=is_logpoint)
                     breakpoints = py_db.breakpoints
                     file_to_id_to_breakpoint = py_db.file_to_id_to_line_breakpoint
                     supported_type = True
@@ -315,7 +325,7 @@ def process_net_command(py_db, cmd_id, seq, text):
                     result = None
                     plugin = py_db.get_plugin_lazy_init()
                     if plugin is not None:
-                        result = plugin.add_breakpoint('add_line_breakpoint', py_db, type, file, line, condition, expression, func_name)
+                        result = plugin.add_breakpoint('add_line_breakpoint', py_db, type, file, line, condition, expression, func_name, hit_condition=hit_condition, is_logpoint=is_logpoint)
                     if result is not None:
                         supported_type = True
                         breakpoint, breakpoints = result
@@ -555,12 +565,12 @@ def process_net_command(py_db, cmd_id, seq, text):
 
                 condition = condition.replace("@_@NEW_LINE_CHAR@_@", '\n').replace("@_@TAB_CHAR@_@", '\t').strip()
 
-                if len(condition) == 0 or condition == "None":
+                if condition is None and (len(condition) == 0 or condition == "None"):
                     condition = None
 
                 expression = expression.replace("@_@NEW_LINE_CHAR@_@", '\n').replace("@_@TAB_CHAR@_@", '\t').strip()
 
-                if len(expression) == 0 or expression == "None":
+                if expression is None and (len(expression) == 0 or expression == "None"):
                     expression = None
 
                 if exception.find('-') != -1:
@@ -750,6 +760,16 @@ def process_net_command(py_db, cmd_id, seq, text):
                 if event:
                     event.set()
 
+            elif cmd_id == CMD_REDIRECT_OUTPUT:
+                if text:
+                    py_db.enable_output_redirection('STDOUT' in text, 'STDERR' in text)
+
+            elif cmd_id == CMD_GET_NEXT_STATEMENT_TARGETS:
+                thread_id, frame_id = text.split('\t', 1)
+
+                int_cmd = InternalGetNextStatementTargets(seq, thread_id, frame_id)
+                py_db.post_internal_command(int_cmd, thread_id)
+
             else:
                 #I have no idea what this is all about
                 cmd = py_db.cmd_factory.make_error_message(seq, "unexpected command " + str(cmd_id))
@@ -773,5 +793,3 @@ def process_net_command(py_db, cmd_id, seq, text):
             py_db.writer.add_command(cmd)
     finally:
         py_db._main_lock.release()
-
-
