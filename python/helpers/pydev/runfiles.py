@@ -6,6 +6,7 @@ Used to run with tests with unittest/pytest/nose.
 
 
 import os
+
 try:
     xrange
 except:
@@ -32,6 +33,14 @@ def main():
             else:
                 other_test_framework_params.append(arg)
 
+    try:
+        # Convert to the case stored in the filesystem
+        import win32api
+        def get_with_filesystem_case(f):
+            return win32api.GetLongPathName(win32api.GetShortPathName(f))
+    except:
+        def get_with_filesystem_case(f):
+            return f
 
     # Here we'll run either with nose or with the pydev_runfiles.
     from _pydev_runfiles import pydev_runfiles
@@ -204,11 +213,18 @@ def main():
                     os.chdir(path)
                     break
 
+            remove = []
             for i in xrange(len(argv)):
                 arg = argv[i]
                 # Workaround bug in py.test: if we pass the full path it ends up importing conftest
                 # more than once (so, always work with relative paths).
                 if os.path.isfile(arg) or os.path.isdir(arg):
+                    
+                    # Args must be passed with the proper case in the filesystem (otherwise
+                    # python itself may not recognize it).
+                    arg = get_with_filesystem_case(arg)
+                    argv[i] = arg
+
                     from os.path import relpath
                     try:
                         # May fail if on different drives
@@ -217,6 +233,11 @@ def main():
                         pass
                     else:
                         argv[i] = arg
+                elif '<unable to get>' in arg:
+                    remove.append(i)
+
+            for i in reversed(remove):
+                del argv[i]
 
             # To find our runfile helpers (i.e.: plugin)...
             d = os.path.dirname(__file__)
