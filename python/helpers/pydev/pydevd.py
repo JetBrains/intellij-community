@@ -1211,6 +1211,40 @@ def enable_qt_support(qt_support_mode):
     from _pydev_bundle import pydev_monkey_qt
     pydev_monkey_qt.patch_qt(qt_support_mode)
 
+def dump_threads(stream=None):
+    '''
+    Helper to dump thread info.
+    '''
+    if stream is None:
+        stream = sys.stderr
+    thread_id_to_name = {}
+    try:
+        for t in threading.enumerate():
+            thread_id_to_name[t.ident] = '%s  (daemon: %s, pydevd thread: %s)' % (
+                t.name, t.daemon, getattr(t, 'is_pydev_daemon_thread', False))
+    except:
+        pass
+    
+    stack_trace = [
+        '===============================================================================',
+        'Threads running',
+        '================================= Thread Dump =================================']
+    
+    for thread_id, stack in sys._current_frames().items():
+        stack_trace.append('\n-------------------------------------------------------------------------------')
+        stack_trace.append(" Thread %s" % thread_id_to_name.get(thread_id, thread_id))
+        stack_trace.append('')
+    
+        if 'self' in stack.f_locals:
+            stream.write(str(stack.f_locals['self']) + '\n')
+    
+        for filename, lineno, name, line in traceback.extract_stack(stack):
+            stack_trace.append(' File "%s", line %d, in %s' % (filename, lineno, name))
+            if line:
+                stack_trace.append("   %s" % (line.strip()))
+    stack_trace.append('\n=============================== END Thread Dump ===============================')
+    stream.write('\n'.join(stack_trace))
+
 
 def usage(doExit=0):
     sys.stdout.write('Usage:\n')
