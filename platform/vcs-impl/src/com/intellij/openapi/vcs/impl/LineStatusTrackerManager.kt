@@ -223,10 +223,9 @@ class LineStatusTrackerManager(
       if (forcedDocuments.containsKey(document)) return
 
       if (data.tracker is PartialLocalLineStatusTracker) {
-        val hasPartialChanges = data.tracker.affectedChangeListsIds.size > 1
-        val hasBlocksExcludedFromCommit = data.tracker.hasBlocksExcludedFromCommit()
+        val hasPartialChanges = data.tracker.hasPartialState()
         val isLoading = loader.hasRequest(RefreshRequest(document))
-        if (hasPartialChanges || hasBlocksExcludedFromCommit || isLoading) return
+        if (hasPartialChanges || isLoading) return
       }
 
       releaseTracker(document)
