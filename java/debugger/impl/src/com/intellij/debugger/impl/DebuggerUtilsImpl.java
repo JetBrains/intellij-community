@@ -5,7 +5,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.actions.DebuggerAction;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.SAPidRemoteConnection;
+import com.intellij.debugger.impl.attach.SAPidRemoteConnection;
 import com.intellij.debugger.engine.StackFrameContext;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.EvaluateException;

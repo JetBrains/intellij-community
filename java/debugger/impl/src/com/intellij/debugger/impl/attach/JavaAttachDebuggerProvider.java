@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.debugger.engine;
+package com.intellij.debugger.impl.attach;
 
+import com.intellij.debugger.engine.RemoteStateState;
 import com.intellij.debugger.impl.DebuggerManagerImpl;
 import com.intellij.debugger.impl.GenericDebuggerRunner;
 import com.intellij.execution.*;
@@ -55,10 +56,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
 
     @Override
     public void attachDebugSession(@NotNull Project project, @NotNull ProcessInfo processInfo) {
-      RunnerAndConfigurationSettings runSettings =
-        RunManager.getInstance(myProject).createRunConfiguration(myInfo.getSessionName(), ProcessAttachRunConfigurationType.FACTORY);
-      ((ProcessAttachRunConfiguration)runSettings.getConfiguration()).myAttachInfo = myInfo;
-      ProgramRunnerUtil.executeConfiguration(runSettings, ProcessAttachDebugExecutor.INSTANCE);
+      attach(myInfo, myProject);
     }
   }
 
@@ -146,7 +144,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
   }
 
   @Nullable
-  private static LocalAttachInfo getProcessAttachInfo(String pid) {
+  static LocalAttachInfo getProcessAttachInfo(String pid) {
     VirtualMachine vm = null;
     try {
       vm = VirtualMachine.attach(pid);
@@ -173,7 +171,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
         }
       }
     }
-    catch (AttachNotSupportedException | IOException ignored) {
+    catch (AttachNotSupportedException | InternalError | IOException ignored) {
     }
     finally {
       if (vm != null) {
@@ -213,7 +211,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     }
   }
 
-  private static class LocalAttachInfo {
+  static class LocalAttachInfo {
     final String myClass;
     final String myPid;
     final String mySAJarPath;
@@ -327,5 +325,13 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     public ConfigurationFactory[] getConfigurationFactories() {
       return new ConfigurationFactory[]{FACTORY};
     }
+  }
+
+  static void attach(JavaAttachDebuggerProvider.LocalAttachInfo info, Project project) {
+    RunnerAndConfigurationSettings runSettings =
+      RunManager
+        .getInstance(project).createRunConfiguration(info.getSessionName(), JavaAttachDebuggerProvider.ProcessAttachRunConfigurationType.FACTORY);
+    ((JavaAttachDebuggerProvider.ProcessAttachRunConfiguration)runSettings.getConfiguration()).myAttachInfo = info;
+    ProgramRunnerUtil.executeConfiguration(runSettings, JavaAttachDebuggerProvider.ProcessAttachDebugExecutor.INSTANCE);
   }
 }
