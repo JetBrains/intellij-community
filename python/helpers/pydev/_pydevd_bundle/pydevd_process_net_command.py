@@ -638,6 +638,9 @@ def process_net_command(py_db, cmd_id, seq, text):
             elif cmd_id == CMD_LOAD_SOURCE:
                 path = text
                 try:
+                    if not IS_PY3K:  # In Python 3, the frame object will have unicode for the file, whereas on python 2 it has a byte-array encoded with the filesystem encoding.
+                        path = path.encode(file_system_encoding)
+
                     path = pydevd_file_utils.norm_file_to_server(path)
                     f = open(path, 'r')
                     source = f.read()
