@@ -111,6 +111,9 @@ except:
     except:
         import io as StringIO
 
+from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE, PYDEV_FILE
+get_file_type = DONT_TRACE.get
+
 
 CMD_RUN = 101
 CMD_LIST_THREADS = 102
@@ -170,6 +173,8 @@ CMD_GET_DESCRIPTION = 148
 CMD_PROCESS_CREATED = 149
 CMD_SHOW_CYTHON_WARNING = 150
 CMD_LOAD_FULL_VALUE = 151
+
+CMD_GET_THREAD_STACK = 152
 
 CMD_PROCESS_CREATED_MSG_RECEIVED = 159
 
@@ -236,6 +241,7 @@ ID_TO_MEANING = {
     '149': 'CMD_PROCESS_CREATED',
     '150': 'CMD_SHOW_CYTHON_WARNING',
     '151': 'CMD_LOAD_FULL_VALUE',
+    '152': 'CMD_GET_THREAD_STACK',
 
     '159': 'CMD_PROCESS_CREATED_MSG_RECEIVED',
 
@@ -254,6 +260,7 @@ VERSION_STRING = "@@BUILD_NUMBER@@"
 
 from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
 file_system_encoding = getfilesystemencoding()
+filesystem_encoding_is_utf8 = file_system_encoding.lower() in ('utf-8', 'utf_8', 'utf8')
 
 
 class CommunicationRole(object):
@@ -656,6 +663,22 @@ class NetCommandFactory:
         except:
             return self.make_error_message(seq, get_exception_traceback_str())
 
+    def make_get_thread_stack_message(self, seq, thread_id, topmost_frame):
+        """Returns thread stack as XML """
+        try:
+            # If frame is None, the return is an empty frame list.
+            cmd_text = ['<xml><thread id="%s">' % (thread_id,)]
+
+            if topmost_frame is not None:
+                try:
+                    cmd_text.append(self.make_thread_stack_str(topmost_frame))
+                finally:
+                    topmost_frame = None
+            cmd_text.append('</thread></xml>')
+            return NetCommand(CMD_GET_THREAD_STACK, seq, ''.join(cmd_text))
+        except:
+            return self.make_error_message(seq, get_exception_traceback_str())
+
     def make_variable_changed_message(self, seq, payload):
         # notify debugger that value was changed successfully
         return NetCommand(CMD_RETURN, seq, payload)
@@ -688,71 +711,94 @@ class NetCommandFactory:
         except:
             return self.make_error_message(0, get_exception_traceback_str())
 
-    def make_thread_suspend_str(self, thread_id, frame, stop_reason, message, suspend_type="trace"):
-        """ <xml>
+    def make_thread_stack_str(self, frame):
+        make_valid_xml_value = pydevd_xml.make_valid_xml_value
+        cmd_text_list = []
+        append = cmd_text_list.append
+
+        curr_frame = frame
+        frame = None  # Clear frame reference
+        try:
+            while curr_frame:
+                my_id = id(curr_frame)
+
+                if curr_frame.f_code is None:
+                    break  # Iron Python sometimes does not have it!
+
+                method_name = curr_frame.f_code.co_name  # method name (if in method) or ? if global
+                if method_name is None:
+                    break  # Iron Python sometimes does not have it!
+
+                abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_frame(curr_frame)
+                if get_file_type(abs_path_real_path_and_base[2]) == PYDEV_FILE:
+                    # Skip pydevd files.
+                    curr_frame = curr_frame.f_back
+                    continue
+
+                filename_in_utf8 = pydevd_file_utils.norm_file_to_client(abs_path_real_path_and_base[0])
+                if not filesystem_encoding_is_utf8 and hasattr(filename_in_utf8, "decode"):
+                    # filename_in_utf8 is a byte string encoded using the file system encoding
+                    # convert it to utf8
+                    filename_in_utf8 = filename_in_utf8.decode(file_system_encoding).encode("utf-8")
+
+                # print("file is ", filename_in_utf8)
+
+                lineno = str(curr_frame.f_lineno)
+                # print("line is ", lineno)
+
+                # Note: variables are all gotten 'on-demand'.
+                append('<frame id="%s" name="%s" ' % (my_id , make_valid_xml_value(method_name)))
+                append('file="%s" line="%s">' % (quote(filename_in_utf8, '/>_= \t'), lineno))
+                append("</frame>")
+                curr_frame = curr_frame.f_back
+        except:
+            traceback.print_exc()
+
+        curr_frame = None  # Clear frame reference
+        return ''.join(cmd_text_list)
+
+    def make_thread_suspend_str(
+        self,
+        thread_id,
+        frame,
+        stop_reason=None,
+        message=None,
+        suspend_type="trace",
+        ):
+        """
+        :return str:
+        <xml>
             <thread id="id" stop_reason="reason">
-                    <frame id="id" name="functionName " file="file" line="line">
-                    <var variable stuffff....
+                <frame id="id" name="functionName " file="file" line="line">
                 </frame>
             </thread>
+        </xml>
         """
-        cmd_text_list = ["<xml>"]
-        append = cmd_text_list.append
         make_valid_xml_value = pydevd_xml.make_valid_xml_value
+        cmd_text_list = []
+        append = cmd_text_list.append
 
+        cmd_text_list.append('<xml>')
         if message:
             message = make_valid_xml_value(message)
 
-        append('<thread id="%s" stop_reason="%s" message="%s" suspend_type="%s">' % (thread_id, stop_reason, message, suspend_type))
-
-        curr_frame = frame
-        try:
-            while curr_frame:
-                #print cmdText
-                my_id = id(curr_frame)
-                #print "id is ", my_id
-
-                if curr_frame.f_code is None:
-                    break #Iron Python sometimes does not have it!
-
-                my_name = curr_frame.f_code.co_name #method name (if in method) or ? if global
-                if my_name is None:
-                    break #Iron Python sometimes does not have it!
-
-                #print "name is ", my_name
-
-                abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_frame(curr_frame)
-
-                myFile = pydevd_file_utils.norm_file_to_client(abs_path_real_path_and_base[0])
-                if file_system_encoding.lower() != "utf-8" and hasattr(myFile, "decode"):
-                    # myFile is a byte string encoded using the file system encoding
-                    # convert it to utf8
-                    myFile = myFile.decode(file_system_encoding).encode("utf-8")
-
-                #print "file is ", myFile
-                #myFile = inspect.getsourcefile(curr_frame) or inspect.getfile(frame)
-
-                myLine = str(curr_frame.f_lineno)
-                #print "line is ", myLine
-
-                #the variables are all gotten 'on-demand'
-                #variables = pydevd_xml.frame_vars_to_xml(curr_frame.f_locals)
-
-                variables = ''
-                append('<frame id="%s" name="%s" ' % (my_id , make_valid_xml_value(my_name)))
-                append('file="%s" line="%s">' % (quote(myFile, '/>_= \t'), myLine))
-                append(variables)
-                append("</frame>")
-                curr_frame = curr_frame.f_back
-        except :
-            traceback.print_exc()
-
+        append('<thread id="%s"' % (thread_id,))
+        if stop_reason is not None:
+            append(' stop_reason="%s"' % (stop_reason,))
+        if message is not None:
+            append(' message="%s"' % (message,))
+        if suspend_type is not None:
+            append(' suspend_type="%s"' % (suspend_type,))
+        append('>')
+        append(self.make_thread_stack_str(frame))
         append("</thread></xml>")
+
         return ''.join(cmd_text_list)
 
     def make_thread_suspend_message(self, thread_id, frame, stop_reason, message, suspend_type):
         try:
-            return NetCommand(CMD_THREAD_SUSPEND, 0, self.make_thread_suspend_str(thread_id, frame, stop_reason, message, suspend_type))
+            return NetCommand(CMD_THREAD_SUSPEND, 0, self.make_thread_suspend_str(
+                thread_id, frame, stop_reason, message, suspend_type))
         except:
             return self.make_error_message(0, get_exception_traceback_str())
 
