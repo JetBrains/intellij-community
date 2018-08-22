@@ -96,7 +96,7 @@ def trace_dispatch(py_db, frame, event, arg):
     thread_tracer = ThreadTracer((py_db, thread, additional_info, global_cache_skips, global_cache_frame_skips))
 
     if f_unhandled is not None:
-        # print(' --> found', f_unhandled.f_code.co_name, f_unhandled.f_code.co_filename, f_unhandled.f_code.co_firstlineno)
+        # print(' --> found to trace unhandled', f_unhandled.f_code.co_name, f_unhandled.f_code.co_filename, f_unhandled.f_code.co_firstlineno)
         if only_trace_for_unhandled_exceptions:
             f_trace = thread_tracer.trace_unhandled_exceptions
         else:
@@ -140,6 +140,7 @@ class PyDbFrameTraceAndUnhandledExceptionsTrace(object):
 
     def trace_dispatch(self, frame, event, arg):
         if event == 'exception' and arg is not None:
+            # print('self._unhandled_trace', self._unhandled_trace)
             self._unhandled_trace(frame, event, arg)
         else:
             self._pydb_frame_trace(frame, event, arg)
@@ -175,6 +176,7 @@ class ThreadTracer:
 
     def trace_unhandled_exceptions(self, frame, event, arg):
         # Note that we ignore the frame as this tracing method should only be put in topmost frames already.
+        # print('trace_unhandled_exceptions', event, frame.f_code.co_name, frame.f_code.co_filename, frame.f_code.co_firstlineno)
         if event == 'exception' and arg is not None:
             from _pydevd_bundle.pydevd_breakpoints import stop_on_unhandled_exception
             py_db, t, additional_info = self._args[0:3]
@@ -191,6 +193,7 @@ class ThreadTracer:
         # ENDIF
 
     def trace_dispatch_and_unhandled_exceptions(self, frame, event, arg):
+        # print('trace_dispatch_and_unhandled_exceptions', event, frame.f_code.co_name, frame.f_code.co_filename, frame.f_code.co_firstlineno)
         if event == 'exception' and arg is not None:
             self.trace_unhandled_exceptions(frame, event, arg)
             ret = self.trace_dispatch_and_unhandled_exceptions
@@ -204,7 +207,7 @@ class ThreadTracer:
                 # Ok, this frame needs to be traced and needs to deal with unhandled exceptions. Create
                 # a class which does this for us.
                 py_db_frame_trace_and_unhandled_exceptions_trace = PyDbFrameTraceAndUnhandledExceptionsTrace(
-                    self.trace_dispatch_and_unhandled_exceptions, pydb_frame_trace)
+                    pydb_frame_trace, self.trace_dispatch_and_unhandled_exceptions)
                 ret = py_db_frame_trace_and_unhandled_exceptions_trace.trace_dispatch
         # IFDEF CYTHON
         # return SafeCallWrapper(ret)
