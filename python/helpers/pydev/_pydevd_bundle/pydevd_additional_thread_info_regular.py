@@ -77,6 +77,7 @@ class PyDBAdditionalThreadInfo(object):
     # cdef public int suspend_type;
     # cdef public int pydev_next_line;
     # cdef public str pydev_func_name;
+    # cdef public bint suspended_at_unhandled;
     # ELSE
     __slots__ = [
         'pydev_state',
@@ -93,6 +94,7 @@ class PyDBAdditionalThreadInfo(object):
         'suspend_type',
         'pydev_next_line',
         'pydev_func_name',
+        'suspended_at_unhandled',
     ]
     # ENDIF
 
@@ -111,6 +113,7 @@ class PyDBAdditionalThreadInfo(object):
         self.suspend_type = PYTHON_SUSPEND
         self.pydev_next_line = -1
         self.pydev_func_name = '.invalid.'  # Must match the type in cython
+        self.suspended_at_unhandled = False
 
     def iter_frames(self, t):
         # sys._current_frames(): dictionary with thread id -> topmost frame
