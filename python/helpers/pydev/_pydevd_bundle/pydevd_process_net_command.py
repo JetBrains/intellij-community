@@ -5,7 +5,7 @@ import traceback
 from _pydev_bundle import pydev_log
 from _pydevd_bundle import pydevd_traceproperty, pydevd_tracing, pydevd_dont_trace
 import pydevd_file_utils
-from _pydevd_bundle.pydevd_breakpoints import LineBreakpoint, update_exception_hook
+from _pydevd_bundle.pydevd_breakpoints import LineBreakpoint
 from _pydevd_bundle.pydevd_comm import CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, CMD_THREAD_KILL, InternalTerminateThread, \
     CMD_THREAD_SUSPEND, pydevd_find_thread_by_id, CMD_THREAD_RUN, InternalRunThread, CMD_STEP_INTO, CMD_STEP_OVER, \
     CMD_STEP_RETURN, CMD_STEP_INTO_MY_CODE, InternalStepThread, CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT, \
@@ -459,9 +459,8 @@ def process_net_command(py_db, cmd_id, seq, text):
                             continue
                         added.append(exception_breakpoint)
 
-                    py_db.update_after_exceptions_added(added)
-                    if break_on_caught:
-                        py_db.enable_tracing_in_frames_while_running_if_frame_eval()
+                    py_db.enable_tracing_in_frames_while_running_if_frame_eval()
+                    py_db.set_tracing_for_untraced_contexts_if_not_frame_eval()
 
                 else:
                     sys.stderr.write("Error when setting exception list. Received: %s\n" % (text,))
@@ -548,9 +547,8 @@ def process_net_command(py_db, cmd_id, seq, text):
                     )
 
                     if exception_breakpoint is not None:
-                        py_db.update_after_exceptions_added([exception_breakpoint])
-                        if notify_always:
-                            py_db.enable_tracing_in_frames_while_running_if_frame_eval()
+                        py_db.enable_tracing_in_frames_while_running_if_frame_eval()
+                        py_db.set_tracing_for_untraced_contexts_if_not_frame_eval()
                 else:
                     supported_type = False
                     plugin = py_db.get_plugin_lazy_init()
@@ -583,7 +581,7 @@ def process_net_command(py_db, cmd_id, seq, text):
                         py_db.break_on_caught_exceptions = cp
                     except:
                         pydev_log.debug("Error while removing exception %s"%sys.exc_info()[0])
-                    update_exception_hook(py_db)
+                    py_db.set_tracing_for_untraced_contexts_if_not_frame_eval()
                 else:
                     supported_type = False
 
