@@ -1,10 +1,13 @@
 package circlet.actions
 
 import circlet.client.*
+import circlet.client.api.*
 import circlet.components.*
 import circlet.platform.client.*
 import com.intellij.notification.*
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.components.*
+import com.intellij.openapi.wm.impl.welcomeScreen.*
 import kotlinx.coroutines.experimental.*
 import runtime.*
 
@@ -15,16 +18,31 @@ class TestCircletAction : AnAction() {
     }
 
     override fun actionPerformed(e: AnActionEvent) {
+
+
         launch(UiDispatch.coroutineContext) {
             val project = e.project!!
             val result = project.connection.loginModel!!.client.me.info()
 
+            val profile = result.profile.resolve()
+
+            val projects = project.connection.loginModel!!.client.pr.projectsByMember(profile.id)
+
+            val prlist = projects.joinToString(", ") { it.name }
+
+            val repositories = project.connection.loginModel!!.client.repoService.repositories()
+
+
             Notification(
                 "Circlet",
                 "Circlet check",
-                "Me = $result",
+                "Hello, ${profile.englishFullName()}. Projects: $prlist, repos: ${repositories.joinToString(", ")}",
                 NotificationType.INFORMATION
             ).notify(project)
+
+
+            val c = service<RepositoryComponent>()
+            c.repositoryList.addAll(repositories)
         }
     }
 }

@@ -46,7 +46,7 @@ class JComponentBasedList<T : JComponentBasedList.Item>(parentLifetime: Lifetime
 
     private val panel = JPanel(VerticalFlowLayout(0, 0))
 
-    val component: Component = ScrollPaneFactory.createScrollPane(
+    val component: JComponent = ScrollPaneFactory.createScrollPane(
         panel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
     )
 
