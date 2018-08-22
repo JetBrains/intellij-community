@@ -26,7 +26,6 @@ get_file_type = DONT_TRACE.get
 # ELSE
 # ENDIF
 
-
 # Cache where we should keep that we completely skipped entering some context.
 # It needs to be invalidated when:
 # - Breakpoints are changed
@@ -79,6 +78,7 @@ def trace_dispatch(py_db, frame, event, arg):
         thread = threadingCurrentThread()
 
     if getattr(thread, 'pydev_do_not_trace', None):
+        SetTrace(None, apply_to_pydevd_thread=True)
         return None
 
     try:

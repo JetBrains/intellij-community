@@ -359,7 +359,7 @@ class PyDBDaemonThread(threading.Thread):
                 disable_tracing = False
 
             if disable_tracing:
-                pydevd_tracing.SetTrace(None)  # no debugging on this thread
+                pydevd_tracing.SetTrace(None, apply_to_pydevd_thread=True)  # no debugging on this thread
 
 
 #=======================================================================================================================
