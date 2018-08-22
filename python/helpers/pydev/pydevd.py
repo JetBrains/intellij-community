@@ -110,10 +110,11 @@ class PyDBCommandThread(PyDBDaemonThread):
         self.setName('pydevd.CommandThread')
 
     def _on_run(self):
-        for i in xrange(1, 10):
-            time.sleep(0.5) #this one will only start later on (because otherwise we may not have any non-daemon threads
-            if self.killReceived:
-                return
+        # Delay a bit this initialization to wait for the main program to start.
+        time.sleep(0.3)
+        
+        if self.killReceived:
+            return
 
         if self.pydev_do_not_trace:
             self.py_db.SetTrace(None) # no debugging on this thread
@@ -125,13 +126,12 @@ class PyDBCommandThread(PyDBDaemonThread):
                 except:
                     pydevd_log(0, 'Finishing debug communication...(2)')
                 self._py_db_command_thread_event.clear()
-                self._py_db_command_thread_event.wait(0.5)
+                self._py_db_command_thread_event.wait(0.3)
         except:
             pydev_log.debug(sys.exc_info()[0])
 
             #only got this error in interpreter shutdown
             #pydevd_log(0, 'Finishing debug communication...(3)')
-
 
 
 #=======================================================================================================================
@@ -493,6 +493,12 @@ class PyDB:
                     sys.stderr.write("Can't suspend thread: %s\n" % (t,))
                     
     def notify_thread_created(self, thread_id, thread, use_lock=True):
+        if self.writer is None:
+            # Protect about threads being created before the communication structure is in place
+            # (note that they will appear later on anyways as pydevd does reconcile live/dead threads
+            # when processing internal commands, albeit it may take longer and in general this should
+            # not be usual as it's expected that the debugger is live before other threads are created).
+            return
         if use_lock:
             self._lock_running_thread_ids.acquire()
         try:
