@@ -19,7 +19,7 @@ from _pydevd_bundle.pydevd_comm import CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, C
     CMD_RUN_CUSTOM_OPERATION, InternalRunCustomOperation, CMD_IGNORE_THROWN_EXCEPTION_AT, CMD_ENABLE_DONT_TRACE, \
     CMD_SHOW_RETURN_VALUES, ID_TO_MEANING, CMD_GET_DESCRIPTION, InternalGetDescription, InternalLoadFullValue, \
     CMD_LOAD_FULL_VALUE, CMD_PROCESS_CREATED_MSG_RECEIVED, CMD_REDIRECT_OUTPUT, CMD_GET_NEXT_STATEMENT_TARGETS, \
-    InternalGetNextStatementTargets, CMD_SET_PROJECT_ROOTS
+    InternalGetNextStatementTargets, CMD_SET_PROJECT_ROOTS, CMD_GET_THREAD_STACK
 from _pydevd_bundle.pydevd_constants import get_thread_id, IS_PY3K, DebugInfoHolder, dict_keys, STATE_RUN, \
     NEXT_VALUE_SEPARATOR
 from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
@@ -79,6 +79,20 @@ def process_net_command(py_db, cmd_id, seq, text):
                 # response is a list of threads
                 cmd = py_db.cmd_factory.make_list_threads_message(seq)
 
+            elif cmd_id == CMD_GET_THREAD_STACK:
+                thread_id = text
+
+                t = pydevd_find_thread_by_id(thread_id)
+                frame = None
+                if t and not getattr(t, 'pydev_do_not_trace', None):
+                    additional_info = set_additional_thread_info(t)
+                    frame = additional_info.get_topmost_frame(t)
+                try:
+                    cmd = py_db.cmd_factory.make_get_thread_stack_message(seq, thread_id, frame)
+                finally:
+                    frame = None
+                    t = None
+
             elif cmd_id == CMD_THREAD_KILL:
                 int_cmd = InternalTerminateThread(text)
                 py_db.post_internal_command(int_cmd, text)
@@ -88,9 +102,12 @@ def process_net_command(py_db, cmd_id, seq, text):
                 t = pydevd_find_thread_by_id(text)
                 if t and not getattr(t, 'pydev_do_not_trace', None):
                     additional_info = set_additional_thread_info(t)
-                    for frame in additional_info.iter_frames(t):
-                        py_db.set_trace_for_frame_and_parents(frame, overwrite_prev_trace=True)
-                        del frame
+                    frame = additional_info.get_topmost_frame(t)
+                    if frame is not None:
+                        try:
+                            py_db.set_trace_for_frame_and_parents(frame, overwrite_prev_trace=True)
+                        finally:
+                            frame = None
 
                     py_db.set_suspend(t, CMD_THREAD_SUSPEND)
                 elif text.startswith('__frame__:'):
