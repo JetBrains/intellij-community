@@ -1037,10 +1037,34 @@ class PyDB:
             module_name = file
             filename = get_fullname(file)
             if filename is None:
-                sys.stderr.write("No module named %s\n" % file)
-                return
+                mod_dir = get_package_dir(module_name)
+                if mod_dir is None:
+                    sys.stderr.write("No module named %s\n" % file)
+                    return
+                else:
+                    filename = get_fullname("%s.__main__" % module_name)
+                    if filename is None:
+                        sys.stderr.write("No module named %s\n" % file)
+                        return
+                    else:
+                        file = filename
             else:
                 file = filename
+                mod_dir = os.path.dirname(filename)
+                main_py = os.path.join(mod_dir, '__main__.py')
+                main_pyc = os.path.join(mod_dir, '__main__.pyc')
+                if filename.endswith('__init__.pyc'):
+                    if os.path.exists(main_pyc):
+                        filename = main_pyc
+                    elif os.path.exists(main_py):
+                        filename = main_py
+                elif filename.endswith('__init__.py'):
+                    if os.path.exists(main_pyc) and not os.path.exists(main_py):
+                        filename = main_pyc
+                    elif os.path.exists(main_py):
+                        filename = main_py
+
+            sys.argv[0] = filename
 
         if os.path.isdir(file):
             new_target = os.path.join(file, '__main__.py')
