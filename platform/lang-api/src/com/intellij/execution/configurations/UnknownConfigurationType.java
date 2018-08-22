@@ -5,7 +5,6 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.LazyUtil;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 public final class UnknownConfigurationType extends ConfigurationTypeBase {
@@ -13,7 +12,7 @@ public final class UnknownConfigurationType extends ConfigurationTypeBase {
   public static final UnknownConfigurationType INSTANCE = new UnknownConfigurationType();
 
   private UnknownConfigurationType() {
-    super(NAME, NAME, ExecutionBundle.message("run.configuration.unknown.description"), LazyUtil.create(() -> AllIcons.RunConfigurations.Unknown));
+    super(NAME, NAME, ExecutionBundle.message("run.configuration.unknown.description"), LazyUtil.create(() -> AllIcons.Actions.Help));
 
     addFactory(new ConfigurationFactory(this) {
       @NotNull
@@ -22,10 +21,11 @@ public final class UnknownConfigurationType extends ConfigurationTypeBase {
         return new UnknownRunConfiguration(this, project);
       }
 
-      @Contract(pure = true)
+      @NotNull
       @Override
-      public boolean canConfigurationBeSingleton() {
-        return false;
+      public RunConfigurationSingletonPolicy getSingletonPolicy() {
+        // in any case you cannot run UnknownConfigurationType
+        return RunConfigurationSingletonPolicy.SINGLE_INSTANCE_ONLY;
       }
     });
   }

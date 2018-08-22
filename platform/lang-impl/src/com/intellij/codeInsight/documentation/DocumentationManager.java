@@ -223,6 +223,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           if (action == myActionManager.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_UP)) return;
           if (action == ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_ESCAPE)) return;
           if (ActionPlaces.JAVADOC_INPLACE_SETTINGS.equals(event.getPlace())) return;
+          if (ActionPlaces.JAVADOC_TOOLBAR.equals(event.getPlace())) return;
           if (action instanceof BaseNavigateToSourceAction) return;
           closeDocHint();
         }

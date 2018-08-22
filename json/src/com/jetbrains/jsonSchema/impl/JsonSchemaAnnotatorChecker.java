@@ -544,17 +544,16 @@ class JsonSchemaAnnotatorChecker {
   }
 
   private void checkForEnum(PsiElement value, JsonSchemaObject schema) {
-    //enum values + pattern -> don't check enum values
-    if (schema.getEnum() == null || schema.getPattern() != null) return;
+    List<Object> enumItems = schema.getEnum();
+    if (enumItems == null) return;
     final JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(value, schema);
     if (walker == null) return;
     final String text = StringUtil.notNullize(walker.getNodeTextForValidation(value));
-    final List<Object> objects = schema.getEnum();
     BiFunction<String, String, Boolean> eq = myOptions.isCaseInsensitiveEnumCheck() ? String::equalsIgnoreCase : String::equals;
-    for (Object object : objects) {
+    for (Object object : enumItems) {
       if (checkEnumValue(object, walker, walker.createValueAdapter(value), text, eq)) return;
     }
-    error(ENUM_MISMATCH_PREFIX + StringUtil.join(objects, o -> o.toString(), ", "), value,
+    error(ENUM_MISMATCH_PREFIX + StringUtil.join(enumItems, o -> o.toString(), ", "), value,
           JsonValidationError.FixableIssueKind.NonEnumValue, null, JsonErrorPriority.MEDIUM_PRIORITY);
   }
 

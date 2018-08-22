@@ -185,20 +185,20 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
   }
 
   @Override
-  public String getDefaultObjectValue(boolean includeWhitespaces) {
-    return includeWhitespaces ? "\n  " : "";
+  public String getDefaultObjectValue() {
+    return "";
   }
 
   @Override
-  @Nullable public String defaultObjectValueDescription() { return "start object"; }
+  @Nullable public String defaultObjectValueDescription() { return "{...}"; }
 
   @Override
-  public String getDefaultArrayValue(boolean includeWhitespaces) {
-    return includeWhitespaces ? "\n  - " : "- ";
+  public String getDefaultArrayValue() {
+    return "- ";
   }
 
   @Override
-  @Nullable public String defaultArrayValueDescription() { return "start array"; }
+  @Nullable public String defaultArrayValueDescription() { return "[...]"; }
 
   @Override
   public boolean invokeEnterBeforeObjectAndArray() {

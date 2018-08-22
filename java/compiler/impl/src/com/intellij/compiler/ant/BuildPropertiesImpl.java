@@ -45,7 +45,7 @@ public class BuildPropertiesImpl extends BuildProperties {
     add(new Property(PROPERTY_COMPILER_ADDITIONAL_ARGS, javacSettings.ADDITIONAL_OPTIONS_STRING));
     //noinspection HardCodedStringLiteral
     final int heapSize = CompilerConfiguration.getInstance(project).getBuildProcessHeapSize(javacSettings.MAXIMUM_HEAP_SIZE);
-    add(new Property(PROPERTY_COMPILER_MAX_MEMORY, Integer.toString(heapSize) + "m"));
+    add(new Property(PROPERTY_COMPILER_MAX_MEMORY, heapSize + "m"));
 
     add(new IgnoredFiles());
 

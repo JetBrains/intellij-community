@@ -66,10 +66,15 @@ public final class ParametersList implements Cloneable {
 
   @NotNull
   public Map<String, String> getProperties() {
+    return getProperties("");
+  }
+
+  @NotNull
+  public Map<String, String> getProperties(String valueIfMissing) {
     Map<String, String> result = new LinkedHashMap<>();
     JBIterable<Matcher> matchers = JBIterable.from(myParameters).map(PROPERTY_PATTERN::matcher).filter(Matcher::matches);
     for (Matcher matcher : matchers) {
-      result.put(matcher.group(1), StringUtil.notNullize(matcher.group(2), ""));
+      result.put(matcher.group(1), StringUtil.notNullize(matcher.group(2), valueIfMissing));
     }
     return result;
   }

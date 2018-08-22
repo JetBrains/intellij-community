@@ -144,7 +144,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
   private class ShowAvailableOnlyOnAnalyzeInspectionsAction extends CheckboxAction implements DumbAware {
 
     public ShowAvailableOnlyOnAnalyzeInspectionsAction() {
-      super("Show Only \"Available only for Analyze | Inspect Code\"");
+      super("Show Only Batch-Mode Inspections");
     }
 
     @Override

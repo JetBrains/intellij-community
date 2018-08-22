@@ -48,7 +48,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   private final String myHelpTopic;
   private final boolean myBrokenConfiguration;
   private boolean myStoreProjectConfiguration;
-  private boolean mySingleton;
+  private boolean mySingleton = true;
   private String myFolderName;
   private boolean myChangingNameFromCode;
 
@@ -154,10 +154,6 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
   public boolean isStoreProjectConfiguration() {
     return myStoreProjectConfiguration;
-  }
-
-  public boolean isSingleton() {
-    return mySingleton;
   }
 
   @Nullable
@@ -286,7 +282,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   @NotNull
   public RunnerAndConfigurationSettings createSnapshot(boolean cloneBeforeRunTasks) throws ConfigurationException {
     RunnerAndConfigurationSettings snapshot = getEditor().getSnapshot();
-    snapshot.setSingleton(isSingleton());
+    snapshot.setSingleton(mySingleton);
     if (cloneBeforeRunTasks) {
       RunManagerImplKt.cloneBeforeRunTasks(snapshot.getConfiguration());
     }
@@ -319,7 +315,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     private JButton myFixButton;
     private JSeparator mySeparator;
     private JCheckBox myCbStoreProjectConfiguration;
-    private JBCheckBox myCbSingleton;
+    private JBCheckBox myIsAllowMultipleInstances;
     private JPanel myValidationPanel;
 
     private Runnable myQuickFix = null;
@@ -330,7 +326,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
       getEditor().addSettingsEditorListener(settingsEditor -> updateWarning());
       myWarningLabel.setCopyable(true);
-      myWarningLabel.setIcon(AllIcons.RunConfigurations.ConfigurationWarning);
+      myWarningLabel.setIcon(AllIcons.General.BalloonError);
 
       myComponentPlace.setLayout(new GridBagLayout());
       myComponentPlace.add(getEditorComponent(),
@@ -355,11 +351,11 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         public void actionPerformed(ActionEvent e) {
           setModified(true);
           myStoreProjectConfiguration = myCbStoreProjectConfiguration.isSelected();
-          mySingleton = myCbSingleton.isSelected();
+          mySingleton = !myIsAllowMultipleInstances.isSelected();
         }
       };
       myCbStoreProjectConfiguration.addActionListener(actionListener);
-      myCbSingleton.addActionListener(actionListener);
+      myIsAllowMultipleInstances.addActionListener(actionListener);
     }
 
     private void doReset(RunnerAndConfigurationSettings settings) {
@@ -370,9 +366,9 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       myCbStoreProjectConfiguration.setVisible(!settings.isTemplate());
 
       mySingleton = settings.isSingleton();
-      myCbSingleton.setEnabled(!isUnknownRunConfiguration);
-      myCbSingleton.setSelected(mySingleton);
-      myCbSingleton.setVisible(settings.getFactory().canConfigurationBeSingleton());
+      myIsAllowMultipleInstances.setEnabled(!isUnknownRunConfiguration);
+      myIsAllowMultipleInstances.setSelected(!mySingleton);
+      myIsAllowMultipleInstances.setVisible(settings.getFactory().getSingletonPolicy().isPolicyConfigurable());
     }
 
     public final JComponent getWholePanel() {

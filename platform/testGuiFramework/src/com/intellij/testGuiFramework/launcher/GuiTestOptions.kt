@@ -45,11 +45,9 @@ object GuiTestOptions {
   //system property to set what tests should be run. -Didea.gui.test.filter=ShortClassName1,ShortClassName2
   val filteredListOfTests: String by lazy { getSystemProperty(FILTER_KEY, NO_NEED_TO_FILTER_TESTS) }
 
-  val screenRecorderJarDirPath: String? by lazy { System.getProperty("idea.gui.test.screenrecorder.jar.dir.path") }
-  val testsToRecord: List<String> by lazy { System.getProperty("idea.gui.test.screenrecorder.tests_to_record")
-                                                  ?.split(";")
-                                            ?: emptyList() }
-  val videoDuration: Long by lazy { getSystemProperty("idea.gui.test.screenrecorder.video_duration_in_minutes", 3).toLong() }
+  val screenRecorderJarDirPath: String? by lazy { System.getenv("SCREENRECORDER_JAR_DIR") }
+  val testsToRecord: List<String> by lazy { System.getenv("SCREENRECOREDER_TESTS_TO_RECORD")?.split(";") ?: emptyList() }
+  val videoDuration: Long by lazy { System.getenv("SCREENRECORDER_VIDEO_DURATION")?.toLong() ?: 3 }
 
   private val configDefaultPath: String by lazy {
     try {

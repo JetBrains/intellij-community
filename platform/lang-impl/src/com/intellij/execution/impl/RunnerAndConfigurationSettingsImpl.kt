@@ -53,7 +53,7 @@ enum class RunConfigurationLevel {
 class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: RunManagerImpl,
                                                                    private var _configuration: RunConfiguration? = null,
                                                                    private var isTemplate: Boolean = false,
-                                                                   private var isSingleton: Boolean = false,
+                                                                   private var isSingleton: Boolean = true,
                                                                    var level: RunConfigurationLevel = RunConfigurationLevel.WORKSPACE) : Cloneable, RunnerAndConfigurationSettings, Comparable<Any>, SerializableScheme {
   companion object {
     @JvmStatic
@@ -181,12 +181,12 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
 
     wasSingletonSpecifiedExplicitly = false
     if (isTemplate) {
-      isSingleton = factory.isConfigurationSingletonByDefault
+      isSingleton = factory.singletonPolicy.isSingleton
     }
     else {
       val singletonStr = element.getAttributeValue(SINGLETON)
       if (singletonStr.isNullOrEmpty()) {
-        isSingleton = factory.isConfigurationSingletonByDefault
+        isSingleton = factory.singletonPolicy.isSingleton
       }
       else {
         wasSingletonSpecifiedExplicitly = true
@@ -258,7 +258,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
       if (!isActivateToolWindowBeforeRun) {
         element.setAttribute(ACTIVATE_TOOLWINDOW_BEFORE_RUN, "false")
       }
-      if (wasSingletonSpecifiedExplicitly || isSingleton != factory.isConfigurationSingletonByDefault) {
+      if (wasSingletonSpecifiedExplicitly || isSingleton != factory.singletonPolicy.isSingleton) {
         element.setAttribute(SINGLETON, isSingleton.toString())
       }
       if (isTemporary) {

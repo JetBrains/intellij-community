@@ -157,12 +157,27 @@ class MapBinding extends Binding implements MultiNodeBinding {
     }
   }
 
+  private static boolean isMutableMap(@NotNull Map object) {
+    if (object == Collections.emptyMap()) {
+      return false;
+    }
+    else {
+      String simpleName = object.getClass().getSimpleName();
+      return !simpleName.equals("EmptyMap") && !simpleName.equals("UnmodifiableMap");
+    }
+  }
+
   @Nullable
   private Map deserialize(@Nullable Object context, @NotNull List<Element> childNodes) {
     // if accessor is null, it is sub-map and we must not use context
     Map map = myAccessor == null ? null : (Map)context;
     if (map != null) {
-      map.clear();
+      if (isMutableMap(map)) {
+        map.clear();
+      }
+      else {
+        map = null;
+      }
     }
 
     for (Element childNode : childNodes) {

@@ -106,6 +106,14 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     return myEP != null ? myEP.getShortName() : getTool().getShortName();
   }
 
+  /**
+   * @return a first IDE version when inspection appears, or empty string if not specified
+   */
+  @NotNull
+  public String getSinceVersion() {
+    return myEP != null ? myEP.getSinceVersion() : "";
+  }
+
   public String getID() {
     return getShortName();
   }

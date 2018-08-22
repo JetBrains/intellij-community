@@ -50,8 +50,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author ven
@@ -445,7 +445,7 @@ public final class NavigationUtil {
       if (mnemonic != -1) {
         final Action action = createNumberAction(mnemonic, popup, itemsMap, processor);
         popup.registerAction(mnemonic + "Action", KeyStroke.getKeyStroke(String.valueOf(mnemonic)), action);
-        popup.registerAction(mnemonic + "Action", KeyStroke.getKeyStroke("NUMPAD" + String.valueOf(mnemonic)), action);
+        popup.registerAction(mnemonic + "Action", KeyStroke.getKeyStroke("NUMPAD" + mnemonic), action);
         hasMnemonic.set(true);
       }
     }

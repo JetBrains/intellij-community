@@ -49,6 +49,7 @@ public abstract class SearchPopupController {
       }
       else {
         hidePopup();
+        handleAppendToQuery();
         return;
       }
     }
@@ -220,7 +221,14 @@ public abstract class SearchPopupController {
 
   protected abstract void showPopupForQuery();
 
+  protected void handleAppendToQuery() {
+  }
+
   protected void handleAppendAttributeValue() {
+  }
+
+  public boolean isPopupShow() {
+    return myPopup != null && myPopup.isValid();
   }
 
   public void hidePopup() {

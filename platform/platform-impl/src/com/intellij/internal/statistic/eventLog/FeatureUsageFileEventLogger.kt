@@ -18,22 +18,25 @@ open class FeatureUsageFileEventLogger(private val sessionId: String,
 
   private var lastEvent: LogEvent? = null
   private var lastEventTime: Long = 0
+  private var lastEventCreatedTime: Long = 0
 
   override fun log(recorderId: String, action: String, isState: Boolean) {
     log(recorderId, action, Collections.emptyMap(), isState)
   }
 
   override fun log(recorderId: String, action: String, data: Map<String, Any>, isState: Boolean) {
+    val eventTime = System.currentTimeMillis()
     myLogExecutor.execute(Runnable {
-      val event = newLogEvent(sessionId, build, bucket, recorderId, recorderVersion, action, isState)
+      val creationTime = System.currentTimeMillis()
+      val event = newLogEvent(sessionId, build, bucket, eventTime, recorderId, recorderVersion, action, isState)
       for (datum in data) {
         event.event.addData(datum.key, datum.value)
       }
-      log(writer, event)
+      log(writer, event, creationTime)
     })
   }
 
-  private fun log(writer: FeatureUsageEventWriter, event: LogEvent) {
+  private fun log(writer: FeatureUsageEventWriter, event: LogEvent, createdTime: Long) {
     if (lastEvent != null && event.time - lastEventTime <= 10000 && lastEvent!!.shouldMerge(event)) {
       lastEventTime = event.time
       lastEvent!!.event.increment()
@@ -42,12 +45,17 @@ open class FeatureUsageFileEventLogger(private val sessionId: String,
       logLastEvent(writer)
       lastEvent = event
       lastEventTime = event.time
+      lastEventCreatedTime = createdTime
     }
   }
 
   private fun logLastEvent(writer: FeatureUsageEventWriter) {
-    if (lastEvent != null) {
-      writer.log(LogEventSerializer.toString(lastEvent!!))
+    lastEvent?.let {
+      if (it.event.isEventGroup()) {
+        it.event.addData("last", lastEventTime)
+      }
+      it.event.addData("created", lastEventCreatedTime)
+      writer.log(LogEventSerializer.toString(it))
     }
     lastEvent = null
   }
