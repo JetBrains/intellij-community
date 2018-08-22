@@ -161,18 +161,18 @@ public class GitUtil {
   @NotNull
   public static String readFile(@NotNull VirtualFile file) throws IOException {
     final int ATTEMPTS = 3;
-    for (int attempt = 0; attempt < ATTEMPTS; attempt++) {
+    int attempt = 1;
+    while (true) {
       try {
-        return new String(file.contentsToByteArray());
+        return new String(file.contentsToByteArray(), CharsetToolkit.UTF8_CHARSET);
       }
       catch (IOException e) {
         LOG.info(String.format("IOException while reading %s (attempt #%s)", file, attempt));
-        if (attempt >= ATTEMPTS - 1) {
+        if (attempt++ >= ATTEMPTS) {
           throw e;
         }
       }
     }
-    throw new AssertionError("Shouldn't get here. Couldn't read " + file);
   }
 
   /**
