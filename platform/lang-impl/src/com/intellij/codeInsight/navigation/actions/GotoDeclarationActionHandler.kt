@@ -4,7 +4,7 @@ package com.intellij.codeInsight.navigation.actions
 import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction.underModalProgress
 import com.intellij.featureStatistics.FeatureUsageTracker
-import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.command.runCommand
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
@@ -55,10 +55,10 @@ object GotoDeclarationActionHandler : CodeInsightActionHandler {
 
   private fun navigateInCurrentEditor(project: Project, editor: Editor, file: PsiFile, target: Target): Boolean {
     if (editor.isDisposed || target !is OpenFileDescriptor || target.file != file.virtualFile) return false
-    CommandProcessor.getInstance().executeCommand(project, {
+    runCommand {
       IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation()
       target.navigateIn(editor)
-    }, "", null)
+    }
     return true
   }
 
