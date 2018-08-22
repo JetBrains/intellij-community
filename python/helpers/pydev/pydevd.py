@@ -44,7 +44,8 @@ from _pydevd_frame_eval.pydevd_frame_eval_main import frame_eval_func, enable_ca
 from _pydevd_bundle.pydevd_utils import save_main_module
 from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogger, AsyncioLogger, send_message, cur_time
 from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads, wrap_asyncio
-from pydevd_file_utils import get_fullname, rPath
+from pydevd_file_utils import get_fullname, rPath, get_package_dir
+import pydev_ipython  # @UnusedImport
 
 
 __version_info__ = (1, 3, 3)
