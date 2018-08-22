@@ -20,7 +20,7 @@ class IORedirector:
             tdout/stderr which has a buffer to write binary data).
         '''
         self._redirect_to = (original, new_redirect)
-        if wrap_buffer:
+        if wrap_buffer and hasattr(original, 'buffer'):
             self.buffer = IORedirector(original.buffer, new_redirect.buffer, False)
 
     def write(self, s):
