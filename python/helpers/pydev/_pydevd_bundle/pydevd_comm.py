@@ -675,7 +675,19 @@ class NetCommandFactory:
 
             if topmost_frame is not None:
                 try:
-                    cmd_text.append(self.make_thread_stack_str(topmost_frame))
+                    # Note: if we detect that we're already stopped in a given place within
+                    # the debugger, use that stack instead of creating a new one with the
+                    # current position (this is needed because when an uncaught exception
+                    # is reported for a given frame we are actually stopped in a different
+                    # place within the debugger).
+                    frame = topmost_frame
+                    thread_stack_str = ''
+                    while frame is not None:
+                        if frame.f_code.co_name == 'do_wait_suspend' and frame.f_code.co_filename.endswith('pydevd.py'):
+                            thread_stack_str = frame.f_locals.get('thread_stack_str')
+                            break
+                        frame = frame.f_back
+                    cmd_text.append(thread_stack_str or self.make_thread_stack_str(topmost_frame))
                 finally:
                     topmost_frame = None
             cmd_text.append('</thread></xml>')
@@ -770,13 +782,25 @@ class NetCommandFactory:
         suspend_type="trace",
         ):
         """
-        :return str:
-        <xml>
-            <thread id="id" stop_reason="reason">
+        :return tuple(str,str):
+            Returns tuple(thread_suspended_str, thread_stack_str).
+            
+            i.e.:
+            (
+                '''
+                    <xml>
+                        <thread id="id" stop_reason="reason">
+                            <frame id="id" name="functionName " file="file" line="line">
+                            </frame>
+                        </thread>
+                    </xml>
+                '''
+                ,
+                '''
                 <frame id="id" name="functionName " file="file" line="line">
                 </frame>
-            </thread>
-        </xml>
+                '''
+            )
         """
         make_valid_xml_value = pydevd_xml.make_valid_xml_value
         cmd_text_list = []
@@ -794,15 +818,20 @@ class NetCommandFactory:
         if suspend_type is not None:
             append(' suspend_type="%s"' % (suspend_type,))
         append('>')
-        append(self.make_thread_stack_str(frame))
+        thread_stack_str = self.make_thread_stack_str(frame)
+        append(thread_stack_str)
         append("</thread></xml>")
 
-        return ''.join(cmd_text_list)
+        return ''.join(cmd_text_list), thread_stack_str
 
     def make_thread_suspend_message(self, thread_id, frame, stop_reason, message, suspend_type):
         try:
-            return NetCommand(CMD_THREAD_SUSPEND, 0, self.make_thread_suspend_str(
-                thread_id, frame, stop_reason, message, suspend_type))
+            
+            thread_suspend_str, thread_stack_str = self.make_thread_suspend_str(
+                thread_id, frame, stop_reason, message, suspend_type)
+            cmd = NetCommand(CMD_THREAD_SUSPEND, 0, thread_suspend_str)
+            cmd.thread_stack_str = thread_stack_str
+            return cmd
         except:
             return self.make_error_message(0, get_exception_traceback_str())
 
@@ -869,9 +898,11 @@ class NetCommandFactory:
 
             exc_type = pydevd_xml.make_valid_xml_value(str(exc_type)).replace('\t', '  ') or 'exception: type unknown'
             exc_desc = pydevd_xml.make_valid_xml_value(str(exc_desc)).replace('\t', '  ') or 'exception: no description'
+            
+            thread_suspend_str, _thread_stack_str = self.make_thread_suspend_str(
+                thread_id, trace_obj.tb_frame, CMD_SEND_CURR_EXCEPTION_TRACE, '')
 
-            payload = str(curr_frame_id) + '\t' + exc_type + "\t" + exc_desc + "\t" + \
-                self.make_thread_suspend_str(thread_id, trace_obj.tb_frame, CMD_SEND_CURR_EXCEPTION_TRACE, '')
+            payload = str(curr_frame_id) + '\t' + exc_type + "\t" + exc_desc + "\t" + thread_suspend_str
 
             return NetCommand(CMD_SEND_CURR_EXCEPTION_TRACE, seq, payload)
         except Exception:
@@ -908,7 +939,8 @@ class NetCommandFactory:
 
     def make_show_console_message(self, thread_id, frame):
         try:
-            return NetCommand(CMD_SHOW_CONSOLE, 0, self.make_thread_suspend_str(thread_id, frame, CMD_SHOW_CONSOLE, ''))
+            thread_suspended_str, _thread_stack_str = self.make_thread_suspend_str(thread_id, frame, CMD_SHOW_CONSOLE, '')
+            return NetCommand(CMD_SHOW_CONSOLE, 0, thread_suspended_str)
         except:
             return self.make_error_message(0, get_exception_traceback_str())
 
