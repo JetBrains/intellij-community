@@ -143,11 +143,95 @@ def init_mpl_in_console(interpreter):
         import_hook_manager.add_module_name(mod, interpreter.mpl_modules_for_patching.pop(mod))
 
 
+if sys.platform != 'win32':
+    def pid_exists(pid):
+        # Note that this function in the face of errors will conservatively consider that
+        # the pid is still running (because we'll exit the current process when it's
+        # no longer running, so, we need to be 100% sure it actually exited).
+
+        import errno
+        if pid == 0:
+            # According to "man 2 kill" PID 0 has a special meaning:
+            # it refers to <<every process in the process group of the
+            # calling process>> so we don't want to go any further.
+            # If we get here it means this UNIX platform *does* have
+            # a process with id 0.
+            return True
+        try:
+            os.kill(pid, 0)
+        except OSError as err:
+            if err.errno == errno.ESRCH:
+                # ESRCH == No such process
+                return False
+            elif err.errno == errno.EPERM:
+                # EPERM clearly means there's a process to deny access to
+                return True
+            else:
+                # According to "man 2 kill" possible error values are
+                # (EINVAL, EPERM, ESRCH) therefore we should never get
+                # here. If we do, although it's an error, consider it
+                # exists (see first comment in this function).
+                return True
+        else:
+            return True
+else:
+    def pid_exists(pid):
+        # Note that this function in the face of errors will conservatively consider that
+        # the pid is still running (because we'll exit the current process when it's
+        # no longer running, so, we need to be 100% sure it actually exited).
+        import ctypes
+        kernel32 = ctypes.windll.kernel32
+
+        PROCESS_QUERY_INFORMATION = 0x0400
+        PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+        ERROR_INVALID_PARAMETER = 0x57
+        STILL_ACTIVE = 259
+
+        process = kernel32.OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_QUERY_LIMITED_INFORMATION, 0, pid)
+        if not process:
+            err = kernel32.GetLastError()
+            if err == ERROR_INVALID_PARAMETER:
+                # Means it doesn't exist (pid parameter is wrong).
+                return False
+
+            # There was some unexpected error (such as access denied), so
+            # consider it exists (although it could be something else, but we don't want
+            # to raise any errors -- so, just consider it exists).
+            return True
+
+        try:
+            zero = ctypes.c_int(0)
+            exit_code = ctypes.pointer(zero)
+
+            exit_code_suceeded = kernel32.GetExitCodeProcess(process, exit_code)
+            if not exit_code_suceeded:
+                # There was some unexpected error (such as access denied), so
+                # consider it exists (although it could be something else, but we don't want
+                # to raise any errors -- so, just consider it exists).
+                return True
+
+
+            elif bool(exit_code.contents.value) and int(exit_code.contents.value) != STILL_ACTIVE:
+                return False
+        finally:
+            kernel32.CloseHandle(process)
+
+        return True
+
+
 def process_exec_queue(interpreter):
     init_mpl_in_console(interpreter)
     from pydev_ipython.inputhook import get_inputhook
+    try:
+        kill_if_pid_not_alive = int(os.environ.get('PYDEV_ECLIPSE_PID', '-1'))
+    except:
+        kill_if_pid_not_alive = -1
 
     while 1:
+        if kill_if_pid_not_alive != -1:
+            if not pid_exists(kill_if_pid_not_alive):
+                exit()
+
         # Running the request may have changed the inputhook in use
         inputhook = get_inputhook()
 
