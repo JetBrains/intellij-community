@@ -46,7 +46,7 @@ from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads, wra
 from pydevd_file_utils import get_fullname, rPath
 
 
-__version_info__ = (1, 3, 0)
+__version_info__ = (1, 3, 1)
 __version_info_str__ = []
 for v in __version_info__:
     __version_info_str__.append(str(v))
