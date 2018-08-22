@@ -137,13 +137,18 @@ def find_frame(thread_id, frame_id):
                 else:
                     msgFrames += '  -  '
 
-            errMsg = '''find_frame: frame not found.
-    Looking for thread_id:%s, frame_id:%s
-    Current     thread_id:%s, available frames:
-    %s\n
-    ''' % (thread_id, lookingFor, curr_thread_id, msgFrames)
-
-            sys.stderr.write(errMsg)
+# Note: commented this error message out (it may commonly happen 
+# if a message asking for a frame is issued while a thread is paused
+# but the thread starts running before the message is actually 
+# handled).
+# Leaving code to uncomment during tests.  
+#             err_msg = '''find_frame: frame not found.
+#     Looking for thread_id:%s, frame_id:%s
+#     Current     thread_id:%s, available frames:
+#     %s\n
+#     ''' % (thread_id, lookingFor, curr_thread_id, msgFrames)
+# 
+#             sys.stderr.write(err_msg)
             return None
 
         return frameFound
