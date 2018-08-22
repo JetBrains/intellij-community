@@ -93,7 +93,7 @@ public class UIUtil {
     else {
       ((EditorEx)editor).setEmbeddedIntoDialogWrapper(true);
     }
-  
+
     TemplateEditorUtil.setHighlighter(editor, contextType);
 
     if (addToolTipForVariableHandler) {
@@ -172,7 +172,7 @@ public class UIUtil {
 
   @NotNull
   public static JComponent createCompleteMatchInfo(final Producer<Configuration> configurationProducer) {
-    return installCompleteMatchInfo(new JLabel(AllIcons.RunConfigurations.Variables), configurationProducer);
+    return installCompleteMatchInfo(new JLabel(AllIcons.Actions.ListFiles), configurationProducer);
   }
 
   @NotNull

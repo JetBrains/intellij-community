@@ -30,4 +30,32 @@ public class AssertAll {
       () -> Assertions.assertTrue(<warning descr="Result of 's4.trim().isEmpty()' is always 'true'">s4.trim().isEmpty()</warning>)
     );
   }
+
+  interface Person {
+    String getFirstName();
+    String getLastName();
+  }
+
+  void testNested(Person person) {
+    Assertions.assertAll("properties",
+              () -> {
+                String firstName = person.getFirstName();
+                Assertions.assertNotNull(firstName);
+
+                Assertions.assertAll("first name",
+                          () -> Assertions.assertTrue(firstName.startsWith("J")),
+                          () -> Assertions.assertTrue(firstName.endsWith("n"))
+                );
+              },
+              () -> {
+                String lastName = person.getLastName();
+                Assertions.assertNotNull(lastName);
+
+                Assertions.assertAll("last name",
+                          () -> Assertions.assertTrue(lastName.startsWith("D")),
+                          () -> Assertions.assertTrue(lastName.endsWith("e"))
+                );
+              }
+    );
+  }
 }

@@ -7,9 +7,9 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EnvironmentUtil;
@@ -48,7 +48,8 @@ public class ExternalSystemJdkUtil {
       }
 
       if (project == null || project.isDefault()) {
-        Sdk recent = ProjectJdkTable.getInstance().findMostRecentSdkOfType(JavaSdk.getInstance());
+        SdkType javaSdk = getJavaSdk();
+        Sdk recent = javaSdk == null ? null : ProjectJdkTable.getInstance().findMostRecentSdkOfType(javaSdk);
         return recent != null ? recent : JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
       }
 
@@ -116,7 +117,7 @@ public class ExternalSystemJdkUtil {
   @NotNull
   public static SdkType getJavaSdkType() {
     // JavaSdk.getInstance() can be null for non-java IDE
-    JavaSdk javaSdk = JavaSdk.getInstance();
+    SdkType javaSdk = getJavaSdk();
     return javaSdk == null ? SimpleJavaSdkType.getInstance() : javaSdk;
   }
 
@@ -137,20 +138,25 @@ public class ExternalSystemJdkUtil {
 
   @NotNull
   public static Sdk addJdk(String homePath) {
-    // JavaSdk.getInstance() can be null for non-java IDE
-    JavaSdk javaSdk = JavaSdk.getInstance();
+    Sdk jdk;
+    SdkType javaSdk = getJavaSdk();
     if (javaSdk == null) {
       SimpleJavaSdkType simpleJavaSdkType = SimpleJavaSdkType.getInstance();
-      return simpleJavaSdkType.createJdk(simpleJavaSdkType.suggestSdkName(null, homePath), homePath);
+      jdk = simpleJavaSdkType.createJdk(simpleJavaSdkType.suggestSdkName(null, homePath), homePath);
     }
     else {
-      return ApplicationManager.getApplication().runWriteAction(
-        (Computable<Sdk>)() -> {
-          Sdk jdk = javaSdk.createJdk(javaSdk.suggestSdkName(null, homePath), homePath, false);
-          ProjectJdkTable.getInstance().addJdk(jdk);
-          return jdk;
-        }
-      );
+      jdk = ((JavaSdk)javaSdk).createJdk(javaSdk.suggestSdkName(null, homePath), homePath, false);
     }
+    SdkConfigurationUtil.addSdk(jdk);
+    return jdk;
+  }
+
+  @Nullable
+  private static SdkType getJavaSdk() {
+    try{
+      return JavaSdk.getInstance();
+    } catch (Throwable ignore) {
+    }
+    return null;
   }
 }

@@ -533,7 +533,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     public String toString() {
       return "{" +
              "id=" + myId +
-             ", parentId=" + (myParentNode != null ? String.valueOf(myParentNode.getId()) : "<undefined>") +
+             ", parentId=" + (myParentNode != null ? myParentNode.getId() : "<undefined>") +
              ", name='" + myProxy.getName() +
              "', isSuite=" + myProxy.isSuite() +
              ", state=" + myState +

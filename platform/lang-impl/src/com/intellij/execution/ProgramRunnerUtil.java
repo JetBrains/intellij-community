@@ -198,7 +198,7 @@ public class ProgramRunnerUtil {
   @NotNull
   public static Icon getRawIcon(@NotNull RunnerAndConfigurationSettings settings) {
     Icon icon = settings.getFactory().getIcon(settings.getConfiguration());
-    return icon == null ? AllIcons.RunConfigurations.Unknown : icon;
+    return icon == null ? AllIcons.Actions.Help : icon;
   }
 
   public static Icon getTemporaryIcon(@NotNull Icon rawIcon) {

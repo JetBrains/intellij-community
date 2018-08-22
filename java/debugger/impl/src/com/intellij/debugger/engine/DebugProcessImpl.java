@@ -96,7 +96,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   @NonNls private static final String SHMEM_ATTACHING_CONNECTOR_NAME = "com.sun.jdi.SharedMemoryAttach";
   @NonNls private static final String SOCKET_LISTENING_CONNECTOR_NAME = "com.sun.jdi.SocketListen";
   @NonNls private static final String SHMEM_LISTENING_CONNECTOR_NAME = "com.sun.jdi.SharedMemoryListen";
-  @NonNls static final String SAPID_ATTACHING_CONNECTOR_NAME = "sun.jvm.hotspot.jdi.SAPIDAttachingConnector";
 
   private final Project myProject;
   private final RequestManagerImpl myRequestManager;
@@ -445,15 +444,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
       if (myConnection instanceof SAPidRemoteConnection) {
         SAPidRemoteConnection pidRemoteConnection = (SAPidRemoteConnection)myConnection;
-        AttachingConnector connector;
-        try {
-          Class<?> connectorClass = Class.forName(SAPID_ATTACHING_CONNECTOR_NAME, true,
-                                                  new SAJDIClassLoader(getClass().getClassLoader(), pidRemoteConnection.getSAJarPath()));
-          connector = (AttachingConnector)connectorClass.newInstance();
-        }
-        catch (Exception e) {
-          throw new ExecutionException(processError(e), e);
-        }
+        AttachingConnector connector = pidRemoteConnection.getConnector();
         String pid = pidRemoteConnection.getPid();
         if (StringUtil.isEmpty(pid)) {
           throw new CantRunException(DebuggerBundle.message("error.no.pid"));

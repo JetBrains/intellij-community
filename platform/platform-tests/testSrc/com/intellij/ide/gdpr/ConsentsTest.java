@@ -26,7 +26,8 @@ public class ConsentsTest extends TestCase{
 
   private static String createUpgradeJson(String id, boolean isAccepted) {
     final long tstamp = System.currentTimeMillis();
-    return "[{\"consentId\":\""+id+"\",\"version\":\"1.5\",\"text\":\"This is an upgraded text of test consent option.\",\"printableName\":\"Test consent option\",\"accepted\":"+String.valueOf(isAccepted)+",\"deleted\":false,\"acceptanceTime\":"+tstamp+"}]";
+    return "[{\"consentId\":\"" + id + "\",\"version\":\"1.5\",\"text\":\"This is an upgraded text of test consent option.\",\"printableName\":\"Test consent option\",\"accepted\":" +
+           isAccepted + ",\"deleted\":false,\"acceptanceTime\":" + tstamp + "}]";
   }
 
   public void testUpdateDefaultsAndConfirmedFromServer() throws InterruptedException {

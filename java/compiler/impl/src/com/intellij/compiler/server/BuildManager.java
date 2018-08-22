@@ -1131,8 +1131,8 @@ public class BuildManager implements Disposable {
     if (shouldGenerateIndex != null) {
       cmdLine.addParameter("-D"+ GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION +"=" + shouldGenerateIndex);
     }
-    cmdLine.addParameter("-D"+ GlobalOptions.COMPILE_PARALLEL_OPTION +"=" + Boolean.toString(config.PARALLEL_COMPILATION));
-    cmdLine.addParameter("-D"+ GlobalOptions.REBUILD_ON_DEPENDENCY_CHANGE_OPTION + "=" + Boolean.toString(config.REBUILD_ON_DEPENDENCY_CHANGE));
+    cmdLine.addParameter("-D" + GlobalOptions.COMPILE_PARALLEL_OPTION + "=" + config.PARALLEL_COMPILATION);
+    cmdLine.addParameter("-D" + GlobalOptions.REBUILD_ON_DEPENDENCY_CHANGE_OPTION + "=" + config.REBUILD_ON_DEPENDENCY_CHANGE);
 
     if (Boolean.TRUE.equals(Boolean.valueOf(System.getProperty("java.net.preferIPv4Stack", "false")))) {
       cmdLine.addParameter("-Djava.net.preferIPv4Stack=true");

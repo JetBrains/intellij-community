@@ -203,9 +203,9 @@ object GuiTestUtilKt {
    *
    * @throws WaitTimedOutError with the text: "Timed out waiting for $timeout second(s) until {@code conditionText} will be not null"
    */
-  inline fun <ReturnType> withPauseWhenNull(conditionText: String = "function to probe will",
+  fun <ReturnType> withPauseWhenNull(conditionText: String = "function to probe will",
                                             timeout: Timeout = Timeouts.defaultTimeout,
-                                            crossinline functionProbeToNull: () -> ReturnType?): ReturnType {
+                                            functionProbeToNull: () -> ReturnType?): ReturnType {
     var result: ReturnType? = null
     waitUntil("$conditionText will be not null", timeout) {
       result = functionProbeToNull()
@@ -214,7 +214,7 @@ object GuiTestUtilKt {
     return result!!
   }
 
-  inline fun waitUntil(condition: String, timeout: Timeout = Timeouts.defaultTimeout, crossinline conditionalFunction: () -> Boolean) {
+  fun waitUntil(condition: String, timeout: Timeout = Timeouts.defaultTimeout, conditionalFunction: () -> Boolean) {
     Pause.pause(object : Condition("${timeout.toSec()} second(s) until $condition") {
       override fun test() = conditionalFunction()
     }, timeout)

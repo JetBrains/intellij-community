@@ -916,7 +916,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   private static class DimensionRenderer extends JLabel implements Renderer<Dimension> {
     @Override
     public JComponent setValue(@NotNull final Dimension value) {
-      setText(String.valueOf(value.width) + "x" + value.height);
+      setText(value.width + "x" + value.height);
       return this;
     }
   }

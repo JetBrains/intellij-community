@@ -249,9 +249,10 @@ open class MultipleFileMergeDialog(
     val selectedFiles = getSelectedFiles()
     val haveSelection = selectedFiles.any()
     val haveUnmergeableFiles = selectedFiles.any { mergeSession?.canMerge(it) == false }
+    val haveUnacceptableFiles = selectedFiles.any { mergeSession != null && mergeSession !is MergeSessionEx && !mergeSession.canMerge(it)}
 
-    acceptYoursButton.isEnabled = haveSelection
-    acceptTheirsButton.isEnabled = haveSelection
+    acceptYoursButton.isEnabled = haveSelection && !haveUnacceptableFiles
+    acceptTheirsButton.isEnabled = haveSelection && !haveUnacceptableFiles
     mergeButton.isEnabled = haveSelection && !haveUnmergeableFiles
   }
 
@@ -299,7 +300,7 @@ open class MultipleFileMergeDialog(
       }
       else {
         for (file in files) {
-          acceptFileRevision(file, resolution)
+          resolveFileViaContent(file, resolution)
           checkMarkModifiedProject(file)
           markFileProcessed(file, resolution)
         }
@@ -313,7 +314,7 @@ open class MultipleFileMergeDialog(
     updateModelFromFiles()
   }
 
-  private fun acceptFileRevision(file: VirtualFile, resolution: MergeSession.Resolution) {
+  private fun resolveFileViaContent(file: VirtualFile, resolution: MergeSession.Resolution) {
     if (!DiffUtil.makeWritable(project, file)) {
       throw IOException("File is read-only: " + file.presentableName)
     }

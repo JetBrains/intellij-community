@@ -244,7 +244,7 @@ public class AppEngineSupportProvider extends FrameworkSupportInModuleProvider {
       model.addFrameworkListener(this);
 
       myErrorLabel = new HyperlinkLabel();
-      myErrorLabel.setIcon(AllIcons.RunConfigurations.ConfigurationWarning);
+      myErrorLabel.setIcon(AllIcons.General.BalloonError);
       myErrorLabel.setVisible(false);
       myErrorLabel.setHyperlinkTarget(AppEngineSdkUtil.APP_ENGINE_DOWNLOAD_URL);
       myErrorPanel.add(BorderLayout.CENTER, myErrorLabel);

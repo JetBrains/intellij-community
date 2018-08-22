@@ -104,7 +104,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       }
     };
 
-    mySettingsButton = new MyToolbarButton("Settings", AllIcons.General.Gear, null, e -> {
+    mySettingsButton = new MyToolbarButton("Settings", AllIcons.General.GearPlain, null, e -> {
       final ActionPopupMenu popupMenu =
         ((ActionManagerImpl)ActionManager.getInstance()).createActionPopupMenu(BRANCH_POPUP, new DefaultActionGroup(mySettingsActions));
       popupMenu.getComponent().show(mySettingsButton, 0, assertNotNull(mySettingsButton).getHeight());

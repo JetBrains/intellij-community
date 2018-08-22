@@ -23,7 +23,6 @@ import com.intellij.xdebugger.attach.XDefaultLocalAttachGroup;
 import com.intellij.xdebugger.attach.XLocalAttachDebugger;
 import com.intellij.xdebugger.attach.XLocalAttachDebuggerProvider;
 import com.intellij.xdebugger.attach.XLocalAttachGroup;
-import com.sun.jdi.connect.Connector;
 import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.VirtualMachine;
 import org.jetbrains.annotations.Nls;
@@ -39,18 +38,6 @@ import java.util.*;
  * @author egor
  */
 public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider {
-  private static final boolean SA_PID_ATTACH_AVAILABLE;
-
-  static {
-    Connector sapidAttachConnector = null;
-    try {
-      sapidAttachConnector = DebugProcessImpl.findConnector(DebugProcessImpl.SAPID_ATTACHING_CONNECTOR_NAME);
-    }
-    catch (ExecutionException ignored) {
-    }
-    SA_PID_ATTACH_AVAILABLE = sapidAttachConnector != null;
-  }
-
   private static class JavaLocalAttachDebugger implements XLocalAttachDebugger {
     private final Project myProject;
     private final LocalAttachInfo myInfo;
@@ -178,7 +165,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       }
 
       // sa pid attach if sa-jdi.jar is available
-      if (SA_PID_ATTACH_AVAILABLE) {
+      if (SAPidRemoteConnection.isSAPidAttachAvailable()) {
         Properties systemProperties = vm.getSystemProperties();
         File saJdiJar = new File(systemProperties.getProperty("java.home"), "../lib/sa-jdi.jar"); // java 8 only for now
         if (saJdiJar.exists()) {

@@ -1112,7 +1112,11 @@ public class MavenProject {
 
   @NotNull
   private Map<String, String> readConfigFile(@SystemIndependent String relativePath) {
-    File baseDir = MavenUtil.getBaseDir(getDirectoryFile());
+    return readConfigFile(MavenUtil.getBaseDir(getDirectoryFile()), relativePath);
+  }
+
+  @NotNull
+  public static Map<String, String> readConfigFile(final File baseDir, @SystemIndependent String relativePath) {
     File configFile = new File(baseDir + FileUtil.toSystemDependentName(relativePath));
 
     ParametersList parametersList = new ParametersList();
