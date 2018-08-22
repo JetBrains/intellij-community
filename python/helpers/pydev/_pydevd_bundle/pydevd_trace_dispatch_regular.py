@@ -14,9 +14,8 @@ from _pydevd_bundle.pydevd_tracing import SetTrace
 # ELSE
 from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
 from _pydevd_bundle.pydevd_frame import PyDBFrame
-from os.path import basename, splitext
-
 # ENDIF
+from os.path import basename, splitext
 
 threadingCurrentThread = threading.currentThread
 get_file_type = DONT_TRACE.get
