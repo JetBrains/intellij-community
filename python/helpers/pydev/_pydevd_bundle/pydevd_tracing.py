@@ -124,8 +124,12 @@ def settrace_while_running_if_frame_eval(py_db, trace_func):
                 # that's ok, no info currently set
                 continue
 
-            for frame in additional_info.iter_frames(t):
-                py_db.set_trace_for_frame_and_parents(frame, overwrite_prev_trace=True, dispatch_func=trace_func)
+            frame = additional_info.get_topmost_frame(t)
+            if frame is not None:
+                try:
+                    py_db.set_trace_for_frame_and_parents(frame, overwrite_prev_trace=True, dispatch_func=trace_func)
+                finally:
+                    frame = None
             py_db.enable_cache_frames_without_breaks(False)
             # sometimes (when script enters new frames too fast), we can't enable tracing only in the appropriate
             # frame. So, if breakpoint was added during run, we should disable frame evaluation forever.

@@ -472,9 +472,12 @@ class PyDB:
                 if t is thread_suspended_at_bp:
                     continue
                 additional_info = set_additional_thread_info(t)
-                for frame in additional_info.iter_frames(t):
-                    self.set_trace_for_frame_and_parents(frame, overwrite_prev_trace=True)
-                    del frame
+                frame = additional_info.get_topmost_frame(t)
+                if frame is not None:
+                    try:
+                        self.set_trace_for_frame_and_parents(frame, overwrite_prev_trace=True)
+                    finally:
+                        frame = None
 
                 self.set_suspend(t, CMD_THREAD_SUSPEND)
 
@@ -653,12 +656,13 @@ class PyDB:
                 if getattr(t, 'is_pydev_daemon_thread', False):
                     continue
 
-                # TODO: optimize so that we only actually add that tracing if it's in
-                # the new breakpoint context.
                 additional_info = set_additional_thread_info(t)
-                for frame in additional_info.iter_frames(t):
-                    if frame is not ignore_frame:
+                frame = additional_info.get_topmost_frame(t)
+                try:
+                    if frame is not None and frame is not ignore_frame:
                         self.set_trace_for_frame_and_parents(frame, overwrite_prev_trace=overwrite_prev_trace)
+                finally:
+                    frame = None
         finally:
             frame = None
             t = None
