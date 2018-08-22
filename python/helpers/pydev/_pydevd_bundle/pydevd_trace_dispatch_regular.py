@@ -126,11 +126,6 @@ class ThreadTracer:
                 py_db._process_thread_not_alive(get_thread_id(t))
                 return None  # suspend tracing
 
-            try:
-                # Make fast path faster!
-                abs_path_real_path_and_base = NORM_PATHS_AND_BASE_CONTAINER[frame.f_code.co_filename]
-            except:
-                abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_frame(frame)
 
             if py_db.thread_analyser is not None:
                 py_db.thread_analyser.log_event(frame)
@@ -138,16 +133,21 @@ class ThreadTracer:
             if py_db.asyncio_analyser is not None:
                 py_db.asyncio_analyser.log_event(frame)
 
-            filename = abs_path_real_path_and_base[1]
             # Note: it's important that the context name is also given because we may hit something once
             # in the global context and another in the local context.
-            cache_key = (frame.f_lineno, frame.f_code.co_name, filename)
+            cache_key = (frame.f_lineno, frame.f_code.co_name, frame.f_code.co_filename)
             if not is_stepping and cache_key in cache_skips:
                 # print('skipped: trace_dispatch (cache hit)', cache_key, frame.f_lineno, event, frame.f_code.co_name)
                 return None
 
-            file_type = get_file_type(
-                abs_path_real_path_and_base[-1])  # we don't want to debug threading or anything related to pydevd
+            try:
+                # Make fast path faster!
+                abs_path_real_path_and_base = NORM_PATHS_AND_BASE_CONTAINER[frame.f_code.co_filename]
+            except:
+                abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_frame(frame)
+
+            filename = abs_path_real_path_and_base[1]
+            file_type = get_file_type(abs_path_real_path_and_base[-1])  # we don't want to debug threading or anything related to pydevd
 
             if file_type is not None:
                 if file_type == 1:  # inlining LIB_FILE = 1
