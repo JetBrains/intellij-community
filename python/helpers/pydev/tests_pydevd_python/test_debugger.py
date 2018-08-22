@@ -1657,8 +1657,25 @@ class WriterThreadCasePathTranslation(debugger_unittest.AbstractWriterThread):
 
 
 #=======================================================================================================================
+# WriterThreadCaseScapy
+#=======================================================================================================================
+class WriterThreadCaseScapy(debugger_unittest.AbstractWriterThread):
+
+    TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case_scapy.py')
+    
+    def run(self):
+        self.start_socket()
+        self.write_add_breakpoint(2, None)
+        self.write_make_initial_run()
+        
+        thread_id, frame_id = self.wait_for_breakpoint_hit()
+        
+        self.write_run_thread(thread_id)
+        self.finished_ok = True
+
+#=======================================================================================================================
 # WriterThreadCaseEvaluateErrors
-#======================================================================================================================
+#=======================================================================================================================
 class WriterThreadCaseEvaluateErrors(debugger_unittest.AbstractWriterThread):
 
     TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case7.py')
@@ -1930,6 +1947,9 @@ class Test(unittest.TestCase, debugger_unittest.DebuggerRunner):
         
     def test_case_settrace(self):
         self.check_case(WriterCaseSetTrace)
+        
+    def test_case_scapy(self):
+        self.check_case(WriterThreadCaseScapy)
 
     def test_redirect_output(self):
         self.check_case(WriterThreadCaseRedirectOutput)
