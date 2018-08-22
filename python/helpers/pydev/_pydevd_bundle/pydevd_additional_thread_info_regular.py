@@ -115,13 +115,15 @@ class PyDBAdditionalThreadInfo(object):
         self.pydev_func_name = '.invalid.'  # Must match the type in cython
         self.suspended_at_unhandled = False
 
-    def iter_frames(self, t):
+    def get_topmost_frame(self, thread):
+        '''
+        Gets the topmost frame for the given thread. Note that it may be None
+        and callers should remove the reference to the frame as soon as possible
+        to avoid disturbing user code.
+        '''
         # sys._current_frames(): dictionary with thread id -> topmost frame
         current_frames = _current_frames()
-        v = current_frames.get(t.ident)
-        if v is not None:
-            return [v]
-        return []
+        return current_frames.get(thread.ident)
 
     def __str__(self):
         return 'State:%s Stop:%s Cmd: %s Kill:%s' % (

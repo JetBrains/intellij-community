@@ -69,6 +69,8 @@ CMD_GET_ARRAY = 143
 CMD_STEP_INTO_MY_CODE = 144
 CMD_GET_CONCURRENCY_EVENT = 145
 
+CMD_GET_THREAD_STACK = 152
+
 CMD_REDIRECT_OUTPUT = 200
 CMD_GET_NEXT_STATEMENT_TARGETS = 201
 CMD_SET_PROJECT_ROOTS = 202
@@ -135,7 +137,7 @@ class ReaderThread(threading.Thread):
         self.all_received = []
         self._kill = False
         
-    def get_next_message(self, context_messag):
+    def get_next_message(self, context_message):
         try:
             msg = self._queue.get(block=True, timeout=15)
         except:
@@ -151,7 +153,7 @@ class ReaderThread(threading.Thread):
                 frame_info += stack_msg
                 frame = frame.f_back
             frame = None
-            sys.stdout.write('Message returned in get_next_message(): %s --  ctx: %s, asked at:\n%s\n' % (unquote_plus(unquote_plus(msg)), context_messag, frame_info))
+            sys.stdout.write('Message returned in get_next_message(): %s --  ctx: %s, asked at:\n%s\n' % (unquote_plus(unquote_plus(msg)), context_message, frame_info))
         return msg
 
     def run(self):
@@ -691,6 +693,10 @@ class AbstractWriterThread(threading.Thread):
         self.log.append('write_run_thread')
         self.write("%s\t%s\t%s" % (CMD_THREAD_RUN, self.next_seq(), thread_id,))
         
+    def write_get_thread_stack(self, thread_id):
+        self.log.append('write_get_thread_stack')
+        self.write("%s\t%s\t%s" % (CMD_GET_THREAD_STACK, self.next_seq(), thread_id,))
+
     def write_load_source(self, filename):
         self.log.append('write_load_source')
         self.write("%s\t%s\t%s" % (CMD_LOAD_SOURCE, self.next_seq(), filename,))
@@ -728,12 +734,8 @@ class AbstractWriterThread(threading.Thread):
         return seq
         
     def wait_for_list_threads(self, seq):
-        while True: 
-            # Note: get_next_message would timeout if there's no message.
-            last = self.reader_thread.get_next_message('wait_list_threads')
-            if last.startswith('502\t%s' % (seq,)):
-                return re.findall(r'\bid=\"(\w+)\"', last)
-                
+        return self.wait_for_message(lambda msg:msg.startswith('502\t%s' % (seq,)))
+
     def wait_for_message(self, accept_message, unquote_msg=True, expect_xml=True):
         import untangle
         from io import StringIO
