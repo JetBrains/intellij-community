@@ -706,7 +706,12 @@ def _get_debugger_test_file(filename):
         # realpath is a no-op on systems without islink support
         rPath = os.path.abspath
 
-    return os.path.normcase(rPath(os.path.join(os.path.dirname(__file__), filename)))
+    ret = os.path.normcase(rPath(os.path.join(os.path.dirname(__file__), filename)))
+    if not os.path.exists(ret):
+        ret = os.path.join(os.path.dirname(ret), 'resources', os.path.basename(ret))
+    if not os.path.exists(ret):
+        raise AssertionError('Expected: %s to exist.' % (ret,))
+    return ret
 
 def get_free_port():
     from _pydev_bundle.pydev_localhost import get_socket_name
