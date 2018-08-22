@@ -1072,6 +1072,7 @@ class PyDB:
             if os.path.isfile(new_target):
                 file = new_target
 
+        m = None
         if globals is None:
             m = save_main_module(file, 'pydevd')
             globals = m.__dict__
@@ -1083,27 +1084,28 @@ class PyDB:
         if locals is None:
             locals = globals
 
+        # Predefined (writable) attributes: __name__ is the module's name;
+        # __doc__ is the module's documentation string, or None if unavailable;
+        # __file__ is the pathname of the file from which the module was loaded,
+        # if it was loaded from a file. The __file__ attribute is not present for
+        # C modules that are statically linked into the interpreter; for extension modules
+        # loaded dynamically from a shared library, it is the pathname of the shared library file.
+
+
+        # I think this is an ugly hack, bug it works (seems to) for the bug that says that sys.path should be the same in
+        # debug and run.
+        if sys.path[0] != '' and m is not None and m.__file__.startswith(sys.path[0]):
+            # print >> sys.stderr, 'Deleting: ', sys.path[0]
+            del sys.path[0]
+
+        if not is_module:
+            # now, the local directory has to be added to the pythonpath
+            # sys.path.insert(0, os.getcwd())
+            # Changed: it's not the local directory, but the directory of the file launched
+            # The file being run must be in the pythonpath (even if it was not before)
+            sys.path.insert(0, os.path.split(rPath(file))[0])
+
         if set_trace:
-            # Predefined (writable) attributes: __name__ is the module's name;
-            # __doc__ is the module's documentation string, or None if unavailable;
-            # __file__ is the pathname of the file from which the module was loaded,
-            # if it was loaded from a file. The __file__ attribute is not present for
-            # C modules that are statically linked into the interpreter; for extension modules
-            # loaded dynamically from a shared library, it is the pathname of the shared library file.
-
-
-            # I think this is an ugly hack, bug it works (seems to) for the bug that says that sys.path should be the same in
-            # debug and run.
-            if sys.path[0] != '' and m.__file__.startswith(sys.path[0]):
-                # print >> sys.stderr, 'Deleting: ', sys.path[0]
-                del sys.path[0]
-
-            if not is_module:
-                # now, the local directory has to be added to the pythonpath
-                # sys.path.insert(0, os.getcwd())
-                # Changed: it's not the local directory, but the directory of the file launched
-                # The file being run must be in the pythonpath (even if it was not before)
-                sys.path.insert(0, os.path.split(rPath(file))[0])
 
             while not self.ready_to_run:
                 time.sleep(0.1)  # busy wait until we receive run command
