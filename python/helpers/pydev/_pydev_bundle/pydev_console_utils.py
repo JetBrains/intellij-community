@@ -10,7 +10,7 @@ from _pydev_bundle.pydev_stdin import StdIn, DebugConsoleStdIn
 from _pydev_imps._pydev_saved_modules import thread
 from _pydevd_bundle import pydevd_thrift
 from _pydevd_bundle import pydevd_vars
-from _pydevd_bundle.pydevd_constants import IS_JYTHON, dict_iter_items
+from _pydevd_bundle.pydevd_constants import IS_JYTHON, dict_iter_items, NEXT_VALUE_SEPARATOR, Null
 from pydev_console.protocol import CompletionOption, CompletionOptionType
 
 try:
@@ -357,8 +357,9 @@ class BaseInterpreterInterface(BaseCodeExecutor):
                 traceback.print_exc()
                 sys.stderr.write('pydevd is not available, cannot connect\n', )
 
+            from _pydevd_bundle.pydevd_constants import set_thread_id
             from _pydev_bundle import pydev_localhost
-            threading.currentThread().__pydevd_id__ = "console_main"
+            set_thread_id(threading.currentThread(), "console_main")
 
             self.orig_find_frame = pydevd_vars.find_frame
             pydevd_vars.find_frame = self._findFrame

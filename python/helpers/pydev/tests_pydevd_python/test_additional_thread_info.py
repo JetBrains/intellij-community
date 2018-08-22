@@ -3,7 +3,6 @@ import os
 from _pydev_bundle import pydev_monkey
 sys.path.insert(0, os.path.split(os.path.split(__file__)[0])[0])
 
-from _pydevd_bundle.pydevd_constants import Null
 import unittest
 
 try:
