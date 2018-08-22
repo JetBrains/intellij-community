@@ -49,6 +49,8 @@ IS_PY2 = False
 if sys.version_info[0] == 2:
     IS_PY2 = True
 
+IS_PY26 = sys.version_info[:2] == (2, 6)
+    
 if IS_PY2:
     builtin_qualifier = "__builtin__"
 else:
@@ -1949,6 +1951,7 @@ class Test(unittest.TestCase, debugger_unittest.DebuggerRunner):
     def test_case_settrace(self):
         self.check_case(WriterCaseSetTrace)
         
+    @pytest.mark.skipif(IS_PY26, reason='scapy only supports 2.7 onwards.')
     def test_case_scapy(self):
         self.check_case(WriterThreadCaseScapy)
 
