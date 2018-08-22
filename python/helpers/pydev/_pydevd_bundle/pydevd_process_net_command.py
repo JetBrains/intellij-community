@@ -449,6 +449,8 @@ def process_net_command(py_db, cmd_id, seq, text):
 
                         exception_breakpoint = py_db.add_break_on_exception(
                             exception_type,
+                            condition=None,
+                            expression=None,
                             notify_always=break_on_caught,
                             notify_on_terminate=break_on_uncaught,
                             notify_on_first_raise_only=False,
