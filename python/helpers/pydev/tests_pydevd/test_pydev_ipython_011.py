@@ -147,7 +147,9 @@ class TestRunningCode(TestBase):
         self.redirect_stdout()
         try:
             self.add_exec('?')
-            assert len(sys.stdout.getvalue()) > 1000, 'IPython help should be pretty big'
+            found = sys.stdout.getvalue()
+            if len(found) < 1000:
+                raise AssertionError('Expected IPython help to be big. Found: %s' % (found,))
         finally:
             self.restore_stdout()
 
@@ -156,7 +158,9 @@ class TestRunningCode(TestBase):
         self.redirect_stdout()
         try:
             self.add_exec('int?')
-            assert sys.stdout.getvalue().find('Convert') != -1
+            found = sys.stdout.getvalue()
+            if 'Convert' not in found:
+                raise AssertionError('Expected to find "Convert" in %s' % (found,))
         finally:
             self.restore_stdout()
 
