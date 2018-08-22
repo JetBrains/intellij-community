@@ -8,11 +8,11 @@ from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER
 from _pydevd_bundle.pydevd_tracing import SetTrace
 # IFDEF CYTHON
-# # In Cython, PyDBAdditionalThreadInfo is bundled in the file.
+# # In Cython, set_additional_thread_info is bundled in the file.
 # from cpython.object cimport PyObject
 # from cpython.ref cimport Py_INCREF, Py_XDECREF
 # ELSE
-from _pydevd_bundle.pydevd_additional_thread_info import PyDBAdditionalThreadInfo
+from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
 from _pydevd_bundle.pydevd_frame import PyDBFrame
 
 # ENDIF
@@ -86,7 +86,7 @@ def trace_dispatch(py_db, frame, event, arg):
         if additional_info is None:
             raise AttributeError()
     except:
-        additional_info = thread.additional_info = PyDBAdditionalThreadInfo()
+        additional_info = set_additional_thread_info(thread)
 
     # print('enter thread tracer', thread, get_thread_id(thread))
     thread_tracer = ThreadTracer((py_db, thread, additional_info, global_cache_skips, global_cache_frame_skips))
