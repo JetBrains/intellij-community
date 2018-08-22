@@ -121,9 +121,4 @@ class BuildOptions {
    */
   boolean isInDevelopmentMode = SystemProperties.getBooleanProperty("intellij.build.dev.mode",
                                                                     System.getProperty("teamcity.buildType.id") == null)
-
-  /**
-   * If {@code true} the compiled classes will be archived to zip file
-   */
-  boolean archiveCompiledClasses = SystemProperties.getBooleanProperty("intellij.build.archive.compiled.classes", true)
 }
