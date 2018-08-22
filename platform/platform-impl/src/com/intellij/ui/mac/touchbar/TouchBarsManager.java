@@ -76,10 +76,12 @@ public class TouchBarsManager {
           @Override
           public void processTerminated(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler, int exitCode) {
             // TODO: probably, need to remove debugger-panel from stack completely
+            final String twid = env.getExecutor().getToolWindowId();
             ourStack.pop(topContainer -> {
               if (topContainer.getType() != BarType.DEBUGGER)
                 return false;
-              if (!executorId.equals(ToolWindowId.DEBUG) && !executorId.equals(ToolWindowId.RUN_DASHBOARD))
+
+              if (!ToolWindowId.DEBUG.equals(twid) && !ToolWindowId.RUN_DASHBOARD.equals(twid))
                 return false;
 
               // System.out.println("processTerminated, dbgSessionsCount=" + pd.getDbgSessions());
