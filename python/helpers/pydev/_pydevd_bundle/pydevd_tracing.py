@@ -69,7 +69,7 @@ def _internal_set_trace(tracing_func):
         TracingFunctionHolder._original_tracing(tracing_func)
 
 
-def SetTrace(tracing_func, frame_eval_func=None, dummy_tracing_func=None):
+def SetTrace(tracing_func, frame_eval_func=None, dummy_tracing_func=None, apply_to_pydevd_thread=False):
     if tracing_func is not None and frame_eval_func is not None:
         # There is no need to set tracing function if frame evaluation is available
         frame_eval_func()
@@ -82,8 +82,9 @@ def SetTrace(tracing_func, frame_eval_func=None, dummy_tracing_func=None):
 
     current_thread = threading.currentThread()
     do_not_trace_before = getattr(current_thread, 'pydev_do_not_trace', None)
-    if do_not_trace_before:
-        return
+    if not apply_to_pydevd_thread:
+        if do_not_trace_before:
+            return
     try:
         TracingFunctionHolder._lock.acquire()
         current_thread.pydev_do_not_trace = True  # avoid settrace reentering
