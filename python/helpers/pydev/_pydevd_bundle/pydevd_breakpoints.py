@@ -5,7 +5,7 @@ from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame
 from _pydev_imps._pydev_saved_modules import threading
 
 
-class ExceptionBreakpoint:
+class ExceptionBreakpoint(object):
 
     def __init__(
             self,
