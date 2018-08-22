@@ -306,20 +306,19 @@ class PyDB:
             self.plugin = PluginManager(self)
         return self.plugin
 
-    def not_in_scope(self, filename):
-        return pydevd_utils.not_in_project_roots(filename)
+    def in_project_scope(self, filename):
+        return pydevd_utils.in_project_roots(filename)
 
     def is_ignored_by_filters(self, filename):
         return pydevd_utils.is_ignored_by_filter(filename)
 
-    def first_appearance_in_scope(self, trace):
-        if trace is None or self.not_in_scope(trace.tb_frame.f_code.co_filename):
+    def is_exception_trace_in_project_scope(self, trace):
+        if trace is None or not self.in_project_scope(trace.tb_frame.f_code.co_filename):
             return False
         else:
             trace = trace.tb_next
             while trace is not None:
-                frame = trace.tb_frame
-                if not self.not_in_scope(frame.f_code.co_filename):
+                if not self.in_project_scope(trace.tb_frame.f_code.co_filename):
                     return False
                 trace = trace.tb_next
             return True
@@ -704,8 +703,8 @@ class PyDB:
             exception,
             condition,
             expression,
-            notify_always,
-            notify_on_terminate,
+            notify_on_handled_exceptions,
+            notify_on_unhandled_exceptions,
             notify_on_first_raise_only,
             ignore_libraries=False
     ):
@@ -714,8 +713,8 @@ class PyDB:
                     exception,
                     condition,
                     expression,
-                    notify_always,
-                    notify_on_terminate,
+                    notify_on_handled_exceptions,
+                    notify_on_unhandled_exceptions,
                     notify_on_first_raise_only,
                     ignore_libraries
             )
@@ -723,14 +722,14 @@ class PyDB:
             pydev_log.error("Error unable to add break on exception for: %s (exception could not be imported)\n" % (exception,))
             return None
 
-        if eb.notify_on_terminate:
+        if eb.notify_on_unhandled_exceptions:
             cp = self.break_on_uncaught_exceptions.copy()
             cp[exception] = eb
             if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
                 pydev_log.error("Exceptions to hook on terminate: %s\n" % (cp,))
             self.break_on_uncaught_exceptions = cp
 
-        if eb.notify_always:
+        if eb.notify_on_handled_exceptions:
             cp = self.break_on_caught_exceptions.copy()
             cp[exception] = eb
             if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
