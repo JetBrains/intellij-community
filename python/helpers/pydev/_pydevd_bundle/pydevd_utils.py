@@ -13,7 +13,7 @@ import inspect
 from _pydevd_bundle.pydevd_constants import IS_PY3K, get_global_debugger
 import sys
 from _pydev_bundle import pydev_log
-
+from _pydev_imps._pydev_saved_modules import threading
 
 
 def _normpath(filename):
@@ -312,3 +312,42 @@ def is_ignored_by_filter(filename, filename_to_ignored_by_filters_cache={}):
 
         return filename_to_ignored_by_filters_cache[filename]
 
+
+def dump_threads(stream=None):
+    '''
+    Helper to dump thread info.
+    '''
+    if stream is None:
+        stream = sys.stderr
+    thread_id_to_name = {}
+    try:
+        for t in threading.enumerate():
+            thread_id_to_name[t.ident] = '%s  (daemon: %s, pydevd thread: %s)' % (
+                t.name, t.daemon, getattr(t, 'is_pydev_daemon_thread', False))
+    except:
+        pass
+
+    stream.write('===============================================================================\n')
+    stream.write('Threads running\n')
+    stream.write('================================= Thread Dump =================================\n')
+
+    for thread_id, stack in sys._current_frames().items():
+        stream.write('\n-------------------------------------------------------------------------------\n')
+        stream.write(" Thread %s" % thread_id_to_name.get(thread_id, thread_id))
+        stream.write('\n\n')
+
+        for i, (filename, lineno, name, line) in enumerate(traceback.extract_stack(stack)):
+
+            stream.write(' File "%s", line %d, in %s\n' % (filename, lineno, name))
+            if line:
+                stream.write("   %s\n" % (line.strip()))
+
+            if i == 0 and 'self' in stack.f_locals:
+                stream.write('   self: ')
+                try:
+                    stream.write(str(stack.f_locals['self']))
+                except:
+                    stream.write('Unable to get str of: %s' % (type(stack.f_locals['self']),))
+                stream.write('\n')
+
+    stream.write('\n=============================== END Thread Dump ===============================')
