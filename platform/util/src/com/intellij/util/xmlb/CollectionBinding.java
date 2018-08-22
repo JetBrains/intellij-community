@@ -15,7 +15,16 @@ class CollectionBinding extends AbstractCollectionBinding  {
   }
 
   private static boolean isMutableCollection(@Nullable Object object) {
-    return object instanceof Collection && !object.getClass().getSimpleName().startsWith("Unmodifiable");
+    if (object == Collections.emptyList() || object == Collections.emptySet()) {
+      return false;
+    }
+    else if (object instanceof Collection) {
+      String simpleName = object.getClass().getSimpleName();
+      return !simpleName.equals("EmptyList") && !simpleName.startsWith("Unmodifiable") && !simpleName.equals("EmptySet");
+    }
+    else {
+      return false;
+    }
   }
 
   @NotNull
