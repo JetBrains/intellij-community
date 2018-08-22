@@ -185,8 +185,7 @@ class ThreadTracer:
                     if frame.f_back is not None:
                         additional_info.suspended_at_unhandled = True
 
-                    exctype, value, tb = arg
-                    stop_on_unhandled_exception(py_db, t, additional_info, exctype, value, tb)
+                    stop_on_unhandled_exception(py_db, t, additional_info, arg)
         # IFDEF CYTHON
         # return SafeCallWrapper(self.trace_unhandled_exceptions)
         # ELSE
