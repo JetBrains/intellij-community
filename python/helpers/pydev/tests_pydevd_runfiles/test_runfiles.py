@@ -1,5 +1,6 @@
 import os.path
 import sys
+from tests_python.test_debugger import IS_PY26
 
 IS_JYTHON = sys.platform.find('java') != -1
 
@@ -199,6 +200,21 @@ class RunfilesTest(unittest.TestCase):
         for t in tests:
             total += t.countTestCases()
         return total
+    
+    def test_runfile_imports(self):
+        from _pydev_runfiles import pydev_runfiles_coverage
+        from _pydev_runfiles import pydev_runfiles_parallel_client
+        from _pydev_runfiles import pydev_runfiles_parallel
+        import pytest
+        if IS_PY26:
+            with pytest.raises(AssertionError) as e:
+                from _pydev_runfiles import pydev_runfiles_pytest2
+            assert 'Please upgrade pytest' in str(e)
+        else:
+            from _pydev_runfiles import pydev_runfiles_pytest2
+        from _pydev_runfiles import pydev_runfiles_unittest
+        from _pydev_runfiles import pydev_runfiles_xml_rpc
+        from _pydev_runfiles import pydev_runfiles
 
     def test___match(self):
         matcher = self.MyTestRunner._PydevTestRunner__match

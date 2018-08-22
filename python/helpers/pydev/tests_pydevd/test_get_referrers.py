@@ -93,6 +93,7 @@ class Test(unittest.TestCase):
 
 
     def test_get_referrers6(self):
+        import sys
         container = dict(a=[1])
 
         def should_appear(obj):
@@ -100,7 +101,11 @@ class Test(unittest.TestCase):
             return pydevd_referrers.get_referrer_info(obj)
 
         result = should_appear(container['a'])
-        assert 'should_appear' in result
+        if sys.version_info[:2] >= (3, 7):
+            # In Python 3.7 the frame is not appearing in gc.get_referrers.
+            assert 'should_appear' not in result
+        else:
+            assert 'should_appear' in result
 
 
     def test_get_referrers7(self):

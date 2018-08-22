@@ -1,3 +1,5 @@
+from _pydevd_bundle.pydevd_constants import IS_JYTHON
+from collections import namedtuple
 try:
     from urllib import quote, quote_plus, unquote_plus
 except ImportError:
@@ -72,6 +74,7 @@ CMD_GET_CONCURRENCY_EVENT = 145
 
 CMD_GET_THREAD_STACK = 152
 CMD_THREAD_DUMP_TO_STDERR = 153  # This is mostly for unit-tests to diagnose errors on ci.
+CMD_STOP_ON_START = 154
 
 CMD_REDIRECT_OUTPUT = 200
 CMD_GET_NEXT_STATEMENT_TARGETS = 201
@@ -86,6 +89,7 @@ REASON_CAUGHT_EXCEPTION = CMD_STEP_CAUGHT_EXCEPTION
 REASON_UNCAUGHT_EXCEPTION = CMD_ADD_EXCEPTION_BREAK
 REASON_STOP_ON_BREAKPOINT = CMD_SET_BREAK
 REASON_THREAD_SUSPEND = CMD_THREAD_SUSPEND
+REASON_STEP_INTO_MY_CODE = CMD_STEP_INTO_MY_CODE
 
 
 # Always True (because otherwise when we do have an error, it's hard to diagnose).
@@ -103,6 +107,8 @@ try:
     xrange
 except:
     xrange = range
+
+Hit = namedtuple('Hit', 'thread_id, frame_id, line, suspend_type, name, file')
 
 def overrides(method):
     '''
@@ -398,6 +404,20 @@ class AbstractWriterThread(threading.Thread):
         if re.match(r'^(\d+)\t(\d)+', line):
             return True
         
+        if IS_JYTHON:
+            for expected in (
+                'org.python.netty.util.concurrent.DefaultPromise', 
+                'org.python.netty.util.concurrent.SingleThreadEventExecutor', 
+                'Failed to submit a listener notification task. Event loop shut down?',
+                'java.util.concurrent.RejectedExecutionException',
+                'An event executor terminated with non-empty task',
+                ):
+                if expected in line:
+                    return True
+
+            if line.strip().startswith('at '):
+                return True        
+            
         return False
         
     def additional_output_checks(self, stdout, stderr):
@@ -507,15 +527,16 @@ class AbstractWriterThread(threading.Thread):
                 return msg, ctx
 
         
-    def wait_for_breakpoint_hit(self, *args, **kwargs):
-        return self.wait_for_breakpoint_hit_with_suspend_type(*args, **kwargs)[:-1]
-
-    def wait_for_breakpoint_hit_with_suspend_type(self, reason=REASON_STOP_ON_BREAKPOINT, get_line=False, get_name=False):
+    def wait_for_breakpoint_hit(self, reason=REASON_STOP_ON_BREAKPOINT, **kwargs):
         '''
             108 is over
             109 is return
             111 is breakpoint
         '''
+        # note: those must be passed in kwargs.
+        line = kwargs.get('line')
+        file = kwargs.get('file')
+
         self.log.append('Start: wait_for_breakpoint_hit')
         # wait for hit breakpoint
         last = self.reader_thread.get_next_message('wait_for_breakpoint_hit. reason=%s' % (reason,))
@@ -524,27 +545,27 @@ class AbstractWriterThread(threading.Thread):
             
 
         # we have something like <xml><thread id="12152656" stop_reason="111"><frame id="12453120" name="encode" ...
-        splitted = last.split('"')
-        suspend_type = splitted[7]
-        thread_id = splitted[1]
-        frame_id = splitted[9]
-        name = splitted[11]
-        if get_line:
-            self.log.append('End(0): wait_for_breakpoint_hit: %s' % (last,))
-            try:
-                if not get_name:
-                    return thread_id, frame_id, int(splitted[15]), suspend_type
-                else:
-                    return thread_id, frame_id, int(splitted[15]), name, suspend_type
-            except:
-                raise AssertionError('Error with: %s, %s, %s.\nLast: %s.\n\nAll: %s\n\nSplitted: %s' % (
-                    thread_id, frame_id, splitted[13], last, '\n'.join(self.reader_thread.all_received), splitted))
-
-        self.log.append('End(1): wait_for_breakpoint_hit: %s' % (last,))
-        if not get_name:
-            return thread_id, frame_id, suspend_type
+        if len(msg.thread.frame) == 0:
+            frame = msg.thread.frame
         else:
-            return thread_id, frame_id, name, suspend_type
+            frame = msg.thread.frame[0]
+        thread_id = msg.thread['id']
+        frame_id = frame['id']
+        suspend_type = msg.thread['suspend_type']
+        name = frame['name']
+        frame_line = int(frame['line'])
+        frame_file = frame['file']
+
+        if file is not None:
+            assert frame_file.endswith(file), 'Expected hit to be in file %s, was: %s' % (file, frame_file)
+
+        if line is not None:
+            assert line == frame_line, 'Expected hit to be in line %s, was: %s' % (line, frame_line)
+
+        self.log.append('End(1): wait_for_breakpoint_hit: %s' % (msg.original_xml,))
+
+        return Hit(
+            thread_id=thread_id, frame_id=frame_id, line=frame_line, suspend_type=suspend_type, name=name, file=frame_file)
 
     def wait_for_get_next_statement_targets(self):
         last = ''
@@ -589,6 +610,8 @@ class AbstractWriterThread(threading.Thread):
             expected_vars = [expected_vars]
             
         all_found = []
+        ignored = []
+        
         while True:
             try:
                 last = self.reader_thread.get_next_message('wait_for_multiple_vars: %s' % (expected_vars,))
@@ -597,23 +620,36 @@ class AbstractWriterThread(threading.Thread):
                 for v in expected_vars:
                     if v not in all_found:
                         missing.append(v)
-                raise ValueError('Not Found:\n%s\nNot found messages: %s\nFound messages: %s\nExpected messages: %s' % (
-                    '\n'.join(missing), len(missing), len(all_found), len(expected_vars)))
-            found = 0
+                raise ValueError('Not Found:\n%s\nNot found messages: %s\nFound messages: %s\nExpected messages: %s\nIgnored messages:\n%s' % (
+                    '\n'.join(missing), len(missing), len(all_found), len(expected_vars), '\n'.join(ignored)))
+                
+            was_message_used = False
+            new_expected = []
             for expected in expected_vars:
+                found_expected = False
                 if isinstance(expected, (tuple, list)):
                     for e in expected:
                         if self._is_var_in_last(e, last):
+                            was_message_used = True
+                            found_expected = True
                             all_found.append(expected)
-                            found += 1
                             break
                 else:
                     if self._is_var_in_last(expected, last):
+                        was_message_used = True
+                        found_expected = True
                         all_found.append(expected)
-                        found += 1
                         
-            if found == len(expected_vars):
+                if not found_expected:
+                    new_expected.append(expected)
+
+            expected_vars = new_expected
+                        
+            if not expected_vars:
                 return True
+            
+            if not was_message_used:
+                ignored.append(last)
                         
     wait_for_var = wait_for_multiple_vars
     wait_for_vars = wait_for_multiple_vars
@@ -624,7 +660,8 @@ class AbstractWriterThread(threading.Thread):
         self.log.append('write_make_initial_run')
 
     def write_version(self):
-        self.write("501\t%s\t1.0\tWINDOWS\tID" % self.next_seq())
+        from _pydevd_bundle.pydevd_constants import IS_WINDOWS
+        self.write("501\t%s\t1.0\t%s\tID" % (self.next_seq(), 'WINDOWS' if IS_WINDOWS else 'UNIX'))
         
     def get_main_filename(self):
         return self.TEST_FILE
@@ -639,6 +676,9 @@ class AbstractWriterThread(threading.Thread):
         self.write("111\t%s\t%s\t%s\t%s\t%s\t%s\tNone\tNone" % (self.next_seq(), breakpoint_id, 'python-line', filename, line, func))
         self.log.append('write_add_breakpoint: %s line: %s func: %s' % (breakpoint_id, line, func))
         return breakpoint_id
+
+    def write_stop_on_start(self, stop=True):
+        self.write("%s\t%s\t%s" % (CMD_STOP_ON_START, self.next_seq(), stop))
 
     def write_dump_threads(self):
         self.write("%s\t%s\t" % (CMD_THREAD_DUMP_TO_STDERR, self.next_seq()))
@@ -772,7 +812,9 @@ class AbstractWriterThread(threading.Thread):
                     except:
                         traceback.print_exc()
                         raise AssertionError('Unable to parse:\n%s\nxml:\n%s' % (last, xml))
-                    return xml.xml
+                    ret = xml.xml
+                    ret.original_xml = last
+                    return ret
                 else:
                     return last
             if prev != last:

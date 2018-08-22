@@ -129,7 +129,8 @@ class Test(unittest.TestCase):
                          desc.find('str join(str self, list sequence)') >= 0 or
                          desc.find('S.join(iterable) -> str') >= 0 or
                          desc.find('S.join(iterable) -> unicode') >= 0 or
-                         desc.find('join(self: str, sequence: list) -> str') >= 0,
+                         desc.find('join(self: str, sequence: list) -> str') >= 0 or
+                         desc.find('Concatenate any number of strings.') >= 0,
                          "Could not recognize: %s" % (desc,))
         finally:
             sys.stdout = self.original_stdout
