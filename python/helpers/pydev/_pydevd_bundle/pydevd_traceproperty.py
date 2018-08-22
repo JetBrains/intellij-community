@@ -3,6 +3,7 @@
 from _pydevd_bundle.pydevd_comm import get_global_debugger
 from _pydevd_bundle.pydevd_constants import DebugInfoHolder, IS_PY2
 from _pydevd_bundle import pydevd_tracing
+import traceback
 
 #=======================================================================================================================
 # replace_builtin_property
@@ -17,14 +18,14 @@ def replace_builtin_property(new_property=None):
             __builtin__.__dict__['property'] = new_property
         except:
             if DebugInfoHolder.DEBUG_TRACE_LEVEL:
-                import traceback;traceback.print_exc() #@Reimport
+                traceback.print_exc() #@Reimport
     else:
         try:
             import builtins #Python 3.0 does not have the __builtin__ module @UnresolvedImport
             builtins.__dict__['property'] = new_property
         except:
             if DebugInfoHolder.DEBUG_TRACE_LEVEL:
-                import traceback;traceback.print_exc() #@Reimport
+                traceback.print_exc() #@Reimport
     return original
 
 

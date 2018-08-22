@@ -176,6 +176,7 @@ CMD_LOAD_FULL_VALUE = 151
 
 CMD_GET_THREAD_STACK = 152
 CMD_THREAD_DUMP_TO_STDERR = 153  # This is mostly for unit-tests to diagnose errors on ci.
+CMD_STOP_ON_START = 154
 
 CMD_PROCESS_CREATED_MSG_RECEIVED = 159
 
@@ -244,6 +245,7 @@ ID_TO_MEANING = {
     '151': 'CMD_LOAD_FULL_VALUE',
     '152': 'CMD_GET_THREAD_STACK',
     '153': 'CMD_THREAD_DUMP_TO_STDERR',
+    '154': 'CMD_STOP_ON_START',
 
     '159': 'CMD_PROCESS_CREATED_MSG_RECEIVED',
 
@@ -750,7 +752,7 @@ class NetCommandFactory:
 
                 # Note: variables are all gotten 'on-demand'.
                 append('<frame id="%s" name="%s" ' % (my_id , make_valid_xml_value(method_name)))
-                append('file="%s" line="%s">' % (quote(filename_in_utf8, '/>_= \t'), lineno))
+                append('file="%s" line="%s">' % (quote(make_valid_xml_value(filename_in_utf8), '/>_= \t'), lineno))
                 append("</frame>")
                 curr_frame = curr_frame.f_back
         except:

@@ -55,6 +55,7 @@ class TestCPython(unittest.TestCase):
             '(self, object cmp, object key, bool reverse)',
             '(self, cmp: object, key: object, reverse: bool)',
             '(key=None, reverse=False)',
+            '(self, key=None, reverse=False)',
         )
 
     def test_imports2a(self):

@@ -248,7 +248,7 @@ def in_project_roots(filename, filename_to_in_scope_cache=_FILENAME_TO_IN_SCOPE_
     except:
         project_roots = _get_project_roots()
         original_filename = filename
-        if not filename.startswith('<'):
+        if not filename.endswith('>'):
             filename = _normpath(filename)
         filename = _normpath(filename)
 
@@ -326,12 +326,14 @@ def dump_threads(stream=None):
                 t.name, t.daemon, getattr(t, 'is_pydev_daemon_thread', False))
     except:
         pass
+    
+    from _pydevd_bundle.pydevd_additional_thread_info_regular import _current_frames
 
     stream.write('===============================================================================\n')
     stream.write('Threads running\n')
     stream.write('================================= Thread Dump =================================\n')
 
-    for thread_id, stack in sys._current_frames().items():
+    for thread_id, stack in _current_frames().items():
         stream.write('\n-------------------------------------------------------------------------------\n')
         stream.write(" Thread %s" % thread_id_to_name.get(thread_id, thread_id))
         stream.write('\n\n')

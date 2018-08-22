@@ -13,8 +13,8 @@ elif hasattr(_temp, '_Thread__stopped'): # Python 2.x has this
         return not t._Thread__stopped
 
 else: 
-    # Make it an error: we want to detect only stops (so, isAlive() can't be used because it may return True before the
-    # thread is actually running).
-    raise AssertionError('Check how to detect that a thread has been stopped.')
+    # Jython wraps a native java thread and thus only obeys the public API.
+    def is_thread_alive(t):
+        return t.isAlive()
 
 del _temp

@@ -19,9 +19,9 @@ from _pydevd_bundle.pydevd_comm import CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, C
     CMD_RUN_CUSTOM_OPERATION, InternalRunCustomOperation, CMD_IGNORE_THROWN_EXCEPTION_AT, CMD_ENABLE_DONT_TRACE, \
     CMD_SHOW_RETURN_VALUES, ID_TO_MEANING, CMD_GET_DESCRIPTION, InternalGetDescription, InternalLoadFullValue, \
     CMD_LOAD_FULL_VALUE, CMD_PROCESS_CREATED_MSG_RECEIVED, CMD_REDIRECT_OUTPUT, CMD_GET_NEXT_STATEMENT_TARGETS, \
-    InternalGetNextStatementTargets, CMD_SET_PROJECT_ROOTS, CMD_GET_THREAD_STACK, CMD_THREAD_DUMP_TO_STDERR
+    InternalGetNextStatementTargets, CMD_SET_PROJECT_ROOTS, CMD_GET_THREAD_STACK, CMD_THREAD_DUMP_TO_STDERR, CMD_STOP_ON_START
 from _pydevd_bundle.pydevd_constants import get_thread_id, IS_PY3K, DebugInfoHolder, dict_keys, STATE_RUN, \
-    NEXT_VALUE_SEPARATOR
+    NEXT_VALUE_SEPARATOR, IS_WINDOWS
 from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
 
 def process_net_command(py_db, cmd_id, seq, text):
@@ -51,7 +51,13 @@ def process_net_command(py_db, cmd_id, seq, text):
             elif cmd_id == CMD_VERSION:
                 # response is version number
                 # ide_os should be 'WINDOWS' or 'UNIX'.
-                ide_os = 'WINDOWS'
+
+                # Default based on server process (although ideally the IDE should
+                # provide it).
+                if IS_WINDOWS:
+                    ide_os = 'WINDOWS'
+                else:
+                    ide_os = 'UNIX'
 
                 # Breakpoints can be grouped by 'LINE' or by 'ID'.
                 breakpoints_by = 'LINE'
@@ -790,6 +796,9 @@ def process_net_command(py_db, cmd_id, seq, text):
 
             elif cmd_id == CMD_THREAD_DUMP_TO_STDERR:
                 pydevd_utils.dump_threads()
+
+            elif cmd_id == CMD_STOP_ON_START:
+                py_db.stop_on_start = text.strip() in ('True', 'true', '1')
 
             else:
                 #I have no idea what this is all about
