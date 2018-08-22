@@ -221,7 +221,7 @@ class DebuggerRunner(object):
         process = subprocess.Popen(
             args,
             stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
+            stderr=subprocess.PIPE,
             cwd=writer_thread.get_cwd() if writer_thread is not None else '.',
             env=writer_thread.get_environ() if writer_thread is not None else None,
         )
@@ -234,7 +234,7 @@ class DebuggerRunner(object):
         finish = [False]
 
         try:
-            def read(stream, buffer):
+            def read(stream, buffer, debug_stream, stream_name):
                 for line in stream.readlines():
                     if finish[0]:
                         return
@@ -242,10 +242,11 @@ class DebuggerRunner(object):
                         line = line.decode('utf-8', errors='replace')
 
                     if SHOW_STDOUT:
-                        sys.stdout.write('stdout: %s' % (line,))
+                        debug_stream.write('%s: %s' % (stream_name, line,))
                     buffer.append(line)
 
-            start_new_thread(read, (process.stdout, stdout))
+            start_new_thread(read, (process.stdout, stdout, sys.stdout, 'stdout'))
+            start_new_thread(read, (process.stderr, stderr, sys.stderr, 'stderr'))
 
 
             if SHOW_OTHER_DEBUG_INFO:
@@ -333,8 +334,29 @@ class AbstractWriterThread(threading.Thread):
         self._next_breakpoint_id = 0
         self.log = []
         
+    def _ignore_stderr_line(self, line):
+        if line.startswith((
+            'debugger: ', 
+            '>>', 
+            '<<', 
+            'warning: Debugger speedups',
+            'pydev debugger: New process is launching',
+            'pydev debugger: To debug that process'
+            )):
+            return True
+        
+        if re.match(r'^(\d+)\t(\d)+', line):
+            return True
+        
+        return False
+        
     def additional_output_checks(self, stdout, stderr):
-        pass
+        for line in stderr.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            if not self._ignore_stderr_line(line):
+                raise AssertionError('Did not expect to have line in stderr:\n\n%s\n\nFull stderr:\n\n%s' % (line, stderr))
 
     def get_environ(self):
         return None
