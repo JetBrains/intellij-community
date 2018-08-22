@@ -1293,6 +1293,29 @@ class WriterThreadCaseEventExt(debugger_unittest.AbstractWriterThread):
         return env
 
 #=======================================================================================================================
+# WriterThreadCaseThreadCreationDeadlock - check case where there was a deadlock evaluating expressions
+#======================================================================================================================
+class WriterThreadCaseThreadCreationDeadlock(debugger_unittest.AbstractWriterThread):
+
+    TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case_thread_creation_deadlock.py')
+
+    def run(self):
+        self.start_socket()
+        self.write_add_breakpoint(26, None)
+        self.write_make_initial_run()
+
+        thread_id, frame_id, line = self.wait_for_breakpoint_hit('111', True)
+
+        assert line == 26, 'Expected return to be in line 26, was: %s' % line
+
+        self.write_evaluate_expression('%s\t%s\t%s' % (thread_id, frame_id, 'LOCAL'), 'create_thread()')
+        self.wait_for_evaluation('<var name="create_thread()" type="str" qualifier="{0}" value="str: create_thread:ok'.format(builtin_qualifier))
+        self.write_run_thread(thread_id)
+
+
+        self.finished_ok = True
+
+#=======================================================================================================================
 # Test
 #=======================================================================================================================
 class Test(unittest.TestCase, debugger_unittest.DebuggerRunner):
@@ -1461,6 +1484,9 @@ class Test(unittest.TestCase, debugger_unittest.DebuggerRunner):
     @unittest.skipIf(IS_IRONPYTHON, reason='Failing on IronPython (needs to be investigated).')
     def test_case_event_ext(self):
         self.check_case(WriterThreadCaseEventExt)
+
+    def test_case_writer_thread_creation_deadlock(self):
+        self.check_case(WriterThreadCaseThreadCreationDeadlock)
 
 
 @unittest.skipIf(not IS_CPYTHON, reason='CPython only test.')

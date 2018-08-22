@@ -52,15 +52,17 @@ class TestCPython(unittest.TestCase):
         l.append(('De,f)2', 'de,s,c,ription2', ''))
         msg = t.processor.format_completion_message(None, l)
         self.assertEqual('@@COMPLETIONS(None,(Def,desc%2C%2Cr%2C%2Ci%28%29ption, ),(Def%281,descriptio%28n1, ),(De%2Cf%292,de%2Cs%2Cc%2Cription2, ))END@@', msg)
-    def create_connections(self, p1=50002):
+
+    def create_connections(self):
         '''
         Creates the connections needed for testing.
         '''
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server.bind((pycompletionserver.HOST, p1))
+        server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        server.bind((pycompletionserver.HOST, 0))
         server.listen(1)  #socket to receive messages.
 
-        t = pycompletionserver.CompletionServer(p1)
+        t = pycompletionserver.CompletionServer(server.getsockname()[1])
         t.exit_process_on_kill = False
         start_new_thread(t.run, ())
 

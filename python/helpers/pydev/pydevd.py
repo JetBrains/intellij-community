@@ -491,7 +491,7 @@ class PyDB:
                     self.set_suspend(t, CMD_THREAD_SUSPEND)
                 else:
                     sys.stderr.write("Can't suspend thread: %s\n" % (t,))
-                    
+
     def notify_thread_created(self, thread_id, thread, use_lock=True):
         if self.writer is None:
             # Protect about threads being created before the communication structure is in place
@@ -499,27 +499,38 @@ class PyDB:
             # when processing internal commands, albeit it may take longer and in general this should
             # not be usual as it's expected that the debugger is live before other threads are created).
             return
+
         if use_lock:
             self._lock_running_thread_ids.acquire()
         try:
             if thread_id in self._running_thread_ids:
                 return
-            
+
             if not hasattr(thread, 'additional_info'):
                 # see http://sourceforge.net/tracker/index.php?func=detail&aid=1955428&group_id=85796&atid=577329
                 # Let's create the additional info right away!
                 thread.additional_info = PyDBAdditionalThreadInfo()
+
+            elif thread.additional_info.pydev_notify_kill:
+                # After we notify it should be killed, make sure we don't notify it's alive (on a racing condition
+                # this could happen as we may notify before the thread is stopped internally).
+                return
+
             self._running_thread_ids[thread_id] = thread
-            self.writer.add_command(self.cmd_factory.make_thread_created_message(thread))
         finally:
             if use_lock:
                 self._lock_running_thread_ids.release()
-                
+
+        self.writer.add_command(self.cmd_factory.make_thread_created_message(thread))
+
     def notify_thread_not_alive(self, thread_id, use_lock=True):
         """ if thread is not alive, cancel trace_dispatch processing """
+        if self.writer is None:
+            return
+
         if use_lock:
             self._lock_running_thread_ids.acquire()
-            
+
         try:
             thread = self._running_thread_ids.pop(thread_id, None)
             if thread is None:
@@ -528,22 +539,19 @@ class PyDB:
             was_notified = thread.additional_info.pydev_notify_kill
             if not was_notified:
                 thread.additional_info.pydev_notify_kill = True
-                cmd = self.cmd_factory.make_thread_killed_message(thread_id)
-                self.writer.add_command(cmd)
         finally:
             if use_lock:
                 self._lock_running_thread_ids.release()
 
+        self.writer.add_command(self.cmd_factory.make_thread_killed_message(thread_id))
 
     def process_internal_commands(self):
         '''This function processes internal commands
         '''
         self._main_lock.acquire()
         try:
-
             self.check_output_redirect()
 
-            curr_thread_id = get_thread_id(threadingCurrentThread())
             program_threads_alive = {}
             all_threads = threadingEnumerate()
             program_threads_dead = []
@@ -563,68 +571,33 @@ class PyDB:
                             # get new id with its process number and the debugger loses access to both threads.
                             # Therefore we should update thread_id for every main thread in the new process.
 
-                            # TODO: Investigate: should we do this for all threads in threading.enumerate()?
-                            # (i.e.: if a fork happens on Linux, this seems likely).
-                            old_thread_id = get_thread_id(t)
-                            if old_thread_id != 'console_main':
-                                # The console_main is a special thread id used in the console and its id should never be reset
-                                # (otherwise we may no longer be able to get its variables -- see: https://www.brainwy.com/tracker/PyDev/776).
-                                clear_cached_thread_id(t)
-                                clear_cached_thread_id(threadingCurrentThread())
+                            # Fix it for all existing threads.
+                            for existing_thread in all_threads:
+                                old_thread_id = get_thread_id(existing_thread)
+                                if old_thread_id != 'console_main':
+                                    # The console_main is a special thread id used in the console and its id should never be reset
+                                    # (otherwise we may no longer be able to get its variables -- see: https://www.brainwy.com/tracker/PyDev/776).
+                                    clear_cached_thread_id(t)
 
-                            thread_id = get_thread_id(t)
-                            curr_thread_id = get_thread_id(threadingCurrentThread())
-                            if pydevd_vars.has_additional_frames_by_id(old_thread_id):
-                                frames_by_id = pydevd_vars.get_additional_frames_by_id(old_thread_id)
-                                pydevd_vars.add_additional_frame_by_id(thread_id, frames_by_id)
-                        else:
-                            thread_id = get_thread_id(t)
+                                thread_id = get_thread_id(t)
+                                if thread_id != old_thread_id:
+                                    if pydevd_vars.has_additional_frames_by_id(old_thread_id):
+                                        frames_by_id = pydevd_vars.get_additional_frames_by_id(old_thread_id)
+                                        pydevd_vars.add_additional_frame_by_id(thread_id, frames_by_id)
+
+                        thread_id = get_thread_id(t)
                         program_threads_alive[thread_id] = t
 
                         self.notify_thread_created(thread_id, t, use_lock=False)
 
-                        queue = self.get_internal_queue(thread_id)
-                        cmdsToReadd = []  # some commands must be processed by the thread itself... if that's the case,
-                        # we will re-add the commands to the queue after executing.
-                        try:
-                            while True:
-                                int_cmd = queue.get(False)
-
-                                if not self.mpl_hooks_in_debug_console and isinstance(int_cmd, InternalConsoleExec):
-                                    # add import hooks for matplotlib patches if only debug console was started
-                                    try:
-                                        self.init_matplotlib_in_debug_console()
-                                        self.mpl_in_use = True
-                                    except:
-                                        pydevd_log(2, "Matplotlib support in debug console failed", traceback.format_exc())
-                                    self.mpl_hooks_in_debug_console = True
-
-                                if int_cmd.can_be_executed_by(curr_thread_id):
-                                    pydevd_log(2, "processing internal command ", str(int_cmd))
-                                    int_cmd.do_it(self)
-                                else:
-                                    pydevd_log(2, "NOT processing internal command ", str(int_cmd))
-                                    cmdsToReadd.append(int_cmd)
-
-
-                        except _queue.Empty: #@UndefinedVariable
-                            for int_cmd in cmdsToReadd:
-                                queue.put(int_cmd)
-                                # this is how we exit
-
-
+                # Compute and notify about threads which are no longer alive.
                 thread_ids = list(self._running_thread_ids.keys())
                 for thread_id in thread_ids:
                     if thread_id not in program_threads_alive:
                         program_threads_dead.append(thread_id)
-                        
+
                 for thread_id in program_threads_dead:
-                    try:
-                        self.notify_thread_not_alive(thread_id, use_lock=False)
-                    except:
-                        sys.stderr.write('Error iterating through %s (%s) - %s\n' % (
-                            program_threads_alive, program_threads_alive.__class__, dir(program_threads_alive)))
-                        raise
+                    self.notify_thread_not_alive(thread_id, use_lock=False)
             finally:
                 self._lock_running_thread_ids.release()
 
@@ -633,6 +606,45 @@ class PyDB:
                 for t in all_threads:
                     if hasattr(t, 'do_kill_pydev_thread'):
                         t.do_kill_pydev_thread()
+            else:
+                # Actually process the commands now (make sure we don't have a lock for _lock_running_thread_ids
+                # acquired at this point as it could lead to a deadlock if some command evaluated tried to
+                # create a thread and wait for it -- which would try to notify about it getting that lock).
+                curr_thread_id = None
+                for thread_id in program_threads_alive:
+                    queue = self.get_internal_queue(thread_id)
+                    cmdsToReadd = []  # some commands must be processed by the thread itself... if that's the case,
+                    # we will re-add the commands to the queue after executing.
+                    try:
+                        while True:
+                            int_cmd = queue.get(False)
+
+                            if not self.mpl_hooks_in_debug_console and isinstance(int_cmd, InternalConsoleExec):
+                                # add import hooks for matplotlib patches if only debug console was started
+                                try:
+                                    self.init_matplotlib_in_debug_console()
+                                    self.mpl_in_use = True
+                                except:
+                                    pydevd_log(2, "Matplotlib support in debug console failed", traceback.format_exc())
+                                self.mpl_hooks_in_debug_console = True
+
+                            if curr_thread_id is None:
+                                # Lazily get the current thread id.
+                                curr_thread_id = get_thread_id(threadingCurrentThread())
+
+                            if int_cmd.can_be_executed_by(curr_thread_id):
+                                pydevd_log(2, "processing internal command ", str(int_cmd))
+                                int_cmd.do_it(self)
+                            else:
+                                pydevd_log(2, "NOT processing internal command ", str(int_cmd))
+                                cmdsToReadd.append(int_cmd)
+
+
+                    except _queue.Empty: #@UndefinedVariable
+                        # this is how we exit
+                        for int_cmd in cmdsToReadd:
+                            queue.put(int_cmd)
+
 
         finally:
             self._main_lock.release()
