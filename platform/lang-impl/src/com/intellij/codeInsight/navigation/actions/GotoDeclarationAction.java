@@ -50,6 +50,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -77,7 +78,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   @NotNull
   @Override
   protected CodeInsightActionHandler getHandler() {
-    return this;
+    return Registry.is("ide.symbol.goto") ? GotoDeclarationActionHandler.INSTANCE : this;
   }
 
   @Override
