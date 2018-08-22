@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author Eugene Zhuravlev
@@ -15,6 +13,7 @@ import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -327,7 +326,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
         final StackFrame stackFrame = getStackFrame();
-        return stackFrame != null? stackFrame.getArgumentValues() : Collections.emptyList();
+        return stackFrame != null ? ContainerUtil.notNullize(stackFrame.getArgumentValues()) : Collections.emptyList();
       }
       catch (InternalException e) {
         // From Oracle's forums:
