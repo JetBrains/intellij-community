@@ -93,6 +93,32 @@ class WriterThreadCaseSetNextStatement(debugger_unittest.AbstractWriterThread):
         self.finished_ok = True
 
 #=======================================================================================================================
+# WriterThreadCaseGetNextStatementTargets
+#======================================================================================================================
+class WriterThreadCaseGetNextStatementTargets(debugger_unittest.AbstractWriterThread):
+
+    TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case_get_next_statement_targets.py')
+
+    def run(self):
+        self.start_socket()
+        breakpoint_id = self.write_add_breakpoint(21, None)
+        self.write_make_initial_run()
+
+        thread_id, frame_id, line = self.wait_for_breakpoint_hit('111', True)
+
+        assert line == 21, 'Expected return to be in line 21, was: %s' % line
+
+        self.write_get_next_statement_targets(thread_id, frame_id)
+        targets = self.wait_for_get_next_statement_targets()
+        expected = set((2, 3, 5, 8, 9, 10, 12, 13, 14, 15, 17, 18, 19, 21))
+        assert targets == expected, 'Expected targets to be %s, was: %s' % (expected, targets)
+
+        self.write_remove_breakpoint(breakpoint_id)
+        self.write_run_thread(thread_id)
+
+        self.finished_ok = True
+
+#=======================================================================================================================
 # AbstractWriterThreadCaseDjango
 #======================================================================================================================
 class AbstractWriterThreadCaseDjango(debugger_unittest.AbstractWriterThread):
@@ -1654,6 +1680,10 @@ class Test(unittest.TestCase, debugger_unittest.DebuggerRunner):
     @unittest.skip('New behaviour differs from PyDev -- needs to be investigated).')
     def test_case_set_next_statement(self):
         self.check_case(WriterThreadCaseSetNextStatement)
+
+    @unittest.mark.skipif(not IS_CPYTHON, reason='Only for Python.')
+    def test_case_get_next_statement_targets(self):
+        self.check_case(WriterThreadCaseGetNextStatementTargets)
 
     @unittest.skipIf(IS_IRONPYTHON, reason='Failing on IronPython (needs to be investigated).')
     def test_case_type_ext(self):

@@ -2,6 +2,7 @@ from _pydevd_bundle.pydevd_constants import dict_iter_values, IS_PY24
 from _pydev_bundle import pydev_log
 from _pydevd_bundle import pydevd_import_class
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame
+from _pydev_imps._pydev_saved_modules import threading
 
 
 class ExceptionBreakpoint:
@@ -35,17 +36,45 @@ class ExceptionBreakpoint:
     def __str__(self):
         return self.qname
 
+    @property
+    def has_condition(self):
+        return self.condition is not None
+
+    def handle_hit_condition(self, frame):
+        return False
+
 
 class LineBreakpoint(object):
 
-    def __init__(self, line, condition, func_name, expression, suspend_policy="NONE"):
+    def __init__(self, line, condition, func_name, expression, suspend_policy="NONE", hit_condition=None, is_logpoint=False):
         self.line = line
         self.condition = condition
         self.func_name = func_name
         self.expression = expression
         self.suspend_policy = suspend_policy
+        self.hit_condition = hit_condition
+        self._hit_count = 0
+        self._hit_condition_lock = threading.Lock()
         # need for frame evaluation: list of code objects, which bytecode was modified by this breakpoint
         self.code_objects = set()
+        self.is_logpoint = is_logpoint
+
+    @property
+    def has_condition(self):
+        return self.condition is not None or self.hit_condition is not None
+
+    def handle_hit_condition(self, frame):
+        if self.hit_condition is None:
+            return False
+        ret = False
+        with self._hit_condition_lock:
+            self._hit_count += 1
+            expr = self.hit_condition.replace('@HIT@', str(self._hit_count))
+            try:
+                ret = bool(eval(expr, frame.f_globals, frame.f_locals))
+            except Exception:
+                ret = False
+        return ret
 
 
 def get_exception_full_qname(exctype):
