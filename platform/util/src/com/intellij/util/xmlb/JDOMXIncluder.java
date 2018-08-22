@@ -46,9 +46,7 @@ public class JDOMXIncluder {
   @NonNls private static final String HREF = "href";
   @NonNls private static final String BASE = "base";
   @NonNls private static final String PARSE = "parse";
-  @NonNls private static final String TEXT = "text";
   @NonNls private static final String XML = "xml";
-  @NonNls private static final String ENCODING = "encoding";
   @NonNls private static final String XPOINTER = "xpointer";
 
   public static final Namespace XINCLUDE_NAMESPACE = Namespace.getNamespace(XI, HTTP_WWW_W3_ORG_2001_XINCLUDE);
@@ -263,7 +261,8 @@ public class JDOMXIncluder {
       remoteParsed = extractNeededChildren(element, remoteParsed);
     }
 
-    for (int i = 0; i < remoteParsed.size(); i++) {
+    int i = 0;
+    for (; i < remoteParsed.size(); i++) {
       Content o = remoteParsed.get(i);
       if (o instanceof Element) {
         Element e = (Element)o;
@@ -312,19 +311,17 @@ public class JDOMXIncluder {
     assert remoteElements.get(0) instanceof Element;
 
     Element e = (Element)remoteElements.get(0);
-
-    if (e.getName().equals(rootTagName)) {
-      String subTagName = matcher.group(2);
-      if (subTagName != null) {
-        // cut off the slash
-        e = e.getChild(subTagName.substring(1));
-      }
-      assert e != null;
-      return new ArrayList<Content>(e.getContent());
-    }
-    else {
+    if (!e.getName().equals(rootTagName)) {
       return Collections.emptyList();
     }
+
+    String subTagName = matcher.group(2);
+    if (subTagName != null) {
+      // cut off the slash
+      e = e.getChild(subTagName.substring(1));
+    }
+    assert e != null;
+    return new ArrayList<Content>(e.getContent());
   }
 
   @NotNull
