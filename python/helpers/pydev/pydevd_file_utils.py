@@ -204,31 +204,41 @@ def _NormPaths(filename):
         abs_path = _NormPath(filename, os.path.abspath)
         real_path = _NormPath(filename, rPath)
 
+        # cache it for fast access later
         NORM_PATHS_CONTAINER[filename] = abs_path, real_path
         return abs_path, real_path
 
 
 def _NormPath(filename, normpath):
     r = normpath(filename)
-    # cache it for fast access later
     ind = r.find('.zip')
     if ind == -1:
         ind = r.find('.egg')
     if ind != -1:
         ind += 4
         zip_path = r[:ind]
-        if r[ind] == "!":
-            ind += 1
         inner_path = r[ind:]
+        if inner_path.startswith('!'):
+            # Note (fabioz): although I can replicate this by creating a file ending as
+            # .zip! or .egg!, I don't really know what's the real-world case for this
+            # (still kept as it was added by @jetbrains, but it should probably be reviewed
+            # later on).
+            # Note 2: it goes hand-in-hand with 'exists'.
+            inner_path = inner_path[1:]
+            zip_path = zip_path + '!'
+
         if inner_path.startswith('/') or inner_path.startswith('\\'):
             inner_path = inner_path[1:]
-        r = join(normcase(zip_path), inner_path)
-    else:
-        r = normcase(r)
+        if inner_path:
+            r = join(normcase(zip_path), inner_path)
+            return r
+
+    r = normcase(r)
     return r
 
 
-ZIP_SEARCH_CACHE = {}
+_ZIP_SEARCH_CACHE = {}
+_NOT_FOUND_SENTINEL = object()
 
 
 def exists(file):
@@ -242,24 +252,33 @@ def exists(file):
     if ind != -1:
         ind += 4
         zip_path = file[:ind]
-        if file[ind] == "!":
-            ind += 1
         inner_path = file[ind:]
-        try:
-            zip = ZIP_SEARCH_CACHE[zip_path]
-        except KeyError:
+        if inner_path.startswith("!"):
+            # Note (fabioz): although I can replicate this by creating a file ending as
+            # .zip! or .egg!, I don't really know what's the real-world case for this
+            # (still kept as it was added by @jetbrains, but it should probably be reviewed
+            # later on).
+            # Note 2: it goes hand-in-hand with '_NormPath'.
+            inner_path = inner_path[1:]
+            zip_path = zip_path + '!'
+
+        zip_file_obj = _ZIP_SEARCH_CACHE.get(zip_path, _NOT_FOUND_SENTINEL)
+        if zip_file_obj is None:
+            return False
+        elif zip_file_obj is _NOT_FOUND_SENTINEL:
             try:
                 import zipfile
-                zip = zipfile.ZipFile(zip_path, 'r')
-                ZIP_SEARCH_CACHE[zip_path] = zip
-            except :
-                return None
+                zip_file_obj = zipfile.ZipFile(zip_path, 'r')
+                _ZIP_SEARCH_CACHE[zip_path] = zip_file_obj
+            except:
+                _ZIP_SEARCH_CACHE[zip_path] = _NOT_FOUND_SENTINEL
+                return False
 
         try:
             if inner_path.startswith('/') or inner_path.startswith('\\'):
                 inner_path = inner_path[1:]
 
-            info = zip.getinfo(inner_path.replace('\\', '/'))
+            _info = zip_file_obj.getinfo(inner_path.replace('\\', '/'))
 
             return join(zip_path, inner_path)
         except KeyError:
