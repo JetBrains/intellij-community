@@ -190,20 +190,17 @@ class PyDBFrame:
                     
                     was_just_raised = just_raised(trace)
                     if was_just_raised:
-                        add_exception_to_frame(frame, (exception, value, trace))
-                    
-                    if was_just_raised:
         
-                        if main_debugger.break_on_exceptions_thrown_in_same_context:
+                        if main_debugger.skip_on_exceptions_thrown_in_same_context:
                             # Option: Don't break if an exception is caught in the same function from which it is thrown
                             return False, frame
 
                     if exception_breakpoint.notify_on_first_raise_only:
-                        if main_debugger.break_on_exceptions_thrown_in_same_context:
+                        if main_debugger.skip_on_exceptions_thrown_in_same_context:
                             # In this case we never stop if it was just raised, so, to know if it was the first we
                             # need to check if we're in the 2nd method.
                             if not was_just_raised and not just_raised(trace.tb_next):
-                                return False, frame  # I.e.: we stop only when we'r
+                                return False, frame  # I.e.: we stop only when we're at the caller of a method that throws an exception
                                 
                         else:
                             if not was_just_raised:
@@ -215,6 +212,9 @@ class PyDBFrame:
                         info.pydev_message = exception_breakpoint.qname
                     except:
                         info.pydev_message = exception_breakpoint.qname.encode('utf-8')
+                        
+                    # Always add exception to frame (must remove later after we proceed).
+                    add_exception_to_frame(frame, (exception, value, trace))
 
                 else:
                     # No regular exception breakpoint, let's see if some plugin handles it.
@@ -338,7 +338,10 @@ class PyDBFrame:
 
             main_debugger.set_trace_for_frame_and_parents(frame)
         finally:
+            # Make sure the user cannot see the '__exception__' we added after we leave the suspend state.
+            remove_exception_from_frame(frame)
             #Clear some local variables...
+            frame = None
             trace_obj = None
             initial_trace_obj = None
             check_trace_obj = None

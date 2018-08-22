@@ -250,7 +250,7 @@ class PyDB:
         self._termination_event_set = False
         self.signature_factory = None
         self.SetTrace = pydevd_tracing.SetTrace
-        self.break_on_exceptions_thrown_in_same_context = False
+        self.skip_on_exceptions_thrown_in_same_context = False
         self.ignore_exceptions_thrown_in_lines_with_ignore_exception = True
 
         # Suspend debugger even if breakpoint condition raises an exception
