@@ -31,7 +31,7 @@ from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_SET_NEXT_STATEMENT, CM
     CMD_STEP_RETURN, CMD_STEP_INTO_MY_CODE, CMD_THREAD_SUSPEND, CMD_RUN_TO_LINE, \
     CMD_ADD_EXCEPTION_BREAK, CMD_SMART_STEP_INTO, InternalConsoleExec, NetCommandFactory, \
     PyDBDaemonThread, _queue, ReaderThread, GetGlobalDebugger, get_global_debugger, \
-    set_global_debugger, WriterThread, pydevd_log, \
+    set_global_debugger, WriterThread, pydevd_find_thread_by_id, pydevd_log, \
     start_client, start_server, InternalGetBreakpointException, InternalSendCurrExceptionTrace, \
     InternalSendCurrExceptionTraceProceeded, CommunicationRole
 from _pydevd_bundle.pydevd_custom_frames import CustomFramesContainer, custom_frames_container_init
@@ -738,8 +738,14 @@ class PyDB:
 
 
     def set_suspend(self, thread, stop_reason):
-        thread.additional_info.suspend_type = PYTHON_SUSPEND
-        thread.additional_info.pydev_state = STATE_SUSPEND
+        info = thread.additional_info
+        info.suspend_type = PYTHON_SUSPEND
+        info.pydev_state = STATE_SUSPEND
+        if info.pydev_step_cmd == -1:
+            # If the step command is not specified, set it to step into
+            # to make sure it'll break as soon as possible.
+            info.pydev_step_cmd = CMD_STEP_INTO
+
         thread.stop_reason = stop_reason
 
         # If conditional breakpoint raises any exception during evaluation send details to Java
@@ -1268,7 +1274,8 @@ class _CustomWriter(object):
             if IS_PY2:
                 # Need s in bytes
                 if isinstance(s, unicode):
-                    s = s.encode('utf-8', errors='replace')
+                    # Note: python 2.6 does not accept the "errors" keyword.
+                    s = s.encode('utf-8', 'replace')
             else:
                 # Need s in str
                 if isinstance(s, bytes):
@@ -1342,15 +1349,15 @@ def settrace(
     _set_trace_lock.acquire()
     try:
         _locked_settrace(
-            host,
-            stdoutToServer,
-            stderrToServer,
-            port,
-            suspend,
-            trace_only_current_thread,
-            overwrite_prev_trace,
-            patch_multiprocessing,
-            stop_at_frame,
+                host,
+                stdoutToServer,
+                stderrToServer,
+                port,
+                suspend,
+                trace_only_current_thread,
+                overwrite_prev_trace,
+                patch_multiprocessing,
+                stop_at_frame,
         )
     finally:
         _set_trace_lock.release()
@@ -1708,8 +1715,6 @@ def main():
             finally:
                 dispatcher.close()
         else:
-            pydev_log.info("pydev debugger: starting\n")
-
             try:
                 pydev_monkey.patch_new_process_functions_with_warning()
             except:
