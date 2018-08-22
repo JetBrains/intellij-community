@@ -48,7 +48,8 @@ public class ExternalSystemJdkUtil {
       }
 
       if (project == null || project.isDefault()) {
-        Sdk recent = ProjectJdkTable.getInstance().findMostRecentSdkOfType(JavaSdk.getInstance());
+        SdkType javaSdk = getJavaSdk();
+        Sdk recent = javaSdk == null ? null : ProjectJdkTable.getInstance().findMostRecentSdkOfType(javaSdk);
         return recent != null ? recent : JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
       }
 
@@ -116,7 +117,7 @@ public class ExternalSystemJdkUtil {
   @NotNull
   public static SdkType getJavaSdkType() {
     // JavaSdk.getInstance() can be null for non-java IDE
-    JavaSdk javaSdk = JavaSdk.getInstance();
+    SdkType javaSdk = getJavaSdk();
     return javaSdk == null ? SimpleJavaSdkType.getInstance() : javaSdk;
   }
 
@@ -137,16 +138,24 @@ public class ExternalSystemJdkUtil {
   @NotNull
   public static Sdk addJdk(String homePath) {
     Sdk jdk;
-    // JavaSdk.getInstance() can be null for non-java IDE
-    JavaSdk javaSdk = JavaSdk.getInstance();
+    SdkType javaSdk = getJavaSdk();
     if (javaSdk == null) {
       SimpleJavaSdkType simpleJavaSdkType = SimpleJavaSdkType.getInstance();
       jdk = simpleJavaSdkType.createJdk(simpleJavaSdkType.suggestSdkName(null, homePath), homePath);
     }
     else {
-      jdk = javaSdk.createJdk(javaSdk.suggestSdkName(null, homePath), homePath, false);
+      jdk = ((JavaSdk)javaSdk).createJdk(javaSdk.suggestSdkName(null, homePath), homePath, false);
     }
     SdkConfigurationUtil.addSdk(jdk);
     return jdk;
+  }
+
+  @Nullable
+  private static SdkType getJavaSdk() {
+    try{
+      return JavaSdk.getInstance();
+    } catch (Exception ignore) {
+    }
+    return null;
   }
 }
