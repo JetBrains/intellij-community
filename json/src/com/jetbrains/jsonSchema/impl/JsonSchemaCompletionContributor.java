@@ -353,8 +353,10 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       if (hasSameType(variants)) {
         final JsonSchemaType type = jsonSchemaObject.getType();
         final List<Object> values = jsonSchemaObject.getEnum();
+        Object defaultValue = jsonSchemaObject.getDefault();
+
         boolean hasValues = !ContainerUtil.isEmpty(values);
-        if (type != null || hasValues || jsonSchemaObject.getDefault() != null) {
+        if (type != null || hasValues || defaultValue != null) {
           builder = builder.withInsertHandler(
             !hasValues || values.stream().map(v -> v.getClass()).distinct().count() == 1 ?
             createPropertyInsertHandler(jsonSchemaObject, hasValue, insertComma) :
@@ -432,21 +434,12 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
                                                                      boolean insertComma) {
       JsonSchemaType type = jsonSchemaObject.getType();
       List<Object> values = jsonSchemaObject.getEnum();
-      if (type == null || values == null) {
-        MatchResult result = new JsonSchemaResolver(jsonSchemaObject).detailedResolve();
-        if (result.mySchemas.size() == 1) {
-          JsonSchemaObject object = result.mySchemas.get(0);
-          if (type == null) type = object.getType();
-          if (values == null) values = object.getEnum();
-        }
-      }
       if (type == null && values != null && !values.isEmpty()) type = detectType(values);
       final Object defaultValue = jsonSchemaObject.getDefault();
       final String defaultValueAsString = defaultValue == null || defaultValue instanceof JsonSchemaObject ? null :
                                           (defaultValue instanceof String ? "\"" + defaultValue + "\"" :
                                                                         String.valueOf(defaultValue));
       JsonSchemaType finalType = type;
-      List<Object> finalValues = values;
       return new InsertHandler<LookupElement>() {
         @Override
         public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
@@ -521,13 +514,13 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
                 break;
               case _string:
               case _integer:
-                insertPropertyWithEnum(context, editor, defaultValueAsString, finalValues, finalType, comma, myWalker);
+                insertPropertyWithEnum(context, editor, defaultValueAsString, values, finalType, comma, myWalker);
                 break;
               default:
             }
           }
           else {
-            insertPropertyWithEnum(context, editor, defaultValueAsString, finalValues, null, comma, myWalker);
+            insertPropertyWithEnum(context, editor, defaultValueAsString, values, null, comma, myWalker);
           }
         }
       };
@@ -616,7 +609,9 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       editor.getCaretModel().moveToOffset(newOffset);
     }
 
-    formatInsertedString(context, stringToInsert.length());
+    if (!walker.invokeEnterBeforeObjectAndArray()) {
+      formatInsertedString(context, stringToInsert.length());
+    }
 
     if (hasValues) {
       AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
