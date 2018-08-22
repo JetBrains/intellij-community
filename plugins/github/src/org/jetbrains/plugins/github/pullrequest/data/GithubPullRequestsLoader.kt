@@ -27,7 +27,7 @@ class GithubPullRequestsLoader(private val progressManager: ProgressManager,
   private val LOG = logger<GithubPullRequestsLoader>()
 
   private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("GitHub PR loading breaker", 1)
-  private var progressIndicator = EmptyProgressIndicator()
+  private var progressIndicator = createNonReusableIndicator()
   private var query: String = buildQuery(null)
   private var nextPageRequest: GithubApiRequest<GithubResponsePage<GithubSearchedIssue>>? = createInitialRequest()
   private var isDisposed = false
@@ -111,16 +111,18 @@ class GithubPullRequestsLoader(private val progressManager: ProgressManager,
   fun reset() {
     if (isDisposed) return
     progressIndicator.cancel()
-    progressIndicator = object : EmptyProgressIndicator() {
-      override fun start() {
-        checkCanceled()
-        super.start()
-      }
-    }
+    progressIndicator = createNonReusableIndicator()
     executor.execute {
       nextPageRequest = createInitialRequest()
       stateEventDispatcher.multicaster.loaderReset()
       LOG.debug("Reset listeners notified")
+    }
+  }
+
+  private fun createNonReusableIndicator(): ProgressIndicator = object : EmptyProgressIndicator() {
+    override fun start() {
+      checkCanceled()
+      super.start()
     }
   }
 
