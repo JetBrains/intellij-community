@@ -550,6 +550,16 @@ def start_client(host, port):
 
     s = socket(AF_INET, SOCK_STREAM)
 
+    #  Set TCP keepalive on an open socket.
+    #  It activates after 1 second (TCP_KEEPIDLE,) of idleness,
+    #  then sends a keepalive ping once every 3 seconds (TCP_KEEPINTVL),
+    #  and closes the connection after 5 failed ping (TCP_KEEPCNT), or 15 seconds
+    from socket import IPPROTO_TCP, SO_KEEPALIVE, TCP_KEEPIDLE, TCP_KEEPINTVL, TCP_KEEPCNT
+    s.setsockopt(SOL_SOCKET, SO_KEEPALIVE, 1)
+    s.setsockopt(IPPROTO_TCP, TCP_KEEPIDLE, 1)
+    s.setsockopt(IPPROTO_TCP, TCP_KEEPINTVL, 3)
+    s.setsockopt(IPPROTO_TCP, TCP_KEEPCNT, 5)
+
     MAX_TRIES = 100
     i = 0
     while i<MAX_TRIES:
