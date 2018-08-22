@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs.vfs;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -77,9 +76,6 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
       setRevision("0");
 
       showLoadingContentFailedMessage(e);
-    }
-    catch (ProcessCanceledException ex) {
-      myContent = null;
     }
   }
 
