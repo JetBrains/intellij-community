@@ -119,12 +119,9 @@ def settrace_while_running_if_frame_eval(py_db, trace_func):
         for t in threads:
             if getattr(t, 'is_pydev_daemon_thread', False):
                 continue
-            additional_info = None
-            try:
-                additional_info = t.additional_info
-            except AttributeError:
-                pass  # that's ok, no info currently set
+            additional_info = getattr(t, 'additional_info', None)
             if additional_info is None:
+                # that's ok, no info currently set
                 continue
 
             for frame in additional_info.iter_frames(t):
