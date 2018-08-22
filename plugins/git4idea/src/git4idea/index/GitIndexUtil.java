@@ -146,7 +146,7 @@ public class GitIndexUtil {
       FilePath path = VcsUtil.getFilePath(root, GitUtil.unescapePath(filePath));
 
       if ("tree".equals(type)) return new StagedDirectory(path);
-      if ("commit".equals(type)) return new StagedSubrepo(path);
+      if ("commit".equals(type)) return new StagedSubrepo(path, hash);
       if (!"blob".equals(type)) return null;
 
       boolean executable = EXECUTABLE_MODE.equals(permissions);
@@ -229,6 +229,11 @@ public class GitIndexUtil {
     public FilePath getPath() {
       return myPath;
     }
+
+    @Override
+    public String toString() {
+      return "StagedFileOrDirectory[" + myPath + "]";
+    }
   }
 
   public static class StagedFile extends StagedFileOrDirectory {
@@ -249,6 +254,11 @@ public class GitIndexUtil {
     public boolean isExecutable() {
       return myExecutable;
     }
+
+    @Override
+    public String toString() {
+      return "StagedFile[" + myPath + "] at [" + myBlobHash + "]";
+    }
   }
 
   public static class StagedDirectory extends StagedFileOrDirectory {
@@ -258,8 +268,21 @@ public class GitIndexUtil {
   }
 
   public static class StagedSubrepo extends StagedFileOrDirectory {
-    public StagedSubrepo(@NotNull FilePath path) {
+    @NotNull private final String myBlobHash;
+
+    public StagedSubrepo(@NotNull FilePath path, @NotNull String blobHash) {
       super(path);
+      myBlobHash = blobHash;
+    }
+
+    @NotNull
+    public String getBlobHash() {
+      return myBlobHash;
+    }
+
+    @Override
+    public String toString() {
+      return "StagedSubRepo[" + myPath + "] at [" + myBlobHash + "]";
     }
   }
 }
