@@ -1751,6 +1751,65 @@ class WriterCaseLamda(debugger_unittest.AbstractWriterThread):
             self.write_run_thread(thread_id)
 
         self.finished_ok = True
+        
+
+#=======================================================================================================================
+# WriterDebugZipFiles
+#======================================================================================================================
+class WriterDebugZipFiles(debugger_unittest.AbstractWriterThread):
+
+    TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case_zip_files.py')
+
+    def __init__(self, tmpdir):
+        self.tmpdir = tmpdir
+        super(WriterDebugZipFiles, self).__init__()
+        import zipfile
+        zip_file = zipfile.ZipFile(
+            str(tmpdir.join('myzip.zip')), 'w')
+        zip_file.writestr('zipped/__init__.py', '')
+        zip_file.writestr('zipped/zipped_contents.py', 'def call_in_zip():\n    return 1')
+        zip_file.close()
+        
+        zip_file = zipfile.ZipFile(
+            str(tmpdir.join('myzip2.egg!')), 'w')
+        zip_file.writestr('zipped2/__init__.py', '')
+        zip_file.writestr('zipped2/zipped_contents2.py', 'def call_in_zip2():\n    return 1')
+        zip_file.close()
+
+    def get_environ(self):
+        env = os.environ.copy()
+        curr_pythonpath = env.get('PYTHONPATH', '')
+
+        curr_pythonpath = str(self.tmpdir.join('myzip.zip')) + os.pathsep + curr_pythonpath
+        curr_pythonpath = str(self.tmpdir.join('myzip2.egg!')) + os.pathsep + curr_pythonpath
+        env['PYTHONPATH'] = curr_pythonpath
+        
+        env["IDE_PROJECT_ROOTS"] = str(self.tmpdir.join('myzip.zip'))
+        return env
+
+    def run(self):
+        self.start_socket()
+        self.write_add_breakpoint(
+            2, 
+            'None', 
+            filename=os.path.join(self.tmpdir.join('myzip.zip'), 'zipped', 'zipped_contents.py')
+        )
+        self.write_make_initial_run()
+        thread_id, _frame_id, name, _suspend_type = self.wait_for_breakpoint_hit_with_suspend_type(get_name=True)
+        assert name == 'call_in_zip'
+        self.write_run_thread(thread_id)
+        
+        self.write_add_breakpoint(
+            2, 
+            'None', 
+            filename=os.path.join(self.tmpdir.join('myzip2.egg!'), 'zipped2', 'zipped_contents2.py')
+        )
+        self.write_make_initial_run()
+        thread_id, _frame_id, name, _suspend_type = self.wait_for_breakpoint_hit_with_suspend_type(get_name=True)
+        assert name == 'call_in_zip2'
+        self.write_run_thread(thread_id)
+        
+        self.finished_ok = True
 
 
 #=======================================================================================================================
@@ -1973,6 +2032,13 @@ class Test(unittest.TestCase, debugger_unittest.DebuggerRunner):
 
     def test_case_lamdda(self):
         self.check_case(WriterCaseLamda)
+        
+    @pytest.fixture(autouse=True)
+    def setup_fixtures(self, tmpdir):
+        self.tmpdir = tmpdir
+        
+    def test_debug_zip_files(self):
+        self.check_case(WriterDebugZipFiles(self.tmpdir))
 
 
 
