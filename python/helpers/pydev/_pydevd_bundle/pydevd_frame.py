@@ -403,6 +403,7 @@ class PyDBFrame:
     #     cdef int breakpoints_in_line_cache;
     #     cdef int breakpoints_in_frame_cache;
     #     cdef bint has_breakpoint_in_frame;
+    #     cdef bint need_trace_return;
     # ELSE
     def trace_dispatch(self, frame, event, arg):
     # ENDIF
@@ -440,10 +441,11 @@ class PyDBFrame:
                     return None
 
             need_trace_return = False
-            if is_call and main_debugger.signature_factory:
-                need_trace_return = send_signature_call_trace(main_debugger, frame, filename)
-            if is_return and main_debugger.signature_factory:
-                send_signature_return_trace(main_debugger, frame, filename, arg)
+            if main_debugger.signature_factory is not None:
+                if is_call:
+                    need_trace_return = send_signature_call_trace(main_debugger, frame, filename)
+                elif is_return:
+                    send_signature_return_trace(main_debugger, frame, filename, arg)
 
             stop_frame = info.pydev_step_stop
             step_cmd = info.pydev_step_cmd
