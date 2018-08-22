@@ -314,6 +314,8 @@ def report_test(status, filename, test, captured_output, error_contents, duratio
     pydev_runfiles_xml_rpc.notifyTest(
         status, captured_output, error_contents, filename, test, time_str)
 
+if not hasattr(pytest, 'hookimpl'):
+    raise AssertionError('Please upgrade pytest (the current version of pytest: %s is unsupported)' % (pytest.__version__,))
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):

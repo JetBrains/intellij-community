@@ -66,7 +66,7 @@ class TestCPython(unittest.TestCase):
         t.exit_process_on_kill = False
         start_new_thread(t.run, ())
 
-        s, addr = server.accept()
+        s, _addr = server.accept()
 
         return t, s
 
@@ -102,11 +102,13 @@ class TestCPython(unittest.TestCase):
             #math is a builtin and because of that, it starts with None as a file
             start = '@@COMPLETIONS(None,(__doc__,'
             start_2 = '@@COMPLETIONS(None,(__name__,'
-            if '/math.so,' in completions or\
-                '/math.cpython-33m.so,' in completions or \
-                '/math.cpython-34m.so,' in completions or \
-                'math.cpython-35m' in completions or \
-                'math.cpython-36m' in completions:
+            if ('/math.so,' in completions or
+                '/math.cpython-33m.so,' in completions or 
+                '/math.cpython-34m.so,' in completions or 
+                'math.cpython-35m' in completions or 
+                'math.cpython-36m' in completions or
+                'math.cpython-37m' in completions
+                ):
                 return
             self.assertTrue(completions.startswith(start) or completions.startswith(start_2), '%s DOESNT START WITH %s' % (completions, (start, start_2)))
 
