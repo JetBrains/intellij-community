@@ -23,7 +23,8 @@ THREAD_METHODS = ['start', '_stop', 'join']
 LOCK_METHODS = ['__init__', 'acquire', 'release', '__enter__', '__exit__']
 QUEUE_METHODS = ['put', 'get']
 
-from _pydevd_bundle.pydevd_comm import GlobalDebuggerHolder, NetCommand
+from _pydevd_bundle.pydevd_comm import NetCommand
+from _pydevd_bundle.pydevd_constants import GlobalDebuggerHolder
 import traceback
 
 import time
@@ -87,6 +88,8 @@ def get_text_list_for_frame(frame):
 
 def send_message(event_class, time, name, thread_id, type, event, file, line, frame, lock_id=0, parent=None):
     dbg = GlobalDebuggerHolder.global_dbg
+    if dbg is None:
+        return
     cmdTextList = ['<xml>']
 
     cmdTextList.append('<' + event_class)
