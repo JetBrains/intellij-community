@@ -90,6 +90,7 @@ from _pydevd_bundle import pydevd_xml
 from _pydevd_bundle import pydevd_tracing
 from _pydevd_bundle import pydevd_vm_type
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, norm_file_to_client, is_real_file
+import pydevd_file_utils
 import os
 import sys
 import traceback
@@ -749,7 +750,7 @@ class NetCommandFactory:
 
                 if is_real_file(my_file):
                     # if filename is Jupyter cell id
-                    my_file = norm_file_to_client(abs_path_real_path_and_base[0])
+                    my_file = pydevd_file_utils.norm_file_to_client(abs_path_real_path_and_base[0])
 
                 if file_system_encoding.lower() != "utf-8" and hasattr(my_file, "decode"):
                     # my_file is a byte string encoded using the file system encoding
