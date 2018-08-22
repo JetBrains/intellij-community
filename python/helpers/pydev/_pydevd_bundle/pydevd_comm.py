@@ -575,22 +575,18 @@ def start_client(host, port):
     except ImportError:
         pass  # May not be available everywhere.
 
-    MAX_TRIES = 100
-    i = 0
-    while i<MAX_TRIES:
-        try:
-            s.connect((host, port))
-        except:
-            i+=1
-            time.sleep(0.2)
-            continue
+    try:
+        s.settimeout(10)  # 10 seconds timeout
+        s.connect((host, port))
+        s.settimeout(None)  # no timeout after connected
         pydevd_log(1, "Connected.")
         return s
+    except:
+        sys.stderr.write("Could not connect to %s: %s\n" % (host, port))
+        sys.stderr.flush()
+        traceback.print_exc()
+        raise
 
-    sys.stderr.write("Could not connect to %s: %s\n" % (host, port))
-    sys.stderr.flush()
-    traceback.print_exc()
-    sys.exit(1) #TODO: is it safe?
 
 
 
