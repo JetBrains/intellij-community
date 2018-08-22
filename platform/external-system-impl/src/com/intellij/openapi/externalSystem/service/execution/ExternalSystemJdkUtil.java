@@ -155,7 +155,7 @@ public class ExternalSystemJdkUtil {
   private static SdkType getJavaSdk() {
     try{
       return JavaSdk.getInstance();
-    } catch (Exception ignore) {
+    } catch (Throwable ignore) {
     }
     return null;
   }
