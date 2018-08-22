@@ -4,9 +4,7 @@ package com.intellij.util.xmlb;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.io.URLUtil;
 import org.jdom.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +55,7 @@ public class JDOMXIncluder {
   private final boolean myIgnoreMissing;
   private final PathResolver myPathResolver;
 
-  private JDOMXIncluder(boolean ignoreMissing, PathResolver pathResolver) {
+  private JDOMXIncluder(boolean ignoreMissing, @NotNull PathResolver pathResolver) {
     myIgnoreMissing = ignoreMissing;
     myPathResolver = pathResolver;
   }
@@ -82,20 +80,50 @@ public class JDOMXIncluder {
     return new JDOMXIncluder(ignoreMissing, pathResolver).doResolve(original, base);
   }
 
+  /**
+   * Original element will be mutated in place.
+   */
   @NotNull
-  public static Element resolveNonXIncludeElement(@NotNull Element original, @Nullable String base, boolean ignoreMissing, PathResolver pathResolver) throws XIncludeException {
+  public static Element resolveNonXIncludeElement(@NotNull Element original, @Nullable String base, boolean ignoreMissing, @NotNull PathResolver pathResolver) throws XIncludeException {
     LOG.assertTrue(!isIncludeElement(original));
 
     Stack<String> bases = new Stack<String>();
     if (base != null) {
       bases.push(base);
     }
-    return new JDOMXIncluder(ignoreMissing, pathResolver).resolveNonXIncludeElement(original, bases);
+    return new InplaceJdomXIncluder(ignoreMissing, pathResolver).resolveNonXIncludeElement(original, bases);
   }
 
   @NotNull
   public static List<Content> resolve(@NotNull Element original, String base) throws XIncludeException {
     return new JDOMXIncluder(false, DEFAULT_PATH_RESOLVER).doResolve(original, base);
+  }
+
+  private static final class InplaceJdomXIncluder extends JDOMXIncluder {
+    private InplaceJdomXIncluder(boolean ignoreMissing, @NotNull PathResolver pathResolver) {
+      super(ignoreMissing, pathResolver);
+    }
+
+    @Override
+    @NotNull
+    protected Element resolveNonXIncludeElement(@NotNull Element original, @NotNull Stack<String> bases) throws XIncludeException {
+      List<Content> contentList = original.getContent();
+      for (int i = contentList.size() - 1; i >= 0; i--) {
+        Content content = contentList.get(i);
+        if (content instanceof Element) {
+          Element element = (Element)content;
+          if (isIncludeElement(element)) {
+            original.setContent(i, resolveXIncludeElement(element, bases));
+          }
+          else {
+            // process child element to resolve possible includes
+            // ignore result since in our case (in-place processing) returned element it is the same element
+            resolveNonXIncludeElement(element, bases);
+          }
+        }
+      }
+      return original;
+    }
   }
 
   private Document doResolve(Document original, String base) {
@@ -190,7 +218,7 @@ public class JDOMXIncluder {
     return resolve(original, bases);
   }
 
-  private static boolean isIncludeElement(Element element) {
+  protected static boolean isIncludeElement(Element element) {
     return element.getName().equals(INCLUDE) && element.getNamespace().equals(XINCLUDE_NAMESPACE);
   }
 
@@ -206,12 +234,11 @@ public class JDOMXIncluder {
   }
 
   @NotNull
-  private List<Content> resolveXIncludeElement(@NotNull Element element, @NotNull Stack<String> bases) throws XIncludeException {
+  protected List<Content> resolveXIncludeElement(@NotNull Element element, @NotNull Stack<String> bases) throws XIncludeException {
     String base = "";
-    if (!bases.isEmpty()) base = bases.peek();
-
-    // These lines are probably unnecessary
-    assert isIncludeElement(element);
+    if (!bases.isEmpty()) {
+      base = bases.peek();
+    }
 
     String href = element.getAttributeValue(HREF);
     assert href != null : "Missing href attribute";
@@ -223,53 +250,36 @@ public class JDOMXIncluder {
 
     URL remote = myPathResolver.resolvePath(href, base);
 
-    boolean parse = true;
     final String parseAttribute = element.getAttributeValue(PARSE);
-
     if (parseAttribute != null) {
-      if (parseAttribute.equals(TEXT)) {
-        parse = false;
-      }
-
-      assert parseAttribute.equals(XML) : parseAttribute + "is not a legal value for the parse attribute";
+      LOG.assertTrue(parseAttribute.equals(XML), parseAttribute + " is not a legal value for the parse attribute");
     }
 
-    if (parse) {
-      assert !bases.contains(remote.toExternalForm()) : "Circular XInclude Reference to " + remote.toExternalForm();
+    assert !bases.contains(remote.toExternalForm()) : "Circular XInclude Reference to " + remote.toExternalForm();
 
-      final Element fallbackElement = element.getChild("fallback", element.getNamespace());
-      List<Content> remoteParsed = parseRemote(bases, remote, fallbackElement);
-      if (!remoteParsed.isEmpty()) {
-        remoteParsed = extractNeededChildren(element, remoteParsed);
-      }
-
-      for (int i = 0; i < remoteParsed.size(); i++) {
-        Content o = remoteParsed.get(i);
-        if (o instanceof Element) {
-          Element e = (Element)o;
-          List<Content> nodes = resolve(e, bases);
-          remoteParsed.addAll(i, nodes);
-          i += nodes.size();
-          remoteParsed.remove(i);
-          i--;
-          e.detach();
-        }
-      }
-
-      for (Content content : remoteParsed) {
-        content.detach();
-      }
-      return remoteParsed;
+    final Element fallbackElement = element.getChild("fallback", element.getNamespace());
+    List<Content> remoteParsed = parseRemote(bases, remote, fallbackElement);
+    if (!remoteParsed.isEmpty()) {
+      remoteParsed = extractNeededChildren(element, remoteParsed);
     }
-    else {
-      try {
-        String encoding = element.getAttributeValue(ENCODING);
-        return Collections.<Content>singletonList(new Text(StreamUtil.readText(URLUtil.openResourceStream(remote), encoding)));
-      }
-      catch (IOException e) {
-        throw new XIncludeException(e);
+
+    for (int i = 0; i < remoteParsed.size(); i++) {
+      Content o = remoteParsed.get(i);
+      if (o instanceof Element) {
+        Element e = (Element)o;
+        List<Content> nodes = resolve(e, bases);
+        remoteParsed.addAll(i, nodes);
+        i += nodes.size();
+        remoteParsed.remove(i);
+        i--;
+        e.detach();
       }
     }
+
+    for (Content content : remoteParsed) {
+      content.detach();
+    }
+    return remoteParsed;
   }
 
   //xpointer($1)
@@ -320,10 +330,8 @@ public class JDOMXIncluder {
   @NotNull
   private List<Content> parseRemote(@NotNull Stack<String> bases, @NotNull URL remote, @Nullable Element fallbackElement) {
     try {
-      Document doc = JDOMUtil.loadResourceDocument(remote);
       bases.push(remote.toExternalForm());
-
-      Element root = doc.getRootElement();
+      Element root = JDOMUtil.loadResourceDocument(remote).getRootElement();
       List<Content> list = resolve(root, bases);
       bases.pop();
       return list;
@@ -345,13 +353,15 @@ public class JDOMXIncluder {
   }
 
   @NotNull
-  private Element resolveNonXIncludeElement(@NotNull Element original, @NotNull Stack<String> bases) throws XIncludeException {
+  protected Element resolveNonXIncludeElement(@NotNull Element original, @NotNull Stack<String> bases) throws XIncludeException {
     Element result = new Element(original.getName(), original.getNamespace());
-    for (Attribute a : original.getAttributes()) {
-      result.setAttribute(a.clone());
+    if (original.hasAttributes()) {
+      for (Attribute a : original.getAttributes()) {
+        result.setAttribute(a.clone());
+      }
     }
 
-    for (Content o : original.getContent())  {
+    for (Content o : original.getContent()) {
       if (o instanceof Element) {
         Element element = (Element)o;
         if (isIncludeElement(element)) {
