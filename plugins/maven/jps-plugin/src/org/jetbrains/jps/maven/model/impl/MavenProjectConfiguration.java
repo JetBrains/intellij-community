@@ -233,12 +233,12 @@ public class MavenProjectConfiguration {
   @NotNull
   public static Map<String, String> readConfigFiles(File baseDir) {
     Map<String, String> result = new HashMap<>();
-    readConfigFile(baseDir, File.separator + ".mvn" + File.separator + "jvm.config", result);
-    readConfigFile(baseDir, File.separator + ".mvn" + File.separator + "maven.config", result);
+    readConfigFile(baseDir, File.separator + ".mvn" + File.separator + "jvm.config", result, "");
+    readConfigFile(baseDir, File.separator + ".mvn" + File.separator + "maven.config", result, "true");
     return result.isEmpty() ? emptyMap() : result;
   }
 
-  private static void readConfigFile(File baseDir, String relativePath, Map<String, String> result) {
+  private static void readConfigFile(File baseDir, String relativePath, Map<String, String> result, String valueIfMissing) {
     File configFile = new File(baseDir, relativePath);
 
     if (configFile.exists() && configFile.isFile()) {
@@ -246,7 +246,7 @@ public class MavenProjectConfiguration {
         for (String parameter : ParametersListUtil.parse(StreamUtil.readText(in, CharsetToolkit.UTF8))) {
           Matcher matcher = MAVEN_PROPERTY_PATTERN.matcher(parameter);
           if (matcher.matches()) {
-            result.put(matcher.group(1), StringUtil.notNullize(matcher.group(2)));
+            result.put(matcher.group(1), StringUtil.notNullize(matcher.group(2), valueIfMissing));
           }
         }
       }

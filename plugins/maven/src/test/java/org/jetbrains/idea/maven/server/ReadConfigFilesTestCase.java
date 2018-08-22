@@ -24,8 +24,10 @@ public abstract class ReadConfigFilesTestCase extends UsefulTestCase {
   }
 
   public void testPropertiesWithoutValue() throws IOException {
-    doTestBothConfigFiles("-DmyProperty", ContainerUtil.stringMap("myProperty", ""));
-    doTestBothConfigFiles("-Da -Dc=d\n-De", ContainerUtil.stringMap("a", "", "c", "d", "e", ""));
+    doTestJvmConfig("-DmyProperty", ContainerUtil.stringMap("myProperty", ""));
+    doTestMavenConfig("-DmyProperty", ContainerUtil.stringMap("myProperty", "true"));
+    doTestJvmConfig("-Da -Dc=d\n-De", ContainerUtil.stringMap("a", "", "c", "d", "e", ""));
+    doTestMavenConfig("-Da -Dc=d\n-De", ContainerUtil.stringMap("a", "true", "c", "d", "e", "true"));
   }
 
   public void testSpacesInValues() throws IOException {
@@ -34,7 +36,7 @@ public abstract class ReadConfigFilesTestCase extends UsefulTestCase {
     //spaces in properties in maven.config aren't handled properly anyway, it just splits the whole content by spaces and feeds GnuParser with it, see org.apache.maven.cli.MavenCli#cli
   }
 
-  private void doTestBothConfigFiles(final String text, final Map<String, String> expected) throws IOException {
+  private void doTestBothConfigFiles(String text, Map<String, String> expected) throws IOException {
     doTestJvmConfig(text, expected);
     doTestMavenConfig(text, expected);
   }
@@ -81,8 +83,8 @@ public abstract class ReadConfigFilesTestCase extends UsefulTestCase {
     @NotNull
     protected Map<String, String> readProperties(File baseDir) {
       Map<String, String> result = new HashMap<>();
-      result.putAll(MavenProject.readConfigFile(baseDir, MavenConstants.MAVEN_CONFIG_RELATIVE_PATH));
-      result.putAll(MavenProject.readConfigFile(baseDir, MavenConstants.JVM_CONFIG_RELATIVE_PATH));
+      result.putAll(MavenProject.readConfigFile(baseDir, MavenProject.ConfigFileKind.MAVEN_CONFIG));
+      result.putAll(MavenProject.readConfigFile(baseDir, MavenProject.ConfigFileKind.JVM_CONFIG));
       return result;
     }
   }
