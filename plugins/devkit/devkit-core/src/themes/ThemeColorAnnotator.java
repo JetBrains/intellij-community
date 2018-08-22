@@ -40,7 +40,6 @@ public class ThemeColorAnnotator implements Annotator {
     return LineMarkerSettings.getSettings().isEnabled(new ColorLineMarkerProvider());
   }
 
-  //TODO review/rework
   private static boolean isTargetElement(@NotNull PsiElement element) {
     if (!(element instanceof JsonStringLiteral)) return false;
 
@@ -60,6 +59,7 @@ public class ThemeColorAnnotator implements Annotator {
     private final String myColorHex;
     private final JsonStringLiteral myLiteral;
 
+
     private MyRenderer(String colorHex, JsonStringLiteral literal) {
       myColorHex = colorHex;
       myLiteral = literal;
@@ -69,7 +69,6 @@ public class ThemeColorAnnotator implements Annotator {
     @Override
     public Icon getIcon() {
       try {
-        //TODO support other color formats?
         Color color = Color.decode(myColorHex);
         return JBUI.scale(new ColorIcon(ICON_SIZE, color));
       } catch (NumberFormatException ignore) {
@@ -83,10 +82,17 @@ public class ThemeColorAnnotator implements Annotator {
       return new AnAction() {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          //TODO implement
+            //TODO implement
         }
       };
     }
+
+    @Nullable
+    @Override
+    public String getTooltipText() {
+      return null; //TODO implement
+    }
+
 
     @Override
     public boolean equals(Object o) {
