@@ -103,16 +103,16 @@ class TestJython(unittest.TestCase):
         '''
         Creates the connections needed for testing.
         '''
-        p1 = self.get_free_port()
+        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        server.bind((pycompletionserver.HOST, 0))
+        server.listen(1)  #socket to receive messages.
+
         from thread import start_new_thread
-        t = pycompletionserver.CompletionServer(p1)
+        t = pycompletionserver.CompletionServer(server.getsockname()[1])
         t.exit_process_on_kill = False
 
         start_new_thread(t.run, ())
-
-        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server.bind((pycompletionserver.HOST, p1))
-        server.listen(1)
 
         sock, _addr = server.accept()
 
