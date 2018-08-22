@@ -1,5 +1,6 @@
-package com.intellij.codeInspection;
+package com.intellij.codeInspection.tests.java;
 
+import com.intellij.codeInspection.tests.UastCallMatcherTestBase;
 import com.intellij.jvm.analysis.JvmAnalysisTestsUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.TestDataPath;

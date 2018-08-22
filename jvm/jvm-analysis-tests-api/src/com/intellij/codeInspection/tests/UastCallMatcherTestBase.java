@@ -1,5 +1,6 @@
-package com.intellij.codeInspection;
+package com.intellij.codeInspection.tests;
 
+import com.intellij.codeInspection.UastCallMatcher;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.TestDataFile;
@@ -14,8 +15,8 @@ import org.jetbrains.uast.UastCallKind;
 import java.util.Locale;
 import java.util.Set;
 
-import static com.intellij.codeInspection.JvmAnalysisTestsUastUtil.getUElementsOfTypeFromFile;
 import static com.intellij.codeInspection.UastCallMatcher.builder;
+import static com.intellij.codeInspection.tests.JvmAnalysisTestsUastUtil.getUElementsOfTypeFromFile;
 
 public abstract class UastCallMatcherTestBase extends JavaCodeInsightFixtureTestCase {
   @Override

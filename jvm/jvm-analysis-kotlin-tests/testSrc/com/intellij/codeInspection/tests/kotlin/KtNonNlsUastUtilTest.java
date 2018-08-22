@@ -1,4 +1,4 @@
-package com.intellij.codeInspection;
+package com.intellij.codeInspection.tests.kotlin;
 
 import com.intellij.jvm.analysis.JvmAnalysisKtTestsUtil;
 import com.intellij.psi.PsiFile;
@@ -13,8 +13,8 @@ import org.junit.Assume;
 
 import java.util.Set;
 
-import static com.intellij.codeInspection.JvmAnalysisTestsUastUtil.getUElementsOfTypeFromFile;
 import static com.intellij.codeInspection.NonNlsUastUtil.isNonNlsStringLiteral;
+import static com.intellij.codeInspection.tests.JvmAnalysisTestsUastUtil.getUElementsOfTypeFromFile;
 
 @TestDataPath("$CONTENT_ROOT/testData/codeInspection/nonNls")
 public class KtNonNlsUastUtilTest extends JavaCodeInsightFixtureTestCase {

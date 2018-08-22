@@ -1,4 +1,4 @@
-package com.intellij.codeInspection;
+package com.intellij.codeInspection.tests.java;
 
 import com.intellij.jvm.analysis.JvmAnalysisTestsUtil;
 import com.intellij.psi.PsiFile;
@@ -12,7 +12,7 @@ import org.jetbrains.uast.ULiteralExpression;
 import java.util.Set;
 
 import static com.intellij.codeInspection.NonNlsUastUtil.isNonNlsStringLiteral;
-import static com.intellij.codeInspection.JvmAnalysisTestsUastUtil.getUElementsOfTypeFromFile;
+import static com.intellij.codeInspection.tests.JvmAnalysisTestsUastUtil.getUElementsOfTypeFromFile;
 
 @TestDataPath("$CONTENT_ROOT/testData/codeInspection/nonNls")
 public class NonNlsUastUtilTest extends JavaCodeInsightFixtureTestCase {

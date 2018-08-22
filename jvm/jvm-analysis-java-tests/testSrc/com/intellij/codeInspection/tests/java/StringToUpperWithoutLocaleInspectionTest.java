@@ -1,5 +1,6 @@
-package com.intellij.codeInspection;
+package com.intellij.codeInspection.tests.java;
 
+import com.intellij.codeInspection.tests.StringToUpperWithoutLocaleInspectionTestBase;
 import com.intellij.jvm.analysis.JvmAnalysisTestsUtil;
 import com.intellij.testFramework.TestDataPath;
 

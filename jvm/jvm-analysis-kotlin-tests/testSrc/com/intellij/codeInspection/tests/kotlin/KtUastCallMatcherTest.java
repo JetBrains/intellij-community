@@ -1,5 +1,6 @@
-package com.intellij.codeInspection;
+package com.intellij.codeInspection.tests.kotlin;
 
+import com.intellij.codeInspection.tests.UastCallMatcherTestBase;
 import com.intellij.jvm.analysis.JvmAnalysisKtTestsUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.TestDataPath;

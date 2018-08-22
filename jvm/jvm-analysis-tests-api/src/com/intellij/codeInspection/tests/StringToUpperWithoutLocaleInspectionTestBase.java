@@ -1,5 +1,6 @@
-package com.intellij.codeInspection;
+package com.intellij.codeInspection.tests;
 
+import com.intellij.codeInspection.StringToUpperWithoutLocale2Inspection;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;

@@ -1,4 +1,4 @@
-package com.intellij.codeInspection;
+package com.intellij.codeInspection.tests;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
