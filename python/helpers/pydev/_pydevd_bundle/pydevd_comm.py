@@ -173,6 +173,7 @@ CMD_PROCESS_CREATED_MSG_RECEIVED = 159
 
 CMD_REDIRECT_OUTPUT = 200
 CMD_GET_NEXT_STATEMENT_TARGETS = 201
+CMD_SET_PROJECT_ROOTS = 202
 
 CMD_VERSION = 501
 CMD_RETURN = 502
@@ -408,16 +409,16 @@ class ReaderThread(PyDBDaemonThread):
 
                 read_buffer += r
                 if DebugInfoHolder.DEBUG_RECORD_SOCKET_READS:
-                    sys.stderr.write('debugger: received >>%s<<\n' % (read_buffer,))
+                    sys.stderr.write(u'debugger: received >>%s<<\n' % (read_buffer,))
                     sys.stderr.flush()
 
                 if len(read_buffer) == 0:
                     self.handle_except()
                     break
-                while read_buffer.find('\n') != -1:
-                    command, read_buffer = read_buffer.split('\n', 1)
+                while read_buffer.find(u'\n') != -1:
+                    command, read_buffer = read_buffer.split(u'\n', 1)
 
-                    args = command.split('\t', 2)
+                    args = command.split(u'\t', 2)
                     try:
                         cmd_id = int(args[0])
                         pydev_log.debug('Received command: %s %s\n' % (ID_TO_MEANING.get(str(cmd_id), '???'), command,))

@@ -709,6 +709,9 @@ class PyDB:
             break_dict[pybreakpoint.line] = pybreakpoint
 
         breakpoints[file] = break_dict
+        self.clear_skip_caches()
+        
+    def clear_skip_caches(self):
         global_cache_skips.clear()
         global_cache_frame_skips.clear()
 

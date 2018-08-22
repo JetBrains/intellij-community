@@ -3,7 +3,7 @@ import sys
 import traceback
 
 from _pydev_bundle import pydev_log
-from _pydevd_bundle import pydevd_traceproperty, pydevd_tracing, pydevd_dont_trace
+from _pydevd_bundle import pydevd_traceproperty, pydevd_tracing, pydevd_dont_trace, pydevd_utils
 import pydevd_file_utils
 from _pydevd_bundle.pydevd_breakpoints import LineBreakpoint
 from _pydevd_bundle.pydevd_comm import CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, CMD_THREAD_KILL, InternalTerminateThread, \
@@ -19,7 +19,7 @@ from _pydevd_bundle.pydevd_comm import CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, C
     CMD_RUN_CUSTOM_OPERATION, InternalRunCustomOperation, CMD_IGNORE_THROWN_EXCEPTION_AT, CMD_ENABLE_DONT_TRACE, \
     CMD_SHOW_RETURN_VALUES, ID_TO_MEANING, CMD_GET_DESCRIPTION, InternalGetDescription, InternalLoadFullValue, \
     CMD_LOAD_FULL_VALUE, CMD_PROCESS_CREATED_MSG_RECEIVED, CMD_REDIRECT_OUTPUT, CMD_GET_NEXT_STATEMENT_TARGETS, \
-    InternalGetNextStatementTargets
+    InternalGetNextStatementTargets, CMD_SET_PROJECT_ROOTS
 from _pydevd_bundle.pydevd_constants import get_thread_id, IS_PY3K, DebugInfoHolder, dict_keys, STATE_RUN, \
     NEXT_VALUE_SEPARATOR
 
@@ -310,7 +310,7 @@ def process_net_command(py_db, cmd_id, seq, text):
                 if condition is not None and (len(condition) <= 0 or condition == "None"):
                     condition = None
 
-                if expression is None and (len(expression) <= 0 or expression == "None"):
+                if expression is not None and (len(expression) <= 0 or expression == "None"):
                     expression = None
 
                 if hit_condition is not None and (len(hit_condition) <= 0 or hit_condition == "None"):
@@ -565,12 +565,12 @@ def process_net_command(py_db, cmd_id, seq, text):
 
                 condition = condition.replace("@_@NEW_LINE_CHAR@_@", '\n').replace("@_@TAB_CHAR@_@", '\t').strip()
 
-                if condition is None and (len(condition) == 0 or condition == "None"):
+                if condition is not None and (len(condition) == 0 or condition == "None"):
                     condition = None
 
                 expression = expression.replace("@_@NEW_LINE_CHAR@_@", '\n').replace("@_@TAB_CHAR@_@", '\t').strip()
 
-                if expression is None and (len(expression) == 0 or expression == "None"):
+                if expression is not None and (len(expression) == 0 or expression == "None"):
                     expression = None
 
                 if exception.find('-') != -1:
@@ -769,6 +769,9 @@ def process_net_command(py_db, cmd_id, seq, text):
 
                 int_cmd = InternalGetNextStatementTargets(seq, thread_id, frame_id)
                 py_db.post_internal_command(int_cmd, thread_id)
+
+            elif cmd_id == CMD_SET_PROJECT_ROOTS:
+                pydevd_utils.set_project_roots(text.split(u'\t'))
 
             else:
                 #I have no idea what this is all about
