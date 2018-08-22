@@ -679,6 +679,22 @@ class WriterThreadCase9(debugger_unittest.AbstractWriterThread):
 
         self.finished_ok = True
 
+#=======================================================================================================================
+# WriterThreadCase20 - Check that we were notified of threads creation before they started to run
+#======================================================================================================================
+class WriterThreadCase20(debugger_unittest.AbstractWriterThread):
+
+    TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case20.py')
+
+    def run(self):
+        self.start_socket()
+        self.write_make_initial_run()
+
+        # We already check if it prints 'TEST SUCEEDED' by default, so, nothing
+        # else should be needed in this test as it tests what's needed just by
+        # running the module.
+        self.finished_ok = True
+
 
 #=======================================================================================================================
 # WriterThreadCase8
@@ -1377,6 +1393,9 @@ class Test(unittest.TestCase, debugger_unittest.DebuggerRunner):
         self.check_case(WriterThreadCase19)
 
     # PY-29051
+    def test_case_20(self):
+        self.check_case(WriterThreadCase20)
+
     def test_case_20(self):
         self.check_case(WriterThreadCase20)
 
