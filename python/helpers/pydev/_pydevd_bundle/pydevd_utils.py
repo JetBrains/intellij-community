@@ -15,7 +15,6 @@ import sys
 from _pydev_bundle import pydev_log
 from _pydev_imps._pydev_saved_modules import threading
 
-
 def _normpath(filename):
     return pydevd_file_utils.get_abs_path_real_path_and_base_from_file(filename)[0]
 
@@ -135,7 +134,9 @@ def get_clsname_for_code(code, frame):
                     func_code = method.__code__
                 if func_code and func_code == code:
                     clsname = first_arg_class.__name__
+
     return clsname
+
 
 _PROJECT_ROOTS_CACHE = []
 _LIBRARY_ROOTS_CACHE = []
@@ -250,7 +251,6 @@ def in_project_roots(filename, filename_to_in_scope_cache=_FILENAME_TO_IN_SCOPE_
         original_filename = filename
         if not filename.endswith('>'):
             filename = _normpath(filename)
-        filename = _normpath(filename)
 
         found_in_project = []
         for root in project_roots:
@@ -263,14 +263,23 @@ def in_project_roots(filename, filename_to_in_scope_cache=_FILENAME_TO_IN_SCOPE_
             if root and filename.startswith(root):
                 found_in_library.append(root)
 
-        in_project = False
-        if found_in_project:
-            if not found_in_library:
-                in_project = True
+        if not project_roots:
+            # If we have no project roots configured, consider it being in the project
+            # roots if it's not found in site-packages (because we have defaults for those
+            # and not the other way around).
+            if filename.endswith('>'):
+                in_project = False
             else:
-                # Found in both, let's see which one has the bigger path matched.
-                if max(len(x) for x in found_in_project) > max(len(x) for x in found_in_library):
+                in_project = not found_in_library
+        else:
+            in_project = False
+            if found_in_project:
+                if not found_in_library:
                     in_project = True
+                else:
+                    # Found in both, let's see which one has the bigger path matched.
+                    if max(len(x) for x in found_in_project) > max(len(x) for x in found_in_library):
+                        in_project = True
 
         filename_to_in_scope_cache[original_filename] = in_project
         return in_project
@@ -326,12 +335,13 @@ def dump_threads(stream=None):
                 t.name, t.daemon, getattr(t, 'is_pydev_daemon_thread', False))
     except:
         pass
-    
+
     from _pydevd_bundle.pydevd_additional_thread_info_regular import _current_frames
 
     stream.write('===============================================================================\n')
     stream.write('Threads running\n')
     stream.write('================================= Thread Dump =================================\n')
+    stream.flush()
 
     for thread_id, stack in _current_frames().items():
         stream.write('\n-------------------------------------------------------------------------------\n')
@@ -351,5 +361,7 @@ def dump_threads(stream=None):
                 except:
                     stream.write('Unable to get str of: %s' % (type(stack.f_locals['self']),))
                 stream.write('\n')
+        stream.flush()
 
     stream.write('\n=============================== END Thread Dump ===============================')
+    stream.flush()
