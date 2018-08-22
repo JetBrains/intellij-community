@@ -53,8 +53,8 @@ public abstract class GithubCreatePullRequestTestBase extends GithubTest {
     cloneRepo();
     createBranch();
     createChanges();
-    myRepository.update();
     initGitChecks();
+    myRepository.update();
   }
 
   @Override
