@@ -48,9 +48,15 @@ import os
 
 from _pydevd_bundle import pydevd_vm_type
 
+# Constant detects when running on Jython/windows properly later on.
+IS_WINDOWS = sys.platform == 'win32'
+
 IS_JYTHON = pydevd_vm_type.get_vm_type() == pydevd_vm_type.PydevdVmType.JYTHON
 IS_JYTH_LESS25 = False
+
 if IS_JYTHON:
+    import java.lang.System  # @UnresolvedImport
+    IS_WINDOWS = java.lang.System.getProperty("os.name").lower().startswith("windows")
     if sys.version_info[0] == 2 and sys.version_info[1] < 5:
         IS_JYTH_LESS25 = True
 

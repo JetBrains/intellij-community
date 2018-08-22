@@ -3,7 +3,7 @@ import os
 import sys
 import traceback
 from _pydev_imps._pydev_saved_modules import threading
-from _pydevd_bundle.pydevd_constants import get_thread_id, get_global_debugger
+from _pydevd_bundle.pydevd_constants import get_thread_id, get_global_debugger, IS_WINDOWS, IS_JYTHON
 from _pydev_bundle import pydev_log
 
 try:
@@ -554,20 +554,21 @@ def patch_new_process_functions():
     monkey_patch_os('spawnvp', create_spawnv)
     monkey_patch_os('spawnvpe', create_spawnve)
 
-    if sys.platform != 'win32':
-        monkey_patch_os('fork', create_fork)
-        try:
-            import _posixsubprocess
-            monkey_patch_module(_posixsubprocess, 'fork_exec', create_fork_exec)
-        except ImportError:
-            pass
-    else:
-        # Windows
-        try:
-            import _subprocess
-        except ImportError:
-            import _winapi as _subprocess
-        monkey_patch_module(_subprocess, 'CreateProcess', create_CreateProcess)
+    if not IS_JYTHON:
+        if not IS_WINDOWS:
+            monkey_patch_os('fork', create_fork)
+            try:
+                import _posixsubprocess
+                monkey_patch_module(_posixsubprocess, 'fork_exec', create_fork_exec)
+            except ImportError:
+                pass
+        else:
+            # Windows
+            try:
+                import _subprocess
+            except ImportError:
+                import _winapi as _subprocess
+            monkey_patch_module(_subprocess, 'CreateProcess', create_CreateProcess)
 
 
 def patch_new_process_functions_with_warning():
@@ -588,20 +589,21 @@ def patch_new_process_functions_with_warning():
     monkey_patch_os('spawnvp', create_warn_multiproc)
     monkey_patch_os('spawnvpe', create_warn_multiproc)
 
-    if sys.platform != 'win32':
-        monkey_patch_os('fork', create_warn_multiproc)
-        try:
-            import _posixsubprocess
-            monkey_patch_module(_posixsubprocess, 'fork_exec', create_warn_fork_exec)
-        except ImportError:
-            pass
-    else:
-        # Windows
-        try:
-            import _subprocess
-        except ImportError:
-            import _winapi as _subprocess
-        monkey_patch_module(_subprocess, 'CreateProcess', create_CreateProcessWarnMultiproc)
+    if not IS_JYTHON:
+        if not IS_WINDOWS:
+            monkey_patch_os('fork', create_warn_multiproc)
+            try:
+                import _posixsubprocess
+                monkey_patch_module(_posixsubprocess, 'fork_exec', create_warn_fork_exec)
+            except ImportError:
+                pass
+        else:
+            # Windows
+            try:
+                import _subprocess
+            except ImportError:
+                import _winapi as _subprocess
+            monkey_patch_module(_subprocess, 'CreateProcess', create_CreateProcessWarnMultiproc)
 
 
 class _NewThreadStartupWithTrace:
@@ -680,6 +682,8 @@ def patch_thread_module(thread_module):
 
     if getattr(thread_module, '_original_start_new_thread', None) is None:
         if thread_module is threading:
+            if not hasattr(thread_module, '_start_new_thread'):
+                return  # Jython doesn't have it.
             _original_start_new_thread = thread_module._original_start_new_thread = thread_module._start_new_thread
         else:
             _original_start_new_thread = thread_module._original_start_new_thread = thread_module.start_new_thread

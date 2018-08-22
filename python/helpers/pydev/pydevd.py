@@ -294,6 +294,7 @@ class PyDB:
 
         # this flag disables frame evaluation even if it's available
         self.do_not_use_frame_eval = False
+        self.stop_on_start = False
 
         # sequence id of `CMD_PROCESS_CREATED` command -> threading.Event
         self.process_created_msg_received_events = dict()
@@ -1118,6 +1119,10 @@ class PyDB:
         thread_id = get_thread_id(t)
         self.notify_thread_created(thread_id, t)
 
+        if self.stop_on_start:
+            info = set_additional_thread_info(t)
+            t.additional_info.pydev_step_cmd = CMD_STEP_INTO_MY_CODE
+            
         # Note: important: set the tracing right before calling _exec.
         if set_trace:
             pydevd_tracing.SetTrace(self.trace_dispatch, self.frame_eval_func, self.dummy_trace_dispatch)
