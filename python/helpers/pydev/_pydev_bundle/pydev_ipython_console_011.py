@@ -85,7 +85,24 @@ class PyDevIPCompleter(IPCompleter):
         if self.python_matches in self.matchers:
             # `self.python_matches` matches attributes or global python names
             self.matchers.remove(self.python_matches)
+            
+class PyDevIPCompleter6(IPCompleter):
 
+    def __init__(self, *args, **kwargs):
+        """ Create a Completer that reuses the advanced completion support of PyDev
+            in addition to the completion support provided by IPython """
+        IPCompleter.__init__(self, *args, **kwargs)
+
+    @property
+    def matchers(self):
+        """All active matcher routines for completion"""
+        # To remove python_matches we now have to override it as it's now a property in the superclass.
+        return [
+            self.file_matches,
+            self.magic_matches,
+            self.python_func_kw_matches,
+            self.dict_key_matches,
+        ]
 
 class PyDevTerminalInteractiveShell(TerminalInteractiveShell):
     banner1 = Unicode(default_pydev_banner, config=True,
@@ -198,6 +215,15 @@ class PyDevTerminalInteractiveShell(TerminalInteractiveShell):
                                      )
         return completer
 
+    def _new_completer_600(self):
+        completer = PyDevIPCompleter6(shell=self,
+                                     namespace=self.user_ns,
+                                     global_namespace=self.user_global_ns,
+                                     use_readline=False,
+                                     parent=self
+                                     )
+        return completer
+
     def add_completer_hooks(self):
         from IPython.core.completerlib import module_completer, magic_run_completer, cd_completer
         try:
@@ -231,7 +257,9 @@ class PyDevTerminalInteractiveShell(TerminalInteractiveShell):
         # extra information.
         # See getCompletions for where the two sets of results are merged
 
-        if IPythonRelease._version_major >= 5:
+        if IPythonRelease._version_major >= 6:
+            self.Completer = self._new_completer_600()
+        elif IPythonRelease._version_major >= 5:
             self.Completer = self._new_completer_500()
         elif IPythonRelease._version_major >= 2:
             self.Completer = self._new_completer_234()
