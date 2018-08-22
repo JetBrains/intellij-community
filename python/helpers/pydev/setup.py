@@ -14,54 +14,11 @@ http://lucumr.pocoo.org/2014/1/27/python-on-wheels/
 
 Another (no wheels): https://jamie.curle.io/blog/my-first-experience-adding-package-pypi/
 
-New version: change version and then:
+See:
 
-rm dist/pydevd*
+build_tools\pydevd_release_process.txt
 
-C:\tools\Miniconda32\Scripts\activate py27_32
-python setup.py sdist bdist_wheel
-deactivate
-dir dist
-
-C:\tools\Miniconda32\Scripts\activate py34_32
-python setup.py sdist bdist_wheel
-deactivate
-dir dist
-
-C:\tools\Miniconda32\Scripts\activate py35_32
-python setup.py sdist bdist_wheel
-deactivate
-dir dist
-
-C:\tools\Miniconda32\Scripts\activate py36_32
-python setup.py sdist bdist_wheel
-deactivate
-dir dist
-
-C:\tools\Miniconda\Scripts\activate py27_64
-python setup.py sdist bdist_wheel
-deactivate
-dir dist
-
-C:\tools\Miniconda\Scripts\activate py34_64
-python setup.py sdist bdist_wheel
-deactivate
-dir dist
-
-C:\tools\Miniconda\Scripts\activate py35_64
-python setup.py sdist bdist_wheel
-deactivate
-dir dist
-
-C:\tools\Miniconda\Scripts\activate py36_64
-python setup.py sdist bdist_wheel
-deactivate
-dir dist
-
-twine upload dist/pydevd*
-
-git tag pydev_debugger_1_1_1 -a -m "PyDev.Debugger 1.1.1"
-git push --tags
+for release process.
 '''
 
 
