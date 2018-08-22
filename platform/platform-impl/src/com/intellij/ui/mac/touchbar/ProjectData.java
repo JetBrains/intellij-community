@@ -52,13 +52,13 @@ class ProjectData {
       @Override
       public void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler) {
         // System.out.println("processStarted: " + executorId);
-        if (executorId.equals(ToolWindowId.DEBUG))
+        if (ToolWindowId.DEBUG.equals(env.getExecutor().getToolWindowId()))
           myActiveDebugSessions.incrementAndGet();
       }
       @Override
       public void processTerminated(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler, int exitCode) {
         // System.out.println("processTerminated: " + executorId);
-        if (executorId.equals(ToolWindowId.DEBUG)) {
+        if (ToolWindowId.DEBUG.equals(env.getExecutor().getToolWindowId())) {
           final int val = myActiveDebugSessions.decrementAndGet();
           if (val < 0) {
             LOG.error("received 'processTerminated' when no process wasn't started");
@@ -71,8 +71,6 @@ class ProjectData {
     //
     // Listen ToolWindowManager
     //
-    final ToolWindowManagerEx twm = ToolWindowManagerEx.getInstanceEx(myProject);
-
     myProject.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
       @Override
       public void stateChanged() {
