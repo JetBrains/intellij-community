@@ -528,6 +528,26 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
+  // PY-31442
+  public void testFStringFragmentWithLiteralFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  // PY-31442
+  public void testFStringFragmentWithNotParenthesizedLambda() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  // PY-31442
+  public void testFStringFragmentWithParenthesizedLambda() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  // PY-31442
+  public void testFStringFragmentWithDictLiteral() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
   // PY-19036
   public void testAwaitInNonAsyncNestedFunction() {
     doTest(LanguageLevel.PYTHON35);
