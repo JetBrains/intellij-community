@@ -1438,14 +1438,9 @@ public class PluginManagerCore {
     }
 
     ExtensionPoint[] extensionPoints = area.getExtensionPoints();
-    Set<String> epNames = new THashSet<>(extensionPoints.length);
-    for (ExtensionPoint point : extensionPoints) {
-      epNames.add(point.getName());
-    }
-
     for (IdeaPluginDescriptorImpl descriptor : loadedPlugins) {
-      for (String epName : epNames) {
-        descriptor.registerExtensions(area, epName);
+      for (ExtensionPoint extensionPoint : extensionPoints) {
+        descriptor.registerExtensions(area, extensionPoint);
       }
     }
   }

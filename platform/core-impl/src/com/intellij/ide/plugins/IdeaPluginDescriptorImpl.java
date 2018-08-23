@@ -328,16 +328,20 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   // made public for Upsource
   public void registerExtensions(@NotNull ExtensionsArea area, @NotNull String epName) {
+    registerExtensions(area, area.getExtensionPoint(epName));
+  }
+
+  // made public for Upsource
+  public void registerExtensions(@NotNull ExtensionsArea area, @NotNull ExtensionPoint<?> extensionPoint) {
     if (myExtensions == null) {
       return;
     }
 
-    Collection<Element> elements = myExtensions.get(epName);
+    Collection<Element> elements = myExtensions.get(extensionPoint.getName());
     if (elements.isEmpty()) {
       return;
     }
 
-    ExtensionPoint<Object> extensionPoint = area.getExtensionPoint(epName);
     for (Element element : elements) {
       area.registerExtension(extensionPoint, this, element);
     }
@@ -640,7 +644,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myOptionalDescriptors = optionalDescriptors;
   }
 
-  void mergeOptionalConfig(final IdeaPluginDescriptorImpl descriptor) {
+  void mergeOptionalConfig(@NotNull IdeaPluginDescriptorImpl descriptor) {
     if (myExtensions == null) {
       myExtensions = descriptor.myExtensions;
     }
