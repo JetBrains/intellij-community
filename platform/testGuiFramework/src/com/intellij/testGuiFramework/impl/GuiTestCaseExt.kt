@@ -14,8 +14,6 @@ import org.junit.Rule
 import org.junit.rules.ErrorCollector
 import org.junit.rules.TemporaryFolder
 import org.junit.rules.TestName
-import java.nio.file.Files
-import java.nio.file.Path
 
 open class GuiTestCaseExt : GuiTestCase() {
 
@@ -175,9 +173,10 @@ fun GuiTestCase.checkProjectIsCompiled(expectedStatus: String) {
     toolwindow(id = textEventLog) {
       content(tabName = "") {
         editor{
-          val lastLine = this.getCurrentFileContents(false)?.lines()?.last { it.trim().isNotEmpty() } ?: ""
-          assert(lastLine.contains(expectedStatus)) {
-            "Line `$lastLine` doesn't contain expected status `$expectedStatus`"
+          GuiTestUtilKt.waitUntil("Wait for '$expectedStatus' appears") {
+            val output = this.getCurrentFileContents(false)?.lines() ?: emptyList()
+            val lastLine = output.lastOrNull { it.trim().isNotEmpty() } ?: ""
+            lastLine.contains(expectedStatus)
           }
         }
       }
