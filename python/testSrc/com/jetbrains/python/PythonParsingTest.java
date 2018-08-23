@@ -533,6 +533,11 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
+  // PY-31422
+  public void testFStringFragmentWithInterpolatedFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
   // PY-31442
   public void testFStringFragmentWithNotParenthesizedLambda() {
     doTest(LanguageLevel.PYTHON36);

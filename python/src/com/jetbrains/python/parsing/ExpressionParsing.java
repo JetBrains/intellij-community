@@ -132,7 +132,7 @@ public class ExpressionParsing extends Parsing {
           break;
         }
         else {
-          marker.error("Unexpected f-string token");
+          builder.mark().error("Unexpected f-string token");
           break;
         }
       }
@@ -142,12 +142,34 @@ public class ExpressionParsing extends Parsing {
 
   private void parseFStringFragment() {
     PsiBuilder builder = myContext.getBuilder();
-    if (builder.getTokenType() == PyTokenTypes.FSTRING_FRAGMENT_START) {
+    if (atToken(PyTokenTypes.FSTRING_FRAGMENT_START)) {
       final PsiBuilder.Marker marker = builder.mark();
       nextToken();
       myContext.getExpressionParser().parseExpression();
+      if (atToken(PyTokenTypes.FSTRING_FRAGMENT_FORMAT_START)) {
+        parseFStringFragmentFormatPart();
+      }
       checkMatches(PyTokenTypes.FSTRING_FRAGMENT_END, "} expected");
       marker.done(PyElementTypes.FSTRING_FRAGMENT);
+    }
+  }
+
+  private void parseFStringFragmentFormatPart() {
+    if (atToken(PyTokenTypes.FSTRING_FRAGMENT_FORMAT_START)) {
+      final PsiBuilder.Marker marker = myContext.getBuilder().mark();
+      nextToken();
+      while (true) {
+        if (atToken(PyTokenTypes.FSTRING_TEXT)) {
+          nextToken();
+        }
+        else if (atToken(PyTokenTypes.FSTRING_FRAGMENT_START)) {
+          parseFStringFragment();
+        }
+        else {
+          break;
+        }
+      }
+      marker.done(PyElementTypes.FSTRING_FRAGMENT_FORMAT_PART);
     }
   }
 
