@@ -328,16 +328,18 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   // made public for Upsource
   public void registerExtensions(@NotNull ExtensionsArea area, @NotNull String epName) {
-    if (myExtensions != null) {
-      Collection<Element> elements = myExtensions.get(epName);
-      if (elements.isEmpty()) {
-        return;
-      }
+    if (myExtensions == null) {
+      return;
+    }
 
-      ExtensionPoint<Object> extensionPoint = area.getExtensionPoint(epName);
-      for (Element element : elements) {
-        area.registerExtension(extensionPoint, this, element);
-      }
+    Collection<Element> elements = myExtensions.get(epName);
+    if (elements.isEmpty()) {
+      return;
+    }
+
+    ExtensionPoint<Object> extensionPoint = area.getExtensionPoint(epName);
+    for (Element element : elements) {
+      area.registerExtension(extensionPoint, this, element);
     }
   }
 
