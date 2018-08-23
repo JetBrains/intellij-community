@@ -405,7 +405,7 @@ public class CodeCompletionHandlerBase {
     }
     finally {
       if (context != null && context.getLaterRunnable() != null) {
-        context.getLaterRunnable().run();
+        TransactionGuard.getInstance().submitTransactionAndWait(context.getLaterRunnable());
       }
     }
   }
