@@ -5,6 +5,7 @@ import com.intellij.lexer.FlexLexer;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.Stack;import org.jetbrains.annotations.NonNls;
 
 %%
 
@@ -13,6 +14,8 @@ import com.intellij.openapi.util.text.StringUtil;
 %unicode
 %function advance
 %type IElementType
+// TODO remove
+%debug
 
 DIGIT = [0-9]
 NONZERODIGIT = [1-9]
@@ -48,8 +51,8 @@ IMAGNUMBER=(({FLOATNUMBER})|({INTPART}))[Jj]
 
 // If you change patterns for string literals, don't forget to update PyStringLiteralUtil!
 // "c" prefix character is included for Cython
-SINGLE_QUOTED_STRING=[UuBbCcRrFf]{0,3}({QUOTED_LITERAL} | {DOUBLE_QUOTED_LITERAL})
-TRIPLE_QUOTED_STRING=[UuBbCcRrFf]{0,3}({TRIPLE_QUOTED_LITERAL}|{TRIPLE_APOS_LITERAL})
+SINGLE_QUOTED_STRING=[UuBbCcRr]{0,3}({QUOTED_LITERAL} | {DOUBLE_QUOTED_LITERAL})
+TRIPLE_QUOTED_STRING=[UuBbCcRr]{0,3}({TRIPLE_QUOTED_LITERAL}|{TRIPLE_APOS_LITERAL})
 
 DOCSTRING_LITERAL=({SINGLE_QUOTED_STRING}|{TRIPLE_QUOTED_STRING})
 
@@ -69,9 +72,57 @@ ONE_TWO_APOS = ('[^\\']) | ('\\[^]) | (''[^\\']) | (''\\[^])
 APOS_STRING_CHAR = [^\\'] | {ANY_ESCAPE_SEQUENCE} | {ONE_TWO_APOS}
 TRIPLE_APOS_LITERAL = {THREE_APOS} {APOS_STRING_CHAR}* {THREE_APOS}?
 
+FSTRING_PREFIX = [UuBbCcRr]{0,3}[fF][UuBbCcRr]{0,3}
+FSTRING_START = {FSTRING_PREFIX} (\"\"\"|'''|\"|')
+FSTRING_END = (\"\"\"|'''|\"|')
+FSTRING_FRAGMENT_START = "{"
+FSTRING_FRAGMENT_BANG = "!"
+FSTRING_FRAGMENT_CONVERSION = [sra]
+FSTRING_FRAGMENT_COLON = ":"
+FSTRING_FRAGMENT_END = "}"
+FSTRING_ESCAPED_LBRACE = "{{"
+// TODO report it in annotation
+//FSTRING_ESCAPED_RBRACE = "}}"
+FSTRING_TEXT = ([^\\\'\r\n{] | {ESCAPE_SEQUENCE} | {FSTRING_ESCAPED_LBRACE} | (\\[\r\n]))+
+
 %state PENDING_DOCSTRING
 %state IN_DOCSTRING_OWNER
+%state FSTRING
+%state FSTRING_FRAGMENT
+%state FSTRING_FRAGMENT_FORMAT_PART
 %{
+static final class FStringState {
+  private final int oldState;
+  private final int oldBraceBalance;
+  private final String openingQuotes;
+
+  FStringState(int state, int braceBalance, @NonNls String fStringStart) {
+    oldState = state;
+    oldBraceBalance = braceBalance;
+
+    String prefix = fStringStart.toLowerCase();
+    prefix = StringUtil.trimLeading(prefix, 'r');
+    prefix = StringUtil.trimLeading(prefix, 'f');
+    prefix = StringUtil.trimLeading(prefix, 'r');
+    openingQuotes = prefix;
+  }
+}
+
+void pushFString() {
+  states.push(new FStringState(yystate(), braceBalance, yytext().toString()));
+  braceBalance = 0;
+  yybegin(FSTRING);
+}
+
+void popFString() {
+  FStringState state = states.pop();
+  braceBalance = state.oldBraceBalance;
+  yybegin(state.oldState);
+}
+
+private final Stack<FStringState> states = new Stack<>();
+private int braceBalance = 0;
+
 private int getSpaceLength(CharSequence string) {
 String string1 = string.toString();
 string1 = StringUtil.trimEnd(string1, "\\");
@@ -88,6 +139,18 @@ return yylength()-s.length();
 [\t]                        { return PyTokenTypes.TAB; }
 [\f]                        { return PyTokenTypes.FORMFEED; }
 "\\"                        { return PyTokenTypes.BACKSLASH; }
+
+<FSTRING> {
+  {FSTRING_TEXT} { return PyTokenTypes.FSTRING_TEXT; }
+  {FSTRING_END} { popFString(); return PyTokenTypes.FSTRING_END; }
+  "{" { yybegin(FSTRING_FRAGMENT); return PyTokenTypes.FSTRING_FRAGMENT_START; }
+}
+
+<FSTRING_FRAGMENT> {
+  "{" { braceBalance++; return PyTokenTypes.LBRACE; }
+  "}" { if (braceBalance == 0) { yybegin(FSTRING); return PyTokenTypes.FSTRING_FRAGMENT_END; }
+        else { braceBalance--; return PyTokenTypes.RBRACE; } }
+}
 
 <YYINITIAL> {
 [\n]                        { if (zzCurrentPos == 0) yybegin(PENDING_DOCSTRING); return PyTokenTypes.LINE_BREAK; }
@@ -117,7 +180,7 @@ return PyTokenTypes.DOCSTRING; }
 [\n]                        { return PyTokenTypes.LINE_BREAK; }
 {END_OF_LINE_COMMENT}       { return PyTokenTypes.END_OF_LINE_COMMENT; }
 
-<YYINITIAL, IN_DOCSTRING_OWNER> {
+<YYINITIAL, IN_DOCSTRING_OWNER, FSTRING_FRAGMENT> {
 {LONGINTEGER}         { return PyTokenTypes.INTEGER_LITERAL; }
 {INTEGER}             { return PyTokenTypes.INTEGER_LITERAL; }
 {FLOATNUMBER}         { return PyTokenTypes.FLOAT_LITERAL; }
@@ -205,6 +268,8 @@ return PyTokenTypes.DOCSTRING; }
 "="                   { return PyTokenTypes.EQ; }
 ";"                   { return PyTokenTypes.SEMICOLON; }
 
+{FSTRING_START}       { pushFString(); return PyTokenTypes.FSTRING_START; }
+
 [^]                   { return PyTokenTypes.BAD_CHARACTER; }
 }
 
@@ -217,10 +282,7 @@ return PyTokenTypes.DOCSTRING; }
                                  else yybegin(YYINITIAL); return PyTokenTypes.SINGLE_QUOTED_STRING; }
 {TRIPLE_QUOTED_STRING}          { if (zzInput == YYEOF) return PyTokenTypes.DOCSTRING;
                                  else yybegin(YYINITIAL); return PyTokenTypes.TRIPLE_QUOTED_STRING; }
-{DOCSTRING_LITERAL}[\ \t]*[\n;]   { yypushback(getSpaceLength(yytext())); yybegin(YYINITIAL); return PyTokenTypes.DOCSTRING; }
-{DOCSTRING_LITERAL}[\ \t]*"\\"  {
- yypushback(getSpaceLength(yytext())); return PyTokenTypes.DOCSTRING; }
-
+{DOCSTRING_LITERAL}[\ \t]*[\n;] { yypushback(getSpaceLength(yytext())); yybegin(YYINITIAL); return PyTokenTypes.DOCSTRING; }
+{DOCSTRING_LITERAL}[\ \t]*"\\"  { yypushback(getSpaceLength(yytext())); return PyTokenTypes.DOCSTRING; }
 .                               { yypushback(1); yybegin(YYINITIAL); }
 }
-

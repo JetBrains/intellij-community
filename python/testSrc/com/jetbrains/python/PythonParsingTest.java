@@ -369,10 +369,6 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
-  public void doTest() {
-    doTest(LanguageLevel.PYTHON26);
-  }
-
   public void testCompoundStatementAfterSemicolon() {  // PY-7660
     doTest();
   }
@@ -512,6 +508,26 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
+  // PY-31442
+  public void testFStringWithSimpleFragment() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+  
+  // PY-31442
+  public void testFStringGluedWithLiteralStringNodes() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  // PY-31442
+  public void testFStringEscapedBraces() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  // PY-31442
+  public void testFStringExpressionContainBraces() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
   // PY-19036
   public void testAwaitInNonAsyncNestedFunction() {
     doTest(LanguageLevel.PYTHON35);
@@ -548,6 +564,10 @@ public class PythonParsingTest extends ParsingTestCase {
   // PY-17017
   public void testTrailingBlockCommentsFollowedByStatement() {
     doTest();
+  }
+
+  public void doTest() {
+    doTest(LanguageLevel.PYTHON26);
   }
 
   public void doTest(LanguageLevel languageLevel) {
