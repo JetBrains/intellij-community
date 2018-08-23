@@ -344,9 +344,6 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
     new LibraryLicense(name: "PicoContainer", libraryName: "picocontainer", version: "1.2", license: "BSD",
                        url: "https://github.com/codehaus/picocontainer", licenseUrl: "https://opensource.org/licenses/bsd-license.php"),
-    new LibraryLicense(name: "Plantuml", libraryName: "plantuml.jar", version: "1.2017.18", license: "Apache 2.0",
-                       url: "http://plantuml.com", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
-
     new LibraryLicense(name: "plexus-archiver", libraryName: "plexus-archiver", version: "2.4.4", license: "Apache 2.0",
                        url: "https://github.com/codehaus-plexus/plexus-archiver", licenseUrl: "http://apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "plexus-classworlds", attachedTo: "intellij.maven.server.m30.impl", version: "2.4", license: "Apache 2.0",
