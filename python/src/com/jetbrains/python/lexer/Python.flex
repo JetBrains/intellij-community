@@ -4,8 +4,9 @@ package com.jetbrains.python.lexer;
 import com.intellij.lexer.FlexLexer;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
+import com.intellij.util.containers.Stack;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.Stack;import org.jetbrains.annotations.NonNls;
+import com.jetbrains.python.psi.PyStringLiteralUtil;
 
 %%
 
@@ -91,36 +92,53 @@ FSTRING_TEXT = ([^\\\'\r\n{] | {ESCAPE_SEQUENCE} | {FSTRING_ESCAPED_LBRACE} | (\
 %state FSTRING_FRAGMENT
 %state FSTRING_FRAGMENT_FORMAT_PART
 %{
-static final class FStringState {
+static final class FragmentState {
   private final int oldState;
   private final int oldBraceBalance;
-  private final String openingQuotes;
 
-  FStringState(int state, int braceBalance, @NonNls String fStringStart) {
+  FragmentState(int state, int braceBalance) {
     oldState = state;
     oldBraceBalance = braceBalance;
-
-    String prefix = fStringStart.toLowerCase();
-    prefix = StringUtil.trimLeading(prefix, 'r');
-    prefix = StringUtil.trimLeading(prefix, 'f');
-    prefix = StringUtil.trimLeading(prefix, 'r');
-    openingQuotes = prefix;
   }
 }
 
-void pushFString() {
-  states.push(new FStringState(yystate(), braceBalance, yytext().toString()));
+void pushFStringFragment() {
+  fragmentStates.push(new FragmentState(yystate(), braceBalance));
   braceBalance = 0;
-  yybegin(FSTRING);
+  yybegin(FSTRING_FRAGMENT);
 }
 
-void popFString() {
-  FStringState state = states.pop();
+void popFStringFragment() {
+  FragmentState state = fragmentStates.pop();
   braceBalance = state.oldBraceBalance;
   yybegin(state.oldState);
 }
 
-private final Stack<FStringState> states = new Stack<>();
+static final class FStringState {
+  private final int oldState;
+  private final String quotes;
+
+  FStringState(int state, String quotes) {
+    oldState = state;
+    this.quotes = quotes;
+  }
+}
+
+void pushFString() {
+  final String prefixAndQuotes = yytext().toString();
+  final int prefixLength = PyStringLiteralUtil.getPrefixLength(prefixAndQuotes);
+  fStringStates.push(new FStringState(yystate(), prefixAndQuotes.substring(prefixLength)));
+  yybegin(FSTRING);
+}
+
+void popFString() {
+  final FStringState state = fStringStates.pop();
+  yybegin(state.oldState);
+}
+
+private final Stack<FragmentState> fragmentStates = new Stack<>();
+private final Stack<FStringState> fStringStates = new Stack<>();
+
 private int braceBalance = 0;
 
 private int getSpaceLength(CharSequence string) {
@@ -143,12 +161,18 @@ return yylength()-s.length();
 <FSTRING> {
   {FSTRING_TEXT} { return PyTokenTypes.FSTRING_TEXT; }
   {FSTRING_END} { popFString(); return PyTokenTypes.FSTRING_END; }
-  "{" { yybegin(FSTRING_FRAGMENT); return PyTokenTypes.FSTRING_FRAGMENT_START; }
+  "{" { pushFStringFragment(); return PyTokenTypes.FSTRING_FRAGMENT_START; }
 }
 
 <FSTRING_FRAGMENT> {
+  "(" { braceBalance++; return PyTokenTypes.LPAR; }
+  ")" { braceBalance--; return PyTokenTypes.RPAR; }
+  
+  "[" { braceBalance++; return PyTokenTypes.LBRACKET; }
+  "]" { braceBalance--; return PyTokenTypes.RBRACKET; }
+  
   "{" { braceBalance++; return PyTokenTypes.LBRACE; }
-  "}" { if (braceBalance == 0) { yybegin(FSTRING); return PyTokenTypes.FSTRING_FRAGMENT_END; }
+  "}" { if (braceBalance == 0) { popFStringFragment(); return PyTokenTypes.FSTRING_FRAGMENT_END; }
         else { braceBalance--; return PyTokenTypes.RBRACE; } }
 }
 
