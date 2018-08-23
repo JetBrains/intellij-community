@@ -418,6 +418,8 @@ class CommunityLibraryLicenses {
                        url: "http://java.net/downloads/swingx/", licenseUrl: "http://www.opensource.org/licenses/lgpl-2.1.php"),
     new LibraryLicense(name: "TestNG", version: "6.9 snapshot", license: "Apache 2.0", url: "http://testng.org/doc/",
                        licenseUrl: "https://github.com/cbeust/testng/blob/master/LICENSE.txt"),
+    new LibraryLicense(name: "Thrift", libraryName: "libthrift", version: "0.11.0", license: "Apache 2.0",
+                       licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://thrift.apache.org/"),
     new LibraryLicense(name: "Trilead SSH", libraryName: "trilead-ssh2", version: "build-217-jenkins-11", license: "BSD style",
                        licenseUrl: "https://github.com/jenkinsci/trilead-ssh2/blob/master/LICENSE.txt",
                        url: "https://github.com/jenkinsci/trilead-ssh2"),
