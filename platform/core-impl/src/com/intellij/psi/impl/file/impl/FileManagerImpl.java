@@ -318,7 +318,7 @@ public class FileManagerImpl implements FileManager {
   }
 
   @TestOnly
-  public void checkConsistency() {
+  void checkConsistency() {
     for (VirtualFile file : new ArrayList<>(getVFileToViewProviderMap().keySet())) {
       findCachedViewProvider(file); // complete delayed validity checks
     }

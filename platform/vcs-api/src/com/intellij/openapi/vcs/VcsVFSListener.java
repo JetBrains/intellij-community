@@ -102,12 +102,7 @@ public abstract class VcsVFSListener implements Disposable {
   protected void executeAdd() {
     final List<VirtualFile> addedFiles = acquireAddedFiles();
     LOG.debug("executeAdd. addedFiles: ", addedFiles);
-    for (Iterator<VirtualFile> iterator = addedFiles.iterator(); iterator.hasNext(); ) {
-      VirtualFile file = iterator.next();
-      if (myVcsFileListenerContextHelper.isAdditionIgnored(file)) {
-        iterator.remove();
-      }
-    }
+    addedFiles.removeIf(myVcsFileListenerContextHelper::isAdditionIgnored);
     final Map<VirtualFile, VirtualFile> copyFromMap = acquireCopiedFiles();
     if (! addedFiles.isEmpty()) {
       executeAdd(addedFiles, copyFromMap);
@@ -181,18 +176,8 @@ public abstract class VcsVFSListener implements Disposable {
     myDeletedWithoutConfirmFiles.clear();
     myDeletedFiles.clear();
 
-    for (Iterator<FilePath> iterator = filesToDelete.iterator(); iterator.hasNext(); ) {
-      FilePath file = iterator.next();
-      if (myVcsFileListenerContextHelper.isDeletionIgnored(file)) {
-        iterator.remove();
-      }
-    }
-    for (Iterator<FilePath> iterator = deletedFiles.iterator(); iterator.hasNext(); ) {
-      FilePath file = iterator.next();
-      if (myVcsFileListenerContextHelper.isDeletionIgnored(file)) {
-        iterator.remove();
-      }
-    }
+    filesToDelete.removeIf(myVcsFileListenerContextHelper::isDeletionIgnored);
+    deletedFiles.removeIf(myVcsFileListenerContextHelper::isDeletionIgnored);
 
     if (deletedFiles.isEmpty() &&filesToDelete.isEmpty()) return;
 
@@ -264,7 +249,7 @@ public abstract class VcsVFSListener implements Disposable {
 
     String newPath = newParentPath + "/" + newName;
     if (!(filterOutUnknownFiles() && status == FileStatus.UNKNOWN) && status != FileStatus.IGNORED) {
-      MovedFileInfo existingMovedFile = ContainerUtil.find(myMovedFiles, (info) -> Comparing.equal(info.myFile, file));
+      MovedFileInfo existingMovedFile = ContainerUtil.find(myMovedFiles, info -> Comparing.equal(info.myFile, file));
       if (existingMovedFile != null) {
         LOG.debug("Reusing existing moved file [" + file + "] with new path [" + newPath + "]");
         existingMovedFile.myNewPath = newPath;
@@ -460,16 +445,8 @@ public abstract class VcsVFSListener implements Disposable {
         copiedAddedMoved.add(movedFileInfo.myNewPath);
       }
 
-      for (Iterator<FilePath> iterator = myDeletedFiles.iterator(); iterator.hasNext(); ) {
-        if (copiedAddedMoved.contains(FileUtil.toSystemIndependentName(iterator.next().getPath()))) {
-          iterator.remove();
-        }
-      }
-      for (Iterator<FilePath> iterator = myDeletedWithoutConfirmFiles.iterator(); iterator.hasNext(); ) {
-        if (copiedAddedMoved.contains(FileUtil.toSystemIndependentName(iterator.next().getPath()))) {
-          iterator.remove();
-        }
-      }
+      myDeletedFiles.removeIf(path -> copiedAddedMoved.contains(FileUtil.toSystemIndependentName(path.getPath())));
+      myDeletedWithoutConfirmFiles.removeIf(path -> copiedAddedMoved.contains(FileUtil.toSystemIndependentName(path.getPath())));
     }
 
     @Override
