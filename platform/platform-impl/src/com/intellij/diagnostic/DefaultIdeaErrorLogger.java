@@ -4,7 +4,7 @@ package com.intellij.diagnostic;
 import com.android.tools.analytics.AnalyticsSettings;
 import com.intellij.diagnostic.VMOptions.MemoryKind;
 import com.intellij.featureStatistics.fusCollectors.AppLifecycleUsageTriggerCollector;
-import com.intellij.ide.AndroidStudioSystemHealthMonitor;
+import com.intellij.ide.AndroidStudioSystemHealthMonitorAdapter;
 import com.intellij.ide.ExceptionRegistry;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
@@ -97,7 +97,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
         if (isReportableCrash(t)) {
           StackTrace stackTrace = ExceptionRegistry.INSTANCE.register(t);
           incrementAndSaveExceptionCount(t);
-          AndroidStudioSystemHealthMonitor.reportException(t, stackTrace);
+          AndroidStudioSystemHealthMonitorAdapter.reportException(t, stackTrace);
         }
       }
     }
@@ -141,15 +141,15 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
   }
 
   private static void incrementAndSaveExceptionCount(@NotNull Throwable t) {
-    AndroidStudioSystemHealthMonitor.incrementAndSaveExceptionCount();
+    AndroidStudioSystemHealthMonitorAdapter.incrementAndSaveExceptionCount();
     PluginId pluginId = IdeErrorsDialog.findPluginId(t);
     if (pluginId != null) {
       IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
       if (plugin != null && plugin.isBundled()) {
-        AndroidStudioSystemHealthMonitor.incrementAndSaveBundledPluginsExceptionCount();
+        AndroidStudioSystemHealthMonitorAdapter.incrementAndSaveBundledPluginsExceptionCount();
       }
       else {
-        AndroidStudioSystemHealthMonitor.incrementAndSaveNonBundledPluginsExceptionCount();
+        AndroidStudioSystemHealthMonitorAdapter.incrementAndSaveNonBundledPluginsExceptionCount();
       }
     }
   }

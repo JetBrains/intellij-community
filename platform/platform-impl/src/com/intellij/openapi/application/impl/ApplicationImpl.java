@@ -1228,7 +1228,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         long t = System.currentTimeMillis();
         myLock.writeLock();
         long elapsed = Math.max(0, System.currentTimeMillis() - t);
-        AndroidStudioSystemHealthMonitor.recordWriteLockWaitTime(elapsed);
+        AndroidStudioSystemHealthMonitorAdapter.recordWriteLockWaitTime(elapsed);
         if (LOG.isDebugEnabled()) {
           if (elapsed != 0) {
             LOG.debug("Write action wait time: " + elapsed);

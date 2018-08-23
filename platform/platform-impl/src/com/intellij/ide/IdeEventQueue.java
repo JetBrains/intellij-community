@@ -397,7 +397,7 @@ public class IdeEventQueue extends EventQueue {
           // Stop the current stopwatch and resume any previously-running stopwatch.
           long elapsed = myRecursiveStopwatch.end(oldStopwatchState);
           if (elapsed != -1) {
-            AndroidStudioSystemHealthMonitor.recordEventTime(EVENT_TIMING_INTERVAL, elapsed);
+            AndroidStudioSystemHealthMonitorAdapter.recordEventTime(EVENT_TIMING_INTERVAL, elapsed);
           }
         }
       }
