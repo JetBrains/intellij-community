@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.debugger.impl.attach.JavaDebuggerAttachUtil;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
@@ -34,6 +35,7 @@ import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -207,8 +209,10 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
       myProcessHandler.addProcessListener(new ProcessAdapter() {
         @Override
         public void startNotified(@NotNull ProcessEvent event) {
-          ApplicationManager.getApplication().executeOnPooledThread(
-            () -> myEnabled.set(JavaDebuggerAttachUtil.canAttach(myProcessHandler.getProcess())));
+          // 1 second delay to allow jvm to start correctly
+          JobScheduler.getScheduler().schedule(
+            () -> myEnabled.set(JavaDebuggerAttachUtil.canAttach(myProcessHandler.getProcess())), 1, TimeUnit.SECONDS);
+          myProcessHandler.removeProcessListener(this);
         }
       });
     }
