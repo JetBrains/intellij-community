@@ -8,6 +8,9 @@ import com.intellij.psi.PsiElement;
 public interface DotEnvProperty extends PsiElement {
 
   @NotNull
-  PsiElement getValue();
+  DotEnvKey getKey();
+
+  @Nullable
+  DotEnvValue getValue();
 
 }

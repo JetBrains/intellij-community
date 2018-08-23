@@ -5,9 +5,6 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface DotEnvComment extends PsiElement {
-
-  @NotNull
-  PsiElement getLineComment();
+public interface DotEnvValue extends PsiElement {
 
 }

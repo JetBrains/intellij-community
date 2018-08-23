@@ -2,4 +2,5 @@
 /out/
 /dotenv.jar
 /idea-flex.skeleton
-/jflex-1.7.0-SNAPSHOT.jar
+/jflex-1.7.0.jar
+/gen/ru/adelf/idea/dotenv/grammars/_DotEnvLexer.java~

@@ -11,25 +11,19 @@ import static ru.adelf.idea.dotenv.psi.DotEnvTypes.*;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import ru.adelf.idea.dotenv.psi.*;
 
-public class DotEnvCommentImpl extends ASTWrapperPsiElement implements DotEnvComment {
+public class DotEnvKeyImpl extends ASTWrapperPsiElement implements DotEnvKey {
 
-  public DotEnvCommentImpl(ASTNode node) {
+  public DotEnvKeyImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull DotEnvVisitor visitor) {
-    visitor.visitComment(this);
+    visitor.visitKey(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof DotEnvVisitor) accept((DotEnvVisitor)visitor);
     else super.accept(visitor);
-  }
-
-  @Override
-  @NotNull
-  public PsiElement getLineComment() {
-    return findNotNullChildByType(LINE_COMMENT);
   }
 
 }

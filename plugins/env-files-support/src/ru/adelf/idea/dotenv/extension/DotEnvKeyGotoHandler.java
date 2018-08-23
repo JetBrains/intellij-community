@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesApi;
+import ru.adelf.idea.dotenv.psi.DotEnvKey;
 import ru.adelf.idea.dotenv.psi.DotEnvProperty;
 import ru.adelf.idea.dotenv.util.EnvironmentVariablesUtil;
 
@@ -21,11 +22,11 @@ public class DotEnvKeyGotoHandler implements GotoDeclarationHandler {
 
         psiElement = psiElement.getParent();
 
-        if(!(psiElement instanceof DotEnvProperty)) {
+        if(!(psiElement instanceof DotEnvKey)) {
             return new PsiElement[0];
         }
 
-        return EnvironmentVariablesApi.getKeyUsages(psiElement.getProject(), EnvironmentVariablesUtil.getKeyFromString(psiElement.getText()));
+        return EnvironmentVariablesApi.getKeyUsages(psiElement.getProject(), psiElement.getText());
     }
 
     @Nullable

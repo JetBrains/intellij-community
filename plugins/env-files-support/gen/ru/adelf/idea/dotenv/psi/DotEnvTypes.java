@@ -8,25 +8,27 @@ import ru.adelf.idea.dotenv.psi.impl.*;
 
 public interface DotEnvTypes {
 
-  IElementType COMMENT = new DotEnvElementType("COMMENT");
-  IElementType EMPTY_LINE = new DotEnvElementType("EMPTY_LINE");
+  IElementType KEY = new DotEnvElementType("KEY");
   IElementType PROPERTY = new DotEnvElementType("PROPERTY");
+  IElementType VALUE = new DotEnvElementType("VALUE");
 
-  IElementType LINE_COMMENT = new DotEnvTokenType("LINE_COMMENT");
-  IElementType SPACE = new DotEnvTokenType("SPACE");
-  IElementType VALUE = new DotEnvTokenType("VALUE");
+  IElementType COMMENT = new DotEnvTokenType("COMMENT");
+  IElementType CRLF = new DotEnvTokenType("CRLF");
+  IElementType KEY_CHARS = new DotEnvTokenType("KEY_CHARS");
+  IElementType SEPARATOR = new DotEnvTokenType("SEPARATOR");
+  IElementType VALUE_CHARS = new DotEnvTokenType("VALUE_CHARS");
 
   class Factory {
     public static PsiElement createElement(ASTNode node) {
       IElementType type = node.getElementType();
-       if (type == COMMENT) {
-        return new DotEnvCommentImpl(node);
-      }
-      else if (type == EMPTY_LINE) {
-        return new DotEnvEmptyLineImpl(node);
+       if (type == KEY) {
+        return new DotEnvKeyImpl(node);
       }
       else if (type == PROPERTY) {
         return new DotEnvPropertyImpl(node);
+      }
+      else if (type == VALUE) {
+        return new DotEnvValueImpl(node);
       }
       throw new AssertionError("Unknown element type: " + type);
     }

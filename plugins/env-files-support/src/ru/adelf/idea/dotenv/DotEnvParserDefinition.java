@@ -5,12 +5,14 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.*;
+import ru.adelf.idea.dotenv.grammars.DotEnvLexerAdapter;
 import ru.adelf.idea.dotenv.parser.DotEnvParser;
 import ru.adelf.idea.dotenv.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 public class DotEnvParserDefinition implements ParserDefinition {
     private static final TokenSet WHITE_SPACES = TokenSet.create(TokenType.WHITE_SPACE);
+    private static final TokenSet COMMENTS = TokenSet.create(DotEnvTypes.COMMENT);
     private static final IFileElementType FILE = new IFileElementType(DotEnvLanguage.INSTANCE);
 
     @NotNull
@@ -26,7 +28,7 @@ public class DotEnvParserDefinition implements ParserDefinition {
 
     @NotNull
     public TokenSet getCommentTokens() {
-        return TokenSet.EMPTY;
+        return COMMENTS;
     }
 
     @NotNull

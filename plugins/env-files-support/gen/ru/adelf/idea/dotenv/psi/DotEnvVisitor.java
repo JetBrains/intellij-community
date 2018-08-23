@@ -7,15 +7,15 @@ import com.intellij.psi.PsiElement;
 
 public class DotEnvVisitor extends PsiElementVisitor {
 
-  public void visitComment(@NotNull DotEnvComment o) {
-    visitPsiElement(o);
-  }
-
-  public void visitEmptyLine(@NotNull DotEnvEmptyLine o) {
+  public void visitKey(@NotNull DotEnvKey o) {
     visitPsiElement(o);
   }
 
   public void visitProperty(@NotNull DotEnvProperty o) {
+    visitPsiElement(o);
+  }
+
+  public void visitValue(@NotNull DotEnvValue o) {
     visitPsiElement(o);
   }
 

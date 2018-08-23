@@ -57,6 +57,8 @@
     <localInspection language="DotEnv" groupName="DotEnv"
                      shortName="DotEnvDuplicateKeyInspection" displayName="Duplicate keys" enabledByDefault="true" level="WARNING"
                      implementationClass="ru.adelf.idea.dotenv.inspections.DuplicateKeyInspection"/>
+
+    <lang.syntaxHighlighterFactory language="DotEnv" implementationClass="ru.adelf.idea.dotenv.DotEnvSyntaxHighlighterFactory"/>
   </extensions>
 
   <extensions defaultExtensionNs="ru.adelf.idea.dotenv">

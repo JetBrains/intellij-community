@@ -11,17 +11,14 @@
   elementTypeHolderClass="ru.adelf.idea.dotenv.psi.DotEnvTypes"
   elementTypeClass="ru.adelf.idea.dotenv.psi.DotEnvElementType"
   tokenTypeClass="ru.adelf.idea.dotenv.psi.DotEnvTokenType"
-
-  tokens = [
-    LINE_COMMENT="regexp:(//|#).*"
-    VALUE="regexp:.+"
-  ]
 }
 
-dotEnvFile ::= (property|comment|empty_line)*
+dotEnvFile ::= item_*
 
-empty_line ::= SPACE
+private item_ ::= (property|COMMENT|CRLF)
 
-comment ::= LINE_COMMENT
+key ::= KEY_CHARS
 
-property ::= VALUE
+value ::= VALUE_CHARS
+
+property ::= (key SEPARATOR value?) | key

@@ -13,7 +13,7 @@ import ru.adelf.idea.dotenv.psi.*;
 
 public class DotEnvPropertyImpl extends ASTWrapperPsiElement implements DotEnvProperty {
 
-  public DotEnvPropertyImpl(ASTNode node) {
+  public DotEnvPropertyImpl(@NotNull ASTNode node) {
     super(node);
   }
 
@@ -28,8 +28,14 @@ public class DotEnvPropertyImpl extends ASTWrapperPsiElement implements DotEnvPr
 
   @Override
   @NotNull
-  public PsiElement getValue() {
-    return findNotNullChildByType(VALUE);
+  public DotEnvKey getKey() {
+    return findNotNullChildByClass(DotEnvKey.class);
+  }
+
+  @Override
+  @Nullable
+  public DotEnvValue getValue() {
+    return findChildByClass(DotEnvValue.class);
   }
 
 }

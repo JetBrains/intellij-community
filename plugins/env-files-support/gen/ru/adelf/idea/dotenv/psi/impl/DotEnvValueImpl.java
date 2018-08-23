@@ -11,14 +11,14 @@ import static ru.adelf.idea.dotenv.psi.DotEnvTypes.*;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import ru.adelf.idea.dotenv.psi.*;
 
-public class DotEnvEmptyLineImpl extends ASTWrapperPsiElement implements DotEnvEmptyLine {
+public class DotEnvValueImpl extends ASTWrapperPsiElement implements DotEnvValue {
 
-  public DotEnvEmptyLineImpl(ASTNode node) {
+  public DotEnvValueImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull DotEnvVisitor visitor) {
-    visitor.visitEmptyLine(this);
+    visitor.visitValue(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {

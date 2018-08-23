@@ -23,14 +23,14 @@ public class DotEnvParser implements PsiParser, LightPsiParser {
     boolean r;
     b = adapt_builder_(t, b, this, null);
     Marker m = enter_section_(b, 0, _COLLAPSE_, null);
-    if (t == COMMENT) {
-      r = comment(b, 0);
-    }
-    else if (t == EMPTY_LINE) {
-      r = empty_line(b, 0);
+    if (t == KEY) {
+      r = key(b, 0);
     }
     else if (t == PROPERTY) {
       r = property(b, 0);
+    }
+    else if (t == VALUE) {
+      r = value(b, 0);
     }
     else {
       r = parse_root_(t, b, 0);
@@ -43,63 +43,81 @@ public class DotEnvParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // LINE_COMMENT
-  public static boolean comment(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "comment")) return false;
-    if (!nextTokenIs(b, LINE_COMMENT)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, LINE_COMMENT);
-    exit_section_(b, m, COMMENT, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // (property|comment|empty_line)*
+  // item_*
   static boolean dotEnvFile(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "dotEnvFile")) return false;
-    int c = current_position_(b);
     while (true) {
-      if (!dotEnvFile_0(b, l + 1)) break;
+      int c = current_position_(b);
+      if (!item_(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "dotEnvFile", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
 
-  // property|comment|empty_line
-  private static boolean dotEnvFile_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "dotEnvFile_0")) return false;
+  /* ********************************************************** */
+  // property|COMMENT|CRLF
+  static boolean item_(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "item_")) return false;
+    boolean r;
+    r = property(b, l + 1);
+    if (!r) r = consumeToken(b, COMMENT);
+    if (!r) r = consumeToken(b, CRLF);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // KEY_CHARS
+  public static boolean key(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "key")) return false;
+    if (!nextTokenIs(b, KEY_CHARS)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = property(b, l + 1);
-    if (!r) r = comment(b, l + 1);
-    if (!r) r = empty_line(b, l + 1);
+    r = consumeToken(b, KEY_CHARS);
+    exit_section_(b, m, KEY, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // (key SEPARATOR value?) | key
+  public static boolean property(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "property")) return false;
+    if (!nextTokenIs(b, KEY_CHARS)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = property_0(b, l + 1);
+    if (!r) r = key(b, l + 1);
+    exit_section_(b, m, PROPERTY, r);
+    return r;
+  }
+
+  // key SEPARATOR value?
+  private static boolean property_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "property_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = key(b, l + 1);
+    r = r && consumeToken(b, SEPARATOR);
+    r = r && property_0_2(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  /* ********************************************************** */
-  // SPACE
-  public static boolean empty_line(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "empty_line")) return false;
-    if (!nextTokenIs(b, SPACE)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, SPACE);
-    exit_section_(b, m, EMPTY_LINE, r);
-    return r;
+  // value?
+  private static boolean property_0_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "property_0_2")) return false;
+    value(b, l + 1);
+    return true;
   }
 
   /* ********************************************************** */
-  // VALUE
-  public static boolean property(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "property")) return false;
-    if (!nextTokenIs(b, VALUE)) return false;
+  // VALUE_CHARS
+  public static boolean value(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "value")) return false;
+    if (!nextTokenIs(b, VALUE_CHARS)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, VALUE);
-    exit_section_(b, m, PROPERTY, r);
+    r = consumeToken(b, VALUE_CHARS);
+    exit_section_(b, m, VALUE, r);
     return r;
   }
 
