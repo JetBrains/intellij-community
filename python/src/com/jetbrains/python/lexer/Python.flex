@@ -76,21 +76,17 @@ TRIPLE_APOS_LITERAL = {THREE_APOS} {APOS_STRING_CHAR}* {THREE_APOS}?
 FSTRING_PREFIX = [UuBbCcRr]{0,3}[fF][UuBbCcRr]{0,3}
 FSTRING_START = {FSTRING_PREFIX} (\"\"\"|'''|\"|')
 FSTRING_END = (\"\"\"|'''|\"|')
-FSTRING_FRAGMENT_START = "{"
-FSTRING_FRAGMENT_BANG = "!"
-FSTRING_FRAGMENT_CONVERSION = [sra]
-FSTRING_FRAGMENT_COLON = ":"
-FSTRING_FRAGMENT_END = "}"
 FSTRING_ESCAPED_LBRACE = "{{"
 // TODO report it in annotation
 //FSTRING_ESCAPED_RBRACE = "}}"
 FSTRING_TEXT = ([^\\\'\r\n{] | {ESCAPE_SEQUENCE} | {FSTRING_ESCAPED_LBRACE} | (\\[\r\n]))+
+FSTRING_FORMAT_TEXT = ([^\\\'\r\n{}] | (\\[\r\n]))+
 
 %state PENDING_DOCSTRING
 %state IN_DOCSTRING_OWNER
 %state FSTRING
 %state FSTRING_FRAGMENT
-%state FSTRING_FRAGMENT_FORMAT_PART
+%state FSTRING_FRAGMENT_FORMAT
 %{
 static final class FragmentState {
   private final int oldState;
@@ -172,6 +168,16 @@ return yylength()-s.length();
   "]" { braceBalance--; return PyTokenTypes.RBRACKET; }
   
   "{" { braceBalance++; return PyTokenTypes.LBRACE; }
+  "}" { if (braceBalance == 0) { popFStringFragment(); return PyTokenTypes.FSTRING_FRAGMENT_END; }
+        else { braceBalance--; return PyTokenTypes.RBRACE; } }
+        
+  ":" { if (braceBalance == 0) { yybegin(FSTRING_FRAGMENT_FORMAT); return PyTokenTypes.FSTRING_FRAGMENT_FORMAT_START; }
+        else { return PyTokenTypes.COLON; } }
+}
+
+<FSTRING_FRAGMENT_FORMAT> {
+  {FSTRING_FORMAT_TEXT} { return PyTokenTypes.FSTRING_TEXT; }
+  "{" { pushFStringFragment(); return PyTokenTypes.FSTRING_FRAGMENT_START; }
   "}" { if (braceBalance == 0) { popFStringFragment(); return PyTokenTypes.FSTRING_FRAGMENT_END; }
         else { braceBalance--; return PyTokenTypes.RBRACE; } }
 }
