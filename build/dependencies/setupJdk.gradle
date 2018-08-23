@@ -2,7 +2,7 @@
 task setupJdks(dependsOn: ['setupJdk18', 'setupJdk16'])
 cleanSetupJdks.dependsOn('cleanSetupJdk18', 'cleanSetupJdk16', 'cleanDownloadJdk18')
 
-def jdkRepo = 'https://cache-redirector.jetbrains.com'
+def jdkRepo = 'https://repo.labs.intellij.net'
 
 def checkoutDir = intellijProjectDir()
 def jdkDir = "$checkoutDir/build/jdk"
@@ -21,7 +21,7 @@ task downloadJdk18 {
   doLast {
     logger.info("Downloading up JDK 1.8 to compile (using $jdkRepo repo)")
     download {
-      src "$jdkRepo/intellij-jdk/${artifactName}"
+      src "$jdkRepo/webstorm-test-data/${artifactName}"
       dest outputFile
       tempAndMove true
     }

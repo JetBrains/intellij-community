@@ -1,6 +1,6 @@
 task setupJbre {}
 
-def jdkRepo = 'https://cache-redirector.jetbrains.com/intellij-jdk'
+def jdkRepo = 'https://repo.labs.intellij.net/webstorm-test-data'
 def targetOs = "${System.getProperty("intellij.build.target.os", "all")}"
 
 jrePlatformsToDownload(targetOs).each { platform ->
