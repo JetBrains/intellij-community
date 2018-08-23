@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ssh.SSHUtil;
+import com.intellij.util.PathUtil;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,12 +19,14 @@ import java.util.regex.Matcher;
 class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
   private final Project myProject;
   private final boolean myIgnoreAuthenticationRequest;
+  private final boolean myDoNotRememberPasswords;
 
   @Nullable private String myLastAskedKeyPath = null;
 
-  public GitNativeSshGuiAuthenticator(Project project, boolean isIgnoreAuthenticationRequest) {
+  public GitNativeSshGuiAuthenticator(Project project, boolean isIgnoreAuthenticationRequest, boolean doNotRememberPasswords) {
     myProject = project;
     myIgnoreAuthenticationRequest = isIgnoreAuthenticationRequest;
+    myDoNotRememberPasswords = doNotRememberPasswords;
   }
 
   @Nullable
@@ -49,7 +52,15 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
     boolean resetPassword = keyPath.equals(myLastAskedKeyPath);
     myLastAskedKeyPath = keyPath;
 
-    return GitSSHGUIHandler.askPassphrase(myProject, keyPath, resetPassword, myIgnoreAuthenticationRequest, myLastAskedKeyPath);
+    if (myDoNotRememberPasswords) {
+      return askUser(() -> {
+        String message = GitBundle.message("ssh.ask.passphrase.message", PathUtil.getFileName(keyPath));
+        return Messages.showInputDialog(myProject, message, GitBundle.getString("ssh.ask.passphrase.title"), null, null, null);
+      });
+    }
+    else {
+      return GitSSHGUIHandler.askPassphrase(myProject, keyPath, resetPassword, myIgnoreAuthenticationRequest, myLastAskedKeyPath);
+    }
   }
 
   private static boolean isConfirmation(@NotNull String description) {
