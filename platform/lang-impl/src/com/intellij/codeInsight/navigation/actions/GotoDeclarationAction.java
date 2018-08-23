@@ -286,7 +286,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   }
 
   @Nullable
-  public static PsiElement[] findTargetElementsNoVS(Project project, Editor editor, int offset, boolean lookupAccepted) {
+  static PsiElement[] findTargetElementsFromProviders(@NotNull Project project, @NotNull Editor editor, int offset) {
     Document document = editor.getDocument();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) return null;
@@ -295,13 +295,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     for (GotoDeclarationHandler handler : Extensions.getExtensions(GotoDeclarationHandler.EP_NAME)) {
       try {
         PsiElement[] result = handler.getGotoDeclarationTargets(elementAt, offset, editor);
-        if (result != null && result.length > 0) {
-          for (PsiElement element : result) {
-            if (element == null) {
-              LOG.error("Null target element is returned by " + handler.getClass().getName());
-              return null;
-            }
-          }
+        if (result != null && result.length > 0 && assertNotNullElements(result, handler.getClass())) {
           return result;
         }
       }
@@ -309,6 +303,13 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
         LOG.error(new ExtensionException(handler.getClass()));
       }
     }
+    return null;
+  }
+
+  @Nullable
+  public static PsiElement[] findTargetElementsNoVS(Project project, Editor editor, int offset, boolean lookupAccepted) {
+    PsiElement[] targets = findTargetElementsFromProviders(project, editor, offset);
+    if (targets != null) return targets;
 
     int flags = TargetElementUtil.getInstance().getAllAccepted() & ~TargetElementUtil.ELEMENT_NAME_ACCEPTED;
     if (!lookupAccepted) {
@@ -360,5 +361,15 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     }
 
     super.update(event);
+  }
+
+  private static boolean assertNotNullElements(@NotNull PsiElement[] result, @NotNull Class<?> handlerClass) {
+    for (PsiElement element : result) {
+      if (element == null) {
+        LOG.error("Null target element is returned by " + handlerClass.getName());
+        return false;
+      }
+    }
+    return true;
   }
 }
