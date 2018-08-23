@@ -2,14 +2,14 @@
 package com.intellij.codeInspection.blockingCallsDetection;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-public interface NonblockingContextChecker {
-  ExtensionPointName<NonblockingContextChecker> EP_NAME = ExtensionPointName.create("com.intellij.nonblockingMethodChecker");
+public interface NonBlockingContextChecker {
+  ExtensionPointName<NonBlockingContextChecker> EP_NAME = ExtensionPointName.create("com.intellij.codeInsight.nonBlockingContextChecker");
 
-  boolean isActive(Project project);
+  boolean isActive(@NotNull PsiFile file);
 
   boolean isContextNonBlockingFor(@NotNull PsiElement element);
 }
