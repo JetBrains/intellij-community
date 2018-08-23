@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -25,7 +26,8 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
   public void testScenarios() {
     Collection<Scenario> scenarios = createScenarios();
     SearchResultsCollector collector = new SearchResultsCollector();
-    MultithreadSearcher searcher = new MultithreadSearcher(collector);
+    Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
+    MultithreadSearcher searcher = new MultithreadSearcher(collector, command -> alarm.addRequest(command, 0));
 
     scenarios.forEach(scenario -> {
       searcher.search(scenario.contributorsAndLimits, null, false, ignrd -> null);
