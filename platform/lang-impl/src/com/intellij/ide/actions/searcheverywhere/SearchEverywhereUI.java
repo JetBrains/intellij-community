@@ -30,7 +30,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
@@ -206,11 +205,8 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     MultithreadSearcher.Listener listener = new MultithreadSearcher.Listener() {
       @Override
       public void elementsAdded(List<MultithreadSearcher.ElementInfo> list) {
-        Map<SearchEverywhereContributor<?>, List<Object>> map = new HashMap<>();
-        list.forEach(info -> {
-          List<Object> lst = map.computeIfAbsent(info.getContributor(), o -> new ArrayList<>());
-          lst.add(info.getElement());
-        });
+        Map<SearchEverywhereContributor<?>, List<MultithreadSearcher.ElementInfo>> map =
+          list.stream().collect(Collectors.groupingBy(info -> info.getContributor()));
 
         map.forEach((key, lst) -> myListModel.addElements(lst, key));
         ScrollingUtil.ensureSelectionExists(myResultsList);
@@ -726,7 +722,10 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
   }
 
   private void showMoreElements(SearchEverywhereContributor contributor) {
-
+    Map<SearchEverywhereContributor<?>, Collection<MultithreadSearcher.ElementInfo>> found = myListModel.getFoundElementsMap();
+    int limit = myListModel.getItemsForContributor(contributor)
+                + (mySelectedTab.getContributor().isPresent() ? SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT : MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT);
+    mySearcher.findMoreItems(found, getSearchPattern(), isUseNonProjectItems(), contributor, limit, c -> myContributorFilters.get(c.getSearchProviderId()));
   }
 
   private void stopSearching() {
@@ -850,7 +849,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
 
     private static final Object MORE_ELEMENT = new Object();
 
-    private final List<Pair<Object, SearchEverywhereContributor>> listElements = new ArrayList<>();
+    private final List<MultithreadSearcher.ElementInfo> listElements = new ArrayList<>();
 
     @Override
     public int getSize() {
@@ -859,33 +858,29 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
 
     @Override
     public Object getElementAt(int index) {
-      return listElements.get(index).first;
+      return listElements.get(index).getElement();
     }
 
     public Collection<Object> getFoundItems(SearchEverywhereContributor contributor) {
       return listElements.stream()
-                         .filter(pair -> pair.second == contributor && pair.first != MORE_ELEMENT)
-                         .map(pair -> pair.getFirst())
+                         .filter(info -> info.getContributor() == contributor && info.getElement() != MORE_ELEMENT)
+                         .map(info -> info.getElement())
                          .collect(Collectors.toList());
     }
 
     public boolean hasMoreElements(SearchEverywhereContributor contributor) {
       return listElements.stream()
-        .anyMatch(pair -> pair.first == MORE_ELEMENT && pair.second == contributor);
+        .anyMatch(info -> info.getElement() == MORE_ELEMENT && info.getContributor() == contributor);
     }
 
-    public void addElements(List<Object> items, SearchEverywhereContributor contributor) {
+    public void addElements(List<MultithreadSearcher.ElementInfo> items, SearchEverywhereContributor contributor) {
       if (items.isEmpty()) {
         return;
       }
 
-      List<Pair<Object, SearchEverywhereContributor>> pairsToAdd = items.stream()
-        .map(o -> Pair.create(o, contributor))
-        .collect(Collectors.toList());
-
       int startIndex = getInsertionPoint(contributor);
-      int endIndex = startIndex + pairsToAdd.size() - 1;
-      listElements.addAll(startIndex, pairsToAdd);
+      int endIndex = startIndex + items.size() - 1;
+      listElements.addAll(startIndex, items);
       fireIntervalAdded(this, startIndex, endIndex);
     }
 
@@ -895,8 +890,8 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
         return;
       }
 
-      while (listElements.get(index).second == contributor) {
-        if (item.equals(listElements.get(index).first)) {
+      while (listElements.get(index).getContributor() == contributor) {
+        if (item.equals(listElements.get(index).getElement())) {
           listElements.remove(index);
           fireIntervalRemoved(this, index, index);
           return;
@@ -919,7 +914,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
 
       if (!alreadyHas && newVal) {
         index += 1;
-        listElements.add(index, Pair.create(MORE_ELEMENT, contributor));
+        listElements.add(index, new MultithreadSearcher.ElementInfo(MORE_ELEMENT, 0, contributor));
         fireIntervalAdded(this, index, index);
       }
     }
@@ -937,16 +932,16 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     }
 
     public boolean isMoreElement(int index) {
-      return listElements.get(index).first == MORE_ELEMENT;
+      return listElements.get(index).getElement() == MORE_ELEMENT;
     }
 
     public SearchEverywhereContributor getContributorForIndex(int index) {
-      return listElements.get(index).second;
+      return listElements.get(index).getContributor();
     }
 
     public boolean isGroupFirstItem(int index) {
       return index == 0
-        || listElements.get(index).second != listElements.get(index - 1).second;
+        || listElements.get(index).getContributor() != listElements.get(index - 1).getContributor();
     }
 
     public int getItemsForContributor(SearchEverywhereContributor contributor) {
@@ -959,14 +954,18 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       return last - first + 1;
     }
 
+    public Map<SearchEverywhereContributor<?>, Collection<MultithreadSearcher.ElementInfo>> getFoundElementsMap() {
+      return listElements.stream().collect(Collectors.groupingBy(o -> o.getContributor(), Collectors.toCollection(ArrayList::new)));
+    }
+
     @NotNull
     private List<SearchEverywhereContributor> contributors() {
-      return Lists.transform(listElements, pair -> pair.getSecond());
+      return Lists.transform(listElements, info -> info.getContributor());
     }
 
     @NotNull
     private List<Object> values() {
-      return Lists.transform(listElements, pair -> pair.getFirst());
+      return Lists.transform(listElements, info -> info.getElement());
     }
 
     private int getInsertionPoint(SearchEverywhereContributor contributor) {
