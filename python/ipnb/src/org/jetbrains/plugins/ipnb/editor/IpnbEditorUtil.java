@@ -61,7 +61,7 @@ public class IpnbEditorUtil {
     assert document != null;
     EditorEx editor = (EditorEx)editorFactory.createEditor(document, project, fragment.getVirtualFile(), false);
     editor.setFile(fragment.getVirtualFile());
-    //setupEditor(editor);
+    setupEditor(editor);
     return editor;
   }
 
@@ -71,9 +71,9 @@ public class IpnbEditorUtil {
     editor.getScrollPane().setBorder(null);
     editor.setContextMenuGroupId(null);
     final EditorSettings editorSettings = editor.getSettings();
-    editorSettings.setLineMarkerAreaShown(false);
-    editorSettings.setIndentGuidesShown(false);
-    editorSettings.setLineNumbersShown(false);
+    editorSettings.setLineMarkerAreaShown(true);
+    editorSettings.setIndentGuidesShown(true);
+    editorSettings.setLineNumbersShown(true);
     editorSettings.setFoldingOutlineShown(false);
     editorSettings.setAdditionalPageAtBottom(false);
     editorSettings.setAdditionalColumnsCount(0);

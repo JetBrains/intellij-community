@@ -3,6 +3,18 @@ import sys
 import traceback
 
 
+def compile_cache_wrapper(orig):
+    def compile_cache(*args, **kwargs):
+        cache_name = orig(*args, **kwargs)
+        print("new name", cache_name)
+        return cache_name
+    return compile_cache
+
+
+def patch_compile_cache(ipython_shell):
+    ipython_shell.compile.cache = compile_cache_wrapper(ipython_shell.compile.cache)
+
+
 def attach_to_debugger(debugger_port):
     ipython_shell = get_ipython()
 
@@ -18,6 +30,8 @@ def attach_to_debugger(debugger_port):
     except:
         traceback.print_exc()
         sys.stderr.write('Failed to connect to target debugger.\n')
+
+    patch_compile_cache(ipython_shell)
 
     # Register to process commands when idle
     try:
