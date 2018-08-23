@@ -68,7 +68,7 @@ public class ExpressionParsing extends Parsing {
       buildTokenElement(PyElementTypes.BOOL_LITERAL_EXPRESSION, myBuilder);
       return true;
     }
-    else if (PyTokenTypes.STRING_NODES.contains(firstToken)) {
+    else if (PyTokenTypes.STRING_NODES.contains(firstToken) || firstToken == PyTokenTypes.FSTRING_START) {
       return parseStringLiteralExpression();
     }
     else if (firstToken == PyTokenTypes.LPAR) {
@@ -95,15 +95,60 @@ public class ExpressionParsing extends Parsing {
 
   public boolean parseStringLiteralExpression() {
     final PsiBuilder builder = myContext.getBuilder();
-    if (PyTokenTypes.STRING_NODES.contains(builder.getTokenType())) {
+    IElementType tokenType = builder.getTokenType();
+    if (PyTokenTypes.STRING_NODES.contains(tokenType) || tokenType == PyTokenTypes.FSTRING_START) {
       final PsiBuilder.Marker marker = builder.mark();
-      while (PyTokenTypes.STRING_NODES.contains(builder.getTokenType())) {
-        nextToken();
+      while (true) {
+        tokenType = builder.getTokenType();
+        if (PyTokenTypes.STRING_NODES.contains(tokenType)) {
+          nextToken();
+        }
+        else if (tokenType == PyTokenTypes.FSTRING_START) {
+          parseFormattedStringNode();
+        }
+        else {
+          break;
+        }
       }
       marker.done(PyElementTypes.STRING_LITERAL_EXPRESSION);
       return true;
     }
     return false;
+  }
+
+  private void parseFormattedStringNode() {
+    final PsiBuilder builder = myContext.getBuilder();
+    if (builder.getTokenType() == PyTokenTypes.FSTRING_START) {
+      final PsiBuilder.Marker marker = builder.mark();
+      nextToken();
+      while (true) {
+        if (atToken(PyTokenTypes.FSTRING_TEXT)) {
+          nextToken();
+        }
+        else if (atToken(PyTokenTypes.FSTRING_FRAGMENT_START)) {
+          parseFStringFragment();
+        }
+        else if (matchToken(PyTokenTypes.FSTRING_END)) {
+          break;
+        }
+        else {
+          marker.error("Unexpected f-string token");
+          break;
+        }
+      }
+      marker.done(PyElementTypes.FSTRING_NODE);
+    }
+  }
+
+  private void parseFStringFragment() {
+    PsiBuilder builder = myContext.getBuilder();
+    if (builder.getTokenType() == PyTokenTypes.FSTRING_FRAGMENT_START) {
+      final PsiBuilder.Marker marker = builder.mark();
+      nextToken();
+      myContext.getExpressionParser().parseExpression();
+      checkMatches(PyTokenTypes.FSTRING_FRAGMENT_END, "} expected");
+      marker.done(PyElementTypes.FSTRING_FRAGMENT);
+    }
   }
 
   private void parseListLiteralExpression(final PsiBuilder builder, boolean isTargetExpression) {
