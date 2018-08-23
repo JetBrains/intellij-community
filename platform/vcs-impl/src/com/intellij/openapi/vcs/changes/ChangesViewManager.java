@@ -180,7 +180,13 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     addBorder(changesToolbar.getComponent(), createBorder(JBColor.border(), SideBorder.RIGHT));
     BorderLayoutPanel changesPanel = simplePanel(createScrollPane(myView)).addToLeft(changesToolbar.getComponent());
 
-    BorderLayoutPanel contentPanel = simplePanel(changesPanel);
+    BorderLayoutPanel contentPanel = new BorderLayoutPanel() {
+      @Override
+      public Dimension getMinimumSize() {
+        return isMinimumSizeSet() ? super.getMinimumSize() : changesToolbar.getComponent().getPreferredSize();
+      }
+    };
+    contentPanel.addToCenter(changesPanel);
     if (isNonModalCommit()) {
       contentPanel.addToBottom(new ChangesViewCommitPanel(myProject));
     }
