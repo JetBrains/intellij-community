@@ -2,8 +2,10 @@
 package com.intellij.codeInsight.navigation.actions
 
 import com.intellij.codeInsight.CodeInsightActionHandler
+import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction.underModalProgress
 import com.intellij.featureStatistics.FeatureUsageTracker
+import com.intellij.lang.LanguageNamesValidation
 import com.intellij.openapi.command.runCommand
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -34,7 +36,7 @@ object GotoDeclarationActionHandler : CodeInsightActionHandler {
 
     if (targets.isEmpty()) {
       if (!tryFindUsages()) {
-        notifyCantGoAnywhere()
+        notifyCantGoAnywhere(project, editor, file)
       }
     }
     else {
@@ -49,7 +51,15 @@ object GotoDeclarationActionHandler : CodeInsightActionHandler {
 
   private fun tryFindUsages(): Boolean = TODO()
 
-  private fun notifyCantGoAnywhere(): Unit = TODO()
+  private fun notifyCantGoAnywhere(project: Project, editor: Editor, file: PsiFile) {
+    //disable 'no declaration found' notification for keywords
+    file.findElementAt(editor.caretModel.offset)?.let { element ->
+      LanguageNamesValidation.INSTANCE.forLanguage(element.language)?.let { validator ->
+        if (validator.isKeyword(element.text, project)) return
+      }
+    }
+    HintManager.getInstance().showErrorHint(editor, "Cannot find declaration to go to")
+  }
 
   private fun chooseTarget(targets: List<Target>): Target? = TODO()
 
