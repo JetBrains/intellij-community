@@ -58,7 +58,7 @@ public class BlockingMethodInNonBlockingContextInspectionTest extends UsefulTest
     BlockingMethodInNonBlockingContextInspection myInspection = new BlockingMethodInNonBlockingContextInspection();
     myInspection.myBlockingAnnotations =
       Collections.singletonList(BlockingMethodInNonBlockingContextInspection.DEFAULT_BLOCKING_ANNOTATION);
-    myInspection.myNonblockingAnnotations =
+    myInspection.myNonBlockingAnnotations =
       Collections.singletonList(BlockingMethodInNonBlockingContextInspection.DEFAULT_NONBLOCKING_ANNOTATION);
     myFixture.enableInspections(myInspection);
   }

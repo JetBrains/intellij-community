@@ -4,7 +4,6 @@ package com.intellij.codeInspection.blockingCallsDetection;
 import com.intellij.analysis.JvmAnalysisBundle;
 import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool;
 import com.intellij.codeInspection.AnalysisUastUtil;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -15,10 +14,8 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
@@ -29,6 +26,7 @@ import org.jetbrains.uast.UCallExpression;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
 import java.util.List;
 
 public class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUastLocalInspectionTool {
@@ -37,7 +35,7 @@ public class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUa
   public static final String DEFAULT_NONBLOCKING_ANNOTATION = "org.jetbrains.annotations.NonBlocking";
 
   public List<String> myBlockingAnnotations = new SmartList<>();
-  public List<String> myNonblockingAnnotations = new SmartList<>();
+  public List<String> myNonBlockingAnnotations = new SmartList<>();
 
   @Nullable
   @Override
@@ -58,25 +56,24 @@ public class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUa
 
     List<BlockingMethodChecker> blockingMethodCheckers =
       ContainerUtil.append(BlockingMethodChecker.EP_NAME.getExtensionList(),
-                           new DefaultBlockingMethodChecker(myBlockingAnnotations));
+                           new AnnotationBasedBlockingMethodChecker(myBlockingAnnotations));
 
-    List<NonblockingContextChecker> nonblockingContextCheckers =
-      ContainerUtil.append(NonblockingContextChecker.EP_NAME.getExtensionList(),
-                           new DefaultNonblockingContextChecker(myNonblockingAnnotations));
+    List<NonBlockingContextChecker> nonBlockingContextCheckers =
+      ContainerUtil.append(NonBlockingContextChecker.EP_NAME.getExtensionList(),
+                           new AnnotationBasedNonBlockingContextChecker(myNonBlockingAnnotations));
 
-    if (!isInspectionActive(holder.getProject(), blockingMethodCheckers, nonblockingContextCheckers)) {
+    if (!isInspectionActive(holder.getFile(), blockingMethodCheckers, nonBlockingContextCheckers)) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
-    return new BlockingMethodInNonBlockingContextVisitor(holder, blockingMethodCheckers, nonblockingContextCheckers);
+    return new BlockingMethodInNonBlockingContextVisitor(holder, blockingMethodCheckers, nonBlockingContextCheckers);
   }
 
-  private static boolean isInspectionActive(Project project,
+  private static boolean isInspectionActive(PsiFile file,
                                             List<BlockingMethodChecker> myBlockingMethodCheckers,
-                                            List<NonblockingContextChecker> myNonblockingContextCheckers) {
-    return myBlockingMethodCheckers.stream().anyMatch(extension -> extension.isActive(project)) &&
-           myNonblockingContextCheckers.stream().anyMatch(extension -> extension.isActive(project));
+                                            List<NonBlockingContextChecker> myNonBlockingContextCheckers) {
+    return myBlockingMethodCheckers.stream().anyMatch(extension -> extension.isActive(file)) &&
+           myNonBlockingContextCheckers.stream().anyMatch(extension -> extension.isActive(file));
   }
-
 
 
   private class OptionsPanel extends JPanel {
@@ -89,27 +86,27 @@ public class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUa
         new BlockingAnnotationsPanel(
           project,
           JvmAnalysisBundle
-            .message("inspection.blocking.method.annotation.blocking"),
+            .message("jvm.inspections.blocking.method.annotation.blocking"),
           DEFAULT_BLOCKING_ANNOTATION,
           myBlockingAnnotations,
-          new String[]{DEFAULT_BLOCKING_ANNOTATION},
-          JvmAnalysisBundle.message("inspection.blocking.method.annotation.configure.empty.text"),
-          JvmAnalysisBundle.message("inspection.blocking.method.annotation.configure.add.blocking.title"));
+          Collections.singletonList(DEFAULT_BLOCKING_ANNOTATION),
+          JvmAnalysisBundle.message("jvm.inspections.blocking.method.annotation.configure.empty.text"),
+          JvmAnalysisBundle.message("jvm.inspections.blocking.method.annotation.configure.add.blocking.title"));
 
 
-      BlockingAnnotationsPanel nonblockingAnnotationsPanel =
+      BlockingAnnotationsPanel nonBlockingAnnotationsPanel =
         new BlockingAnnotationsPanel(
           project,
           JvmAnalysisBundle.message(
-            "inspection.blocking.method.annotation.nonblocking"),
+            "jvm.inspections.blocking.method.annotation.non-blocking"),
           DEFAULT_NONBLOCKING_ANNOTATION,
-          myNonblockingAnnotations,
-          new String[]{DEFAULT_NONBLOCKING_ANNOTATION},
-          JvmAnalysisBundle.message("inspection.blocking.method.annotation.configure.add.nonblocking.title"),
-          JvmAnalysisBundle.message("inspection.blocking.method.annotation.configure.add.nonblocking.title"));
+          myNonBlockingAnnotations,
+          Collections.singletonList(DEFAULT_NONBLOCKING_ANNOTATION),
+          JvmAnalysisBundle.message("jvm.inspections.blocking.method.annotation.configure.empty.text"),
+          JvmAnalysisBundle.message("jvm.inspections.blocking.method.annotation.configure.add.non-blocking.title"));
 
       mainPanel.setFirstComponent(blockingAnnotationsPanel.getComponent());
-      mainPanel.setSecondComponent(nonblockingAnnotationsPanel.getComponent());
+      mainPanel.setSecondComponent(nonBlockingAnnotationsPanel.getComponent());
 
       add(mainPanel, BorderLayout.CENTER);
     }
@@ -129,14 +126,14 @@ public class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUa
   private static class BlockingMethodInNonBlockingContextVisitor extends PsiElementVisitor {
     private final ProblemsHolder myHolder;
     private final List<BlockingMethodChecker> myBlockingMethodCheckers;
-    private final List<NonblockingContextChecker> myNonblockingContextCheckers;
+    private final List<NonBlockingContextChecker> myNonBlockingContextCheckers;
 
     public BlockingMethodInNonBlockingContextVisitor(@NotNull ProblemsHolder holder,
                                                      List<BlockingMethodChecker> blockingMethodCheckers,
-                                                     List<NonblockingContextChecker> nonblockingContextCheckers) {
+                                                     List<NonBlockingContextChecker> nonBlockingContextCheckers) {
       myHolder = holder;
       this.myBlockingMethodCheckers = blockingMethodCheckers;
-      this.myNonblockingContextCheckers = nonblockingContextCheckers;
+      this.myNonBlockingContextCheckers = nonBlockingContextCheckers;
     }
 
     @Override
@@ -150,23 +147,23 @@ public class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUa
       PsiMethod referencedMethod = callExpression.resolve();
       if (referencedMethod == null) return;
 
-      boolean isReferencedMethodBlocking = CachedValuesManager.getCachedValue(referencedMethod, () -> {
-        boolean isBlocking =
-          StreamEx.of(referencedMethod).append(referencedMethod.findDeepestSuperMethods()).anyMatch(method -> isMethodBlocking(method));
-        return CachedValueProvider.Result.create(isBlocking, PsiModificationTracker.MODIFICATION_COUNT);
-      });
-
+      //boolean isReferencedMethodBlocking = CachedValuesManager.getCachedValue(referencedMethod, () -> {
+      //  boolean isBlocking =
+      //    StreamEx.of(referencedMethod).append(referencedMethod.findDeepestSuperMethods()).anyMatch(method -> isMethodBlocking(method));
+      //  return CachedValueProvider.Result.create(isBlocking, PsiModificationTracker.MODIFICATION_COUNT);
+      //});
+      boolean isReferencedMethodBlocking =
+        StreamEx.of(referencedMethod).append(referencedMethod.findDeepestSuperMethods()).anyMatch(method -> isMethodBlocking(method));
       if (!isReferencedMethodBlocking) return;
 
       PsiElement elementToHighLight = AnalysisUastUtil.getMethodIdentifierSourcePsi(callExpression);
       if (elementToHighLight == null) return;
       myHolder.registerProblem(elementToHighLight,
-                               JvmAnalysisBundle.message("method.name.contains.blocking.word.problem.descriptor"),
-                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+                               JvmAnalysisBundle.message("method.name.contains.blocking.word.problem.descriptor"));
     }
 
     private boolean isContextNonBlockingFor(PsiElement element) {
-      return myNonblockingContextCheckers.stream().anyMatch(extension -> extension.isContextNonBlockingFor(element));
+      return myNonBlockingContextCheckers.stream().anyMatch(extension -> extension.isContextNonBlockingFor(element));
     }
 
     private boolean isMethodBlocking(PsiMethod method) {

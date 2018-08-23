@@ -2,14 +2,14 @@
 package com.intellij.codeInspection.blockingCallsDetection;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 
 public interface BlockingMethodChecker {
-  ExtensionPointName<BlockingMethodChecker> EP_NAME = ExtensionPointName.create("com.intellij.blockingMethodChecker");
+  ExtensionPointName<BlockingMethodChecker> EP_NAME = ExtensionPointName.create("com.intellij.codeInsight.blockingMethodChecker");
 
-  boolean isActive(Project project);
+  boolean isActive(PsiFile file);
 
   boolean isMethodBlocking(@NotNull PsiMethod method);
 }

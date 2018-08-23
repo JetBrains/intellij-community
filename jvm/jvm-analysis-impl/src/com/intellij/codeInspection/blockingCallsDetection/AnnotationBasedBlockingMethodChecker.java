@@ -2,9 +2,7 @@
 package com.intellij.codeInspection.blockingCallsDetection;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -12,17 +10,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class DefaultBlockingMethodChecker implements BlockingMethodChecker {
+public class AnnotationBasedBlockingMethodChecker implements BlockingMethodChecker {
 
   private final List<String> myBlockingAnnotations;
 
-  public DefaultBlockingMethodChecker(List<String> blockingAnnotations) {
+  public AnnotationBasedBlockingMethodChecker(List<String> blockingAnnotations) {
     myBlockingAnnotations = blockingAnnotations;
   }
 
   @Override
-  public boolean isActive(Project project) {
-    return !myBlockingAnnotations.isEmpty();
+  public boolean isActive(PsiFile file) {
+    if (myBlockingAnnotations.isEmpty()) return false;
+    PsiClass annotationClass = JavaPsiFacade.getInstance(file.getProject())
+      .findClass(BlockingMethodInNonBlockingContextInspection.DEFAULT_BLOCKING_ANNOTATION, file.getResolveScope());
+    return annotationClass != null;
   }
 
   @Override

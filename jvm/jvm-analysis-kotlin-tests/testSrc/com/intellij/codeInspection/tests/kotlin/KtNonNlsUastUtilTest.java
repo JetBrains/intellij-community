@@ -21,7 +21,7 @@ public class KtNonNlsUastUtilTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    Assume.assumeTrue(KotlinVersion.CURRENT.isAtLeast(1, 2, 60));
+    Assume.assumeTrue(KotlinVersion.CURRENT.isAtLeast(1, 2, 50));
   }
 
   @Override
