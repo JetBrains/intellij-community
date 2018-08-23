@@ -10,11 +10,10 @@ import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.ProcessInfo;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.internal.DebugAttachDetector;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.rt.execution.application.AppMainV2;
@@ -39,6 +38,8 @@ import java.util.*;
  * @author egor
  */
 public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider {
+  private static final Logger LOG = Logger.getInstance(JavaAttachDebuggerProvider.class);
+
   private static class JavaLocalAttachDebugger implements XLocalAttachDebugger {
     private final Project myProject;
     private final LocalAttachInfo myInfo;
@@ -135,12 +136,37 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       res = getProcessAttachInfo(pidString);
     }
     if (res == null) {
-      Pair<String, Integer> address = DebugAttachDetector.getAttachAddress(ParametersListUtil.parse(processInfo.getCommandLine()));
-      if (address != null) {
-        res = new DebuggerLocalAttachInfo(true, String.valueOf(address.getSecond()), null, pidString);
-      }
+      res = getProcessAttachInfo(ParametersListUtil.parse(processInfo.getCommandLine()), pidString);
     }
     return res;
+  }
+
+  @Nullable
+  static LocalAttachInfo getProcessAttachInfo(List<String> arguments, String pid) {
+    String address;
+    boolean socket;
+    for (String argument : arguments) {
+      if (argument.startsWith("-agentlib:jdwp") &&
+          argument.contains("server=y") &&
+          (argument.contains("transport=dt_shmem") || argument.contains("transport=dt_socket"))) {
+        socket = argument.contains("transport=dt_socket");
+        String[] params = argument.split(",");
+        for (String param : params) {
+          if (param.startsWith("address")) {
+            try {
+              address = param.split("=")[1];
+              return new DebuggerLocalAttachInfo(socket, address, null, pid);
+            }
+            catch (Exception e) {
+              LOG.error(e);
+              return null;
+            }
+          }
+        }
+        break;
+      }
+    }
+    return null;
   }
 
   @Nullable
