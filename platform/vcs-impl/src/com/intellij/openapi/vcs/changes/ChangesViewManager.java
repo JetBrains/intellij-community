@@ -179,8 +179,14 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     ActionToolbar changesToolbar = createChangesToolbar();
     addBorder(changesToolbar.getComponent(), createBorder(JBColor.border(), SideBorder.RIGHT));
     BorderLayoutPanel changesPanel = simplePanel(createScrollPane(myView)).addToLeft(changesToolbar.getComponent());
+
+    BorderLayoutPanel contentPanel = simplePanel(changesPanel);
+    if (isNonModalCommit()) {
+      contentPanel.addToBottom(new ChangesViewCommitPanel(myProject));
+    }
+
     MyChangeProcessor changeProcessor = new MyChangeProcessor(myProject);
-    mySplitterComponent = new PreviewDiffSplitterComponent(changesPanel, changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION,
+    mySplitterComponent = new PreviewDiffSplitterComponent(contentPanel, changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION,
                                                            myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
 
     myView.installPopupHandler((DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewPopupMenu"));
