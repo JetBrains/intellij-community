@@ -27,7 +27,7 @@ import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.JavadocOrderRootType;
+import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.NewLibraryConfiguration;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
@@ -51,6 +51,7 @@ import org.eclipse.aether.transfer.TransferCancelledException;
 import org.eclipse.aether.version.Version;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.aether.ArtifactDependencyNode;
@@ -80,6 +81,15 @@ public class JarRepositoryManager {
   private static final String MAVEN_REPOSITORY_MACRO = "$MAVEN_REPOSITORY$";
   private static final String DEFAULT_REPOSITORY_PATH = ".m2/repository";
   private static final AtomicInteger ourTasksInProgress = new AtomicInteger();
+
+  private static final Map<String, OrderRootType> ourClassifierToRootType = new HashMap<>();
+
+  static {
+    ourClassifierToRootType.put(ArtifactKind.ARTIFACT.getClassifier(), OrderRootType.CLASSES);
+    ourClassifierToRootType.put(ArtifactKind.JAVADOC.getClassifier(), OrderRootType.DOCUMENTATION);
+    ourClassifierToRootType.put(ArtifactKind.SOURCES.getClassifier(), OrderRootType.SOURCES);
+    ourClassifierToRootType.put(ArtifactKind.ANNOTATIONS.getClassifier(), AnnotationOrderRootType.getInstance());
+  }
 
   private static class JobExecutor {
     static final ExecutorService INSTANCE = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("RemoteLibraryDownloader");
@@ -164,6 +174,11 @@ public class JarRepositoryManager {
     repoPath = userHome != null ? new File(userHome, DEFAULT_REPOSITORY_PATH) : new File(DEFAULT_REPOSITORY_PATH);
     ourLocalRepositoryPath = repoPath;
     return repoPath;
+  }
+
+  @TestOnly
+  static void setLocalRepositoryPath(File localRepo) {
+    ourLocalRepositoryPath = localRepo;
   }
 
   public static Collection<OrderRoot> loadDependenciesModal(@NotNull Project project,
@@ -491,16 +506,8 @@ public class JarRepositoryManager {
         final String url = VfsUtil.getUrlForLibraryRoot(toFile);
         final VirtualFile file = manager.refreshAndFindFileByUrl(url);
         if (file != null) {
-          OrderRootType rootType;
-          if (ArtifactKind.JAVADOC.getClassifier().equals(each.getClassifier())) {
-            rootType = JavadocOrderRootType.getInstance();
-          }
-          else if (ArtifactKind.SOURCES.getClassifier().equals(each.getClassifier())) {
-            rootType = OrderRootType.SOURCES;
-          }
-          else {
-            rootType = OrderRootType.CLASSES;
-          }
+          OrderRootType rootType = ourClassifierToRootType.getOrDefault(each.getClassifier(), OrderRootType.CLASSES);
+
           result.add(new OrderRoot(file, rootType));
         }
       }

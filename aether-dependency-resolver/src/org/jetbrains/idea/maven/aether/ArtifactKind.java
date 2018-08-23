@@ -18,7 +18,8 @@ package org.jetbrains.idea.maven.aether;
 import org.jetbrains.annotations.NotNull;
 
 public enum ArtifactKind {
-  ARTIFACT("", "jar"), SOURCES("sources", "jar"), JAVADOC("javadoc", "jar");
+  ARTIFACT("", "jar"), SOURCES("sources", "jar"), JAVADOC("javadoc", "jar"),
+  ANNOTATIONS("annotations", "zip");
 
   private final String myClassifier;
   private final String myExtension;

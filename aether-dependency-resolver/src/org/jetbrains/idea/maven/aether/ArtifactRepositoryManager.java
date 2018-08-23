@@ -1,5 +1,6 @@
 package org.jetbrains.idea.maven.aether;
 
+import org.apache.log4j.Logger;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.RepositorySystem;
@@ -30,10 +31,7 @@ import org.eclipse.aether.util.filter.DependencyFilterUtils;
 import org.eclipse.aether.util.graph.visitor.FilteringDependencyVisitor;
 import org.eclipse.aether.util.graph.visitor.TreeDependencyVisitor;
 import org.eclipse.aether.util.version.GenericVersionScheme;
-import org.eclipse.aether.version.InvalidVersionSpecificationException;
-import org.eclipse.aether.version.Version;
-import org.eclipse.aether.version.VersionConstraint;
-import org.eclipse.aether.version.VersionScheme;
+import org.eclipse.aether.version.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,6 +53,7 @@ import java.util.*;
 public class ArtifactRepositoryManager {
   private static final VersionScheme ourVersioning = new GenericVersionScheme();
   private static final JreProxySelector ourProxySelector = new JreProxySelector();
+  private static final Logger LOG = Logger.getLogger(ArtifactRepositoryManager.class);
   private final DefaultRepositorySystemSession mySession;
 
   private static final RemoteRepository MAVEN_CENTRAL_REPOSITORY = createRemoteRepository(
@@ -185,12 +184,18 @@ public class ArtifactRepositoryManager {
                                                           Set<ArtifactKind> artifactKinds, boolean includeTransitiveDependencies,
                                                           List<String> excludedDependencies) throws Exception {
     final List<Artifact> artifacts = new ArrayList<>();
-    final Set<VersionConstraint> constraints = Collections.singleton(asVersionConstraint(versionConstraint));
+    final VersionConstraint originalConstraints = asVersionConstraint(versionConstraint);
     for (ArtifactKind kind : artifactKinds) {
       // RepositorySystem.resolveDependencies() ignores classifiers, so we need to set classifiers explicitly for discovered dependencies.
       // Because of that we have to first discover deps and then resolve corresponding artifacts
       try {
         final List<ArtifactRequest> requests;
+        final Set<VersionConstraint> constraints;
+        if (kind == ArtifactKind.ANNOTATIONS) {
+          constraints = relaxForAnnotations(originalConstraints);
+        } else {
+          constraints = Collections.singleton(originalConstraints);
+        }
         if (includeTransitiveDependencies) {
           final CollectResult collectResult = ourSystem.collectDependencies(
             mySession, createCollectRequest(groupId, artifactId, constraints, EnumSet.of(kind))
@@ -244,6 +249,34 @@ public class ArtifactRepositoryManager {
       }
     }
     return artifacts;
+  }
+
+  private Set<VersionConstraint> relaxForAnnotations(VersionConstraint constraint) {
+    String annotationsConstraint = constraint.toString();
+
+    final Version version = constraint.getVersion();
+    if (version != null) {
+      final String major = version.toString().split("\\.|-|_")[0];
+      annotationsConstraint = "[" + major + ", " + version.toString() + "-an10000]";
+    }
+
+    final VersionRange range = constraint.getRange();
+    if (range != null) {
+      final String majorLower = range.getLowerBound().getVersion().toString().split("\\.|-|_")[0];
+
+      String upper = range.getUpperBound().isInclusive()
+                     ? range.getUpperBound().toString() + "-an10000]"
+                     : range.getUpperBound().toString() + ")";
+      annotationsConstraint = "[" + majorLower + ", " + upper;
+    }
+
+    try {
+      return Collections.singleton(ourVersioning.parseVersionConstraint(annotationsConstraint));
+    } catch (InvalidVersionSpecificationException e) {
+      LOG.info("Failed to parse version constraint " + annotationsConstraint, e);
+    }
+
+    return Collections.singleton(constraint);
   }
 
   @NotNull
