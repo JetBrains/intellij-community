@@ -7,10 +7,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.StringInterner;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceReader;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jdom.*;
 import org.jdom.filter.Filter;
 import org.jdom.input.SAXBuilder;
@@ -90,36 +90,6 @@ public class JDOMUtil {
 
   private static final EmptyTextFilter CONTENT_FILTER = new EmptyTextFilter();
 
-  public static int getTreeHash(@NotNull Element root) {
-    return addToHash(0, root, true);
-  }
-
-  private static int addToHash(int i, @NotNull Element element, boolean skipEmptyText) {
-    i = addToHash(i, element.getName());
-
-    for (Attribute attribute : element.getAttributes()) {
-      i = addToHash(i, attribute.getName());
-      i = addToHash(i, attribute.getValue());
-    }
-
-    for (Content child : element.getContent()) {
-      if (child instanceof Element) {
-        i = addToHash(i, (Element)child, skipEmptyText);
-      }
-      else if (child instanceof Text) {
-        String text = ((Text)child).getText();
-        if (!skipEmptyText || !StringUtil.isEmptyOrSpaces(text)) {
-          i = addToHash(i, text);
-        }
-      }
-    }
-    return i;
-  }
-
-  private static int addToHash(int i, @NotNull String s) {
-    return i * 31 + s.hashCode();
-  }
-
   /**
    * @deprecated Use {@link Element#getChildren} instead
    */
@@ -128,28 +98,6 @@ public class JDOMUtil {
   public static Element[] getElements(@NotNull Element m) {
     List<Element> list = m.getChildren();
     return list.toArray(new Element[0]);
-  }
-
-  /**
-   * Replace all strings in JDOM {@code element} with their interned variants with the help of {@code interner} to reduce memory.
-   * It's better to use {@link #internElement(Element)} though because the latter will intern the Element instances too.
-   */
-  public static void internStringsInElement(@NotNull Element element, @NotNull StringInterner interner) {
-    element.setName(interner.intern(element.getName()));
-
-    for (Attribute attr : element.getAttributes()) {
-      attr.setName(interner.intern(attr.getName()));
-      attr.setValue(interner.intern(attr.getValue()));
-    }
-
-    for (Content o : element.getContent()) {
-      if (o instanceof Element) {
-        internStringsInElement((Element)o, interner);
-      }
-      else if (o instanceof Text) {
-        ((Text)o).setText(interner.intern(o.getValue()));
-      }
-    }
   }
 
   @NotNull
@@ -208,6 +156,7 @@ public class JDOMUtil {
     return c1 instanceof Element && c2 instanceof Element && areElementsEqual((Element)c1, (Element)c2, ignoreEmptyAttrValues);
   }
 
+  @SuppressWarnings("DuplicateDetector")
   private static boolean isAttributesEqual(@NotNull List<Attribute> l1, @NotNull List<Attribute> l2, boolean ignoreEmptyAttrValues) {
     if (ignoreEmptyAttrValues) {
       l1 = ContainerUtil.filter(l1, NOT_EMPTY_VALUE_CONDITION);
@@ -247,6 +196,7 @@ public class JDOMUtil {
         }
       });
       saxBuilder.setIgnoringBoundaryWhitespace(true);
+      saxBuilder.setIgnoringElementContentWhitespace(true);
       ourSaxBuilder.set(new SoftReference<SAXBuilder>(saxBuilder));
     }
     return saxBuilder;
@@ -268,7 +218,7 @@ public class JDOMUtil {
   }
 
   @NotNull
-  private static Document loadDocument(@NotNull Reader reader) throws IOException, JDOMException {
+  public static Document loadDocument(@NotNull Reader reader) throws IOException, JDOMException {
     try {
       return getSaxBuilder().build(reader);
     }
@@ -508,23 +458,7 @@ public class JDOMUtil {
     for (int i = 0; i < text.length(); i++) {
       final char ch = text.charAt(i);
       final String quotation = escapeChar(ch, escapeApostrophes, escapeSpaces, escapeLineEnds);
-      if (buffer == null) {
-        if (quotation != null) {
-          // An quotation occurred, so we'll have to use StringBuffer
-          // (allocate room for it plus a few more entities).
-          buffer = new StringBuilder(text.length() + 20);
-          // Copy previous skipped characters and fall through
-          // to pickup current character
-          buffer.append(text, 0, i);
-          buffer.append(quotation);
-        }
-      }
-      else if (quotation == null) {
-        buffer.append(ch);
-      }
-      else {
-        buffer.append(quotation);
-      }
+      buffer = XmlStringUtil.appendEscapedSymbol(text, buffer, i, quotation, ch);
     }
     // If there were any entities, return the escaped characters
     // that we put in the StringBuffer. Otherwise, just return
