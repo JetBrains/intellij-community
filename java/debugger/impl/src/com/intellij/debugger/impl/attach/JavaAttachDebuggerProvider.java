@@ -33,6 +33,8 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author egor
@@ -171,6 +173,22 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
 
   @Nullable
   static LocalAttachInfo getProcessAttachInfo(String pid) {
+    CompletableFuture<LocalAttachInfo> future = CompletableFuture.supplyAsync(() -> getProcessAttachInfoInt(pid));
+    try {
+      // attaching ang getting info may hang in some cases
+      return future.get(5, TimeUnit.SECONDS);
+    }
+    catch (Exception e) {
+      LOG.info("Timeout while getting attach info", e);
+    }
+    finally {
+      future.cancel(true);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static LocalAttachInfo getProcessAttachInfoInt(String pid) {
     VirtualMachine vm = null;
     try {
       vm = VirtualMachine.attach(pid);
@@ -197,7 +215,10 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
         }
       }
     }
-    catch (AttachNotSupportedException | InternalError | IOException ignored) {
+    catch (InternalError e) {
+      LOG.warn(e);
+    }
+    catch (AttachNotSupportedException | IOException ignored) {
     }
     finally {
       if (vm != null) {
