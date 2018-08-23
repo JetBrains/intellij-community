@@ -24,7 +24,7 @@ import org.jetbrains.intellij.build.ProductProperties
  */
 @CompileStatic
 class VmOptionsGenerator {
-  private static final String COMMON_VM_OPTIONS = "-XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50 -ea " +
+  private static final String COMMON_VM_OPTIONS = "-XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:ShenandoahMaxFreeThreshold=30 -XX:SoftRefLRUPolicyMSPerMB=50 -ea " +
                                           "-Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true " +
                                           "-Djdk.http.auth.tunneling.disabledSchemes=\"\" " +
                                           "-XX:+HeapDumpOnOutOfMemoryError -XX:-OmitStackTraceInFastThrow"
