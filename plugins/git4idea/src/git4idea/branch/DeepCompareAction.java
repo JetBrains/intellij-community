@@ -27,10 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.VcsLogDataKeys;
-import com.intellij.vcs.log.VcsLogDataPack;
-import com.intellij.vcs.log.VcsLogUi;
-import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogBranchFilterImpl;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.filter.BranchPopupBuilder;
@@ -49,20 +46,22 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
   public boolean isSelected(AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    if (project == null || ui == null) {
+    VcsLogDataProvider dataProvider = e.getData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER);
+    if (project == null || ui == null || dataProvider == null) {
       return false;
     }
-    return DeepComparator.getInstance(project, ui).hasHighlightingOrInProgress();
+    return DeepComparator.getInstance(project, dataProvider, ui).hasHighlightingOrInProgress();
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean selected) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     final VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    if (project == null || ui == null) {
+    VcsLogDataProvider dataProvider = e.getData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER);
+    if (project == null || ui == null || dataProvider == null) {
       return;
     }
-    final DeepComparator dc = DeepComparator.getInstance(project, ui);
+    final DeepComparator dc = DeepComparator.getInstance(project, dataProvider, ui);
     if (selected) {
       VcsLogUtil.triggerUsage(e);
 
