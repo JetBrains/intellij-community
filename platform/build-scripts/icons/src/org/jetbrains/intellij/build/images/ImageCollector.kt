@@ -347,23 +347,25 @@ private fun mergeDeprecations(data1: DeprecationData?,
 }
 
 fun Path.processChildrenInParallel(consumer: (Path) -> Unit) {
-  DirectorySpliterator.list(this).use {
-    DirectorySpliterator.list(this).parallel().forEach(consumer)
+  DirectorySpliterator.list(this, isParallel = true).use {
+    it.forEach(consumer)
   }
 }
 
 // https://stackoverflow.com/a/34351591/1910191
-private class DirectorySpliterator private constructor(private var iterator: Iterator<Path>?, private var estimation: Long) : Spliterator<Path> {
+private class DirectorySpliterator private constructor(iterator: Iterator<Path>, private var estimation: Long) : Spliterator<Path> {
+  private var iterator: Iterator<Path>? = iterator
+
   companion object {
     // opposite to JDK, you don't need to close
     @Throws(IOException::class)
-    fun list(parent: Path): Stream<Path> {
+    fun list(parent: Path, isParallel: Boolean = true): Stream<Path> {
       val directoryStream = Files.newDirectoryStream(parent)
       val splitSize = Runtime.getRuntime().availableProcessors() + 1
-      val spliterator = DirectorySpliterator(directoryStream.iterator(), splitSize.toLong())
-      return StreamSupport.stream(spliterator, false).onClose {
-        directoryStream.close()
-      }
+      return StreamSupport.stream(DirectorySpliterator(directoryStream.iterator(), splitSize.toLong()), isParallel)
+        .onClose {
+          directoryStream.close()
+        }
     }
   }
 
@@ -386,8 +388,11 @@ private class DirectorySpliterator private constructor(private var iterator: Ite
   }
 
   override fun trySplit(): Spliterator<Path>? {
-    if (iterator == null || estimation == 1L)
+    val iterator = iterator
+    if (iterator == null || estimation == 1L) {
       return null
+    }
+
     val e = this.estimation.ushr(1)
     this.estimation -= e
     return DirectorySpliterator(iterator, e)
@@ -395,5 +400,5 @@ private class DirectorySpliterator private constructor(private var iterator: Ite
 
   override fun estimateSize() = estimation
 
-  override fun characteristics() =  Spliterator.DISTINCT or Spliterator.NONNULL
+  override fun characteristics() = Spliterator.DISTINCT or Spliterator.NONNULL or Spliterator.IMMUTABLE
 }
