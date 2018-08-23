@@ -59,7 +59,7 @@ abstract class ImageSanityCheckerBase(private val projectHome: File, private val
     process(images, WARNING, "icon with suspicious size", module) { image ->
       if (!isIcon(image.file!!)) return@process true
 
-      return@process image.files.groupBy { ImageExtension.fromFile(it) }.all { (_, files) ->
+      return@process image.files.groupBy { ImageExtension.fromFile(it) }.all { (ext, files) ->
         val basicSizes = files.filter { ImageType.fromFile(it) in setOf(BASIC, DARCULA) }.mapNotNull { imageSize(it) }.toSet()
         val retinaSizes = files.filter { ImageType.fromFile(it) in setOf(RETINA, RETINA_DARCULA) }.mapNotNull { imageSize(it) }.toSet()
 
@@ -68,8 +68,13 @@ abstract class ImageSanityCheckerBase(private val projectHome: File, private val
         if (basicSizes.size == 1 && retinaSizes.size == 1) {
           val sizeBasic = basicSizes.single()
           val sizeRetina = retinaSizes.single()
-          val sizeBasicTwice = Dimension(sizeBasic.width * 2, sizeBasic.height * 2)
-          return@all sizeBasicTwice == sizeRetina
+          if (ext == SVG) {
+            return@all sizeBasic == sizeRetina
+          }
+          else {
+            val sizeBasicTwice = Dimension(sizeBasic.width * 2, sizeBasic.height * 2)
+            return@all sizeBasicTwice == sizeRetina
+          }
         }
         return@all true
       }
