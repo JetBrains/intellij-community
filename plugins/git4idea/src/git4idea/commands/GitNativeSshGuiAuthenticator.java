@@ -55,7 +55,7 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
     if (myDoNotRememberPasswords) {
       return askUser(() -> {
         String message = GitBundle.message("ssh.ask.passphrase.message", PathUtil.getFileName(keyPath));
-        return Messages.showInputDialog(myProject, message, GitBundle.getString("ssh.ask.passphrase.title"), null, null, null);
+        return Messages.showPasswordDialog(myProject, message, GitBundle.getString("ssh.ask.passphrase.title"), null);
       });
     }
     else {
@@ -90,7 +90,7 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
   @Nullable
   private String askGenericInput(@NotNull String description) {
     return askUser(() -> {
-      return Messages.showInputDialog(myProject, description, GitBundle.message("ssh.keyboard.interactive.title"), null, null, null);
+      return Messages.showPasswordDialog(myProject, description, GitBundle.message("ssh.keyboard.interactive.title"), null);
     });
   }
 
