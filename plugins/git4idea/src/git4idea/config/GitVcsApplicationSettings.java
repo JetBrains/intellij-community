@@ -72,6 +72,10 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
     return myState.SSH_EXECUTABLE;
   }
 
+  public boolean isUseIdeaSsh() {
+    return getIdeaSsh() == SshExecutable.IDEA_SSH;
+  }
+
   public boolean isOverrideSshAskPass() {
     return myState.OVERRIDE_SSH_ASK_PASS;
   }

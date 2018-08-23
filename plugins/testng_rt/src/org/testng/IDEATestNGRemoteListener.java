@@ -262,7 +262,7 @@ public class IDEATestNGRemoteListener {
     final long duration = result.getDuration();
     myPrintStream.println("\n##teamcity[testFinished name=\'" +
                           escapeName(getTestMethodNameWithParams(result)) +
-                          (duration > 0 ? "\' duration=\'" + Long.toString(duration) : "") +
+                          (duration > 0 ? "\' duration=\'" + duration : "") +
                           "\']");
   }
 

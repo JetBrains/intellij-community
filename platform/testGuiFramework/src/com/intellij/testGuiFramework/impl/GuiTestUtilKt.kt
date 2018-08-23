@@ -3,8 +3,10 @@ package com.intellij.testGuiFramework.impl
 
 import com.intellij.diagnostic.MessagePool
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.Ref
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.framework.Timeouts
+import com.intellij.testGuiFramework.framework.toPrintable
 import com.intellij.testGuiFramework.framework.toSec
 import com.intellij.ui.EngravedLabel
 import org.fest.swing.core.ComponentMatcher
@@ -201,7 +203,9 @@ object GuiTestUtilKt {
    *
    * @throws WaitTimedOutError with the text: "Timed out waiting for $timeout second(s) until {@code conditionText} will be not null"
    */
-  fun <ReturnType> withPauseWhenNull(conditionText: String = "function to probe will", timeout: Timeout = Timeouts.defaultTimeout, functionProbeToNull: () -> ReturnType?): ReturnType {
+  fun <ReturnType> withPauseWhenNull(conditionText: String = "function to probe will",
+                                            timeout: Timeout = Timeouts.defaultTimeout,
+                                            functionProbeToNull: () -> ReturnType?): ReturnType {
     var result: ReturnType? = null
     waitUntil("$conditionText will be not null", timeout) {
       result = functionProbeToNull()
@@ -216,13 +220,38 @@ object GuiTestUtilKt {
     }, timeout)
   }
 
+  inline fun <R> tryWithPause(exceptionClass: Class<out Exception>,
+                   condition: String = "try block will not throw ${exceptionClass.name} exception",
+                   timeout: Timeout,
+                   crossinline tryBlock: () -> R): R {
+    val exceptionRef: Ref<Exception> = Ref.create()
+    try {
+      return withPauseWhenNull (condition, timeout) {
+        try {
+          tryBlock()
+        }
+        catch (e: Exception) {
+          if (exceptionClass.isInstance(e)) {
+            exceptionRef.set(e)
+            return@withPauseWhenNull null
+          }
+          throw e
+        }
+      }
+    }
+    catch (e: WaitTimedOutError) {
+      throw Exception("Timeout for $condition exceeded ${timeout.toPrintable()}", exceptionRef.get())
+    }
+  }
+
   fun silentWaitUntil(condition: String, timeoutInSeconds: Int = 60, conditionalFunction: () -> Boolean) {
     try {
       Pause.pause(object : Condition("$timeoutInSeconds second(s) until $condition silently") {
         override fun test() = conditionalFunction()
       }, Timeout.timeout(timeoutInSeconds.toLong(), TimeUnit.SECONDS))
     }
-    catch (ignore: WaitTimedOutError) { }
+    catch (ignore: WaitTimedOutError) {
+    }
   }
 
   fun <ComponentType : Component> findAllWithBFS(container: Container, clazz: Class<ComponentType>): List<ComponentType> {
@@ -253,7 +282,9 @@ object GuiTestUtilKt {
     return GuiTestUtil.waitUntilGone(root, timeout, matcher)
   }
 
-  fun GuiTestCase.waitProgressDialogUntilGone(dialogTitle: String, timeoutToAppear: Timeout = Timeouts.seconds05, timeoutToGone: Timeout = Timeouts.defaultTimeout) {
+  fun GuiTestCase.waitProgressDialogUntilGone(dialogTitle: String,
+                                              timeoutToAppear: Timeout = Timeouts.seconds05,
+                                              timeoutToGone: Timeout = Timeouts.defaultTimeout) {
     waitProgressDialogUntilGone(this.robot(), dialogTitle, timeoutToAppear, timeoutToGone)
   }
 
@@ -311,7 +342,8 @@ object GuiTestUtilKt {
   inline fun ignoreComponentLookupException(action: () -> Unit) = try {
     action()
   }
-  catch (ignore: ComponentLookupException) { }
+  catch (ignore: ComponentLookupException) {
+  }
 
   fun ensureCreateHasDone(guiTestCase: GuiTestCase) {
     try {

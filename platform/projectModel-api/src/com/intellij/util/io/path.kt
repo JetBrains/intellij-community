@@ -75,7 +75,7 @@ fun Path.delete() {
     }
   }
   catch (e: Exception) {
-    FileUtil.delete(toFile())
+    deleteAsIOFile()
   }
 }
 
@@ -116,7 +116,7 @@ private fun Path.deleteRecursively() = Files.walkFileTree(this, object : SimpleF
       Files.delete(file)
     }
     catch (e: Exception) {
-      FileUtil.delete(file.toFile())
+      deleteAsIOFile()
     }
     return FileVisitResult.CONTINUE
   }
@@ -126,11 +126,19 @@ private fun Path.deleteRecursively() = Files.walkFileTree(this, object : SimpleF
       Files.delete(dir)
     }
     catch (e: Exception) {
-      FileUtil.delete(dir.toFile())
+      deleteAsIOFile()
     }
     return FileVisitResult.CONTINUE
   }
 })
+
+private fun Path.deleteAsIOFile() {
+  try {
+    FileUtil.delete(toFile())
+  }
+  // according to specification #toFile() method may throw UnsupportedOperationException
+  catch (ignored: UnsupportedOperationException) {}
+}
 
 fun Path.lastModified(): FileTime = Files.getLastModifiedTime(this)
 

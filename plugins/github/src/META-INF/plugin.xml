@@ -32,6 +32,8 @@
     <projectService serviceInterface="org.jetbrains.plugins.github.util.GithubProjectSettings"
                     serviceImplementation="org.jetbrains.plugins.github.util.GithubProjectSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.github.pullrequest.GithubPullRequestsToolWindowManager"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestsComponentFactory"/>
     <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.github.extensions.GithubAnnotationGutterActionProvider"/>
     <projectConfigurable parentId="project.propVCSSupport.Mappings" instance="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable"/>
     <statistics.applicationUsagesCollector
@@ -51,6 +53,9 @@
       <add-to-group group-id="Git.Menu"/>
     </action>
     <action id="Github.Create.Pull.Request" class="org.jetbrains.plugins.github.GithubCreatePullRequestAction">
+      <add-to-group group-id="Git.Menu"/>
+    </action>
+    <action id="Github.View.Pull.Request" class="org.jetbrains.plugins.github.GithubViewPullRequestsAction" internal="true">
       <add-to-group group-id="Git.Menu"/>
     </action>
     <action id="Github.Open.In.Browser" class="org.jetbrains.plugins.github.GithubOpenInBrowserActionGroup">

@@ -166,7 +166,7 @@ public class ResolveImportUtil {
     final PsiFile sourceFile = params.getFile();
     final boolean importIsAbsolute = params.isAbsolute();
 
-    final String marker = qualifiedName + "#" + Integer.toString(relativeLevel);
+    final String marker = qualifiedName + "#" + relativeLevel;
     final Set<String> beingImported = ourBeingImported.get();
     if (beingImported.contains(marker)) {
       return Collections.emptyList(); // break endless loop in import

@@ -505,6 +505,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder catchAll() {
+    myAnalyzer.popTrap(Trap.TryCatchAll.class);
     GotoInstruction gotoInstruction = new GotoInstruction(null);
     add(gotoInstruction).end();
     myBranches.add(() -> gotoInstruction.setOffset(myAnalyzer.getInstructionCount()));

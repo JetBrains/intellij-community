@@ -197,7 +197,7 @@ public class JUnit4TestListener extends RunListener {
     if (methodName != null) {
       final long duration = currentTime() - myCurrentTestStart;
       myPrintStream.println("\n##teamcity[testFinished name=\'" + escapeName(methodName.replaceFirst("/", ".")) +
-                            (duration > 0 ? "\' duration=\'"  + Long.toString(duration) : "") + "\']");
+                            (duration > 0 ? "\' duration=\'" + duration : "") + "\']");
     }
     myCurrentTest = null;
   }

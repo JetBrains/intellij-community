@@ -139,24 +139,20 @@
       <add-to-group group-id="Internal.Errors"/>
     </action>
 
-    <action id="GenerateVisitorByHierarchy" internal="true" class="com.intellij.internal.GenerateVisitorByHierarchyAction"
-            text="Generate Hierarchy Visitor...">
-      <add-to-group group-id="Internal"/>
-    </action>
+    <group id="Internal.Java" text="Java" popup="true" compact="true">
+      <action id="GenerateVisitorByHierarchy" internal="true" class="com.intellij.internal.GenerateVisitorByHierarchyAction"
+              text="Generate Hierarchy Visitor..."/>
 
-    <action id="UsedIconsListing" internal="true" class="com.intellij.internal.UsedIconsListingAction"
-            text="List Used Icons">
-      <add-to-group group-id="Internal"/>
-    </action>
-    <action id="ExpressionStatistics" internal="true" class="com.intellij.internal.ExpressionStatisticsAction"
-            text="Collect Java Expression Statistics">
-      <add-to-group group-id="Internal"/>
-    </action>
+      <action id="UsedIconsListing" internal="true" class="com.intellij.internal.UsedIconsListingAction"
+              text="List Used Icons"/>
+      <action id="ExpressionStatistics" internal="true" class="com.intellij.internal.ExpressionStatisticsAction"
+              text="Collect Java Expression Statistics"/>
 
-    <action id="StaticIconFields" internal="true" class="com.intellij.internal.StaticIconFieldsAction"
-            text="List Static Field Initializers">
+      <action id="StaticIconFields" internal="true" class="com.intellij.internal.StaticIconFieldsAction"
+              text="List Static Field Initializers"/>
+
       <add-to-group group-id="Internal"/>
-    </action>
+    </group>
 
     <group id="JavaDebuggerActions">
       <action id="Debugger.CustomizeContextView" class="com.intellij.debugger.actions.CustomizeContextViewAction">

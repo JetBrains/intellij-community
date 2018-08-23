@@ -30,10 +30,10 @@ import com.intellij.psi.util.*;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.IncorrectOperationException;
-import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -238,6 +238,12 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
             myTypeEvaluator.setType(new TypeMigrationUsageInfo(expression), type != null ? type: myTypeEvaluator.evaluateType(expression));
           }
         }
+      }
+    }
+    else if (PsiUtil.isCondition(expression, expression.getParent())) {
+      final TypeView view = new TypeView(expression);
+      if (view.isChanged()) { //means that boolean condition becomes non-boolean
+        findConversionOrFail(expression, expression, view.getTypePair());
       }
     }
   }

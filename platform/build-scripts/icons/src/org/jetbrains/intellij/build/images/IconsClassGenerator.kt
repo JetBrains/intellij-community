@@ -1,21 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images
 
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.LineSeparator
 import com.intellij.util.containers.ContainerUtil
@@ -26,9 +12,12 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.*
 
-class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeChangesToDisk: Boolean = true) {
+class IconsClassGenerator(private val projectHome: File, val util: JpsModule, private val writeChangesToDisk: Boolean = true) {
   private var processedClasses = 0
   private var processedIcons = 0
   private var processedPhantom = 0
@@ -147,7 +136,7 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
   }
 
   private fun generate(module: JpsModule, className: String, packageName: String, customLoad: Boolean, copyrightComment: String): String? {
-    val imageCollector = ImageCollector(projectHome, true)
+    val imageCollector = ImageCollector(projectHome.toPath(), true, className = className)
     val images = imageCollector.collect(module, true)
     imageCollector.printUsedIconRobots()
 
@@ -197,7 +186,7 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
 
     val (nodes, leafs) = images.partition { getImageId(it, depth).contains('/') }
     val nodeMap = nodes.groupBy { getImageId(it, depth).substringBefore('/') }
-    val leafMap = ContainerUtil.newMapFromValues(leafs.iterator(), { getImageId(it, depth) })
+    val leafMap = ContainerUtil.newMapFromValues(leafs.iterator()) { getImageId(it, depth) }
 
     val sortedKeys = (nodeMap.keys + leafMap.keys).sortedWith(NAME_COMPARATOR)
     sortedKeys.forEach { key ->
@@ -226,74 +215,74 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
                           answer: StringBuilder,
                           level: Int,
                           customLoad: Boolean) {
-    val file = image.file
-    if (file == null) return
-    if (!image.phantom && !isIcon(file)) return
-
-    val iconName = iconName(file)
-    val used = image.used
-    val deprecated = image.deprecated
-    val deprecationComment = image.deprecation?.comment
-    val deprecationReplacement = image.deprecation?.replacement
-    val deprecationReplacementContextClazz = image.deprecation?.replacementContextClazz
+    val file = image.file ?: return
+    if (!image.phantom && !isIcon(file)) {
+      return
+    }
 
     processedIcons++
     if (image.phantom) processedPhantom++
 
-    if (used || deprecated) {
+    if (image.used || image.deprecated) {
+      val deprecationComment = image.deprecation?.comment
       append(answer, "", level)
       if (deprecationComment != null) {
         append(answer, "/** @deprecated $deprecationComment */", level)
       }
       append(answer, "@SuppressWarnings(\"unused\")", level)
     }
-    if (deprecated) {
+    if (image.deprecated) {
       append(answer, "@Deprecated", level)
     }
 
     val sourceRoot = image.sourceRoot
-    var root_prefix = ""
+    var rootPrefix = "/"
     if (sourceRoot.rootType == JavaSourceRootType.SOURCE) {
       @Suppress("UNCHECKED_CAST")
       val packagePrefix = (sourceRoot.properties as JpsSimpleElement<JavaSourceRootProperties>).data.packagePrefix
-      if (!packagePrefix.isEmpty()) root_prefix = "/" + packagePrefix.replace('.', '/')
+      if (!packagePrefix.isEmpty()) {
+        rootPrefix += packagePrefix.replace('.', '/') + "/"
+      }
     }
 
-    if (deprecationReplacementContextClazz == null) {
-      val imageFile: File
-      if (deprecationReplacement != null) {
-        imageFile = File(sourceRoot.file, deprecationReplacement)
-        assert(isIcon(imageFile), { "Overriding icon should be valid: $iconName - ${imageFile.path}" })
-      }
-      else {
-        imageFile = file
-      }
+    val iconName = iconName(file)
+    val deprecation = image.deprecation
 
-      val size = if (imageFile.exists()) imageSize(imageFile) else null
-      val comment: String
-      if (size != null) {
-        comment = " // ${size.width}x${size.height}"
-      }
-      else if (image.phantom) {
-        comment = ""
-      }
-      else {
-        error("Can't get icon size: $imageFile")
-      }
-
+    if (deprecation?.replacementContextClazz != null) {
       val method = if (customLoad) "load" else "IconLoader.getIcon"
-      val relativePath = root_prefix + "/" + FileUtil.getRelativePath(sourceRoot.file, imageFile)!!.replace('\\', '/')
       append(answer,
-             "public static final Icon $iconName = $method(\"$relativePath\");$comment",
+             "public static final Icon $iconName = $method(\"${deprecation.replacement}\", ${deprecation.replacementContextClazz}.class);",
              level)
+      return
+    }
+    else if (deprecation?.replacementReference != null) {
+      append(answer, "public static final Icon $iconName = ${deprecation.replacementReference};", level)
+      return
+    }
+
+    val sourceRootFile = Paths.get(JpsPathUtil.urlToPath(sourceRoot.url))
+    val imageFile: Path
+    if (deprecation?.replacement == null) {
+      imageFile = file
     }
     else {
-      val method = if (customLoad) "load" else "IconLoader.getIcon"
-      val relativePath = deprecationReplacement
-      append(answer,
-             "public static final Icon $iconName = $method(\"$relativePath\", ${deprecationReplacementContextClazz}.class);",
-             level)
+      imageFile = sourceRootFile.resolve(deprecation.replacement.removePrefix("/").removePrefix(File.separator))
+      assert(isIcon(imageFile)) { "Overriding icon should be valid: $iconName - $imageFile" }
     }
+
+    val size = if (Files.exists(imageFile)) imageSize(imageFile) else null
+    val comment: String
+    when {
+      size != null -> comment = " // ${size.width}x${size.height}"
+      image.phantom -> comment = ""
+      else -> error("Can't get icon size: $imageFile")
+    }
+
+    val method = if (customLoad) "load" else "IconLoader.getIcon"
+    val relativePath = rootPrefix + FileUtilRt.toSystemIndependentName(sourceRootFile.relativize(imageFile).toString())
+    append(answer,
+           "public static final Icon $iconName = $method(\"$relativePath\");$comment",
+           level)
   }
 
   private fun append(answer: StringBuilder, text: String, level: Int) {
@@ -316,7 +305,7 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
     val rootDir = File(JpsPathUtil.urlToPath(rootUrl))
     if (!rootDir.isDirectory) return null
 
-    val file = File(rootDir, ImageCollector.ROBOTS_FILE_NAME)
+    val file = File(rootDir, ROBOTS_FILE_NAME)
     if (!file.exists()) return null
 
     val prefix = "name:"
@@ -342,11 +331,10 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
     return toJavaIdentifier(answer.toString())
   }
 
-  private fun iconName(file: File): String {
-    val name = capitalize(file.name.substringBeforeLast('.'))
+  private fun iconName(file: Path): String {
+    val name = capitalize(file.fileName.toString().substringBeforeLast('.'))
     return toJavaIdentifier(name)
   }
-
 
   private fun toJavaIdentifier(id: String): String {
     val sb = StringBuilder()

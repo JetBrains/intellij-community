@@ -75,7 +75,7 @@ public class RestRunConfigurationType implements ConfigurationType {
 
     @Override
     @NotNull
-    public RunConfiguration createTemplateConfiguration(Project project) {
+    public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
       return new DocutilsRunConfiguration(project, this);
     }
   }
@@ -87,7 +87,7 @@ public class RestRunConfigurationType implements ConfigurationType {
 
     @Override
     @NotNull
-    public RunConfiguration createTemplateConfiguration(Project project) {
+    public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
       return new SphinxRunConfiguration(project, this);
     }
   }

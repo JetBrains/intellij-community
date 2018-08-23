@@ -33,10 +33,12 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
+import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.VMDisconnectedException;
@@ -376,7 +378,13 @@ public class DebugProcessEvents extends DebugProcessImpl {
       LOG.debug("leave: processVMStartEvent()");
 
       if (!machineProxy.canBeModified()) {
+        XDebugSessionImpl session = (XDebugSessionImpl)getSession().getXDebugSession();
+        if (session != null) {
+          session.setReadOnly(true);
+          session.setPauseActionSupported(false);
+        }
         myDebugProcessDispatcher.getMulticaster().paused(getSuspendManager().pushSuspendContext(EventRequest.SUSPEND_ALL, 0));
+        UIUtil.invokeLaterIfNeeded(() -> XDebugSessionTab.showFramesView(session));
       }
     }
   }

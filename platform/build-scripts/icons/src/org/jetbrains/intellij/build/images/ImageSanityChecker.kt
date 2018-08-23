@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images
 
 import org.jetbrains.intellij.build.images.ImageExtension.*
@@ -23,11 +9,11 @@ import java.awt.Dimension
 import java.io.File
 import java.util.*
 
-abstract class ImageSanityCheckerBase(val projectHome: File, val ignoreSkipTag: Boolean) {
+abstract class ImageSanityCheckerBase(private val projectHome: File, private val ignoreSkipTag: Boolean) {
   private val STUB_PNG_MD5 = "5a87124746c39b00aad480e92672eca0" // /actions/stub.svg - 16x16
 
   fun check(module: JpsModule) {
-    val allImages = ImageCollector(projectHome, false, ignoreSkipTag).collect(module)
+    val allImages = ImageCollector(projectHome.toPath(), false, ignoreSkipTag).collect(module)
 
     val (images, broken) = allImages.partition { it.file != null }
     log(Severity.ERROR, "image without base version", module, broken)
@@ -127,8 +113,7 @@ abstract class ImageSanityCheckerBase(val projectHome: File, val ignoreSkipTag: 
   }
 
 
-  private fun process(images: List<ImagePaths>, severity: Severity, message: String, module: JpsModule,
-                      processor: (ImagePaths) -> Boolean) {
+  private fun process(images: List<ImagePaths>, severity: Severity, message: String, module: JpsModule, processor: (ImagePaths) -> Boolean) {
     val result = ArrayList<ImagePaths>()
     images.forEach {
       if (!processor(it)) result.add(it)
@@ -144,13 +129,6 @@ abstract class ImageSanityCheckerBase(val projectHome: File, val ignoreSkipTag: 
 class ImageSanityChecker(projectHome: File) : ImageSanityCheckerBase(projectHome, false) {
   private val infos: StringBuilder = StringBuilder()
   private val warnings: StringBuilder = StringBuilder()
-
-  fun printInfo() {
-    if (infos.isNotEmpty()) {
-      println()
-      println(infos)
-    }
-  }
 
   fun printWarnings() {
     if (warnings.isNotEmpty()) {
@@ -178,7 +156,7 @@ class ImageSanityChecker(projectHome: File) : ImageSanityCheckerBase(projectHome
     if (images.isEmpty()) return
     logger.append("$prefix $message found in module '${module.name}'\n")
     images.sortedBy { it.id }.forEach {
-      logger.append("    ${it.id} - ${it.presentablePath.path}\n")
+      logger.append("    ${it.id} - ${it.presentablePath}\n")
     }
     logger.append("\n")
   }

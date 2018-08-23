@@ -140,8 +140,8 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   }
 
   @NotNull
-  private Future<Void> disposeConsoleAsync() {
-    Future<Void> shutdownFuture;
+  private Future<?> disposeConsoleAsync() {
+    Future<?> shutdownFuture;
     if (myCommunication != null) {
       shutdownFuture = UIUtil.invokeAndWaitIfNeeded(() -> {
         try {

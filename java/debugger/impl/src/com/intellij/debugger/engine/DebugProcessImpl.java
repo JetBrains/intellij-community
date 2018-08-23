@@ -13,6 +13,7 @@ import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 import com.intellij.debugger.engine.requests.MethodReturnValueWatcher;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.*;
+import com.intellij.debugger.impl.attach.SAPidRemoteConnection;
 import com.intellij.debugger.jdi.EmptyConnectorArgument;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
@@ -83,6 +84,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -95,7 +97,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   @NonNls private static final String SHMEM_ATTACHING_CONNECTOR_NAME = "com.sun.jdi.SharedMemoryAttach";
   @NonNls private static final String SOCKET_LISTENING_CONNECTOR_NAME = "com.sun.jdi.SocketListen";
   @NonNls private static final String SHMEM_LISTENING_CONNECTOR_NAME = "com.sun.jdi.SharedMemoryListen";
-  @NonNls static final String SAPID_ATTACHING_CONNECTOR_NAME = "sun.jvm.hotspot.jdi.SAPIDAttachingConnector";
 
   private final Project myProject;
   private final RequestManagerImpl myRequestManager;
@@ -442,12 +443,13 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
       final String address = myConnection.getAddress();
 
-      if (myConnection instanceof PidRemoteConnection) {
-        String pid = ((PidRemoteConnection)myConnection).getPid();
+      if (myConnection instanceof SAPidRemoteConnection) {
+        SAPidRemoteConnection pidRemoteConnection = (SAPidRemoteConnection)myConnection;
+        AttachingConnector connector = pidRemoteConnection.getConnector();
+        String pid = pidRemoteConnection.getPid();
         if (StringUtil.isEmpty(pid)) {
           throw new CantRunException(DebuggerBundle.message("error.no.pid"));
         }
-        AttachingConnector connector = (AttachingConnector)findConnector(SAPID_ATTACHING_CONNECTOR_NAME);
         myArguments = connector.defaultArguments();
         Connector.Argument pidArg = myArguments.get("pid");
         if (pidArg != null) {
@@ -855,6 +857,14 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   public static String processIOException(@NotNull IOException e, @Nullable String address) {
     if (e instanceof UnknownHostException) {
       return DebuggerBundle.message("error.unknown.host") + (address != null ? " (" + address + ")" : "") + ":\n" + e.getLocalizedMessage();
+    }
+
+    // Failed SA attach
+    Throwable cause = e.getCause();
+    if (cause instanceof InvocationTargetException) {
+      if (cause.getCause() != null) {
+        return cause.getCause().getLocalizedMessage();
+      }
     }
 
     String message;

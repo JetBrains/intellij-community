@@ -2,11 +2,12 @@
 package org.jetbrains.plugins.github.issue
 
 import com.intellij.openapi.progress.ProgressIndicator
-import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
+import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.GithubFullPath
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GithubIssue
+import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import java.io.IOException
 
@@ -26,7 +27,7 @@ object GithubIssuesLoadingHelper {
   @Throws(IOException::class)
   fun search(executor: GithubApiRequestExecutor, indicator: ProgressIndicator, server: GithubServerPath,
              owner: String, repo: String, withClosed: Boolean, assignee: String? = null, query: String? = null)
-    : List<GithubIssue> {
+    : List<GithubSearchedIssue> {
 
     return GithubApiPagesLoader.loadAll(executor, indicator,
                                         GithubApiRequests.Search.Issues.pages(server,

@@ -22,6 +22,15 @@ class JavaElementActionsFactory(private val renderer: JavaElementRenderer) : Jvm
     listOf(ModifierFix(declaration.modifierList, renderer.render(modifier), shouldPresent, false))
   }
 
+  override fun createChangeModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> {
+    val declaration = target as PsiModifierListOwner
+    if (declaration.language != JavaLanguage.INSTANCE) return emptyList()
+    val fix = object : ModifierFix(declaration.modifierList, renderer.render(request.modifier), request.shouldBePresent(), false) {
+      override fun isAvailable(): Boolean = request.isValid && super.isAvailable()
+    }
+    return listOf(fix)
+  }
+
   override fun createAddAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> {
     val declaration = target as? PsiModifierListOwner ?: return emptyList()
     if (declaration.language != JavaLanguage.INSTANCE) return emptyList()

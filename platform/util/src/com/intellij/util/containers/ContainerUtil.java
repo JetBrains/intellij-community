@@ -2717,6 +2717,9 @@ public class ContainerUtil extends ContainerUtilRt {
     else if (list.size() == 1) {
       return new SmartList<T>(list.get(0));
     }
+    else if (list.isEmpty()) {
+      return new SmartList<T>();
+    }
     else {
       return new ArrayList<T>(list);
     }

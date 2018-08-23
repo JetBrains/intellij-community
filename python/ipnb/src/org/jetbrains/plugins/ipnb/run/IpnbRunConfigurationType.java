@@ -51,11 +51,6 @@ public class IpnbRunConfigurationType implements ConfigurationType {
     }
 
     @Override
-    public boolean isConfigurationSingletonByDefault() {
-      return true;
-    }
-
-    @Override
     @NotNull
     public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
       return new IpnbRunConfiguration(project, this);

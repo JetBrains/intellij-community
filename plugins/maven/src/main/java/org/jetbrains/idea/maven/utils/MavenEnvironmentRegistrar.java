@@ -2,13 +2,13 @@
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.application.options.PathMacrosImpl;
+import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.openapi.application.PathMacros;
-import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.util.io.FileUtil;
 
-public class MavenEnvironmentRegistrar implements BaseComponent {
+public class MavenEnvironmentRegistrar implements ApplicationInitializedListener {
   @Override
-  public void initComponent() {
+  public void componentsInitialized() {
     registerPathVariable();
   }
 

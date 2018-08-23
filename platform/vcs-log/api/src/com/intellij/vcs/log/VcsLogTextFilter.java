@@ -44,9 +44,22 @@ public interface VcsLogTextFilter extends VcsLogDetailsFilter {
    */
   boolean matchesCase();
 
+  /**
+   * Checks whether a specified commit message matches this filter.
+   *
+   * @param message a commit message to check
+   * @return true if commit message matches this filter
+   */
+  boolean matches(@NotNull String message);
+
   @NotNull
   @Override
   default VcsLogFilterCollection.FilterKey<VcsLogTextFilter> getKey() {
     return TEXT_FILTER;
+  }
+
+  @Override
+  default boolean matches(@NotNull VcsCommitMetadata details) {
+    return matches(details.getFullMessage());
   }
 }

@@ -88,7 +88,7 @@
             text="Open Repository Version" description="Open editor with selected revision of the file"/>
     <action class="com.intellij.vcs.log.ui.actions.history.GetVersionFromHistoryAction" id="Vcs.Log.GetVersion"
             use-shortcut-of="Vcs.GetVersion"
-            text="Get" description="Get version from repository" icon="AllIcons.Actions.Get"/>
+            text="Get" description="Get version from repository" icon="AllIcons.Actions.Download"/>
     <action class="com.intellij.vcs.log.ui.actions.history.AnnotateRevisionFromHistoryAction" id="Vcs.Log.AnnotateRevisionAction"
             use-shortcut-of="Annotate"
             text="Annotate" description="Annotate Revision" icon="AllIcons.Actions.Annotate"/>

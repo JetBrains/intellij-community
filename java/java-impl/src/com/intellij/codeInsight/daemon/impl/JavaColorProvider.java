@@ -281,7 +281,7 @@ public class JavaColorProvider implements ElementColorProvider {
   private static void replaceFloat(PsiExpression expr, float newValue) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(expr.getProject());
     if (getFloat(expr) != newValue) {
-      expr.replace(factory.createExpressionFromText(String.valueOf(newValue) + "f", null));
+      expr.replace(factory.createExpressionFromText(newValue + "f", null));
     }
   }
 

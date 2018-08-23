@@ -192,7 +192,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
 
   protected JComponent createHistoryButton() {
-    JLabel label = new JLabel(AllIcons.Actions.Get);
+    JLabel label = new JLabel(AllIcons.Actions.Download);
     label.setToolTipText("Recent files");
     new ClickListener() {
       @Override

@@ -255,7 +255,7 @@ public class SearchTextField extends JPanel {
     }
   }
 
-  private boolean toClearTextOnEscape() {
+  protected boolean toClearTextOnEscape() {
     return ApplicationManager.getApplication() != null;
   }
 

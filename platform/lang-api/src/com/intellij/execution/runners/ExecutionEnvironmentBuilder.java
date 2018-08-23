@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class ExecutionEnvironmentBuilder {
-  @NotNull private RunProfile myRunProfile;
+  private RunProfile myRunProfile;
   @NotNull private ExecutionTarget myTarget = DefaultExecutionTarget.INSTANCE;
 
   @NotNull private final Project myProject;
@@ -24,7 +24,6 @@ public final class ExecutionEnvironmentBuilder {
   @Nullable private ConfigurationPerRunnerSettings myConfigurationSettings;
   @Nullable private RunContentDescriptor myContentToReuse;
   @Nullable private RunnerAndConfigurationSettings myRunnerAndConfigurationSettings;
-  @Nullable private String myRunnerId;
   private ProgramRunner<?> myRunner;
   private boolean myAssignNewId;
   @Nullable private Long myExecutionId = null;
@@ -133,6 +132,7 @@ public final class ExecutionEnvironmentBuilder {
     return this;
   }
 
+  @NotNull
   public ExecutionEnvironmentBuilder runner(@NotNull ProgramRunner<?> runner) {
     myRunner = runner;
     return this;
@@ -164,12 +164,7 @@ public final class ExecutionEnvironmentBuilder {
     }
 
     if (environment == null && myRunner == null) {
-      if (myRunnerId == null) {
-        myRunner = ProgramRunner.getRunner(myExecutor.getId(), myRunProfile);
-      }
-      else {
-        myRunner = ProgramRunner.findRunnerById(myRunnerId);
-      }
+      myRunner = ProgramRunner.getRunner(myExecutor.getId(), myRunProfile);
     }
 
     if (environment == null && myRunner == null) {

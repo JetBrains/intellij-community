@@ -191,7 +191,6 @@ public class GradleIntellijPluginFrameworkSupportProvider extends GradleFramewor
       settings.setTaskNames(Collections.singletonList(":runIde"));
       settings.setExternalProjectPath(contentRootPath);
     }
-    configuration.setSingleton(true);
     runManager.addConfiguration(configuration);
     runManager.setSelectedConfiguration(configuration);
   }

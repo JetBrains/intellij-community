@@ -307,7 +307,7 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
   private class MoveToStandardViewAction extends AnAction {
 
     public MoveToStandardViewAction() {
-      super("Move to standard view", "Move to standard view", AllIcons.Actions.MoveToStandardPlace);
+      super("Move to standard view", "Move to standard view", AllIcons.Actions.MoveTo2);
     }
 
     @Override
