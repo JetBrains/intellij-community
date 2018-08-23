@@ -96,8 +96,14 @@ class AndroidStudioLibraryLicenses {
     new LibraryLicense(name: "Juniversalchardet", libraryName: "juniversalchardet", version: "1.0.3",
                        url: "https://code.google.com/archive/p/juniversalchardet",
                        license: "MPL 1.1",  licenseUrl: "http://www.mozilla.org/MPL/MPL-1.1.html"),
+    // for moshi module library in intellij.android.core
+    new LibraryLicense(name: "Moshi", libraryName: "moshi", version: "1.6.0", license: "Apache 2.0",
+                       url: "https://github.com/square/moshi"),
     // for nosyncbuilder-jarjar module library in intellij.android.core
     new LibraryLicense(name: "nosyncbuilder-jarjar", license: "Apache 2.0", url: "http://source.android.com/"),
+    // for okio module library in intellij.android.core
+    new LibraryLicense(name: "Okio", libraryName: "okio", version: "1.14.0", license: "Apache 2.0",
+                       url: "https://github.com/square/okio"),
     // for pepk module library in intellij.android.core
     new LibraryLicense(name: "PEPK", libraryName: "pepk", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "samplesindex-v1-1.0-SNAPSHOT.jar", libraryName: "samplesindex-v1-1.0-SNAPSHOT.jar",
