@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -31,4 +32,7 @@ public abstract class ApplicationUsagesCollector extends FeatureUsagesCollector 
 
   @NotNull
   public abstract Set<UsageDescriptor> getUsages();
+
+  @Nullable
+  public FUSUsageContext getContext() {return null;}
 }
