@@ -2,14 +2,13 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.components.OldComponentConfig;
+import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
-import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class OptimizedPluginBean {
@@ -59,15 +58,6 @@ public class OptimizedPluginBean {
   @Tag(value = "is-internal", textIfEmpty = "true")
   public boolean isInternal;
 
-  @Tag("extensions")
-  public Element[] extensions;
-
-  @Tag("extensionPoints")
-  public Element[] extensionPoints;
-
-  @Tag("actions")
-  public Element[] actions;
-
   @Property(surroundWithTag = false)
   @XCollection
   public PluginDependency[] dependencies;
@@ -96,5 +86,5 @@ public class OptimizedPluginBean {
 
   @Property(surroundWithTag = false)
   @XCollection(elementName = "module")
-  public List<String> modules = new ArrayList<>();
+  public List<String> modules = new SmartList<>();
 }

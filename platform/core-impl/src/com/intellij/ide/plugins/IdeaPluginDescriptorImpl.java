@@ -24,6 +24,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import com.intellij.util.xmlb.XmlSerializer;
 import gnu.trove.THashMap;
+import org.jdom.Content;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -103,19 +104,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myBundled = bundled;
   }
 
-  @Nullable
-  private static List<Element> copyChildren(@Nullable Element[] elements) {
-    if (elements == null || elements.length == 0) {
-      return null;
-    }
-
-    List<Element> result = new SmartList<>();
-    for (Element extensionsRoot : elements) {
-      result.addAll(extensionsRoot.getChildren());
-    }
-    return result;
-  }
-
   @SuppressWarnings("HardCodedStringLiteral")
   private static String createDescriptionKey(final PluginId id) {
     return "plugin." + id + ".description";
@@ -167,7 +155,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   // used in upsource
   protected void readExternal(@NotNull Element element) {
-    PluginBean pluginBean = XmlSerializer.deserialize(element, PluginBean.class);
+    OptimizedPluginBean pluginBean = XmlSerializer.deserialize(element, OptimizedPluginBean.class);
     myUrl = pluginBean.url;
 
     String idString = StringUtil.nullize(pluginBean.id, true);
@@ -256,26 +244,45 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     if (myProjectComponents == null) myProjectComponents = ComponentConfig.EMPTY_ARRAY;
     if (myModuleComponents == null) myModuleComponents = ComponentConfig.EMPTY_ARRAY;
 
-    if (!ArrayUtil.isEmpty(pluginBean.extensions)) {
-      myExtensions = MultiMap.createSmart();
-      for (Element extensionsRoot : pluginBean.extensions) {
-        String ns = extensionsRoot.getAttributeValue("defaultExtensionNs");
-        for (Element extension : extensionsRoot.getChildren()) {
-          myExtensions.putValue(ExtensionsAreaImpl.extractEPName(extension, ns), extension);
+    for (Content content : element.getContent()) {
+      if (!(content instanceof Element)) {
+        continue;
+      }
+
+      Element child = (Element)content;
+      switch (child.getName()) {
+        case "extensions": {
+          if (myExtensions == null) {
+            myExtensions = MultiMap.createSmart();
+          }
+          String ns = child.getAttributeValue("defaultExtensionNs");
+          for (Element extension : child.getChildren()) {
+            myExtensions.putValue(ExtensionsAreaImpl.extractEPName(extension, ns), extension);
+          }
         }
+        break;
+
+        case "extensionPoints": {
+          if (myExtensionsPoints == null) {
+            myExtensionsPoints = MultiMap.createSmart();
+          }
+          for (Element extensionPoint : child.getChildren()) {
+            myExtensionsPoints.putValue(StringUtilRt.notNullize(extensionPoint.getAttributeValue(ExtensionsAreaImpl.ATTRIBUTE_AREA)), extensionPoint);
+          }
+        }
+        break;
+
+        case "actions": {
+          if (myActionElements == null) {
+            myActionElements = new ArrayList<>(child.getChildren());
+          }
+          else {
+            myActionElements.addAll(child.getChildren());
+          }
+        }
+        break;
       }
     }
-
-    if (!ArrayUtil.isEmpty(pluginBean.extensionPoints)) {
-      myExtensionsPoints = MultiMap.createSmart();
-      for (Element extensionsRoot : pluginBean.extensionPoints) {
-        for (Element extensionPoint : extensionsRoot.getChildren()) {
-          myExtensionsPoints.putValue(StringUtilRt.notNullize(extensionPoint.getAttributeValue(ExtensionsAreaImpl.ATTRIBUTE_AREA)), extensionPoint);
-        }
-      }
-    }
-
-    myActionElements = copyChildren(pluginBean.actions);
 
     if (pluginBean.modules != null && !pluginBean.modules.isEmpty()) {
       myModules = pluginBean.modules;
@@ -283,7 +290,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   @Nullable
-  private static Date parseReleaseDate(PluginBean bean) {
+  private static Date parseReleaseDate(@NotNull OptimizedPluginBean bean) {
     final String dateStr = bean.releaseDate;
     if (dateStr != null) {
       try {
