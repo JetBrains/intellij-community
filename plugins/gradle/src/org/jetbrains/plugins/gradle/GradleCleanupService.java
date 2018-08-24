@@ -12,7 +12,7 @@ import org.jetbrains.plugins.gradle.internal.daemon.GradleDaemonServices;
  */
 public class GradleCleanupService implements Disposable {
   private static final Logger LOG = Logger.getInstance(GradleCleanupService.class);
-  // todo should be replaced when it will be possible to distinguish gradle daemon processes started by other clients
+  // todo should be replaced when it will be possible to distinguish active gradle daemon processes used by other clients
   private static final boolean DISABLE_DAEMONS_STOP = Boolean.getBoolean("idea.gradle.disableDaemonsStopOnExit");
 
   @Override
