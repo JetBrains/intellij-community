@@ -18,11 +18,11 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class AsyncEditorLoader {
   private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("AsyncEditorLoader Pool", 2);
@@ -73,38 +73,71 @@ public class AsyncEditorLoader {
     return myLoadingFinished;
   }
 
+  /**
+   * @return a future holding the continuation to be executed in EDT
+   * <p>
+   * NOTE: it's only meaningful to call the resulting Runnable if you can guarantee that
+   * the document is not changed since the `scheduleLoading()` was initially called.
+   * Otherwise the result of this method must be ignored
+   * (it'll complete the loading in EDT, restart it or abandon it automatically).
+   */
   private Future<Runnable> scheduleLoading() {
+    CompletableFuture<Runnable> continuationFuture = new CompletableFuture<>();
     PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(myProject);
     Document document = myEditor.getDocument();
-    return ourExecutor.submit(() -> {
-      AtomicLong docStamp = new AtomicLong();
-      Ref<Runnable> ref = new Ref<>();
+    ourExecutor.submit(() -> {
       try {
-        while (!myEditorComponent.isDisposed()) {
-          ProgressIndicatorUtils.runWithWriteActionPriority(() -> psiDocumentManager.commitAndRunReadAction(() -> {
-            docStamp.set(document.getModificationStamp());
-            ref.set(myProject.isDisposed() ? EmptyRunnable.INSTANCE : myTextEditor.loadEditorInBackground());
-          }), new ProgressIndicatorBase());
-          Runnable continuation = ref.get();
-          if (continuation != null) {
-            psiDocumentManager.performLaterWhenAllCommitted(() -> {
-              if (docStamp.get() == document.getModificationStamp()) loadingFinished(continuation);
-              else if (!myEditorComponent.isDisposed()) scheduleLoading();
-            }, ModalityState.any());
-            return continuation;
+        while (!myEditorComponent.isDisposed() && !isDone()) {
+          LoadEditorResult result = tryLoadEditor(document);
+          if (result != null) {
+            continuationFuture.complete(result.continuation);
+            invokeAndWait(() -> {
+              if (isDone()) {
+                // it might happen when the caller already finished the loading manually through `continuationFuture`
+                return;
+              }
+              if (!myEditorComponent.isDisposed() &&
+                  psiDocumentManager.isCommitted(document) &&
+                  result.docStamp == document.getModificationStamp()) {
+                loadingFinished(result.continuation);
+              }
+            });
           }
-          ProgressIndicatorUtils.yieldToPendingWriteActions();
         }
       }
       finally {
-        if (ref.isNull()) invokeLater(() -> loadingFinished(null));
+        if (!isDone()) invokeAndWait((() -> loadingFinished(null)));
       }
-      return null;
     });
+    return continuationFuture;
   }
 
-  private static void invokeLater(Runnable runnable) {
-    ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any());
+  private boolean isDone() {
+    return myLoadingFinished.isDone();
+  }
+
+  private static class LoadEditorResult {
+    public final long docStamp;
+    @NotNull public final Runnable continuation;
+
+    public LoadEditorResult(long docStamp, @NotNull Runnable continuation) {
+      this.docStamp = docStamp;
+      this.continuation = continuation;
+    }
+  }
+
+  @Nullable
+  private LoadEditorResult tryLoadEditor(Document document) {
+    Ref<LoadEditorResult> ref = Ref.create();
+    ProgressIndicatorUtils.runWithWriteActionPriority(() -> PsiDocumentManager.getInstance(myProject).commitAndRunReadAction(() -> {
+      Runnable continuation = myProject.isDisposed() ? EmptyRunnable.INSTANCE : myTextEditor.loadEditorInBackground();
+      ref.set(new LoadEditorResult(document.getModificationStamp(), continuation));
+    }), new ProgressIndicatorBase());
+    return ref.get();
+  }
+
+  private static void invokeAndWait(Runnable runnable) {
+    ApplicationManager.getApplication().invokeAndWait(runnable, ModalityState.any());
   }
 
   private boolean worthWaiting() {
@@ -125,7 +158,7 @@ public class AsyncEditorLoader {
   }
 
   private void loadingFinished(Runnable continuation) {
-    if (myLoadingFinished.isDone()) return;
+    if (isDone()) return;
     myLoadingFinished.complete(null);
     myEditor.putUserData(ASYNC_LOADER, null);
 
@@ -177,7 +210,7 @@ public class AsyncEditorLoader {
 
 
     TextEditorState state = myProvider.getStateImpl(myProject, myEditor, level);
-    if (!myLoadingFinished.isDone() && myDelayedState != null) {
+    if (!isDone() && myDelayedState != null) {
       state.setDelayedFoldState(myDelayedState::getFoldingState);
     }
     return state;
@@ -186,7 +219,7 @@ public class AsyncEditorLoader {
   void setEditorState(@NotNull final TextEditorState state, boolean exactState) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    if (!myLoadingFinished.isDone()) {
+    if (!isDone()) {
       myDelayedState = state;
     }
 
