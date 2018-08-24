@@ -4,7 +4,6 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.actions.SearchEverywherePsiRenderer;
 import com.intellij.ide.util.EditSourceUtil;
-import com.intellij.ide.util.gotoByName.ChooseByNameModel;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
 import com.intellij.navigation.NavigationItem;
@@ -167,6 +166,11 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
         return super.getElementText(element);
       }
     };
+  }
+
+  @Override
+  public int getElementPriority(Object element, String searchPattern) {
+    return 50;
   }
 
   protected boolean isDumbModeSupported() {

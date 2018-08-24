@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.EqualityPolicy;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -135,13 +134,8 @@ class MultithreadSearcher {
         myContributor.fetchElements(myPattern, myUseNonProjectItems, filter, myIndicator,
                                     element -> {
                                       try {
-                                        //todo !!!
-                                        //int priority = myContributor.getPriority(element);
-                                        //EqualityPolicy<Object> eqPolicy = myContributor.getEqualityPolicy();
-
                                         int priority = myContributor.getElementPriority(element, myPattern);
-                                        EqualityPolicy<Object> eqPolicy = (EqualityPolicy<Object>) EqualityPolicy.CANONICAL;
-                                        boolean added = myAccumulator.addElement(element, myContributor, priority, eqPolicy);
+                                        boolean added = myAccumulator.addElement(element, myContributor, priority);
                                         if (!added) {
                                           myAccumulator.setContributorHasMore(myContributor, true);
                                         }
@@ -196,18 +190,18 @@ class MultithreadSearcher {
       myNotificationExecutor = notificationExecutor;
     }
 
-    protected Collection<Pair<SearchEverywhereContributor<?>, ElementInfo>> findSameElements(Object element, EqualityPolicy<Object> policy) {
-      Collection<Pair<SearchEverywhereContributor<?>, ElementInfo>> res  = new ArrayList<>();
+    protected Collection<Pair<SearchEverywhereContributor<?>, ElementInfo>> findSameElements(Object element) {
+      Collection<Pair<SearchEverywhereContributor<?>, ElementInfo>> res = new ArrayList<>();
       sections.forEach((contributor, objects) ->
                          objects.stream()
-                           .filter(info -> policy.isEqual(element, info.element))
+                           .filter(info -> Objects.equals(element, info.element))
                            .forEach(info -> res.add(Pair.create(contributor, info)))
       );
 
       return res;
     }
 
-    public abstract boolean addElement(Object element, SearchEverywhereContributor<?> contributor, int priority, EqualityPolicy<Object> policy) throws InterruptedException;
+    public abstract boolean addElement(Object element, SearchEverywhereContributor<?> contributor, int priority) throws InterruptedException;
     public abstract void contributorFinished(SearchEverywhereContributor<?> contributor);
     public abstract void setContributorHasMore(SearchEverywhereContributor<?> contributor, boolean hasMore);
   }
@@ -225,7 +219,7 @@ class MultithreadSearcher {
     }
 
     @Override
-    public boolean addElement(Object element, SearchEverywhereContributor<?> contributor, int priority, EqualityPolicy<Object> policy) {
+    public boolean addElement(Object element, SearchEverywhereContributor<?> contributor, int priority) {
       assert contributor == myExpandedContributor; // Only expanded contributor items allowed
 
       Collection<ElementInfo> section = sections.get(contributor);
@@ -235,7 +229,7 @@ class MultithreadSearcher {
         return false;
       }
 
-      Collection<Pair<SearchEverywhereContributor<?>, ElementInfo>> sameElementsInfo = findSameElements(element, policy);
+      Collection<Pair<SearchEverywhereContributor<?>, ElementInfo>> sameElementsInfo = findSameElements(element);
       if (!sameElementsInfo.isEmpty() && sameElementsInfo.stream().allMatch(pair -> pair.second.getPriority() >= priority)) {
         LOG.debug(String.format("Element %s for contributor %s was skipped", element.toString(), contributor.getSearchProviderId()));
         return true;
@@ -293,8 +287,7 @@ class MultithreadSearcher {
     }
 
     @Override
-    public boolean addElement(Object element, SearchEverywhereContributor<?> contributor, int priority,
-                           EqualityPolicy<Object> policy) throws InterruptedException {
+    public boolean addElement(Object element, SearchEverywhereContributor<?> contributor, int priority) throws InterruptedException {
       ElementInfo newElementInfo = new ElementInfo(element, priority, contributor);
       Condition condition = conditionsMap.get(contributor);
       Collection<ElementInfo> section = sections.get(contributor);
@@ -310,7 +303,7 @@ class MultithreadSearcher {
           return false;
         }
 
-        Collection<Pair<SearchEverywhereContributor<?>, ElementInfo>> sameElementsInfo = findSameElements(element, policy);
+        Collection<Pair<SearchEverywhereContributor<?>, ElementInfo>> sameElementsInfo = findSameElements(element);
         if (!sameElementsInfo.isEmpty() && sameElementsInfo.stream().allMatch(pair -> pair.second.getPriority() >= priority)) {
           LOG.debug(String.format("Element %s for contributor %s was skipped", element.toString(), contributor.getSearchProviderId()));
           return true;

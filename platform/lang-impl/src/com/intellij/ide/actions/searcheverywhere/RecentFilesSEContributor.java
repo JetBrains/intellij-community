@@ -51,6 +51,11 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
   }
 
   @Override
+  public int getElementPriority(Object element, String searchPattern) {
+    return super.getElementPriority(element, searchPattern) + 1;
+  }
+
+  @Override
   public void fetchElements(String pattern, boolean everywhere, SearchEverywhereContributorFilter<FileType> filter,
                             ProgressIndicator progressIndicator, Function<Object, Boolean> consumer) {
     String searchString = filterControlSymbols(pattern);
