@@ -103,7 +103,7 @@ public class XmlTagNameSynchronizer implements CommandListener {
   }
 
   @Override
-  public void beforeCommandFinished(CommandEvent event) {
+  public void beforeCommandFinished(@NotNull CommandEvent event) {
     final TagNameSynchronizer[] synchronizers = findSynchronizers(event.getDocument());
     for (TagNameSynchronizer synchronizer : synchronizers) {
       synchronizer.beforeCommandFinished();

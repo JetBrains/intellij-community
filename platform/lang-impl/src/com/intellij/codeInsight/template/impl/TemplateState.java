@@ -137,13 +137,13 @@ public class TemplateState implements Disposable {
       boolean started = false;
 
       @Override
-      public void commandStarted(CommandEvent event) {
+      public void commandStarted(@NotNull CommandEvent event) {
         myDocumentChangesTerminateTemplate = isCaretOutsideCurrentSegment(event.getCommandName());
         started = true;
       }
 
       @Override
-      public void beforeCommandFinished(CommandEvent event) {
+      public void beforeCommandFinished(@NotNull CommandEvent event) {
         if (started && !isDisposed()) {
           Runnable runnable = () -> afterChangedUpdate();
           final LookupImpl lookup = myEditor != null ? (LookupImpl)LookupManager.getActiveLookup(myEditor) : null;

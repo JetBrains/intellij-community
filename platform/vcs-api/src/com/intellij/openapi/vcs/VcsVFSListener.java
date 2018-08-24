@@ -406,7 +406,7 @@ public abstract class VcsVFSListener implements Disposable {
     private int myCommandLevel;
 
     @Override
-    public void commandStarted(final CommandEvent event) {
+    public void commandStarted(@NotNull final CommandEvent event) {
       if (myProject != event.getProject()) return;
       myCommandLevel++;
     }
@@ -450,7 +450,7 @@ public abstract class VcsVFSListener implements Disposable {
     }
 
     @Override
-    public void commandFinished(final CommandEvent event) {
+    public void commandFinished(@NotNull final CommandEvent event) {
       if (myProject != event.getProject()) return;
       myCommandLevel--;
       if (myCommandLevel == 0) {

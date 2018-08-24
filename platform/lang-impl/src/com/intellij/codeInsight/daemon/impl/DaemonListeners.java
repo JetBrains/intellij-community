@@ -437,7 +437,7 @@ public class DaemonListeners implements Disposable {
     private final String myCutActionName = myActionManager.getAction(IdeActions.ACTION_EDITOR_CUT).getTemplatePresentation().getText();
 
     @Override
-    public void commandStarted(CommandEvent event) {
+    public void commandStarted(@NotNull CommandEvent event) {
       Document affectedDocument = extractDocumentFromCommand(event);
       if (!worthBothering(affectedDocument, event.getProject())) return;
 
@@ -450,7 +450,7 @@ public class DaemonListeners implements Disposable {
     }
 
     @Nullable
-    private Document extractDocumentFromCommand(CommandEvent event) {
+    private Document extractDocumentFromCommand(@NotNull CommandEvent event) {
       Document affectedDocument = event.getDocument();
       if (affectedDocument != null) return affectedDocument;
       Object id = event.getCommandGroupId();
@@ -465,7 +465,7 @@ public class DaemonListeners implements Disposable {
     }
 
     @Override
-    public void commandFinished(CommandEvent event) {
+    public void commandFinished(@NotNull CommandEvent event) {
       Document affectedDocument = extractDocumentFromCommand(event);
       if (!worthBothering(affectedDocument, event.getProject())) return;
 
@@ -536,7 +536,7 @@ public class DaemonListeners implements Disposable {
     });
   }
 
-  private class MyAnActionListener extends AnActionListener.Adapter {
+  private class MyAnActionListener implements AnActionListener {
     private final AnAction escapeAction = myActionManager.getAction(IdeActions.ACTION_EDITOR_ESCAPE);
 
     @Override
