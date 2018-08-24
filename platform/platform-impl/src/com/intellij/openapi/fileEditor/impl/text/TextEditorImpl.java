@@ -66,6 +66,9 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
     myLoadingFinished = myAsyncLoader.start();
   }
 
+  /**
+   * @return a continuation to be called in EDT
+   */
   @NotNull
   protected Runnable loadEditorInBackground() {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
