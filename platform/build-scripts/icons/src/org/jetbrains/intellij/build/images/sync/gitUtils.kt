@@ -4,12 +4,14 @@ package org.jetbrains.intellij.build.images.sync
 import java.io.File
 import java.io.IOException
 import java.util.*
+import java.util.stream.Collectors
+import java.util.stream.Stream
 
 private val GIT = (System.getenv("TEAMCITY_GIT_PATH") ?: System.getenv("GIT") ?: "git").also {
   val noGitFound = "Git is not found, please specify path to git executable in TEAMCITY_GIT_PATH or GIT or add it to PATH"
   try {
-    val gitVersion = listOf(it, "--version").execute(File(System.getProperty("user.dir")), true)
-    if (gitVersion.isBlank()) throw IllegalStateException(noGitFound)
+    val gitVersion = execute(File(System.getProperty("user.dir")), it, "--version", silent = true)
+    if (gitVersion.isBlank()) error(noGitFound)
     log(gitVersion)
   }
   catch (e: IOException) {
@@ -24,27 +26,28 @@ private val GIT = (System.getenv("TEAMCITY_GIT_PATH") ?: System.getenv("GIT") ?:
 internal fun listGitObjects(
   repo: File, dirToList: String?,
   fileFilter: (File) -> Boolean = { true }
-): Map<String, GitObject> = listGitTree(repo, dirToList, fileFilter).associate { it }
+): Map<String, GitObject> = listGitTree(repo, dirToList, fileFilter)
+  .collect(Collectors.toMap({ it.first }, { it.second }))
 
 private fun listGitTree(
   repo: File, dirToList: String?,
   fileFilter: (File) -> Boolean
-): Sequence<Pair<String, GitObject>> {
+): Stream<Pair<String, GitObject>> {
   val relativeDirToList = dirToList?.let {
     File(it).relativeTo(repo).path
   } ?: ""
   log("Inspecting $repo")
   if (BUILD_SERVER == null) try {
-    listOf(GIT, "pull", "--rebase").execute(repo)
+    execute(repo, GIT, "pull", "--rebase")
   }
   catch (e: Exception) {
     callSafely {
-      listOf(GIT, "rebase", "--abort").execute(repo)
+      execute(repo, GIT, "rebase", "--abort")
     }
     log("Unable to pull changes for $repo")
   }
-  return listOf(GIT, "ls-tree", "HEAD", "-r", relativeDirToList)
-    .execute(repo).trim().lineSequence()
+  return execute(repo, GIT, "ls-tree", "HEAD", "-r", relativeDirToList, silent = true)
+    .trim().lines().stream()
     .filter { it.isNotBlank() }.map { line ->
       // format: <mode> SP <type> SP <object> TAB <file>
       line.splitWithTab()
@@ -55,7 +58,7 @@ private fun listGitTree(
     .filter { fileFilter(repo.resolve(it[3])) }
     // <file>, <object>, repo
     .map { GitObject(it[3], it[2], repo) }
-    .map { it.file.removePrefix("$relativeDirToList/") to it }
+    .map { it.path.removePrefix("$relativeDirToList/") to it }
 }
 
 /**
@@ -66,7 +69,7 @@ private fun listGitTree(
 internal fun listGitObjects(
   root: File, repos: List<File>,
   fileFilter: (File) -> Boolean = { true }
-): Map<String, GitObject> = repos.asSequence().flatMap { repo ->
+): Map<String, GitObject> = repos.parallelStream().flatMap { repo ->
   listGitTree(repo, null, fileFilter).map {
     // root relative <file> path to git object
     val rootRelativePath = repo.relativeTo(root).path
@@ -77,32 +80,33 @@ internal fun listGitObjects(
       "$rootRelativePath/${it.first}"
     } to it.second
   }
-}.associate { it }
+}.collect(Collectors.toMap({ it.first }, { it.second }))
 
 /**
- * @param file path relative to [repo]
+ * @param path path relative to [repo]
  */
-internal data class GitObject(val file: String, val hash: String, val repo: File) {
-  fun getFile() = File(repo, file)
+internal data class GitObject(val path: String, val hash: String, val repo: File) {
+  val file = File(repo, path)
 }
 
 /**
  * @param path path in repo
  * @return root of repo
  */
-internal fun findGitRepoRoot(path: String, silent: Boolean = false): File = File(path).let {
-  if (it.isDirectory && it.listFiles().find {
-      it.isDirectory && it.name == ".git"
+internal fun findGitRepoRoot(path: String, silent: Boolean = false): File {
+  val dir = File(path)
+  return if (dir.isDirectory && dir.listFiles().find { file ->
+      file.isDirectory && file.name == ".git"
     } != null) {
     if (!silent) log("Git repo found in $path")
-    it
+    dir
   }
-  else if (it.parent != null) {
+  else if (dir.parent != null) {
     if (!silent) log("No git repo found in $path")
-    findGitRepoRoot(it.parent, silent)
+    findGitRepoRoot(dir.parent, silent)
   }
   else {
-    throw IllegalArgumentException("No git repo found in $path")
+    error("No git repo found in $path")
   }
 }
 
@@ -115,7 +119,7 @@ private fun splitAndTry(factor: Int, files: List<String>, repo: File) {
   log("Executing git add for ${repo.absolutePath} in batches with $factor elements each")
   files.split(factor).forEach {
     try {
-      (listOf(GIT, "add") + it).execute(repo, true)
+      execute(repo, GIT, "add", *it.toTypedArray(), silent = true)
     }
     catch (e: Exception) {
       val finerFactor: Int = factor / 2
@@ -126,13 +130,37 @@ private fun splitAndTry(factor: Int, files: List<String>, repo: File) {
   }
 }
 
+@Volatile
+private var latestChangeCommits = emptyMap<String, CommitInfo>()
+
+internal fun latestChangeCommit(path: String, repo: File? = null): CommitInfo? {
+  val foundRepo = repo ?: findGitRepoRoot(path, silent = true)
+  val file = (if (repo == null) File(path) else File(repo, path)).canonicalPath
+  if (!latestChangeCommits.containsKey(file)) {
+    synchronized(file) {
+      if (!latestChangeCommits.containsKey(file)) {
+        val commitInfo = commitInfo(foundRepo, "--", path)
+        if (commitInfo != null) {
+          synchronized(latestChangeCommits) {
+            val tmp = HashMap(latestChangeCommits)
+            tmp[file] = commitInfo
+            latestChangeCommits = tmp
+          }
+        }
+        else return null
+      }
+    }
+  }
+  return latestChangeCommits[file]
+}
+
 /**
  * @return latest commit (or merge) time
  */
-internal fun latestChangeTime(file: String, repo: File): Long {
+internal fun latestChangeTime(path: String, repo: File): Long {
   // latest commit for file
-  val commit = commitInfo(repo, "--", file)
-  if (commit.timestamp <= 0) return -1
+  val commit = latestChangeCommit(path, repo)
+  if (commit == null) return -1
   val mergeCommit = findMergeCommit(repo, commit.hash)
   return Math.max(commit.timestamp, mergeCommit?.timestamp ?: -1)
 }
@@ -142,11 +170,11 @@ internal fun latestChangeTime(file: String, repo: File): Long {
  */
 private fun findMergeCommit(repo: File, commit: String, searchUntil: String = "HEAD"): CommitInfo? {
   // list commits that are both descendants of commit hash and ancestors of HEAD
-  val ancestryPathList = listOf(GIT, "rev-list", "$commit..$searchUntil", "--ancestry-path")
-    .execute(repo, true).lineSequence().filter { it.isNotBlank() }
+  val ancestryPathList = execute(repo, GIT, "rev-list", "$commit..$searchUntil", "--ancestry-path", silent = true)
+    .lineSequence().filter { it.isNotBlank() }
   // follow only the first parent commit upon seeing a merge commit
-  val firstParentList = listOf(GIT, "rev-list", "$commit..$searchUntil", "--first-parent")
-    .execute(repo, true).lineSequence().filter { it.isNotBlank() }.toSet()
+  val firstParentList = execute(repo, GIT, "rev-list", "$commit..$searchUntil", "--first-parent", silent = true)
+    .lineSequence().filter { it.isNotBlank() }.toSet()
   // last common commit may be the latest merge
   return ancestryPathList
     .lastOrNull { firstParentList.contains(it) }
@@ -195,7 +223,7 @@ private fun head(repo: File): String {
     synchronized(heads) {
       if (!heads.containsKey(repo)) {
         val tmp = HashMap(heads)
-        tmp[repo] = listOf(GIT, "rev-parse", "--abbrev-ref", "HEAD").execute(repo).removeSuffix(System.lineSeparator())
+        tmp[repo] = execute(repo, GIT, "rev-parse", "--abbrev-ref", "HEAD", silent = true).removeSuffix(System.lineSeparator())
         heads = tmp
       }
     }
@@ -203,28 +231,27 @@ private fun head(repo: File): String {
   return heads[repo]!!
 }
 
-private fun commitInfo(repo: File, vararg args: String): CommitInfo {
-  val output = listOf(GIT, "log", "--max-count", "1", "--format=%H/%cd/%P/%s", "--date=raw", *args)
-    .execute(repo, true).splitNotBlank("/")
-  // <hash>/<timestamp> <timezone>/<parent hashes>/<subject>
-  return if (output.size < 4) {
-    CommitInfo()
-  }
-  else {
+private fun commitInfo(repo: File, vararg args: String): CommitInfo? {
+  val output = execute(repo, GIT, "log", "--max-count", "1", "--format=%H/%cd/%P/%ce/%s", "--date=raw", *args, silent = true).splitNotBlank("/")
+  // <hash>/<timestamp> <timezone>/<parent hashes>/committer email/<subject>
+  return if (output.size >= 5) {
     CommitInfo(
       hash = output[0],
       timestamp = output[1].splitWithSpace()[0].toLong(),
       parents = output[2].splitWithSpace(),
-      subject = output.subList(3, output.size)
+      committerEmail = output[3],
+      subject = output.subList(4, output.size)
         .joinToString(separator = "/")
         .removeSuffix(System.lineSeparator())
     )
   }
+  else null
 }
 
-private class CommitInfo(
-  val hash: String = "",
-  val timestamp: Long = -1,
-  val subject: String = "",
-  val parents: List<String> = emptyList()
+internal class CommitInfo(
+  val hash: String,
+  val timestamp: Long,
+  val subject: String,
+  val parents: List<String>,
+  val committerEmail: String
 )

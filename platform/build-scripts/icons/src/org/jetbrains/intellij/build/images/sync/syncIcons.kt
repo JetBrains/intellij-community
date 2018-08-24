@@ -11,7 +11,7 @@ internal fun syncAdded(added: Collection<String>,
     added.forEach {
       val target = File(targetDir, it)
       if (target.exists()) log("$it already exists in target repo!")
-      val source = sourceRepoMap[it]!!.getFile()
+      val source = sourceRepoMap[it]!!.file
       source.copyTo(target, overwrite = true)
       val repo = targetRepo(target)
       if (!unversioned.containsKey(repo)) unversioned[repo] = mutableListOf()
@@ -28,8 +28,8 @@ internal fun syncModified(modified: Collection<String>,
                           sourceRepoMap: Map<String, GitObject>) {
   callSafely {
     modified.forEach {
-      val target = targetRepoMap[it]!!.getFile()
-      val source = sourceRepoMap[it]!!.getFile()
+      val target = targetRepoMap[it]!!.file
+      val source = sourceRepoMap[it]!!.file
       source.copyTo(target, overwrite = true)
     }
   }
@@ -38,8 +38,13 @@ internal fun syncModified(modified: Collection<String>,
 internal fun syncRemoved(removed: Collection<String>,
                          targetRepoMap: Map<String, GitObject>) {
   callSafely {
-    removed.map { targetRepoMap[it]!!.getFile() }.forEach {
-      if (!it.delete()) log("Failed to delete ${it.absolutePath}")
+    removed.map { targetRepoMap[it]!!.file }.forEach {
+      if (!it.delete()) {
+        log("Failed to delete ${it.absolutePath}")
+      }
+      else if (it.parentFile.list().isEmpty()) {
+        it.parentFile.delete()
+      }
     }
   }
 }

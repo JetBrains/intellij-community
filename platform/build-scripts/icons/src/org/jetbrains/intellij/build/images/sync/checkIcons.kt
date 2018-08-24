@@ -60,6 +60,9 @@ private fun printUsageAndExit() {
   System.exit(1)
 }
 
+private lateinit var icons: Map<String, GitObject>
+private lateinit var devIcons: Map<String, GitObject>
+
 /**
  * @param devRepoDir developers' git repo
  * @param iconsRepoDir designers' git repo
@@ -73,57 +76,54 @@ fun checkIcons(
 ) {
   logger = loggerImpl
   val iconsRepo = findGitRepoRoot(iconsRepoDir)
-  val icons = readIconsRepo(iconsRepo, iconsRepoDir)
+  icons = readIconsRepo(iconsRepo, iconsRepoDir)
   val devRepoRoot = findGitRepoRoot(devRepoDir)
   val devRepoVcsRoots = vcsRoots(devRepoRoot)
-  val devIcons = readDevRepo(devRepoRoot, devRepoDir, devRepoVcsRoots, skipDirsPattern)
-  val devIconsBackup = HashMap(devIcons)
+  devIcons = readDevRepo(devRepoRoot, devRepoDir, devRepoVcsRoots, skipDirsPattern)
+  val devIconsTmp = HashMap(devIcons)
   val addedByDesigners = mutableListOf<String>()
   val modified = mutableListOf<String>()
   val consistent = mutableListOf<String>()
   icons.forEach { icon, gitObject ->
-    if (!devIcons.containsKey(icon)) {
+    if (!devIconsTmp.containsKey(icon)) {
       addedByDesigners += icon
     }
-    else if (gitObject.hash != devIcons[icon]?.hash) {
+    else if (gitObject.hash != devIconsTmp[icon]?.hash) {
       modified += icon
     }
     else {
       consistent += icon
     }
-    devIcons.remove(icon)
+    devIconsTmp.remove(icon)
   }
-  val addedByDev = devIcons.keys
+  val addedByDev = devIconsTmp.keys
   val modifiedByDev = callWithTimer("Searching for modified by developers") {
-    modifiedByDev(modified, icons, devIconsBackup)
+    modifiedByDev(modified)
   }
   val removedByDev = callWithTimer("Searching for removed by developers") {
-    removedByDev(addedByDesigners, icons, devRepoVcsRoots, File(devRepoDir))
+    removedByDev(addedByDesigners, devRepoVcsRoots, File(devRepoDir))
   }
   val modifiedByDesigners = modified.filter { !modifiedByDev.contains(it) }
   val removedByDesigners = callWithTimer("Searching for removed by designers") {
-    removedByDesigners(
-      addedByDev, devIconsBackup, iconsRepo,
-      File(iconsRepoDir).relativeTo(iconsRepo).path.let {
-        if (it.isEmpty()) "" else "$it/"
-      }
-    )
+    removedByDesigners(addedByDev, iconsRepo, File(iconsRepoDir).relativeTo(iconsRepo).path.let {
+      if (it.isEmpty()) "" else "$it/"
+    })
   }
   if (doSyncIconsRepo) {
-    syncAdded(addedByDev, devIconsBackup, File(iconsRepoDir)) { iconsRepo }
-    syncModified(modifiedByDev, icons, devIconsBackup)
+    syncAdded(addedByDev, devIcons, File(iconsRepoDir)) { iconsRepo }
+    syncModified(modifiedByDev, icons, devIcons)
     syncRemoved(removedByDev, icons)
   }
   if (doSyncDevRepo) {
     syncAdded(addedByDesigners, icons, File(devRepoDir)) { findGitRepoRoot(it.absolutePath, true) }
-    syncModified(modifiedByDesigners, devIconsBackup, icons)
-    if (doSyncRemovedIconsInDev) syncRemoved(removedByDesigners, devIconsBackup)
+    syncModified(modifiedByDesigners, devIcons, icons)
+    if (doSyncRemovedIconsInDev) syncRemoved(removedByDesigners, devIcons)
   }
   report(
-    devIconsBackup.size, icons.size, skippedDirs.size,
+    devRepoRoot, devIcons.size, icons.size, skippedDirs.size,
     addedByDev, removedByDev, modifiedByDev,
     addedByDesigners, removedByDesigners, modifiedByDesigners,
-    consistent, errorHandler, !doSyncIconsRepo && !doSyncDevRepo
+    consistent, errorHandler, doNotify = !doSyncIconsRepo && !doSyncDevRepo
   )
 }
 
@@ -132,7 +132,7 @@ private fun readIconsRepo(iconsRepo: File, iconsRepoDir: String) =
     // read icon hashes
     isValidIcon(it.toPath())
   }.also {
-    if (it.isEmpty()) throw IllegalStateException("Icons repo doesn't contain icons")
+    if (it.isEmpty()) error("Icons repo doesn't contain icons")
   }
 
 private fun readDevRepo(devRepoRoot: File,
@@ -157,7 +157,7 @@ private fun readDevRepo(devRepoRoot: File,
     // read icons from multiple repos in devRepoRoot
     listGitObjects(devRepoRoot, devRepoVcsRoots, devRepoIconFilter)
   }
-  if (devIcons.isEmpty()) throw IllegalStateException("Dev repo doesn't contain icons")
+  if (devIcons.isEmpty()) error("Dev repo doesn't contain icons")
   return devIcons.toMutableMap()
 }
 
@@ -218,7 +218,6 @@ private fun inTestRoot(file: File, testRoots: Set<File>, skipDirsRegex: Regex?):
 
 private fun removedByDesigners(
   addedByDev: MutableCollection<String>,
-  devIcons: Map<String, GitObject>,
   iconsRepo: File, iconsDir: String) = addedByDev.parallelStream()
   .filter {
     val latestChangeTimeByDesigners = latestChangeTime("$iconsDir$it", iconsRepo)
@@ -230,7 +229,6 @@ private fun removedByDesigners(
 
 private fun removedByDev(
   addedByDesigners: MutableCollection<String>,
-  icons: Map<String, GitObject>,
   devRepos: Collection<File>, devRepoDir: File) = addedByDesigners.parallelStream()
   .filter { path ->
     val latestChangeTimeByDev = latestChangeTime(File(devRepoDir, path).absolutePath, devRepos)
@@ -250,15 +248,12 @@ private fun latestChangeTime(file: String, repos: Collection<File>): Long {
   return -1
 }
 
-private fun modifiedByDev(
-  modified: Collection<String>,
-  icons: Map<String, GitObject>,
-  devIcons: Map<String, GitObject>) = modified.parallelStream()
+private fun modifiedByDev(modified: Collection<String>) = modified.parallelStream()
   // latest changes are made by developers
   .filter { latestChangeTime(icons[it]) < latestChangeTime(devIcons[it]) }
   .collect(Collectors.toList())
 
 private fun latestChangeTime(obj: GitObject?) =
-  latestChangeTime(obj!!.file, obj.repo).also {
+  latestChangeTime(obj!!.path, obj.repo).also {
     if (it <= 0) error(obj.toString())
   }
