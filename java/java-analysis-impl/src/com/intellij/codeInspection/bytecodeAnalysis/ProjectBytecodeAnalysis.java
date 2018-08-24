@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
-import com.intellij.codeInsight.InferredAnnotationsManagerImpl;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
@@ -385,7 +384,6 @@ public class ProjectBytecodeAnalysis {
   @NotNull
   private PsiAnnotation createAnnotationFromText(@NotNull final String text) throws IncorrectOperationException {
     PsiAnnotation annotation = JavaPsiFacade.getElementFactory(myProject).createAnnotationFromText(text, null);
-    InferredAnnotationsManagerImpl.markInferred(annotation);
     ((LightVirtualFile)annotation.getContainingFile().getViewProvider().getVirtualFile()).setWritable(false);
     return annotation;
   }
