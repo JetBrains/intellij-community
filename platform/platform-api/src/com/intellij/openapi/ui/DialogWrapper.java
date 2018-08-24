@@ -29,7 +29,6 @@ import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.UIBundle;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBOptionButton;
@@ -55,8 +54,8 @@ import javax.swing.plaf.UIResource;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -452,9 +451,11 @@ public abstract class DialogWrapper {
     return UIUtil.isUnderAquaBasedLookAndFeel() || UIUtil.isUnderDarcula() || UIUtil.isUnderWin10LookAndFeel();
   }
 
-  private static boolean isRemoveHelpButton() {
-    return SystemInfo.isWindows && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) && Registry.is("ide.win.frame.decoration") ||
-           Registry.is("ide.remove.help.button.from.dialogs");
+  private boolean isRemoveHelpButton() {
+    return !ApplicationInfo.contextHelpAvailable() ||
+           SystemInfo.isWindows && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) && Registry.is("ide.win.frame.decoration") ||
+           Registry.is("ide.remove.help.button.from.dialogs") ||
+           getHelpAction() instanceof HelpAction && getHelpId() == null;
   }
 
   /**
@@ -466,19 +467,15 @@ public abstract class DialogWrapper {
    */
   protected JComponent createSouthPanel() {
     List<Action> actions = ContainerUtil.filter(createActions(), Condition.NOT_NULL);
-    List<Action> leftSideActions = newArrayList(createLeftSideActions());
+    List<Action> leftSideActions = ContainerUtil.filter(createLeftSideActions(), Condition.NOT_NULL);
 
-    if (!ApplicationInfo.contextHelpAvailable()) {
-      actions.remove(getHelpAction());
-    }
-
-    boolean hasHelpToMoveToLeftSide = false;
+    Action helpAction = getHelpAction();
+    boolean addHelpToLeftSide = false;
     if (isRemoveHelpButton()) {
-      actions.remove(getHelpAction());
+      actions.remove(helpAction);
     }
-    else if (isMoveHelpButtonLeft() && actions.contains(getHelpAction())) {
-      hasHelpToMoveToLeftSide = true;
-      actions.remove(getHelpAction());
+    else if (isMoveHelpButtonLeft() && actions.remove(helpAction) && !leftSideActions.contains(helpAction)) {
+      addHelpToLeftSide = true;
     }
 
     if (SystemInfo.isMac) {
@@ -502,16 +499,14 @@ public abstract class DialogWrapper {
         actions.add(okNdx < 0 ? 0 : actions.size() - 1, getCancelAction());
       }
     }
-    else if (UIUtil.isUnderGTKLookAndFeel() && actions.contains(getHelpAction())) {
-      leftSideActions.add(getHelpAction());
-      actions.remove(getHelpAction());
+    else if (UIUtil.isUnderGTKLookAndFeel() && actions.remove(helpAction)) {
+      leftSideActions.add(helpAction);
     }
 
     if (!UISettings.getShadowInstance().getAllowMergeButtons()) {
       actions = flattenOptionsActions(actions);
       leftSideActions = flattenOptionsActions(leftSideActions);
     }
-
 
     List<JButton> leftSideButtons = createButtons(leftSideActions);
     List<JButton> rightSideButtons = createButtons(actions);
@@ -526,7 +521,7 @@ public abstract class DialogWrapper {
       TouchbarDataKeys.putDialogButtonDescriptor(button, index++).setMainGroup(index >= leftSideButtons.size());
     }
 
-    return createSouthPanel(leftSideButtons, rightSideButtons, hasHelpToMoveToLeftSide);
+    return createSouthPanel(leftSideButtons, rightSideButtons, addHelpToLeftSide);
   }
 
   @NotNull
@@ -584,7 +579,7 @@ public abstract class DialogWrapper {
   @NotNull
   private JPanel createSouthPanel(@NotNull List<JButton> leftSideButtons,
                                   @NotNull List<JButton> rightSideButtons,
-                                  boolean hasHelpToMoveToLeftSide) {
+                                  boolean addHelpToLeftSide) {
     JPanel panel = new JPanel(new BorderLayout()) {
       @Override
       public Color getBackground() {
@@ -632,7 +627,7 @@ public abstract class DialogWrapper {
     }
 
     JComponent helpButton = null;
-    if (hasHelpToMoveToLeftSide) {
+    if (addHelpToLeftSide) {
       helpButton = createHelpButton(insets);
     }
 
@@ -1063,11 +1058,7 @@ public abstract class DialogWrapper {
    */
   @NotNull
   protected Action[] createActions() {
-    Action helpAction = getHelpAction();
-
-    return helpAction == myHelpAction && getHelpId() == null
-           ? new Action[]{getOKAction(), getCancelAction()}
-           : new Action[]{getOKAction(), getCancelAction(), helpAction};
+    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
   @NotNull
@@ -1520,22 +1511,12 @@ public abstract class DialogWrapper {
     myOKAction.putValue(Action.SHORT_DESCRIPTION, text);
   }
 
-  /**
-   * @return the help identifier or null if no help is available.
-   */
-  @Nullable @NonNls
+  /** Returns the help identifier, or {@code null} if no help is available. */
+  @Nullable
   protected String getHelpId() {
     return null;
   }
 
-  /**
-   * Invoked by default implementation of "Help" action.
-   * Note that the method does nothing if "Help" action isn't enabled.
-   * <p/>
-   * The default implementation shows the help page with id returned
-   * by {@link #getHelpId()}. If that method returns null,
-   * a message box with message "no help available" is shown.
-   */
   protected void doHelpAction() {
     if (myHelpAction.isEnabled()) {
       String helpId = getHelpId();
@@ -1543,8 +1524,7 @@ public abstract class DialogWrapper {
         HelpManager.getInstance().invokeHelp(helpId);
       }
       else {
-        Messages.showMessageDialog(getContentPane(), UIBundle.message("there.is.no.help.for.this.dialog.error.message"),
-                                   UIBundle.message("no.help.available.dialog.title"), Messages.getInformationIcon());
+        LOG.error("null topic; dialog=" + this.getClass() + "; action=" + getHelpAction().getClass());
       }
     }
   }
@@ -1721,7 +1701,7 @@ public abstract class DialogWrapper {
       ActionUtil.registerForEveryKeyboardShortcut(getRootPane(), cancelKeyboardAction, CommonShortcuts.getCloseActiveWindow());
     }
 
-    if (ApplicationInfo.contextHelpAvailable() && !isProgressDialog()) {
+    if (!(isRemoveHelpButton() || isProgressDialog())) {
       ActionListener helpAction = e -> doHelpAction();
       ActionUtil.registerForEveryKeyboardShortcut(getRootPane(), helpAction, CommonShortcuts.getContextHelp());
       rootPane.registerKeyboardAction(helpAction, KeyStroke.getKeyStroke(KeyEvent.VK_HELP, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
