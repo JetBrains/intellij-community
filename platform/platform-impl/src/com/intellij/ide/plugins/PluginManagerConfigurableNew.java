@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
+import com.google.gson.stream.JsonToken;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DataManager;
@@ -37,6 +38,7 @@ import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nls;
@@ -59,6 +61,7 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Alexander Lobas
@@ -782,7 +785,7 @@ public class PluginManagerConfigurableNew
           return;
         }
 
-        List<IdeaPluginDescriptor> result = localSearchPlugins(query);
+        List<IdeaPluginDescriptor> result = loadSuggestPlugins(query);
         if (result.isEmpty()) {
           hidePopup();
           return;
@@ -838,35 +841,43 @@ public class PluginManagerConfigurableNew
       }
 
       @NotNull
-      private List<IdeaPluginDescriptor> localSearchPlugins(@NotNull String query) {
-        IdeaPluginDescriptor descriptorEquals = null;
-        List<IdeaPluginDescriptor> descriptorsStartWith = new ArrayList<>();
-        List<IdeaPluginDescriptor> descriptorsContains = new ArrayList<>();
-
-        for (IdeaPluginDescriptor descriptor : getPluginRepositories()) {
-          String name = descriptor.getName();
-          if (descriptorEquals == null && name.equalsIgnoreCase(query)) {
-            descriptorEquals = descriptor;
-          }
-          else if (StringUtil.startsWithIgnoreCase(name, query)) {
-            descriptorsStartWith.add(descriptor);
-          }
-          else if (StringUtil.containsIgnoreCase(name, query)) {
-            descriptorsContains.add(descriptor);
-          }
-        }
-
+      private List<IdeaPluginDescriptor> loadSuggestPlugins(@NotNull String query) {
         List<IdeaPluginDescriptor> result = new ArrayList<>();
-        if (descriptorEquals != null) {
-          result.add(descriptorEquals);
+        try {
+          ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            try {
+              Pair<Map<String, IdeaPluginDescriptor>, Map<String, List<IdeaPluginDescriptor>>> p = loadPluginRepositories();
+              Map<String, IdeaPluginDescriptor> allRepositoriesMap = p.first;
+              Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = p.second;
+
+              if (query.length() > 1) {
+                try {
+                  for (String pluginId : requestToPluginRepository(createSearchSuggestUrl(query), forceHttps())) {
+                    IdeaPluginDescriptor descriptor = allRepositoriesMap.get(pluginId);
+                    if (descriptor != null) {
+                      result.add(descriptor);
+                    }
+                  }
+                }
+                catch (IOException ignore) {
+                }
+              }
+
+              for (List<IdeaPluginDescriptor> descriptors : customRepositoriesMap.values()) {
+                for (IdeaPluginDescriptor descriptor : descriptors) {
+                  if (StringUtil.containsIgnoreCase(descriptor.getName(), query)) {
+                    result.add(descriptor);
+                  }
+                }
+              }
+            }
+            catch (IOException e) {
+              PluginManagerMain.LOG.info(e);
+            }
+          }).get(300, TimeUnit.MILLISECONDS);
         }
-
-        PluginsGroup.sortByName(descriptorsStartWith);
-        result.addAll(descriptorsStartWith);
-
-        PluginsGroup.sortByName(descriptorsContains);
-        result.addAll(descriptorsContains);
-
+        catch (Exception ignore) {
+        }
         return result;
       }
     };
@@ -1150,18 +1161,23 @@ public class PluginManagerConfigurableNew
   private static List<String> requestToPluginRepository(@NotNull Url url, boolean forceHttps) throws IOException {
     List<String> ids = new ArrayList<>();
 
-    HttpRequests.request(url).forceHttps(forceHttps).productNameAsUserAgent().connect(request -> {
+    HttpRequests.request(url).forceHttps(forceHttps).throwStatusCodeException(false).productNameAsUserAgent().connect(request -> {
       URLConnection connection = request.getConnection();
       if (connection instanceof HttpURLConnection && ((HttpURLConnection)connection).getResponseCode() != HttpURLConnection.HTTP_OK) {
         return null;
       }
 
       try (JsonReaderEx json = new JsonReaderEx(FileUtil.loadTextAndClose(request.getReader()))) {
+        if (json.peek() == JsonToken.BEGIN_OBJECT) {
+          json.beginObject();
+          json.nextName(); // query
+          json.nextString(); // query value
+          json.nextName(); // suggestions
+        }
         json.beginArray();
         while (json.hasNext()) {
           ids.add(json.nextString());
         }
-        json.endArray();
       }
 
       return null;
@@ -1173,8 +1189,16 @@ public class PluginManagerConfigurableNew
   @NotNull
   private static Url createSearchUrl(@NotNull String query, int count) {
     return Urls.newFromEncoded("http://plugins.jetbrains.com/api/search?" + query +
-                               "&build=" + ApplicationInfoImpl.getShadowInstance().getApiVersion() +
+                               "&build=" + URLUtil.encodeURIComponent(ApplicationInfoImpl.getShadowInstance().getApiVersion()) +
                                "&max=" + count);
+  }
+
+  @NotNull
+  private static Url createSearchSuggestUrl(@NotNull String query) {
+    return Urls.newFromEncoded("http://plugins.jetbrains.com/api/searchSuggest?term=" +
+                               URLUtil.encodeURIComponent(query) +
+                               "&productCode=" +
+                               URLUtil.encodeURIComponent(ApplicationInfoImpl.getShadowInstance().getBuild().getProductCode()));
   }
 
   private static boolean forceHttps() {
@@ -1197,7 +1221,7 @@ public class PluginManagerConfigurableNew
     catch (IOException e) {
       PluginManagerMain.LOG.info(e);
     }
-    return Collections.emptyList(); // XXX
+    return Collections.emptyList();
   }
 
   @NotNull
