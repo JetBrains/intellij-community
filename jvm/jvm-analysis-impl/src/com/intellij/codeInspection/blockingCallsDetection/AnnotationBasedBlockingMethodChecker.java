@@ -1,13 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.blockingCallsDetection;
 
-import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class AnnotationBasedBlockingMethodChecker implements BlockingMethodChecker {
@@ -28,10 +28,19 @@ public class AnnotationBasedBlockingMethodChecker implements BlockingMethodCheck
 
   @Override
   public boolean isMethodBlocking(@NotNull PsiMethod method) {
-    HashSet<String> setOfAnnotations = Arrays.stream(AnnotationUtil.getAllAnnotations(method, true, null))
-      .map(PsiAnnotation::getQualifiedName).collect(Collectors.toCollection(HashSet::new));
+    return hasAnnotation(method, myBlockingAnnotations);
+  }
 
-    return myBlockingAnnotations.stream()
-      .anyMatch(annotation -> setOfAnnotations.contains(annotation));
+  static boolean hasAnnotation(PsiModifierListOwner owner, List<String> annotationsFQNames) {
+    boolean hasAnnotation = annotationsFQNames.stream()
+      .anyMatch(annotation -> owner.hasAnnotation(annotation));
+    if (hasAnnotation) return true;
+
+    PsiAnnotation[] externalAnnotations = ExternalAnnotationsManager.getInstance(owner.getProject()).findExternalAnnotations(owner);
+    if (externalAnnotations == null) return false;
+    Set<String> externalAnnotationsFQNames =
+      Arrays.stream(externalAnnotations).map(PsiAnnotation::getQualifiedName).collect(Collectors.toSet());
+    return annotationsFQNames.stream()
+      .anyMatch(annotation -> externalAnnotationsFQNames.contains(annotation));
   }
 }

@@ -7,6 +7,7 @@ import com.intellij.codeInspection.AnalysisUastUtil;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Splitter;
@@ -50,7 +51,7 @@ public class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUa
   @NotNull
   @Override
   public String getDisplayName() {
-    return JvmAnalysisBundle.message("method.name.contains.blocking.word.display.name");
+    return JvmAnalysisBundle.message("jvm.inspections.blocking.method.display.name");
   }
 
   @NotNull
@@ -141,12 +142,15 @@ public class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUa
 
     @Override
     public void visitElement(PsiElement element) {
+      super.visitElement(element);
+
       UCallExpression callExpression = AnalysisUastUtil.getUCallExpression(element);
 
       if (callExpression == null) return;
 
       if (!isContextNonBlockingFor(element)) return;
 
+      ProgressIndicatorProvider.checkCanceled();
       PsiMethod referencedMethod = callExpression.resolve();
       if (referencedMethod == null) return;
 
@@ -157,7 +161,7 @@ public class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUa
       PsiElement elementToHighLight = AnalysisUastUtil.getMethodIdentifierSourcePsi(callExpression);
       if (elementToHighLight == null) return;
       myHolder.registerProblem(elementToHighLight,
-                               JvmAnalysisBundle.message("method.name.contains.blocking.word.problem.descriptor"));
+                               JvmAnalysisBundle.message("jvm.inspections.blocking.method.problem.descriptor"));
     }
 
     private static CachedValueProvider<Boolean> getIsBlockingProvider(PsiMethod referencedMethod,
@@ -171,11 +175,18 @@ public class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUa
     }
 
     private boolean isContextNonBlockingFor(PsiElement element) {
-      return myNonBlockingContextCheckers.stream().anyMatch(extension -> extension.isContextNonBlockingFor(element));
+      return myNonBlockingContextCheckers.stream().anyMatch(extension -> {
+        ProgressIndicatorProvider.checkCanceled();
+        return extension.isContextNonBlockingFor(element);
+      });
     }
 
-    private static boolean isMethodBlocking(PsiMethod method, List<BlockingMethodChecker> blockingMethodCheckers) {
-      return blockingMethodCheckers.stream().anyMatch(extension -> extension.isMethodBlocking(method));
+    private static boolean isMethodBlocking(PsiMethod method,
+                                            List<BlockingMethodChecker> blockingMethodCheckers) {
+      return blockingMethodCheckers.stream().anyMatch(extension -> {
+        ProgressIndicatorProvider.checkCanceled();
+        return extension.isMethodBlocking(method);
+      });
     }
   }
 }

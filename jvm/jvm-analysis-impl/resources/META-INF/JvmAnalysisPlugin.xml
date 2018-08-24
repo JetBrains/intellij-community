@@ -13,7 +13,7 @@
     <localInspection language="UAST" shortName="BlockingMethodInNonBlockingContext"
                      groupBundle="com.intellij.jvm.analysis.JvmAnalysisBundle" groupKey="jvm.inspections.group.name"
                      enabledByDefault="true" level="WARNING"
-                     key="method.name.contains.blocking.word.display.name" bundle="com.intellij.jvm.analysis.JvmAnalysisBundle"
+                     key="jvm.inspections.blocking.method.display.name" bundle="com.intellij.jvm.analysis.JvmAnalysisBundle"
                      implementationClass="com.intellij.codeInspection.blockingCallsDetection.BlockingMethodInNonBlockingContextInspection"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij.codeInsight">
