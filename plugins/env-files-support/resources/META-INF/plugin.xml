@@ -1,7 +1,7 @@
 <idea-plugin>
   <id>ru.adelf.idea.dotenv</id>
   <name>.env files support</name>
-  <version>0.6</version>
+  <version>0.7</version>
   <vendor email="adel.faiz@gmail.com" url="http://adelf.ru">Adel Fayzrakhmanov</vendor>
 
   <description><![CDATA[
@@ -9,7 +9,7 @@
       <br/>
       Features
       <ul>
-        <li>Environment variables completion for PHP, JavaScript, Python and Ruby languages</li>
+        <li>Environment variables completion for PHP, JavaScript, Python, Go and Ruby languages</li>
         <li>Dockerfile and docker-compose.yml files support.</li>
         <li>Go to declaration(in .env file) and usages(in code), by Ctrl(Cmd)+click or hot key(Ctrl(Cmd)-B, etc.)</li>
         <li>.env file commenter</li>
@@ -17,11 +17,12 @@
     ]]></description>
 
   <change-notes><![CDATA[
-      0.6
+      0.7
       <ul>
-        <li>JavaScript support</li>
-        <li>Duplicate keys inspection</li>
-        <li>Small fixes</li>
+        <li>.env syntax highlighting</li>
+        <li>Go support</li>
+        <li>.env.* files support</li>
+        <li>Javascript indexing optimization(remove /node_modules from index)</li>
       </ul>
   ]]></change-notes>
 
