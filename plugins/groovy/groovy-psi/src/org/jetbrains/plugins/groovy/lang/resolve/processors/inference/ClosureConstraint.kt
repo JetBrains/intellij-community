@@ -8,6 +8,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfacePa
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
+import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil.findCall
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.sam.findSingleAbstractMethod
@@ -15,7 +16,7 @@ import org.jetbrains.plugins.groovy.lang.sam.isSamConversionAllowed
 
 class ClosureConstraint(val closure: GrClosableBlock, val leftType: PsiType) : ConstraintFormula {
   override fun reduce(session: InferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
-    if ((session as GroovyInferenceSession).skipClosureBlock) {
+    if ((session as GroovyInferenceSession).skipClosureBlock || session.closureSkipList.contains(findCall(closure))) {
       //TODO:add explicit typed closure constraints
     } else {
       if (leftType !is PsiClassType) return true

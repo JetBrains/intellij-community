@@ -312,7 +312,7 @@ public class LocalVariablesUtil {
     }
     catch (Exception e) {
       if (vm.canBeModified()) { // do not care in read only vms
-        LOG.error(e);
+        LOG.debug(e);
       }
       else {
         LOG.warn(e);

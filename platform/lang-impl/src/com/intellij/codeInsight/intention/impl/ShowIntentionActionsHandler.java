@@ -28,6 +28,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -76,7 +77,10 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       return;
     }
 
-    showIntentionHint(project, editor, file, intentions);
+    editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    Editor finalEditor = editor;
+    PsiFile finalFile = file;
+    editor.getScrollingModel().runActionOnScrollingFinished(() -> showIntentionHint(project, finalEditor, finalFile, intentions));
   }
 
   // added for override into Rider

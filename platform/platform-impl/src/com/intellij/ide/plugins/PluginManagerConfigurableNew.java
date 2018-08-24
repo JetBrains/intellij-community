@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
+import com.google.gson.stream.JsonToken;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DataManager;
@@ -37,6 +38,7 @@ import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nls;
@@ -59,6 +61,7 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Alexander Lobas
@@ -74,6 +77,8 @@ public class PluginManagerConfigurableNew
   private static final int TRENDING_SEARCH_TAB = 3;
   private static final int INSTALLED_SEARCH_TAB = 4;
   private static final int UPDATES_SEARCH_TAB = 5;
+
+  private static final int ITEMS_PER_GROUP = 9;
 
   private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("MMM dd, yyyy");
   private static final DecimalFormat K_FORMAT = new DecimalFormat("###.#K");
@@ -107,9 +112,10 @@ public class PluginManagerConfigurableNew
 
   private Runnable myShutdownCallback;
 
-  private List<IdeaPluginDescriptor> myJBRepositoryList;
-  private Map<String, IdeaPluginDescriptor> myJBRepositoryMap;
-  private final Object myJBRepositoryLock = new Object();
+  private List<IdeaPluginDescriptor> myAllRepositoriesList;
+  private Map<String, IdeaPluginDescriptor> myAllRepositoriesMap;
+  private Map<String, List<IdeaPluginDescriptor>> myCustomRepositoriesMap;
+  private final Object myRepositoriesLock = new Object();
   private List<String> myAllTagSorted;
 
   public PluginManagerConfigurableNew() {
@@ -567,12 +573,25 @@ public class PluginManagerConfigurableNew
       List<PluginsGroup> groups = new ArrayList<>();
 
       try {
-        Map<String, IdeaPluginDescriptor> jbRepositoryMap = loadJBRepository();
+        Pair<Map<String, IdeaPluginDescriptor>, Map<String, List<IdeaPluginDescriptor>>> pair = loadPluginRepositories();
+        Map<String, IdeaPluginDescriptor> allRepositoriesMap = pair.first;
+        Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = pair.second;
+
         Set<String> excludeDescriptors = new HashSet<>();
-        addGroup(groups, excludeDescriptors, jbRepositoryMap, "Featured", "is_featured_search=true", "sort_by:featured");
-        addGroup(groups, excludeDescriptors, jbRepositoryMap, "New and Updated", "orderBy=update+date", "sort_by:updates");
-        addGroup(groups, excludeDescriptors, jbRepositoryMap, "Top Downloads", "orderBy=downloads", "sort_by:downloads");
-        addGroup(groups, excludeDescriptors, jbRepositoryMap, "Top Rated", "orderBy=rating", "sort_by:rating");
+        addGroup(groups, excludeDescriptors, allRepositoriesMap, "Featured", "is_featured_search=true", "sort_by:featured");
+        addGroup(groups, excludeDescriptors, allRepositoriesMap, "New and Updated", "orderBy=update+date", "sort_by:updates");
+        addGroup(groups, excludeDescriptors, allRepositoriesMap, "Top Downloads", "orderBy=downloads", "sort_by:downloads");
+        addGroup(groups, excludeDescriptors, allRepositoriesMap, "Top Rated", "orderBy=rating", "sort_by:rating");
+
+        for (String host : UpdateSettings.getInstance().getPluginHosts()) {
+          List<IdeaPluginDescriptor> allDescriptors = customRepositoriesMap.get(host);
+          if (allDescriptors != null) {
+            addGroup(groups, "Repository: " + host, "repository:\"" + host + "\"", descriptors -> {
+              descriptors.addAll(allDescriptors.subList(0, Math.min(ITEMS_PER_GROUP, allDescriptors.size())));
+              PluginsGroup.sortByName(descriptors);
+            });
+          }
+        }
       }
       catch (IOException e) {
         PluginManagerMain.LOG.info(e);
@@ -592,74 +611,6 @@ public class PluginManagerConfigurableNew
     });
 
     return createScrollPane(panel, false);
-  }
-
-  @NotNull
-  private Map<String, IdeaPluginDescriptor> loadJBRepository() throws IOException {
-    synchronized (myJBRepositoryLock) {
-      if (myJBRepositoryMap != null) {
-        return myJBRepositoryMap;
-      }
-    }
-
-    List<IdeaPluginDescriptor> list = new ArrayList<>();
-    Map<String, IdeaPluginDescriptor> map = new HashMap<>();
-    IOException exception = null;
-
-    for (String host : RepositoryHelper.getPluginHosts()) {
-      try {
-        for (IdeaPluginDescriptor plugin : RepositoryHelper.loadPlugins(host, null)) {
-          String id = plugin.getPluginId().getIdString();
-          if (!map.containsKey(id)) {
-            list.add(plugin);
-            map.put(id, plugin);
-          }
-        }
-      }
-      catch (IOException e) {
-        if (host == null) {
-          exception = e;
-        }
-        else {
-          PluginManagerMain.LOG.info(host, e);
-        }
-      }
-    }
-
-    if (exception != null) {
-      throw exception;
-    }
-
-    ApplicationManager.getApplication().invokeLater(() -> {
-      InstalledPluginsState state = InstalledPluginsState.getInstance();
-      for (IdeaPluginDescriptor descriptor : list) {
-        state.onDescriptorDownload(descriptor);
-      }
-    });
-
-    synchronized (myJBRepositoryLock) {
-      if (myJBRepositoryList == null) {
-        myJBRepositoryList = list;
-        myJBRepositoryMap = map;
-      }
-      return myJBRepositoryMap;
-    }
-  }
-
-  private void addGroup(@NotNull List<PluginsGroup> groups,
-                        @NotNull Set<String> excludeDescriptors,
-                        @NotNull Map<String, IdeaPluginDescriptor> jbRepositoryMap,
-                        @NotNull String name,
-                        @NotNull String query,
-                        @NotNull String showAllQuery) throws IOException {
-    PluginsGroup group = new PluginsGroup(name);
-    loadPlugins(group.descriptors, jbRepositoryMap, excludeDescriptors, query, 9);
-
-    if (!group.descriptors.isEmpty()) {
-      //noinspection unchecked
-      group.rightAction = new LinkLabel("Show All", null, mySearchListener, showAllQuery);
-      groups.add(group);
-    }
   }
 
   @NotNull
@@ -796,7 +747,7 @@ public class PluginManagerConfigurableNew
         if (!UpdateSettings.getInstance().getPluginHosts().isEmpty()) {
           attributes.add("repository:");
         }
-        attributes.add("sort_by:"); // XXX: ignore if sets `repository`
+        attributes.add("sort_by:");
         return attributes;
       }
 
@@ -807,7 +758,7 @@ public class PluginManagerConfigurableNew
           case "tag:":
             if (ContainerUtil.isEmpty(myAllTagSorted)) {
               Set<String> allTags = new HashSet<>();
-              for (IdeaPluginDescriptor descriptor : getJBRepositoryList()) {
+              for (IdeaPluginDescriptor descriptor : getPluginRepositories()) {
                 if (descriptor instanceof PluginNode) {
                   List<String> tags = ((PluginNode)descriptor).getTags();
                   if (!ContainerUtil.isEmpty(tags)) {
@@ -819,9 +770,9 @@ public class PluginManagerConfigurableNew
             }
             return myAllTagSorted;
           case "repository:":
-            return ContainerUtil.concat(ContainerUtil.list("JetBrains"), UpdateSettings.getInstance().getPluginHosts());
+            return UpdateSettings.getInstance().getPluginHosts();
           case "sort_by:":
-            return ContainerUtil.list("downloads", "name", "rating", "featured", "updates"); // XXX: "name" if sets `repository`
+            return ContainerUtil.list("downloads", "name", "rating", "featured", "updates");
         }
         return null;
       }
@@ -834,7 +785,7 @@ public class PluginManagerConfigurableNew
           return;
         }
 
-        List<IdeaPluginDescriptor> result = localSearchPlugins(query);
+        List<IdeaPluginDescriptor> result = loadSuggestPlugins(query);
         if (result.isEmpty()) {
           hidePopup();
           return;
@@ -890,35 +841,43 @@ public class PluginManagerConfigurableNew
       }
 
       @NotNull
-      private List<IdeaPluginDescriptor> localSearchPlugins(@NotNull String query) {
-        IdeaPluginDescriptor descriptorEquals = null;
-        List<IdeaPluginDescriptor> descriptorsStartWith = new ArrayList<>();
-        List<IdeaPluginDescriptor> descriptorsContains = new ArrayList<>();
-
-        for (IdeaPluginDescriptor descriptor : getJBRepositoryList()) {
-          String name = descriptor.getName();
-          if (descriptorEquals == null && name.equalsIgnoreCase(query)) {
-            descriptorEquals = descriptor;
-          }
-          else if (StringUtil.startsWithIgnoreCase(name, query)) {
-            descriptorsStartWith.add(descriptor);
-          }
-          else if (StringUtil.containsIgnoreCase(name, query)) {
-            descriptorsContains.add(descriptor);
-          }
-        }
-
+      private List<IdeaPluginDescriptor> loadSuggestPlugins(@NotNull String query) {
         List<IdeaPluginDescriptor> result = new ArrayList<>();
-        if (descriptorEquals != null) {
-          result.add(descriptorEquals);
+        try {
+          ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            try {
+              Pair<Map<String, IdeaPluginDescriptor>, Map<String, List<IdeaPluginDescriptor>>> p = loadPluginRepositories();
+              Map<String, IdeaPluginDescriptor> allRepositoriesMap = p.first;
+              Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = p.second;
+
+              if (query.length() > 1) {
+                try {
+                  for (String pluginId : requestToPluginRepository(createSearchSuggestUrl(query), forceHttps())) {
+                    IdeaPluginDescriptor descriptor = allRepositoriesMap.get(pluginId);
+                    if (descriptor != null) {
+                      result.add(descriptor);
+                    }
+                  }
+                }
+                catch (IOException ignore) {
+                }
+              }
+
+              for (List<IdeaPluginDescriptor> descriptors : customRepositoriesMap.values()) {
+                for (IdeaPluginDescriptor descriptor : descriptors) {
+                  if (StringUtil.containsIgnoreCase(descriptor.getName(), query)) {
+                    result.add(descriptor);
+                  }
+                }
+              }
+            }
+            catch (IOException e) {
+              PluginManagerMain.LOG.info(e);
+            }
+          }).get(300, TimeUnit.MILLISECONDS);
         }
-
-        PluginsGroup.sortByName(descriptorsStartWith);
-        result.addAll(descriptorsStartWith);
-
-        PluginsGroup.sortByName(descriptorsContains);
-        result.addAll(descriptorsContains);
-
+        catch (Exception ignore) {
+        }
         return result;
       }
     };
@@ -927,13 +886,47 @@ public class PluginManagerConfigurableNew
         @Override
         protected void handleQuery(@NotNull String query, @NotNull PluginsGroup result) {
           try {
-            Map<String, IdeaPluginDescriptor> jbRepositoryMap = loadJBRepository();
+            Pair<Map<String, IdeaPluginDescriptor>, Map<String, List<IdeaPluginDescriptor>>> p = loadPluginRepositories();
+            Map<String, IdeaPluginDescriptor> allRepositoriesMap = p.first;
+            Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = p.second;
+
             SearchQueryParser.Trending parser = new SearchQueryParser.Trending(query);
 
+            if (!parser.repositories.isEmpty()) {
+              for (String repository : parser.repositories) {
+                List<IdeaPluginDescriptor> descriptors = customRepositoriesMap.get(repository);
+                if (descriptors == null) {
+                  continue;
+                }
+                if (parser.searchQuery == null) {
+                  result.descriptors.addAll(descriptors);
+                }
+                else {
+                  for (IdeaPluginDescriptor descriptor : descriptors) {
+                    if (StringUtil.containsIgnoreCase(descriptor.getName(), parser.searchQuery)) {
+                      result.descriptors.add(descriptor);
+                    }
+                  }
+                }
+              }
+              result.sortByName();
+              return;
+            }
+
             for (String pluginId : requestToPluginRepository(createSearchUrl(parser.getUrlQuery(), 10000), forceHttps())) {
-              IdeaPluginDescriptor descriptor = jbRepositoryMap.get(pluginId);
+              IdeaPluginDescriptor descriptor = allRepositoriesMap.get(pluginId);
               if (descriptor != null) {
                 result.descriptors.add(descriptor);
+              }
+            }
+
+            if (parser.searchQuery != null) {
+              for (List<IdeaPluginDescriptor> descriptors : customRepositoriesMap.values()) {
+                for (IdeaPluginDescriptor descriptor : descriptors) {
+                  if (StringUtil.containsIgnoreCase(descriptor.getName(), parser.searchQuery)) {
+                    result.descriptors.add(descriptor);
+                  }
+                }
               }
             }
           }
@@ -1041,13 +1034,103 @@ public class PluginManagerConfigurableNew
     return myPluginsModel.detailPanel;
   }
 
+  @NotNull
+  private static JComponent createScrollPane(@NotNull PluginsGroupComponent panel, boolean initSelection) {
+    JBScrollPane pane = new JBScrollPane(panel);
+    pane.setBorder(JBUI.Borders.empty());
+    if (initSelection) {
+      panel.initialSelection();
+    }
+    return pane;
+  }
+
+  private void addGroup(@NotNull List<PluginsGroup> groups,
+                        @NotNull String name,
+                        @NotNull String showAllQuery,
+                        @NotNull ThrowableConsumer<List<IdeaPluginDescriptor>, IOException> consumer) throws IOException {
+    PluginsGroup group = new PluginsGroup(name);
+    consumer.consume(group.descriptors);
+
+    if (!group.descriptors.isEmpty()) {
+      //noinspection unchecked
+      group.rightAction = new LinkLabel("Show All", null, mySearchListener, showAllQuery);
+      groups.add(group);
+    }
+  }
+
+  private void addGroup(@NotNull List<PluginsGroup> groups,
+                        @NotNull Set<String> excludeDescriptors,
+                        @NotNull Map<String, IdeaPluginDescriptor> allRepositoriesMap,
+                        @NotNull String name,
+                        @NotNull String query,
+                        @NotNull String showAllQuery) throws IOException {
+    addGroup(groups, name, showAllQuery, descriptors -> loadPlugins(descriptors, allRepositoriesMap, excludeDescriptors, query));
+  }
+
+  @NotNull
+  private Pair<Map<String, IdeaPluginDescriptor>, Map<String, List<IdeaPluginDescriptor>>> loadPluginRepositories() throws IOException {
+    synchronized (myRepositoriesLock) {
+      if (myAllRepositoriesMap != null) {
+        return Pair.create(myAllRepositoriesMap, myCustomRepositoriesMap);
+      }
+    }
+
+    List<IdeaPluginDescriptor> list = new ArrayList<>();
+    Map<String, IdeaPluginDescriptor> map = new HashMap<>();
+    Map<String, List<IdeaPluginDescriptor>> custom = new HashMap<>();
+    IOException exception = null;
+
+    for (String host : RepositoryHelper.getPluginHosts()) {
+      try {
+        List<IdeaPluginDescriptor> descriptors = RepositoryHelper.loadPlugins(host, null);
+        if (host != null) {
+          custom.put(host, descriptors);
+        }
+        for (IdeaPluginDescriptor plugin : descriptors) {
+          String id = plugin.getPluginId().getIdString();
+          if (!map.containsKey(id)) {
+            list.add(plugin);
+            map.put(id, plugin);
+          }
+        }
+      }
+      catch (IOException e) {
+        if (host == null) {
+          exception = e;
+        }
+        else {
+          PluginManagerMain.LOG.info(host, e);
+        }
+      }
+    }
+
+    if (exception != null) {
+      throw exception;
+    }
+
+    ApplicationManager.getApplication().invokeLater(() -> {
+      InstalledPluginsState state = InstalledPluginsState.getInstance();
+      for (IdeaPluginDescriptor descriptor : list) {
+        state.onDescriptorDownload(descriptor);
+      }
+    });
+
+    synchronized (myRepositoriesLock) {
+      if (myAllRepositoriesList == null) {
+        myAllRepositoriesList = list;
+        myAllRepositoriesMap = map;
+        myCustomRepositoriesMap = custom;
+      }
+      return Pair.create(myAllRepositoriesMap, myCustomRepositoriesMap);
+    }
+  }
+
   private static void loadPlugins(@NotNull List<IdeaPluginDescriptor> descriptors,
                                   @NotNull Map<String, IdeaPluginDescriptor> allDescriptors,
                                   @NotNull Set<String> excludeDescriptors,
-                                  @NotNull String query,
-                                  int count) throws IOException {
+                                  @NotNull String query) throws IOException {
     boolean forceHttps = forceHttps();
-    Url baseUrl = createSearchUrl(query, count);
+    Url baseUrl = createSearchUrl(query, ITEMS_PER_GROUP);
     Url offsetUrl = baseUrl;
     Map<String, String> offsetParameters = new HashMap<>();
     int offset = 0;
@@ -1062,7 +1145,7 @@ public class PluginManagerConfigurableNew
         IdeaPluginDescriptor descriptor = allDescriptors.get(pluginId);
         if (descriptor != null && excludeDescriptors.add(pluginId) && PluginManager.getPlugin(descriptor.getPluginId()) == null) {
           descriptors.add(descriptor);
-          if (descriptors.size() == count) {
+          if (descriptors.size() == ITEMS_PER_GROUP) {
             return;
           }
         }
@@ -1078,18 +1161,23 @@ public class PluginManagerConfigurableNew
   private static List<String> requestToPluginRepository(@NotNull Url url, boolean forceHttps) throws IOException {
     List<String> ids = new ArrayList<>();
 
-    HttpRequests.request(url).forceHttps(forceHttps).productNameAsUserAgent().connect(request -> {
+    HttpRequests.request(url).forceHttps(forceHttps).throwStatusCodeException(false).productNameAsUserAgent().connect(request -> {
       URLConnection connection = request.getConnection();
       if (connection instanceof HttpURLConnection && ((HttpURLConnection)connection).getResponseCode() != HttpURLConnection.HTTP_OK) {
         return null;
       }
 
       try (JsonReaderEx json = new JsonReaderEx(FileUtil.loadTextAndClose(request.getReader()))) {
+        if (json.peek() == JsonToken.BEGIN_OBJECT) {
+          json.beginObject();
+          json.nextName(); // query
+          json.nextString(); // query value
+          json.nextName(); // suggestions
+        }
         json.beginArray();
         while (json.hasNext()) {
           ids.add(json.nextString());
         }
-        json.endArray();
       }
 
       return null;
@@ -1101,8 +1189,16 @@ public class PluginManagerConfigurableNew
   @NotNull
   private static Url createSearchUrl(@NotNull String query, int count) {
     return Urls.newFromEncoded("http://plugins.jetbrains.com/api/search?" + query +
-                               "&build=" + ApplicationInfoImpl.getShadowInstance().getApiVersion() +
+                               "&build=" + URLUtil.encodeURIComponent(ApplicationInfoImpl.getShadowInstance().getApiVersion()) +
                                "&max=" + count);
+  }
+
+  @NotNull
+  private static Url createSearchSuggestUrl(@NotNull String query) {
+    return Urls.newFromEncoded("http://plugins.jetbrains.com/api/searchSuggest?term=" +
+                               URLUtil.encodeURIComponent(query) +
+                               "&productCode=" +
+                               URLUtil.encodeURIComponent(ApplicationInfoImpl.getShadowInstance().getBuild().getProductCode()));
   }
 
   private static boolean forceHttps() {
@@ -1110,10 +1206,10 @@ public class PluginManagerConfigurableNew
   }
 
   @NotNull
-  private List<IdeaPluginDescriptor> getJBRepositoryList() {
-    synchronized (myJBRepositoryLock) {
-      if (myJBRepositoryList != null) {
-        return myJBRepositoryList;
+  private List<IdeaPluginDescriptor> getPluginRepositories() {
+    synchronized (myRepositoriesLock) {
+      if (myAllRepositoriesList != null) {
+        return myAllRepositoriesList;
       }
     }
     try {
@@ -1125,17 +1221,7 @@ public class PluginManagerConfigurableNew
     catch (IOException e) {
       PluginManagerMain.LOG.info(e);
     }
-    return Collections.emptyList(); // XXX
-  }
-
-  @NotNull
-  private static JComponent createScrollPane(@NotNull PluginsGroupComponent panel, boolean initSelection) {
-    JBScrollPane pane = new JBScrollPane(panel);
-    pane.setBorder(JBUI.Borders.empty());
-    if (initSelection) {
-      panel.initialSelection();
-    }
-    return pane;
+    return Collections.emptyList();
   }
 
   @NotNull

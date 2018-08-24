@@ -96,8 +96,8 @@ public abstract class SearchResultPanel {
             myGroup.titleWithCount();
           }
 
-          myPanel.doLayout();
           myPanel.initialSelection();
+          fullRepaint();
         }, ModalityState.any());
       });
     }

@@ -344,9 +344,6 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
     new LibraryLicense(name: "PicoContainer", libraryName: "picocontainer", version: "1.2", license: "BSD",
                        url: "https://github.com/codehaus/picocontainer", licenseUrl: "https://opensource.org/licenses/bsd-license.php"),
-    new LibraryLicense(name: "Plantuml", libraryName: "plantuml.jar", version: "1.2017.18", license: "Apache 2.0",
-                       url: "http://plantuml.com", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
-
     new LibraryLicense(name: "plexus-archiver", libraryName: "plexus-archiver", version: "2.4.4", license: "Apache 2.0",
                        url: "https://github.com/codehaus-plexus/plexus-archiver", licenseUrl: "http://apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "plexus-classworlds", attachedTo: "intellij.maven.server.m30.impl", version: "2.4", license: "Apache 2.0",
@@ -421,6 +418,8 @@ class CommunityLibraryLicenses {
                        url: "http://java.net/downloads/swingx/", licenseUrl: "http://www.opensource.org/licenses/lgpl-2.1.php"),
     new LibraryLicense(name: "TestNG", version: "6.9 snapshot", license: "Apache 2.0", url: "http://testng.org/doc/",
                        licenseUrl: "https://github.com/cbeust/testng/blob/master/LICENSE.txt"),
+    new LibraryLicense(name: "Thrift", libraryName: "libthrift", version: "0.11.0", license: "Apache 2.0",
+                       licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://thrift.apache.org/"),
     new LibraryLicense(name: "Trilead SSH", libraryName: "trilead-ssh2", version: "build-217-jenkins-11", license: "BSD style",
                        licenseUrl: "https://github.com/jenkinsci/trilead-ssh2/blob/master/LICENSE.txt",
                        url: "https://github.com/jenkinsci/trilead-ssh2"),

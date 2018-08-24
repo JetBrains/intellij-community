@@ -50,6 +50,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.groovy.JpsGroovycRunner");
   private static final Key<Boolean> CHUNK_REBUILD_ORDERED = Key.create("CHUNK_REBUILD_ORDERED");
   private static final Key<Map<ModuleChunk, GroovycContinuation>> CONTINUATIONS = Key.create("CONTINUATIONS");
+  public static final String GROOVYC_IN_PROCESS = "groovyc.in.process";
   final boolean myForStubs;
 
   public JpsGroovycRunner(boolean forStubs) {
@@ -198,7 +199,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
   }
 
   private static boolean shouldRunGroovycInProcess(int jdkVersion) {
-    String explicitProperty = System.getProperty("groovyc.in.process");
+    String explicitProperty = System.getProperty(GROOVYC_IN_PROCESS);
     return explicitProperty != null ? "true".equals(explicitProperty)
                                     : jdkVersion == JavaVersion.current().feature
                                       || jdkVersion < 5; // our own jars require at least JDK 5

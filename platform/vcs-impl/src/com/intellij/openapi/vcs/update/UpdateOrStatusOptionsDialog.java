@@ -11,37 +11,36 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.util.ui.OptionsDialog;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
-  private final JComponent myMainPanel;
-  private final Map<AbstractVcs, Configurable> myEnvToConfMap = new HashMap<>();
   protected final Project myProject;
 
+  private final JComponent myMainPanel;
+  private final List<Configurable> myConfigurables = new ArrayList<>();
+  private final boolean myHelpAvailable;
 
-  public UpdateOrStatusOptionsDialog(Project project, Map<Configurable, AbstractVcs> confs) {
+  public UpdateOrStatusOptionsDialog(Project project, String title, Map<Configurable, AbstractVcs> envToConfMap) {
     super(project);
-    setTitle(getRealTitle());
+    setTitle(title);
     myProject = project;
-    if (confs.size() == 1) {
+    if (envToConfMap.size() == 1) {
       myMainPanel = new JPanel(new BorderLayout());
-      final Configurable configurable = confs.keySet().iterator().next();
-      addComponent(confs.get(configurable), configurable, BorderLayout.CENTER);
+      addComponent(envToConfMap.keySet().iterator().next(), BorderLayout.CENTER);
       myMainPanel.add(Box.createVerticalStrut(10), BorderLayout.SOUTH);
     }
     else {
       myMainPanel = new JBTabbedPane();
-      final ArrayList<AbstractVcs> vcses = new ArrayList<>(confs.values());
-      Collections.sort(vcses, (o1, o2) -> o1.getDisplayName().compareTo(o2.getDisplayName()));
-      Map<AbstractVcs, Configurable> vcsToConfigurable = revertMap(confs);
-      for (AbstractVcs vcs : vcses) {
-        addComponent(vcs, vcsToConfigurable.get(vcs), vcs.getDisplayName());
-      }
+      envToConfMap.entrySet().stream()
+        .sorted(Comparator.comparing(entry -> entry.getValue().getDisplayName()))
+        .forEach(entry -> addComponent(entry.getKey(), entry.getKey().getDisplayName()));
     }
+    myHelpAvailable = myConfigurables.stream().anyMatch(c -> c.getHelpTopic() != null);
     init();
   }
 
@@ -50,26 +49,17 @@ public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
     return "com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialog" + getActionNameForDimensions();
   }
 
-  private static Map<AbstractVcs, Configurable> revertMap(final Map<Configurable, AbstractVcs> confs) {
-    final HashMap<AbstractVcs, Configurable> result = new HashMap<>();
-    for (Configurable configurable : confs.keySet()) {
-      result.put(confs.get(configurable), configurable);
-    }
-    return result;
-  }
-
-  protected abstract String getRealTitle();
   protected abstract String getActionNameForDimensions();
 
-  private void addComponent(AbstractVcs vcs, Configurable configurable, String constraint) {
-    myEnvToConfMap.put(vcs, configurable);
-    myMainPanel.add(configurable.createComponent(), constraint);
+  private void addComponent(Configurable configurable, String constraint) {
+    myConfigurables.add(configurable);
+    myMainPanel.add(Objects.requireNonNull(configurable.createComponent()), constraint);
     configurable.reset();
   }
 
   @Override
   protected void doOKAction() {
-    for (Configurable configurable : myEnvToConfMap.values()) {
+    for (Configurable configurable : myConfigurables) {
       try {
         configurable.apply();
       }
@@ -77,7 +67,7 @@ public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
         return;
       }
       catch (ConfigurationException e) {
-        Messages.showErrorDialog(myProject, VcsBundle.message("messge.text.cannot.save.settings", e.getLocalizedMessage()), getRealTitle());
+        Messages.showErrorDialog(myProject, VcsBundle.message("message.text.cannot.save.settings", e.getLocalizedMessage()), getTitle());
         return;
       }
     }
@@ -91,40 +81,29 @@ public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
 
   @Override
   protected JComponent createCenterPanel() {
-
     return myMainPanel;
   }
 
+  @Nullable
   @Override
-  @NotNull
-  protected Action[] createActions() {
-    for(Configurable conf: myEnvToConfMap.values()) {
-      if (conf.getHelpTopic() != null) {
-        return new Action[] { getOKAction(), getCancelAction(), getHelpAction() };
-      }
-    }
-    return super.createActions();
+  protected String getHelpId() {
+    return myHelpAvailable ? "(fake)" : null;
   }
 
   @Override
   protected void doHelpAction() {
     String helpTopic = null;
-    final Collection<Configurable> v = myEnvToConfMap.values();
-    final Configurable[] configurables = v.toArray(new Configurable[0]);
     if (myMainPanel instanceof JTabbedPane) {
-      final int tabIndex = ((JTabbedPane)myMainPanel).getSelectedIndex();
-      if (tabIndex >= 0 && tabIndex < configurables.length) {
-        helpTopic = configurables [tabIndex].getHelpTopic();
+      int idx = ((JTabbedPane)myMainPanel).getSelectedIndex();
+      if (0 <= idx && idx < myConfigurables.size()) {
+        helpTopic = myConfigurables.get(idx).getHelpTopic();
       }
     }
     else {
-      helpTopic = configurables [0].getHelpTopic();
+      helpTopic = myConfigurables.get(0).getHelpTopic();
     }
     if (helpTopic != null) {
       HelpManager.getInstance().invokeHelp(helpTopic);
-    }
-    else {
-      super.doHelpAction();
     }
   }
 }

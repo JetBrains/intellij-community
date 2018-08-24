@@ -13,6 +13,9 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import git4idea.diff.GitSubmoduleContentRevision;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -116,12 +119,54 @@ public class GitContentRevision implements ByteBackedContentRevision {
   private static ContentRevision createRevision(@NotNull FilePath filePath,
                                                 @Nullable VcsRevisionNumber revisionNumber,
                                                 @NotNull Project project) {
+    SubmoduleAndParent submoduleAndParent = getRepositoryIfSubmodule(project, filePath);
     if (revisionNumber != null && revisionNumber != VcsRevisionNumber.NULL) {
+      if (submoduleAndParent != null) {
+        return GitSubmoduleContentRevision.createRevision(submoduleAndParent.parent, submoduleAndParent.submodule, revisionNumber);
+      }
       return createRevisionImpl(filePath, (GitRevisionNumber)revisionNumber, project, null);
+    }
+    else if (submoduleAndParent != null) {
+      return GitSubmoduleContentRevision.createCurrentRevision(submoduleAndParent.submodule);
     }
     else {
       return CurrentContentRevision.create(filePath);
     }
+  }
+
+  private static class SubmoduleAndParent {
+    @NotNull private final GitRepository submodule;
+    @NotNull private final GitRepository parent;
+
+    SubmoduleAndParent(@NotNull GitRepository submodule, @NotNull GitRepository parent) {
+      this.submodule = submodule;
+      this.parent = parent;
+    }
+  }
+
+  @Nullable
+  private static SubmoduleAndParent getRepositoryIfSubmodule(@NotNull Project project, @NotNull FilePath path) {
+    if (!path.isDirectory()) {
+      return null;
+    }
+
+    VirtualFile file = path.getVirtualFile();
+    if (file == null) { // TODO support deletion of a submodule if possible
+      return null;
+    }
+
+    GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(project);
+    GitRepository candidate = repositoryManager.getRepositoryForRoot(file);
+    if (candidate == null) { // not a root
+      return null;
+    }
+
+    for (GitRepository repo : repositoryManager.getRepositories()) {
+      if (repositoryManager.getDirectSubmodules(repo).contains(candidate)) {
+        return new SubmoduleAndParent(candidate, repo);
+      }
+    }
+    return null;
   }
 
   @NotNull

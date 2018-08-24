@@ -293,6 +293,10 @@
 
     <group id="Vcs.CommitExecutor.Actions"/>
 
+    <group id="ChangesView.CommitToolbar">
+      <reference id="Vcs.MessageActionGroup"/>
+    </group>
+
     <action class="com.intellij.openapi.vcs.actions.VcsToolbarLabelAction" id="VcsToolbarLabelAction" text="VCS Label"/>
 
     <group id="VcsToobarActions">

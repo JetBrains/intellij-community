@@ -390,7 +390,11 @@ public class DependentGroovycRunner {
 
       @Override
       public void addPhaseOperation(PrimaryClassNodeOperation op, int phase) {
-        if (!annoRemovedAdded && mailbox == null && phase == Phases.CONVERSION && op.getClass().getName().startsWith("org.codehaus.groovy.tools.javac.JavaAwareCompilationUnit$")) {
+        if (!annoRemovedAdded &&
+            mailbox == null &&
+            phase == Phases.CONVERSION &&
+            "true".equals(System.getProperty(GroovyRtConstants.GROOVYC_LEGACY_REMOVE_ANNOTATIONS)) &&
+            op.getClass().getName().startsWith("org.codehaus.groovy.tools.javac.JavaAwareCompilationUnit$")) {
           annoRemovedAdded = true;
           super.addPhaseOperation(new PrimaryClassNodeOperation() {
             @Override

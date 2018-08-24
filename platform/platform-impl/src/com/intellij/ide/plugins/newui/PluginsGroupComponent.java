@@ -71,7 +71,23 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
     OpaquePanel panel = new OpaquePanel(new BorderLayout(), new JBColor(0xF7F7F7, 0x3C3F41));
     panel.setBorder(JBUI.Borders.empty(4, 13));
 
-    JLabel title = new JLabel(group.title);
+    JLabel title = new JLabel(group.title) {
+      @Override
+      public Dimension getPreferredSize() {
+        Dimension size = super.getPreferredSize();
+        Container parent = getParent();
+        Insets insets = parent.getInsets();
+        size.width = Math.min(parent.getWidth() - insets.left - insets.right -
+                              (parent.getComponentCount() == 2 ? parent.getComponent(1).getWidth() + JBUI.scale(20) : 0), size.width);
+        return size;
+      }
+
+      @Override
+      public String getToolTipText() {
+        return super.getPreferredSize().width > getWidth() ? super.getToolTipText() : null;
+      }
+    };
+    title.setToolTipText(group.title);
     title.setForeground(new JBColor(0x787878, 0x999999));
     panel.add(title, BorderLayout.WEST);
     group.titleLabel = title;

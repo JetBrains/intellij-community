@@ -2,10 +2,9 @@
 package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.internal.statistic.beans.UsageDescriptor;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -27,8 +26,9 @@ public abstract class ApplicationUsageTriggerCollector extends ApplicationUsages
   @NotNull
   @Override
   public final Set<UsageDescriptor> getUsages() {
-    Map<String, Integer> data = FUSApplicationUsageTrigger.getInstance().getData(getGroupId());
-
-    return ContainerUtil.map2Set(data.entrySet(), e -> new UsageDescriptor(e.getKey(), e.getValue()));
+    return FUSApplicationUsageTrigger.getInstance().getData(getGroupId());
   }
+
+  @Nullable
+  public final FUSUsageContext getContext() {return null;}
 }

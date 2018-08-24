@@ -50,12 +50,12 @@ import java.util.*;
 import static com.intellij.util.ObjectUtils.notNull;
 import static java.util.stream.Collectors.groupingBy;
 
-@SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
+@SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public class VcsUtil {
-  protected static final char[] ourCharsToBeChopped = new char[]{'/', '\\'};
+  protected static final char[] ourCharsToBeChopped = {'/', '\\'};
   private static final Logger LOG = Logger.getInstance("#com.intellij.vcsUtil.VcsUtil");
 
-  public final static String MAX_VCS_LOADED_SIZE_KB = "idea.max.vcs.loaded.size.kb";
+  public static final String MAX_VCS_LOADED_SIZE_KB = "idea.max.vcs.loaded.size.kb";
   private static final int ourMaxLoadedFileSize = computeLoadedFileSize();
 
   @NotNull private static final VcsRoot FICTIVE_ROOT = new VcsRoot(null, null);
@@ -311,7 +311,7 @@ public class VcsUtil {
    *         "before" revision is obviously NULL, while "after" revision is not.
    */
   public static boolean isChangeForNew(Change change) {
-    return (change.getBeforeRevision() == null) && (change.getAfterRevision() != null);
+    return change.getBeforeRevision() == null && change.getAfterRevision() != null;
   }
 
   /**
@@ -320,13 +320,13 @@ public class VcsUtil {
    *         "before" revision is NOT NULL, while "after" revision is NULL.
    */
   public static boolean isChangeForDeleted(Change change) {
-    return (change.getBeforeRevision() != null) && (change.getAfterRevision() == null);
+    return change.getBeforeRevision() != null && change.getAfterRevision() == null;
   }
 
   public static boolean isChangeForFolder(Change change) {
     ContentRevision revB = change.getBeforeRevision();
     ContentRevision revA = change.getAfterRevision();
-    return (revA != null && revA.getFile().isDirectory()) || (revB != null && revB.getFile().isDirectory());
+    return revA != null && revA.getFile().isDirectory() || revB != null && revB.getFile().isDirectory();
   }
 
   /**
@@ -353,7 +353,7 @@ public class VcsUtil {
   @Nullable
   public static VirtualFile getOneVirtualFile(@NotNull AnActionEvent e) {
     VirtualFile[] files = getVirtualFiles(e);
-    return (files.length != 1) ? null : files[0];
+    return files.length != 1 ? null : files[0];
   }
 
   /**
@@ -361,9 +361,10 @@ public class VcsUtil {
    * @return {@code VirtualFile}s available in the current context.
    *         Returns empty array if there are no available files.
    */
+  @NotNull
   public static VirtualFile[] getVirtualFiles(@NotNull AnActionEvent e) {
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
-    return (files == null) ? VirtualFile.EMPTY_ARRAY : files;
+    return files == null ? VirtualFile.EMPTY_ARRAY : files;
   }
 
   /**
@@ -372,7 +373,7 @@ public class VcsUtil {
    * @throws IllegalArgumentException if {@code dir} isn't a directory.
    */
   public static void collectFiles(final VirtualFile dir,
-                                  final List<VirtualFile> files,
+                                  final List<? super VirtualFile> files,
                                   final boolean recursive,
                                   final boolean addDirectories) {
     if (!dir.isDirectory()) {
@@ -519,8 +520,8 @@ public class VcsUtil {
 
   @NotNull
   public static <T> Map<VcsRoot, List<T>> groupByRoots(@NotNull Project project,
-                                                       @NotNull Collection<T> items,
-                                                       @NotNull Function<T, FilePath> filePathMapper) {
+                                                       @NotNull Collection<? extends T> items,
+                                                       @NotNull Function<? super T, ? extends FilePath> filePathMapper) {
     ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
 
     return items.stream().collect(groupingBy(item -> notNull(manager.getVcsRootObjectFor(filePathMapper.fun(item)), FICTIVE_ROOT)));

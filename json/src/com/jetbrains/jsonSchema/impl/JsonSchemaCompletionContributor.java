@@ -148,6 +148,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       if (position == null || position.isEmpty() && isName == ThreeState.NO) return;
 
       final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(myRootSchema, false, position).resolve();
+      final Set<String> knownNames = ContainerUtil.newHashSet();
       // too long here, refactor further
       schemas.forEach(schema -> {
         if (isName != ThreeState.NO) {
@@ -158,8 +159,8 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
           final JsonPropertyAdapter adapter = myWalker.getParentPropertyAdapter(myOriginalPosition);
 
           final Map<String, JsonSchemaObject> schemaProperties = schema.getProperties();
-          addAllPropertyVariants(insertComma, hasValue, properties, adapter, schemaProperties);
-          addIfThenElsePropertyNameVariants(schema, insertComma, hasValue, properties, adapter);
+          addAllPropertyVariants(insertComma, hasValue, properties, adapter, schemaProperties, knownNames);
+          addIfThenElsePropertyNameVariants(schema, insertComma, hasValue, properties, adapter, knownNames);
         }
 
         if (isName != ThreeState.YES) {
@@ -176,7 +177,8 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
                                                    boolean insertComma,
                                                    boolean hasValue,
                                                    @NotNull Collection<String> properties,
-                                                   @Nullable JsonPropertyAdapter adapter) {
+                                                   @Nullable JsonPropertyAdapter adapter,
+                                                   Set<String> knownNames) {
       if (schema.getIf() == null) return;
 
       JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(myPosition, schema);
@@ -191,13 +193,13 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       if (checker.isCorrect()) {
         JsonSchemaObject then = schema.getThen();
         if (then != null) {
-          addAllPropertyVariants(insertComma, hasValue, properties, adapter, then.getProperties());
+          addAllPropertyVariants(insertComma, hasValue, properties, adapter, then.getProperties(), knownNames);
         }
       }
       else {
         JsonSchemaObject schemaElse = schema.getElse();
         if (schemaElse != null) {
-          addAllPropertyVariants(insertComma, hasValue, properties, adapter, schemaElse.getProperties());
+          addAllPropertyVariants(insertComma, hasValue, properties, adapter, schemaElse.getProperties(), knownNames);
         }
       }
     }
@@ -206,10 +208,10 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
                                         boolean hasValue,
                                         Collection<String> properties,
                                         JsonPropertyAdapter adapter,
-                                        Map<String, JsonSchemaObject> schemaProperties) {
+                                        Map<String, JsonSchemaObject> schemaProperties, Set<String> knownNames) {
       schemaProperties.keySet().stream()
-        .filter(name -> !properties.contains(name) || adapter != null && name.equals(adapter.getName()))
-        .forEach(name -> addPropertyVariant(name, schemaProperties.get(name), hasValue, insertComma));
+        .filter(name -> !properties.contains(name) && !knownNames.contains(name) || adapter != null && name.equals(adapter.getName()))
+        .forEach(name -> {knownNames.add(name); addPropertyVariant(name, schemaProperties.get(name), hasValue, insertComma);});
     }
 
     private void suggestValues(JsonSchemaObject schema, boolean isSurelyValue) {
@@ -351,7 +353,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       builder = builder.withIcon(getIcon(jsonSchemaObject.getType()));
 
       if (hasSameType(variants)) {
-        final JsonSchemaType type = jsonSchemaObject.getType();
+        final JsonSchemaType type = jsonSchemaObject.guessType();
         final List<Object> values = jsonSchemaObject.getEnum();
         Object defaultValue = jsonSchemaObject.getDefault();
 

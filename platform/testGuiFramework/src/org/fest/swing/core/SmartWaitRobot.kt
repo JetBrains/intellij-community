@@ -23,7 +23,6 @@ import org.fest.swing.hierarchy.ExistingHierarchy
 import org.fest.swing.keystroke.KeyStrokeMap
 import org.fest.swing.timing.Pause.pause
 import org.fest.swing.util.Modifiers
-import org.fest.util.Preconditions
 import java.awt.Component
 import java.awt.MouseInfo
 import java.awt.Point
@@ -31,6 +30,7 @@ import java.awt.Window
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 import javax.swing.KeyStroke
 import javax.swing.SwingUtilities
 
@@ -107,11 +107,24 @@ class SmartWaitRobot : BasicRobot(null, ExistingHierarchy()) {
   private fun moveMouseWithAttempts(c: Component, x: Int, y: Int, attempts: Int = 3) {
     if (attempts == 0) return
     waitFor { c.isShowing }
-    val p = Preconditions.checkNotNull(AWT.translate(c, x, y))
-    moveMouse(p.x, p.y)
-    val p1 = Preconditions.checkNotNull(AWT.translate(c, x, y))
+
+    val componentLocation: AtomicReference<Point> = AtomicReference()
+    performOnEdt {
+      componentLocation.set(AWT.translate(c, x, y))
+    }
+    requireNotNull(componentLocation.get())
+
+    moveMouse(componentLocation.get().x, componentLocation.get().y)
+
+    componentLocation.set(null)
+    performOnEdt {
+      componentLocation.set(AWT.translate(c, x, y))
+    }
+    requireNotNull(componentLocation.get())
+
     val mouseLocation = MouseInfo.getPointerInfo().location
-    if (mouseLocation.x != p1.x || mouseLocation.y != p1.y) moveMouseWithAttempts(c, x, y, attempts - 1)
+    if (mouseLocation.x != componentLocation.get().x || mouseLocation.y != componentLocation.get().y)
+      moveMouseWithAttempts(c, x, y, attempts - 1)
   }
 
   private fun myInnerClick(button: MouseButton, times: Int, point: Point, component: Component?) {

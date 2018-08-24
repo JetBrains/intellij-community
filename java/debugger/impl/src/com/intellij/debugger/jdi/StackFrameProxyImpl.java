@@ -226,6 +226,14 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     catch (IllegalArgumentException e) {
         LOG.info("Exception while getting this object", e);
     }
+    catch (Exception e) {
+      if (!getVirtualMachine().canBeModified()) { // do not care in read only vms
+        LOG.debug(e);
+      }
+      else {
+        throw e;
+      }
+    }
     return myThisReference;
   }
 
@@ -289,7 +297,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
 
   public Value getValue(LocalVariableProxyImpl localVariable) throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    InvalidStackFrameException error = null;
+    Exception error = null;
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
         Map<LocalVariable, Value> values = getAllValues();
@@ -314,6 +322,15 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
           throw new EvaluateException(DebuggerBundle.message("error.corrupt.debug.info", e.getMessage()), e);
         }
         else throw e;
+      }
+      catch (Exception e) {
+        if (!getVirtualMachine().canBeModified()) { // do not care in read only vms
+          LOG.debug(e);
+          throw new EvaluateException("Debug data corrupted");
+        }
+        else {
+          throw e;
+        }
       }
     }
     throw new EvaluateException(error.getMessage(), error);
@@ -365,6 +382,15 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
           myAllValues = new THashMap<>();
         }
         else throw e;
+      }
+      catch (Exception e) {
+        if (!getVirtualMachine().canBeModified()) { // do not care in read only vms
+          LOG.debug(e);
+          myAllValues = new THashMap<>();
+        }
+        else {
+          throw e;
+        }
       }
     }
     return myAllValues;

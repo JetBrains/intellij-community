@@ -259,7 +259,7 @@ public class DarculaUIUtil {
 
       @Override
     public Insets getBorderInsets(Component c) {
-      return isTableCellEditor(c) ? JBUI.insets(2).asUIResource() :
+      return isTableCellEditor(c) || isCompact(c) ? JBUI.insets(2).asUIResource() :
              isComboBoxEditor(c) ? JBUI.insets(2, 3).asUIResource() : JBUI.insets(5, 8).asUIResource();
     }
   }

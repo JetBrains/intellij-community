@@ -570,18 +570,13 @@ public class BuildManager implements Disposable {
     if (FileDocumentManager.getInstance().getUnsavedDocuments().length > 0) {
       return true;
     }
-    final long threshold = (long)Registry.intValue("compiler.automake.postpone.when.idle.less.than", 3000); // todo: UI option instead of registry?
+    final long threshold = Registry.intValue("compiler.automake.postpone.when.idle.less.than", 3000); // todo: UI option instead of registry?
     final long idleSinceLastActivity = ApplicationManager.getApplication().getIdleTime();
     return idleSinceLastActivity < threshold;
   }
 
   @Nullable
   private Project getCurrentContextProject() {
-    return getContextProject(null);
-  }
-
-  @Nullable
-  private Project getContextProject(@Nullable Window window) {
     final List<Project> openProjects = getOpenProjects();
     if (openProjects.isEmpty()) {
       return null;
@@ -590,11 +585,9 @@ public class BuildManager implements Disposable {
       return openProjects.get(0);
     }
 
+    Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
     if (window == null) {
-      window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-      if (window == null) {
-        return null;
-      }
+      return null;
     }
 
     Component comp = window;
@@ -985,7 +978,7 @@ public class BuildManager implements Disposable {
       });
   }
 
-  private Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>> launchPreloadedBuildProcess(final Project project, ExecutorService projectTaskQueue) throws Exception {
+  private Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>> launchPreloadedBuildProcess(final Project project, ExecutorService projectTaskQueue) {
     ensureListening();
 
     // launching build process from projectTaskQueue ensures that no other build process for this project is currently running
@@ -1316,7 +1309,8 @@ public class BuildManager implements Disposable {
     return PathManagerEx.getAppSystemDir().resolve(SYSTEM_ROOT);
   }
 
-  public File getBuildLogDirectory() {
+  @NotNull
+  private File getBuildLogDirectory() {
     return new File(PathManager.getLogPath(), "build-log");
   }
 

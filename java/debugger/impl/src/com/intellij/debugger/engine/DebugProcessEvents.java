@@ -325,7 +325,8 @@ public class DebugProcessEvents extends DebugProcessImpl {
     LOG.assertTrue(!isAttached());
     if (myState.compareAndSet(State.INITIAL, State.ATTACHED)) {
       final VirtualMachineProxyImpl machineProxy = getVirtualMachineProxy();
-      if (machineProxy.canBeModified()) {
+      boolean canBeModified = machineProxy.canBeModified();
+      if (canBeModified) {
         final EventRequestManager requestManager = machineProxy.eventRequestManager();
 
         if (machineProxy.canGetMethodReturnValues()) {
@@ -359,8 +360,10 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
       myDebugProcessDispatcher.getMulticaster().processAttached(this);
 
-      createStackCapturingBreakpoints();
-      AsyncStacksUtils.setupAgent(this);
+      if (canBeModified) {
+        createStackCapturingBreakpoints();
+        AsyncStacksUtils.setupAgent(this);
+      }
 
       // breakpoints should be initialized after all processAttached listeners work
       ApplicationManager.getApplication().runReadAction(() -> {
@@ -370,14 +373,14 @@ public class DebugProcessEvents extends DebugProcessImpl {
         }
       });
 
-      if (Registry.is("debugger.track.instrumentation", true)) {
+      if (Registry.is("debugger.track.instrumentation", true) && canBeModified) {
         trackClassRedefinitions();
       }
 
       showStatusText(DebuggerBundle.message("status.connected", DebuggerUtilsImpl.getConnectionDisplayName(getConnection())));
       LOG.debug("leave: processVMStartEvent()");
 
-      if (!machineProxy.canBeModified()) {
+      if (!canBeModified) {
         XDebugSessionImpl session = (XDebugSessionImpl)getSession().getXDebugSession();
         if (session != null) {
           session.setReadOnly(true);

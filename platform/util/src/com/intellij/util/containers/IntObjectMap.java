@@ -16,6 +16,7 @@ package com.intellij.util.containers;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Set;
 
 public interface IntObjectMap<V> {
   V put(int key, @NotNull V value);
@@ -47,5 +48,5 @@ public interface IntObjectMap<V> {
   }
 
   @NotNull
-  Iterable<Entry<V>> entries();
+  Set<Entry<V>> entrySet();
 }

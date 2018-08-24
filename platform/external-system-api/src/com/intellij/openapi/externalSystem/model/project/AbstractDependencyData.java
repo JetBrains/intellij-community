@@ -17,8 +17,8 @@ public abstract class AbstractDependencyData<T extends AbstractExternalEntityDat
 
   private static final long serialVersionUID = 1L;
 
-  @NotNull private final ModuleData myOwnerModule;
-  @NotNull private final T          myTarget;
+  @NotNull private ModuleData myOwnerModule;
+  @NotNull private T          myTarget;
 
   private DependencyScope myScope = DependencyScope.COMPILE;
 
@@ -37,10 +37,18 @@ public abstract class AbstractDependencyData<T extends AbstractExternalEntityDat
     return myOwnerModule;
   }
 
+  public void setOwnerModule(@NotNull ModuleData ownerModule) {
+    myOwnerModule = ownerModule;
+  }
+
   @Override
   @NotNull
   public T getTarget() {
     return myTarget;
+  }
+
+  public void setTarget(@NotNull T target) {
+    myTarget = target;
   }
 
   @Override

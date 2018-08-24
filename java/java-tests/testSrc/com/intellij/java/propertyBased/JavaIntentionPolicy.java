@@ -138,6 +138,7 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
   protected boolean shouldSkipIntention(@NotNull String actionText) {
     return actionText.equals("Add clarifying parentheses") ||
            actionText.equals("Remove unnecessary parentheses") ||
+           actionText.equals("See other similar duplicates") ||
            actionText.matches("Simplify '\\(+(true|false)\\)+' to \\1") ||
            // Parenthesizing sub-expression causes cutting the action name at different position, so name changes significantly
            actionText.matches("Compute constant value of '.+'") ||

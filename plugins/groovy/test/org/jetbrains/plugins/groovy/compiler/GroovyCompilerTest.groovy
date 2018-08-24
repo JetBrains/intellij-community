@@ -47,6 +47,7 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestLoggerFactory
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.jps.incremental.groovy.JpsGroovycRunner
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile
 import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.ClassVisitor
@@ -1017,6 +1018,15 @@ class BuildContextImpl extends BuildContext {
       }
     }, 0)
     return version
+  }
+
+  void "test using trait from java"() {
+    myFixture.addFileToProject('a.groovy', 'trait Foo { }')
+    myFixture.addFileToProject('b.java', 'class Bar implements Foo { Foo f; }')
+    assertEmpty(make())
+
+    CompilerConfiguration.getInstance(project).buildProcessVMOptions = "-D$JpsGroovycRunner.GROOVYC_IN_PROCESS=false"
+    assertEmpty(rebuild())
   }
 
   static class GroovycTest extends GroovyCompilerTest {
