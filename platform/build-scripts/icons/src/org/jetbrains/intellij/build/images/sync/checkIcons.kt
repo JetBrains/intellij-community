@@ -3,7 +3,6 @@ package org.jetbrains.intellij.build.images.sync
 
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.intellij.build.images.imageSize
-import org.jetbrains.intellij.build.images.isIcon
 import org.jetbrains.intellij.build.images.isImage
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
@@ -131,11 +130,10 @@ fun checkIcons(
 private fun readIconsRepo(iconsRepo: File, iconsRepoDir: String) =
   listGitObjects(iconsRepo, iconsRepoDir) {
     // read icon hashes
-    isIcon(it.toPath())
+    isValidIcon(it.toPath())
+  }.also {
+    if (it.isEmpty()) throw IllegalStateException("Icons repo doesn't contain icons")
   }
-    .also {
-      if (it.isEmpty()) throw IllegalStateException("Icons repo doesn't contain icons")
-    }
 
 private fun readDevRepo(devRepoRoot: File,
                         devRepoDir: String,
@@ -148,7 +146,7 @@ private fun readDevRepo(devRepoRoot: File,
   val skipDirsRegex = skipDirsPattern?.toRegex()
   val devRepoIconFilter = { file: File ->
     // read icon hashes skipping test roots
-    !inTestRoot(file, testRoots, skipDirsRegex) && isIcon(file.toPath())
+    !inTestRoot(file, testRoots, skipDirsRegex) && isValidIcon(file.toPath())
   }
   val devIcons = if (devRepoVcsRoots.size == 1
                      && devRepoVcsRoots.contains(devRepoRoot)) {
@@ -184,7 +182,7 @@ private val mutedStream = PrintStream(object : OutputStream() {
   override fun write(b: Int) {}
 })
 
-private fun isIcon(file: Path): Boolean {
+private fun isValidIcon(file: Path): Boolean {
   val err = System.err
   System.setErr(mutedStream)
   return try {
