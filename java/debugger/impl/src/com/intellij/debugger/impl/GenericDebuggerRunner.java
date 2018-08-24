@@ -147,8 +147,9 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
     if (StringUtil.isEmpty(debuggerSettings.getDebugPort())) {
       debuggerSettings.setDebugPort(DebuggerUtils.getInstance().findAvailableDebugAddress(debuggerSettings.getTransport() == DebuggerSettings.SOCKET_TRANSPORT));
     }
-    return DebuggerManagerImpl.createDebugParameters(javaParameters, debuggerSettings.LOCAL, debuggerSettings.getTransport(),
-                                                     debuggerSettings.getDebugPort(), false, beforeExecution);
+    return new RemoteConnectionBuilder(debuggerSettings.LOCAL, debuggerSettings.getTransport(), debuggerSettings.getDebugPort())
+      .asyncAgent(beforeExecution)
+      .create(javaParameters);
   }
 
   @Override
