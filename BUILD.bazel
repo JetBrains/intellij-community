@@ -335,6 +335,7 @@ iml_project(
         "//tools/idea/plugins/coverage-common:intellij.platform.coverage",
         "//tools/idea/plugins/coverage/coverage_rt:intellij.java.coverage.rt",
         "//tools/idea/plugins/coverage:intellij.java.coverage",
+        "//tools/idea/plugins/cucumber-jvm-formatter3:intellij.cucumber.jvmFormatter3",
         "//tools/idea/plugins/cucumber-jvm-formatter:intellij.cucumber.jvmFormatter",
         "//tools/idea/plugins/cvs/cvs-core:intellij.vcs.cvs.core",
         "//tools/idea/plugins/cvs/cvs-plugin:intellij.vcs.cvs",

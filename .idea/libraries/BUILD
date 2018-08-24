@@ -1345,3 +1345,29 @@ java_library(
     exports = ["//prebuilts/tools/common/m2/repository/org/mozilla/rhino/1.7.10:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/org/mozilla/rhino/1.7.10:jar"],
 )
+
+# managed by go/iml_to_build
+java_library(
+    name = "cucumber-core_3.0.2",
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    exports = [
+        "//prebuilts/tools/common/m2/repository/io/cucumber/cucumber-core/3.0.2:jar",
+        "//prebuilts/tools/common/m2/repository/io/cucumber/cucumber-expressions/5.0.19:jar",
+        "//prebuilts/tools/common/m2/repository/io/cucumber/cucumber-html/0.2.7:jar",
+        "//prebuilts/tools/common/m2/repository/io/cucumber/datatable-dependencies/1.0.3:jar",
+        "//prebuilts/tools/common/m2/repository/io/cucumber/datatable/1.0.3:jar",
+        "//prebuilts/tools/common/m2/repository/io/cucumber/gherkin/5.0.0:jar",
+        "//prebuilts/tools/common/m2/repository/io/cucumber/tag-expressions/1.1.1:jar",
+    ],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//prebuilts/tools/common/m2/repository/io/cucumber/cucumber-core/3.0.2:jar",
+        "//prebuilts/tools/common/m2/repository/io/cucumber/cucumber-expressions/5.0.19:jar",
+        "//prebuilts/tools/common/m2/repository/io/cucumber/cucumber-html/0.2.7:jar",
+        "//prebuilts/tools/common/m2/repository/io/cucumber/datatable-dependencies/1.0.3:jar",
+        "//prebuilts/tools/common/m2/repository/io/cucumber/datatable/1.0.3:jar",
+        "//prebuilts/tools/common/m2/repository/io/cucumber/gherkin/5.0.0:jar",
+        "//prebuilts/tools/common/m2/repository/io/cucumber/tag-expressions/1.1.1:jar",
+    ],
+)

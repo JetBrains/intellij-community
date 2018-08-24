@@ -33,5 +33,6 @@ iml_module(
         "//prebuilts/tools/common/m2/repository/org/junit/platform/junit-platform-commons/1.1.0:jar[test]",
         "//prebuilts/tools/common/m2/repository/org/junit/platform/junit-platform-engine/1.1.0:jar[test]",
         "//prebuilts/tools/common/m2/repository/org/opentest4j/opentest4j/1.0.0:jar[test]",
+        "//prebuilts/tools/common/m2/repository/org/junit/vintage/junit-vintage-engine/5.1.0:jar[test]",
     ],
 )
