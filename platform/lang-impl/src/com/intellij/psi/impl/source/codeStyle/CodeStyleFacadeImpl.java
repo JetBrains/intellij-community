@@ -28,6 +28,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.lineIndent.LineIndentProvider;
 import com.intellij.psi.codeStyle.lineIndent.LineIndentProviderEP;
@@ -72,6 +73,21 @@ public class CodeStyleFacadeImpl extends CodeStyleFacade {
     return indent != null ? indent : (allowDocCommit ? getLineIndent(editor.getDocument(), offset) : null);
   }
 
+  @Override
+  public int getEOLSpacing(@NotNull Editor editor, @Nullable Language language, int offset, boolean allowDocCommit) {
+    if (myProject == null) return -1;
+    LineIndentProvider lineIndentProvider = LineIndentProviderEP.findLineIndentProvider(language);
+    int space = lineIndentProvider != null ? lineIndentProvider.getEOLSpacing(myProject, editor, language, offset) : -1;
+    if (space < 0 && allowDocCommit) {
+      final Document document = editor.getDocument();
+      PsiDocumentManager.getInstance(myProject).commitDocument(document);
+      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+      if (file == null) return -1;
+      return CodeStyleManager.getInstance(myProject).getSpacing(file, offset);
+    }
+    return space;
+  }
+  
   @Override
   public String getLineSeparator() {
     return CodeStyle.getProjectOrDefaultSettings(myProject).getLineSeparator();

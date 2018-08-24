@@ -47,7 +47,19 @@ public interface LineIndentProvider {
    * leave the current caret position as is without any further formatter-based adjustment.
    */
   @Nullable
-  String getLineIndent(@NotNull Project project, @NotNull Editor editor, Language language, int offset);
+  String getLineIndent(@NotNull Project project, @NotNull Editor editor, @Nullable Language language, int offset);
+
+  /**
+   * Calculates the spacing (in columns) for joined lines at given offset after join lines or smart backspace actions.  
+   *
+   * @param editor   The editor for which the spacing must be returned.
+   * @param language Context language
+   * @param offset   The caret offset in the editor.
+   * @return {@code -1}, if LineIndentProvider can't calculate the spacing. 
+   */
+  default int getEOLSpacing(@NotNull Project project, @NotNull Editor editor, @Nullable Language language, int offset) {
+    return -1;
+  }
   
   boolean isSuitableFor(@Nullable Language language);
 }
