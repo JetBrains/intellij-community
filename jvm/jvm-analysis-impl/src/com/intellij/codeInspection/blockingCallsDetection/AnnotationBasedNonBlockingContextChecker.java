@@ -2,9 +2,7 @@
 package com.intellij.codeInspection.blockingCallsDetection;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.ProjectScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UCallExpression;
 import org.jetbrains.uast.UMethod;
@@ -16,19 +14,19 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class DefaultNonblockingContextChecker implements NonblockingContextChecker {
+public class AnnotationBasedNonBlockingContextChecker implements NonBlockingContextChecker {
 
-  private final List<String> myNonblockingAnnotations;
+  private final List<String> myNonBlockingAnnotations;
 
-  public DefaultNonblockingContextChecker(List<String> nonblockingAnnotations) {
-    myNonblockingAnnotations = nonblockingAnnotations;
+  public AnnotationBasedNonBlockingContextChecker(List<String> nonBlockingAnnotations) {
+    myNonBlockingAnnotations = nonBlockingAnnotations;
   }
 
   @Override
-  public boolean isActive(Project project) {
-    if (myNonblockingAnnotations.isEmpty()) return false;
-    PsiClass annotationClass = JavaPsiFacade.getInstance(project)
-      .findClass(BlockingMethodInNonBlockingContextInspection.DEFAULT_NONBLOCKING_ANNOTATION, ProjectScope.getProjectScope(project));
+  public boolean isActive(@NotNull PsiFile file) {
+    if (myNonBlockingAnnotations.isEmpty()) return false;
+    PsiClass annotationClass = JavaPsiFacade.getInstance(file.getProject())
+      .findClass(BlockingMethodInNonBlockingContextInspection.DEFAULT_NONBLOCKING_ANNOTATION, file.getResolveScope());
     return annotationClass != null;
   }
 
@@ -48,7 +46,7 @@ public class DefaultNonblockingContextChecker implements NonblockingContextCheck
     HashSet<String> setOfAnnotations = Arrays.stream(AnnotationUtil.getAllAnnotations(method, true, null))
       .map(PsiAnnotation::getQualifiedName).collect(Collectors.toCollection(HashSet::new));
 
-    return myNonblockingAnnotations.stream()
+    return myNonBlockingAnnotations.stream()
       .anyMatch(annotation -> setOfAnnotations.contains(annotation));
   }
 }

@@ -12,11 +12,13 @@ public class JavaDebuggerAttachUtil {
     return JavaAttachDebuggerProvider.getProcessAttachInfo(String.valueOf(OSProcessUtil.getProcessID(process))) != null;
   }
 
-  public static void attach(Process process, Project project) {
+  public static boolean attach(Process process, Project project) {
     JavaAttachDebuggerProvider.LocalAttachInfo info =
       JavaAttachDebuggerProvider.getProcessAttachInfo(String.valueOf(OSProcessUtil.getProcessID(process)));
     if (info != null) {
       JavaAttachDebuggerProvider.attach(info, project);
+      return true;
     }
+    return false;
   }
 }

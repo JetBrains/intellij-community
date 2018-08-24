@@ -427,9 +427,27 @@ class PartialLocalLineStatusTracker(project: Project,
   }
 
 
+  internal fun hasPartialState(): Boolean {
+    return documentTracker.readLock {
+      if (affectedChangeListsIds.size > 1) return@readLock true
+
+      var hasIncluded = false
+      var hasExcluded = false
+      blocks.forEach {
+        if (it.excludedFromCommit) {
+          hasExcluded = true
+        }
+        else {
+          hasIncluded = true
+        }
+      }
+      return@readLock hasIncluded && hasExcluded
+    }
+  }
+
   fun hasPartialChangesToCommit(): Boolean {
     return documentTracker.readLock {
-      affectedChangeLists.size > 1 || hasBlocksExcludedFromCommit()
+      affectedChangeLists.size > 1 || blocks.any { it.excludedFromCommit }
     }
   }
 
@@ -595,12 +613,6 @@ class PartialLocalLineStatusTracker(project: Project,
 
 
   enum class ExclusionState { ALL_INCLUDED, ALL_EXCLUDED, PARTIALLY, NO_CHANGES }
-
-  fun hasBlocksExcludedFromCommit(): Boolean {
-    return documentTracker.readLock {
-      blocks.any { it.excludedFromCommit }
-    }
-  }
 
   fun getExcludedFromCommitState(changelistId: String): ExclusionState {
     val marker = ChangeListMarker(changelistId)

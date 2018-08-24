@@ -118,11 +118,15 @@ public abstract class SearchQueryParser {
 
   protected abstract void handleAttribute(@NotNull String name, @NotNull String value, boolean invert);
 
+  @NotNull
+  public static String getTagQuery(@NotNull String tag) {
+    return "tag:" + (tag.indexOf(' ') == -1 ? tag : StringUtil.wrapWithDoubleQuote(tag));
+  }
+
   public static class Trending extends SearchQueryParser {
     public final Set<String> tags = new HashSet<>();
-    public final Set<String> excludeTags = new HashSet<>();
+    public final Set<String> repositories = new HashSet<>();
     public String sortBy;
-    public String repository;
 
     public Trending(@NotNull String query) {
       parse(query);
@@ -168,20 +172,13 @@ public abstract class SearchQueryParser {
     @Override
     protected void handleAttribute(@NotNull String name, @NotNull String value, boolean invert) {
       if (name.equals("tag")) {
-        if (invert) {
-          if (!tags.remove(value)) {
-            excludeTags.add(value);
-          }
-        }
-        else if (!excludeTags.remove(value)) {
-          tags.add(value);
-        }
+        tags.add(value);
       }
       else if (name.equals("sort_by")) {
         sortBy = value;
       }
       else if (name.equals("repository")) {
-        repository = value;
+        repositories.add(value);
       }
     }
   }

@@ -136,8 +136,8 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
   }
 
   private fun generate(module: JpsModule, className: String, packageName: String, customLoad: Boolean, copyrightComment: String): String? {
-    val imageCollector = ImageCollector(projectHome.toPath(), true, className = className)
-    val images = imageCollector.collect(module, true)
+    val imageCollector = ImageCollector(projectHome.toPath(), iconsOnly = true, className = className)
+    val images = imageCollector.collect(module, includePhantom = true)
     imageCollector.printUsedIconRobots()
 
     val answer = StringBuilder()
@@ -171,7 +171,6 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
       }
     }
 
-
     val inners = StringBuilder()
     processIcons(images, inners, customLoad, 0)
     if (inners.isEmpty()) return null
@@ -189,10 +188,9 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
     val leafMap = ContainerUtil.newMapFromValues(leafs.iterator()) { getImageId(it, depth) }
 
     val sortedKeys = (nodeMap.keys + leafMap.keys).sortedWith(NAME_COMPARATOR)
-    sortedKeys.forEach { key ->
+    for (key in sortedKeys) {
       val group = nodeMap[key]
       val image = leafMap[key]
-
       if (group != null) {
         val inners = StringBuilder()
         processIcons(group, inners, customLoad, depth + 1)
@@ -291,8 +289,10 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
   }
 
   private fun getImageId(image: ImagePaths, depth: Int): String {
-    val path = StringUtil.trimStart(image.id, "/").split("/")
-    if (path.size < depth) throw IllegalArgumentException("Can't get image ID - ${image.id}, $depth")
+    val path = image.id.removePrefix("/").split("/")
+    if (path.size < depth) {
+      throw IllegalArgumentException("Can't get image ID - ${image.id}, $depth")
+    }
     return path.drop(depth).joinToString("/")
   }
 

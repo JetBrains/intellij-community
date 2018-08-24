@@ -9,9 +9,9 @@ import com.intellij.lang.jvm.*
 import com.intellij.lang.jvm.actions.*
 import com.intellij.lang.jvm.types.JvmType
 import com.intellij.openapi.components.ServiceManager
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtil
+import java.util.*
 
 class JavaElementActionsFactory(private val renderer: JavaElementRenderer) : JvmElementActionsFactory() {
 
@@ -42,7 +42,7 @@ class JavaElementActionsFactory(private val renderer: JavaElementRenderer) : Jvm
 
     val constantRequested = request.isConstant || javaClass.isInterface || request.modifiers.containsAll(constantModifiers)
     val result = ArrayList<IntentionAction>()
-    if (constantRequested || StringUtil.isCapitalized(request.fieldName)) {
+    if (constantRequested || request.fieldName.toUpperCase(Locale.ENGLISH) == request.fieldName) {
       result += CreateConstantAction(javaClass, request)
     }
     if (!constantRequested) {

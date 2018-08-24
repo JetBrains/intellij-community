@@ -23,7 +23,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffColors;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -46,7 +45,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.Collections;
 import java.util.List;
 
@@ -55,6 +53,7 @@ import static com.intellij.diff.util.DiffDrawUtil.yToLine;
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 import static com.intellij.openapi.diagnostic.Logger.getInstance;
 import static com.intellij.util.ui.update.MergingUpdateQueue.ANY_COMPONENT;
+import static java.util.Collections.emptyList;
 
 public abstract class LineStatusMarkerRenderer {
   private static final Logger LOG = getInstance(LineStatusMarkerRenderer.class);
@@ -156,21 +155,46 @@ public abstract class LineStatusMarkerRenderer {
 
   @NotNull
   protected List<? extends Range> getSelectedRanges(@NotNull Editor editor, int y) {
-    int visualLine = editor.xyToVisualPosition(new Point(0, y)).line;
-    int line1 = editor.visualToLogicalPosition(new VisualPosition(visualLine, 0)).line;
-    int line2 = editor.visualToLogicalPosition(new VisualPosition(visualLine + 1, 0)).line;
-    BitSet lines = new BitSet();
-    lines.set(line1, line2);
-    List<? extends Range> ranges = myTracker.getRangesForLines(lines);
-    if (!ContainerUtil.isEmpty(ranges)) return ranges;
+    List<? extends Range> ranges = myTracker.getRanges();
+    if (ranges == null) return emptyList();
 
-    // special handling for deletion at the end of file
-    int lineCount = getLineCount(editor.getDocument());
-    if (line2 == lineCount) {
-      Range range = myTracker.getRangeForLine(lineCount);
-      if (range != null) return Collections.singletonList(range);
+    EditorImpl editorImpl = (EditorImpl)editor;
+    int lineHeight = editor.getLineHeight();
+    int visibleLineCount = editorImpl.getVisibleLineCount();
+    boolean lastLineSelected = editorImpl.yToVisibleLine(y) == visibleLineCount - 1;
+    int triangleGap = lineHeight / 3;
+
+    Rectangle clip = new Rectangle(0, y - lineHeight, editor.getComponent().getWidth(), lineHeight * 2);
+    List<ChangesBlock> blocks = createMerger(editor).run(ranges, clip);
+
+    List<Range> result = new ArrayList<>();
+    for (ChangesBlock block : blocks) {
+      ChangedLines firstChange = block.changes.get(0);
+      ChangedLines lastChange = block.changes.get(block.changes.size() - 1);
+
+      int line1 = firstChange.line1;
+      int line2 = lastChange.line2;
+
+      int startY = editorImpl.visibleLineToY(line1);
+      int endY = editorImpl.visibleLineToY(line2);
+
+      // "empty" range for deleted block
+      if (firstChange.line1 == firstChange.line2) {
+        startY -= triangleGap;
+      }
+      if (lastChange.line1 == lastChange.line2) {
+        endY += triangleGap;
+      }
+
+      if (startY <= y && endY > y) {
+        result.addAll(block.ranges);
+      }
+      else if (lastLineSelected && line2 == visibleLineCount) {
+        // special handling for deletion at the end of file
+        result.addAll(block.ranges);
+      }
     }
-    return Collections.emptyList();
+    return result;
   }
 
   protected boolean canDoAction(@NotNull Editor editor, @NotNull List<? extends Range> ranges, @NotNull MouseEvent e) {
@@ -231,9 +255,9 @@ public abstract class LineStatusMarkerRenderer {
 
     int framingBorder = getFramingBorderSize();
 
-    List<List<ChangedLines>> blocks = createMerger(editor).run(ranges, g.getClipBounds());
-    for (List<ChangedLines> block: blocks) {
-      paintChangedLines((Graphics2D)g, editor, block, framingBorder);
+    List<ChangesBlock> blocks = createMerger(editor).run(ranges, g.getClipBounds());
+    for (ChangesBlock block : blocks) {
+      paintChangedLines((Graphics2D)g, editor, block.changes, framingBorder);
     }
   }
 
@@ -298,11 +322,11 @@ public abstract class LineStatusMarkerRenderer {
 
         if (!change.isIgnored) {
           Color gutterColor = getGutterColor(change.type, editor);
-          paintTriangle(g, gutterColor, borderColor, x, endX, start);
+          paintTriangle(g, editor, gutterColor, borderColor, x, endX, start);
         }
         else {
           Color ignoredBorderColor = getIgnoredGutterBorderColor(change.type, editor);
-          paintTriangle(g, null, ignoredBorderColor, x, endX, start);
+          paintTriangle(g, editor, null, ignoredBorderColor, x, endX, start);
         }
       }
     }
@@ -312,20 +336,26 @@ public abstract class LineStatusMarkerRenderer {
                                 @NotNull Editor editor,
                                 @NotNull Range range,
                                 int framingBorder) {
-    List<List<ChangedLines>> blocks = new VisibleRangeMerger(editor).run(Collections.singletonList(range), g.getClipBounds());
-    for (List<ChangedLines> block: blocks) {
-      paintChangedLines((Graphics2D)g, editor, block, framingBorder);
+    List<ChangesBlock> blocks = new VisibleRangeMerger(editor).run(Collections.singletonList(range), g.getClipBounds());
+    for (ChangesBlock block : blocks) {
+      paintChangedLines((Graphics2D)g, editor, block.changes, framingBorder);
     }
   }
 
   public static void paintSimpleRange(Graphics g, Editor editor, int line1, int line2, @Nullable Color color) {
-    Rectangle area = getMarkerArea(editor, line1, line2);
+    IntPair horizontalArea = getGutterArea(editor);
+    int x = horizontalArea.val1;
+    int endX = horizontalArea.val2;
+
+    int y = lineToY(editor, line1);
+    int endY = lineToY(editor, line2);
+
     Color borderColor = getGutterBorderColor(editor);
-    if (area.height != 0) {
-      paintRect((Graphics2D)g, color, borderColor, area.x, area.y, area.x + area.width, area.y + area.height);
+    if (endY != y) {
+      paintRect((Graphics2D)g, color, borderColor, x, y, endX, endY);
     }
     else {
-      paintTriangle((Graphics2D)g, color, borderColor, area.x, area.x + area.width, area.y);
+      paintTriangle((Graphics2D)g, editor, color, borderColor, x, endX, y);
     }
   }
 
@@ -335,16 +365,6 @@ public abstract class LineStatusMarkerRenderer {
     int x = gutter.getLineMarkerFreePaintersAreaOffset() + 1; // leave 1px for brace highlighters
     int endX = gutter.getWhitespaceSeparatorOffset();
     return new IntPair(x, endX);
-  }
-
-  @NotNull
-  public static Rectangle getMarkerArea(@NotNull Editor editor, int line1, int line2) {
-    IntPair horizontalArea = getGutterArea(editor);
-    int x = horizontalArea.val1;
-    int endX = horizontalArea.val2;
-    int y = lineToY(editor, line1);
-    int endY = lineToY(editor, line2);
-    return new Rectangle(x, y, endX - x, endY - y);
   }
 
   public static boolean isInsideMarkerArea(@NotNull MouseEvent e) {
@@ -368,8 +388,10 @@ public abstract class LineStatusMarkerRenderer {
     }
   }
 
-  private static void paintTriangle(@NotNull Graphics2D g, @Nullable Color color, @Nullable Color borderColor, int x1, int x2, int y) {
-    int size = JBUI.scale(4);
+  private static void paintTriangle(@NotNull Graphics2D g, @NotNull Editor editor, @Nullable Color color, @Nullable Color borderColor,
+                                    int x1, int x2, int y) {
+    float editorScale = editor instanceof EditorImpl ? ((EditorImpl)editor).getScale() : 1.0f;
+    int size = (int)JBUI.scale(4 * editorScale);
 
     final int[] xPoints = new int[]{x1, x1, x2};
     final int[] yPoints = new int[]{y - size, y + size, y};
@@ -455,9 +477,9 @@ public abstract class LineStatusMarkerRenderer {
   protected static class VisibleRangeMerger {
     @NotNull private final Editor myEditor;
 
-    @NotNull private final List<ChangedLines> myBlock = new ArrayList<>();
+    @NotNull private ChangesBlock myBlock = new ChangesBlock();
 
-    @NotNull private final List<List<ChangedLines>> myResult = new ArrayList<>();
+    @NotNull private final List<ChangesBlock> myResult = new ArrayList<>();
 
     public VisibleRangeMerger(@NotNull Editor editor) {
       myEditor = editor;
@@ -468,7 +490,7 @@ public abstract class LineStatusMarkerRenderer {
     }
 
     @NotNull
-    public List<List<ChangedLines>> run(@NotNull List<? extends Range> ranges, @NotNull Rectangle clip) {
+    public List<ChangesBlock> run(@NotNull List<? extends Range> ranges, @NotNull Rectangle clip) {
       int visibleLineStart = yToLine(myEditor, clip.y);
       int visibleLineEnd = yToLine(myEditor, clip.y + clip.height) + 1;
 
@@ -483,7 +505,7 @@ public abstract class LineStatusMarkerRenderer {
         List<Range.InnerRange> innerRanges = range.getInnerRanges();
 
         if (innerRanges == null || isIgnored) {
-          processLine(line1, line2, range.getType(), isIgnored);
+          processLine(range, line1, line2, range.getType(), isIgnored);
         }
         else {
           for (Range.InnerRange innerRange: innerRanges) {
@@ -491,7 +513,7 @@ public abstract class LineStatusMarkerRenderer {
             int innerLine2 = line1 + innerRange.getLine2();
             byte innerType = innerRange.getType();
 
-            processLine(innerLine1, innerLine2, innerType, isIgnored);
+            processLine(range, innerLine1, innerLine2, innerType, isIgnored);
           }
         }
       }
@@ -500,7 +522,7 @@ public abstract class LineStatusMarkerRenderer {
       return myResult;
     }
 
-    private void processLine(int start, int end, byte type, boolean isIgnored) {
+    private void processLine(@NotNull Range range, int start, int end, byte type, boolean isIgnored) {
       EditorImpl editorImpl = (EditorImpl)myEditor;
       Document document = myEditor.getDocument();
       int lineCount = getLineCount(document);
@@ -521,10 +543,10 @@ public abstract class LineStatusMarkerRenderer {
 
       if (start == end) {
         if (startHasFolding) {
-          appendChange(new ChangedLines(visualStart, visualStart + 1, Range.MODIFIED, isIgnored));
+          appendChange(range, new ChangedLines(visualStart, visualStart + 1, Range.MODIFIED, isIgnored));
         }
         else {
-          appendChange(new ChangedLines(visualStart, visualStart, type, isIgnored));
+          appendChange(range, new ChangedLines(visualStart, visualStart, type, isIgnored));
         }
       }
       else {
@@ -543,81 +565,94 @@ public abstract class LineStatusMarkerRenderer {
         }
 
         if (type == Range.EQUAL || type == Range.MODIFIED) {
-          appendChange(new ChangedLines(visualStart, visualEnd, type, isIgnored));
+          appendChange(range, new ChangedLines(visualStart, visualEnd, type, isIgnored));
         }
         else {
           if (startHasFolding && visualEnd - visualStart > 1) {
-            appendChange(new ChangedLines(visualStart, visualStart + 1, Range.MODIFIED, isIgnored));
+            appendChange(range, new ChangedLines(visualStart, visualStart + 1, Range.MODIFIED, isIgnored));
             startHasFolding = false;
             visualStart++;
           }
           if (endHasFolding && visualEnd - visualStart > 1) {
-            appendChange(new ChangedLines(visualStart, visualEnd - 1, type, isIgnored));
-            appendChange(new ChangedLines(visualEnd - 1, visualEnd, Range.MODIFIED, isIgnored));
+            appendChange(range, new ChangedLines(visualStart, visualEnd - 1, type, isIgnored));
+            appendChange(range, new ChangedLines(visualEnd - 1, visualEnd, Range.MODIFIED, isIgnored));
           }
           else {
-            appendChange(new ChangedLines(visualStart, visualEnd, startHasFolding || endHasFolding ? Range.MODIFIED : type, isIgnored));
+            byte bodyType = startHasFolding || endHasFolding ? Range.MODIFIED : type;
+            appendChange(range, new ChangedLines(visualStart, visualEnd, bodyType, isIgnored));
           }
         }
       }
     }
 
-    private void appendChange(@NotNull ChangedLines newChange) {
-      ChangedLines lastItem = ContainerUtil.getLastItem(myBlock);
+    private void appendChange(@NotNull Range range, @NotNull ChangedLines newChange) {
+      ChangedLines lastItem = ContainerUtil.getLastItem(myBlock.changes);
       if (lastItem != null && lastItem.line2 < newChange.line1) {
         finishBlock();
       }
 
-      if (myBlock.isEmpty()) {
-        myBlock.add(newChange);
+      List<ChangedLines> changes = myBlock.changes;
+      List<Range> ranges = myBlock.ranges;
+
+      if (ContainerUtil.getLastItem(ranges) != range) {
+        ranges.add(range);
+      }
+
+      if (changes.isEmpty()) {
+        changes.add(newChange);
         return;
       }
 
-      ChangedLines lastChange = myBlock.remove(myBlock.size() - 1);
+      ChangedLines lastChange = changes.remove(changes.size() - 1);
 
       if (lastChange.line1 == lastChange.line2 &&
           newChange.line1 == newChange.line2) {
         assert lastChange.line1 == newChange.line1;
         byte type = lastChange.type == newChange.type ? lastChange.type : Range.MODIFIED;
         boolean isIgnored = lastChange.isIgnored && newChange.isIgnored;
-        myBlock.add(new ChangedLines(lastChange.line1, lastChange.line2, type, isIgnored));
+        changes.add(new ChangedLines(lastChange.line1, lastChange.line2, type, isIgnored));
       }
       else if (lastChange.line1 == lastChange.line2 && newChange.type == Range.EQUAL ||
                newChange.line1 == newChange.line2 && lastChange.type == Range.EQUAL) {
-        myBlock.add(lastChange);
-        myBlock.add(newChange);
+        changes.add(lastChange);
+        changes.add(newChange);
       }
       else if (lastChange.type == newChange.type &&
                lastChange.isIgnored == newChange.isIgnored) {
         int union1 = Math.min(lastChange.line1, newChange.line1);
         int union2 = Math.max(lastChange.line2, newChange.line2);
-        myBlock.add(new ChangedLines(union1, union2, lastChange.type, lastChange.isIgnored));
+        changes.add(new ChangedLines(union1, union2, lastChange.type, lastChange.isIgnored));
       }
       else {
         int intersection1 = Math.max(lastChange.line1, newChange.line1);
         int intersection2 = Math.min(lastChange.line2, newChange.line2);
 
         if (lastChange.line1 != intersection1) {
-          myBlock.add(new ChangedLines(lastChange.line1, intersection1, lastChange.type, lastChange.isIgnored));
+          changes.add(new ChangedLines(lastChange.line1, intersection1, lastChange.type, lastChange.isIgnored));
         }
 
         if (intersection1 != intersection2) {
           byte type = lastChange.type == newChange.type ? lastChange.type : Range.MODIFIED;
           boolean isIgnored = lastChange.isIgnored && newChange.isIgnored;
-          myBlock.add(new ChangedLines(intersection1, intersection2, type, isIgnored));
+          changes.add(new ChangedLines(intersection1, intersection2, type, isIgnored));
         }
 
         if (newChange.line2 != intersection2) {
-          myBlock.add(new ChangedLines(intersection2, newChange.line2, newChange.type, newChange.isIgnored));
+          changes.add(new ChangedLines(intersection2, newChange.line2, newChange.type, newChange.isIgnored));
         }
       }
     }
 
     private void finishBlock() {
-      if (myBlock.isEmpty()) return;
-      myResult.add(new ArrayList<>(myBlock));
-      myBlock.clear();
+      if (myBlock.changes.isEmpty()) return;
+      myResult.add(myBlock);
+      myBlock = new ChangesBlock();
     }
+  }
+
+  private static class ChangesBlock {
+    @NotNull public final List<ChangedLines> changes = new ArrayList<>();
+    @NotNull public final List<Range> ranges = new ArrayList<>();
   }
 
   private static class ChangedLines {

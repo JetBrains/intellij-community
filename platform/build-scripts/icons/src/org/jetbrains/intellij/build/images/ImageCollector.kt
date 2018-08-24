@@ -5,7 +5,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
+import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.util.JpsPathUtil
@@ -60,15 +60,17 @@ class ImageFlags(val skipped: Boolean,
 
 data class DeprecationData(val comment: String?, val replacement: String?, val replacementContextClazz: String?, val replacementReference: String?)
 
-
 internal class ImageCollector(private val projectHome: Path, private val iconsOnly: Boolean = true, val ignoreSkipTag: Boolean = false, private val className: String? = null) {
+  // files processed in parallel, so, concurrent data structures must be used
   private val icons = ContainerUtil.newConcurrentMap<String, ImagePaths>()
   private val phantomIcons = ContainerUtil.newConcurrentMap<String, ImagePaths>()
   private val usedIconsRobots: MutableSet<Path> = ContainerUtil.newConcurrentSet()
 
   fun collect(module: JpsModule, includePhantom: Boolean = false): List<ImagePaths> {
     for (sourceRoot in module.sourceRoots) {
-      processRoot(sourceRoot)
+      if (sourceRoot.rootType == JavaResourceRootType.RESOURCE) {
+        processRoot(sourceRoot)
+      }
     }
 
     val result = ArrayList(icons.values)
@@ -85,16 +87,12 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
   }
 
   private fun processRoot(sourceRoot: JpsModuleSourceRoot) {
-    if (!JavaModuleSourceRootTypes.PRODUCTION.contains(sourceRoot.rootType)) {
-      return
-    }
-
     val root = Paths.get(JpsPathUtil.urlToPath(sourceRoot.url))
     if (!Files.exists(root)) {
       return
     }
 
-    val answer = downToRoot(root, root, null, IconRobotsData())
+    val answer = downToRoot(root, root, null, IconRobotsData(), 0)
     val iconsRoot = (if (answer == null || Files.isDirectory(answer)) answer else answer.parent) ?: return
 
     val rootRobotData = upToProjectHome(root)
@@ -102,21 +100,22 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
 
     val robotData = rootRobotData.fork(iconsRoot, root)
 
-    processDirectory(iconsRoot, sourceRoot, robotData, emptyList())
+    processDirectory(iconsRoot, sourceRoot, robotData, emptyList(), 0)
     processPhantomIcons(iconsRoot, sourceRoot, robotData, emptyList())
   }
 
-  private fun processDirectory(dir: Path, sourceRoot: JpsModuleSourceRoot, robotData: IconRobotsData, prefix: List<String>) {
-    dir.processChildrenInParallel { file ->
+  private fun processDirectory(dir: Path, sourceRoot: JpsModuleSourceRoot, robotData: IconRobotsData, prefix: List<String>, level: Int) {
+    // do not process in parallel for if level >= 3 because no sense - parents processed in parallel already
+    dir.processChildren(level < 3) { file ->
       if (robotData.isSkipped(file)) {
-        return@processChildrenInParallel
+        return@processChildren
       }
 
       if (Files.isDirectory(file)) {
         val root = Paths.get(JpsPathUtil.urlToPath(sourceRoot.url))
         val childRobotData = robotData.fork(file, root)
         val childPrefix = prefix + file.fileName.toString()
-        processDirectory(file, sourceRoot, childRobotData, childPrefix)
+        processDirectory(file, sourceRoot, childRobotData, childPrefix, level + 1)
 
         if (childRobotData != robotData) {
           processPhantomIcons(file, sourceRoot, childRobotData, childPrefix)
@@ -165,17 +164,22 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
     return upToProjectHome(parent).fork(parent, projectHome)
   }
 
-  private fun downToRoot(root: Path, file: Path, common: Path?, robotData: IconRobotsData): Path? {
-    if (robotData.isSkipped(file)) return common
+  private fun downToRoot(root: Path, file: Path, common: Path?, robotData: IconRobotsData, level: Int): Path? {
+    if (robotData.isSkipped(file)) {
+      return common
+    }
 
     when {
       Files.isDirectory(file) -> {
-        val childRobotData = robotData.fork(file, root)
+        if (level == 1 && file.fileName.toString() == "META-INF") {
+          return common
+        }
 
+        val childRobotData = robotData.fork(file, root)
         var childCommon = common
         Files.list(file).use { stream ->
           stream.forEachOrdered {
-            childCommon = downToRoot(root, it, childCommon, childRobotData)
+            childCommon = downToRoot(root, it, childCommon, childRobotData, level + 1)
           }
         }
         return childCommon
@@ -305,6 +309,10 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
     }
 
     private fun matches(file: Path, matchers: List<Pattern>): Boolean {
+      if (matchers.isEmpty()) {
+        return false
+      }
+
       val basicPath = getBasicPath(file)
       return matchers.any { matcher ->
         try {
@@ -346,8 +354,8 @@ private fun mergeDeprecations(data1: DeprecationData?,
   throw AssertionError("Different deprecation statements found for icon: $comment\n$data1\n$data2")
 }
 
-fun Path.processChildrenInParallel(consumer: (Path) -> Unit) {
-  DirectorySpliterator.list(this, isParallel = true).use {
+fun Path.processChildren(isParallel: Boolean = true, consumer: (Path) -> Unit) {
+  DirectorySpliterator.list(this, isParallel).use {
     it.forEach(consumer)
   }
 }

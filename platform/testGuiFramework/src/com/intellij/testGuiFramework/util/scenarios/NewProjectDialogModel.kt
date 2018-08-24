@@ -52,6 +52,7 @@ import com.intellij.testGuiFramework.utils.TestUtilsClass
 import com.intellij.testGuiFramework.utils.TestUtilsClassCompanion
 import org.fest.swing.fixture.JListFixture
 import org.fest.swing.timing.Pause
+import java.awt.Point
 
 class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase) {
   companion object : TestUtilsClassCompanion<NewProjectDialogModel>(
@@ -183,7 +184,7 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
 
     override fun toString(): String {
       fun Array<out String>.toFormattedString() = if (this.isEmpty()) ""
-        else this.joinToString(separator = "-") { it.replace(",", "").replace(" ", "") }
+      else this.joinToString(separator = "-") { it.replace(",", "").replace(" ", "") }
       return mainPath.toFormattedString()
     }
 
@@ -197,6 +198,7 @@ fun NewProjectDialogModel.connectDialog(): JDialogFixture =
   testCase.dialog(NewProjectDialogModel.Constants.newProjectTitle, true, Timeouts.defaultTimeout)
 
 typealias LibrariesSet = Set<NewProjectDialogModel.LibraryOrFramework>
+
 fun LibrariesSet.isSetEmpty() = isEmpty() || all { it.isEmpty() }
 fun LibrariesSet.isSetNotEmpty() = !isSetEmpty()
 
@@ -206,7 +208,10 @@ fun LibrariesSet.isSetNotEmpty() = !isSetEmpty()
  * @param libs - path to additional library/framework that should be checked
  * Note: only one library/framework can be checked!
  * */
-fun NewProjectDialogModel.createJavaProject(projectPath: String, libs: LibrariesSet = emptySet(), template: String = "", basePackage: String = "") {
+fun NewProjectDialogModel.createJavaProject(projectPath: String,
+                                            libs: LibrariesSet = emptySet(),
+                                            template: String = "",
+                                            basePackage: String = "") {
   with(guiTestCase) {
     fileSystemUtils.assertProjectPathExists(projectPath)
     with(connectDialog()) {
@@ -214,8 +219,13 @@ fun NewProjectDialogModel.createJavaProject(projectPath: String, libs: Libraries
       if (libs.isSetNotEmpty()) setLibrariesAndFrameworks(libs)
       else {
         button(buttonNext).click()
-        if(template.isNotEmpty()){
-          checkbox(checkCreateProjectFromTemplate).isSelected = true
+        if (template.isNotEmpty()) {
+          waitForPageTransitionFinished {
+            checkbox(checkCreateProjectFromTemplate).target().locationOnScreen
+          }
+          val templateCheckbox = checkbox(checkCreateProjectFromTemplate)
+          if (!templateCheckbox.isSelected)
+            templateCheckbox.click()
           jList(template).clickItem(template)
         }
       }
@@ -225,7 +235,7 @@ fun NewProjectDialogModel.createJavaProject(projectPath: String, libs: Libraries
       shortcut(Key.TAB)
       shortcut(Modifier.CONTROL + Key.X, Modifier.META + Key.X)
       typeText(projectPath)
-      if(template.isNotEmpty() && basePackage.isNotEmpty()){
+      if (template.isNotEmpty() && basePackage.isNotEmpty()) {
         // base package is set only for Command Line app template
         logUIStep("Set Base package to `$basePackage`")
         textfield(textBasePackage).click()
@@ -256,8 +266,12 @@ fun NewProjectDialogModel.createJavaEnterpriseProject(projectPath: String, libs:
       if (libs.isSetNotEmpty()) setLibrariesAndFrameworks(libs)
       else {
         button(buttonNext).click()
-        if(template.isNotEmpty()){
-          checkbox(checkCreateProjectFromTemplate).isSelected = true
+        if (template.isNotEmpty()) {
+          waitForPageTransitionFinished {
+            checkbox(checkCreateProjectFromTemplate).target().locationOnScreen
+          }
+          val checkboxTemplate = checkbox(checkCreateProjectFromTemplate)
+          if (!checkboxTemplate.isSelected) checkboxTemplate.click()
           jList(template).clickItem(template)
         }
       }
@@ -274,6 +288,26 @@ fun NewProjectDialogModel.createJavaEnterpriseProject(projectPath: String, libs:
       waitAMoment()
     }
   }
+}
+
+/**
+ * Waits for transition animation finished
+ * When transition animation occurs components on the appearing page
+ * change their [locationOnScreen] coordinates and at the same time their [x] and [y]
+ * coordinates are kept unchanged.
+ *
+ * @param locationOnScreen - function calculated 1 coordinate of locationOnScreen property of a moving component
+ * */
+fun JDialogFixture.waitForPageTransitionFinished(locationOnScreen: JDialogFixture.() -> Point) {
+  var previousCoord = locationOnScreen()
+  robot().waitForIdle()
+  GuiTestUtilKt.waitUntil("Wait when coordinates stop changing") {
+    val currentCoord = locationOnScreen()
+    val result = previousCoord == currentCoord
+    previousCoord = currentCoord
+    result
+  }
+  robot().waitForIdle()
 }
 
 fun NewProjectDialogModel.createGradleProject(projectPath: String, gradleOptions: NewProjectDialogModel.GradleProjectOptions) {
@@ -577,8 +611,8 @@ fun NewProjectDialogModel.setLibrariesAndFrameworks(libs: LibrariesSet) {
   }
 }
 
-fun NewProjectDialogModel.selectProjectGroup(group: NewProjectDialogModel.Groups){
-  with(connectDialog()){
+fun NewProjectDialogModel.selectProjectGroup(group: NewProjectDialogModel.Groups) {
+  with(connectDialog()) {
     val list: JListFixture = jList(groupJava)
     assertGroupPresent(group)
     list.clickItem(group.toString())

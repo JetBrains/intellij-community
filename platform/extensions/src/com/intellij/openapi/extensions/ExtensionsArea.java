@@ -32,6 +32,7 @@ public interface ExtensionsArea  {
 
   @NotNull
   AreaPicoContainer getPicoContainer();
+
   void registerExtensionPoint(@NotNull PluginDescriptor pluginDescriptor, @NotNull Element extensionPointElement);
 
   /**

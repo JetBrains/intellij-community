@@ -1110,6 +1110,9 @@
           <reference ref="Vcs.UpdateProject"/>
           <reference ref="CheckinProject"/>
         </group>
+        <group id="TouchBarDefault_ctrl" text="Default with Ctrl key">
+          <separator/>
+        </group>
         <group id="TouchBarDefault_alt" text="Default with Alt key">
           <reference ref="SelectInProjectView"/>
           <separator text="type.flexible"/>

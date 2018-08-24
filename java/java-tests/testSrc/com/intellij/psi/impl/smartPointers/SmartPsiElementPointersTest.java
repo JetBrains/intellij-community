@@ -420,7 +420,6 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
   }
 
   public void testPointerDisambiguationAfterDupLine() {
-    @Language("JAVA")
     String text = "class XXX{ void foo() { \n" +
                   " <caret>foo();\n" +
                   "}}";
@@ -584,7 +583,6 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
   }
 
   public void testInXml2() {
-    @Language("XML")
     String text = "<html>\n" +
                   "    <ul class=\"dropdown-menu\">\n" +
                   "        <li><a href=\"#\">One more separated link</a></li>\n" +
@@ -759,7 +757,6 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
   }
 
   public void testUpdateAfterInsertingIdenticalText() {
-    @Language("JAVA")
     String text = "class Foo {\n" +
                   "    void m() {\n" +
                   "    }\n" +
@@ -1123,7 +1120,6 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
   }
 
   public void testCanRestoreErrorElementsAtSameOffset() throws Exception {
-    @Language("JAVA")
     String text = "class Foo { void foo() { if(IdeaLogger.ourErrorsOccurred != null) try(hrow IdeaLogger.ourErrorsOccurred; } }";
     PsiFile file = createFile("a.java",
                               text);

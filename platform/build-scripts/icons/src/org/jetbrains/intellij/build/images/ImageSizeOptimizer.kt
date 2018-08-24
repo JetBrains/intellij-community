@@ -25,7 +25,7 @@ class ImageSizeOptimizer(private val projectHome: File) {
   fun optimizeImages(file: Path): Int {
     if (Files.isDirectory(file)) {
       var count = 0
-      file.processChildrenInParallel {
+      file.processChildren {
         count += optimizeImages(it)
       }
       return count

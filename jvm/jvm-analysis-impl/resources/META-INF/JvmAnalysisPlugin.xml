@@ -1,9 +1,9 @@
 <idea-plugin>
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.blockingMethodChecker"
+    <extensionPoint qualifiedName="com.intellij.codeInsight.blockingMethodChecker"
                     interface="com.intellij.codeInspection.blockingCallsDetection.BlockingMethodChecker"/>
-    <extensionPoint qualifiedName="com.intellij.nonblockingMethodChecker"
-                    interface="com.intellij.codeInspection.blockingCallsDetection.NonblockingContextChecker"/>
+    <extensionPoint qualifiedName="com.intellij.codeInsight.nonBlockingContextChecker"
+                    interface="com.intellij.codeInspection.blockingCallsDetection.NonBlockingContextChecker"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="UnstableApiUsage"
@@ -15,6 +15,8 @@
                      enabledByDefault="true" level="WARNING"
                      key="method.name.contains.blocking.word.display.name" bundle="com.intellij.jvm.analysis.JvmAnalysisBundle"
                      implementationClass="com.intellij.codeInspection.blockingCallsDetection.BlockingMethodInNonBlockingContextInspection"/>
+  </extensions>
+  <extensions defaultExtensionNs="com.intellij.codeInsight">
     <blockingMethodChecker implementation="com.intellij.codeInspection.blockingCallsDetection.ThrowsTypeBlockingMethodChecker"/>
   </extensions>
 </idea-plugin>
