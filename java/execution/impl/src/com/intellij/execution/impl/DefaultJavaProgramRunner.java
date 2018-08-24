@@ -222,7 +222,9 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
 
         @Override
         public void processTerminated(@NotNull ProcessEvent event) {
-          myConnection.disconnect();
+          if (myConnection != null) {
+            myConnection.disconnect();
+          }
           myProcessHandler.removeProcessListener(this);
         }
       });
