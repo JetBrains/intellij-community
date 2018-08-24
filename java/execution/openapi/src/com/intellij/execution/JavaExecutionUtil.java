@@ -15,15 +15,8 @@
  */
 package com.intellij.execution;
 
-import com.intellij.execution.configurations.*;
-import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.filters.Filter;
-import com.intellij.execution.filters.TextConsoleBuilder;
-import com.intellij.execution.filters.TextConsoleBuilderFactory;
-import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
+import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.util.ExecutionErrorDialog;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -79,8 +72,9 @@ public class JavaExecutionUtil {
       if (moduleDependencies.containsAll(modules)) {
         return contextModule;
       }
+      return null;
     }
-    return null;
+    return contextModule;
   }
 
   @Nullable
