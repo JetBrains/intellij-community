@@ -15,29 +15,28 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
+  protected final Project myProject;
+
   private final JComponent myMainPanel;
   private final List<Configurable> myConfigurables = new ArrayList<>();
   private final boolean myHelpAvailable;
-  protected final Project myProject;
 
-  public UpdateOrStatusOptionsDialog(Project project, Map<Configurable, AbstractVcs> confs) {
+  public UpdateOrStatusOptionsDialog(Project project, String title, Map<Configurable, AbstractVcs> envToConfMap) {
     super(project);
-    setTitle(getRealTitle());
+    setTitle(title);
     myProject = project;
-    if (confs.size() == 1) {
+    if (envToConfMap.size() == 1) {
       myMainPanel = new JPanel(new BorderLayout());
-      addComponent(confs.keySet().iterator().next(), BorderLayout.CENTER);
+      addComponent(envToConfMap.keySet().iterator().next(), BorderLayout.CENTER);
       myMainPanel.add(Box.createVerticalStrut(10), BorderLayout.SOUTH);
     }
     else {
       myMainPanel = new JBTabbedPane();
-      confs.entrySet().stream()
+      envToConfMap.entrySet().stream()
         .sorted(Comparator.comparing(entry -> entry.getValue().getDisplayName()))
         .forEach(entry -> addComponent(entry.getKey(), entry.getKey().getDisplayName()));
     }
@@ -50,12 +49,11 @@ public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
     return "com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialog" + getActionNameForDimensions();
   }
 
-  protected abstract String getRealTitle();
   protected abstract String getActionNameForDimensions();
 
   private void addComponent(Configurable configurable, String constraint) {
     myConfigurables.add(configurable);
-    myMainPanel.add(configurable.createComponent(), constraint);
+    myMainPanel.add(Objects.requireNonNull(configurable.createComponent()), constraint);
     configurable.reset();
   }
 
@@ -69,7 +67,7 @@ public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
         return;
       }
       catch (ConfigurationException e) {
-        Messages.showErrorDialog(myProject, VcsBundle.message("messge.text.cannot.save.settings", e.getLocalizedMessage()), getRealTitle());
+        Messages.showErrorDialog(myProject, VcsBundle.message("message.text.cannot.save.settings", e.getLocalizedMessage()), getTitle());
         return;
       }
     }
