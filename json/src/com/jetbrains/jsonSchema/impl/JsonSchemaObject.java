@@ -821,7 +821,67 @@ public class JsonSchemaObject {
       return shortDesc ? "enum" : anEnum.stream().map(o -> o.toString()).collect(Collectors.joining(" | "));
     }
 
+    JsonSchemaType guessedType = guessType();
+    if (guessedType != null) {
+      return guessedType.getDescription();
+    }
+
     return null;
+  }
+
+  @Nullable
+  public JsonSchemaType guessType() {
+    JsonSchemaType type = getType();
+    if (type != null) return type;
+    boolean hasObjectChecks = hasObjectChecks();
+    boolean hasNumericChecks = hasNumericChecks();
+    boolean hasStringChecks = hasStringChecks();
+    boolean hasArrayChecks = hasArrayChecks();
+
+    if (hasObjectChecks && !hasNumericChecks && !hasStringChecks && !hasArrayChecks) {
+      return JsonSchemaType._object;
+    }
+    if (!hasObjectChecks && hasNumericChecks && !hasStringChecks && !hasArrayChecks) {
+      return JsonSchemaType._number;
+    }
+    if (!hasObjectChecks && !hasNumericChecks && hasStringChecks && !hasArrayChecks) {
+      return JsonSchemaType._string;
+    }
+    if (!hasObjectChecks && !hasNumericChecks && !hasStringChecks && hasArrayChecks) {
+      return JsonSchemaType._array;
+    }
+    return null;
+  }
+
+  public boolean hasNumericChecks() {
+    return getMultipleOf() != null
+           || getExclusiveMinimumNumber() != null
+           || getExclusiveMaximumNumber() != null
+           || getMaximum() != null
+           || getMinimum() != null;
+  }
+
+  public boolean hasStringChecks() {
+    return getPattern() != null || getFormat() != null;
+  }
+
+  public boolean hasArrayChecks() {
+    return isUniqueItems()
+           || getContainsSchema() != null
+           || getItemsSchema() != null
+           || getItemsSchemaList() != null
+           || getMinItems() != null
+           || getMaxItems() != null;
+  }
+
+  public boolean hasObjectChecks() {
+    return !getProperties().isEmpty()
+           || getPropertyNamesSchema() != null
+           || getPropertyDependencies() != null
+           || hasPatternProperties()
+           || getRequired() != null
+           || getMinProperties() != null
+           || getMaxProperties() != null;
   }
 
   @Nullable
