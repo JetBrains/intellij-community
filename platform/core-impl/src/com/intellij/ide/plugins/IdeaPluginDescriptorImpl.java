@@ -136,7 +136,12 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   public void readExternal(@NotNull Document document, @NotNull URL url, boolean ignoreMissingInclude, @NotNull JDOMXIncluder.PathResolver pathResolver) throws InvalidDataException {
     // root element always `!isIncludeElement` and it means that result always is a singleton list
     // (also, plugin xml describes one plugin, this descriptor is not able to represent several plugins)
-    Element rootElement = JDOMXIncluder.resolveNonXIncludeElement(document.getRootElement(), url.toExternalForm(), ignoreMissingInclude, pathResolver);
+    Element rootElement = document.getRootElement();
+    if (JDOMUtil.isEmpty(rootElement)) {
+      return;
+    }
+
+    JDOMXIncluder.resolveNonXIncludeElement(rootElement, url.toExternalForm(), ignoreMissingInclude, pathResolver);
     readExternal(JDOMUtil.internElement(rootElement));
   }
 
