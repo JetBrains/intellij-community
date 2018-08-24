@@ -146,10 +146,19 @@ public class ExpressionParsing extends Parsing {
       final PsiBuilder.Marker marker = builder.mark();
       nextToken();
       myContext.getExpressionParser().parseExpression();
-      if (atToken(PyTokenTypes.FSTRING_FRAGMENT_FORMAT_START)) {
+      final boolean hasTypeConversion = matchToken(PyTokenTypes.FSTRING_FRAGMENT_TYPE_CONVERSION);
+      final boolean hasFormatPart = atToken(PyTokenTypes.FSTRING_FRAGMENT_FORMAT_START);
+      if (hasFormatPart) {
         parseFStringFragmentFormatPart();
       }
-      checkMatches(PyTokenTypes.FSTRING_FRAGMENT_END, "} expected");
+      String errorMessage = "} expected";
+      if (!hasFormatPart) {
+        errorMessage = ": or " + errorMessage;
+        if (!hasTypeConversion) {
+          errorMessage = "type conversion, " + errorMessage;
+        }
+      }
+      checkMatches(PyTokenTypes.FSTRING_FRAGMENT_END, errorMessage);
       marker.done(PyElementTypes.FSTRING_FRAGMENT);
     }
   }

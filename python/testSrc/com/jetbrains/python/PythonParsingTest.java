@@ -553,6 +553,50 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
+  public void testFStringFragmentTypeConversion() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringFragmentIllegalTypeConversion() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringFragmentIncompleteTypeConversionBeforeColon() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+  
+  public void testFStringFragmentIncompleteTypeConversionBeforeClosingBrace() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringFragmentIncompleteTypeConversionBeforeClosingQuote() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringFragmentTypeConversionAfterFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringFragmentDuplicateTypeConversion() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringIncompleteFragment() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringIncompleteFragmentWithTypeConversion() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringIncompleteFragmentWithFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringIncompleteFragmentWithTypeConversionAndFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
   // PY-19036
   public void testAwaitInNonAsyncNestedFunction() {
     doTest(LanguageLevel.PYTHON35);
