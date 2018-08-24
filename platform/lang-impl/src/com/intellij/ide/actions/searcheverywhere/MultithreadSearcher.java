@@ -20,22 +20,45 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * @author msokolov
+ */
 class MultithreadSearcher {
 
   private static final Logger LOG = Logger.getInstance(MultithreadSearcher.class);
 
-  private final Listener myListener;
-  private final Executor myNotificationExecutor;
+  @NotNull private final Listener myListener;
+  @NotNull private final Executor myNotificationExecutor;
 
-  public MultithreadSearcher(@NotNull Listener listener, Executor notificationExecutor) {
+  /**
+   * Creates MultithreadSearcher with search results {@link Listener} and specifies executor which going to be used to call listener methods.
+   * Use this constructor when you for example need to receive listener events only in AWT thread
+   * @param listener {@link Listener} to get notifications about searching process
+   * @param notificationExecutor searcher guarantees that all listener methods will be called only through this executor
+   */
+  public MultithreadSearcher(@NotNull Listener listener, @NotNull Executor notificationExecutor) {
     myListener = listener;
     myNotificationExecutor = notificationExecutor;
   }
 
+  /**
+   * Creates MultithreadSearcher with no guarantees about what thread gonna call {@code listener} methods.
+   * In this case listener will be called from different threads, so you have to care about thread safety
+   * @param listener {@link Listener} to get notifications about searching process
+   */
+  @SuppressWarnings("unused")
   public MultithreadSearcher(@NotNull Listener listener) {
     this(listener, Runnable::run);
   }
 
+  /**
+   * Starts searching process with given search parameters
+   * @param contributorsAndLimits map of used searching contributors and maximum elements limit for them
+   * @param pattern search pattern
+   * @param useNonProjectItems flags indicating if non-projects items should be included in search results
+   * @param filterSupplier supplier of {@link SearchEverywhereContributorFilter}'s for different search contributors
+   * @return {@link ProgressIndicator} that could be used to track and/or cancel searching process
+   */
   public ProgressIndicator search(Map<SearchEverywhereContributor<?>, Integer> contributorsAndLimits, String pattern,
                                   boolean useNonProjectItems,
                                   Function<SearchEverywhereContributor<?>, SearchEverywhereContributorFilter<?>> filterSupplier) {
@@ -64,6 +87,16 @@ class MultithreadSearcher {
     return indicator;
   }
 
+  /**
+   * Starts process of expanding (search for more elemetns) specified contributors section (when user choosed "more" item)
+   * @param alreadyFound map of already found items for all used search contributors
+   * @param pattern search pattern
+   * @param useNonProjectItems flags indicating if non-projects items should be included in search results
+   * @param contributorToExpand specifies {@link SearchEverywhereContributor} element which going to be expanded
+   * @param newLimit new maximum elements limit for expanded contributor
+   * @param filterSupplier supplier of {@link SearchEverywhereContributorFilter}'s for different search contributors
+   * @return {@link ProgressIndicator} that could be used to track and/or cancel searching process
+   */
   public ProgressIndicator findMoreItems(Map<SearchEverywhereContributor<?>, Collection<ElementInfo>> alreadyFound, String pattern,
                                          boolean useNonProjectItems, SearchEverywhereContributor<?> contributorToExpand, int newLimit,
                                          Function<SearchEverywhereContributor<?>, SearchEverywhereContributorFilter<?>> filterSupplier) {
@@ -95,6 +128,9 @@ class MultithreadSearcher {
     });
   }
 
+  /**
+   * Search process listener interface
+   */
   public interface Listener {
     void elementsAdded(List<ElementInfo> list);
     void elementsRemoved(List<ElementInfo> list);
@@ -154,6 +190,9 @@ class MultithreadSearcher {
     }
   }
 
+  /**
+   * Class containing info about found elements
+   */
   public static class ElementInfo {
     private final int priority;
     private final Object element;
@@ -178,7 +217,7 @@ class MultithreadSearcher {
     }
   }
 
-  public static abstract class ResultsAccumulator {
+  private static abstract class ResultsAccumulator {
     protected final Map<SearchEverywhereContributor<?>, Collection<MultithreadSearcher.ElementInfo>> sections;
     protected final MultithreadSearcher.Listener myListener;
     protected final Executor myNotificationExecutor;
@@ -261,9 +300,6 @@ class MultithreadSearcher {
     }
   }
 
-  /**
-   * Resulting list accumulator.
-   */
   private static class FullSearchResultsAccumulator extends ResultsAccumulator {
 
     private final Map<SearchEverywhereContributor<?>, Integer> sectionsLimits;
