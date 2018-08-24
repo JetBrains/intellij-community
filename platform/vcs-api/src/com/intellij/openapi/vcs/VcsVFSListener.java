@@ -317,9 +317,7 @@ public abstract class VcsVFSListener implements Disposable {
     public void fileCreated(@NotNull final VirtualFileEvent event) {
       VirtualFile file = event.getFile();
       LOG.debug("fileCreated: ", file);
-      if (isUnderMyVcs(file)) {
-        fileAdded(event, file);
-      }
+      fileAdded(event, file);
     }
 
     @Override
