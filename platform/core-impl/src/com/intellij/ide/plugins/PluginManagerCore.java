@@ -1099,22 +1099,6 @@ public class PluginManagerCore {
       String s = t.nextToken();
       IdeaPluginDescriptorImpl ideaPluginDescriptor = loadDescriptor(new File(s), PLUGIN_XML, false);
       if (ideaPluginDescriptor != null) {
-        // Android Studio: when adding the Kotlin plugin via -Dplugin.path, we're either running tests or running from within the IDE.
-        // In this case, the Android plugin and the platform are loaded in the same (default) UrlClassLoader, which we must also use.
-        if ("org.jetbrains.kotlin".equals(ideaPluginDescriptor.getPluginId().getIdString())) {
-          ideaPluginDescriptor.setUseCoreClassLoader(true);
-
-          try {
-            final ClassLoader loader = PluginManagerCore.class.getClassLoader();
-            final Method addUrlMethod = getAddUrlMethod(loader);
-            for (File aClassPath : ideaPluginDescriptor.getClassPath()) {
-              final File file = aClassPath.getCanonicalFile();
-              addUrlMethod.invoke(loader, file.toURI().toURL());
-            }
-          } catch (Exception e) {
-            e.printStackTrace();
-          }
-        }
         result.add(ideaPluginDescriptor);
       }
     }
@@ -1141,6 +1125,30 @@ public class PluginManagerCore {
     loadDescriptorsFromProperty(result);
 
     loadDescriptorsFromClassPath(result, PluginManagerCore.class.getClassLoader(), fromSources ? progress : null);
+
+    // Android Studio: if we are running unit tests or running Studio from within the IDE, we
+    // must load the Kotlin plugin with the same "core" UrlClassLoader that the platform uses.
+    // This is because the platform requires using a single class loader for all plugins when running internally.
+    // Note that `application == null` can happen during certain tests (anecdotally, some UI tests).
+    if (application == null || application.isUnitTestMode() || application.isInternal()) {
+      result.stream()
+            .filter(descriptor -> "org.jetbrains.kotlin".equals(descriptor.getPluginId().getIdString()))
+            .findFirst()
+            .ifPresent((kotlinDescriptor) -> {
+              kotlinDescriptor.setUseCoreClassLoader(true);
+              try {
+                final ClassLoader loader = PluginManagerCore.class.getClassLoader();
+                final Method addUrlMethod = getAddUrlMethod(loader);
+                for (File aClassPath : kotlinDescriptor.getClassPath()) {
+                  final File file = aClassPath.getCanonicalFile();
+                  addUrlMethod.invoke(loader, file.toURI().toURL());
+                }
+              }
+              catch (Exception e) {
+                LOG.error(e);
+              }
+            });
+    }
 
     return topoSortPlugins(result, errors);
   }
