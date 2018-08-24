@@ -29,6 +29,14 @@ public class DotEnvFileTest extends DotEnvLightCodeInsightFixtureTestCase {
         assertIndexContains(DotEnvKeyValuesIndex.KEY,"OFFSET_KEY=offset");
     }
 
+    public void testEnvCommentedVars() {
+        assertIndexContains(DotEnvKeyValuesIndex.KEY,"COMMENTED_VAR=123");
+        assertIndexContains(DotEnvKeyValuesIndex.KEY,"COMMENTED_VAR2=\"123 #comment\"");
+        assertIndexContains(DotEnvKeyValuesIndex.KEY,"COMMENTED_VAR3=\"123 #com\\\"ment\"");
+
+        assertIndexContains(DotEnvKeyValuesIndex.KEY,"COMMENTED_VAR4=\"1\"");
+    }
+
     public void testEnvComments() {
         assertIndexNotContains(DotEnvKeysIndex.KEY,"Comment", "#Comment", "#Another comment");
     }

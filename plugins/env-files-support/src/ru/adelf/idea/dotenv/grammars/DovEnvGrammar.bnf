@@ -19,6 +19,6 @@ private item_ ::= (property|COMMENT|CRLF)
 
 key ::= KEY_CHARS
 
-value ::= VALUE_CHARS
+value ::= VALUE_CHARS | QUOTE VALUE_CHARS? QUOTE?
 
-property ::= (key SEPARATOR value?) | key
+property ::= (key SEPARATOR value? COMMENT?) | key COMMENT?

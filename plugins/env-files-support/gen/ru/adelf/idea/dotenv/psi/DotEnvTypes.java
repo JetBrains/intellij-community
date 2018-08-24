@@ -15,6 +15,7 @@ public interface DotEnvTypes {
   IElementType COMMENT = new DotEnvTokenType("COMMENT");
   IElementType CRLF = new DotEnvTokenType("CRLF");
   IElementType KEY_CHARS = new DotEnvTokenType("KEY_CHARS");
+  IElementType QUOTE = new DotEnvTokenType("QUOTE");
   IElementType SEPARATOR = new DotEnvTokenType("SEPARATOR");
   IElementType VALUE_CHARS = new DotEnvTokenType("VALUE_CHARS");
 

@@ -23,9 +23,10 @@ public class DotEnvPsiElementsVisitor extends PsiRecursiveElementVisitor {
     }
 
     private void visitProperty(DotEnvProperty property) {
-        EnvironmentKeyValue keyValue = EnvironmentVariablesUtil.getKeyValueFromString(property.getText());
-
-        collectedItems.add(new KeyValuePsiElement(keyValue.getKey(), keyValue.getValue(), property));
+        collectedItems.add(new KeyValuePsiElement(
+                property.getKey().getText(),
+                property.getValue() != null ? property.getValue().getText() : "",
+                property));
     }
 
     public Collection<KeyValuePsiElement> getCollectedItems() {

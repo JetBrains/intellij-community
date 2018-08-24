@@ -18,6 +18,6 @@ public class DotEnvKeyValuesIndex extends EnvironmentVariablesIndex {
     @NotNull
     @Override
     String getIndexKey(KeyValuePsiElement keyValue) {
-        return keyValue.getKey() + "=" + keyValue.getValue();
+        return keyValue.getKey().trim() + "=" + keyValue.getValue().trim();
     }
 }

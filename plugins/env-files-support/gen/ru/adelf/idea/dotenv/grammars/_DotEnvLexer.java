@@ -26,6 +26,8 @@ class _DotEnvLexer implements FlexLexer {
   /** lexical states */
   public static final int YYINITIAL = 0;
   public static final int WAITING_VALUE = 2;
+  public static final int WAITING_QUOTED_VALUE = 4;
+  public static final int WAITING_COMMENT = 6;
 
   /**
    * ZZ_LEXSTATE[l] is the state in the DFA for the lexical state l
@@ -34,7 +36,7 @@ class _DotEnvLexer implements FlexLexer {
    * l is of the form l = 2*k, k a non negative integer
    */
   private static final int ZZ_LEXSTATE[] = { 
-     0,  0,  1, 1
+     0,  0,  1,  1,  2,  2,  3, 3
   };
 
   /** 
@@ -56,8 +58,8 @@ class _DotEnvLexer implements FlexLexer {
 
   /* The ZZ_CMAP_A table has 320 entries */
   static final char ZZ_CMAP_A[] = zzUnpackCMap(
-    "\11\0\1\4\1\2\1\1\1\5\1\3\22\0\1\7\2\0\1\10\13\0\1\11\12\0\1\12\2\0\1\12\36"+
-    "\0\1\6\50\0\1\1\242\0\2\1\26\0");
+    "\11\0\1\4\1\2\1\1\1\5\1\3\22\0\1\7\1\0\1\6\1\11\26\0\1\12\2\0\1\12\36\0\1"+
+    "\10\50\0\1\1\242\0\2\1\26\0");
 
   /** 
    * Translates DFA states to action switch labels.
@@ -65,11 +67,12 @@ class _DotEnvLexer implements FlexLexer {
   private static final int [] ZZ_ACTION = zzUnpackAction();
 
   private static final String ZZ_ACTION_PACKED_0 =
-    "\2\0\2\1\1\2\1\3\1\4\1\1\1\5\2\6"+
-    "\2\7\1\3\1\7\1\0\2\4\1\2\1\6";
+    "\4\0\2\1\1\2\1\3\1\4\1\5\2\6\2\7"+
+    "\1\10\1\7\1\3\1\11\2\12\1\13\1\12\3\11"+
+    "\1\0\2\4\1\2\1\6\1\2";
 
   private static int [] zzUnpackAction() {
-    int [] result = new int[20];
+    int [] result = new int[31];
     int offset = 0;
     offset = zzUnpackAction(ZZ_ACTION_PACKED_0, offset, result);
     return result;
@@ -95,11 +98,12 @@ class _DotEnvLexer implements FlexLexer {
 
   private static final String ZZ_ROWMAP_PACKED_0 =
     "\0\0\0\13\0\26\0\41\0\54\0\67\0\102\0\115"+
-    "\0\130\0\143\0\156\0\171\0\54\0\204\0\217\0\67"+
-    "\0\232\0\245\0\156\0\260";
+    "\0\130\0\143\0\156\0\171\0\204\0\102\0\143\0\217"+
+    "\0\232\0\156\0\245\0\260\0\143\0\273\0\306\0\321"+
+    "\0\334\0\115\0\347\0\362\0\171\0\375\0\321";
 
   private static int [] zzUnpackRowMap() {
-    int [] result = new int[20];
+    int [] result = new int[31];
     int offset = 0;
     offset = zzUnpackRowMap(ZZ_ROWMAP_PACKED_0, offset, result);
     return result;
@@ -122,22 +126,28 @@ class _DotEnvLexer implements FlexLexer {
   private static final int [] ZZ_TRANS = zzUnpackTrans();
 
   private static final String ZZ_TRANS_PACKED_0 =
-    "\1\3\1\4\1\5\1\4\2\5\1\6\1\5\1\7"+
-    "\1\10\1\11\1\12\1\13\2\5\1\14\1\15\1\16"+
-    "\1\17\3\12\2\3\1\0\1\3\2\0\1\20\1\0"+
-    "\2\3\1\0\1\3\1\4\1\5\1\4\2\5\1\20"+
-    "\1\5\2\3\2\0\5\5\1\0\1\5\12\0\1\3"+
-    "\3\0\2\7\1\0\1\3\2\21\1\22\1\21\2\7"+
-    "\1\21\2\3\1\0\1\3\2\0\1\20\1\0\1\3"+
-    "\1\7\14\0\2\12\2\0\10\12\1\23\2\5\2\23"+
-    "\1\12\1\23\4\12\1\24\2\5\2\14\1\12\1\14"+
-    "\4\12\3\0\1\12\1\0\5\12\1\0\3\5\2\17"+
-    "\1\0\1\17\3\0\2\21\2\0\11\21\2\0\3\21"+
-    "\1\7\3\21\1\12\1\24\2\5\2\24\1\12\1\24"+
-    "\3\12";
+    "\1\5\1\6\1\7\1\6\2\7\1\5\1\7\1\10"+
+    "\1\11\1\12\1\13\1\14\2\7\1\15\1\16\1\17"+
+    "\1\20\1\21\1\22\1\13\1\23\1\24\2\7\2\24"+
+    "\1\25\1\24\1\26\2\23\1\27\1\30\2\7\1\31"+
+    "\1\30\1\27\1\31\3\27\2\5\1\0\1\5\2\0"+
+    "\1\5\1\0\1\32\1\5\1\0\1\5\1\6\1\7"+
+    "\1\6\2\7\1\5\1\7\1\32\1\5\2\0\5\7"+
+    "\1\0\1\7\12\0\1\5\3\0\2\11\1\0\1\5"+
+    "\2\33\1\11\1\33\1\34\1\11\1\33\13\0\2\13"+
+    "\2\0\5\13\1\0\2\13\1\35\2\7\2\35\1\13"+
+    "\1\35\1\13\1\0\2\13\1\36\2\7\2\15\1\13"+
+    "\1\15\1\13\1\0\1\13\1\0\3\7\2\20\1\0"+
+    "\1\20\3\0\1\13\3\0\1\13\1\0\5\13\2\23"+
+    "\2\0\2\23\1\0\1\23\1\26\3\23\1\24\2\7"+
+    "\2\24\1\0\1\24\1\26\4\23\2\0\4\23\1\26"+
+    "\2\23\2\27\2\0\10\27\1\37\2\7\2\37\1\27"+
+    "\1\37\4\27\1\31\2\7\2\31\1\27\1\31\3\27"+
+    "\2\33\2\0\11\33\2\0\3\33\1\11\3\33\1\13"+
+    "\1\36\2\7\2\36\1\13\1\36\1\13\1\0\1\13";
 
   private static int [] zzUnpackTrans() {
-    int [] result = new int[187];
+    int [] result = new int[264];
     int offset = 0;
     offset = zzUnpackTrans(ZZ_TRANS_PACKED_0, offset, result);
     return result;
@@ -175,10 +185,11 @@ class _DotEnvLexer implements FlexLexer {
   private static final int [] ZZ_ATTRIBUTE = zzUnpackAttribute();
 
   private static final String ZZ_ATTRIBUTE_PACKED_0 =
-    "\2\0\6\1\1\11\6\1\1\0\4\1";
+    "\4\0\5\1\1\11\4\1\1\11\5\1\1\11\4\1"+
+    "\1\0\5\1";
 
   private static int [] zzUnpackAttribute() {
-    int [] result = new int[20];
+    int [] result = new int[31];
     int offset = 0;
     offset = zzUnpackAttribute(ZZ_ATTRIBUTE_PACKED_0, offset, result);
     return result;
@@ -482,37 +493,57 @@ class _DotEnvLexer implements FlexLexer {
             { yybegin(YYINITIAL); return DotEnvTypes.KEY_CHARS;
             } 
             // fall through
-          case 8: break;
+          case 12: break;
           case 2: 
             { yybegin(YYINITIAL); return TokenType.WHITE_SPACE;
             } 
             // fall through
-          case 9: break;
+          case 13: break;
           case 3: 
             { return TokenType.BAD_CHARACTER;
             } 
             // fall through
-          case 10: break;
+          case 14: break;
           case 4: 
             { yybegin(YYINITIAL); return DotEnvTypes.COMMENT;
             } 
             // fall through
-          case 11: break;
+          case 15: break;
           case 5: 
             { yybegin(WAITING_VALUE); return DotEnvTypes.SEPARATOR;
             } 
             // fall through
-          case 12: break;
+          case 16: break;
           case 6: 
             { yybegin(YYINITIAL); return DotEnvTypes.VALUE_CHARS;
             } 
             // fall through
-          case 13: break;
+          case 17: break;
           case 7: 
             { yybegin(WAITING_VALUE); return TokenType.WHITE_SPACE;
             } 
             // fall through
-          case 14: break;
+          case 18: break;
+          case 8: 
+            { yybegin(WAITING_QUOTED_VALUE); return DotEnvTypes.QUOTE;
+            } 
+            // fall through
+          case 19: break;
+          case 9: 
+            { yybegin(WAITING_COMMENT); return DotEnvTypes.COMMENT;
+            } 
+            // fall through
+          case 20: break;
+          case 10: 
+            { yybegin(WAITING_QUOTED_VALUE); return DotEnvTypes.VALUE_CHARS;
+            } 
+            // fall through
+          case 21: break;
+          case 11: 
+            { yybegin(WAITING_COMMENT); return DotEnvTypes.QUOTE;
+            } 
+            // fall through
+          case 22: break;
           default:
             zzScanError(ZZ_NO_MATCH);
           }

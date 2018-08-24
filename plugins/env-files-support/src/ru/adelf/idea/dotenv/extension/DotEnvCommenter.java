@@ -12,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 public class DotEnvCommenter implements Commenter, SelfManagingCommenter<CommenterDataHolder> {
     private static final String HASH_COMMENT_PREFIX = "#";
-    private static final String SLASH_COMMENT_PREFIX = "//";
 
     public String getLineCommentPrefix() {
         return HASH_COMMENT_PREFIX;
@@ -56,17 +55,12 @@ public class DotEnvCommenter implements Commenter, SelfManagingCommenter<Comment
 
     @Override
     public void uncommentLine(int line, int offset, @NotNull Document document, @NotNull CommenterDataHolder data) {
-        if(document.getText().charAt(offset) == '#') {
-            document.deleteString(offset, offset + HASH_COMMENT_PREFIX.length());
-        } else {
-            document.deleteString(offset, offset + SLASH_COMMENT_PREFIX.length());
-        }
+        document.deleteString(offset, offset + 1);
     }
 
     @Override
     public boolean isLineCommented(int line, int offset, @NotNull Document document, @NotNull CommenterDataHolder data) {
-        return CharArrayUtil.regionMatches(document.getCharsSequence(), offset, HASH_COMMENT_PREFIX) ||
-                CharArrayUtil.regionMatches(document.getCharsSequence(), offset, SLASH_COMMENT_PREFIX);
+        return CharArrayUtil.regionMatches(document.getCharsSequence(), offset, HASH_COMMENT_PREFIX);
     }
 
     @Nullable
