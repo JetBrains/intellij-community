@@ -28,7 +28,6 @@ import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.ChangeListWorker
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
-import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker.LocalRange
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.labels.ActionGroupLink
@@ -46,11 +45,57 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.collections.HashSet
 
-class PartialLocalLineStatusTracker(project: Project,
-                                    document: Document,
-                                    virtualFile: VirtualFile,
-                                    mode: Mode
-) : LineStatusTracker<LocalRange>(project, document, virtualFile, mode), ChangeListWorker.PartialChangeTracker {
+interface PartialLocalLineStatusTracker : LineStatusTracker<LocalRange> {
+  fun getAffectedChangeListsIds(): List<String>
+
+  fun moveToChangelist(range: Range, changelist: LocalChangeList)
+  fun moveToChangelist(lines: BitSet, changelist: LocalChangeList)
+
+
+  fun getExcludedFromCommitState(changelistId: String): ExclusionState
+
+  fun setExcludedFromCommit(isExcluded: Boolean)
+  fun setExcludedFromCommit(range: Range, isExcluded: Boolean)
+  fun setExcludedFromCommit(lines: BitSet, isExcluded: Boolean)
+
+
+  fun hasPartialChangesToCommit(): Boolean
+
+  fun getPartiallyAppliedContent(side: Side, changelistIds: List<String>): String
+  fun handlePartialCommit(side: Side, changelistIds: List<String>): PartialCommitHelper
+  fun rollbackChangelistChanges(changelistsIds: List<String>, rollbackRangesExcludedFromCommit: Boolean)
+
+
+  fun addListener(listener: Listener, disposable: Disposable)
+
+  open class ListenerAdapter : Listener
+  interface Listener : EventListener {
+    fun onBecomingValid(tracker: PartialLocalLineStatusTracker) {}
+    fun onChangeListsChange(tracker: PartialLocalLineStatusTracker) {}
+    fun onChangeListMarkerChange(tracker: PartialLocalLineStatusTracker) {}
+    fun onExcludedFromCommitChange(tracker: PartialLocalLineStatusTracker) {}
+  }
+}
+
+abstract class PartialCommitHelper(val content: String) {
+  @CalledInAwt
+  abstract fun applyChanges()
+}
+
+enum class ExclusionState { ALL_INCLUDED, ALL_EXCLUDED, PARTIALLY, NO_CHANGES }
+
+class LocalRange(line1: Int, line2: Int, vcsLine1: Int, vcsLine2: Int, innerRanges: List<InnerRange>?,
+                 val changelistId: String, val isExcludedFromCommit: Boolean)
+  : Range(line1, line2, vcsLine1, vcsLine2, innerRanges)
+
+
+class ChangelistsLocalLineStatusTracker(project: Project,
+                                        document: Document,
+                                        virtualFile: VirtualFile,
+                                        mode: Mode
+) : LocalLineStatusTracker<LocalRange>(project, document, virtualFile, mode),
+    PartialLocalLineStatusTracker,
+    ChangeListWorker.PartialChangeTracker {
   private val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
   private val lstManager = LineStatusTrackerManager.getInstance(project) as LineStatusTrackerManager
   private val undoManager = UndoManager.getInstance(project)
@@ -417,7 +462,7 @@ class PartialLocalLineStatusTracker(project: Project,
         }
       }
 
-      if (isValid()) eventDispatcher.multicaster.onBecomingValid(this@PartialLocalLineStatusTracker)
+      if (isValid()) eventDispatcher.multicaster.onBecomingValid(this@ChangelistsLocalLineStatusTracker)
     }
 
     private fun mergeExcludedFromCommitRanges(ranges: List<DocumentTracker.Block>): Boolean {
@@ -445,13 +490,13 @@ class PartialLocalLineStatusTracker(project: Project,
     }
   }
 
-  fun hasPartialChangesToCommit(): Boolean {
+  override fun hasPartialChangesToCommit(): Boolean {
     return documentTracker.readLock {
       affectedChangeLists.size > 1 || blocks.any { it.excludedFromCommit }
     }
   }
 
-  fun getPartiallyAppliedContent(side: Side, changelistIds: List<String>): String {
+  override fun getPartiallyAppliedContent(side: Side, changelistIds: List<String>): String {
     return runReadAction {
       val markers = changelistIds.mapTo(HashSet()) { ChangeListMarker(it) }
       val toCommitCondition: (Block) -> Boolean = { markers.contains(it.marker) && !it.excludedFromCommit }
@@ -460,7 +505,7 @@ class PartialLocalLineStatusTracker(project: Project,
   }
 
   @CalledInAwt
-  fun handlePartialCommit(side: Side, changelistIds: List<String>): PartialCommitHelper {
+  override fun handlePartialCommit(side: Side, changelistIds: List<String>): PartialCommitHelper {
     val markers = changelistIds.mapTo(HashSet()) { ChangeListMarker(it) }
     val toCommitCondition: (Block) -> Boolean = { markers.contains(it.marker) && !it.excludedFromCommit }
 
@@ -485,12 +530,8 @@ class PartialLocalLineStatusTracker(project: Project,
     }
   }
 
-  abstract class PartialCommitHelper(val content: String) {
-    @CalledInAwt abstract fun applyChanges()
-  }
-
   @CalledInAwt
-  fun rollbackChangelistChanges(changelistsIds: List<String>, rollbackRangesExcludedFromCommit: Boolean) {
+  override fun rollbackChangelistChanges(changelistsIds: List<String>, rollbackRangesExcludedFromCommit: Boolean) {
     val idsSet = changelistsIds.toSet()
     runBulkRollback {
       idsSet.contains(it.marker.changelistId) && (rollbackRangesExcludedFromCommit || !it.excludedFromCommit)
@@ -498,8 +539,8 @@ class PartialLocalLineStatusTracker(project: Project,
   }
 
 
-  protected class MyLineStatusMarkerRenderer(override val tracker: PartialLocalLineStatusTracker) :
-    LineStatusTracker.LocalLineStatusMarkerRenderer(tracker) {
+  protected class MyLineStatusMarkerRenderer(override val tracker: ChangelistsLocalLineStatusTracker) :
+    LocalLineStatusTracker.LocalLineStatusMarkerRenderer(tracker) {
 
     override fun createMerger(editor: Editor): VisibleRangeMerger {
       return object : VisibleRangeMerger(editor) {
@@ -586,7 +627,7 @@ class PartialLocalLineStatusTracker(project: Project,
 
 
   @CalledInAwt
-  fun moveToChangelist(range: Range, changelist: LocalChangeList) {
+  override fun moveToChangelist(range: Range, changelist: LocalChangeList) {
     val newRange = findBlock(range)
     if (newRange != null) {
       moveToChangelist({ it == newRange }, changelist)
@@ -594,7 +635,7 @@ class PartialLocalLineStatusTracker(project: Project,
   }
 
   @CalledInAwt
-  fun moveToChangelist(lines: BitSet, changelist: LocalChangeList) {
+  override fun moveToChangelist(lines: BitSet, changelist: LocalChangeList) {
     moveToChangelist({ it.isSelectedByLine(lines) }, changelist)
   }
 
@@ -612,9 +653,7 @@ class PartialLocalLineStatusTracker(project: Project,
   }
 
 
-  enum class ExclusionState { ALL_INCLUDED, ALL_EXCLUDED, PARTIALLY, NO_CHANGES }
-
-  fun getExcludedFromCommitState(changelistId: String): ExclusionState {
+  override fun getExcludedFromCommitState(changelistId: String): ExclusionState {
     val marker = ChangeListMarker(changelistId)
     var hasIncluded = false
     var hasExcluded = false
@@ -638,18 +677,18 @@ class PartialLocalLineStatusTracker(project: Project,
   }
 
   @CalledInAwt
-  fun setExcludedFromCommit(isExcluded: Boolean) {
+  override fun setExcludedFromCommit(isExcluded: Boolean) {
     setExcludedFromCommit({ true }, isExcluded)
 
     if (!isOperational() || !isExcluded) shouldInitializeWithExcludedFromCommit = isExcluded
   }
 
-  fun setExcludedFromCommit(range: Range, isExcluded: Boolean) {
+  override fun setExcludedFromCommit(range: Range, isExcluded: Boolean) {
     val newRange = findBlock(range)
     setExcludedFromCommit({ it == newRange }, isExcluded)
   }
 
-  fun setExcludedFromCommit(lines: BitSet, isExcluded: Boolean) {
+  override fun setExcludedFromCommit(lines: BitSet, isExcluded: Boolean) {
     setExcludedFromCommit({ it.isSelectedByLine(lines) }, isExcluded)
   }
 
@@ -777,7 +816,7 @@ class PartialLocalLineStatusTracker(project: Project,
       val rangeStates = states
       if (document != null && project != null && rangeStates != null) {
         val tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(document)
-        if (tracker is PartialLocalLineStatusTracker) {
+        if (tracker is ChangelistsLocalLineStatusTracker) {
           tracker.restoreState(rangeStates)
         }
       }
@@ -785,26 +824,9 @@ class PartialLocalLineStatusTracker(project: Project,
   }
 
 
-  private val eventDispatcher = EventDispatcher.create(Listener::class.java)
-
-  fun addListener(listener: Listener, disposable: Disposable) {
+  private val eventDispatcher = EventDispatcher.create(PartialLocalLineStatusTracker.Listener::class.java)
+  override fun addListener(listener: PartialLocalLineStatusTracker.Listener, disposable: Disposable) {
     eventDispatcher.addListener(listener, disposable)
-  }
-
-  open class ListenerAdapter : Listener
-  interface Listener : EventListener {
-    @CalledInAwt
-    fun onBecomingValid(tracker: PartialLocalLineStatusTracker) {
-    }
-
-    fun onChangeListsChange(tracker: PartialLocalLineStatusTracker) {
-    }
-
-    fun onChangeListMarkerChange(tracker: PartialLocalLineStatusTracker) {
-    }
-
-    fun onExcludedFromCommitChange(tracker: PartialLocalLineStatusTracker) {
-    }
   }
 
 
@@ -823,10 +845,6 @@ class PartialLocalLineStatusTracker(project: Project,
     val range: com.intellij.diff.util.Range,
     val changelistId: String
   )
-
-  class LocalRange(line1: Int, line2: Int, vcsLine1: Int, vcsLine2: Int, innerRanges: List<InnerRange>?,
-                   val changelistId: String, val isExcludedFromCommit: Boolean)
-    : Range(line1, line2, vcsLine1, vcsLine2, innerRanges)
 
   protected data class ChangeListMarker(val changelistId: String) {
     constructor(changelist: LocalChangeList) : this(changelist.id)
@@ -858,8 +876,8 @@ class PartialLocalLineStatusTracker(project: Project,
     fun createTracker(project: Project,
                       document: Document,
                       virtualFile: VirtualFile,
-                      mode: Mode): PartialLocalLineStatusTracker {
-      return PartialLocalLineStatusTracker(project, document, virtualFile, mode)
+                      mode: Mode): ChangelistsLocalLineStatusTracker {
+      return ChangelistsLocalLineStatusTracker(project, document, virtualFile, mode)
     }
   }
 }
