@@ -29,9 +29,7 @@ public class CommonInjectedFileChangesHandler extends BaseInjectedFileChangesHan
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(myProject);
     int curOffset = -1;
     for (PsiLanguageInjectionHost.Shred shred : shreds) {
-      final RangeMarker rangeMarker = myNewDocument.createRangeMarker(
-        shred.getRange().getStartOffset() + shred.getPrefix().length(),
-        shred.getRange().getEndOffset() - shred.getSuffix().length());
+      final RangeMarker rangeMarker = localRangeMarkerFromShred(shred);
       final TextRange rangeInsideHost = shred.getRangeInsideHost();
       PsiLanguageInjectionHost host = shred.getHost();
       RangeMarker origMarker = myOrigDocument.createRangeMarker(rangeInsideHost.shiftRight(host.getTextRange().getStartOffset()));
@@ -48,6 +46,13 @@ public class CommonInjectedFileChangesHandler extends BaseInjectedFileChangesHan
       }
       curOffset = origMarker.getEndOffset();
     }
+  }
+
+  @NotNull
+  protected RangeMarker localRangeMarkerFromShred(PsiLanguageInjectionHost.Shred shred) {
+    return myNewDocument.createRangeMarker(
+      shred.getRange().getStartOffset() + shred.getPrefix().length(),
+      shred.getRange().getEndOffset() - shred.getSuffix().length());
   }
 
   @Override
