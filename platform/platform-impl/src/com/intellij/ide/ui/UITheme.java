@@ -132,7 +132,7 @@ public class UITheme {
   }
 
   private static String toColorString(String fillValue, boolean darkTheme) {
-    if (darkTheme && fillValue.startsWith("Action.") && !fillValue.endsWith(".Dark")) {
+    if (darkTheme && fillValue.startsWith("Actions.") && !fillValue.endsWith(".Dark")) {
       fillValue += ".Dark";
     }
     String color = colorPalette.get(fillValue);
