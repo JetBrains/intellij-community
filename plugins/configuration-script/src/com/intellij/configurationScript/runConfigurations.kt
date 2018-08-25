@@ -2,6 +2,7 @@ package com.intellij.configurationScript
 
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.ConfigurationType
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ReflectionUtil
 import org.jetbrains.io.JsonUtil
@@ -68,7 +69,7 @@ fun describeFactories(configurationType: ConfigurationType, definitions: StringB
   val factory = factories[0]
   val optionsClass = factory.optionsClass
   if (optionsClass == null) {
-    LOG.warn("Configuration factory \"${factory.name}\" is not described because options class not defined")
+    LOG.debug { "Configuration factory \"${factory.name}\" is not described because options class not defined" }
 
     definitions.append("""
       "$definitionId": {
@@ -83,13 +84,13 @@ fun describeFactories(configurationType: ConfigurationType, definitions: StringB
   state.buildJsonSchema(stateProperties)
 
   definitions.append("""
-      "$definitionId": {
-        "properties": {
-          ${stateProperties}
-        },
-        "additionalProperties": false
+    "$definitionId": {
+      "properties": {
+        ${stateProperties}
       },
-      """.trimIndent())
+      "additionalProperties": false
+    },
+    """.trimIndent())
 }
 
 // returns null if id is not valid
