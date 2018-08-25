@@ -19,26 +19,16 @@ internal fun report(
   consistent: Collection<String>, errorHandler: Consumer<String>, doNotify: Boolean
 ) {
   log("Skipped $skipped dirs")
-  fun Collection<String>.logIcons() = if (size < 100) joinToString() else size.toString()
-  log("""
-    |dev repo:
-    | added: ${addedByDev.logIcons()}
-    | removed: ${removedByDev.logIcons()}
-    | modified: ${modifiedByDev.logIcons()}
-    |icons repo:
-    | added: ${addedByDesigners.logIcons()}
-    | removed: ${removedByDesigners.logIcons()}
-    | modified: ${modifiedByDesigners.logIcons()}
-  """.trimMargin())
+  fun Collection<String>.logIcons(description: String) = "$size $description${if (size in 1..10) ": ${joinToString()}" else ""}}"
   val report = """
     |$devIcons icons are found in dev repo:
-    | ${addedByDev.size} added
-    | ${removedByDev.size} removed
-    | ${modifiedByDev.size} modified
+    | ${addedByDev.logIcons("added")}
+    | ${removedByDev.logIcons("removed")}
+    | ${modifiedByDev.logIcons("modified")}
     |$icons icons are found in icons repo:
-    | ${addedByDesigners.size} added
-    | ${removedByDesigners.size} removed
-    | ${modifiedByDesigners.size} modified
+    | ${addedByDesigners.logIcons("added")}
+    | ${removedByDesigners.logIcons("removed")}
+    | ${modifiedByDesigners.logIcons("modified")}
     |${consistent.size} consistent icons in both repos
   """.trimMargin()
   log(report)
