@@ -144,16 +144,27 @@ public class UITheme {
 
   private static final Map<String, String> colorPalette = new HashMap<>();
   static {
-    colorPalette.put("Action.Red", "#DB5860");
-    colorPalette.put("Action.Red.Dark", "#C75450");
-    colorPalette.put("Action.Yellow", "#EDA200");
-    colorPalette.put("Action.Yellow.Dark", "#F0A732");
-    colorPalette.put("Action.Green", "#59A869");
-    colorPalette.put("Action.Green.Dark", "#499C54");
-    colorPalette.put("Action.Blue", "#389FD6");
-    colorPalette.put("Action.Blue.Dark", "#3592C4");
-    colorPalette.put("Action.Grey", "#6E6E6E");
-    colorPalette.put("Action.Grey.Dark", "#AFB1B3");
+    colorPalette.put("Actions.Red", "#DB5860");
+    colorPalette.put("Actions.Red.Dark", "#C75450");
+    colorPalette.put("Actions.Yellow", "#EDA200");
+    colorPalette.put("Actions.Yellow.Dark", "#F0A732");
+    colorPalette.put("Actions.Green", "#59A869");
+    colorPalette.put("Actions.Green.Dark", "#499C54");
+    colorPalette.put("Actions.Blue", "#389FD6");
+    colorPalette.put("Actions.Blue.Dark", "#3592C4");
+    colorPalette.put("Actions.Grey", "#6E6E6E");
+    colorPalette.put("Actions.Grey.Dark", "#AFB1B3");
+    colorPalette.put("Objects.Grey", "#9AA7B0");
+    colorPalette.put("Objects.Blue", "#40B6E0");
+    colorPalette.put("Objects.Green", "#62B543");
+    colorPalette.put("Objects.Yellow", "#F4AF3D");
+    colorPalette.put("Objects.YellowDark", "#D9A343");
+    colorPalette.put("Objects.Purple", "#B99BF8");
+    colorPalette.put("Objects.Pink", "#F98B9E");
+    colorPalette.put("Objects.Red", "#F26522");
+    colorPalette.put("Objects.RedStatus", "#E05555");
+    colorPalette.put("Objects.GreenAndroid", "#A4C639");
+    colorPalette.put("Objects.BlackText", "#231F20");
   }
 
   public String getId() {
