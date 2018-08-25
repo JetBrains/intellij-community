@@ -4,7 +4,6 @@ package com.intellij.execution.configurations;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +24,7 @@ public interface ConfigurationType extends PossiblyDumbAware {
    *
    * @return the display name of the configuration type.
    */
-  @Nls
+  @NotNull
   String getDisplayName();
 
   /**
@@ -44,12 +43,11 @@ public interface ConfigurationType extends PossiblyDumbAware {
   Icon getIcon();
 
   /**
-   * Returns the ID of the configuration type. The ID is used to store run configuration settings in a project or workspace file and
+   * The ID of the configuration type. Should be camel-cased without dashes, underscores, spaces and quotation marks.
+   * The ID is used to store run configuration settings in a project or workspace file and
    * must not change between plugin versions.
-   *
-   * @return the configuration type ID.
    */
-  @NonNls @NotNull
+  @NotNull
   String getId();
 
   /**

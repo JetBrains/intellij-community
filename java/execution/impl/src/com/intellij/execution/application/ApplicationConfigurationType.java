@@ -47,6 +47,7 @@ public class ApplicationConfigurationType implements ConfigurationType {
     };
   }
 
+  @NotNull
   @Override
   public String getDisplayName() {
     return ExecutionBundle.message("application.configuration.name");

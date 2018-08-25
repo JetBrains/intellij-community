@@ -57,6 +57,7 @@ public class PluginConfigurationType implements ConfigurationType {
     };
   }
 
+  @NotNull
   @Override
   public String getDisplayName() {
     return DevKitBundle.message("run.configuration.title");

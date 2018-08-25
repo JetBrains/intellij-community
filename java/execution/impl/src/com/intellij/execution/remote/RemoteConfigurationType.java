@@ -32,6 +32,7 @@ public class RemoteConfigurationType implements ConfigurationType {
     };
   }
 
+  @NotNull
   @Override
   public String getDisplayName() {
     return ExecutionBundle.message("remote.debug.configuration.display.name");

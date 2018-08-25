@@ -44,6 +44,7 @@ public class JUnitConfigurationType implements ConfigurationType {
     };
   }
 
+  @NotNull
   @Override
   public String getDisplayName() {
     return ExecutionBundle.message("junit.configuration.display.name");

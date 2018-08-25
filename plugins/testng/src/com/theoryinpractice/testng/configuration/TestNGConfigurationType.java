@@ -66,6 +66,7 @@ public class TestNGConfigurationType implements ConfigurationType {
         }
     }
 
+    @NotNull
     @Override
     public String getDisplayName() {
         return "TestNG";

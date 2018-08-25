@@ -35,6 +35,7 @@ public class PythonConfigurationType implements ConfigurationType {
     }
   }
 
+  @NotNull
   @Override
   public String getDisplayName() {
     return "Python";

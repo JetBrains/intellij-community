@@ -345,6 +345,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       }
     };
 
+    @NotNull
     @Nls
     @Override
     public String getDisplayName() {

@@ -24,6 +24,7 @@ public class RestRunConfigurationType implements ConfigurationType {
 
   private final String myId = "docs";
 
+  @NotNull
   @Override
   public String getDisplayName() {
     return RestBundle.message("runcfg.docutils.display_name");
@@ -62,6 +63,7 @@ public class RestRunConfigurationType implements ConfigurationType {
       myName = name;
     }
 
+    @NotNull
     @Override
     public String getName() {
       return myName;

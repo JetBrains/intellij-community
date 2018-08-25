@@ -6,8 +6,6 @@ import com.intellij.execution.RunManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.IconUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -66,21 +64,23 @@ public abstract class ConfigurationFactory {
    * the method <code>getName</code> instead of <code>myType.getId()</code>.
    * New implementations need to call <code>myType.getId()</code> by default.
    */
-  @NonNls
+  @NotNull
   public String getId() {
     return getName();
   }
 
   /**
-   * Returns the name of the run configuration variant created by this factory.
-   *
-   * @return the name of the run configuration variant created by this factory
+   * The name of the run configuration variant created by this factory.
    */
-  @Nls
+  @NotNull
   public String getName() {
     return myType.getDisplayName();
   }
 
+  /**
+   * @deprecated Use {@link com.intellij.icons.AllIcons.General.Add}
+   */
+  @Deprecated
   public Icon getAddIcon() {
     return IconUtil.getAddIcon();
   }
