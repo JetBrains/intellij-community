@@ -8,6 +8,7 @@ import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.LayeredIcon;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +37,11 @@ public class JavaScratchConfigurationType extends ApplicationConfigurationType{
       @Override
       public void onNewConfigurationCreated(@NotNull RunConfiguration configuration) {
         ((ModuleBasedConfiguration)configuration).onNewConfigurationCreated();
+      }
+
+      @Override
+      public Class<? extends BaseState> getOptionsClass() {
+        return JavaScratchConfigurationOptions.class;
       }
     };
   }

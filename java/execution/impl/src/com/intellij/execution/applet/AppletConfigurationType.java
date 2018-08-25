@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configuration.ConfigurationFactoryEx;
 import com.intellij.execution.configurations.*;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,6 +25,11 @@ public class AppletConfigurationType implements ConfigurationType {
       @Override
       public void onNewConfigurationCreated(@NotNull RunConfiguration configuration) {
         ((ModuleBasedConfiguration)configuration).onNewConfigurationCreated();
+      }
+
+      @Override
+      public Class<? extends BaseState> getOptionsClass() {
+        return AppletConfigurationOptions.class;
       }
     };
   }

@@ -65,6 +65,12 @@ public class RemoteConfigurationType implements ConfigurationType {
   }
 
   @NotNull
+  @Override
+  public String getConfigurationPropertyName() {
+    return "jvmRemote";
+  }
+
+  @NotNull
   public static RemoteConfigurationType getInstance() {
     return ConfigurationTypeUtil.findConfigurationType(RemoteConfigurationType.class);
   }

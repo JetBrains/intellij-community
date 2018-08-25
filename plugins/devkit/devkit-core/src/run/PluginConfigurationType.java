@@ -85,6 +85,12 @@ public class PluginConfigurationType implements ConfigurationType {
   }
 
   @NotNull
+  @Override
+  public String getConfigurationPropertyName() {
+    return "plugin";
+  }
+
+  @NotNull
   private String getVmParameters() {
     if (myVmParameters == null) {
       String vmOptions;

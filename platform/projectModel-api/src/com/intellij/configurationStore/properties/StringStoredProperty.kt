@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore.properties
 
 import com.intellij.openapi.components.BaseState
@@ -10,6 +8,9 @@ import kotlin.reflect.KProperty
 
 internal class NormalizedStringStoredProperty(private val defaultValue: String?) : StoredPropertyBase<String?>() {
   private var value = defaultValue
+
+  override val jsonType: String
+    get() = "string"
 
   override operator fun getValue(thisRef: BaseState, property: KProperty<*>) = value
 

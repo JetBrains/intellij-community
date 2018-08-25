@@ -15,7 +15,6 @@ import javax.swing.*;
  * @see ConfigurationTypeBase
  */
 public interface ConfigurationType extends PossiblyDumbAware {
-
   ExtensionPointName<ConfigurationType> CONFIGURATION_TYPE_EP = ExtensionPointName.create("com.intellij.configurationType");
 
   /**
@@ -49,6 +48,14 @@ public interface ConfigurationType extends PossiblyDumbAware {
    */
   @NotNull
   String getId();
+
+  /**
+   * The name of the configuration type in a configuration file. The same rules as for id. Useful in cases, where id cannot be changed.
+   */
+  @NotNull
+  default String getConfigurationPropertyName() {
+    return getId();
+  }
 
   /**
    * Returns the configuration factories used by this configuration type. Normally each configuration type provides just a single factory.

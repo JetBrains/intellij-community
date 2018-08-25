@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components
 
 import kotlin.properties.ReadWriteProperty
@@ -8,6 +6,8 @@ import kotlin.reflect.KProperty
 
 internal interface StoredProperty {
   var name: String?
+
+  val jsonType: String
 
   // true if changed
   fun setValue(other: StoredProperty): Boolean

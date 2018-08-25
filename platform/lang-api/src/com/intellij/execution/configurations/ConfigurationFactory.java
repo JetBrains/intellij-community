@@ -3,10 +3,12 @@ package com.intellij.execution.configurations;
 
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.RunManager;
+import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -123,5 +125,10 @@ public abstract class ConfigurationFactory {
   @NotNull
   public RunConfigurationSingletonPolicy getSingletonPolicy() {
     return RunConfigurationSingletonPolicy.SINGLE_INSTANCE;
+  }
+
+  @Nullable
+  public Class<? extends BaseState> getOptionsClass() {
+    return null;
   }
 }

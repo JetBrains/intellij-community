@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore.properties
 
 import com.intellij.openapi.components.BaseState
@@ -10,6 +8,9 @@ import com.intellij.openapi.util.ModificationTracker
 import kotlin.reflect.KProperty
 
 internal abstract class ObjectStateStoredPropertyBase<T>(protected var value: T) : StoredPropertyBase<T>() {
+  override val jsonType: String
+    get() = "object"
+
   override operator fun getValue(thisRef: BaseState, property: KProperty<*>): T = value
 
   override fun setValue(thisRef: BaseState, property: KProperty<*>, @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE") newValue: T) {
@@ -39,6 +40,9 @@ internal abstract class ObjectStateStoredPropertyBase<T>(protected var value: T)
 }
 
 internal open class ObjectStoredProperty<T>(private val defaultValue: T) : ObjectStateStoredPropertyBase<T>(defaultValue) {
+  override val jsonType: String
+    get() = if (defaultValue is Boolean) "boolean" else "object"
+
   override fun isEqualToDefault(): Boolean {
     val value = value
     return defaultValue == value || (value as? BaseState)?.isEqualToDefault() ?: false
