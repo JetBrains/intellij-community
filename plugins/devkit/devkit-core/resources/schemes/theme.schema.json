@@ -116,15 +116,7 @@
               "type": "string",
               "pattern": "#[0-9a-fA-F]{6}"
             },
-            "Action.Red.Dark": {
-              "type": "string",
-              "pattern": "#[0-9a-fA-F]{6}"
-            },
             "Action.Yellow": {
-              "type": "string",
-              "pattern": "#[0-9a-fA-F]{6}"
-            },
-            "Action.Yellow.Dark": {
               "type": "string",
               "pattern": "#[0-9a-fA-F]{6}"
             },
@@ -132,23 +124,11 @@
               "type": "string",
               "pattern": "#[0-9a-fA-F]{6}"
             },
-            "Action.Green.Dark": {
-              "type": "string",
-              "pattern": "#[0-9a-fA-F]{6}"
-            },
             "Action.Blue": {
               "type": "string",
               "pattern": "#[0-9a-fA-F]{6}"
             },
-            "Action.Blue.Dark": {
-              "type": "string",
-              "pattern": "#[0-9a-fA-F]{6}"
-            },
             "Action.Grey": {
-              "type": "string",
-              "pattern": "#[0-9a-fA-F]{6}"
-            },
-            "Action.Grey.Dark": {
               "type": "string",
               "pattern": "#[0-9a-fA-F]{6}"
             }

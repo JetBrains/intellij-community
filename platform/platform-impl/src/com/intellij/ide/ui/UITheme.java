@@ -95,7 +95,7 @@ public class UITheme {
         Map colors = (Map)palette;
         Map<String, String> newPalette = new HashMap<>();
         for (Object o : colors.keySet()) {
-          String key = toColorString(o.toString());
+          String key = toColorString(o.toString(), theme.isDark());
           Object v = colors.get(o.toString());
           if (v instanceof String) {
             String value = (String)v;
@@ -131,7 +131,10 @@ public class UITheme {
     return theme;
   }
 
-  private static String toColorString(String fillValue) {
+  private static String toColorString(String fillValue, boolean darkTheme) {
+    if (darkTheme && fillValue.startsWith("Action.") && !fillValue.endsWith(".Dark")) {
+      fillValue += ".Dark";
+    }
     String color = colorPalette.get(fillValue);
     if (color != null) {
       return StringUtil.toLowerCase(color);
