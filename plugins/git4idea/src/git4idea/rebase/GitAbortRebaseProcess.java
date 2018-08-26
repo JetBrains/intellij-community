@@ -97,12 +97,6 @@ class GitAbortRebaseProcess {
     }
   }
 
-  void abortAndRollback() {
-    LOG.info("Abort rebase. " + (myRepositoryToAbort == null ? "Nothing to abort" : getShortRepositoryName(myRepositoryToAbort)) +
-              ". Roots to rollback: " + joinShortNames(myRepositoriesToRollback.keySet()));
-    doAbort(true);
-  }
-
   @NotNull
   private AbortChoice confirmAbort() {
     String title = "Abort Rebase";
