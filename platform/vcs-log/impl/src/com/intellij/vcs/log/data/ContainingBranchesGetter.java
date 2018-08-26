@@ -78,11 +78,7 @@ public class ContainingBranchesGetter {
   private void clearCache() {
     myCache = createCache();
     myTaskExecutor.clear();
-    Map<VirtualFile, ContainedInBranchCondition> conditions = myConditions;
     myConditions = ContainerUtil.newHashMap();
-    for (ContainedInBranchCondition c : conditions.values()) {
-      c.dispose();
-    }
     // re-request containing branches information for the commit user (possibly) currently stays on
     ApplicationManager.getApplication().invokeLater(this::notifyListeners);
   }
@@ -253,7 +249,6 @@ public class ContainingBranchesGetter {
   private static class ContainedInBranchCondition implements Condition<Integer> {
     @NotNull private final Condition<Integer> myCondition;
     @NotNull private final String myBranch;
-    private volatile boolean isDisposed = false;
 
     public ContainedInBranchCondition(@NotNull Condition<Integer> condition, @NotNull String branch) {
       myCondition = condition;
@@ -267,12 +262,7 @@ public class ContainingBranchesGetter {
 
     @Override
     public boolean value(@NotNull Integer commitId) {
-      if (isDisposed) return false;
       return myCondition.value(commitId);
-    }
-
-    public void dispose() {
-      isDisposed = true;
     }
   }
 }
