@@ -51,7 +51,7 @@ public class ContainingBranchesGetter {
   // other fields accessed only from EDT
   @NotNull private final List<Runnable> myLoadingFinishedListeners = ContainerUtil.newArrayList();
   @NotNull private SLRUMap<CommitId, List<String>> myCache = createCache();
-  @NotNull private Map<VirtualFile, ContainedInBranchCondition> myConditions = ContainerUtil.newHashMap();
+  @NotNull private Map<VirtualFile, Condition<Integer>> myConditions = ContainerUtil.newHashMap();
   private int myCurrentBranchesChecksum;
 
   ContainingBranchesGetter(@NotNull VcsLogData logData, @NotNull Disposable parentDisposable) {
@@ -135,7 +135,7 @@ public class ContainingBranchesGetter {
       if (pg instanceof PermanentGraphInfo) {
         //noinspection unchecked
         int nodeId = ((PermanentGraphInfo)pg).getPermanentCommitsInfo().getNodeId(index);
-        if (nodeId < 10000 && canUseGraphForComputation(myLogData.getLogProvider(root)) ) {
+        if (nodeId < 10000 && canUseGraphForComputation(myLogData.getLogProvider(root))) {
           branches = getContainingBranchesSynchronously(root, hash);
         }
         else {
@@ -154,7 +154,7 @@ public class ContainingBranchesGetter {
     DataPack dataPack = myLogData.getDataPack();
     if (dataPack == DataPack.EMPTY) return Conditions.alwaysFalse();
 
-    ContainedInBranchCondition condition = myConditions.get(root);
+    Condition<Integer> condition = myConditions.get(root);
     if (condition == null) {
       String branchName = myLogData.getLogProvider(root).getCurrentBranch(root);
       if (branchName == null) return Conditions.alwaysFalse();
@@ -165,7 +165,7 @@ public class ContainingBranchesGetter {
 
       int branchIndex = myLogData.getCommitIndex(branchRef.getCommitHash(), branchRef.getRoot());
       PermanentGraph<Integer> graph = dataPack.getPermanentGraph();
-      condition = new ContainedInBranchCondition(graph.getContainedInBranchCondition(Collections.singleton(branchIndex)), branchName);
+      condition = graph.getContainedInBranchCondition(Collections.singleton(branchIndex));
       myConditions.put(root, condition);
     }
     return condition;
@@ -243,26 +243,6 @@ public class ContainingBranchesGetter {
       finally {
         sw.report();
       }
-    }
-  }
-
-  private static class ContainedInBranchCondition implements Condition<Integer> {
-    @NotNull private final Condition<Integer> myCondition;
-    @NotNull private final String myBranch;
-
-    public ContainedInBranchCondition(@NotNull Condition<Integer> condition, @NotNull String branch) {
-      myCondition = condition;
-      myBranch = branch;
-    }
-
-    @NotNull
-    public String getBranch() {
-      return myBranch;
-    }
-
-    @Override
-    public boolean value(@NotNull Integer commitId) {
-      return myCondition.value(commitId);
     }
   }
 }
