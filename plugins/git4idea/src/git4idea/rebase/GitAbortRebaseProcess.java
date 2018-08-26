@@ -42,6 +42,7 @@ import java.util.Map;
 import static com.intellij.CommonBundle.getCancelButtonText;
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.dvcs.DvcsUtil.joinShortNames;
+import static com.intellij.openapi.ui.Messages.canShowMacSheetPanel;
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
 import static com.intellij.openapi.vfs.VfsUtil.markDirtyAndRefresh;
 import static com.intellij.openapi.vfs.VfsUtilCore.toVirtualFileArray;
@@ -108,6 +109,10 @@ class GitAbortRebaseProcess {
     if (myRepositoryToAbort != null) {
       if (myRepositoriesToRollback.isEmpty()) {
         String message = "Abort rebase" + GitUtil.mention(myRepositoryToAbort) + "?";
+        if (canShowMacSheetPanel()) {
+          title = message;
+          message = "";
+        }
         int choice = DialogManager.showOkCancelDialog(myProject, message, title, "Abort", getCancelButtonText(), getQuestionIcon());
         if (choice == Messages.OK) {
           return AbortChoice.ABORT;
@@ -117,6 +122,10 @@ class GitAbortRebaseProcess {
         String message = String.format("Abort rebase in %s only or also rollback rebase in %s?",
                                        getShortRepositoryName(myRepositoryToAbort),
                                        joinShortNames(myRepositoriesToRollback.keySet(), 5));
+        if (canShowMacSheetPanel()) {
+          title = message;
+          message = "";
+        }
         int choice = DialogManager.showYesNoCancelDialog(myProject, message, title, "Abort and Rollback", "Abort Only",
                                                          getCancelButtonText(), getQuestionIcon());
         if (choice == Messages.YES) {
