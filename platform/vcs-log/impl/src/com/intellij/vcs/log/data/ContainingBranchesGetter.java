@@ -151,24 +151,28 @@ public class ContainingBranchesGetter {
   public Condition<Integer> getContainedInBranchCondition(@NotNull VirtualFile root) {
     LOG.assertTrue(EventQueue.isDispatchThread());
 
-    DataPack dataPack = myLogData.getDataPack();
-    if (dataPack == DataPack.EMPTY) return Conditions.alwaysFalse();
-
     Condition<Integer> condition = myConditions.get(root);
     if (condition == null) {
-      String branchName = myLogData.getLogProvider(root).getCurrentBranch(root);
-      if (branchName == null) return Conditions.alwaysFalse();
-
-      VcsRef branchRef = ContainerUtil.find(dataPack.getRefsModel().getBranches(),
-                                            vcsRef -> vcsRef.getRoot().equals(root) && vcsRef.getName().equals(branchName));
-      if (branchRef == null) return Conditions.alwaysFalse();
-
-      int branchIndex = myLogData.getCommitIndex(branchRef.getCommitHash(), branchRef.getRoot());
-      PermanentGraph<Integer> graph = dataPack.getPermanentGraph();
-      condition = graph.getContainedInBranchCondition(Collections.singleton(branchIndex));
+      condition = doGetContainedInBranchCondition(root);
       myConditions.put(root, condition);
     }
     return condition;
+  }
+
+  @NotNull
+  private Condition<Integer> doGetContainedInBranchCondition(@NotNull VirtualFile root) {
+    DataPack dataPack = myLogData.getDataPack();
+    if (dataPack == DataPack.EMPTY) return Conditions.alwaysFalse();
+
+    String branchName = myLogData.getLogProvider(root).getCurrentBranch(root);
+    if (branchName == null) return Conditions.alwaysFalse();
+
+    VcsRef branchRef = ContainerUtil.find(dataPack.getRefsModel().getBranches(),
+                                          vcsRef -> vcsRef.getRoot().equals(root) && vcsRef.getName().equals(branchName));
+    if (branchRef == null) return Conditions.alwaysFalse();
+
+    int branchIndex = myLogData.getCommitIndex(branchRef.getCommitHash(), branchRef.getRoot());
+    return dataPack.getPermanentGraph().getContainedInBranchCondition(Collections.singleton(branchIndex));
   }
 
   @NotNull
