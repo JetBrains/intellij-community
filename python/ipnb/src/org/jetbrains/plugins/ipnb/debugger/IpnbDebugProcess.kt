@@ -45,4 +45,18 @@ class IpnbDebugProcess(session: XDebugSession,
     val connectionManager = IpnbConnectionManager.getInstance(project)
     connectionManager.executeCode(codePanel, connectionId, createPydevConnectionCommand(portToConnect))
   }
+
+  private fun updateBpFilenames(): String {
+    val command = StringBuilder()
+    command.append("from pydev_jupyter import pydev_debug_jupyter\n")
+    command.append("pydev_debug_jupyter.update_bp_filenames()\n")
+
+    return command.toString()
+  }
+
+  fun updateFilenames(connectionId: String, codePanel: IpnbCodePanel) {
+    val connectionManager = IpnbConnectionManager.getInstance(project)
+    connectionManager.executeCode(codePanel, connectionId, updateBpFilenames())
+  }
+
 }

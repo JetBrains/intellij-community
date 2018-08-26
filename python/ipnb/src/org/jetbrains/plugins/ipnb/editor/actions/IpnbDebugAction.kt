@@ -29,7 +29,7 @@ class IpnbDebugAction(private val myFileEditor: IpnbFileEditor) : AnAction("Debu
         val selectedCellPanel = myFileEditor.ipnbFilePanel.selectedCellPanel
         if (selectedCellPanel is IpnbCodePanel) {
           myDebugSession = IpnbDebugRunner.createDebugSession(project, filePath, selectedCellPanel)
-          IpnbRunCellAction.runCell(myFileEditor.ipnbFilePanel, false)
+//          IpnbRunCellAction.runCell(myFileEditor.ipnbFilePanel, false)
         }
       }
       else {
@@ -40,6 +40,11 @@ class IpnbDebugAction(private val myFileEditor: IpnbFileEditor) : AnAction("Debu
     else {
       val debugProcess = myDebugSession?.debugProcess
       if (debugProcess is IpnbDebugProcess && debugProcess.isConnected) {
+        val selectedCellPanel = myFileEditor.ipnbFilePanel.selectedCellPanel
+        if (selectedCellPanel is IpnbCodePanel) {
+          debugProcess.updateFilenames(filePath, selectedCellPanel)
+        }
+
         IpnbRunCellAction.runCell(myFileEditor.ipnbFilePanel, false)
       }
       else {

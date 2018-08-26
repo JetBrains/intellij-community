@@ -307,6 +307,9 @@ def process_net_command(py_db, cmd_id, seq, text):
                     expression = None
 
                 if type == 'python-line':
+                    type = 'ipnb-line'
+
+                if type == 'python-line':
                     breakpoint = LineBreakpoint(line, condition, func_name, expression, suspend_policy)
                     breakpoints = py_db.breakpoints
                     file_to_id_to_breakpoint = py_db.file_to_id_to_line_breakpoint

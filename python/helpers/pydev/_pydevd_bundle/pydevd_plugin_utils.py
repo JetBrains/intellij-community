@@ -15,6 +15,13 @@ except:
     jinja2_debug = None
     pydev_log.debug('Unable to load jinja2_debug plugin')
 
+try:
+    from pydevd_plugins import ipnb_debug
+except:
+    ipnb_debug = None
+    pydev_log.debug('Unable to load ipnb_debug plugin')
+
+
 def load_plugins():
     plugins = []
     if django_debug is not None:
@@ -22,6 +29,10 @@ def load_plugins():
 
     if jinja2_debug is not None:
         plugins.append(jinja2_debug)
+
+    if ipnb_debug is not None:
+        plugins.append(ipnb_debug)
+
     return plugins
 
 

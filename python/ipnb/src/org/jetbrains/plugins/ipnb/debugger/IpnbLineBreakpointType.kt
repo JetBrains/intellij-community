@@ -14,7 +14,7 @@ class IpnbLineBreakpointType : PyLineBreakpointType(ID, "Ipnb Line Breakpoint", 
   override fun canPutAt(file: VirtualFile, line: Int, project: Project): Boolean {
     val stoppable = Ref.create(false)
     val document = FileDocumentManager.getInstance().getDocument(file)
-    if (document != null && file.canonicalPath!!.endsWith("code.py")) {
+    if (document != null) {
       lineHasStoppablePsi(project, file, line, PythonFileType.INSTANCE, document, UNSTOPPABLE_ELEMENTS, UNSTOPPABLE_ELEMENT_TYPES, stoppable
       )
     }
