@@ -152,21 +152,23 @@ public class ContainingBranchesGetter {
   }
 
   @NotNull
-  public Condition<Integer> getContainedInBranchCondition(@NotNull final String branchName, @NotNull final VirtualFile root) {
+  public Condition<Integer> getContainedInBranchCondition(@NotNull VirtualFile root) {
     LOG.assertTrue(EventQueue.isDispatchThread());
 
     DataPack dataPack = myLogData.getDataPack();
     if (dataPack == DataPack.EMPTY) return Conditions.alwaysFalse();
 
-    PermanentGraph<Integer> graph = dataPack.getPermanentGraph();
-    VcsLogRefs refs = dataPack.getRefsModel();
+    String branchName = myLogData.getLogProvider(root).getCurrentBranch(root);
+    if (branchName == null) return Conditions.alwaysFalse();
 
     ContainedInBranchCondition condition = myConditions.get(root);
     if (condition == null || !condition.getBranch().equals(branchName)) {
-      VcsRef branchRef = ContainerUtil.find(refs.getBranches(),
+      VcsRef branchRef = ContainerUtil.find(dataPack.getRefsModel().getBranches(),
                                             vcsRef -> vcsRef.getRoot().equals(root) && vcsRef.getName().equals(branchName));
       if (branchRef == null) return Conditions.alwaysFalse();
+
       int branchIndex = myLogData.getCommitIndex(branchRef.getCommitHash(), branchRef.getRoot());
+      PermanentGraph<Integer> graph = dataPack.getPermanentGraph();
       condition = new ContainedInBranchCondition(graph.getContainedInBranchCondition(Collections.singleton(branchIndex)), branchName);
       myConditions.put(root, condition);
     }

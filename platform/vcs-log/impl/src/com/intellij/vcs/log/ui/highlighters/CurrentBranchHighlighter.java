@@ -51,7 +51,7 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
       VcsLogProvider provider = myLogData.getLogProvider(details.getRoot());
       String currentBranch = provider.getCurrentBranch(details.getRoot());
       if (!HEAD.equals(mySingleFilteredBranch) && currentBranch != null && !(currentBranch.equals(mySingleFilteredBranch))) {
-        condition = myLogData.getContainingBranchesGetter().getContainedInBranchCondition(currentBranch, details.getRoot());
+        condition = myLogData.getContainingBranchesGetter().getContainedInBranchCondition(details.getRoot());
         myConditions.put(details.getRoot(), condition);
       }
       else {
