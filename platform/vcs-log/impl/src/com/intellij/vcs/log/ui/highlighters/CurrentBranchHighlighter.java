@@ -24,7 +24,6 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Map;
@@ -36,7 +35,6 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
   @NotNull private final VcsLogUi myLogUi;
   @NotNull private final Map<VirtualFile, Condition<Integer>> myConditions = ContainerUtil.newHashMap();
   @NotNull private final Map<VirtualFile, Boolean> myIsHighlighted = ContainerUtil.newHashMap();
-  @Nullable private String mySingleFilteredBranch;
 
   public CurrentBranchHighlighter(@NotNull VcsLogData logData, @NotNull VcsLogUi logUi) {
     myLogData = logData;
@@ -65,12 +63,12 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
 
   @Override
   public void update(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
-    mySingleFilteredBranch = VcsLogUtil.getSingleFilteredBranch(dataPack.getFilters(), dataPack.getRefs());
+    String singleFilteredBranch = VcsLogUtil.getSingleFilteredBranch(dataPack.getFilters(), dataPack.getRefs());
     myIsHighlighted.clear();
-    boolean isHeadFilter = HEAD.equals(mySingleFilteredBranch);
+    boolean isHeadFilter = HEAD.equals(singleFilteredBranch);
     for (VirtualFile root : dataPack.getLogProviders().keySet()) {
       String currentBranch = dataPack.getLogProviders().get(root).getCurrentBranch(root);
-      myIsHighlighted.put(root, !isHeadFilter && currentBranch != null && !(currentBranch.equals(mySingleFilteredBranch)));
+      myIsHighlighted.put(root, !isHeadFilter && currentBranch != null && !(currentBranch.equals(singleFilteredBranch)));
     }
     myConditions.clear();
   }
