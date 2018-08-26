@@ -35,6 +35,7 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
   @NotNull private final VcsLogData myLogData;
   @NotNull private final VcsLogUi myLogUi;
   @NotNull private final Map<VirtualFile, Condition<Integer>> myConditions = ContainerUtil.newHashMap();
+  @NotNull private final Map<VirtualFile, Boolean> myIsHighlighted = ContainerUtil.newHashMap();
   @Nullable private String mySingleFilteredBranch;
 
   public CurrentBranchHighlighter(@NotNull VcsLogData logData, @NotNull VcsLogUi logUi) {
@@ -48,9 +49,7 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
     if (isSelected || !myLogUi.isHighlighterEnabled(Factory.ID)) return VcsCommitStyle.DEFAULT;
     Condition<Integer> condition = myConditions.get(details.getRoot());
     if (condition == null) {
-      VcsLogProvider provider = myLogData.getLogProvider(details.getRoot());
-      String currentBranch = provider.getCurrentBranch(details.getRoot());
-      if (!HEAD.equals(mySingleFilteredBranch) && currentBranch != null && !(currentBranch.equals(mySingleFilteredBranch))) {
+      if (myIsHighlighted.getOrDefault(details.getRoot(), false)) {
         condition = myLogData.getContainingBranchesGetter().getContainedInBranchCondition(details.getRoot());
         myConditions.put(details.getRoot(), condition);
       }
@@ -67,6 +66,12 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
   @Override
   public void update(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
     mySingleFilteredBranch = VcsLogUtil.getSingleFilteredBranch(dataPack.getFilters(), dataPack.getRefs());
+    myIsHighlighted.clear();
+    boolean isHeadFilter = HEAD.equals(mySingleFilteredBranch);
+    for (VirtualFile root : dataPack.getLogProviders().keySet()) {
+      String currentBranch = dataPack.getLogProviders().get(root).getCurrentBranch(root);
+      myIsHighlighted.put(root, !isHeadFilter && currentBranch != null && !(currentBranch.equals(mySingleFilteredBranch)));
+    }
     myConditions.clear();
   }
 
