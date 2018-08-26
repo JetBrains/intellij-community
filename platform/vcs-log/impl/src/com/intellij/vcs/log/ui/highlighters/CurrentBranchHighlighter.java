@@ -45,7 +45,7 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
     if (isSelected || !myLogUi.isHighlighterEnabled(Factory.ID)) return VcsCommitStyle.DEFAULT;
     if (!myIsHighlighted.getOrDefault(details.getRoot(), false)) return VcsCommitStyle.DEFAULT;
 
-    Condition<Integer> condition = myLogData.getContainingBranchesGetter().getContainedInBranchCondition(details.getRoot());
+    Condition<Integer> condition = myLogData.getContainingBranchesGetter().getContainedInCurrentBranchCondition(details.getRoot());
     if (condition.value(commitId)) {
       return VcsCommitStyleFactory.background(CURRENT_BRANCH_BG);
     }

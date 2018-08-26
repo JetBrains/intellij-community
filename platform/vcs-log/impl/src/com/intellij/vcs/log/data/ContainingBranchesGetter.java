@@ -148,19 +148,19 @@ public class ContainingBranchesGetter {
   }
 
   @NotNull
-  public Condition<Integer> getContainedInBranchCondition(@NotNull VirtualFile root) {
+  public Condition<Integer> getContainedInCurrentBranchCondition(@NotNull VirtualFile root) {
     LOG.assertTrue(EventQueue.isDispatchThread());
 
     Condition<Integer> condition = myConditions.get(root);
     if (condition == null) {
-      condition = doGetContainedInBranchCondition(root);
+      condition = doGetContainedInCurrentBranchCondition(root);
       myConditions.put(root, condition);
     }
     return condition;
   }
 
   @NotNull
-  private Condition<Integer> doGetContainedInBranchCondition(@NotNull VirtualFile root) {
+  private Condition<Integer> doGetContainedInCurrentBranchCondition(@NotNull VirtualFile root) {
     DataPack dataPack = myLogData.getDataPack();
     if (dataPack == DataPack.EMPTY) return Conditions.alwaysFalse();
 
