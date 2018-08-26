@@ -41,6 +41,7 @@ import java.util.Map;
 
 import static com.intellij.CommonBundle.getCancelButtonText;
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
+import static com.intellij.dvcs.DvcsUtil.joinShortNames;
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
 import static com.intellij.openapi.vfs.VfsUtil.markDirtyAndRefresh;
 import static com.intellij.openapi.vfs.VfsUtilCore.toVirtualFileArray;
@@ -82,7 +83,7 @@ class GitAbortRebaseProcess {
 
   void abortWithConfirmation() {
     LOG.info("Abort rebase. " + (myRepositoryToAbort == null ? "Nothing to abort" : getShortRepositoryName(myRepositoryToAbort)) +
-              ". Roots to rollback: " + DvcsUtil.joinShortNames(myRepositoriesToRollback.keySet()));
+              ". Roots to rollback: " + joinShortNames(myRepositoriesToRollback.keySet()));
     final Ref<AbortChoice> ref = Ref.create();
     ApplicationManager.getApplication().invokeAndWait(() -> ref.set(confirmAbort()));
 
@@ -97,7 +98,7 @@ class GitAbortRebaseProcess {
 
   void abortAndRollback() {
     LOG.info("Abort rebase. " + (myRepositoryToAbort == null ? "Nothing to abort" : getShortRepositoryName(myRepositoryToAbort)) +
-              ". Roots to rollback: " + DvcsUtil.joinShortNames(myRepositoriesToRollback.keySet()));
+              ". Roots to rollback: " + joinShortNames(myRepositoriesToRollback.keySet()));
     doAbort(true);
   }
 
@@ -106,16 +107,17 @@ class GitAbortRebaseProcess {
     String title = "Abort Rebase";
     if (myRepositoryToAbort != null) {
       if (myRepositoriesToRollback.isEmpty()) {
-        String message = "Are you sure you want to abort rebase" + GitUtil.mention(myRepositoryToAbort) + "?";
+        String message = "Abort rebase" + GitUtil.mention(myRepositoryToAbort) + "?";
         int choice = DialogManager.showOkCancelDialog(myProject, message, title, "Abort", getCancelButtonText(), getQuestionIcon());
         if (choice == Messages.OK) {
           return AbortChoice.ABORT;
         }
       }
       else {
-        String message = "Do you want just to abort rebase" + GitUtil.mention(myRepositoryToAbort) + ",\n" +
-                         "or also rollback the successful rebase" + GitUtil.mention(myRepositoriesToRollback.keySet()) + "?";
-        int choice = DialogManager.showYesNoCancelDialog(myProject, message, title, "Abort & Rollback", "Abort",
+        String message = String.format("Abort rebase in %s only or also rollback rebase in %s?",
+                                       getShortRepositoryName(myRepositoryToAbort),
+                                       joinShortNames(myRepositoriesToRollback.keySet(), 5));
+        int choice = DialogManager.showYesNoCancelDialog(myProject, message, title, "Abort and Rollback", "Abort Only",
                                                          getCancelButtonText(), getQuestionIcon());
         if (choice == Messages.YES) {
           return AbortChoice.ROLLBACK_AND_ABORT;
