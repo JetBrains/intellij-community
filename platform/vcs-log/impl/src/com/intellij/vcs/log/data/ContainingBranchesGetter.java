@@ -158,11 +158,11 @@ public class ContainingBranchesGetter {
     DataPack dataPack = myLogData.getDataPack();
     if (dataPack == DataPack.EMPTY) return Conditions.alwaysFalse();
 
-    String branchName = myLogData.getLogProvider(root).getCurrentBranch(root);
-    if (branchName == null) return Conditions.alwaysFalse();
-
     ContainedInBranchCondition condition = myConditions.get(root);
-    if (condition == null || !condition.getBranch().equals(branchName)) {
+    if (condition == null) {
+      String branchName = myLogData.getLogProvider(root).getCurrentBranch(root);
+      if (branchName == null) return Conditions.alwaysFalse();
+
       VcsRef branchRef = ContainerUtil.find(dataPack.getRefsModel().getBranches(),
                                             vcsRef -> vcsRef.getRoot().equals(root) && vcsRef.getName().equals(branchName));
       if (branchRef == null) return Conditions.alwaysFalse();

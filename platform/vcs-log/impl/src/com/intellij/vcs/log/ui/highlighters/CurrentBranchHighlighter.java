@@ -16,7 +16,6 @@
 package com.intellij.vcs.log.ui.highlighters;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtil;
@@ -33,7 +32,6 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
   private static final String HEAD = "HEAD";
   @NotNull private final VcsLogData myLogData;
   @NotNull private final VcsLogUi myLogUi;
-  @NotNull private final Map<VirtualFile, Condition<Integer>> myConditions = ContainerUtil.newHashMap();
   @NotNull private final Map<VirtualFile, Boolean> myIsHighlighted = ContainerUtil.newHashMap();
 
   public CurrentBranchHighlighter(@NotNull VcsLogData logData, @NotNull VcsLogUi logUi) {
@@ -45,17 +43,10 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
   @Override
   public VcsCommitStyle getStyle(int commitId, @NotNull VcsShortCommitDetails details, boolean isSelected) {
     if (isSelected || !myLogUi.isHighlighterEnabled(Factory.ID)) return VcsCommitStyle.DEFAULT;
-    Condition<Integer> condition = myConditions.get(details.getRoot());
-    if (condition == null) {
-      if (myIsHighlighted.getOrDefault(details.getRoot(), false)) {
-        condition = myLogData.getContainingBranchesGetter().getContainedInBranchCondition(details.getRoot());
-        myConditions.put(details.getRoot(), condition);
-      }
-      else {
-        condition = Conditions.alwaysFalse();
-      }
-    }
-    if (condition != null && condition.value(commitId)) {
+    if (!myIsHighlighted.getOrDefault(details.getRoot(), false)) return VcsCommitStyle.DEFAULT;
+
+    Condition<Integer> condition = myLogData.getContainingBranchesGetter().getContainedInBranchCondition(details.getRoot());
+    if (condition.value(commitId)) {
       return VcsCommitStyleFactory.background(CURRENT_BRANCH_BG);
     }
     return VcsCommitStyle.DEFAULT;
@@ -70,7 +61,6 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
       String currentBranch = dataPack.getLogProviders().get(root).getCurrentBranch(root);
       myIsHighlighted.put(root, !isHeadFilter && currentBranch != null && !(currentBranch.equals(singleFilteredBranch)));
     }
-    myConditions.clear();
   }
 
   public static class Factory implements VcsLogHighlighterFactory {
