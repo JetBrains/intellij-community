@@ -406,8 +406,10 @@ public class RedundantCastUtil {
                 LOG.assertTrue(targetType != null);
                 //target type is detected by method call
                 //check that both sides are fine with that
-                if (targetType.isAssignableFrom(((PsiConditionalExpression)newArg).getThenExpression().getType()) && 
-                    targetType.isAssignableFrom(((PsiConditionalExpression)newArg).getElseExpression().getType())) {
+                PsiType thenType = ((PsiConditionalExpression)newArg).getThenExpression().getType();
+                PsiType elseType = ((PsiConditionalExpression)newArg).getElseExpression().getType();
+                if (thenType != null && targetType.isAssignableFrom(thenType) &&
+                    elseType != null && targetType.isAssignableFrom(elseType)) {
                   addToResults(cast);
                 }
               }
