@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsOutgoingChangesProvider;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.ex.PartialCommitHelper;
 import com.intellij.openapi.vcs.impl.PartialChangesUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BeforeAfter;
@@ -63,7 +64,8 @@ public class IdeaTextPatchBuilder {
       List<String> changelistIds = ContainerUtil.map(partialChanges, ChangeListChange::getChangeListId);
       Change change = partialChanges.get(0).getChange();
 
-      String actualText = tracker.getPartiallyAppliedContent(Side.LEFT, changelistIds);
+      PartialCommitHelper helper = tracker.handlePartialCommit(Side.LEFT, changelistIds);
+      String actualText = helper.getContent();
 
       result.add(new BeforeAfter<>(convertRevision(change.getBeforeRevision(), null, provider),
                                    convertRevision(change.getAfterRevision(), actualText, provider)));

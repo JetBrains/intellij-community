@@ -61,7 +61,6 @@ interface PartialLocalLineStatusTracker : LineStatusTracker<LocalRange> {
 
   fun hasPartialChangesToCommit(): Boolean
 
-  fun getPartiallyAppliedContent(side: Side, changelistIds: List<String>): String
   fun handlePartialCommit(side: Side, changelistIds: List<String>): PartialCommitHelper
   fun rollbackChangelistChanges(changelistsIds: List<String>, rollbackRangesExcludedFromCommit: Boolean)
 
@@ -493,14 +492,6 @@ class ChangelistsLocalLineStatusTracker(project: Project,
   override fun hasPartialChangesToCommit(): Boolean {
     return documentTracker.readLock {
       affectedChangeLists.size > 1 || blocks.any { it.excludedFromCommit }
-    }
-  }
-
-  override fun getPartiallyAppliedContent(side: Side, changelistIds: List<String>): String {
-    return runReadAction {
-      val markers = changelistIds.mapTo(HashSet()) { ChangeListMarker(it) }
-      val toCommitCondition: (Block) -> Boolean = { markers.contains(it.marker) && !it.excludedFromCommit }
-      documentTracker.getContentWithPartiallyAppliedBlocks(side, toCommitCondition)
     }
   }
 
