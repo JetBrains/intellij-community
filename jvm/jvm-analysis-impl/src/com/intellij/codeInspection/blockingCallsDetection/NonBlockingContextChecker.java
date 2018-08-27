@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Determines if passed element is inside code fragment where thread should not be blocked
+ * Determines if passed element is inside code fragment where thread should not be blocked.
  * <p>
  * Frameworks could implement this EP to provide information that in some contexts the execution thread should not be blocked.
  *
