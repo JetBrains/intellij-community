@@ -24,7 +24,6 @@ import com.jetbrains.python.pyi.PyiFile
 private const val STUBS_SUFFIX = "-stubs"
 private val STUB_PACKAGE_KEY = Key<Boolean>("PY_STUB_PACKAGE")
 private val INLINE_PACKAGE_KEY = Key<Boolean>("PY_INLINE_PACKAGE")
-private val PEP_561_KEY = Key<Boolean>("PY_PEP_561_KEY")
 
 /**
  * If [name] argument points to element in stub package,
@@ -134,7 +133,7 @@ private fun isNamespacePackage(element: PsiElement): Boolean {
 private fun resolvedElementPriority(element: PsiElement, module: Module?) = when {
   isNamespacePackage(element) -> Priority.NAMESPACE_PACKAGE
   isUserFile(element, module) -> if (pyi(element)) Priority.USER_STUB else Priority.USER_CODE
-  isInStubPackage(element, module) -> Priority.STUB_PACKAGE
+  isInStubPackage(element) -> Priority.STUB_PACKAGE
   isInTypeShed(element) -> Priority.TYPESHED
   isInInlinePackage(element, module) -> Priority.INLINE_PACKAGE
   else -> Priority.OTHER
@@ -143,14 +142,12 @@ private fun resolvedElementPriority(element: PsiElement, module: Module?) = when
 private fun isUserFile(element: PsiElement, module: Module?) =
   module != null &&
   element is PsiFileSystemItem &&
-  element.virtualFile.let {
-    it != null && ModuleUtilCore.moduleContainsFile(module, it, false)
-  }
+  element.virtualFile.let { it != null && ModuleUtilCore.moduleContainsFile(module, it, false) }
 
 /**
  * See [replaceOrUniteWithStubPackage] and [transferStubPackageMarker].
  */
-private fun isInStubPackage(element: PsiElement, module: Module?) = element.getUserData(STUB_PACKAGE_KEY) == true && isPEP561Enabled(module)
+private fun isInStubPackage(element: PsiElement) = element.getUserData(STUB_PACKAGE_KEY) == true
 
 private fun isInTypeShed(element: PsiElement) =
   pyi(element) && (element as? PsiFileSystemItem)?.virtualFile.let { it != null && PyTypeShed.isInside(it) }
@@ -160,31 +157,17 @@ private fun isInTypeShed(element: PsiElement) =
  * Value is cached in element's user data.
  */
 private fun isInInlinePackage(element: PsiElement, module: Module?): Boolean {
+  if (module == null) return false
+
   val cached = element.getUserData(INLINE_PACKAGE_KEY)
   if (cached != null) return cached
 
   val result = !pyi(element) &&
                (element is PyFile || PyUtil.turnDirIntoInit(element) is PyFile) &&
-               isPEP561Enabled(module) &&
+               PyUtil.getLanguageLevelForModule(module).isAtLeast(LanguageLevel.PYTHON37) &&
                getPyTyped(element) != null
 
   element.putUserData(INLINE_PACKAGE_KEY, result)
-  return result
-}
-
-/**
- * See [https://www.python.org/dev/peps/pep-0561/].
- * Value is cached in module's user data.
- */
-private fun isPEP561Enabled(module: Module?): Boolean {
-  if (module == null) return false
-
-  val cached = module.getUserData(PEP_561_KEY)
-  if (cached != null) return cached
-
-  val result = PyUtil.getLanguageLevelForModule(module).isAtLeast(LanguageLevel.PYTHON37)
-
-  module.putUserData(PEP_561_KEY, result)
   return result
 }
 
