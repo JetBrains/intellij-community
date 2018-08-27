@@ -132,11 +132,6 @@ class PaletteListPopupStep implements ListPopupStep<ComponentItem>, SpeedSearchF
   }
 
   @Override
-  public boolean canBeHidden(final ComponentItem value) {
-    return true;
-  }
-
-  @Override
   public String getIndexedString(final ComponentItem value) {
     if (value.isAnyComponent()) {
       return "";

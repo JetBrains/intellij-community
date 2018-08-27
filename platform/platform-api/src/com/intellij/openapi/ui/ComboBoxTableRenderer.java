@@ -344,11 +344,6 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     }
 
     @Override
-    public boolean canBeHidden(T value) {
-      return true;
-    }
-
-    @Override
     public String getIndexedString(T value) {
       return getTextFor(value);
     }
