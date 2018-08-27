@@ -8,7 +8,7 @@ import com.intellij.lang.Language;
  */
 public class YouTrackLanguage extends Language implements DependentLanguage {
 
-  public static YouTrackLanguage INSTANCE = new YouTrackLanguage();
+  public final static YouTrackLanguage INSTANCE = new YouTrackLanguage();
 
   private YouTrackLanguage() {
     super("YouTrack");
