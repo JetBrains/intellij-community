@@ -118,7 +118,10 @@ public class ExpressionParsing extends Parsing {
 
   private void parseFormattedStringNode() {
     final PsiBuilder builder = myContext.getBuilder();
-    if (builder.getTokenType() == PyTokenTypes.FSTRING_START) {
+    if (atToken(PyTokenTypes.FSTRING_START)) {
+      final String prefixThenQuotes = builder.getTokenText();
+      assert prefixThenQuotes != null;
+      final String openingQuotes = prefixThenQuotes.replaceFirst("^[UuBbCcRrFf]*", "");
       final PsiBuilder.Marker marker = builder.mark();
       nextToken();
       while (true) {
@@ -128,7 +131,14 @@ public class ExpressionParsing extends Parsing {
         else if (atToken(PyTokenTypes.FSTRING_FRAGMENT_START)) {
           parseFStringFragment();
         }
-        else if (matchToken(PyTokenTypes.FSTRING_END)) {
+        else if (atToken(PyTokenTypes.FSTRING_END)) {
+          if (builder.getTokenText().equals(openingQuotes)) {
+            nextToken();
+          }
+          // Can be the end of an enclosing f-string, so leave it in the stream
+          else {
+            builder.mark().error("Expected " + openingQuotes);
+          }
           break;
         }
         else {
