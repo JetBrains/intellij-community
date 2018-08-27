@@ -869,6 +869,12 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
     return allSettings.firstOrNull { it.configuration === configuration } ?: findConfigurationByName(configuration.name)
   }
 
+  override fun isTemplate(configuration: RunConfiguration): Boolean {
+    lock.read {
+      return templateIdToConfiguration.values.any { it.configuration === configuration }
+    }
+  }
+
   override fun <T : BeforeRunTask<*>> getBeforeRunTasks(settings: RunConfiguration, taskProviderId: Key<T>): List<T> {
     if (settings is WrappingRunConfiguration<*>) {
       return getBeforeRunTasks(settings.peer, taskProviderId)
