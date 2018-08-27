@@ -260,7 +260,9 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
       actions.add(new SelectNoneAction());
     }
     actions.add(getCancelAction());
-    actions.add(getHelpAction());
+    if (getHelpId() != null) {
+      actions.add(getHelpAction());
+    }
     return actions.toArray(new Action[0]);
   }
 
