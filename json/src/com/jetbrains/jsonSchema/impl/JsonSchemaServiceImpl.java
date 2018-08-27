@@ -366,7 +366,12 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   @Override
   public boolean isApplicableToFile(@Nullable VirtualFile file) {
     if (file == null) return false;
-    return Arrays.stream(JsonSchemaEnabler.EXTENSION_POINT_NAME.getExtensions()).anyMatch(e -> e.isEnabledForFile(file));
+    for (JsonSchemaEnabler e : JsonSchemaEnabler.EXTENSION_POINT_NAME.getExtensionList()) {
+      if (e.isEnabledForFile(file)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static class MyState {
