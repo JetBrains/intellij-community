@@ -76,12 +76,7 @@ public class DataManagerImpl extends DataManager {
       if (dataRule != null) {
         final Set<String> ids = alreadyComputedIds == null ? new THashSet<>() : alreadyComputedIds;
         ids.add(dataId);
-        data = dataRule.getData(new DataProvider() {
-          @Override
-          public Object getData(@NotNull String dataId) {
-            return getDataFromProvider(provider, dataId, ids);
-          }
-        });
+        data = dataRule.getData(id -> getDataFromProvider(provider, id, ids));
 
         if (data != null) return validated(data, dataId, provider);
       }
@@ -118,18 +113,7 @@ public class DataManagerImpl extends DataManager {
 
     final GetDataRule plainRule = getRuleFromMap(AnActionEvent.uninjectedId(dataId));
     if (plainRule != null) {
-      return new GetDataRule() {
-        @Override
-        public Object getData(final DataProvider dataProvider) {
-          return plainRule.getData(new DataProvider() {
-            @Override
-            @Nullable
-            public Object getData(@NotNull @NonNls String dataId) {
-              return dataProvider.getData(AnActionEvent.injectedId(dataId));
-            }
-          });
-        }
-      };
+      return dataProvider -> plainRule.getData(id -> dataProvider.getData(AnActionEvent.injectedId(id)));
     }
 
     return null;
@@ -345,7 +329,6 @@ public class DataManagerImpl extends DataManager {
 
     @Override
     public Object getData(@NotNull String dataId) {
-      if (dataId == null) return null;
       int currentEventCount = IdeEventQueue.getInstance().getEventCount();
       if (myEventCount != -1 && myEventCount != currentEventCount) {
         LOG.error("cannot share data context between Swing events; initial event count = " + myEventCount + "; current event count = " +
