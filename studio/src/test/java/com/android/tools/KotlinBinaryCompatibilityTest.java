@@ -35,7 +35,7 @@ public class KotlinBinaryCompatibilityTest {
     ProcessBuilder process = new ProcessBuilder(
       System.getProperty("java.home") + "/bin/java",
       "-Dplugin.verifier.home.dir=" + tmpDir.getPath(),
-      "-jar", TestUtils.getWorkspaceFile("prebuilts/tools/common/intellij-plugin-verifier/verifier-all.jar").getPath(),
+      "-jar", TestUtils.getWorkspaceFile("prebuilts/tools/common/intellij-plugin-verifier/verifier-cli-1.183-all.jar").getPath(),
       "-ignored-problems", TestUtils.getWorkspaceFile("tools/idea/studio/kotlin_known_problems.txt").getPath(),
       "-verification-reports-dir", TestUtils.getTestOutputDir().getPath(),
       "-runtime-dir", tmpDir.getPath() + "/android-studio/jre",
@@ -50,8 +50,10 @@ public class KotlinBinaryCompatibilityTest {
     assertWithMessage("should be exactly one output file").that(outputDirs).hasLength(1);
 
     String productName = Files.readFirstLine(new File(tmpDir.getPath(), "/android-studio/build.txt"), Charsets.UTF_8);
-    assertAbout(FileSubject.FACTORY).that(new File(outputDirs[0], productName + "/plugins/Kotlin/verdict.txt")).exists();
-    return new File(outputDirs[0], productName + "/plugins/Kotlin/problems.txt");
+    File kotlinDir = new File(outputDirs[0], productName + "/plugins/org.jetbrains.kotlin/").listFiles()[0];
+
+    assertAbout(FileSubject.FACTORY).that(new File(kotlinDir, "verification-verdict.txt")).exists();
+    return new File(kotlinDir, "compatibility-problems.txt");
   }
 
   private static void extract(File studioZip, File tmpDir) throws IOException, ArchiveException {

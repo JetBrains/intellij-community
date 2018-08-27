@@ -38,11 +38,10 @@ java_test(
     srcs = ["src/test/java/com/android/tools/KotlinBinaryCompatibilityTest.java"],
     data = [
         "kotlin_known_problems.txt",
-        "//prebuilts/tools/common/intellij-plugin-verifier:verifier-all.jar",
+        "//prebuilts/tools/common/intellij-plugin-verifier:verifier-cli-1.183-all.jar",
         "//tools/idea:android-studio.tar.gz",
     ],
     tags = [
-        "manual",  # b/113264673
         "no_test_mac",  # TODO: we run out of file handles on Mac, double-check whether 'sysctl kern.maxfiles' is sane
     ],
     deps = [
