@@ -75,12 +75,12 @@ TRIPLE_APOS_LITERAL = {THREE_APOS} {APOS_STRING_CHAR}* {THREE_APOS}?
 
 FSTRING_PREFIX = [UuBbCcRr]{0,3}[fF][UuBbCcRr]{0,3}
 FSTRING_START = {FSTRING_PREFIX} (\"\"\"|'''|\"|')
-FSTRING_END = (\"\"\"|'''|\"|')
+FSTRING_QUOTES = (\"{1,3}|'{1,3})
 FSTRING_ESCAPED_LBRACE = "{{"
 // TODO report it in annotation
 //FSTRING_ESCAPED_RBRACE = "}}"
-FSTRING_TEXT = ([^\\\'\r\n{] | {ESCAPE_SEQUENCE} | {FSTRING_ESCAPED_LBRACE} | (\\[\r\n]))+
-FSTRING_FORMAT_TEXT = ([^\\\'\r\n{}] | (\\[\r\n]))+
+FSTRING_TEXT_NO_QUOTES = ([^\\\'\"\r\n{] | {ESCAPE_SEQUENCE} | {FSTRING_ESCAPED_LBRACE} | (\\[\r\n]))+
+FSTRING_FORMAT_TEXT_NO_QUOTES = ([^\\\'\r\n{}] | (\\[\r\n]))+
 FSTRING_FRAGMENT_TYPE_CONVERSION = "!" [^=:'\"} \t\r\n]*
 
 %state PENDING_DOCSTRING
@@ -92,15 +92,17 @@ FSTRING_FRAGMENT_TYPE_CONVERSION = "!" [^=:'\"} \t\r\n]*
 static final class FragmentState {
   private final int oldState;
   private final int oldBraceBalance;
+  private final FStringState containingFString;
 
-  FragmentState(int state, int braceBalance) {
+  FragmentState(int state, int braceBalance, FStringState fStringState) {
     oldState = state;
     oldBraceBalance = braceBalance;
+    containingFString = fStringState;
   }
 }
 
 void pushFStringFragment() {
-  fragmentStates.push(new FragmentState(yystate(), braceBalance));
+  fragmentStates.push(new FragmentState(yystate(), braceBalance, fStringStates.peek()));
   braceBalance = 0;
   yybegin(FSTRING_FRAGMENT);
 }
@@ -128,9 +130,24 @@ void pushFString() {
   yybegin(FSTRING);
 }
 
-void popFString() {
-  final FStringState state = fStringStates.pop();
-  yybegin(state.oldState);
+boolean hasMatchingFStringStart(String endQuotes){
+  for(int i = fStringStates.size() - 1; i >= 0; i--){
+    final FStringState state = fStringStates.get(i);
+    if (endQuotes.startsWith(state.quotes)){
+      final int nestedNum = fStringStates.size() - i;
+      for(int j = 0; j < nestedNum; j++) {
+        final FStringState removedFString = fStringStates.pop();
+        while (!fragmentStates.isEmpty() && fragmentStates.peek().containingFString == removedFString) {
+          fragmentStates.pop();
+        }
+      }
+      yybegin(state.oldState);
+      final int unmatchedQuotes = endQuotes.length() - state.quotes.length();
+      yypushback(unmatchedQuotes);
+      return true;
+    }
+  }
+  return false;
 }
 
 private final Stack<FragmentState> fragmentStates = new Stack<>();
@@ -156,8 +173,8 @@ return yylength()-s.length();
 "\\"                        { return PyTokenTypes.BACKSLASH; }
 
 <FSTRING> {
-  {FSTRING_TEXT} { return PyTokenTypes.FSTRING_TEXT; }
-  {FSTRING_END} { popFString(); return PyTokenTypes.FSTRING_END; }
+  {FSTRING_TEXT_NO_QUOTES} { return PyTokenTypes.FSTRING_TEXT; }
+  {FSTRING_QUOTES} { return hasMatchingFStringStart(yytext().toString()) ? PyTokenTypes.FSTRING_END : PyTokenTypes.FSTRING_TEXT; }
   "{" { pushFStringFragment(); return PyTokenTypes.FSTRING_FRAGMENT_START; }
 }
 
@@ -176,17 +193,19 @@ return yylength()-s.length();
         
   ":" { if (braceBalance == 0) { yybegin(FSTRING_FRAGMENT_FORMAT); return PyTokenTypes.FSTRING_FRAGMENT_FORMAT_START; }
         else { return PyTokenTypes.COLON; } }
-        
-  {FSTRING_END} { popFStringFragment(); popFString(); return PyTokenTypes.FSTRING_END; }
+
+  // Should be impossible inside expression fragments: any quotes should be matched as a string literal there
+  {FSTRING_QUOTES} { return hasMatchingFStringStart(yytext().toString()) ? PyTokenTypes.FSTRING_END : PyTokenTypes.FSTRING_TEXT; }
 }
 
 <FSTRING_FRAGMENT_FORMAT> {
-  {FSTRING_FORMAT_TEXT} { return PyTokenTypes.FSTRING_TEXT; }
+  {FSTRING_FORMAT_TEXT_NO_QUOTES} { return PyTokenTypes.FSTRING_TEXT; }
   "{" { pushFStringFragment(); return PyTokenTypes.FSTRING_FRAGMENT_START; }
   "}" { if (braceBalance == 0) { popFStringFragment(); return PyTokenTypes.FSTRING_FRAGMENT_END; }
         else { braceBalance--; return PyTokenTypes.RBRACE; } }
-        
-  {FSTRING_END} { popFStringFragment(); popFString(); return PyTokenTypes.FSTRING_END; }
+
+  // format part of a fragment can contain quotes
+  {FSTRING_QUOTES} { return hasMatchingFStringStart(yytext().toString())? PyTokenTypes.FSTRING_END : PyTokenTypes.FSTRING_TEXT; }
 }
 
 <YYINITIAL> {
