@@ -66,14 +66,19 @@ public class IdeaGateway {
   public boolean isVersioned(@NotNull VirtualFile f, boolean shouldBeInContent) {
     if (!f.isInLocalFileSystem()) return false;
 
-    if (!f.isDirectory() && StringUtil.endsWith(f.getNameSequence(), ".class")) return false;
-
+    if (!f.isDirectory()) {
+      CharSequence fileName = f.getNameSequence();
+      if (StringUtil.equals(fileName, "workspace.xml") || StringUtil.endsWith(fileName, ".iws")
+          || StringUtil.endsWith(fileName, ".class")) {
+        return false;
+      }
+    }
+    
     VersionedFilterData versionedFilterData = getVersionedFilterData();
 
     boolean isInContent = false;
     int numberOfOpenProjects = versionedFilterData.myOpenedProjects.size();
     for (int i = 0; i < numberOfOpenProjects; ++i) {
-      if (f.equals(versionedFilterData.myWorkspaceFiles.get(i))) return false;
       ProjectFileIndex index = versionedFilterData.myProjectFileIndices.get(i);
 
       if (index.isExcluded(f)) return false;
@@ -134,7 +139,6 @@ public class IdeaGateway {
   private static class VersionedFilterData {
     final List<Project> myOpenedProjects = new ArrayList<>();
     final List<ProjectFileIndex> myProjectFileIndices = new ArrayList<>();
-    final List<VirtualFile> myWorkspaceFiles = new ArrayList<>();
 
     VersionedFilterData() {
       Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
@@ -143,7 +147,6 @@ public class IdeaGateway {
         if (each.isDefault()) continue;
         if (!each.isInitialized()) continue;
 
-        myWorkspaceFiles.add(each.getWorkspaceFile());
         myOpenedProjects.add(each);
         myProjectFileIndices.add(ProjectRootManager.getInstance(each).getFileIndex());
       }
