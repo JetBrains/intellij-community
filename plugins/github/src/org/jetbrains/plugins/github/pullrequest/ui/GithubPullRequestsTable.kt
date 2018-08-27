@@ -23,6 +23,7 @@ class GithubPullRequestsTable(model: GithubPullRequestsTableModel)
     setShowVerticalLines(false)
     setShowHorizontalLines(false)
     setShowColumns(false)
+    columnSelectionAllowed = false
     intercellSpacing = JBUI.emptySize()
     setTableHeader(InvisibleResizableHeader())
     selectionModel.selectionMode = ListSelectionModel.SINGLE_SELECTION
@@ -50,7 +51,7 @@ class GithubPullRequestsTable(model: GithubPullRequestsTableModel)
       }
 
     private abstract class PullRequestsTableCellRenderer(private val strikeOutOnClosed: Boolean = false) : ColoredTableCellRenderer() {
-      override fun customizeCellRenderer(table: JTable?, value: Any?, selected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
+      override fun customizeCellRenderer(table: JTable, value: Any?, selected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
         value as GithubSearchedIssue
         val textAttributes = if (value.state == GithubIssueState.closed) {
           SimpleTextAttributes(if (strikeOutOnClosed) SimpleTextAttributes.STYLE_STRIKEOUT else SimpleTextAttributes.STYLE_PLAIN,
@@ -60,6 +61,11 @@ class GithubPullRequestsTable(model: GithubPullRequestsTableModel)
           SimpleTextAttributes.REGULAR_ATTRIBUTES
         }
         append(getTextualValue(value), textAttributes)
+        border = null
+        background = if (selected)
+          if (table.hasFocus()) UIUtil.getListSelectionBackground() else UIUtil.getListUnfocusedSelectionBackground()
+        else
+          UIUtil.getListBackground()
       }
 
       protected abstract fun getTextualValue(pullRequest: GithubSearchedIssue): String
