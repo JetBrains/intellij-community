@@ -1,0 +1,19 @@
+PyFile:FStringTerminatedByQuoteInsideStringLiteral.py
+  PyAssignmentStatement
+    PyTargetExpression: s
+      PsiElement(Py:IDENTIFIER)('s')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PyStringLiteralExpression: }baz'
+      PyFormattedStringNode
+        PsiElement(Py:FSTRING_START)('f'')
+        PsiElement(Py:FSTRING_TEXT)('foo')
+        PyFStringFragment
+          PsiElement(Py:FSTRING_FRAGMENT_START)('{')
+          PyStringLiteralExpression: 
+            PsiElement(Py:SINGLE_QUOTED_STRING)('"')
+          PsiErrorElement:type conversion, : or } expected
+            <empty list>
+        PsiElement(Py:FSTRING_END)(''')
+      PsiElement(Py:SINGLE_QUOTED_STRING)('"}baz'')

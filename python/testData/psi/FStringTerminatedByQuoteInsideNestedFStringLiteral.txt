@@ -1,0 +1,37 @@
+PyFile:FStringTerminatedByQuoteInsideNestedFStringLiteral.py
+  PyAssignmentStatement
+    PyTargetExpression: s
+      PsiElement(Py:IDENTIFIER)('s')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PyStringLiteralExpression: }
+      PyFormattedStringNode
+        PsiElement(Py:FSTRING_START)('f'')
+        PyFStringFragment
+          PsiElement(Py:FSTRING_FRAGMENT_START)('{')
+          PyStringLiteralExpression: 
+            PyFormattedStringNode
+              PsiElement(Py:FSTRING_START)('f"""')
+              PyFStringFragment
+                PsiElement(Py:FSTRING_FRAGMENT_START)('{')
+                PyStringLiteralExpression: 
+                  PyFormattedStringNode
+                    PsiElement(Py:FSTRING_START)('f"')
+                    PsiErrorElement:Expected "
+                      <empty list>
+                PsiErrorElement:type conversion, : or } expected
+                  <empty list>
+              PsiErrorElement:Expected """
+                <empty list>
+        PsiElement(Py:FSTRING_END)(''')
+      PsiElement(Py:SINGLE_QUOTED_STRING)('"}"')
+      PsiElement(Py:SINGLE_QUOTED_STRING)('""')
+    PsiErrorElement:End of statement expected
+      <empty list>
+  PsiElement(Py:RBRACE)('}')
+  PsiErrorElement:Statement expected, found Py:RBRACE
+    <empty list>
+  PyExpressionStatement
+    PyStringLiteralExpression: 
+      PsiElement(Py:SINGLE_QUOTED_STRING)(''')

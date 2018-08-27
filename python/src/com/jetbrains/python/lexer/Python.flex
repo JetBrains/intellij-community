@@ -3,7 +3,7 @@ package com.jetbrains.python.lexer;
 
 import com.intellij.lexer.FlexLexer;
 import com.intellij.psi.tree.IElementType;
-import com.jetbrains.python.PyTokenTypes;
+import com.intellij.util.containers.ContainerUtil;import com.jetbrains.python.PyTokenTypes;
 import com.intellij.util.containers.Stack;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.psi.PyStringLiteralUtil;
@@ -136,10 +136,7 @@ boolean hasMatchingFStringStart(String endQuotes){
     if (endQuotes.startsWith(state.quotes)){
       final int nestedNum = fStringStates.size() - i;
       for(int j = 0; j < nestedNum; j++) {
-        final FStringState removedFString = fStringStates.pop();
-        while (!fragmentStates.isEmpty() && fragmentStates.peek().containingFString == removedFString) {
-          fragmentStates.pop();
-        }
+        popFString();
       }
       yybegin(state.oldState);
       final int unmatchedQuotes = endQuotes.length() - state.quotes.length();
@@ -148,6 +145,47 @@ boolean hasMatchingFStringStart(String endQuotes){
     }
   }
   return false;
+}
+
+private void popFString() {
+  final FStringState removedFString = fStringStates.pop();
+  while (!fragmentStates.isEmpty() && fragmentStates.peek().containingFString == removedFString) {
+    fragmentStates.pop();
+  }
+}
+
+IElementType findFStringEndInStringLiteral(String stringLiteral, IElementType stringType){
+    int i = 0;
+    while(i < stringLiteral.length()) {
+      final char c = stringLiteral.charAt(i);
+      if (c == '\\') {
+        i += 2;
+        continue;
+      }
+      final int prefixLength = PyStringLiteralUtil.getPrefixLength(stringLiteral);
+      final String nextThree = stringLiteral.substring(i, Math.min(stringLiteral.length(), i + 3));
+      for(int j = fStringStates.size() - 1; j >= 0; j--) {
+        final FStringState state = fStringStates.get(j);
+        if (nextThree.startsWith(state.quotes)){
+          if (i == 0) {
+            final int nestedNum = fStringStates.size() - j;
+            for(int k = 0; k < nestedNum; k++) {
+              popFString();
+            }
+            yybegin(state.oldState);
+            final int unmatched = stringLiteral.length() - state.quotes.length();
+            yypushback(unmatched);
+            return PyTokenTypes.FSTRING_END;
+          }
+          else {
+            yypushback(stringLiteral.length() - i);
+            return i == prefixLength ? PyTokenTypes.IDENTIFIER : stringType;
+          }
+        }
+      }
+      i++;
+    }
+    return stringType;
 }
 
 private final Stack<FragmentState> fragmentStates = new Stack<>();
@@ -193,6 +231,9 @@ return yylength()-s.length();
         
   ":" { if (braceBalance == 0) { yybegin(FSTRING_FRAGMENT_FORMAT); return PyTokenTypes.FSTRING_FRAGMENT_FORMAT_START; }
         else { return PyTokenTypes.COLON; } }
+
+  {SINGLE_QUOTED_STRING} { return findFStringEndInStringLiteral(yytext().toString(), PyTokenTypes.SINGLE_QUOTED_STRING); }
+  {TRIPLE_QUOTED_LITERAL} { return findFStringEndInStringLiteral(yytext().toString(), PyTokenTypes.TRIPLE_QUOTED_STRING); }
 
   // Should be impossible inside expression fragments: any quotes should be matched as a string literal there
   {FSTRING_QUOTES} { return hasMatchingFStringStart(yytext().toString()) ? PyTokenTypes.FSTRING_END : PyTokenTypes.FSTRING_TEXT; }
@@ -324,7 +365,12 @@ return PyTokenTypes.DOCSTRING; }
 "="                   { return PyTokenTypes.EQ; }
 ";"                   { return PyTokenTypes.SEMICOLON; }
 
-{FSTRING_START}       { pushFString(); return PyTokenTypes.FSTRING_START; }
+{FSTRING_START}       { IElementType type = findFStringEndInStringLiteral(yytext().toString(), PyTokenTypes.FSTRING_START);
+                        if (type == PyTokenTypes.FSTRING_START) {
+                          pushFString();
+                        }
+                        return type;
+                      }
 
 [^]                   { return PyTokenTypes.BAD_CHARACTER; }
 }
