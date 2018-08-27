@@ -46,15 +46,15 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   private ShortenCommandLine myShortenCommandLine = null;
   private final InputRedirectAware.InputRedirectOptions myInputRedirectOptions = new InputRedirectOptions();
 
-  public ApplicationConfiguration(final String name, final Project project, ApplicationConfigurationType applicationConfigurationType) {
-    this(name, project, applicationConfigurationType.getConfigurationFactories()[0]);
+  public ApplicationConfiguration(String name, @NotNull Project project, @NotNull ApplicationConfigurationType configurationType) {
+    this(name, project, configurationType.getConfigurationFactories()[0]);
   }
 
-  public ApplicationConfiguration(final String name, final Project project) {
+  public ApplicationConfiguration(final String name, @NotNull Project project) {
     this(name, project, ApplicationConfigurationType.getInstance().getConfigurationFactories()[0]);
   }
 
-  protected ApplicationConfiguration(final String name, final Project project, final ConfigurationFactory factory) {
+  protected ApplicationConfiguration(String name, @NotNull Project project, @NotNull ConfigurationFactory factory) {
     super(name, new JavaRunConfigurationModule(project, true), factory);
   }
 
@@ -64,11 +64,6 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   @Override
   protected ApplicationConfigurationOptions getOptions() {
     return (ApplicationConfigurationOptions)super.getOptions();
-  }
-
-  @Override
-  protected Class<? extends ModuleBasedConfigurationOptions> getOptionsClass() {
-    return ApplicationConfigurationOptions.class;
   }
 
   @Override

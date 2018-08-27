@@ -24,6 +24,7 @@ public final class CompoundRunConfigurationType extends ConfigurationTypeBase {
         return new CompoundRunConfiguration(project, "Compound Run Configuration", this);
       }
 
+      @NotNull
       @Override
       public String getName() {
         return "Compound Run Configuration";

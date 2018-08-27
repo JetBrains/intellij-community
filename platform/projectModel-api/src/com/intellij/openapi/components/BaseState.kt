@@ -10,6 +10,7 @@ import com.intellij.util.xmlb.PropertyAccessor
 import com.intellij.util.xmlb.SerializationFilter
 import com.intellij.util.xmlb.annotations.Transient
 import gnu.trove.THashMap
+import org.jetbrains.annotations.ApiStatus
 import java.nio.charset.Charset
 import java.util.concurrent.atomic.AtomicLongFieldUpdater
 
@@ -169,6 +170,20 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
 
   fun isEqualToDefault(): Boolean = properties.all { it.isEqualToDefault() }
 
+  // internal usage only
+  @ApiStatus.Experimental
+  fun buildJsonSchema(builder: StringBuilder) {
+    // todo object definition
+    for (property in properties) {
+      builder.jsonEscapedString(property.name!!).append(':').append('{')
+      builder.jsonEscapedString("type").append(':').jsonEscapedString(property.jsonType)
+      builder.append('}')
+      if (property !== properties.last()) {
+        builder.append(',')
+      }
+    }
+  }
+
   @Transient
   override fun getModificationCount(): Long {
     var result = ownModificationCount
@@ -210,4 +225,9 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
       incrementModificationCount()
     }
   }
+}
+
+private fun StringBuilder.jsonEscapedString(value: String): StringBuilder {
+  append('"').append(value).append('"')
+  return this
 }

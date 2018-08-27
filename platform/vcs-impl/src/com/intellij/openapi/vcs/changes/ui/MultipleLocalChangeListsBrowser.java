@@ -598,14 +598,14 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
 
       @NotNull
       @Override
-      protected Stream<Object> getElementsStream() {
-        return VcsTreeModelData.all(MyChangesBrowserTreeList.this).userObjectsStream();
+      protected Stream<Change> getTrackableElementsStream() {
+        return VcsTreeModelData.all(MyChangesBrowserTreeList.this).userObjectsStream(Change.class);
       }
 
       @Nullable
       @Override
       protected Object findElementFor(@NotNull PartialLocalLineStatusTracker tracker) {
-        return VcsTreeModelData.all(MyChangesBrowserTreeList.this).userObjectsStream(Change.class).filter(change -> {
+        return getTrackableElementsStream().filter(change -> {
           return tracker.getVirtualFile().equals(PartialChangesUtil.getVirtualFile(change));
         }).findFirst().orElse(null);
       }

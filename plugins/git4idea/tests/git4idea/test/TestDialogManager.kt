@@ -66,6 +66,11 @@ class TestDialogManager : DialogManager() {
     return myOnMessage.invoke(message)
   }
 
+  override fun showMessageDialog(project: Project, message: String, title: String, options: Array<String>,
+                                 defaultButtonIndex: Int, focusedButtonIndex: Int, icon: Icon?): Int {
+    return myOnMessage.invoke(message)
+  }
+
   override fun showMessageDialog(description: String, title: String, options: Array<String>, defaultButtonIndex: Int,
                                  focusedButtonIndex: Int, icon: Icon?, dontAskOption: DialogWrapper.DoNotAskOption?): Int {
     return myOnMessage.invoke(description)

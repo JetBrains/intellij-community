@@ -358,14 +358,14 @@ public class FileHistoryUi extends AbstractVcsLogUi {
 
     @NotNull
     @Override
-    public VcsCommitStyle getStyle(@NotNull VcsShortCommitDetails commitDetails, boolean isSelected) {
+    public VcsCommitStyle getStyle(int commitId, @NotNull VcsShortCommitDetails commitDetails, boolean isSelected) {
       if (isSelected) return VcsCommitStyle.DEFAULT;
 
       if (myCondition == null) {
         myCondition = getCondition();
       }
 
-      if (myCondition.value(myStorage.getCommitIndex(commitDetails.getId(), commitDetails.getRoot()))) {
+      if (myCondition.value(commitId)) {
         return VcsCommitStyleFactory.background(myBgColor);
       }
       return VcsCommitStyle.DEFAULT;

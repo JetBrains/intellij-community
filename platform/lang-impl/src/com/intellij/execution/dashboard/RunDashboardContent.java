@@ -304,6 +304,11 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
           SwingUtilities.invokeLater(() -> {
             if (myContentManager.isDisposed() || myContentManager.getIndexOfContent(toSelect) == -1) return;
 
+            // Selected node may changed, we do not need to select content if it doesn't correspond currently selected node.
+            if (myLastSelection instanceof RunDashboardNode) {
+              if (toSelect != ((RunDashboardNode)myLastSelection).getContent()) return;
+            }
+
             myContentManager.removeContentManagerListener(myContentManagerListener);
             myContentManager.setSelectedContent(toSelect);
             myContentManager.addContentManagerListener(myContentManagerListener);

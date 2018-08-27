@@ -158,7 +158,11 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
 
   private void prepareNativeSshAuth() throws IOException {
     GitXmlRpcNativeSshService service = ServiceManager.getService(GitXmlRpcNativeSshService.class);
-    GitNativeSshGuiAuthenticator authenticator = new GitNativeSshGuiAuthenticator(myProject, myHandler.isIgnoreAuthenticationRequest());
+
+    boolean doNotRememberPasswords = myHandler.getUrls().size() > 1;
+    GitNativeSshGuiAuthenticator authenticator = new GitNativeSshGuiAuthenticator(myProject,
+                                                                                  myHandler.isIgnoreAuthenticationRequest(),
+                                                                                  doNotRememberPasswords);
 
     myNativeSshHandler = service.registerHandler(authenticator, myProject);
     int port = service.getXmlRcpPort();

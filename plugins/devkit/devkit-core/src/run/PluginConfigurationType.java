@@ -57,6 +57,7 @@ public class PluginConfigurationType implements ConfigurationType {
     };
   }
 
+  @NotNull
   @Override
   public String getDisplayName() {
     return DevKitBundle.message("run.configuration.title");
@@ -81,6 +82,12 @@ public class PluginConfigurationType implements ConfigurationType {
   @Override
   public String getId() {
     return "#org.jetbrains.idea.devkit.run.PluginConfigurationType";
+  }
+
+  @NotNull
+  @Override
+  public String getConfigurationPropertyName() {
+    return "plugin";
   }
 
   @NotNull

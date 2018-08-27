@@ -451,11 +451,10 @@ public abstract class DialogWrapper {
     return UIUtil.isUnderAquaBasedLookAndFeel() || UIUtil.isUnderDarcula() || UIUtil.isUnderWin10LookAndFeel();
   }
 
-  private boolean isRemoveHelpButton() {
+  private static boolean isRemoveHelpButton() {
     return !ApplicationInfo.contextHelpAvailable() ||
            SystemInfo.isWindows && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) && Registry.is("ide.win.frame.decoration") ||
-           Registry.is("ide.remove.help.button.from.dialogs") ||
-           getHelpAction() instanceof HelpAction && getHelpId() == null;
+           Registry.is("ide.remove.help.button.from.dialogs");
   }
 
   /**
@@ -1058,7 +1057,10 @@ public abstract class DialogWrapper {
    */
   @NotNull
   protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
+    Action helpAction = getHelpAction();
+    return helpAction == myHelpAction && getHelpId() == null ?
+           new Action[]{getOKAction(), getCancelAction()} :
+           new Action[]{getOKAction(), getCancelAction(), helpAction};
   }
 
   @NotNull

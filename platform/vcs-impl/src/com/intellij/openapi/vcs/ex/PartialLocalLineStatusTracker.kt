@@ -264,13 +264,13 @@ class PartialLocalLineStatusTracker(project: Project,
   }
 
   private inner class MyUndoCommandListener : CommandListener {
-    override fun commandStarted(event: CommandEvent?) {
+    override fun commandStarted(event: CommandEvent) {
       if (!CommandProcessor.getInstance().isUndoTransparentActionInProgress) {
         hasUndoInCommand = false
       }
     }
 
-    override fun commandFinished(event: CommandEvent?) {
+    override fun commandFinished(event: CommandEvent) {
       if (!CommandProcessor.getInstance().isUndoTransparentActionInProgress) {
         hasUndoInCommand = false
       }
@@ -289,7 +289,7 @@ class PartialLocalLineStatusTracker(project: Project,
     }
 
 
-    override fun beforeCommandFinished(event: CommandEvent?) {
+    override fun beforeCommandFinished(event: CommandEvent) {
       registerRedoAction()
     }
 

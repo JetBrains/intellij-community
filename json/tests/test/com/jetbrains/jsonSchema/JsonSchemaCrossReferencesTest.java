@@ -176,7 +176,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
 
     if (delayAfterUpdate) {
       // give time for vfs callbacks to finish
-      Thread.sleep(200);
+      Thread.sleep(400);
     }
 
     doHighlighting();

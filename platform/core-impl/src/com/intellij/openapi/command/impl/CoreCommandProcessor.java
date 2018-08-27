@@ -68,7 +68,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
     MessageBus messageBus = ApplicationManager.getApplication().getMessageBus();
     messageBus.connect().subscribe(CommandListener.TOPIC, new CommandListener() {
       @Override
-      public void commandStarted(CommandEvent event) {
+      public void commandStarted(@NotNull CommandEvent event) {
         for (CommandListener listener : myListeners) {
           try {
             listener.commandStarted(event);
@@ -80,7 +80,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
       }
 
       @Override
-      public void beforeCommandFinished(CommandEvent event) {
+      public void beforeCommandFinished(@NotNull CommandEvent event) {
         for (CommandListener listener : myListeners) {
           try {
             listener.beforeCommandFinished(event);
@@ -92,7 +92,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
       }
 
       @Override
-      public void commandFinished(CommandEvent event) {
+      public void commandFinished(@NotNull CommandEvent event) {
         for (CommandListener listener : myListeners) {
           try {
             listener.commandFinished(event);

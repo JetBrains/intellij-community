@@ -35,8 +35,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * Provides capabilities to asynchronously calculate "contained in branches" information.
@@ -152,7 +152,7 @@ public class ContainingBranchesGetter {
   }
 
   @NotNull
-  public Condition<CommitId> getContainedInBranchCondition(@NotNull final String branchName, @NotNull final VirtualFile root) {
+  public Condition<Integer> getContainedInBranchCondition(@NotNull final String branchName, @NotNull final VirtualFile root) {
     LOG.assertTrue(EventQueue.isDispatchThread());
 
     DataPack dataPack = myLogData.getDataPack();
@@ -166,8 +166,8 @@ public class ContainingBranchesGetter {
       VcsRef branchRef = ContainerUtil.find(refs.getBranches(),
                                             vcsRef -> vcsRef.getRoot().equals(root) && vcsRef.getName().equals(branchName));
       if (branchRef == null) return Conditions.alwaysFalse();
-      condition = new ContainedInBranchCondition(graph.getContainedInBranchCondition(
-        Collections.singleton(myLogData.getCommitIndex(branchRef.getCommitHash(), branchRef.getRoot()))), branchName);
+      int branchIndex = myLogData.getCommitIndex(branchRef.getCommitHash(), branchRef.getRoot());
+      condition = new ContainedInBranchCondition(graph.getContainedInBranchCondition(Collections.singleton(branchIndex)), branchName);
       myConditions.put(root, condition);
     }
     return condition;
@@ -248,7 +248,7 @@ public class ContainingBranchesGetter {
     }
   }
 
-  private class ContainedInBranchCondition implements Condition<CommitId> {
+  private static class ContainedInBranchCondition implements Condition<Integer> {
     @NotNull private final Condition<Integer> myCondition;
     @NotNull private final String myBranch;
     private volatile boolean isDisposed = false;
@@ -264,9 +264,9 @@ public class ContainingBranchesGetter {
     }
 
     @Override
-    public boolean value(CommitId commitId) {
+    public boolean value(@NotNull Integer commitId) {
       if (isDisposed) return false;
-      return myCondition.value(myLogData.getCommitIndex(commitId.getHash(), commitId.getRoot()));
+      return myCondition.value(commitId);
     }
 
     public void dispose() {

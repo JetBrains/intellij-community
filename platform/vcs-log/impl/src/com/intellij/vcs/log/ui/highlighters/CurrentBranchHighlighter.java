@@ -34,7 +34,7 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
   private static final String HEAD = "HEAD";
   @NotNull private final VcsLogData myLogData;
   @NotNull private final VcsLogUi myLogUi;
-  @NotNull private final Map<VirtualFile, Condition<CommitId>> myConditions = ContainerUtil.newHashMap();
+  @NotNull private final Map<VirtualFile, Condition<Integer>> myConditions = ContainerUtil.newHashMap();
   @Nullable private String mySingleFilteredBranch;
 
   public CurrentBranchHighlighter(@NotNull VcsLogData logData, @NotNull VcsLogUi logUi) {
@@ -44,9 +44,9 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
 
   @NotNull
   @Override
-  public VcsCommitStyle getStyle(@NotNull VcsShortCommitDetails details, boolean isSelected) {
+  public VcsCommitStyle getStyle(int commitId, @NotNull VcsShortCommitDetails details, boolean isSelected) {
     if (isSelected || !myLogUi.isHighlighterEnabled(Factory.ID)) return VcsCommitStyle.DEFAULT;
-    Condition<CommitId> condition = myConditions.get(details.getRoot());
+    Condition<Integer> condition = myConditions.get(details.getRoot());
     if (condition == null) {
       VcsLogProvider provider = myLogData.getLogProvider(details.getRoot());
       String currentBranch = provider.getCurrentBranch(details.getRoot());
@@ -58,7 +58,7 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
         condition = Conditions.alwaysFalse();
       }
     }
-    if (condition != null && condition.value(new CommitId(details.getId(), details.getRoot()))) {
+    if (condition != null && condition.value(commitId)) {
       return VcsCommitStyleFactory.background(CURRENT_BRANCH_BG);
     }
     return VcsCommitStyle.DEFAULT;
