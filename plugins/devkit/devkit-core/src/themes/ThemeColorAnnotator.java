@@ -54,12 +54,12 @@ public class ThemeColorAnnotator implements Annotator {
     String text = ((JsonStringLiteral)element).getValue();
     if (StringUtil.isEmpty(text)) return false;
     if (!text.startsWith("#")) return false;
-    int length = text.length();
-    if (length != 7) return false; // '#FFFFFF'
+    if (text.length() != 7) return false; // '#FFFFFF'
     if (!HEX_COLOR_PATTERN.matcher(text).matches()) return false;
 
     return true;
   }
+
 
   private static class MyRenderer extends GutterIconRenderer {
     private static final int ICON_SIZE = 8;
