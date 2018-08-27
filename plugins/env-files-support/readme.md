@@ -22,6 +22,8 @@ Python dotenv package: https://github.com/theskumar/python-dotenv
 
 Ruby dotenv gem: https://github.com/bkeepers/dotenv
 
+Go dotenv library: https://github.com/joho/godotenv
+
 ## Screenshots
 
 ![phpstorm dotenv support](https://plugins.jetbrains.com/files/9525/screenshot_16858.png)
