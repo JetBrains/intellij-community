@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.jetbrains.jsonSchema.JsonSchemaVfsListener;
 import com.jetbrains.jsonSchema.extension.*;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
@@ -47,9 +48,13 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     myAnySchemaChangeTracker = () -> myAnyChangeCount.get();
     myCatalogManager = new JsonSchemaCatalogManager(myProject);
 
-    project.getMessageBus().connect().subscribe(JsonSchemaVfsListener.JSON_SCHEMA_CHANGED, myAnyChangeCount::incrementAndGet);
-    project.getMessageBus().connect().subscribe(JsonSchemaVfsListener.JSON_DEPS_CHANGED, () -> { myRefs.clear(); myAnyChangeCount.incrementAndGet(); });
-    JsonSchemaVfsListener.startListening(project, this);
+    MessageBusConnection connection = project.getMessageBus().connect();
+    connection.subscribe(JsonSchemaVfsListener.JSON_SCHEMA_CHANGED, myAnyChangeCount::incrementAndGet);
+    connection.subscribe(JsonSchemaVfsListener.JSON_DEPS_CHANGED, () -> {
+      myRefs.clear();
+      myAnyChangeCount.incrementAndGet();
+    });
+    JsonSchemaVfsListener.startListening(project, this, connection);
     myCatalogManager.startUpdates();
   }
 
