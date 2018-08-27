@@ -57,21 +57,23 @@ class EqClass extends SortedIntSet {
 
   List<DfaVariableValue> getVariables(boolean unwrap) {
     List<DfaVariableValue> vars = ContainerUtil.newArrayList();
-    for (DfaValue value : getMemberValues()) {
+    forEach(id -> {
+      DfaValue value = myFactory.getValue(id);
       if (unwrap) {
         value = DfaMemoryStateImpl.unwrap(value);
       }
       if (value instanceof DfaVariableValue) {
         vars.add((DfaVariableValue)value);
       }
-    }
+      return true;
+    });
     return vars;
   }
 
   List<DfaValue> getMemberValues() {
     final List<DfaValue> result = new ArrayList<>(size());
-    forEach(c1 -> {
-      DfaValue value = myFactory.getValue(c1);
+    forEach(id -> {
+      DfaValue value = myFactory.getValue(id);
       result.add(value);
       return true;
     });
@@ -80,12 +82,16 @@ class EqClass extends SortedIntSet {
 
   @Nullable
   DfaValue findConstant(boolean wrapped) {
-    for (DfaValue value : getMemberValues()) {
+    Ref<DfaValue> result = new Ref<>();
+    forEach(id -> {
+      DfaValue value = myFactory.getValue(id);
       if (value instanceof DfaConstValue || wrapped && DfaMemoryStateImpl.unwrap(value) instanceof DfaConstValue) {
-        return value;
+        result.set(value);
+        return false;
       }
-    }
-    return null;
+      return true;
+    });
+    return result.get();
   }
 
   @Nullable
