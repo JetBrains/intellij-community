@@ -1,15 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore.properties
 
-import com.intellij.openapi.components.BaseState
-import com.intellij.openapi.components.StoredProperty
-import com.intellij.openapi.components.StoredPropertyBase
+import com.intellij.openapi.components.*
 import com.intellij.openapi.util.ModificationTracker
+import com.intellij.openapi.util.text.StringUtil
 import kotlin.reflect.KProperty
 
 internal abstract class ObjectStateStoredPropertyBase<T>(protected var value: T) : StoredPropertyBase<T>() {
-  override val jsonType: String
-    get() = "object"
+  override val jsonType: JsonSchemaType
+    get() = JsonSchemaType.OBJECT
 
   override operator fun getValue(thisRef: BaseState, property: KProperty<*>): T = value
 
@@ -20,7 +19,7 @@ internal abstract class ObjectStateStoredPropertyBase<T>(protected var value: T)
     }
   }
 
-  override fun setValue(other: StoredProperty): Boolean {
+  override fun setValue(other: StoredProperty<T>): Boolean {
     @Suppress("UNCHECKED_CAST")
     val newValue = (other as ObjectStateStoredPropertyBase<T>).value
     return if (newValue == value) {
@@ -39,9 +38,9 @@ internal abstract class ObjectStateStoredPropertyBase<T>(protected var value: T)
   override fun toString() = "$name = ${if (isEqualToDefault()) "" else value?.toString() ?: super.toString()}"
 }
 
-internal open class ObjectStoredProperty<T>(private val defaultValue: T) : ObjectStateStoredPropertyBase<T>(defaultValue) {
-  override val jsonType: String
-    get() = if (defaultValue is Boolean) "boolean" else "object"
+internal open class ObjectStoredProperty<T>(private val defaultValue: T) : ObjectStateStoredPropertyBase<T>(defaultValue), ScalarProperty {
+  override val jsonType: JsonSchemaType
+    get() = if (defaultValue is Boolean) JsonSchemaType.BOOLEAN else JsonSchemaType.OBJECT
 
   override fun isEqualToDefault(): Boolean {
     val value = value
@@ -49,6 +48,11 @@ internal open class ObjectStoredProperty<T>(private val defaultValue: T) : Objec
   }
 
   override fun getModificationCount() = (value as? ModificationTracker)?.modificationCount ?: 0
+
+  @Suppress("UNCHECKED_CAST")
+  override fun parseAndSetValue(rawValue: String?) {
+    value = (StringUtil.equalsIgnoreCase(rawValue, "true") || StringUtil.equalsIgnoreCase(rawValue, "yes") || StringUtil.equalsIgnoreCase(rawValue, "on")) as T
+  }
 }
 
 internal class StateObjectStoredProperty<T : BaseState?>(initialValue: T) : ObjectStateStoredPropertyBase<T>(initialValue) {

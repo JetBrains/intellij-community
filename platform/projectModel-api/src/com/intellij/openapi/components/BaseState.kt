@@ -21,15 +21,20 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     private val MOD_COUNT_UPDATER = AtomicLongFieldUpdater.newUpdater(BaseState::class.java, "ownModificationCount")
   }
 
-  private val properties: MutableList<StoredProperty> = SmartList()
+  private val properties: MutableList<StoredProperty<Any>> = SmartList()
 
   @Volatile
   @Transient
   private var ownModificationCount: Long = 0
 
+  private fun addProperty(p: StoredProperty<*>) {
+    @Suppress("UNCHECKED_CAST")
+    properties.add(p as StoredProperty<Any>)
+  }
+
   fun <T> property(): StoredPropertyBase<T?> {
     val result = ObjectStoredProperty<T?>(null)
-    properties.add(result)
+    addProperty(result)
     return result
   }
 
@@ -39,7 +44,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
    */
   fun <T : BaseState?> property(initialValue: T): StoredPropertyBase<T> {
     val result = StateObjectStoredProperty(initialValue)
-    properties.add(result)
+    addProperty(result)
     return result
   }
 
@@ -51,7 +56,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
       override fun isEqualToDefault() = isDefault(value)
     }
 
-    properties.add(result)
+    addProperty(result)
     return result
   }
 
@@ -61,7 +66,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
    */
   fun <E, C : MutableCollection<E>> property(initialValue: C): StoredPropertyBase<C> {
     val result = CollectionStoredProperty(initialValue)
-    properties.add(result)
+    addProperty(result)
     return result
   }
 
@@ -70,7 +75,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
    */
   fun <T : Charset> property(initialValue: T): StoredPropertyBase<T> {
     val result = ObjectStoredProperty(initialValue)
-    properties.add(result)
+    addProperty(result)
     return result
   }
 
@@ -79,7 +84,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
    */
   fun <T : Enum<*>> property(defaultValue: T): StoredPropertyBase<T> {
     val result = ObjectStoredProperty(defaultValue)
-    properties.add(result)
+    addProperty(result)
     return result
   }
 
@@ -88,7 +93,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
    */
   fun <T : Any> list(): StoredPropertyBase<MutableList<T>> {
     val result = ListStoredProperty<T>()
-    properties.add(result)
+    addProperty(result)
     @Suppress("UNCHECKED_CAST")
     return result as StoredPropertyBase<MutableList<T>>
   }
@@ -99,7 +104,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
 
   fun <K : Any, V: Any> map(value: MutableMap<K, V> = THashMap()): StoredPropertyBase<MutableMap<K, V>> {
     val result = MapStoredProperty(value)
-    properties.add(result)
+    addProperty(result)
     return result
   }
 
@@ -113,31 +118,31 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
    */
   fun string(defaultValue: String? = null): StoredPropertyBase<String?> {
     val result = NormalizedStringStoredProperty(defaultValue)
-    properties.add(result)
+    addProperty(result)
     return result
   }
 
   fun property(defaultValue: Int = 0): StoredPropertyBase<Int> {
     val result = IntStoredProperty(defaultValue, null)
-    properties.add(result)
+    addProperty(result)
     return result
   }
 
   fun property(defaultValue: Long = 0): StoredPropertyBase<Long> {
     val result = LongStoredProperty(defaultValue, null)
-    properties.add(result)
+    addProperty(result)
     return result
   }
 
   fun property(defaultValue: Float = 0f, valueNormalizer: ((value: Float) -> Float)? = null): StoredPropertyBase<Float> {
     val result = FloatStoredProperty(defaultValue, valueNormalizer)
-    properties.add(result)
+    addProperty(result)
     return result
   }
 
   fun property(defaultValue: Boolean = false): StoredPropertyBase<Boolean> {
     val result = ObjectStoredProperty(defaultValue)
-    properties.add(result)
+    addProperty(result)
     return result
   }
 
@@ -169,20 +174,6 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   }
 
   fun isEqualToDefault(): Boolean = properties.all { it.isEqualToDefault() }
-
-  // internal usage only
-  @ApiStatus.Experimental
-  fun buildJsonSchema(builder: StringBuilder) {
-    // todo object definition
-    for (property in properties) {
-      builder.jsonEscapedString(property.name!!).append(':').append('{')
-      builder.jsonEscapedString("type").append(':').jsonEscapedString(property.jsonType)
-      builder.append('}')
-      if (property !== properties.last()) {
-        builder.append(',')
-      }
-    }
-  }
 
   @Transient
   override fun getModificationCount(): Long {
@@ -223,6 +214,24 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
 
     if (changed) {
       incrementModificationCount()
+    }
+  }
+
+  fun getProperties() = properties
+}
+
+// move buildJsonSchema and other such functions from BaseState to exclude from completion
+// internal usage only
+@ApiStatus.Experimental
+fun buildJsonSchema(state: BaseState, builder: StringBuilder) {
+  val properties = state.getProperties()
+  // todo object definition
+  for (property in properties) {
+    builder.jsonEscapedString(property.name!!).append(':').append('{')
+    builder.jsonEscapedString("type").append(':').jsonEscapedString(property.jsonType.jsonName)
+    builder.append('}')
+    if (property !== properties.last()) {
+      builder.append(',')
     }
   }
 }

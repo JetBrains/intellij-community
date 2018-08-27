@@ -1,14 +1,22 @@
 package com.intellij.configurationScript
 
+import com.intellij.execution.application.ApplicationConfigurationOptions
 import com.intellij.execution.configurations.ConfigurationTypeBase
+import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import gnu.trove.THashMap
-import org.assertj.core.data.MapEntry
+import com.intellij.util.SmartList
 import org.intellij.lang.annotations.Language
+import org.junit.ClassRule
 import org.junit.Test
 import javax.swing.Icon
 
 class ConfigurationFileTest {
+  companion object {
+    @JvmField
+    @ClassRule
+    val projectRule = ProjectRule()
+  }
+
   @Test
   fun rcId() {
     fun convert(string: String): String {
@@ -32,36 +40,59 @@ class ConfigurationFileTest {
     val result = parse("""
     runConfigurations:
     """)
-//    assertThat((node as MappingNode).value.map { (it.keyNode as ScalarNode).value }).containsExactly("runConfigurations")
-    assertThat(result).isNull()
+    assertThat(result).isEmpty()
+  }
+
+  @Test
+  fun `empty rc type group`() {
+    val result = parse("""
+    runConfigurations:
+      jvmMainMethod:
+    """)
+    assertThat(result).isEmpty()
   }
 
   @Test
   fun `empty rc`() {
     val result = parse("""
     runConfigurations:
-      jvmApp:
+      jvmMainMethod:
+        -
     """)
-    assertThat(result).isInstanceOf(THashMap::class.java)
-    @Suppress("UNCHECKED_CAST")
-    assertThat(result as Map<String, Any>).containsExactly(MapEntry.entry("jvmApp", null))
+    assertThat(result).isEmpty()
   }
 
   @Test
-  fun `one jvmApp`() {
+  fun `one jvmMainMethod`() {
     val result = parse("""
     runConfigurations:
-      jvmApp:
+      jvmMainMethod:
         isAlternativeJrePathEnabled: true
     """)
-    assertThat(result).isInstanceOf(THashMap::class.java)
-    @Suppress("UNCHECKED_CAST")
-    assertThat(result as Map<String, Any>).containsExactly(MapEntry.entry("jvmApp", null))
+    val options = ApplicationConfigurationOptions()
+    options.isAlternativeJrePathEnabled = true
+    assertThat(result).containsExactly(options)
+  }
+
+  @Test
+  fun `one jvmMainMethod as list`() {
+    val result = parse("""
+    runConfigurations:
+      jvmMainMethod:
+        - isAlternativeJrePathEnabled: true
+    """)
+    val options = ApplicationConfigurationOptions()
+    options.isAlternativeJrePathEnabled = true
+    assertThat(result).containsExactly(options)
   }
 }
 
-private fun parse(@Language("YAML") data: String): Any? {
-  return parseConfigurationFile(data.trimIndent().reader())
+private fun parse(@Language("YAML") data: String): List<Any> {
+  val list = SmartList<Any>()
+  parseConfigurationFile(data.trimIndent().reader()) { _, state ->
+    list.add(state)
+  }
+  return list
 }
 
 private class TestConfigurationType(id: String) : ConfigurationTypeBase(id, id, "", null as Icon?)

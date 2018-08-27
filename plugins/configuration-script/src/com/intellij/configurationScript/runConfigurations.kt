@@ -2,6 +2,7 @@ package com.intellij.configurationScript
 
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.ConfigurationType
+import com.intellij.openapi.components.buildJsonSchema
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ReflectionUtil
@@ -64,7 +65,7 @@ private fun describeFactories(configurationType: ConfigurationType, definitions:
   if (factories.size > 1) {
     for (factory in factories) {
       rcProperties.append("""
-          "${idToPropertyName(factory.id, null, factory)}": {
+          "${rcFactoryIdToPropertyName(factory)}": {
             "type": "object"
           },
         """.trimIndent())
@@ -88,7 +89,7 @@ private fun describeFactories(configurationType: ConfigurationType, definitions:
 
   val state = ReflectionUtil.newInstance(optionsClass)
   val stateProperties = StringBuilder()
-  state.buildJsonSchema(stateProperties)
+  buildJsonSchema(state, stateProperties)
 
   definitions.append("""
     "$definitionId": {
@@ -103,6 +104,11 @@ private fun describeFactories(configurationType: ConfigurationType, definitions:
 // returns null if id is not valid
 internal fun rcTypeIdToPropertyName(configurationType: ConfigurationType): CharSequence? {
   return idToPropertyName(configurationType.configurationPropertyName, configurationType, null)
+}
+
+// returns null if id is not valid
+internal fun rcFactoryIdToPropertyName(factory: ConfigurationFactory): CharSequence? {
+  return idToPropertyName(factory.id, null, factory)
 }
 
 // returns null if id is not valid

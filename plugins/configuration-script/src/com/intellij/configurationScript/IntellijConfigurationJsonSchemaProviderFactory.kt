@@ -20,13 +20,11 @@ internal val LOG = logger<IntellijConfigurationJsonSchemaProviderFactory>()
 internal class IntellijConfigurationJsonSchemaProviderFactory : JsonSchemaProviderFactory, JsonSchemaFileProvider {
   private val schemeFile: VirtualFile by lazy { generateConfigurationSchema() }
 
-  override fun getProviders(project: Project): List<JsonSchemaFileProvider> {
-    return listOf(this)
-  }
+  override fun getProviders(project: Project) = listOf(this)
 
   override fun isAvailable(file: VirtualFile): Boolean {
     val nameSequence = file.nameSequence
-    return (nameSequence.endsWith(".yaml") || nameSequence.endsWith(".yml")) && StringUtil.equals(file.parent?.nameSequence, Project.DIRECTORY_STORE_FOLDER)
+    return StringUtil.equals(nameSequence, IDE_FILE) || StringUtil.equals(nameSequence, IDE_FILE_VARIANT_2)
   }
 
   override fun getName() = "IntelliJ Configuration"
