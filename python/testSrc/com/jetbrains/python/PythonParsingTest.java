@@ -597,6 +597,86 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
+  public void testFStringTerminatedByQuoteOfStringLiteral() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteInsideStringLiteral() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteOfNestedStringLiteral() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteInsideNestedStringLiteral() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteOfFStringLiteral() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteInsideFStringLiteral() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteOfNestedFStringLiteral() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteInsideNestedFStringLiteral() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteOfStringLiteralInFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteInsideStringLiteralInFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteOfNestedStringLiteralInFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteInsideNestedStringLiteralInFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteOfFStringLiteralInFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteInsideFStringLiteralInFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteOfNestedFStringLiteralInFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteInsideNestedFStringLiteralInFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteInLiteralPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteInNestedLiteralPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteInFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteInNestedFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
   // PY-19036
   public void testAwaitInNonAsyncNestedFunction() {
     doTest(LanguageLevel.PYTHON35);
