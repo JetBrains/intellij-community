@@ -84,6 +84,13 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
       final JavaParameters parameters = ((JavaCommandLine)state).getJavaParameters();
       patch(parameters, env.getRunnerSettings(), env.getRunProfile(), true);
 
+      if (Registry.is("execution.java.always.debug")) {
+        ParametersList parametersList = parameters.getVMParametersList();
+        if (parametersList.getList().stream().noneMatch(s -> s.startsWith("-agentlib:jdwp"))) {
+          parametersList.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,quiet=y");
+        }
+      }
+
       ProcessProxy proxy = ProcessProxyFactory.getInstance().createCommandLineProxy((JavaCommandLine)state);
       executionResult = state.execute(env.getExecutor(), this);
       if (proxy != null) {
