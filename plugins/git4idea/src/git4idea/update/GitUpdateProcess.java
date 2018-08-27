@@ -316,7 +316,7 @@ public class GitUpdateProcess {
       }
       else {
         detachedHeads.add(repository);
-        LOG.info("checkTrackedBranchesConfigured: current branch is null in " + repository);
+        LOG.info(String.format("skipping update of [%s] (detached HEAD)", getShortRepositoryName(repository)));
       }
     }
 
@@ -340,7 +340,8 @@ public class GitUpdateProcess {
       }
       else {
         noTrackedBranch.add(repository);
-        LOG.info(String.format("checkTrackedBranchesConfiguration: no track info for current branch %s in %s", branch, repository));
+        LOG.info(String.format("skipping update of [%s] (no tracked branch for current branch [%s])",
+                               getShortRepositoryName(repository), branch));
       }
     }
 
