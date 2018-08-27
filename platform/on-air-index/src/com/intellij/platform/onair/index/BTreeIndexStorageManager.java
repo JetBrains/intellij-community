@@ -30,13 +30,19 @@ import java.nio.channels.ReadableByteChannel;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class BTreeIndexStorageManager implements IndexStorageManager {
   private static final int FORWARD_STORAGE_KEY_SIZE = 6;
+  private static final int DUMMY = Integer.MAX_VALUE / 2;
+
+  private static final Function<Integer, Integer> LOCAL_TO_REMOTE_DUMMY = local -> local + DUMMY;
+  private static final Function<Integer, Integer> REMOTE_TO_LOCAL_DUMMY = remote -> remote - DUMMY;
 
   public final Storage storage;
   public final ConcurrentHashMap<String, BTreeIndexStorage> indexStorages = new ConcurrentHashMap<>();
+  public final ConcurrentHashMap<String, BTreeIntPersistentMap> forwardIndices = new ConcurrentHashMap<>();
   public final Novelty indexNovelty;
   public final Map indexHeads;
   public final BTree forwardStorage;
@@ -132,7 +138,9 @@ public class BTreeIndexStorageManager implements IndexStorageManager {
 
   @Override
   public <V> PersistentMap<Integer, V> createForwardIndexStorage(ID<?, ?> indexId, DataExternalizer<V> valueExternalizer) {
-    return new BTreeIntPersistentMap<>(indexId.getUniqueId(), valueExternalizer, indexNovelty, forwardStorage);
+    BTreeIntPersistentMap<V> map = new BTreeIntPersistentMap<>(indexId.getUniqueId(), valueExternalizer, indexNovelty, forwardStorage);
+    forwardIndices.put(indexId.getName(), map);
+    return new BTreeIndexStorageManagerDelegatingPersistentMap<>(this, indexId, LOCAL_TO_REMOTE_DUMMY, REMOTE_TO_LOCAL_DUMMY);
   }
 
   @SuppressWarnings("unchecked")
@@ -171,6 +179,6 @@ public class BTreeIndexStorageManager implements IndexStorageManager {
                               newRevision,
                               baseRevision);
     indexStorages.put(indexId.getName(), indexStorage);
-    return indexStorage;
+    return new BTreeIndexStorageManagerDelegatingIndexStorage<>(this, indexId, LOCAL_TO_REMOTE_DUMMY, REMOTE_TO_LOCAL_DUMMY);
   }
 }

@@ -44,7 +44,7 @@ public abstract class ValueContainer<Value> {
     @NotNull
     IntIterator getInputIdsIterator();
 
-    @Nullable
+    @NotNull
     IntPredicate getValueAssociationPredicate();
   }
 
