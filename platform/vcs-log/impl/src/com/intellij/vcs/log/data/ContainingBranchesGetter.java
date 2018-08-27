@@ -30,6 +30,7 @@ import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor;
 import com.intellij.vcs.log.util.StopWatch;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -167,8 +168,7 @@ public class ContainingBranchesGetter {
     String branchName = myLogData.getLogProvider(root).getCurrentBranch(root);
     if (branchName == null) return Conditions.alwaysFalse();
 
-    VcsRef branchRef = ContainerUtil.find(dataPack.getRefsModel().getBranches(),
-                                          vcsRef -> vcsRef.getRoot().equals(root) && vcsRef.getName().equals(branchName));
+    VcsRef branchRef = VcsLogUtil.findBranch(dataPack.getRefsModel(), root, branchName);
     if (branchRef == null) return Conditions.alwaysFalse();
 
     int branchIndex = myLogData.getCommitIndex(branchRef.getCommitHash(), branchRef.getRoot());
