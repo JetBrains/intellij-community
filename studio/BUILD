@@ -42,7 +42,7 @@ java_test(
         "//tools/idea:android-studio.tar.gz",
     ],
     tags = [
-        "manual,"  # suddenly failing
+        "manual",  # b/113264673
         "no_test_mac",  # TODO: we run out of file handles on Mac, double-check whether 'sysctl kern.maxfiles' is sane
     ],
     deps = [
