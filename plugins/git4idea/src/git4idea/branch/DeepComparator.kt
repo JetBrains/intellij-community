@@ -132,8 +132,8 @@ class DeepComparator(private val project: Project,
 
     val comparedBranch = task!!.comparedBranch
     val singleFilteredBranch = VcsLogUtil.getSingleFilteredBranch(dataPack.filters, dataPack.refs)
-    if (task!!.comparedBranch != singleFilteredBranch) {
-      LOG.debug("Branch filter changed. Compared branch: ${task!!.comparedBranch}, filtered branch: $singleFilteredBranch")
+    if (comparedBranch != singleFilteredBranch) {
+      LOG.debug("Branch filter changed. Compared branch: $comparedBranch, filtered branch: $singleFilteredBranch")
       stopAndUnhighlight()
       notifyHighlightingCancelled()
       return
@@ -216,7 +216,7 @@ class DeepComparator(private val project: Project,
       removeHighlighting()
 
       if (exception != null) {
-        VcsNotifier.getInstance(myProject).notifyError("Couldn't compare with branch $comparedBranch", exception!!.message)
+        VcsNotifier.getInstance(project).notifyError("Couldn't compare with branch $comparedBranch", exception!!.message)
         return
       }
       nonPickedCommits = collectedNonPickedCommits
