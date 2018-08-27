@@ -176,16 +176,18 @@ class PyDBFrame:
                 is_real = is_real_file(frame.f_code.co_filename)
 
                 if exception_breakpoint is not None:
+                    # Always add exception to frame (must remove later after we proceed).
+                    add_exception_to_frame(frame, (exception, value, trace))
+
                     if exception_breakpoint.condition is not None:
                         eval_result = handle_breakpoint_condition(main_debugger, info, exception_breakpoint, frame)
                         if not eval_result:
                             return False, frame
 
                     if exception_breakpoint.ignore_libraries:
-                        if not main_debugger.is_exception_trace_in_project_scope(trace):
-                            pydev_log.debug("Ignore exception %s in library %s -- (%s)" % (exception, frame.f_code.co_filename, frame.f_code.co_name))
-                            return False, frame
-
+                        frame = trace.tb_frame
+                        while frame is not None and not main_debugger.in_project_scope(frame.f_code.co_filename):
+                            frame = frame.f_back
                     if ignore_exception_trace(trace):
                         return False, frame
 
@@ -236,7 +238,7 @@ class PyDBFrame:
 
     def handle_exception(self, frame, event, arg):
         try:
-            # print('handle_exception', frame.f_lineno, frame.f_code.co_name)
+            print('handle_exception', frame.f_lineno, frame.f_code.co_name)
 
             # We have 3 things in arg: exception type, description, traceback object
             trace_obj = arg[2]
@@ -251,15 +253,10 @@ class PyDBFrame:
                 while trace_obj.tb_next is not None:
                     trace_obj = trace_obj.tb_next
 
-
             if main_debugger.ignore_exceptions_thrown_in_lines_with_ignore_exception:
                 for check_trace_obj in (initial_trace_obj, trace_obj):
                     filename = get_abs_path_real_path_and_base_from_frame(check_trace_obj.tb_frame)[1]
-
-
                     filename_to_lines_where_exceptions_are_ignored = self.filename_to_lines_where_exceptions_are_ignored
-
-
                     lines_ignored = filename_to_lines_where_exceptions_are_ignored.get(filename)
                     if lines_ignored is None:
                         lines_ignored = filename_to_lines_where_exceptions_are_ignored[filename] = {}
@@ -313,9 +310,7 @@ class PyDBFrame:
                         if merged.get(exc_lineno, 0):
                             return
 
-
             thread = self._args[3]
-
             try:
                 frame_id_to_frame = {}
                 frame_id_to_frame[id(frame)] = frame
@@ -450,6 +445,7 @@ class PyDBFrame:
             has_exception_breakpoints = main_debugger.break_on_caught_exceptions or main_debugger.has_plugin_exception_breaks
 
             if is_exception_event:
+                print("exception event")
                 if has_exception_breakpoints:
                     should_stop, frame = self.should_stop_on_exception(frame, event, arg)
                     if should_stop:
