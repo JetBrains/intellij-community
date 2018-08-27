@@ -1,16 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.execution.CommandLineUtil;
@@ -303,13 +291,23 @@ public class EnvironmentUtil {
       return exitCode;
     }
     LOG.warn("shell env loader is timed out");
-    UnixProcessManager.sendSigIntToProcessTree(process);
-    exitCode = waitFor(process, 1000);
-    if (exitCode != null) {
-      return exitCode;
+
+    // First, try to interrupt 'softly' (we know how to do it only on *nix)
+    if (!SystemInfo.isWindows) {
+      UnixProcessManager.sendSigIntToProcessTree(process);
+      exitCode = waitFor(process, 1000);
+      if (exitCode != null) {
+        return exitCode;
+      }
+      LOG.warn("failed to terminate shell env loader process gracefully, terminating forcibly");
     }
-    LOG.warn("failed to terminate shell env loader process gracefully, terminating forcibly");
-    UnixProcessManager.sendSigKillToProcessTree(process);
+
+    if (SystemInfo.isWindows) {
+      process.destroy();
+    }
+    else {
+      UnixProcessManager.sendSigKillToProcessTree(process);
+    }
     exitCode = waitFor(process, 1000);
     if (exitCode != null) {
       return exitCode;
