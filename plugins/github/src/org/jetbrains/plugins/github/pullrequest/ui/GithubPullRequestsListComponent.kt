@@ -16,6 +16,8 @@ import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.components.panels.Wrapper
+import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.ui.frame.ProgressStripe
@@ -23,8 +25,11 @@ import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsLoader
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchComponent
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchModel
+import java.util.*
+import javax.swing.JComponent
 import javax.swing.JScrollBar
 import javax.swing.ScrollPaneConstants
+import javax.swing.event.ListSelectionEvent
 
 class GithubPullRequestsListComponent(project: Project,
                                       actionManager: ActionManager,
@@ -47,6 +52,9 @@ class GithubPullRequestsListComponent(project: Project,
   private val progressStripe = ProgressStripe(scrollPane, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
   private val searchModel = GithubPullRequestSearchModel()
   private val search = GithubPullRequestSearchComponent(project, autoPopupController, popupFactory, searchModel)
+  private val tableToolbarWrapper: Wrapper
+
+  private val selectionEventDispatcher = EventDispatcher.create(PullRequestSelectionListener::class.java)
 
   init {
     loader.addStateListener(this, this)
@@ -58,14 +66,22 @@ class GithubPullRequestsListComponent(project: Project,
       }
     }, this)
 
+    table.selectionModel.addListSelectionListener { e: ListSelectionEvent ->
+      if (!e.valueIsAdjusting) {
+        if (table.selectedRow < 0) selectionEventDispatcher.multicaster.selectionChanged(null)
+        else selectionEventDispatcher.multicaster.selectionChanged(tableModel.getValueAt(table.selectedRow, 0))
+      }
+    }
+
     val refreshAction = object : DumbAwareAction("Refresh", null, AllIcons.Actions.Refresh) {
       override fun actionPerformed(e: AnActionEvent) = loader.reset()
     }
     val actionGroup = DefaultActionGroup(refreshAction)
     val toolbar = actionManager.createActionToolbar("GithubPullRequestsToolWindowListToolbar", actionGroup, true)
     toolbar.setReservePlaceAutoPopupIcon(false)
+    tableToolbarWrapper = Wrapper(toolbar.component)
 
-    val headerPanel = JBUI.Panels.simplePanel(0, 0).addToCenter(search).addToRight(toolbar.component)
+    val headerPanel = JBUI.Panels.simplePanel(0, 0).addToCenter(search).addToRight(tableToolbarWrapper)
     val tableWithError = JBUI.Panels
       .simplePanel(progressStripe)
       .addToTop(errorPanel)
@@ -77,6 +93,13 @@ class GithubPullRequestsListComponent(project: Project,
     resetSearch()
   }
 
+  fun setToolbarHeightReferent(referent: JComponent) {
+    tableToolbarWrapper.setVerticalSizeReferent(referent)
+  }
+
+  fun addSelectionListener(listener: PullRequestSelectionListener, disposable: Disposable) =
+    selectionEventDispatcher.addListener(listener, disposable)
+
   private fun potentiallyLoadMore() {
     if (loadOnScrollThreshold && isScrollAtThreshold(scrollPane.verticalScrollBar)) {
       loadMore()
@@ -84,7 +107,7 @@ class GithubPullRequestsListComponent(project: Project,
   }
 
   private fun loadMore() {
-    if(isDisposed) return
+    if (isDisposed) return
     loadOnScrollThreshold = false
     loader.requestLoadMore()
   }
@@ -170,5 +193,9 @@ class GithubPullRequestsListComponent(project: Project,
 
   override fun dispose() {
     isDisposed = true
+  }
+
+  interface PullRequestSelectionListener : EventListener {
+    fun selectionChanged(selection: GithubSearchedIssue?)
   }
 }

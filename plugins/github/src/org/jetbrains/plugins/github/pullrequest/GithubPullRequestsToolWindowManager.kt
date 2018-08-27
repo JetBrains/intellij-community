@@ -43,7 +43,7 @@ class GithubPullRequestsToolWindowManager internal constructor(private val proje
 
     var content = contentManager.findContentByRemoteUrlInContent(remoteUrl)
     if (content == null) {
-      val component = componentFactory.createComponent(remoteUrl, account) ?: return
+      val component = componentFactory.createComponent(repository, remote, remoteUrl, account) ?: return
       content = contentManager.factory.createContent(component, null, false)
         .apply {
           setPreferredFocusedComponent { component }
