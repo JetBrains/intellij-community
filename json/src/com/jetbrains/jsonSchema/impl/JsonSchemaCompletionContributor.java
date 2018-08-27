@@ -364,6 +364,9 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
             createPropertyInsertHandler(jsonSchemaObject, hasValue, insertComma) :
             createDefaultPropertyInsertHandler(true, insertComma));
         }
+        else {
+          builder = builder.withInsertHandler(createDefaultPropertyInsertHandler(false, insertComma));
+        }
       } else if (!hasValue) {
         builder = builder.withInsertHandler(createDefaultPropertyInsertHandler(false, insertComma));
       }
