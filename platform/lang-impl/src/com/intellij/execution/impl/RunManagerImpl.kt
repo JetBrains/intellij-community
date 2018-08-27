@@ -46,7 +46,7 @@ private const val RECENT = "recent_temporary"
 
 // open for Upsource (UpsourceRunManager overrides to disable loadState (empty impl))
 @State(name = "RunManager", storages = [(Storage(value = StoragePathMacros.WORKSPACE_FILE, useSaveThreshold = ThreeState.NO))])
-open class RunManagerImpl(internal val project: Project) : RunManagerEx(), PersistentStateComponent<Element>, Disposable {
+open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStateComponent<Element>, Disposable {
   companion object {
     const val CONFIGURATION = "configuration"
     const val NAME_ATTR = "name"
@@ -516,7 +516,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     isFirstLoadState.set(false)
     loadSharedRunConfigurations()
     runConfigurationFirstLoaded()
-    eventPublisher.stateLoaded()
+    eventPublisher.stateLoaded(this, true)
   }
 
   override fun loadState(parentNode: Element) {
@@ -596,7 +596,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       eventPublisher.runConfigurationSelected()
     }
 
-    eventPublisher.stateLoaded()
+    eventPublisher.stateLoaded(this, isFirstLoadState)
   }
 
   private fun loadSharedRunConfigurations() {

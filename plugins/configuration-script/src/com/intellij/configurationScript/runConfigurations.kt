@@ -10,10 +10,17 @@ import org.jetbrains.io.JsonUtil
 @Suppress("JsonStandardCompliance")
 private const val ref = "\$ref"
 
-internal fun buildRunConfigurationTypeSchema(properties: StringBuilder, definitions: StringBuilder) {
+internal inline fun processConfigurationTypes(processor: (configurationType: ConfigurationType, propertyName: CharSequence, isLast: Boolean) -> Unit) {
   val configurationTypes = ConfigurationType.CONFIGURATION_TYPE_EP.extensionList
+  val last = configurationTypes.lastOrNull() ?: return
   for (configurationType in configurationTypes) {
-    val propertyName = rcTypeIdToPropertyName(configurationType)
+    val propertyName = rcTypeIdToPropertyName(configurationType) ?: continue
+    processor(configurationType, propertyName, configurationType === last)
+  }
+}
+
+internal fun buildRunConfigurationTypeSchema(properties: StringBuilder, definitions: StringBuilder) {
+  processConfigurationTypes { configurationType, propertyName, isLast ->
     val definitionId = "${propertyName}RC"
     val description = configurationType.configurationTypeDescription
     val descriptionField: CharSequence = when {
@@ -39,7 +46,7 @@ internal fun buildRunConfigurationTypeSchema(properties: StringBuilder, definiti
         "$ref": "#/definitions/$definitionId"
       }
       """.trimIndent())
-    if (configurationType !== configurationTypes.last()) {
+    if (!isLast) {
       properties.append(',')
     }
 
@@ -47,7 +54,7 @@ internal fun buildRunConfigurationTypeSchema(properties: StringBuilder, definiti
   }
 }
 
-fun describeFactories(configurationType: ConfigurationType, definitions: StringBuilder, definitionId: String) {
+private fun describeFactories(configurationType: ConfigurationType, definitions: StringBuilder, definitionId: String) {
   val factories = configurationType.configurationFactories
   if (factories.isEmpty()) {
     LOG.error("Configuration type \"${configurationType.displayName}\" is not valid: factory list is empty")

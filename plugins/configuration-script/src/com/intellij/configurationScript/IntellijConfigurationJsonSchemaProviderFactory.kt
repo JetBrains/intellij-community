@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationScript
 
+import com.intellij.json.JsonFileType
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
@@ -12,10 +13,11 @@ import com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory
 import com.jetbrains.jsonSchema.extension.SchemaType
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion
 import org.intellij.lang.annotations.Language
+import java.nio.charset.StandardCharsets
 
-internal val LOG = logger<IdeConfigurationJsonSchemaProviderFactory>()
+internal val LOG = logger<IntellijConfigurationJsonSchemaProviderFactory>()
 
-internal class IdeConfigurationJsonSchemaProviderFactory : JsonSchemaProviderFactory, JsonSchemaFileProvider {
+internal class IntellijConfigurationJsonSchemaProviderFactory : JsonSchemaProviderFactory, JsonSchemaFileProvider {
   private val schemeFile: VirtualFile by lazy { generateConfigurationSchema() }
 
   override fun getProviders(project: Project): List<JsonSchemaFileProvider> {
@@ -75,7 +77,7 @@ private fun generateConfigurationSchema(): LightVirtualFile {
       }
     },
     "properties": {
-      "runConfigurations": {
+      "${Keys.runConfigurations}": {
         "description": "The run configurations",
         "type": "object",
         "$ref": "#/definitions/RunConfigurations"
@@ -84,5 +86,10 @@ private fun generateConfigurationSchema(): LightVirtualFile {
     "additionalProperties": false
   }
   """
-  return LightVirtualFile("scheme.json", data.trimIndent())
+  return LightVirtualFile("scheme.json", JsonFileType.INSTANCE, data.trimIndent(), StandardCharsets.UTF_8, 0)
+}
+
+@Suppress("JsonStandardCompliance")
+object Keys {
+  const val runConfigurations = "runConfigurations"
 }

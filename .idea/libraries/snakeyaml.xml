@@ -1,6 +1,9 @@
 <component name="libraryTable">
   <library name="snakeyaml" type="repository">
     <properties maven-id="org.yaml:snakeyaml:1.22" />
+    <ANNOTATIONS>
+      <root url="file://$PROJECT_DIR$/lib/annotations/snakeyaml" />
+    </ANNOTATIONS>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/yaml/snakeyaml/1.22/snakeyaml-1.22.jar!/" />
     </CLASSES>
