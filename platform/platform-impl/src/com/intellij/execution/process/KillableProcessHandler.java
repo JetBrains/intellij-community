@@ -21,7 +21,9 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jvnet.winp.WinProcess;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -39,6 +41,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
 
   private boolean myShouldKillProcessSoftly = true;
   private final boolean myMediatedProcess;
+  private boolean myShouldKillProcessSoftlyWithWinP = false;
 
   public KillableProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     super(commandLine);
@@ -99,8 +102,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   private boolean canKillProcessSoftly() {
     if (processCanBeKilledByOS(myProcess)) {
       if (SystemInfo.isWindows) {
-        // runnerw.exe can send Ctrl+C events to a wrapped process
-        return myMediatedProcess;
+        return myMediatedProcess || myShouldKillProcessSoftlyWithWinP;
       }
       else if (SystemInfo.isUnix) {
         // 'kill -SIGINT <pid>' will be executed
@@ -144,9 +146,25 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
     }
   }
 
+  /**
+   * Enables sending Ctrl+C to a Windows-process on first termination attempt.
+   * This is an experimental API which will be removed in future releases once stabilized.
+   * Please do not use this API.
+   * @param shouldKillProcessSoftlyWithWinP true to use
+   */
+  @ApiStatus.Experimental
+  public void setShouldKillProcessSoftlyWithWinP(boolean shouldKillProcessSoftlyWithWinP) {
+    myShouldKillProcessSoftlyWithWinP = shouldKillProcessSoftlyWithWinP;
+  }
+
   protected boolean destroyProcessGracefully() {
-    if (SystemInfo.isWindows && myMediatedProcess) {
-      return RunnerMediator.destroyProcess(myProcess, true);
+    if (SystemInfo.isWindows) {
+      if (myMediatedProcess) {
+        return RunnerMediator.destroyProcess(myProcess, true);
+      }
+      if (myShouldKillProcessSoftlyWithWinP) {
+        return new WinProcess(myProcess).sendCtrlC();
+      }
     }
     else if (SystemInfo.isUnix) {
       return UnixProcessManager.sendSigIntToProcessTree(myProcess);
