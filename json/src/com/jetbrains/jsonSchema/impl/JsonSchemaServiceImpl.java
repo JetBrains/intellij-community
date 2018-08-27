@@ -2,6 +2,7 @@
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.json.JsonUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -258,9 +259,9 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
 
   @Override
   public boolean isSchemaFile(@NotNull VirtualFile file) {
-    return isMappedSchema(file)
-           || isSchemaByProvider(file)
-           || hasSchemaSchema(file);
+    return JsonUtil.isJsonFile(file) && (isMappedSchema(file)
+                                         || isSchemaByProvider(file)
+                                         || hasSchemaSchema(file));
   }
 
   public boolean isMappedSchema(@NotNull VirtualFile file) {
