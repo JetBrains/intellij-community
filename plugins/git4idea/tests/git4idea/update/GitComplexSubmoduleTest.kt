@@ -50,16 +50,16 @@ import java.util.*
  *   |  | |.git
  * ```
  */
-class GitSubmoduleTest : GitPlatformTest() {
+class GitComplexSubmoduleTest : GitSubmoduleTestBase() {
   private lateinit var mainRepo: GitRepository
   private lateinit var elderRepo: GitRepository
   private lateinit var youngerRepo: GitRepository
   private lateinit var grandchildRepo: GitRepository
 
-  private lateinit var grandchild: Repos
-  private lateinit var elder: Repos
-  private lateinit var younger: Repos
-  private lateinit var main: Repos
+  private lateinit var grandchild: RepositoryAndParent
+  private lateinit var elder: RepositoryAndParent
+  private lateinit var younger: RepositoryAndParent
+  private lateinit var main: RepositoryAndParent
 
   override fun setUp() {
     super.setUp()
@@ -130,6 +130,7 @@ class GitSubmoduleTest : GitPlatformTest() {
   }
 
   private fun setUpRepositoryStructure() {
+    // create separate git local and remote repositories outside of the project
     grandchild = createPlainRepo("grandchild")
     younger = createPlainRepo("younger")
     elder = createPlainRepo("elder")
@@ -139,7 +140,7 @@ class GitSubmoduleTest : GitPlatformTest() {
     mainRepo = createRepository(projectPath)
     val parent = prepareRemoteRepo(mainRepo)
     git("push -u origin master")
-    main = Repos("parent", File(projectPath), parent)
+    main = RepositoryAndParent("parent", File(projectPath), parent)
 
     elderRepo = addSubmoduleInProject(elder.remote, elder.name)
     youngerRepo = addSubmoduleInProject(younger.remote, younger.name, "alib/younger")
@@ -168,23 +169,6 @@ class GitSubmoduleTest : GitPlatformTest() {
     refresh(LocalFileSystem.getInstance().refreshAndFindFileByPath(rootPath)!!)
     setupDefaultUsername()
     return registerRepo(project, rootPath)
-  }
-
-  private fun createPlainRepo(moduleName: String): Repos {
-    cd(testRoot)
-    git("init $moduleName")
-    val child = File(testRoot, moduleName)
-    cd(child)
-    setupDefaultUsername()
-    tac("initial.txt", "initial")
-    val parent = "$moduleName.git"
-    git("remote add origin ${testRoot}/$parent")
-
-    cd(testRoot)
-    git("init --bare $parent")
-    cd(child)
-    git("push -u origin master")
-    return Repos(moduleName, child, File(testRoot, parent))
   }
 
   // second clone of the whole project with submodules
@@ -234,5 +218,4 @@ class GitSubmoduleTest : GitPlatformTest() {
 
   private fun orderedRepositories() = listOf(grandchildRepo, youngerRepo, elderRepo, mainRepo)
 
-  private data class Repos(val name: String, val local: File, val remote: File)
 }
