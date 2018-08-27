@@ -16,6 +16,7 @@ import com.jetbrains.jsonSchema.extension.*;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
 import com.jetbrains.jsonSchema.remote.JsonSchemaCatalogManager;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -397,12 +398,17 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
       return myData.getValue().get(file);
     }
 
+    @NotNull
     private static Map<VirtualFile, JsonSchemaFileProvider> createFileProviderMap(@NotNull final List<JsonSchemaFileProvider> list) {
       // if there are different providers with the same schema files,
       // stream API does not allow to collect same keys with Collectors.toMap(): throws duplicate key
-      final Map<VirtualFile, JsonSchemaFileProvider> map = new HashMap<>();
-      list.stream().filter(provider -> provider.getSchemaFile() != null)
-        .forEach(provider -> map.put(provider.getSchemaFile(), provider));
+      final Map<VirtualFile, JsonSchemaFileProvider> map = new THashMap<>();
+      for (JsonSchemaFileProvider provider : list) {
+        VirtualFile schemaFile = provider.getSchemaFile();
+        if (schemaFile != null) {
+          map.put(schemaFile, provider);
+        }
+      }
       return map;
     }
   }
