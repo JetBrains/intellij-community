@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.sdk.flavors;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
@@ -45,7 +46,7 @@ public class CondaEnvSdkFlavor extends CPythonSdkFlavor {
   public static CondaEnvSdkFlavor INSTANCE = new CondaEnvSdkFlavor();
 
   @Override
-  public Collection<String> suggestHomePaths() {
+  public Collection<String> suggestHomePaths(@Nullable Module module) {
     List<String> candidates = new ArrayList<>();
 
     for (VirtualFile file : getCondaDefaultLocations()) {

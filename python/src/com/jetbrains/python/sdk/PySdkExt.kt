@@ -47,17 +47,17 @@ import java.nio.file.Paths
  * @author vlan
  */
 
-fun findBaseSdks(existingSdks: List<Sdk>): List<Sdk> {
+fun findBaseSdks(existingSdks: List<Sdk>, module: Module?): List<Sdk> {
   val existing = existingSdks.filter { it.sdkType is PythonSdkType && it.isSystemWide }
-  val detected = detectSystemWideSdks(existingSdks)
+  val detected = detectSystemWideSdks(module, existingSdks)
   return existing + detected
 }
 
-fun detectSystemWideSdks(existingSdks: List<Sdk>): List<PyDetectedSdk> {
+fun detectSystemWideSdks(module: Module?, existingSdks: List<Sdk>): List<PyDetectedSdk> {
   val existingPaths = existingSdks.map { it.homePath }.toSet()
   return PythonSdkFlavor.getApplicableFlavors(false)
     .asSequence()
-    .flatMap { it.suggestHomePaths().asSequence() }
+    .flatMap { it.suggestHomePaths(module).asSequence() }
     .filter { it !in existingPaths }
     .map { PyDetectedSdk(it) }
     .sortedWith(compareBy<PyDetectedSdk>({ it.guessedLanguageLevel },
@@ -66,10 +66,10 @@ fun detectSystemWideSdks(existingSdks: List<Sdk>): List<PyDetectedSdk> {
 }
 
 fun detectVirtualEnvs(module: Module?, existingSdks: List<Sdk>): List<PyDetectedSdk> =
-  filterSuggestedPaths(VirtualEnvSdkFlavor.INSTANCE.suggestHomePaths(), existingSdks, module)
+  filterSuggestedPaths(VirtualEnvSdkFlavor.INSTANCE.suggestHomePaths(module), existingSdks, module)
 
 fun detectCondaEnvs(module: Module?, existingSdks: List<Sdk>): List<PyDetectedSdk> =
-  filterSuggestedPaths(CondaEnvSdkFlavor.INSTANCE.suggestHomePaths(), existingSdks, module)
+  filterSuggestedPaths(CondaEnvSdkFlavor.INSTANCE.suggestHomePaths(module), existingSdks, module)
 
 fun createSdkByGenerateTask(generateSdkHomePath: Task.WithResult<String, ExecutionException>,
                             existingSdks: List<Sdk>,

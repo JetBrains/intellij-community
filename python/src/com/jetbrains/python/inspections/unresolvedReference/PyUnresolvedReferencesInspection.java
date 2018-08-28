@@ -1088,7 +1088,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       // Remove those unsed, that are reported to be skipped by extension points
       final Set<PyImportedNameDefiner> unusedImportToSkip = new HashSet<>();
       for (final PyImportedNameDefiner unusedImport : unusedImports) {
-        if (importShouldBeSkippedByExtPoint(unusedImport)) { // Pass to extension points
+        if (importShouldBeSkippedByExtPoint(unusedImport, myTypeEvalContext)) { // Pass to extension points
           unusedImportToSkip.add(unusedImport);
         }
       }
@@ -1207,9 +1207,10 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
    * @param importNameDefiner unused import
    * @return true of one or more asks
    */
-  private static boolean importShouldBeSkippedByExtPoint(@NotNull final PyImportedNameDefiner importNameDefiner) {
+  private static boolean importShouldBeSkippedByExtPoint(@NotNull final PyImportedNameDefiner importNameDefiner,
+                                                         @NotNull final TypeEvalContext typeEvalContext) {
     for (final PyUnresolvedReferenceSkipperExtPoint skipper : PyUnresolvedReferenceSkipperExtPoint.EP_NAME.getExtensions()) {
-      if (skipper.unusedImportShouldBeSkipped(importNameDefiner)) {
+      if (skipper.unusedImportShouldBeSkipped(importNameDefiner, typeEvalContext)) {
         return true;
       }
     }

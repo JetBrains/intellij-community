@@ -828,7 +828,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
         substitutor.substitute(targetType),
         initializer,
         parameter.getNameIdentifierGroovy(),
-        method
+        parameter
       );
     }
   }

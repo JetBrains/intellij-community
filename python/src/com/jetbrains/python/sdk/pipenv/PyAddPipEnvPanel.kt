@@ -44,7 +44,7 @@ class PyAddPipEnvPanel(private val project: Project?,
 
   private val moduleField: JComboBox<Module>
 
-  private val baseSdkField = PySdkPathChoosingComboBox(findBaseSdks(existingSdks), null).apply {
+  private val baseSdkField = PySdkPathChoosingComboBox(findBaseSdks(existingSdks, module), null).apply {
     val preferredSdkPath = PySdkSettings.instance.preferredVirtualEnvBaseSdk
     val detectedPreferredSdk = items.find { it.homePath == preferredSdkPath }
     selectedSdk = when {
@@ -58,6 +58,7 @@ class PyAddPipEnvPanel(private val project: Project?,
 
   private val installPackagesCheckBox = JBCheckBox("Install packages from Pipfile").apply {
     isVisible = newProjectPath == null
+    isSelected = isVisible
   }
 
   private val pipEnvPathField = TextFieldWithBrowseButton().apply {

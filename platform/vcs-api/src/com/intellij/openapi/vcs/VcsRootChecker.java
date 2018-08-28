@@ -43,9 +43,11 @@ public abstract class VcsRootChecker {
   public abstract VcsKey getSupportedVcs();
 
   /**
-   * Checks if the given path represents the VCS special directory, e.g. {@code .git}.
+   * Checks if the given directory looks like a VCS special directory, e.g. "{@code .git}".
+   * <br/><br/>
+   * This is a quick rough check. A more precise is done in {@link #isRoot(String)}.
    */
-  public boolean isVcsDir(@NotNull String path) {
+  public boolean isVcsDir(@NotNull String dirName) {
     return false;
   }
 

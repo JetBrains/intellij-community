@@ -8,6 +8,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -15,6 +16,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
@@ -43,6 +45,7 @@ import java.util.List;
  * {@code "void process(Processor<T> p)"  -> "void process(Processor<? super T> p)"}
  */
 public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTool {
+  private static final Logger LOG = Logger.getInstance(BoundedWildcardInspection.class);
   @SuppressWarnings("WeakerAccess") public boolean REPORT_INVARIANT_CLASSES = true;
   @SuppressWarnings("WeakerAccess") public boolean REPORT_PRIVATE_METHODS = true;
   private JBCheckBox myReportInvariantClassesCB;
@@ -81,7 +84,10 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
                       ? InspectionGadgetsBundle.message("bounded.wildcard.covariant.descriptor")
                       : InspectionGadgetsBundle.message("bounded.wildcard.contravariant.descriptor")) +
                      (wildCardIsUseless ? " but decided against it" : "");
-        holder.registerProblem(typeElement, msg, type, new ReplaceWithQuestionTFix(isOverriddenOrOverrides(candidate.method), canBeExtends));
+        // show verbose message in debug mode only
+        if (!wildCardIsUseless || LOG.isDebugEnabled()) {
+          holder.registerProblem(typeElement, msg, type, new ReplaceWithQuestionTFix(isOverriddenOrOverrides(candidate.method), canBeExtends));
+        }
       }
     };
   }
@@ -180,7 +186,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     PsiTypeElement newInnerTypeElement = pf.createTypeElement(isExtends ? PsiWildcardType
       .createExtends(psiManager, type) : PsiWildcardType.createSuper(psiManager, type));
 
-    PsiClassReferenceType methodParamType = (PsiClassReferenceType)candidate.methodParameter.getType();
+    PsiClassReferenceType methodParamType = candidate.methodParameterType;
     PsiClassReferenceType clone = new PsiClassReferenceType((PsiJavaCodeReferenceElement)methodParamType.getReference().copy(), methodParamType.getLanguageLevel());
     PsiAnnotation[] annotations = methodParamType.getApplicableAnnotations();
 
@@ -235,7 +241,8 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
 
     PsiClassReferenceType newParameterType = suggestMethodParameterType(candidate, isExtends);
 
-    PsiMethod methodCopy = createMethodCopy(project, candidate.method, candidate.methodParameterIndex, newParameterType);
+    PsiMethod methodCopy = DebugUtil
+      .performPsiModification("Creating method copy", () -> createMethodCopy(project, candidate.method, candidate.methodParameterIndex, newParameterType));
     PsiClass containingClass = candidate.method.getContainingClass();
     PsiField field = findFieldAssignedFromMethodParameter(candidate.methodParameter, method);
     List<PsiElement> superMethodsCalls = new ArrayList<>(); // shouldn't error-check these because they're not generalized yet
@@ -246,7 +253,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
       return errorChecks(methodCopy.getBody(), superMethodsCalls);
     }
     // field can be referenced from anywhere in the file
-    PsiClass classCopy = createClassCopy(project, field, containingClass, candidate.method, methodCopy, newParameterType);
+    PsiClass classCopy = DebugUtil.performPsiModification("Creating class copy", () -> createClassCopy(project, field, containingClass, candidate.method, methodCopy, newParameterType));
 
     return errorChecks(classCopy, superMethodsCalls);
   }

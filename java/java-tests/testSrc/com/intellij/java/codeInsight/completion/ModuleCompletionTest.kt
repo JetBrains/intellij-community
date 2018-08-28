@@ -34,7 +34,7 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   fun testRequiresBare() =
     variants("module M { requires <caret>",
              "transitive", "static", "M2", "java.base", "java.se", "java.xml.bind", "java.xml.ws", "javax.doomed",
-             "lib.multi.release", "lib.named", "lib.auto", "lib.claimed", "lib.xml.bind", "lib.xml.ws")
+             "lib.multi.release", "lib.named", "lib.auto", "lib.claimed")
   fun testRequiresTransitive() = complete("module M { requires tr<caret> }", "module M { requires transitive <caret> }")
   fun testRequiresSimpleName() = complete("module M { requires M<caret> }", "module M { requires M2;<caret> }")
   fun testRequiresQualifiedName() = complete("module M { requires lib.m<caret> }", "module M { requires lib.multi.release;<caret> }")

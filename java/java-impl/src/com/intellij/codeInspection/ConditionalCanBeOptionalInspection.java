@@ -21,6 +21,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
@@ -116,7 +118,7 @@ public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalIns
         (PsiLambdaExpression)factory.createExpressionFromText("(" + variable.getType().getCanonicalText() + " " +
                                                               inLambdaName + ")->" + ct.text(notNullBranch), ternary);
       PsiParameter lambdaParameter = trueLambda.getParameterList().getParameters()[0];
-      PsiExpression trueBody = (PsiExpression)trueLambda.getBody();
+      PsiExpression trueBody = Objects.requireNonNull((PsiExpression)trueLambda.getBody());
       String replacement = OptionalUtil.generateOptionalUnwrap(CommonClassNames.JAVA_UTIL_OPTIONAL + ".ofNullable(" + name + ")",
                                                                lambdaParameter, trueBody, ct.markUnchanged(nullBranch), ternary.getType(),
                                                                !ExpressionUtils.isSafelyRecomputableExpression(nullBranch));
@@ -131,7 +133,7 @@ public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalIns
     final PsiExpression myNullBranch;
     final PsiExpression myNotNullBranch;
 
-    public TernaryNullCheck(PsiVariable variable, PsiExpression nullBranch, PsiExpression notNullBranch) {
+    private TernaryNullCheck(PsiVariable variable, PsiExpression nullBranch, PsiExpression notNullBranch) {
       myVariable = variable;
       myNullBranch = nullBranch;
       myNotNullBranch = notNullBranch;

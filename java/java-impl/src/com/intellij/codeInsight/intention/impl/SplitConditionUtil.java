@@ -120,6 +120,7 @@ public class SplitConditionUtil {
                                              CommentTracker tracker) {
     List<String> elseChain = new ArrayList<>();
     boolean chainFinished = false;
+    loop:
     while (!chainFinished) {
       PsiIfStatement nextIf = tryCast(ControlFlowUtils.stripBraces(elseBranch), PsiIfStatement.class);
       if (nextIf == null) break;
@@ -144,7 +145,7 @@ public class SplitConditionUtil {
         }
         if (nextOperands.length <= operands.length) break;
         for (int i = 0; i < operands.length; i++) {
-          if (!PsiEquivalenceUtil.areElementsEquivalent(nextOperands[i], operands[i])) break;
+          if (!PsiEquivalenceUtil.areElementsEquivalent(nextOperands[i], operands[i])) break loop;
         }
         PsiExpression nextExtracted =
           getROperands(nextPolyadic, nextPolyadic.getTokenBeforeOperand(nextOperands[operands.length]), tracker);

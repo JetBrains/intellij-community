@@ -131,7 +131,9 @@ class PyPipEnvPackageManager(val sdk: Sdk) : PyPackageManager() {
       return entries
         .asSequence()
         .filterNotNull()
-        .map { PyPackage(it.pkg.packageName, it.pkg.installedVersion, null, emptyList()) }
+        .flatMap { sequenceOf(it.pkg) + it.dependencies.asSequence() }
+        .map { PyPackage(it.packageName, it.installedVersion, null, emptyList()) }
+        .distinct()
         .toList()
     }
   }

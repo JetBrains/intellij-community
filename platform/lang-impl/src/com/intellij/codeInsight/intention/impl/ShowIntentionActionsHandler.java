@@ -5,7 +5,9 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.codeInsight.daemon.impl.IntentionsUI;
+import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
@@ -100,7 +102,6 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
 
     int offset = editor.getCaretModel().getOffset();
     PsiElement psiElement = psiFile.findElementAt(offset);
-    boolean inProject = psiFile.getManager().isInProject(psiFile);
     try {
       Project project = psiFile.getProject();
       if (action instanceof IntentionActionDelegate) action = ((IntentionActionDelegate)action).getDelegate();
@@ -116,7 +117,8 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       }
       
       if (action instanceof PsiElementBaseIntentionAction) {
-        if (!inProject || psiElement == null || !((PsiElementBaseIntentionAction)action).isAvailable(project, editor, psiElement)) return false;
+        PsiElementBaseIntentionAction psiAction = (PsiElementBaseIntentionAction)action;
+        if (psiElement == null || !psiAction.checkFile(psiFile) || !psiAction.isAvailable(project, editor, psiElement)) return false;
       }
       else if (!action.isAvailable(project, editor, psiFile)) {
         return false;

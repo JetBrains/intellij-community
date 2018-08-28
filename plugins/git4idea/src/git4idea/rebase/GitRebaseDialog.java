@@ -165,11 +165,11 @@ public class GitRebaseDialog extends DialogWrapper {
     myPreserveMergesCheckBox.setSelected(mySettings.isPreserveMerges());
     myShowTagsCheckBox.setSelected(mySettings.showTags());
     myShowRemoteBranchesCheckBox.setSelected(mySettings.showRemoteBranches());
+    setupBranches();
     overwriteOntoForCurrentBranch(mySettings);
 
     myOriginalOntoBranch = GitUIUtil.getTextField(myOntoComboBox).getText();
 
-    setupBranches();
     validateFields();
   }
 

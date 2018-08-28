@@ -40,7 +40,8 @@ public class JsonFileResolver {
       return JsonSchemaCatalogManager.DEFAULT_CATALOG_HTTPS;
     }
     if (StringUtil.startsWithIgnoreCase(urlString, JsonSchemaRemoteContentProvider.STORE_URL_PREFIX_HTTP)) {
-      return StringUtil.replace(urlString, "http://json.schemastore.org/", "https://schemastore.azurewebsites.net/schemas/json/") + ".json";
+      String newUrl = StringUtil.replace(urlString, "http://json.schemastore.org/", "https://schemastore.azurewebsites.net/schemas/json/");
+      return newUrl.endsWith(".json") ? newUrl : newUrl + ".json";
     }
     return urlString;
   }

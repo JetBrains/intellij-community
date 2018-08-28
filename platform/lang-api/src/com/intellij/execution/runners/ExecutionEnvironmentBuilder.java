@@ -41,6 +41,7 @@ public final class ExecutionEnvironmentBuilder {
   @Nullable private String myRunnerId;
   private ProgramRunner<?> myRunner;
   private boolean myAssignNewId;
+  @Nullable private Long myExecutionId = null;
   @NotNull private Executor myExecutor;
   @Nullable private DataContext myDataContext;
   @Nullable private UserDataHolderBase myCopyableUserDataHolder;
@@ -165,6 +166,12 @@ public final class ExecutionEnvironmentBuilder {
     return this;
   }
 
+  public ExecutionEnvironmentBuilder executionId(long executionId) {
+    myExecutionId = executionId;
+    myAssignNewId = false;
+    return this;
+  }
+
   @NotNull
   public ExecutionEnvironment build() {
     ExecutionEnvironment environment = null;
@@ -194,6 +201,9 @@ public final class ExecutionEnvironmentBuilder {
 
     if (myAssignNewId) {
       environment.assignNewExecutionId();
+    }
+    if (myExecutionId != null) {
+      environment.setExecutionId(myExecutionId);
     }
     if (myDataContext != null) {
       environment.setDataContext(myDataContext);

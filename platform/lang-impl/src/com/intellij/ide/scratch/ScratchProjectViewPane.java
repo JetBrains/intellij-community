@@ -149,12 +149,6 @@ public class ScratchProjectViewPane extends ProjectViewPane {
   }
 
   @Nullable
-  @Override
-  protected PsiElement getPSIElement(@Nullable Object element) {
-    return element instanceof RootType ? getDirectory(myProject, (RootType)element) : super.getPSIElement(element);
-  }
-
-  @Nullable
   static PsiDirectory getDirectory(@NotNull Project project, @NotNull RootType rootId) {
     VirtualFile virtualFile = getVirtualFile(rootId);
     return virtualFile == null ? null : PsiManager.getInstance(project).findDirectory(virtualFile);

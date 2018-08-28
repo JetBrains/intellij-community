@@ -20,8 +20,7 @@ import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.NavigationItemFileStatus;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
@@ -41,7 +40,6 @@ import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -55,12 +53,11 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
   }
 
   @Override
-  public Component getListCellRendererComponent(
-    JList list,
-    Object value,
-    int index,
-    boolean isSelected,
-    boolean cellHasFocus) {
+  public Component getListCellRendererComponent(JList list,
+                                                Object value,
+                                                int index,
+                                                boolean isSelected,
+                                                boolean cellHasFocus) {
     removeAll();
 
     final boolean hasRightRenderer = UISettings.getInstance().getShowIconInQuickNavigation();
@@ -91,40 +88,26 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
     return this;
   }
 
-  protected static Color getBackgroundColor(@Nullable Object value) {
-    if (value instanceof PsiElement || value instanceof DataProvider) {
-      final PsiElement psiElement = value instanceof PsiElement
-                                    ? (PsiElement)value
-                                    : CommonDataKeys.PSI_ELEMENT.getData((DataProvider) value);
-      if (psiElement != null && psiElement.isValid()) {
-        VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiElement);
-        Color fileColor = virtualFile == null ? null : getFileBackgroundColor(psiElement.getProject(), virtualFile);
-        if (fileColor != null) {
-          return fileColor;
-        }
-      }
-    }
-
-    return UIUtil.getListBackground();
+  static PsiElement getPsiElement(Object o) {
+    return o instanceof PsiElement ? (PsiElement)o :
+           o instanceof PsiElementNavigationItem ? ((PsiElementNavigationItem)o).getTargetElement() : null;
   }
 
   private static class LeftRenderer extends ColoredListCellRenderer {
     public final boolean myRenderLocation;
     private final Matcher myMatcher;
 
-    public LeftRenderer(boolean renderLocation, Matcher matcher) {
+    LeftRenderer(boolean renderLocation, Matcher matcher) {
       myRenderLocation = renderLocation;
       myMatcher = matcher;
     }
 
     @Override
-    protected void customizeCellRenderer(
-      @NotNull JList list,
-      Object value,
-      int index,
-      boolean selected,
-      boolean hasFocus
-      ) {
+    protected void customizeCellRenderer(@NotNull JList list,
+                                         Object value,
+                                         int index,
+                                         boolean selected,
+                                         boolean hasFocus) {
       Color bgColor = UIUtil.getListBackground();
 
       if (value instanceof PsiElement && !((PsiElement)value).isValid()) {
@@ -132,36 +115,33 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
         append("Invalid", SimpleTextAttributes.ERROR_ATTRIBUTES);
       }
       else if (value instanceof NavigationItem) {
-        NavigationItem element = (NavigationItem)value;
-        ItemPresentation presentation = element.getPresentation();
+        NavigationItem item = (NavigationItem)value;
+        ItemPresentation presentation = item.getPresentation();
         assert presentation != null: "PSI elements displayed in choose by name lists must return a non-null value from getPresentation(): element " +
-          element.toString() + ", class " + element.getClass().getName();
+          item.toString() + ", class " + item.getClass().getName();
         String name = presentation.getPresentableText();
         assert name != null: "PSI elements displayed in choose by name lists must return a non-null value from getPresentation().getPresentableName: element " +
-                                     element.toString() + ", class " + element.getClass().getName();
+                                     item.toString() + ", class " + item.getClass().getName();
         Color color = list.getForeground();
-        boolean isProblemFile = element instanceof PsiElement
-                                && WolfTheProblemSolver.getInstance(((PsiElement)element).getProject())
-                                   .isProblemFile(PsiUtilCore.getVirtualFile((PsiElement)element));
+        boolean isProblemFile = item instanceof PsiElement
+                                && WolfTheProblemSolver.getInstance(((PsiElement)item).getProject())
+                                   .isProblemFile(PsiUtilCore.getVirtualFile((PsiElement)item));
 
-        if (element instanceof PsiElement || element instanceof DataProvider) {
-          final PsiElement psiElement = element instanceof PsiElement
-                                        ? (PsiElement)element
-                                        : CommonDataKeys.PSI_ELEMENT.getData((DataProvider) element);
-          if (psiElement != null) {
-            final Project project = psiElement.getProject();
+        PsiElement psiElement = getPsiElement(item);
 
-            final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiElement);
-            isProblemFile = WolfTheProblemSolver.getInstance(project).isProblemFile(virtualFile);
+        if (psiElement != null && psiElement.isValid()) {
+          Project project = psiElement.getProject();
 
-            Color fileColor = virtualFile == null ? null : getFileBackgroundColor(project, virtualFile);
-            if (fileColor != null) {
-              bgColor = fileColor;
-            }
+          VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiElement);
+          isProblemFile = WolfTheProblemSolver.getInstance(project).isProblemFile(virtualFile);
+
+          Color fileColor = virtualFile == null ? null : getFileBackgroundColor(project, virtualFile);
+          if (fileColor != null) {
+            bgColor = fileColor;
           }
         }
 
-        FileStatus status = NavigationItemFileStatus.get(element);
+        FileStatus status = NavigationItemFileStatus.get(item);
         if (status != FileStatus.NOT_CHANGED) {
           color = status.getColor();
         }

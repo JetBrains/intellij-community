@@ -25,6 +25,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 import static com.intellij.codeInsight.PsiEquivalenceUtil.areElementsEquivalent;
 
 public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -239,8 +241,9 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
     }
     String lambdaText = generateOptionalLambda(factory, ct, optionalRef, trueValue);
     PsiLambdaExpression lambda = (PsiLambdaExpression)factory.createExpressionFromText(lambdaText, trueValue);
+    PsiExpression body = Objects.requireNonNull((PsiExpression)lambda.getBody());
     return OptionalUtil.generateOptionalUnwrap(optionalRef.getText(), lambda.getParameterList().getParameters()[0],
-                                               (PsiExpression)lambda.getBody(), ct.markUnchanged(falseValue), targetType, true);
+                                               body, ct.markUnchanged(falseValue), targetType, true);
   }
 
   static boolean isSimpleOrUnchecked(PsiExpression expression) {
@@ -250,7 +253,7 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
   static class OptionalIsPresentFix implements LocalQuickFix {
     private final OptionalIsPresentCase myScenario;
 
-    public OptionalIsPresentFix(OptionalIsPresentCase scenario) {
+    OptionalIsPresentFix(OptionalIsPresentCase scenario) {
       myScenario = scenario;
     }
 

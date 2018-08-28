@@ -41,7 +41,7 @@ public class DefaultXmlPsiPolicy implements XmlPsiPolicy{
     final FileElement dummyParent = DummyHolderFactory.createHolder(text.getManager(), null, charTable).getTreeElement();
     final XmlTag rootTag =
       ((XmlFile)PsiFileFactory.getInstance(containingFile.getProject())
-        .createFileFromText("a.xml", "<a>" + displayText + "</a>")).getRootTag();
+        .createFileFromText("a.xml", containingFile.getLanguage(), "<a>" + displayText + "</a>", false, true)).getRootTag();
 
     assert rootTag != null;
     final XmlTagChild[] tagChildren = rootTag.getValue().getChildren();

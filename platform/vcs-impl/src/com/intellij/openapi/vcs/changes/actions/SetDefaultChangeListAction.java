@@ -16,26 +16,18 @@
 
 package com.intellij.openapi.vcs.changes.actions;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 
 public class SetDefaultChangeListAction extends AnAction implements DumbAware {
-  public SetDefaultChangeListAction() {
-    super(VcsBundle.message("changes.action.setdefaultchangelist.text"),
-          VcsBundle.message("changes.action.setdefaultchangelist.description"), AllIcons.Actions.Submit1);
-  }
-
-
   public void update(AnActionEvent e) {
     ChangeList[] lists = e.getData(VcsDataKeys.CHANGE_LISTS);
     final boolean visible =

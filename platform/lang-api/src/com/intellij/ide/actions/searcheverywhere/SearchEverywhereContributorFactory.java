@@ -10,5 +10,5 @@ public interface SearchEverywhereContributorFactory<F> {
   SearchEverywhereContributor<F> createContributor(AnActionEvent initEvent);
 
   @Nullable
-  SearchEverywhereContributorFilter<F> createFilter();
+  SearchEverywhereContributorFilter<F> createFilter(AnActionEvent initEvent);
 }

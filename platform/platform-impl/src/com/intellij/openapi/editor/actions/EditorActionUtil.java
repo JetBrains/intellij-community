@@ -856,9 +856,9 @@ public class EditorActionUtil {
    */
   public static void makePositionVisible(@NotNull final Editor editor, final int offset) {
     FoldingModel foldingModel = editor.getFoldingModel();
-    FoldRegion collapsedRegionAtOffset;
-    while ((collapsedRegionAtOffset  = foldingModel.getCollapsedRegionAtOffset(offset)) != null) {
-      final FoldRegion region = collapsedRegionAtOffset;
+    while (true) {
+      FoldRegion region = foldingModel.getCollapsedRegionAtOffset(offset);
+      if (region == null || region.shouldNeverExpand()) break;
       foldingModel.runBatchFoldingOperation(() -> region.setExpanded(true));
     }
   }

@@ -1,0 +1,1 @@
+deprecated: github_icon.png -> com.intellij.icons.AllIcons@/vcs/vendors/github.svg; to be removed in IDEA 2020 - use AllIcons.Vcs.Vendors.Github

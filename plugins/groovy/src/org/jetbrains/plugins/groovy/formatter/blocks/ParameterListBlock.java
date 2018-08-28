@@ -27,8 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.formatter.AlignmentProvider;
 import org.jetbrains.plugins.groovy.formatter.FormattingContext;
 import org.jetbrains.plugins.groovy.formatter.processors.GroovyWrappingProcessor;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +35,7 @@ import java.util.List;
  * @author Max Medvedev
  */
 public class ParameterListBlock extends GroovyBlock {
-  private final List<Block> mySubBlocks;
+  private final List<Block> mySubBlocks = new ArrayList<>();
   private final TextRange myTextRange;
 
   @NotNull
@@ -46,19 +44,16 @@ public class ParameterListBlock extends GroovyBlock {
     return myTextRange;
   }
 
-  public ParameterListBlock(@NotNull GrMethod method, @NotNull Indent indent, @Nullable Wrap wrap, @NotNull FormattingContext context) {
-    super(method.getParameterList().getNode(), indent, wrap, context);
-    final ASTNode methodNode = method.getNode();
-    final ASTNode leftParenth = methodNode.findChildByType(GroovyTokenTypes.mLPAREN);
-    final ASTNode rightParenth = methodNode.findChildByType(GroovyTokenTypes.mRPAREN);
+  public ParameterListBlock(@NotNull Indent indent,
+                            @Nullable Wrap wrap,
+                            @NotNull FormattingContext context,
+                            @NotNull ASTNode leftParenth,
+                            @NotNull ASTNode parameterList,
+                            @Nullable ASTNode rightParenth,
+                            @NotNull List<ASTNode> astNodes) {
+    super(parameterList, indent, wrap, context);
 
-    final GroovyWrappingProcessor wrappingProcessor = new GroovyWrappingProcessor(this);
-    mySubBlocks = new ArrayList<>();
-    if (leftParenth != null) {
-      mySubBlocks.add(new GroovyBlock(leftParenth, Indent.getNoneIndent(), Wrap.createWrap(WrapType.NONE, false), myContext));
-    }
-
-    List<ASTNode> astNodes = GroovyBlockGenerator.visibleChildren(myNode);
+    mySubBlocks.add(new GroovyBlock(leftParenth, Indent.getNoneIndent(), Wrap.createWrap(WrapType.NONE, false), myContext));
 
     final boolean unfinished = isParameterListUnfinished(myNode);
 
@@ -74,10 +69,10 @@ public class ParameterListBlock extends GroovyBlock {
     }
 
 
+    final GroovyWrappingProcessor wrappingProcessor = new GroovyWrappingProcessor(this);
     for (ASTNode childNode : astNodes) {
       mySubBlocks.add(new GroovyBlock(childNode, Indent.getContinuationIndent(), wrappingProcessor.getChildWrap(childNode), myContext));
     }
-
 
     if (rightParenth != null) {
       mySubBlocks.add(new GroovyBlock(rightParenth,
@@ -86,9 +81,7 @@ public class ParameterListBlock extends GroovyBlock {
                                       myContext));
 
       if (!unfinished && myContext.getSettings().ALIGN_MULTILINE_METHOD_BRACKETS) {
-        if (leftParenth != null) {
-          myContext.getAlignmentProvider().addPair(leftParenth, rightParenth, false);
-        }
+        myContext.getAlignmentProvider().addPair(leftParenth, rightParenth, false);
       }
     }
 

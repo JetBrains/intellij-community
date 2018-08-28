@@ -5,9 +5,8 @@ import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.RepositoryHelper;
-import com.intellij.internal.statistic.AbstractProjectsUsagesCollector;
-import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -31,7 +30,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public abstract class AbstractToolsUsagesCollector extends AbstractProjectsUsagesCollector {
+public abstract class AbstractToolsUsagesCollector extends ProjectUsagesCollector {
 
   private static final Predicate<ScopeToolState> BUNDLED = state -> {
     final IdeaPluginDescriptor descriptor = getIdeaPluginDescriptor(state);
@@ -70,7 +69,7 @@ public abstract class AbstractToolsUsagesCollector extends AbstractProjectsUsage
 
   @NotNull
   @Override
-  public Set<UsageDescriptor> getProjectUsages(@NotNull final Project project) {
+  public Set<UsageDescriptor> getUsages(@NotNull final Project project) {
     final List<ScopeToolState> tools = InspectionProjectProfileManager.getInstance(project).getCurrentProfile().getAllTools();
     return filter(tools.stream())
       .map(ScopeToolState::getTool)
@@ -84,12 +83,10 @@ public abstract class AbstractToolsUsagesCollector extends AbstractProjectsUsage
 
   public static class AllBundledToolsUsagesCollector extends AbstractToolsUsagesCollector {
 
-    private static final GroupDescriptor GROUP_ID = GroupDescriptor.create("all-bundled-tools");
-
     @NotNull
     @Override
-    public GroupDescriptor getGroupId() {
-      return GROUP_ID;
+    public String getGroupId() {
+      return "statistics.all.bundled.tools";
     }
 
     @NotNull
@@ -101,12 +98,10 @@ public abstract class AbstractToolsUsagesCollector extends AbstractProjectsUsage
 
   public static class AllListedToolsUsagesCollector extends AbstractToolsUsagesCollector {
 
-    private static final GroupDescriptor GROUP_ID = GroupDescriptor.create("all-listed-tools");
-
     @NotNull
     @Override
-    public GroupDescriptor getGroupId() {
-      return GROUP_ID;
+    public String getGroupId() {
+      return "statistics.all.listed.tools";
     }
 
     @NotNull
@@ -118,12 +113,11 @@ public abstract class AbstractToolsUsagesCollector extends AbstractProjectsUsage
 
   public static class EnabledBundledToolsUsagesCollector extends AbstractToolsUsagesCollector {
 
-    private static final GroupDescriptor GROUP_ID = GroupDescriptor.create("enabled-bundled-tools");
 
     @NotNull
     @Override
-    public GroupDescriptor getGroupId() {
-      return GROUP_ID;
+    public String getGroupId() {
+      return "statistics.enabled.bundled.tools";
     }
 
     @NotNull
@@ -135,12 +129,10 @@ public abstract class AbstractToolsUsagesCollector extends AbstractProjectsUsage
 
   public static class EnabledListedToolsUsagesCollector extends AbstractToolsUsagesCollector {
 
-    private static final GroupDescriptor GROUP_ID = GroupDescriptor.create("enabled-listed-tools");
-
     @NotNull
     @Override
-    public GroupDescriptor getGroupId() {
-      return GROUP_ID;
+    public String getGroupId() {
+      return "statistics.enabled.listed.tools";
     }
 
     @NotNull
@@ -152,12 +144,10 @@ public abstract class AbstractToolsUsagesCollector extends AbstractProjectsUsage
 
   public static class DisabledBundledToolsUsagesCollector extends AbstractToolsUsagesCollector {
 
-    private static final GroupDescriptor GROUP_ID = GroupDescriptor.create("disabled-bundled-tools");
-
     @NotNull
     @Override
-    public GroupDescriptor getGroupId() {
-      return GROUP_ID;
+    public String getGroupId() {
+      return "statistics.disabled.bundled.tools";
     }
 
     @NotNull
@@ -169,12 +159,10 @@ public abstract class AbstractToolsUsagesCollector extends AbstractProjectsUsage
 
   public static class DisabledListedToolsUsagesCollector extends AbstractToolsUsagesCollector {
 
-    private static final GroupDescriptor GROUP_ID = GroupDescriptor.create("disabled-listed-tools");
-
     @NotNull
     @Override
-    public GroupDescriptor getGroupId() {
-      return GROUP_ID;
+    public String getGroupId() {
+      return "statistics.disabled.listed.tools";
     }
 
     @NotNull

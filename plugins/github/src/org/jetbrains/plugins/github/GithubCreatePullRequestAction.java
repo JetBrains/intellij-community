@@ -15,13 +15,13 @@
  */
 package org.jetbrains.plugins.github;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.DialogManager;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
-import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubServerPath;
@@ -33,7 +33,7 @@ import org.jetbrains.plugins.github.ui.GithubCreatePullRequestDialog;
  */
 public class GithubCreatePullRequestAction extends LegacySingleAccountActionGroup {
   public GithubCreatePullRequestAction() {
-    super("Create Pull Request", "Create pull request from current branch", GithubIcons.Github_icon);
+    super("Create Pull Request", "Create pull request from current branch", AllIcons.Vcs.Vendors.Github);
   }
 
   @Override

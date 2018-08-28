@@ -56,6 +56,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mLCURLY;
@@ -254,21 +255,7 @@ public class GroovyBlockGenerator {
     }
 
     if (blockPsi instanceof GrMethod) {
-
-      final ArrayList<Block> subBlocks = new ArrayList<>();
-
-      for (ASTNode childNode : getGroovyChildren(myNode)) {
-        if (childNode.getElementType() == GroovyTokenTypes.mLPAREN) continue;
-        if (childNode.getElementType() == GroovyTokenTypes.mRPAREN) continue;
-
-        if (childNode.getElementType() == GroovyElementTypes.PARAMETERS_LIST) {
-          subBlocks.add(new ParameterListBlock(((GrMethod)blockPsi), Indent.getNoneIndent(), Wrap.createWrap(WrapType.NONE, false), myContext));
-        }
-        else if (canBeCorrectBlock(childNode)) {
-          subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), getChildWrap(childNode), myContext));
-        }
-      }
-      return subBlocks;
+      return generateMethodSubBlocks();
     }
 
     else if (blockPsi instanceof GrTraditionalForClause) {
@@ -584,6 +571,70 @@ public class GroovyBlockGenerator {
       }
     }
     return list;
+  }
+
+  @NotNull
+  private List<Block> generateMethodSubBlocks() {
+    final List<Block> result = new ArrayList<>();
+    final Iterator<ASTNode> children = ContainerUtil.iterate(getGroovyChildren(myNode));
+
+    ASTNode leftParen = null;
+    while (children.hasNext()) {
+      final ASTNode childNode = children.next();
+      final IElementType childElementType = childNode.getElementType();
+      if (childElementType == GroovyTokenTypes.mLPAREN) {
+        leftParen = childNode;
+        break;
+      }
+      else if (canBeCorrectBlock(childNode)) {
+        result.add(new GroovyBlock(childNode, getIndent(childNode), getChildWrap(childNode), myContext));
+      }
+    }
+    assert leftParen != null;
+
+    final List<ASTNode> nodes = new ArrayList<>();
+
+    ASTNode parameterList = null;
+    while (children.hasNext()) {
+      final ASTNode childNode = children.next();
+      final IElementType childElementType = childNode.getElementType();
+      if (childElementType == GroovyElementTypes.PARAMETERS_LIST) {
+        parameterList = childNode;
+        break;
+      }
+      if (canBeCorrectBlock(childNode)) {
+        nodes.add(childNode);
+      }
+    }
+    assert parameterList != null;
+
+    nodes.addAll(visibleChildren(parameterList));
+
+    ASTNode rightParen = null;
+    while (children.hasNext()) {
+      final ASTNode childNode = children.next();
+      final IElementType childElementType = childNode.getElementType();
+      if (childElementType == GroovyTokenTypes.mRPAREN) {
+        rightParen = childNode;
+        break;
+      }
+      if (canBeCorrectBlock(childNode)) {
+        nodes.add(childNode);
+      }
+    }
+
+    result.add(new ParameterListBlock(
+      Indent.getNoneIndent(), Wrap.createWrap(WrapType.NONE, false), myContext, leftParen, parameterList, rightParen, nodes
+    ));
+
+    while (children.hasNext()) {
+      final ASTNode childNode = children.next();
+      if (canBeCorrectBlock(childNode)) {
+        result.add(new GroovyBlock(childNode, getIndent(childNode), getChildWrap(childNode), myContext));
+      }
+    }
+
+    return result;
   }
 
   private boolean mustAlign(PsiElement blockPsi, List<ASTNode> children) {

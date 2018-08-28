@@ -47,6 +47,8 @@ public final class Layout7Test extends TestCase{
     panel.add(scroll, new GridConstraints(1,0,1,2,GridConstraints.ANCHOR_CENTER,GridConstraints.FILL_BOTH,
       GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, new Dimension(0,0), null, null, 0));
 
+    panel.doLayout();
+
     assertEquals(503, panel.getMinimumSize().width);
     assertEquals(503, panel.getPreferredSize().width);
 

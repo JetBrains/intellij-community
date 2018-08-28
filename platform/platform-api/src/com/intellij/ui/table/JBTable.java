@@ -20,11 +20,14 @@ import com.intellij.openapi.util.ExpirableRunnable;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
+import com.intellij.ui.treeStructure.treetable.TreeTable;
+import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
@@ -818,17 +821,31 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
     @Override
     public String getToolTipText(@NotNull final MouseEvent event) {
-      final TableModel model = getModel();
-      if (model instanceof SortableColumnModel) {
+      ColumnInfo[] columnInfos = getColumnInfos();
+      if (columnInfos != null) {
         final int i = columnAtPoint(event.getPoint());
         final int infoIndex = i >= 0 ? convertColumnIndexToModel(i) : -1;
-        final ColumnInfo[] columnInfos = ((SortableColumnModel)model).getColumnInfos();
         final String tooltipText = infoIndex >= 0 && infoIndex < columnInfos.length ? columnInfos[infoIndex].getTooltipText() : null;
         if (tooltipText != null) {
           return tooltipText;
         }
       }
       return super.getToolTipText(event);
+    }
+
+    @Nullable
+    private ColumnInfo[] getColumnInfos() {
+      TableModel model = getModel();
+      if (model instanceof SortableColumnModel) {
+        return ((SortableColumnModel)model).getColumnInfos();
+      }
+      else if (getTable() instanceof TreeTable) {
+        TreeTableModel treeTableModel = ((TreeTable)getTable()).getTableModel();
+        if (treeTableModel instanceof SortableColumnModel) {
+          return ((SortableColumnModel)treeTableModel).getColumnInfos();
+        }
+      }
+      return null;
     }
 
     @Override

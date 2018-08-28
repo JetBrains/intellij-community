@@ -516,6 +516,8 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
       while (c != null) {
         if (c.getParent() instanceof JLayeredPane) {
           c.setSize(c.getPreferredSize());
+          c.revalidate();
+          c.repaint();
           break;
         }
         c = c.getParent();

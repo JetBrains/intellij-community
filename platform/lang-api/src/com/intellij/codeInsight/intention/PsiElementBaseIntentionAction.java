@@ -44,7 +44,7 @@ public abstract class PsiElementBaseIntentionAction extends BaseIntentionAction 
     }
   }
 
-  protected boolean checkFile(@Nullable PsiFile file) {
+  public boolean checkFile(@Nullable PsiFile file) {
     if (file == null) return false;
     PsiManager manager = file.getManager();
     return manager != null && manager.isInProject(file) || ScratchFileService.isInScratchRoot(file.getVirtualFile());

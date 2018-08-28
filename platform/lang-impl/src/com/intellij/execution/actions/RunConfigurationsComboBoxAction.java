@@ -4,21 +4,18 @@ package com.intellij.execution.actions;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.impl.ExecutionManagerImpl;
-import com.intellij.execution.runners.ExecutionUtil;
-import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -85,7 +82,9 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
         }
       }
       presentation.setText(name, false);
-      setConfigurationIcon(presentation, settings, project);
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        setConfigurationIcon(presentation, settings, project);
+      }
     }
     else {
       presentation.putClientProperty(BUTTON_MODE, Boolean.TRUE);
@@ -102,16 +101,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
                                            final RunnerAndConfigurationSettings settings,
                                            final Project project) {
     try {
-      Icon icon = RunManagerEx.getInstanceEx(project).getConfigurationIcon(settings);
-      ExecutionManagerImpl executionManager = ExecutionManagerImpl.getInstance(project);
-      List<RunContentDescriptor> runningDescriptors = executionManager.getRunningDescriptors(s -> s == settings);
-      if (runningDescriptors.size() == 1) {
-        icon = ExecutionUtil.getLiveIndicator(icon);
-      }
-      if (runningDescriptors.size() > 1) {
-        icon = IconUtil.addText(icon, String.valueOf(runningDescriptors.size()));
-      }
-      presentation.setIcon(icon);
+      presentation.setIcon(RunManagerEx.getInstanceEx(project).getConfigurationIcon(settings, true));
     }
     catch (IndexNotReadyException ignored) {
     }

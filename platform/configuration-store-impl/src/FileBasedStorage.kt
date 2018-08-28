@@ -115,6 +115,8 @@ open class FileBasedStorage(file: Path,
       var result = cachedVirtualFile
       if (result == null) {
         result = LocalFileSystem.getInstance().findFileByPath(file.systemIndependentPath)
+        // otherwise virtualFile.contentsToByteArray() will query expensive FileTypeManager.getInstance()).getByFile()
+        result?.charset = StandardCharsets.UTF_8
         cachedVirtualFile = result
       }
       return cachedVirtualFile

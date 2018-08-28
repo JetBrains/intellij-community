@@ -736,13 +736,15 @@ public class Switcher extends AnAction implements DumbAware {
 
     @Override
     public void keyTyped(@NotNull KeyEvent e) {
+      if (e.getKeyCode() == VK_ENTER) {
+        navigate(e);
+      }
     }
 
     @Override
     public void keyReleased(@NotNull KeyEvent e) {
       boolean ctrl = e.getKeyCode() == CTRL_KEY;
-      boolean enter = e.getKeyCode() == VK_ENTER;
-      if (ctrl && isAutoHide() || enter) {
+      if (ctrl && isAutoHide()) {
         navigate(e);
       }
     }

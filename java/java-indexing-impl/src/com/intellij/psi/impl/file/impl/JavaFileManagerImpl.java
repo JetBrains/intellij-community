@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaAutoModuleNameIndex;
@@ -29,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
@@ -177,20 +177,14 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
   public Collection<PsiJavaModule> findModules(@NotNull String moduleName, @NotNull GlobalSearchScope scope) {
     GlobalSearchScope excludingScope = new LibSrcExcludingScope(scope);
 
-    Collection<PsiJavaModule> named = JavaModuleNameIndex.getInstance().get(moduleName, myManager.getProject(), excludingScope);
-    if (!named.isEmpty()) {
-      return upgradeModules(sortModules(named, scope), moduleName, scope);
-    }
+    List<PsiJavaModule> results = new ArrayList<>(JavaModuleNameIndex.getInstance().get(moduleName, myManager.getProject(), excludingScope));
 
     Collection<VirtualFile> jars = JavaAutoModuleNameIndex.getFilesByKey(moduleName, excludingScope);
     if (!jars.isEmpty()) {
-      List<PsiJavaModule> automatic = jars.stream().map(f -> LightJavaModule.getModule(myManager, f)).collect(Collectors.toList());
-      if (!automatic.isEmpty()) {
-        return sortModules(automatic, scope);
-      }
+      jars.stream().map(f -> LightJavaModule.getModule(myManager, f)).forEach(results::add);
     }
 
-    return Collections.emptyList();
+    return upgradeModules(sortModules(results, scope), moduleName, scope);
   }
 
   private static class LibSrcExcludingScope extends DelegatingGlobalSearchScope {
@@ -210,14 +204,10 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
   private static Collection<PsiJavaModule> sortModules(Collection<PsiJavaModule> modules, GlobalSearchScope scope) {
     if (modules.size() > 1) {
       List<PsiJavaModule> list = new ArrayList<>(modules);
-      list.sort((m1, m2) -> scope.compare(virtualFile(m2), virtualFile(m1)));
+      list.sort((m1, m2) -> scope.compare(PsiImplUtil.getModuleVirtualFile(m2), PsiImplUtil.getModuleVirtualFile(m1)));
       modules = list;
     }
     return modules;
-  }
-
-  private static VirtualFile virtualFile(PsiJavaModule m) {
-    return m instanceof LightJavaModule ? ((LightJavaModule)m).getRootVirtualFile() : m.getContainingFile().getVirtualFile();
   }
 
   private static Collection<PsiJavaModule> upgradeModules(Collection<PsiJavaModule> modules, String moduleName, GlobalSearchScope scope) {
@@ -232,7 +222,7 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
         ModuleFileIndex index = ModuleRootManager.getInstance(module).getFileIndex();
         for (ListIterator<PsiJavaModule> i = list.listIterator(); i.hasNext(); ) {
           PsiJavaModule candidate = i.next();
-          if (index.getOrderEntryForFile(candidate.getContainingFile().getVirtualFile()) instanceof JdkOrderEntry) {
+          if (index.getOrderEntryForFile(PsiImplUtil.getModuleVirtualFile(candidate)) instanceof JdkOrderEntry) {
             if (i.previousIndex() > 0) {
               i.remove();  // not at the top -> is upgraded
             }

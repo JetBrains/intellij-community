@@ -6,6 +6,10 @@ package com.intellij.codeInspection.dataFlow.inliner;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.CFGBuilder;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
+import com.intellij.codeInspection.dataFlow.SpecialField;
+import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
@@ -38,13 +42,13 @@ public class MapUpdateInliner implements CallInliner {
       String name = Objects.requireNonNull(call.getMethodExpression().getReferenceName());
       switch (name) {
         case "computeIfAbsent":
-          inlineComputeIfAbsent(builder, key, function, type);
+          inlineComputeIfAbsent(builder, qualifier, key, function, type);
           break;
         case "computeIfPresent":
-          inlineComputeIfPresent(builder, key, function, type);
+          inlineComputeIfPresent(builder, qualifier, key, function, type);
           break;
         case "compute":
-          inlineCompute(builder, key, function, type);
+          inlineCompute(builder, qualifier, key, function, type);
           break;
         default:
           throw new IllegalStateException("Unsupported name: " + name);
@@ -75,20 +79,31 @@ public class MapUpdateInliner implements CallInliner {
         .swap()
         .invokeFunction(2, function)
         .end()
-        .flushFields();
+        .chain(b -> flushSize(qualifier, b));
       return true;
     }
     return false;
   }
 
-  private static void inlineComputeIfAbsent(@NotNull CFGBuilder builder, PsiExpression key, PsiExpression function, PsiType type) {
+  private static void flushSize(PsiExpression qualifier, CFGBuilder builder) {
+    DfaValueFactory factory = builder.getFactory();
+    DfaValue value = factory.createValue(qualifier);
+    DfaValue size = SpecialField.MAP_SIZE.createValue(factory, value);
+    builder.assignAndPop(size, DfaUnknownValue.getInstance());
+  }
+
+  private static void inlineComputeIfAbsent(@NotNull CFGBuilder builder,
+                                            PsiExpression qualifier,
+                                            PsiExpression key,
+                                            PsiExpression function,
+                                            PsiType type) {
     builder
       .pushExpression(key) // stack: .. key
       .evaluateFunction(function)
       .pushUnknown() // stack: .. key; get() result
       .ifNull() // stack: .. key
       .invokeFunction(1, function) // stack: .. mapping result
-      .flushFields()
+      .chain(b -> flushSize(qualifier, b))
       .elseBranch()
       .pop()
       .push(builder.getFactory().createTypeValue(type, Nullability.NOT_NULL))
@@ -96,7 +111,7 @@ public class MapUpdateInliner implements CallInliner {
   }
 
   private static void inlineComputeIfPresent(@NotNull CFGBuilder builder,
-                                             PsiExpression key,
+                                             PsiExpression qualifier, PsiExpression key,
                                              PsiExpression function,
                                              PsiType type) {
     builder
@@ -106,7 +121,7 @@ public class MapUpdateInliner implements CallInliner {
       .ifNotNull() // stack: .. key
       .push(builder.getFactory().createTypeValue(type, Nullability.NOT_NULL))
       .invokeFunction(2, function) // stack: .. mapping result
-      .flushFields()
+      .chain(b -> flushSize(qualifier, b))
       .elseBranch()
       .pop()
       .pushNull()
@@ -114,7 +129,7 @@ public class MapUpdateInliner implements CallInliner {
   }
 
   private static void inlineCompute(@NotNull CFGBuilder builder,
-                                    PsiExpression key,
+                                    PsiExpression qualifier, PsiExpression key,
                                     PsiExpression function,
                                     PsiType type) {
     builder
@@ -122,6 +137,6 @@ public class MapUpdateInliner implements CallInliner {
       .evaluateFunction(function)
       .push(builder.getFactory().createTypeValue(type, Nullability.NULLABLE))
       .invokeFunction(2, function) // stack: .. mapping result
-      .flushFields();
+      .chain(b -> flushSize(qualifier, b));
   }
 }

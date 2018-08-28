@@ -7,6 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
@@ -66,6 +67,7 @@ public class GrClosureType extends GrLiteralClassType {
   @Override
   @NotNull
   public PsiType[] getParameters() {
+    if (ourForbidClosureInference) throw new IllegalStateException();
     if (myTypeArgs == null) {
       myTypeArgs = inferParameters();
     }
@@ -176,5 +178,18 @@ public class GrClosureType extends GrLiteralClassType {
   @Override
   public String toString() {
     return "PsiType: Closure<*>";
+  }
+
+  private static boolean ourForbidClosureInference;
+
+  @TestOnly
+  public static void forbidClosureInference(@NotNull Runnable runnable) {
+    ourForbidClosureInference = true;
+    try {
+      runnable.run();
+    }
+    finally {
+      ourForbidClosureInference = false;
+    }
   }
 }

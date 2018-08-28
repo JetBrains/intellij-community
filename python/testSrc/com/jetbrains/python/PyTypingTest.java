@@ -1400,6 +1400,14 @@ public class PyTypingTest extends PyTestCase {
            "expr = D.factory()");
   }
 
+  // PY-31004
+  public void testRecursiveTypeAliasInAnotherFile() {
+    doMultiFileStubAwareTest("Union[list, int]",
+                             "from other import MyType\n" +
+                             "\n" +
+                             "expr: MyType = ...");
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

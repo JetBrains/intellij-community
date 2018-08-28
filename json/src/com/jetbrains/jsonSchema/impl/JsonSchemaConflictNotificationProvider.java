@@ -24,6 +24,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.LightColors;
+import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.SchemaType;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.settings.mappings.JsonSchemaMappingsConfigurable;
@@ -62,8 +64,8 @@ public class JsonSchemaConflictNotificationProvider extends EditorNotifications.
   @Override
   public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor) {
     if (!myJsonSchemaService.isApplicableToFile(file)) return null;
-    final Collection<VirtualFile> schemaFiles = myJsonSchemaService.getSchemaFilesForFile(file);
-    if (schemaFiles.size() <= 1) return null;
+    final Collection<VirtualFile> schemaFiles = ContainerUtil.newArrayList();
+    if (!hasConflicts(schemaFiles, file)) return null;
 
     final String message = createMessage(schemaFiles, myJsonSchemaService,
                                          "; ", "<html>There are several JSON Schemas mapped to this file: ", "</html>");
@@ -76,6 +78,18 @@ public class JsonSchemaConflictNotificationProvider extends EditorNotifications.
       EditorNotifications.getInstance(myProject).updateNotifications(file);
     });
     return panel;
+  }
+
+  private boolean hasConflicts(@NotNull Collection<VirtualFile> files, @NotNull VirtualFile file) {
+    List<JsonSchemaFileProvider> providers = ((JsonSchemaServiceImpl)myJsonSchemaService).getProvidersForFile(file);
+    for (JsonSchemaFileProvider provider : providers) {
+      if (provider.getSchemaType() != SchemaType.userSchema) continue;
+      VirtualFile schemaFile = provider.getSchemaFile();
+      if (schemaFile != null) {
+        files.add(schemaFile);
+      }
+    }
+    return files.size() > 1;
   }
 
   public static String createMessage(@NotNull final Collection<VirtualFile> schemaFiles,

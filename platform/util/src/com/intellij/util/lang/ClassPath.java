@@ -17,6 +17,7 @@ package com.intellij.util.lang;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -394,9 +395,9 @@ public class ClassPath {
     }
 
     if (ourOrder != null) {
-      String jarURL = FileUtil.toSystemIndependentName(loader.getBaseURL().getFile());
-      jarURL = StringUtil.trimStart(jarURL, "file:/");
-      if (jarURL.startsWith(home)) {
+      Pair<String, String> pair = URLUtil.splitJarUrl(loader.getBaseURL().toExternalForm());
+      String jarURL = pair != null ? pair.first : null;
+      if (jarURL != null && jarURL.startsWith(home)) {
         jarURL = jarURL.replaceFirst(home, "");
         jarURL = StringUtil.trimEnd(jarURL, "!/");
         ourOrder.println(url + ":" + jarURL);

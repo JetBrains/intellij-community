@@ -91,7 +91,7 @@ public class OptionalUtil {
    * @return an expression text which will unwrap an {@code Optional}.
    */
   public static String generateOptionalUnwrap(String qualifier, PsiVariable var,
-                                              PsiExpression trueExpression, PsiExpression falseExpression,
+                                              @NotNull PsiExpression trueExpression, PsiExpression falseExpression,
                                               @Nullable PsiType targetType, boolean useOrElseGet) {
     PsiExpression stripped = PsiUtil.skipParenthesizedExprDown(trueExpression);
     PsiType trueType = trueExpression.getType();
@@ -120,15 +120,17 @@ public class OptionalUtil {
         PsiConditionalExpression condition = (PsiConditionalExpression)stripped;
         PsiExpression thenExpression = condition.getThenExpression();
         PsiExpression elseExpression = condition.getElseExpression();
-        if (elseExpression != null && PsiEquivalenceUtil.areElementsEquivalent(falseExpression, elseExpression)) {
-          return generateOptionalUnwrap(
-            qualifier + ".filter(" + LambdaUtil.createLambda(var, condition.getCondition()) + ")", var,
-            condition.getThenExpression(), falseExpression, targetType, useOrElseGet);
-        }
-        if (thenExpression != null && PsiEquivalenceUtil.areElementsEquivalent(falseExpression, thenExpression)) {
-          return generateOptionalUnwrap(
-            qualifier + ".filter(" + var.getName() + " -> " + BoolUtils.getNegatedExpressionText(condition.getCondition()) + ")", var,
-            condition.getElseExpression(), falseExpression, targetType, useOrElseGet);
+        if (thenExpression != null && elseExpression != null) {
+          if (PsiEquivalenceUtil.areElementsEquivalent(falseExpression, elseExpression)) {
+            return generateOptionalUnwrap(
+              qualifier + ".filter(" + LambdaUtil.createLambda(var, condition.getCondition()) + ")", var,
+              thenExpression, falseExpression, targetType, useOrElseGet);
+          }
+          if (PsiEquivalenceUtil.areElementsEquivalent(falseExpression, thenExpression)) {
+            return generateOptionalUnwrap(
+              qualifier + ".filter(" + var.getName() + " -> " + BoolUtils.getNegatedExpressionText(condition.getCondition()) + ")", var,
+              elseExpression, falseExpression, targetType, useOrElseGet);
+          }
         }
       }
       String suffix = null;

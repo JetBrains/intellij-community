@@ -93,7 +93,7 @@ public class ClosureAsAnonymousParameterEnhancer extends AbstractClosureParamete
     if (variant instanceof GroovyMethodResult) {
       MethodCandidate candidate = ((GroovyMethodResult)variant).getCandidate();
       if (candidate != null) {
-        Pair<PsiParameter, PsiType> pair = candidate.mapArguments().get(new Argument(null, closure));
+        Pair<PsiParameter, PsiType> pair = candidate.getArgumentMapping().get(new Argument(null, closure));
         if (pair != null) {
           GrReferenceExpression invokedExpression = (GrReferenceExpression)call.getInvokedExpression();
           GroovyInferenceSession session =

@@ -2,7 +2,6 @@
 
 package com.intellij.ide.projectView.impl;
 
-import com.intellij.ProjectTopics;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.icons.AllIcons;
@@ -191,13 +190,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     myFileEditorManager = fileEditorManager;
 
     myConnection = project.getMessageBus().connect();
-    myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-      @Override
-      public void rootsChanged(ModuleRootEvent event) {
-        refresh();
-      }
-    });
-
     myAutoScrollFromSourceHandler = new MyAutoScrollFromSourceHandler();
 
     myDataProvider = new MyPanel();

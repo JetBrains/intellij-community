@@ -140,19 +140,16 @@ public class JsonCachedValues {
     for (JsonValue value: array.getValueList()) {
       if (!(value instanceof JsonObject)) continue;
       JsonProperty fileMatch = ((JsonObject)value).findProperty("fileMatch");
-      if (fileMatch == null) continue;
-      Collection<String> masks = resolveMasks(fileMatch.getValue());
-
-        JsonProperty url = ((JsonObject)value).findProperty("url");
-        if (url != null) {
-          JsonValue urlValue = url.getValue();
-          if (urlValue instanceof JsonStringLiteral) {
-            String urlStringValue = ((JsonStringLiteral)urlValue).getValue();
-            if (!StringUtil.isEmpty(urlStringValue)) {
-              catalogMap.add(Pair.create(masks, urlStringValue));
-            }
-          }
+      Collection<String> masks = fileMatch == null ? ContainerUtil.emptyList() : resolveMasks(fileMatch.getValue());
+      JsonProperty url = ((JsonObject)value).findProperty("url");
+      if (url == null) continue;
+      JsonValue urlValue = url.getValue();
+      if (urlValue instanceof JsonStringLiteral) {
+        String urlStringValue = ((JsonStringLiteral)urlValue).getValue();
+        if (!StringUtil.isEmpty(urlStringValue)) {
+          catalogMap.add(Pair.create(masks, urlStringValue));
         }
+      }
     }
   }
 

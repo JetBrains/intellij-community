@@ -1581,6 +1581,7 @@ public class AllIcons {
     public static final Icon ApacheDerby = IconLoader.getIcon("/providers/apacheDerby.png"); // 16x16
     public static final Icon Azure = IconLoader.getIcon("/providers/azure.png"); // 16x16
     public static final Icon Bea = IconLoader.getIcon("/providers/bea.png"); // 16x16
+    public static final Icon ClickHouse = IconLoader.getIcon("/providers/clickHouse.svg"); // 16x16
     public static final Icon Cvs = IconLoader.getIcon("/providers/cvs.png"); // 16x16
     public static final Icon DB2 = IconLoader.getIcon("/providers/DB2.png"); // 16x16
     public static final Icon Eclipse = IconLoader.getIcon("/providers/eclipse.png"); // 16x16
@@ -1882,6 +1883,11 @@ public class AllIcons {
     public static final Icon StripUp = IconLoader.getIcon("/vcs/stripUp.png"); // 16x16
     public static final Icon Unshelve = IconLoader.getIcon("/vcs/Unshelve.svg"); // 16x16
     public static final Icon UnshelveSilent = IconLoader.getIcon("/vcs/unshelveSilent.svg"); // 16x16
+
+    public static class Vendors {
+      public static final Icon Github = IconLoader.getIcon("/vcs/vendors/github.svg"); // 16x16
+
+    }
 
   }
 

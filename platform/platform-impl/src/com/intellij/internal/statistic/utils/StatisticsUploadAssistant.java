@@ -26,6 +26,7 @@ import com.intellij.internal.statistic.service.old.OldConfigurableStatisticsServ
 import com.intellij.util.Time;
 
 public class StatisticsUploadAssistant {
+  private static final String IDEA_SUPPRESS_REPORT_STATISTICS = "idea.suppress.statistics.report";
   public static final Object LOCK = new Object();
 
   private StatisticsUploadAssistant(){};
@@ -59,7 +60,7 @@ public class StatisticsUploadAssistant {
   }
 
   public static boolean isSendAllowed(final SentUsagesPersistence settings) {
-    return settings != null && settings.isAllowed();
+    return settings != null && settings.isAllowed() && !Boolean.getBoolean(IDEA_SUPPRESS_REPORT_STATISTICS);
   }
 
   public static void updateSentTime() {

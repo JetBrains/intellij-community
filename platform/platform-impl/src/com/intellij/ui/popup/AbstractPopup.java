@@ -930,6 +930,9 @@ public class AbstractPopup implements JBPopup {
     myPopup.setRequestFocus(myRequestFocus);
 
     final Window window = getContentWindow(myContent);
+    if (window instanceof IdeFrame) {
+      LOG.warn("Lightweight popup is shown using AbstractPopup class. But this class is not supposed to work with lightweight popups.");
+    }
 
     window.setFocusableWindowState(myRequestFocus);
     window.setFocusable(myRequestFocus);
@@ -986,6 +989,11 @@ public class AbstractPopup implements JBPopup {
       Disposer.register(this, tb);
 
     myPopup.show();
+    Rectangle bounds = window.getBounds();
+    if (bounds.width > screen.width || bounds.height > screen.height) {
+      ScreenUtil.fitToScreen(bounds);
+      window.setBounds(bounds);
+    }
 
     WindowAction.setEnabledFor(myPopup.getWindow(), myResizable);
 
