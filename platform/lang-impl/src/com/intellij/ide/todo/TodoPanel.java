@@ -110,6 +110,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     UIUtil.setLineStyleAngled(myTree);
     myTree.setShowsRootHandles(true);
     myTree.setRootVisible(false);
+    myTree.setRowHeight(0); // enable variable-height rows
     myTree.setCellRenderer(new TodoCompositeRenderer());
     EditSourceOnDoubleClickHandler.install(myTree);
     new TreeSpeedSearch(myTree);
