@@ -2,7 +2,6 @@
 package com.intellij.psi.util;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.BitUtil;
 
 public abstract class PsiFormatUtilBase {
   public static final int SHOW_NAME = 0x0001; // variable, method, class
@@ -30,23 +29,5 @@ public abstract class PsiFormatUtilBase {
     if (buffer.length() != 0 && !StringUtil.endsWithChar(buffer, ' ')) {
       buffer.append(' ');
     }
-  }
-
-  protected static boolean testOption(int options, int flag) {
-    return BitUtil.isSet(options, flag);
-  }
-
-  protected static boolean testOneOf(int options, int... flags) {
-    for (int flag : flags) {
-      if (testOption(options, flag)) return true;
-    }
-    return false;
-  }
-
-  protected static boolean testAll(int options, int... flags) {
-    for (int flag : flags) {
-      if (!testOption(options, flag)) return false;
-    }
-    return true;
   }
 }
