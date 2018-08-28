@@ -5,7 +5,7 @@ PyFile:FStringFragmentWithNotParenthesizedLambda.py
     PsiWhiteSpace(' ')
     PsiElement(Py:EQ)('=')
     PsiWhiteSpace(' ')
-    PyStringLiteralExpression: 
+    PyStringLiteralExpression: {lambda x: 42}
       PyFormattedStringNode
         PsiElement(Py:FSTRING_START)('f'')
         PyFStringFragment

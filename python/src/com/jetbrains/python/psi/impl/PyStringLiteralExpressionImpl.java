@@ -26,10 +26,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.PsiReferenceService.Hints;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpLanguage;
 import com.jetbrains.python.lexer.PythonHighlightingLexer;
@@ -118,13 +120,15 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   @Override
   @NotNull
   public List<ASTNode> getStringNodes() {
-    return Arrays.asList(getNode().getChildren(PyTokenTypes.STRING_NODES));
+    final TokenSet stringNodeTypes = TokenSet.orSet(PyTokenTypes.STRING_NODES, TokenSet.create(PyElementTypes.FSTRING_NODE));
+    return Arrays.asList(getNode().getChildren(stringNodeTypes));
   }
 
   @NotNull
   @Override
   public List<PyRichStringNode> getGluedStringNodes() {
     return StreamEx.of(getStringNodes())
+      .map(ASTNode::getPsi)
       .select(PyRichStringNode.class)
       .toList();
   }

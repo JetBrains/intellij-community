@@ -5,7 +5,7 @@ PyFile:FStringTerminatedByQuoteOfFStringLiteral.py
     PsiWhiteSpace(' ')
     PsiElement(Py:EQ)('=')
     PsiWhiteSpace(' ')
-    PyStringLiteralExpression: 
+    PyStringLiteralExpression: foo{f
       PyFormattedStringNode
         PsiElement(Py:FSTRING_START)('f'')
         PsiElement(Py:FSTRING_TEXT)('foo')
