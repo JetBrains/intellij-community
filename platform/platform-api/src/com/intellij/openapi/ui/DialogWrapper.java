@@ -1811,7 +1811,7 @@ public abstract class DialogWrapper {
      * @param name the action name (see {@link Action#NAME})
      */
     protected DialogWrapperAction(@NotNull String name) {
-      putValue(NAME, name);
+      super(name);
     }
 
     /**
@@ -1920,7 +1920,7 @@ public abstract class DialogWrapper {
 
   private class HelpAction extends AbstractAction {
     private HelpAction() {
-      putValue(NAME, CommonBundle.getHelpButtonText());
+      super(CommonBundle.getHelpButtonText());
     }
 
     @Override
