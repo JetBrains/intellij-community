@@ -137,7 +137,12 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
 
   private fun generate(module: JpsModule, className: String, packageName: String, customLoad: Boolean, copyrightComment: String): String? {
     val imageCollector = ImageCollector(projectHome.toPath(), iconsOnly = true, className = className)
+
     val images = imageCollector.collect(module, includePhantom = true)
+    if (images.isEmpty()) {
+      return null
+    }
+
     imageCollector.printUsedIconRobots()
 
     val answer = StringBuilder()
@@ -187,7 +192,20 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
     val nodeMap = nodes.groupBy { getImageId(it, depth).substringBefore('/') }
     val leafMap = ContainerUtil.newMapFromValues(leafs.iterator()) { getImageId(it, depth) }
 
-    val sortedKeys = (nodeMap.keys + leafMap.keys).sortedWith(NAME_COMPARATOR)
+    fun getWeight(key: String): Int {
+      val image = leafMap[key]
+      if (image == null) {
+        return 0
+      }
+      return if (image.deprecated) 1 else 0
+    }
+
+    val sortedKeys = (nodeMap.keys + leafMap.keys)
+      .sortedWith(NAME_COMPARATOR)
+      .sortedWith(kotlin.Comparator(function = { o1, o2 ->
+        getWeight(o1) - getWeight(o2)
+      }))
+
     for (key in sortedKeys) {
       val group = nodeMap[key]
       val image = leafMap[key]
