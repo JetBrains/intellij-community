@@ -9,7 +9,8 @@ if __name__ == '__main__':
         
     import pydevd
     print('before pydevd.settrace')
-    pydevd.settrace(port=port)
+    from _pydev_bundle import pydev_localhost
+    pydevd.settrace(host=pydev_localhost.get_localhost(), port=port)
     print('after pydevd.settrace')
     raise ValueError('TEST SUCEEDED!')
     
