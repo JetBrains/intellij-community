@@ -127,8 +127,8 @@ private fun getSpecialSaxBuilder(): SAXBuilder {
 }
 
 @Throws(IOException::class, JDOMException::class)
-fun loadElementAndKeepBoundaryWhitespace(stream: InputStream): Element {
-  return stream.use { getSpecialSaxBuilder().build(it).detachRootElement() }
+fun loadDocumentAndKeepBoundaryWhitespace(stream: InputStream): Document {
+  return stream.use { getSpecialSaxBuilder().build(it) }
 }
 
 @Throws(IOException::class, JDOMException::class)
