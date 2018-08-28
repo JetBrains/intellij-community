@@ -321,6 +321,8 @@
                     serviceImplementation="com.intellij.ide.util.gotoByName.GotoClassSymbolConfiguration"/>
     <projectService serviceInterface="com.intellij.ide.util.gotoByName.SearchEverywhereConfiguration"
                     serviceImplementation="com.intellij.ide.util.gotoByName.SearchEverywhereConfiguration"/>
+    <projectService serviceInterface="com.intellij.navigation.NavigationService"
+                    serviceImplementation="com.intellij.navigation.NavigationServiceImpl"/>
     <preloadingActivity implementation="com.intellij.ide.actions.GotoClassPresentationUpdater"/>
 
     <projectService serviceInterface="com.intellij.ide.hierarchy.HierarchyBrowserManager"

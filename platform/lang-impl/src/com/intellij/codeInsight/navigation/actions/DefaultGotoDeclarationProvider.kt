@@ -5,12 +5,9 @@ import com.intellij.codeInsight.findReferences
 import com.intellij.codeInsight.navigation.GotoDeclarationProvider
 import com.intellij.codeInsight.navigation.PsiElementNavigationTarget
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction.findTargetElementsFromProviders
-import com.intellij.model.Symbol
-import com.intellij.model.psi.PsiSymbol
 import com.intellij.navigation.NavigationTarget
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import java.util.function.Consumer
 
@@ -25,26 +22,9 @@ class DefaultGotoDeclarationProvider : GotoDeclarationProvider {
       return
     }
     for (reference in findReferences(editor, file)) {
-      for (result in reference.resolve(false)) {
-        val symbol = result.target
-        for (target in getNavigationTargets(project, symbol)) {
-          consumer.accept(target)
-        }
+      for (target in reference.getNavigationTargets(project)) {
+        consumer.accept(target)
       }
-    }
-  }
-
-  private fun getNavigationTargets(project: Project, symbol: Symbol): Collection<NavigationTarget> {
-    // TODO obtain targets from reference
-    return listOf(getNavigationTarget(project, symbol))
-  }
-
-  private fun getNavigationTarget(project: Project, symbol: Symbol): NavigationTarget {
-    return when (symbol) {
-      is NavigationTarget -> symbol
-      is PsiElement -> PsiElementNavigationTarget(symbol)
-      is PsiSymbol -> PsiElementNavigationTarget(symbol.element)
-      else -> TODO()
     }
   }
 }
