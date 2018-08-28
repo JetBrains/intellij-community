@@ -6,12 +6,15 @@ import com.google.common.io.CharStreams;
 import com.google.gson.GsonBuilder;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.platform.onair.storage.StorageImpl;
 import com.intellij.platform.onair.storage.api.Address;
 import com.intellij.platform.onair.storage.api.Novelty;
 import com.intellij.platform.onair.storage.api.NoveltyImpl;
 import com.intellij.platform.onair.storage.api.Storage;
 import com.intellij.platform.onair.tree.BTree;
+import com.intellij.platform.onair.tree.ByteUtils;
+import com.intellij.util.containers.IntIntHashMap;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.indexing.IndexInfrastructure;
 import com.intellij.util.indexing.IndexStorageManager;
@@ -27,6 +30,9 @@ import java.net.InetSocketAddress;
 import java.net.URL;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -47,11 +53,19 @@ public class BTreeIndexStorageManager implements IndexStorageManager {
   public final Map indexHeads;
   public final BTree forwardStorage;
 
+  Function<Integer, Integer> localToRemote = LOCAL_TO_REMOTE_DUMMY;
+  Function<Integer, Integer> remoteToLocal = REMOTE_TO_LOCAL_DUMMY;
+
   public BTreeIndexStorageManager() {
+    this(
+      System.getProperty("onair.index.revision"),
+      System.getProperty("onair.index.cache.host"),
+      System.getProperty("onair.index.cache.port", "11211")
+    );
+  }
+
+  public BTreeIndexStorageManager(String revision, String cacheHost, String cachePort) {
     try {
-      String revision = System.getProperty("onair.index.revision");
-      String cacheHost = System.getProperty("onair.index.cache.host");
-      String cachePort = System.getProperty("onair.index.cache.port", "11211");
       if (cacheHost != null) {
         storage = new StorageImpl(new InetSocketAddress(cacheHost, Integer.parseInt(cachePort)));
       }
@@ -180,5 +194,108 @@ public class BTreeIndexStorageManager implements IndexStorageManager {
                               baseRevision);
     indexStorages.put(indexId.getName(), indexStorage);
     return new BTreeIndexStorageManagerDelegatingIndexStorage<>(this, indexId, LOCAL_TO_REMOTE_DUMMY, REMOTE_TO_LOCAL_DUMMY);
+  }
+
+  public void close() throws IOException {
+    indexNovelty.close();
+  }
+
+  public BTree save(final FSRecords fs) {
+    final BTree tree = BTree.create(indexNovelty, storage, 8);
+    for (final FSRecords.NameId root : fs.listRootsWithLock()) {
+      addChild(tree, Integer.MIN_VALUE, root.id, root.name);
+      addChildren(fs, tree, root.id);
+    }
+    return tree;
+  }
+
+  private void addChildren(FSRecords fs, BTree tree, int rootId) {
+    for (final FSRecords.NameId child : fs.listAll(rootId)) {
+      addChild(tree, rootId, child.id, child.name.toString());
+      addChildren(fs, tree, child.id);
+    }
+  }
+
+  public void remap(final FSRecords fs, final BTree remoteTree) {
+    final LinkedList<NodeMapping> queue = new LinkedList<>();
+    processChildren(remoteTree, queue, Integer.MIN_VALUE, getRootMap(fs));
+
+    final IntIntHashMap localToRemote = new IntIntHashMap();
+    final IntIntHashMap remoteToLocal = new IntIntHashMap();
+
+    // fake idempotent mapping for default value
+    localToRemote.put(1, 1);
+    remoteToLocal.put(1, 1);
+
+    NodeMapping mapping = queue.poll();
+    while (mapping != null) {
+      localToRemote.put(mapping.localId, mapping.remoteId);
+      remoteToLocal.put(mapping.remoteId, mapping.localId);
+
+      final Map<CharSequence, Integer> children = new HashMap<>();
+      for (final FSRecords.NameId child : fs.listAll(mapping.localId)) {
+        if (children.put(child.name.toString(), child.id) != null) {
+          throw new RuntimeException("inconsistent children");
+        }
+      }
+
+      processChildren(remoteTree, queue, mapping.remoteId, children);
+
+      mapping = queue.poll();
+    }
+
+    this.localToRemote = local -> localToRemote.get(local);
+    this.remoteToLocal = remote -> remoteToLocal.get(remote);
+  }
+
+  private void processChildren(BTree remoteTree, LinkedList<NodeMapping> queue, int remoteParentId, Map<CharSequence, Integer> children) {
+    final byte[] rangeKey = new byte[4 + 4];
+    ByteUtils.writeUnsignedInt(remoteParentId ^ 0x80000000, rangeKey, 0);
+    ByteUtils.writeUnsignedInt(0, rangeKey, 4);
+    remoteTree.forEach(indexNovelty, rangeKey, (key, value) -> {
+      final int parentId = (int)(ByteUtils.readUnsignedInt(key, 0) ^ 0x80000000);
+      final boolean matchingId = parentId == remoteParentId;
+      if (matchingId) {
+        final String childName = new String(value, StandardCharsets.UTF_8);
+        final Integer localId = children.get(childName);
+        if (localId != null) {
+          final int remoteId = (int)(ByteUtils.readUnsignedInt(key, 4) ^ 0x80000000);
+          queue.addFirst(new NodeMapping(localId, remoteId)); // DFS
+        }
+      }
+      return matchingId;
+    });
+  }
+
+  private void addChild(BTree tree, int rootId, int childId, CharSequence childName) {
+    final byte[] key = new byte[8];
+    ByteUtils.writeUnsignedInt(rootId ^ 0x80000000, key, 0);
+    ByteUtils.writeUnsignedInt(childId ^ 0x80000000, key, 4);
+    // TODO: better string binding?
+    if (!tree.put(indexNovelty, key, childName.toString().getBytes(StandardCharsets.UTF_8))) {
+      throw new RuntimeException("inconsistent tree");
+    }
+  }
+
+  @NotNull
+  private static Map<CharSequence, Integer> getRootMap(FSRecords fs) {
+    final FSRecords.NameId[] rootsList = fs.listRootsWithLock();
+    final Map<CharSequence, Integer> roots = new HashMap<>();
+    for (final FSRecords.NameId root : rootsList) {
+      if (roots.put(root.name, root.id) != null) {
+        throw new RuntimeException("inconsistent roots");
+      }
+    }
+    return roots;
+  }
+
+  private static final class NodeMapping {
+    public final int localId;
+    public final int remoteId;
+
+    public NodeMapping(int localId, int remoteId) {
+      this.localId = localId;
+      this.remoteId = remoteId;
+    }
   }
 }

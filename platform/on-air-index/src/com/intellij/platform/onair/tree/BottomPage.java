@@ -40,6 +40,18 @@ public class BottomPage extends BasePage {
     return true;
   }
 
+  @Override
+  protected boolean forEach(@NotNull Novelty novelty, @NotNull byte[] fromKey, @NotNull KeyValueConsumer consumer) {
+    for (int i = binarySearchRange(fromKey); i < size; i++) {
+      byte[] key = getKey(i);
+      byte[] value = getValue(novelty, i);
+      if (!consumer.consume(key, value)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   @Nullable
   @Override
   protected BasePage put(@NotNull Novelty novelty, @NotNull byte[] key, @NotNull byte[] value, boolean overwrite, boolean[] result) {

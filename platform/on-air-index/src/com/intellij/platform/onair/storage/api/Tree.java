@@ -22,6 +22,8 @@ public interface Tree {
 
   boolean forEach(@NotNull Novelty novelty, @NotNull KeyValueConsumer consumer);
 
+  boolean forEach(@NotNull Novelty novelty, @NotNull byte[] fromKey, @NotNull KeyValueConsumer consumer);
+
   Address store(@NotNull Novelty novelty);
 
   Address store(@NotNull Novelty novelty, @NotNull StorageConsumer consumer);

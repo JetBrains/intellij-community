@@ -1,7 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.onair.storage.api;
 
-public interface Novelty {
+import java.io.Closeable;
+
+public interface Novelty extends Closeable {
 
   // result must be less than 0
   long alloc(byte[] bytes);

@@ -230,11 +230,11 @@ public class BuildManager implements Disposable {
   private final Charset mySystemCharset = CharsetToolkit.getDefaultSystemCharset();
   private volatile boolean myBuildProcessDebuggingEnabled;
 
-  public BuildManager(final ProjectManager projectManager, final FSRecords fsRecords) {
+  public BuildManager(final ProjectManager projectManager) {
     final Application application = ApplicationManager.getApplication();
     IS_UNIT_TEST_MODE = application.isUnitTestMode();
     myProjectManager = projectManager;
-    myFSRecords = fsRecords;
+    myFSRecords = FSRecords.getInstance();
 
     final String fallbackSdkHome = getFallbackSdkHome();
     if (fallbackSdkHome != null) {

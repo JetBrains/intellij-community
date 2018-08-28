@@ -40,9 +40,9 @@ import java.util.List;
 public class TemplateDataLanguageMappings extends LanguagePerFileMappings<Language> {
   private final FilePropertyPusher<Language> myPropertyPusher;
 
-  public TemplateDataLanguageMappings(final Project project, final FSRecords fsRecords) {
+  public TemplateDataLanguageMappings(final Project project) {
     super(project);
-    myPropertyPusher = new TemplateDataLanguagePusher(fsRecords);
+    myPropertyPusher = new TemplateDataLanguagePusher();
   }
 
   public static TemplateDataLanguageMappings getInstance(final Project project) {

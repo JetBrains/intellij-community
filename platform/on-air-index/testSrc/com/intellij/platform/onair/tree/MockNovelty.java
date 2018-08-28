@@ -61,6 +61,10 @@ public class MockNovelty implements Novelty {
   }
 
   @Override
+  public void close() {
+  }
+
+  @Override
   public Novelty unsynchronizedCopy() {
     return this;
   }

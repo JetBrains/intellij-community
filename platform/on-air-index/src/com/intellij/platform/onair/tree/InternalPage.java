@@ -36,6 +36,26 @@ public class InternalPage extends BasePage {
   }
 
   @Override
+  protected boolean forEach(@NotNull Novelty novelty, @NotNull byte[] fromKey, @NotNull KeyValueConsumer consumer) {
+    boolean first = true;
+    for (int i = binarySearchGuess(fromKey); i < size; i++) {
+      Address childAddress = getChildAddress(i);
+      BasePage child = tree.loadPage(novelty, childAddress);
+      if (first) {
+        if (!child.forEach(novelty, fromKey, consumer)) {
+          return false;
+        }
+        first = false;
+      } else {
+        if (!child.forEach(novelty, consumer)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  @Override
   @Nullable
   protected BasePage put(@NotNull Novelty novelty, @NotNull byte[] key, @NotNull byte[] value, boolean overwrite, boolean[] result) {
     int pos = binarySearch(key, 0);

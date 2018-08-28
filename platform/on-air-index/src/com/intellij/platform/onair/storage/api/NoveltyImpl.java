@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.onair.storage.api;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -10,7 +9,7 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class NoveltyImpl implements Novelty, Closeable {
+public class NoveltyImpl implements Novelty {
   private static final int INITIAL_SIZE = 1024 * 1024 * 2047; // almost 2GB
 
   protected final MappedByteBuffer myByteBuffer;

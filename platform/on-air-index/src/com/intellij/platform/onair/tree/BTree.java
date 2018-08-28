@@ -56,6 +56,11 @@ public class BTree implements Tree {
   }
 
   @Override
+  public boolean forEach(@NotNull Novelty novelty, @NotNull byte[] fromKey, @NotNull KeyValueConsumer consumer) {
+    return loadPage(novelty, address).forEach(novelty, fromKey, consumer);
+  }
+
+  @Override
   public boolean put(@NotNull Novelty novelty, @NotNull byte[] key, @NotNull byte[] value) {
     return put(novelty, key, value, true);
   }

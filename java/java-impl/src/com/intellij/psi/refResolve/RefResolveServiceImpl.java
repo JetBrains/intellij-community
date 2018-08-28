@@ -94,13 +94,12 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
   public RefResolveServiceImpl(final Project project,
                                final MessageBus messageBus,
                                final PsiManager psiManager,
-                               final FSRecords fsRecords,
                                StartupManager startupManager,
                                ApplicationEx application,
                                ProjectFileIndex projectFileIndex) throws IOException {
     super(project);
     ((FutureTask)resolveProcess).run();
-    myFSRecords = fsRecords;
+    myFSRecords = FSRecords.getInstance();
     myApplication = application;
     myProjectFileIndex = projectFileIndex;
     if (ENABLED) {

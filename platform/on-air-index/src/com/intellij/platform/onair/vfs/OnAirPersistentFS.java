@@ -20,8 +20,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class OnAirPersistentFS extends PersistentFSImpl {
-  public OnAirPersistentFS(@NotNull MessageBus bus, @NotNull FSRecordsImpl fsRecords) {
-    super(bus, fsRecords);
+  public OnAirPersistentFS(@NotNull MessageBus bus) {
+    super(bus);
   }
 
   public static void download(String revision) {
@@ -61,5 +61,4 @@ public class OnAirPersistentFS extends PersistentFSImpl {
     }
     super.initComponent();
   }
-
 }

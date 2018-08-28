@@ -122,7 +122,7 @@ public class FSRecordsImpl extends FSRecords {
   private final DbConnection myDbConnection = new DbConnection(this);
   private final FileNameCache myFileNameCache = new FileNameCache(this);
 
-  private FSRecordsImpl() {
+  FSRecordsImpl() {
     //noinspection ConstantConditions
     assert HEADER_SIZE <= RECORD_SIZE;
 
@@ -711,40 +711,51 @@ public class FSRecordsImpl extends FSRecords {
 
   private static final int ROOT_RECORD_ID = 1;
 
+  @Override
+  public NameId[] listRootsWithLock() {
+    return writeAndHandleErrors(() -> doListRoots());
+  }
+
   @NotNull
   @TestOnly
-  int[] listRoots() {
-    return readAndHandleErrors(() -> {
-      if (ourStoreRootsSeparately) {
-        TIntArrayList result = new TIntArrayList();
+  NameId[] listRoots() {
+    return readAndHandleErrors(() -> doListRoots());
+  }
 
-        try (LineNumberReader stream = new LineNumberReader(
-          new BufferedReader(new InputStreamReader(new FileInputStream(myDbConnection.myRootsFile))))) {
-          String str;
-          while ((str = stream.readLine()) != null) {
-            int index = str.indexOf(' ');
-            int id = Integer.parseInt(str.substring(0, index));
-            result.add(id);
-          }
-        }
-        catch (FileNotFoundException ignored) {
-        }
+  private NameId[] doListRoots() throws IOException {
+    if (ourStoreRootsSeparately) {
+      final ArrayList<NameId> result = new ArrayList<>();
 
-        return result.toNativeArray();
+      try (LineNumberReader stream = new LineNumberReader(
+        new BufferedReader(new InputStreamReader(new FileInputStream(myDbConnection.myRootsFile))))) {
+        String str;
+        while ((str = stream.readLine()) != null) {
+          int index = str.indexOf(' ');
+          int id = Integer.parseInt(str.substring(0, index));
+          final String url = str.substring(index + 1);
+          result.add(new NameId(id, -1, url));
+        }
+      }
+      catch (FileNotFoundException ignored) {
       }
 
-      try (DataInputStream input = readAttribute(ROOT_RECORD_ID, ourChildrenAttr)) {
-        if (input == null) return ArrayUtil.EMPTY_INT_ARRAY;
-        final int count = DataInputOutputUtil.readINT(input);
-        int[] result = ArrayUtil.newIntArray(count);
-        int prevId = 0;
-        for (int i = 0; i < count; i++) {
-          DataInputOutputUtil.readINT(input); // Name
-          prevId = result[i] = DataInputOutputUtil.readINT(input) + prevId; // Id
-        }
-        return result;
+      return result.toArray(NameId.EMPTY_ARRAY);
+    }
+
+    try (DataInputStream input = readAttribute(ROOT_RECORD_ID, ourChildrenAttr)) {
+      if (input == null) return NameId.EMPTY_ARRAY;
+      final int count = DataInputOutputUtil.readINT(input);
+      final ArrayList<NameId> result = new ArrayList<>();
+      int prevId = 0;
+      int prevNameId = 0;
+      for (int i = 0; i < count; i++) {
+        final int nameId = DataInputOutputUtil.readINT(input) + prevNameId;// Name
+        prevId = DataInputOutputUtil.readINT(input) + prevId; // Id
+        prevNameId = nameId;
+        result.add(new NameId(prevId, prevNameId, doGetNameByNameId(nameId)));
       }
-    });
+      return result.toArray(NameId.EMPTY_ARRAY);
+    }
   }
 
   @TestOnly
@@ -1756,7 +1767,8 @@ public class FSRecordsImpl extends FSRecords {
     }
   }
 
-  void dispose() {
+  @Override
+  public void dispose() {
     writeAndHandleErrors(() -> {
       try {
         myDbConnection.doForce();

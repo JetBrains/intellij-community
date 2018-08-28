@@ -54,6 +54,8 @@ public abstract class BasePage {
 
   protected abstract boolean forEach(@NotNull Novelty novelty, @NotNull KeyValueConsumer consumer);
 
+  protected abstract boolean forEach(@NotNull Novelty novelty, @NotNull byte[] fromKey, @NotNull KeyValueConsumer consumer);
+
   protected abstract BasePage mergeWithChildren(@NotNull Novelty novelty);
 
   protected abstract boolean isBottom();
@@ -106,6 +108,14 @@ public abstract class BasePage {
     int index = binarySearch(key, 0);
     if (index < 0) {
       index = Math.max(0, -index - 2);
+    }
+    return index;
+  }
+
+  protected int binarySearchRange(byte[] key) {
+    int index = binarySearch(key, 0);
+    if (index < 0) {
+      index = Math.max(0, -index - 1);
     }
     return index;
   }
