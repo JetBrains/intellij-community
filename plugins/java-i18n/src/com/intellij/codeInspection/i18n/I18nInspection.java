@@ -15,19 +15,18 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
 import com.intellij.spellchecker.SpellCheckerManager;
+import com.intellij.spellchecker.engine.BaseSpellChecker;
+import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import com.intellij.ui.AddDeleteListPanel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
@@ -650,6 +649,10 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
       return false;
     }
 
+    //if (!containsInDictionary(project, expression)) {
+    //  return false;
+    //}
+
     Pattern pattern = myCachedNonNlsPattern;
     if (pattern != null) {
       PsiFile file = expression.getContainingFile();
@@ -670,6 +673,18 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
     }
 
     return true;
+  }
+
+  private static boolean containsInDictionary(Project project, PsiLiteralExpression expression) {
+    String value = expression.getText();
+    final Ref<Boolean> res = Ref.create(false);
+    PlainTextSplitter.getInstance().split(value, TextRange.allOf(value), textRange -> {
+      final String word = textRange.substring(value); //TODO: we should split into list of words and then check one by one
+      if (((BaseSpellChecker)SpellCheckerManager.getInstance(project).getSpellChecker()).isCorrect(word, true)) {
+        res.set(true);
+      }
+    });
+    return res.get();
   }
 
   private static boolean isArgOfEnumConstant(PsiLiteralExpression expression) {
