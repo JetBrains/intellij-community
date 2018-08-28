@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.CommonBundle;
@@ -54,30 +54,37 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
     return myUserObject;
   }
 
+  @Override
   public int getChildCount() {
     return getChildren().size();
   }
 
+  @Override
   public Enumeration children() {
     return Collections.enumeration(getChildren());
   }
 
+  @Override
   public TreeNode getChildAt(int childIndex) {
     return (TreeNode) getChildren().get(childIndex);
   }
 
+  @Override
   public int getIndex(TreeNode node) {
     return getChildren().indexOf(node);
   }
 
+  @Override
   public boolean getAllowsChildren() {
     return !isLeaf();
   }
 
+  @Override
   public boolean isLeaf() {
     return myUserObject instanceof DirectoryEntry && ((DirectoryEntry)myUserObject).isFile();
   }
 
+  @Override
   public TreeNode getParent() {
     return myParentNode;
   }
@@ -107,7 +114,7 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
     if (removeCurrentChildren || NodeLoadState.EMPTY.equals(myChildrenLoadState)) {
       initChildren();
     }
-    
+
     myModel.getCacheLoader().load(this, expander);
   }
 
@@ -136,6 +143,7 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
     return myUserObject instanceof DirectoryEntry ? (DirectoryEntry)myUserObject : null;
   }
 
+  @Override
   public void dispose() {
   }
 

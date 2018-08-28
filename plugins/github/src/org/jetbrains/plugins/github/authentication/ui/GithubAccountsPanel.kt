@@ -88,7 +88,7 @@ internal class GithubAccountsPanel(private val project: Project,
                       }
                     }
 
-                    override fun updateButton(e: AnActionEvent?) {
+                    override fun updateButton(e: AnActionEvent) {
                       isEnabled = isEnabled && !accountList.selectedValue.projectDefault
                     }
                   })

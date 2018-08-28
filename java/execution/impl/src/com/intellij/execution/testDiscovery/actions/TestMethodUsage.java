@@ -171,7 +171,7 @@ class TestMethodUsage implements Usage, UsageInFile, UsageInModule, PsiElementUs
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (!UsageView.USAGE_INFO_LIST_KEY.is(dataId)) return null;
     PsiElement psi = getElement();
     return psi == null ? null : Collections.singletonList(new UsageInfo(psi));

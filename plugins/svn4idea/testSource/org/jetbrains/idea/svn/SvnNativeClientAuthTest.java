@@ -22,6 +22,8 @@ import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.auth.*;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,10 +31,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.testFramework.UsefulTestCase.assertExists;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+@Ignore
 public class SvnNativeClientAuthTest extends SvnTestCase {
   private AcceptResult myCertificateAnswer = AcceptResult.ACCEPTED_TEMPORARILY;
   private boolean myCredentialsCorrect = true;
@@ -487,8 +491,7 @@ public class SvnNativeClientAuthTest extends SvnTestCase {
     assertTrue(exceptions.isEmpty());
 
     final Change change = new Change(null, new CurrentContentRevision(VcsUtil.getFilePath(vf)));
-    final List<VcsException> commit = vcs.getCheckinEnvironment().commit(Collections.singletonList(change), "commit");
-    assertTrue(commit.isEmpty());
+    commit(Collections.singletonList(change), "commit");
     ++ myExpectedCreds;
     ++ myExpectedCert;
     return file;
@@ -497,7 +500,7 @@ public class SvnNativeClientAuthTest extends SvnTestCase {
   private File testCheckoutImpl(@NotNull Url url) throws IOException {
     final File root = FileUtil.createTempDirectory("checkoutRoot", "");
     root.deleteOnExit();
-    assertTrue(root.exists());
+    assertExists(root);
     SvnCheckoutProvider
       .checkout(myProject, root, url, Revision.HEAD, Depth.INFINITY, false, new CheckoutProvider.Listener() {
         @Override
@@ -556,6 +559,4 @@ public class SvnNativeClientAuthTest extends SvnTestCase {
       ++ myExpectedCert;
     }
   }
-
-  private static @interface Test {}
 }

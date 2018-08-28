@@ -254,10 +254,12 @@ public class StackFrameItem {
       return mySourcePosition;
     }
 
+    @Override
     public boolean isSynthetic() {
       return myIsSynthetic;
     }
 
+    @Override
     public boolean isInLibraryContent() {
       return myIsInLibraryContent;
     }

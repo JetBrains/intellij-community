@@ -81,7 +81,7 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
       };
       testApplication.setDataProvider(new TestDataProvider(myProject) {
         @Override
-        public Object getData(@NonNls String dataId) {
+        public Object getData(@NotNull @NonNls String dataId) {
           if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
             return elements;
           }

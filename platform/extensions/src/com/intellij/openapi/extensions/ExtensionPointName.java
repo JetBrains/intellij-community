@@ -8,9 +8,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author mike
- */
 public final class ExtensionPointName<T> {
   private final String myName;
 
@@ -33,6 +30,9 @@ public final class ExtensionPointName<T> {
     return myName;
   }
 
+  /**
+   * Prefer to use {@link #getExtensionList()}.
+   */
   @NotNull
   public T[] getExtensions() {
     return getExtensions(null);
@@ -58,6 +58,7 @@ public final class ExtensionPointName<T> {
     return Extensions.getArea(areaInstance).getExtensionPoint(getName());
   }
 
+  @Nullable
   public <V extends T> V findExtension(@NotNull Class<V> instanceOf) {
     return ContainerUtil.findInstance(getExtensionList(), instanceOf);
   }

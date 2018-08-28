@@ -443,6 +443,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     };
   }
 
+  @Override
   public boolean isProblemResolved(@Nullable RefEntity entity) {
     return myFixedElements.containsKey(entity);
   }

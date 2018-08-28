@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 public class XPathSupportLoader extends FileTypeFactory {
     private static final boolean DBG_MODE = Boolean.getBoolean("xpath-lang.register-file-type");
 
+  @Override
   public void createFileTypes(final @NotNull FileTypeConsumer consumer) {
         if (DBG_MODE || ApplicationManager.getApplication().isUnitTestMode()) {
             consumer.consume(XPathFileType.XPATH, XPathFileType.XPATH.getDefaultExtension());

@@ -6,7 +6,10 @@ import com.intellij.ide.gdpr.ConsentOptions;
 import com.intellij.internal.statistic.configurable.SendPeriod;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -17,8 +20,7 @@ import org.jetbrains.annotations.Nullable;
   name = "UsagesStatistic",
   storages = @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED)
 )
-public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersistenceComponent
-  implements NamedComponent, PersistentStateComponent<Element> {
+public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersistenceComponent implements PersistentStateComponent<Element> {
   public static final String USAGE_STATISTICS_XML = "usage.statistics.xml";
 
   @NonNls private boolean isShowNotification = true;
@@ -117,12 +119,5 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
   @Override
   public boolean isShowNotification() {
     return isShowNotification;
-  }
-
-  @Override
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "SentUsagesPersistenceComponent";
   }
 }

@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections.quickfix;
 
 import com.google.common.collect.Iterators;
@@ -18,7 +16,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import com.intellij.xml.util.XmlStringUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
@@ -92,7 +89,7 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
     }
     return new PyChangeSignatureQuickFix(function, extraParams, null);
   }
-  
+
   private final List<Pair<Integer, PyParameterInfo>> myExtraParameters;
   @Nullable private final SmartPsiElementPointer<PyCallSiteExpression> myOriginalCallSiteExpression;
 
@@ -114,6 +111,7 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
     }
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return PyBundle.message("QFIX.NAME.change.signature");

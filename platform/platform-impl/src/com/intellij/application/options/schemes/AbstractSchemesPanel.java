@@ -293,7 +293,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     }
 
     @Override
-    public boolean canBePerformed(DataContext context) {
+    public boolean canBePerformed(@NotNull DataContext context) {
       return true;
     }
 

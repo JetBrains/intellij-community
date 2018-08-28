@@ -55,6 +55,7 @@ public class FixedComboBoxEditor implements ComboBoxEditor {
     return myField;
   }
 
+  @Override
   public void setItem(Object anObject) {
     if (anObject != null) {
       myField.setText(anObject.toString());
@@ -65,6 +66,7 @@ public class FixedComboBoxEditor implements ComboBoxEditor {
     }
   }
 
+  @Override
   public Object getItem() {
     Object newValue = myField.getText();
     if (oldValue != null && !(oldValue instanceof String)) {
@@ -88,6 +90,7 @@ public class FixedComboBoxEditor implements ComboBoxEditor {
     return newValue;
   }
 
+  @Override
   public void selectAll() {
     myField.selectAll();
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myField, true));

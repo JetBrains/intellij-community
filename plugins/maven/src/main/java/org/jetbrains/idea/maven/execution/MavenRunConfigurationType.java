@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
@@ -49,13 +47,13 @@ public class MavenRunConfigurationType implements ConfigurationType {
     myFactory = new ConfigurationFactory(this) {
       @NotNull
       @Override
-      public RunConfiguration createTemplateConfiguration(Project project) {
+      public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
         return new MavenRunConfiguration(project, this, "");
       }
 
       @NotNull
       @Override
-      public RunConfiguration createTemplateConfiguration(Project project, RunManager runManager) {
+      public RunConfiguration createTemplateConfiguration(@NotNull Project project, @NotNull RunManager runManager) {
         return new MavenRunConfiguration(project, this, "");
       }
 
@@ -66,8 +64,6 @@ public class MavenRunConfigurationType implements ConfigurationType {
         if (!StringUtil.isEmptyOrSpaces(cfg.getRunnerParameters().getWorkingDirPath())) return cfg;
 
         Project project = cfg.getProject();
-        if (project == null) return cfg;
-
         MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
 
         List<MavenProject> projects = projectsManager.getProjects();
@@ -91,6 +87,7 @@ public class MavenRunConfigurationType implements ConfigurationType {
     };
   }
 
+  @NotNull
   @Override
   public String getDisplayName() {
     return RunnerBundle.message("maven.run.configuration.name");

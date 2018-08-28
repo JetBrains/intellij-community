@@ -32,6 +32,7 @@ class Cvs2Configurable implements Configurable {
     myProject = project;
   }
 
+  @Override
   @NonNls public String getDisplayName() {
     return "CVS2";
   }
@@ -41,6 +42,7 @@ class Cvs2Configurable implements Configurable {
     return "reference.projectsettings.vcs.cvs.options";
   }
 
+  @Override
   public JComponent createComponent() {
     myComponent = new CvsConfigurationPanel(myProject);
     myComponent.updateFrom(getCvsConfiguration(), getAppLevelConfiguration());
@@ -55,18 +57,22 @@ class Cvs2Configurable implements Configurable {
     return CvsConfiguration.getInstance(myProject);
   }
 
+  @Override
   public boolean isModified() {
     return !myComponent.equalsTo(getCvsConfiguration(), getAppLevelConfiguration());
   }
 
+  @Override
   public void apply() {
     myComponent.saveTo(getCvsConfiguration(), getAppLevelConfiguration());
   }
 
+  @Override
   public void reset() {
     myComponent.updateFrom(getCvsConfiguration(), getAppLevelConfiguration());
   }
 
+  @Override
   public void disposeUIResources() {
     myComponent = null;
   }

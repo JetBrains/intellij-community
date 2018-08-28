@@ -187,8 +187,8 @@ public class PySectionBasedDocStringTest extends PyTestCase {
                  "Third line", docString.getSummary());
   }
 
-  public void testNamedReturnsAndYields() {
-    final GoogleCodeStyleDocString docString = findAndParseGoogleStyleDocString();
+  public void testNumpyNamedReturnsAndYields() {
+    final NumpyDocString docString = findAndParseNumpyStyleDocString();
     assertEmpty(docString.getSummary());
     assertSize(2, docString.getSections());
 
@@ -400,6 +400,25 @@ public class PySectionBasedDocStringTest extends PyTestCase {
                                                                           "    :param Tuple[int, int] name: Some description\n" +
                                                                           "\"\"\""));
     
+  }
+
+  // PY-31025
+  public void testGoogleDescriptionOfReturnValueWithoutType() {
+    final GoogleCodeStyleDocString docString = findAndParseGoogleStyleDocString();
+    assertEquals("return value description", docString.getReturnDescription());
+  }
+
+  // PY-31025
+  public void testGoogleMultilineDescriptionOfReturnValueWithoutType() {
+    final GoogleCodeStyleDocString docString = findAndParseGoogleStyleDocString();
+    assertEquals("return value description\n" +
+                 "with continuation", docString.getReturnDescription());
+  }
+
+  // PY-31025
+  public void testGoogleDescriptionOfReturnValueOnNextLine() {
+    final GoogleCodeStyleDocString docString = findAndParseGoogleStyleDocString();
+    assertEquals("return value description", docString.getReturnDescription());
   }
 
   @Override

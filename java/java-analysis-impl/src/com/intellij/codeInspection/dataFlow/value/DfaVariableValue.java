@@ -19,7 +19,7 @@ package com.intellij.codeInspection.dataFlow.value;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.DfaFactMap;
 import com.intellij.codeInspection.dataFlow.DfaFactType;
-import com.intellij.codeInspection.dataFlow.NullabilityUtil;
+import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.*;
@@ -202,7 +202,7 @@ public final class DfaVariableValue extends DfaValue {
 
   @NotNull
   public Nullability getInherentNullability() {
-    return NullabilityUtil.fromBoolean(getInherentFacts().get(DfaFactType.CAN_BE_NULL));
+    return DfaNullability.toNullability(getInherentFacts().get(DfaFactType.NULLABILITY));
   }
 
   public boolean isFlushableByCalls() {

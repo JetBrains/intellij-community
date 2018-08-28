@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.lookup.impl;
 
@@ -29,8 +15,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
+import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -61,19 +47,19 @@ public class LookupManagerImpl extends LookupManager {
         if (project == myProject) {
           Lookup lookup = getActiveLookup();
           if (lookup != null && BitUtil.isSet(flags, HintManager.HIDE_BY_LOOKUP_ITEM_CHANGE)) {
-            lookup.addLookupListener(new LookupAdapter() {
+            lookup.addLookupListener(new LookupListener() {
               @Override
-              public void currentItemChanged(LookupEvent event) {
+              public void currentItemChanged(@NotNull LookupEvent event) {
                 hint.hide();
               }
 
               @Override
-              public void itemSelected(LookupEvent event) {
+              public void itemSelected(@NotNull LookupEvent event) {
                 hint.hide();
               }
 
               @Override
-              public void lookupCanceled(LookupEvent event) {
+              public void lookupCanceled(@NotNull LookupEvent event) {
                 hint.hide();
               }
             });
@@ -95,15 +81,14 @@ public class LookupManagerImpl extends LookupManager {
     });
 
 
-    final EditorFactoryAdapter myEditorFactoryListener = new EditorFactoryAdapter() {
+    EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryListener() {
       @Override
       public void editorReleased(@NotNull EditorFactoryEvent event) {
         if (event.getEditor() == myActiveLookupEditor) {
           hideActiveLookup();
         }
       }
-    };
-    EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener, myProject);
+    }, myProject);
   }
 
   @Override
@@ -135,19 +120,19 @@ public class LookupManagerImpl extends LookupManager {
 
     myActiveLookup = lookup;
     myActiveLookupEditor = editor;
-    myActiveLookup.addLookupListener(new LookupAdapter() {
+    myActiveLookup.addLookupListener(new LookupListener() {
       @Override
-      public void itemSelected(LookupEvent event) {
+      public void itemSelected(@NotNull LookupEvent event) {
         lookupClosed();
       }
 
       @Override
-      public void lookupCanceled(LookupEvent event) {
+      public void lookupCanceled(@NotNull LookupEvent event) {
         lookupClosed();
       }
 
       @Override
-      public void currentItemChanged(LookupEvent event) {
+      public void currentItemChanged(@NotNull LookupEvent event) {
         alarm.cancelAllRequests();
         CodeInsightSettings settings = CodeInsightSettings.getInstance();
         if (settings.AUTO_POPUP_JAVADOC_INFO && DocumentationManager.getInstance(myProject).getDocInfoHint() == null) {
@@ -187,10 +172,10 @@ public class LookupManagerImpl extends LookupManager {
 
   private void showJavadoc(LookupImpl lookup) {
     if (myActiveLookup != lookup) return;
-    
+
     DocumentationManager docManager = DocumentationManager.getInstance(myProject);
     if (docManager.getDocInfoHint() != null) return; // will auto-update
-    
+
     LookupElement currentItem = lookup.getCurrentItem();
     CompletionProcess completion = CompletionService.getCompletionService().getCurrentCompletion();
     if (currentItem != null && currentItem.isValid() && isAutoPopupJavadocSupportedBy(currentItem) && completion != null) {

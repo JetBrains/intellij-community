@@ -30,11 +30,13 @@ class InlineViewDescriptor implements UsageViewDescriptor{
     myElement = element;
   }
 
+  @Override
   @NotNull
   public PsiElement[] getElements() {
     return new PsiElement[] {myElement};
   }
 
+  @Override
   public String getProcessedElementsHeader() {
     if (myElement instanceof PsiField) {
       return RefactoringBundle.message("inline.field.elements.header");
@@ -51,10 +53,12 @@ class InlineViewDescriptor implements UsageViewDescriptor{
     return "Unknown element";
   }
 
+  @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("invocations.to.be.inlined", UsageViewBundle.getReferencesString(usagesCount, filesCount));
   }
 
+  @Override
   public String getCommentReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("comments.elements.header",
                                      UsageViewBundle.getOccurencesString(usagesCount, filesCount));

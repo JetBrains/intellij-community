@@ -549,17 +549,20 @@ abstract class FunctionHelper {
       return myParameters[0];
     }
 
+    @Override
     PsiExpression getExpression() {
       // Usage logic presume that this method is called only if myBody is PsiExpression
       return (PsiExpression)myBody;
     }
 
+    @Override
     void transform(StreamToLoopReplacementContext context, String... argumentValues) {
       LOG.assertTrue(argumentValues.length == myParameters.length);
       EntryStream.zip(myParameters, argumentValues).forKeyValue(
         (oldName, newName) -> myBody = replaceVarReference(myBody, oldName, newName, context));
     }
 
+    @Override
     void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
       int idx = ArrayUtil.indexOf(myParameters, newName);
       if(idx >= 0) {
@@ -581,6 +584,7 @@ abstract class FunctionHelper {
       consumer.accept(myBody);
     }
 
+    @Override
     String getParameterName(int index) {
       return myParameters[index];
     }
@@ -625,6 +629,7 @@ abstract class FunctionHelper {
                      .map(PsiElement::getText).joining();
     }
 
+    @Override
     void transform(StreamToLoopReplacementContext context, String... argumentValues) {
       super.transform(context, argumentValues);
       List<PsiReturnStatement> returns = getReturns(myBody);

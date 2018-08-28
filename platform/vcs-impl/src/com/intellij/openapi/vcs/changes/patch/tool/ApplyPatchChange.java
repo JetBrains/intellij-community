@@ -310,7 +310,7 @@ class ApplyPatchChange {
     final String tooltipText = DiffUtil.createTooltipText(text, null);
     return new DiffGutterRenderer(icon, tooltipText) {
       @Override
-      protected void performAction(AnActionEvent e) {
+      protected void performAction(@NotNull AnActionEvent e) {
         perform.run();
       }
     };

@@ -71,7 +71,7 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
       setupHighlighting(it)
     }, MonospaceEditorCustomization.getInstance()))
     document.addDocumentListener(object: DocumentListener {
-      override fun documentChanged(event: DocumentEvent?) {
+      override fun documentChanged(event: DocumentEvent) {
         modified = true
       }
     }, disposable)
@@ -154,7 +154,7 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
         }
       }
     }
-    
+
     super.doCancelAction()
   }
 

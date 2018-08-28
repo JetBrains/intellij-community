@@ -9,6 +9,26 @@ import java.util.*
 
 class XmlSerializerSetTest {
   @Test
+  fun `empty set`() {
+    @Tag("bean")
+    class Bean {
+      @JvmField
+      var values = emptySet<String>()
+    }
+
+    val data = Bean()
+    data.values = setOf("foo")
+    testSerializer("""
+      <bean>
+        <option name="values">
+          <set>
+            <option value="foo" />
+          </set>
+        </option>
+      </bean>""", data)
+  }
+
+  @Test
   fun notFinalField() {
     @Tag("bean")
     class BeanWithSet {

@@ -165,6 +165,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     handleMappingChange(mappings.keySet(), oldFiles, project != null && !project.isDefault());
   }
 
+  @Override
   public void setMapping(@Nullable VirtualFile file, @Nullable T value) {
     synchronized (myMappings) {
       ensureStateLoaded();

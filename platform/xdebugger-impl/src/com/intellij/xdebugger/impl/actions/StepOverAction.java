@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public class StepOverAction extends XDebuggerActionBase implements DumbAware {
+  @Override
   @NotNull
   protected DebuggerActionHandler getHandler(@NotNull final DebuggerSupport debuggerSupport) {
     return debuggerSupport.getStepOverHandler();

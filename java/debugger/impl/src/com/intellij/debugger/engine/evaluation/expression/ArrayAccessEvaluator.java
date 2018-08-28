@@ -41,6 +41,7 @@ class ArrayAccessEvaluator implements Evaluator {
     myIndexEvaluator = indexEvaluator;
   }
 
+  @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     myEvaluatedIndex = 0;
     myEvaluatedArrayReference = null;
@@ -62,22 +63,27 @@ class ArrayAccessEvaluator implements Evaluator {
     }
   }
 
+  @Override
   public Modifier getModifier() {
     Modifier modifier = null;
     if (myEvaluatedArrayReference != null) {
       modifier = new Modifier() {
+        @Override
         public boolean canInspect() {
           return true;
         }
 
+        @Override
         public boolean canSetValue() {
           return true;
         }
 
+        @Override
         public void setValue(Value value) throws ClassNotLoadedException, InvalidTypeException {
           myEvaluatedArrayReference.setValue(myEvaluatedIndex, value);
         }
 
+        @Override
         public Type getExpectedType() throws EvaluateException {
           try {
             ArrayType type = (ArrayType)myEvaluatedArrayReference.referenceType();
@@ -88,6 +94,7 @@ class ArrayAccessEvaluator implements Evaluator {
           }
         }
 
+        @Override
         public NodeDescriptorImpl getInspectItem(Project project) {
           return new ArrayElementDescriptorImpl(project, myEvaluatedArrayReference, myEvaluatedIndex);
         }

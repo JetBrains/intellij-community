@@ -50,6 +50,7 @@ public class AntBeforeRunTask extends BeforeRunTask<AntBeforeRunTask>{
     myTargetName = targetName;
   }
 
+  @Override
   public void writeExternal(@NotNull Element element) {
     super.writeExternal(element);
     if (myAntFileUrl != null && myTargetName != null) {
@@ -58,6 +59,7 @@ public class AntBeforeRunTask extends BeforeRunTask<AntBeforeRunTask>{
     }
   }
 
+  @Override
   public void readExternal(@NotNull Element element) {
     super.readExternal(element);
     final String url = element.getAttributeValue("antfile");

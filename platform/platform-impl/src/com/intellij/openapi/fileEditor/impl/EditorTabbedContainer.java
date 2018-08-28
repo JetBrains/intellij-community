@@ -117,7 +117,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       .setPopupGroup(
         () -> (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_TAB_POPUP), ActionPlaces.EDITOR_TAB_POPUP, false)
       .addTabMouseListener(new TabMouseListener()).getPresentation()
-      .setTabDraggingEnabled(true).setUiDecorator(() -> new UiDecorator.UiDecoration(null, new Insets(TabsUtil.TAB_VERTICAL_PADDING, 8, TabsUtil.TAB_VERTICAL_PADDING, 8)))
+      .setTabDraggingEnabled(true).setUiDecorator(() -> new UiDecorator.UiDecoration(null, JBUI.insets(2, 8)))
       .setTabLabelActionsMouseDeadzone(TimedDeadzone.NULL).setGhostsAlwaysVisible(true).setTabLabelActionsAutoHide(false)
       .setActiveTabFillIn(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground()).setPaintFocus(false).getJBTabs()
       .addListener(new TabsListener() {
@@ -468,7 +468,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
   private final class MyDataProvider implements DataProvider {
     @Override
-    public Object getData(@NonNls final String dataId) {
+    public Object getData(@NotNull @NonNls final String dataId) {
       if (CommonDataKeys.PROJECT.is(dataId)) {
         return myProject;
       }

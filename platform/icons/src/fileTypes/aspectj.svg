@@ -1,12 +1,9 @@
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-  <title>aspectj</title>
-  <g>
-    <g>
-      <polygon points="7 1 3 5 7 5 7 1" fill="#9aa7b0" opacity="0.8" style="isolation: isolate"/>
-      <polygon points="8 1 8 5 8 6 7 6 3 6 3 8 13 8 13 1 8 1" fill="#9aa7b0" opacity="0.8" style="isolation: isolate"/>
-    </g>
-    <rect x="1" y="9" width="15" height="7" fill="#f26522" opacity="0.7"/>
-    <path d="M4.10964,10h.78072L7,15H6.10941l-.48628-1.19889H3.35623L2.86326,15H2ZM5.3153,13.02841l-.82868-1.986-.822,1.986Z" fill="#231f20" opacity="0.7"/>
-    <path d="M10.12549,10v3.22559A1.24032,1.24032,0,0,1,10,13.792V14H9.85889a.69676.69676,0,0,1-.49854.19727,1.18455,1.18455,0,0,1-.9707-.585l-.55811.5918A1.80469,1.80469,0,0,0,9.37451,15a1.58977,1.58977,0,0,0,1.17139-.437A1.81488,1.81488,0,0,0,11,13.25342V10Z" fill="#231f20" opacity="0.7"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <g fill="none" fill-rule="evenodd">
+    <polygon fill="#9AA7B0" fill-opacity=".8" points="7 1 3 5 7 5"/>
+    <polygon fill="#9AA7B0" fill-opacity=".8" points="8 1 8 6 3 6 3 8 13 8 13 1"/>
+    <polygon fill="#F26522" fill-opacity=".7" points="1 16 16 16 16 9 1 9"/>
+    <path fill="#231F20" fill-opacity=".7" d="M3.15,3 L2.49612121,1.4 L1.85,3 L3.15,3 Z M2.109,0 L2.89,0 L5,5 L3.9,5 L3.4,4 L1.6,4 L1.1,5 L0,5 L2.109,0 Z" transform="translate(2 10)"/>
+    <path fill="#231F20" fill-opacity=".7" d="M1.39509277,3.58770752 C1.62440186,3.83789062 1.83782861,4 2.28682861,4 C2.81318359,4 3,3.58770752 3,3.29760742 L3,0 L4,0 L4,3.58770752 C4,4.31964111 3.32670898,5 2.45,5 C1.629,5 1.15,4.76264111 0.8,4.31964111 L1.39509277,3.58770752 Z" transform="translate(7 10)"/>
   </g>
 </svg>

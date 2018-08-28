@@ -567,7 +567,7 @@ public class EditorWindow {
     }
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       if (CommonDataKeys.VIRTUAL_FILE.is(dataId)){
         final VirtualFile virtualFile = myEditor.getFile();
         return virtualFile.isValid() ? virtualFile : null;
@@ -585,7 +585,7 @@ public class EditorWindow {
     }
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       // this is essential for ability to close opened file
       if (DATA_KEY.is(dataId)){
         return myWindow;

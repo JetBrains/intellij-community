@@ -23,6 +23,7 @@ import org.jetbrains.jps.model.JpsTypedElement;
  * @author nik
  */
 public interface JpsTypedModule<P extends JpsElement> extends JpsModule, JpsTypedElement<P> {
+  @Override
   @NotNull
   JpsModuleType<P> getModuleType();
 

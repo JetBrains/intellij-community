@@ -212,7 +212,7 @@ public class PalettePanel extends JPanel implements DataProvider, PaletteToolWin
   }
 
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformDataKeys.FILE_EDITOR.is(dataId) && myDesigner != null) {
       return myDesigner.getEditor();
     }

@@ -75,28 +75,34 @@ public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifa
     }
   }
 
+  @Override
   @NotNull
   public ArtifactType getArtifactType() {
     return myArtifactType;
   }
 
+  @Override
   public String getName() {
     return myName;
   }
 
+  @Override
   public boolean isBuildOnMake() {
     return myBuildOnMake;
   }
 
+  @Override
   @NotNull
   public CompositePackagingElement<?> getRootElement() {
     return myRootElement;
   }
 
+  @Override
   public String getOutputPath() {
     return myOutputPath;
   }
 
+  @Override
   public Collection<? extends ArtifactPropertiesProvider> getPropertiesProviders() {
     return Collections.unmodifiableCollection(myProperties.keySet());
   }
@@ -118,6 +124,7 @@ public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifa
     return artifact;
   }
 
+  @Override
   public void setName(@NotNull String name) {
     String oldName = myName;
     myName = name;
@@ -131,10 +138,12 @@ public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifa
     return "artifact:" + myName;
   }
 
+  @Override
   public void setRootElement(CompositePackagingElement<?> root) {
     myRootElement = root;
   }
 
+  @Override
   public void setProperties(ArtifactPropertiesProvider provider, ArtifactProperties<?> properties) {
     if (properties != null) {
       myProperties.put(provider, properties);
@@ -144,19 +153,23 @@ public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifa
     }
   }
 
+  @Override
   public void setArtifactType(@NotNull ArtifactType selected) {
     myArtifactType = selected;
     resetProperties();
   }
 
+  @Override
   public void setBuildOnMake(boolean buildOnMake) {
     myBuildOnMake = buildOnMake;
   }
 
+  @Override
   public void setOutputPath(String outputPath) {
     myOutputPath = outputPath;
   }
 
+  @Override
   public ArtifactProperties<?> getProperties(@NotNull ArtifactPropertiesProvider provider) {
     return myProperties.get(provider);
   }

@@ -43,7 +43,8 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
     super(project, value, viewSettings);
   }
 
-  protected Collection<AbstractTreeNode> modulesAndGroups(Collection<ModuleDescription> modules) {
+  @NotNull
+  Collection<AbstractTreeNode> modulesAndGroups(@NotNull Collection<? extends ModuleDescription> modules) {
     if (getSettings().isFlattenModules()) {
       return ContainerUtil.mapNotNull(modules, moduleDescription -> {
         try {
@@ -107,7 +108,8 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
     return result;
   }
 
-  protected abstract AbstractTreeNode createModuleGroup(final Module module)
+  @NotNull
+  protected abstract AbstractTreeNode createModuleGroup(@NotNull Module module)
     throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException;
 
   @Nullable
@@ -116,7 +118,7 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
     if (moduleDescription instanceof LoadedModuleDescription) {
       return createModuleGroup(((LoadedModuleDescription)moduleDescription).getModule());
     }
-    else if (moduleDescription instanceof UnloadedModuleDescription) {
+    if (moduleDescription instanceof UnloadedModuleDescription) {
       return createUnloadedModuleNode((UnloadedModuleDescription)moduleDescription);
     }
     return null;
@@ -126,11 +128,12 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
     return null;
   }
 
-  protected abstract AbstractTreeNode createModuleGroupNode(final ModuleGroup moduleGroup)
+  @NotNull
+  protected abstract AbstractTreeNode createModuleGroupNode(@NotNull ModuleGroup moduleGroup)
     throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException;
 
   @Override
-  public void update(PresentationData presentation) {
+  public void update(@NotNull PresentationData presentation) {
     presentation.setIcon(PlatformIcons.PROJECT_ICON);
     presentation.setPresentableText(getProject().getName());
   }

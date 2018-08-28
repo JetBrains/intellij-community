@@ -195,7 +195,7 @@ public class XLineBreakpointManager {
 
   private class MyDocumentListener implements DocumentListener {
     @Override
-    public void documentChanged(final DocumentEvent e) {
+    public void documentChanged(@NotNull final DocumentEvent e) {
       final Document document = e.getDocument();
       Collection<XLineBreakpointImpl> breakpoints = getDocumentBreakpoints(document);
       if (!breakpoints.isEmpty()) {
@@ -211,21 +211,21 @@ public class XLineBreakpointManager {
 
   private boolean myDragDetected = false;
 
-  private class MyEditorMouseMotionListener extends EditorMouseMotionAdapter {
+  private class MyEditorMouseMotionListener implements EditorMouseMotionListener {
     @Override
     public void mouseDragged(EditorMouseEvent e) {
       myDragDetected = true;
     }
   }
 
-  private class MyEditorMouseListener extends EditorMouseAdapter {
+  private class MyEditorMouseListener implements EditorMouseListener {
     @Override
-    public void mousePressed(EditorMouseEvent e) {
+    public void mousePressed(@NotNull EditorMouseEvent e) {
       myDragDetected = false;
     }
 
     @Override
-    public void mouseClicked(final EditorMouseEvent e) {
+    public void mouseClicked(@NotNull final EditorMouseEvent e) {
       final Editor editor = e.getEditor();
       final MouseEvent mouseEvent = e.getMouseEvent();
       if (mouseEvent.isPopupTrigger()

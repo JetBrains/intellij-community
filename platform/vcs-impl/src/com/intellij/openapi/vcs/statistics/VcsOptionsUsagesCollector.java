@@ -14,9 +14,11 @@ import static com.intellij.internal.statistic.utils.StatisticsUtilKt.getBooleanU
 import static com.intellij.internal.statistic.utils.StatisticsUtilKt.getEnumUsage;
 
 public class VcsOptionsUsagesCollector extends ProjectUsagesCollector {
+  @Override
   @NotNull
   public String getGroupId() { return "statistics.vcs.options"; }
 
+  @Override
   @NotNull
   public Set<UsageDescriptor> getUsages(@NotNull Project project) {
     return getDescriptors(project);

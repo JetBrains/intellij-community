@@ -70,7 +70,7 @@ public class CommandLineApplication {
 
     private static class CommandLineDataContext extends UserDataHolderBase implements DataContext {
       @Override
-      public Object getData(String dataId) {
+      public Object getData(@NotNull String dataId) {
         return ourInstance.getData(dataId);
       }
     }

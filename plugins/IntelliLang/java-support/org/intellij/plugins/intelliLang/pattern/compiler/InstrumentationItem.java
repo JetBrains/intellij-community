@@ -30,6 +30,7 @@ class InstrumentationItem implements FileProcessingCompiler.ProcessingItem {
     myClassFile = classFile;
   }
 
+  @Override
   @NotNull
   public VirtualFile getFile() {
     return myClassFile;
@@ -40,6 +41,7 @@ class InstrumentationItem implements FileProcessingCompiler.ProcessingItem {
     return myClassFile;
   }
 
+  @Override
   public ValidityState getValidityState() {
 //        return new TimestampValidityState(myClassFile.getModificationStamp());
     return null;

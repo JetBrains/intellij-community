@@ -10,18 +10,18 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.stateStore
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.util.ArrayUtilRt
 import java.util.concurrent.TimeUnit
 
+private val LOG = logger<FeatureUsageSettingsEventScheduler>()
+
+private const val PERIOD_DELAY = 24 * 60
+private const val INITIAL_DELAY = PERIOD_DELAY
+
 class FeatureUsageSettingsEventScheduler : FeatureUsageStateEventTracker {
-  private val LOG = Logger.getInstance("com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEventScheduler")
-
-  private val PERIOD_DELAY = 24 * 60
-  private val INITIAL_DELAY = PERIOD_DELAY
-
   override fun initialize() {
     if (!FeatureUsageLogger.isEnabled()) {
       return
@@ -46,20 +46,16 @@ class FeatureUsageSettingsEventScheduler : FeatureUsageStateEventTracker {
   }
 
   private fun logInitializedComponents(componentManager: ComponentManager) {
-    if (componentManager.stateStore !is ComponentStoreImpl) {
-      return
-    }
-
-    val project = componentManager as? Project
+    val stateStore = (componentManager.stateStore as? ComponentStoreImpl) ?: return
     ApplicationManager.getApplication().invokeLater {
-      val components = (componentManager.stateStore as ComponentStoreImpl).getComponents()
+      val components = stateStore.getComponents()
       for (name in ArrayUtilRt.toStringArray(components.keys)) {
         val info = components[name]
         val component = info?.component
         try {
           if (component is PersistentStateComponent<*>) {
             info.stateSpec?.let {
-              logConfigurationState(name, it, component.state, project)
+              logConfigurationState(name, it, component.state, componentManager as? Project)
             }
           }
         }

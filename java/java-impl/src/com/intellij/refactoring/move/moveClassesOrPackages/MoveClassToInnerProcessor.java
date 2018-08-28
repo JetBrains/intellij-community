@@ -90,11 +90,13 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     return new MoveMultipleElementsViewDescriptor(myClassesToMove, myTargetClass.getQualifiedName());
   }
 
+  @Override
   @NotNull
   public UsageInfo[] findUsages() {
     final List<UsageInfo> usages = new ArrayList<>();
@@ -105,6 +107,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
     return usages.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
+  @Override
   protected boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
     final UsageInfo[] usages = refUsages.get();
     return showConflicts(getConflicts(usages), usages);
@@ -121,6 +124,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
     });
   }
 
+  @Override
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
     MoveClassToInnerHandler[] handlers = MoveClassToInnerHandler.EP_NAME.getExtensions();
 
@@ -212,6 +216,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @Override
   @NotNull
   protected String getCommandName() {
     return RefactoringBundle.message("move.class.to.inner.command.name",
@@ -299,6 +304,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
 
   private static PsiElement[] collectPackageLocalMembers(PsiElement classToMove) {
     return PsiTreeUtil.collectElements(classToMove, new PsiElementFilter() {
+      @Override
       public boolean isAccepted(final PsiElement element) {
         if (element instanceof PsiMember) {
           PsiMember member = (PsiMember) element;

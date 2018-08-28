@@ -55,6 +55,7 @@ public final class Selector {
     myPath = path;
   }
 
+  @Override
   public Selector clone() {
     return new Selector(this);
   }

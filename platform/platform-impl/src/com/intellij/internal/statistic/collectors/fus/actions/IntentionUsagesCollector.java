@@ -4,6 +4,7 @@ package com.intellij.internal.statistic.collectors.fus.actions;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.IntentionsCollector;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
+import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.internal.statistic.service.fus.collectors.FUStatisticsDifferenceSender;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -14,6 +15,7 @@ import static com.intellij.internal.statistic.service.fus.collectors.UsageDescri
 
 public final class IntentionUsagesCollector extends ApplicationUsagesCollector implements FUStatisticsDifferenceSender {
 
+  @Override
   @NotNull
   public Set<UsageDescriptor> getUsages() {
     IntentionsCollector.State state = IntentionsCollector.getInstance().getState();
@@ -21,8 +23,14 @@ public final class IntentionUsagesCollector extends ApplicationUsagesCollector i
     return ContainerUtil.map2Set(state.myIntentions.entrySet(), e -> new UsageDescriptor(ensureProperKey(e.getKey()), e.getValue()));
   }
 
+  @Override
   @NotNull
   public String getGroupId() {
     return "statistics.actions.intentions";
+  }
+
+  @Override
+  public FUSUsageContext getContext() {
+    return FUSUsageContext.DEFAULT;
   }
 }

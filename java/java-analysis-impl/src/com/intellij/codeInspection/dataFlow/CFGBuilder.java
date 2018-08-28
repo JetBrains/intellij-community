@@ -126,6 +126,21 @@ public class CFGBuilder {
   }
 
   /**
+   * Generate instructions to push given DfaValue on stack and bind it to given expression.
+   * <p>
+   * Stack before: ...
+   * <p>
+   * Stack after: ... value
+   *
+   * @param value value to push
+   * @param expression expression which result is being pushed
+   * @return this builder
+   */
+  public CFGBuilder push(DfaValue value, PsiExpression expression) {
+    return add(new PushInstruction(value, expression));
+  }
+
+  /**
    * Generate instructions to pop single DfaValue from stack
    * <p>
    * Stack before: ... value
@@ -190,6 +205,16 @@ public class CFGBuilder {
    */
   public CFGBuilder objectOf() {
     return add(new ObjectOfInstruction());
+  }
+
+  /**
+   * Generate instructions to bind top-of-stack value to the given expression. Stack remains unchanged.
+   *
+   * @param expression expression to bind top-of-stack value to
+   * @return this builder
+   */
+  public CFGBuilder resultOf(PsiExpression expression) {
+    return add(new ResultOfInstruction(expression));
   }
 
   /**
@@ -480,6 +505,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder catchAll() {
+    myAnalyzer.popTrap(Trap.TryCatchAll.class);
     GotoInstruction gotoInstruction = new GotoInstruction(null);
     add(gotoInstruction).end();
     myBranches.add(() -> gotoInstruction.setOffset(myAnalyzer.getInstructionCount()));

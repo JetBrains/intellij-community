@@ -28,8 +28,8 @@ public abstract class ProjectUsageTriggerCollector extends ProjectUsagesCollecto
   @NotNull
   @Override
   public final Set<UsageDescriptor> getUsages(@NotNull Project project) {
-    Map<String, Integer> data = FUSProjectUsageTrigger.getInstance(project).getData(getGroupId());
-
-    return ContainerUtil.map2Set(data.entrySet(), e -> new UsageDescriptor(e.getKey(), e.getValue()));
+    return FUSProjectUsageTrigger.getInstance(project).getData(getGroupId());
   }
+
+  public final FUSUsageContext getContext(@NotNull Project project) {return null;}
 }

@@ -52,7 +52,7 @@ public final class ExecuteCompositeTargetEvent extends ExecutionEvent {
   public ExecuteCompositeTargetEvent(String[] targetNames) {
     this(Arrays.asList(targetNames));
   }
-  
+
   public ExecuteCompositeTargetEvent(List<String> targetNames) {
     myTargetNames = targetNames;
     final StringBuilder builder = new StringBuilder();
@@ -72,10 +72,12 @@ public final class ExecuteCompositeTargetEvent extends ExecutionEvent {
     myPresentableName = myCompositeName;
   }
 
+  @Override
   public String getTypeId() {
     return TYPE_ID;
   }
 
+  @Override
   public String getPresentableName() {
     return myPresentableName;
   }
@@ -92,11 +94,13 @@ public final class ExecuteCompositeTargetEvent extends ExecutionEvent {
     return myTargetNames;
   }
 
+  @Override
   public void readExternal(Element element, Project project) throws InvalidDataException {
     super.readExternal(element, project);
     myPresentableName = element.getAttributeValue(PRESENTABLE_NAME);
   }
 
+  @Override
   public String writeExternal(Element element, Project project) {
     element.setAttribute(PRESENTABLE_NAME, myPresentableName);
     return myCompositeName;

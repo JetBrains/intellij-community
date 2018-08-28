@@ -38,10 +38,12 @@ public class SafeDeleteExtendsClassUsageInfo extends SafeDeleteReferenceUsageInf
     LOG.assertTrue(mySubstitutor != null);
   }
 
+  @Override
   public PsiClass getReferencedElement() {
     return (PsiClass)super.getReferencedElement();
   }
 
+  @Override
   public void deleteElement() throws IncorrectOperationException {
     final PsiElement parent = getElement().getParent();
     LOG.assertTrue(parent instanceof PsiReferenceList);
@@ -71,6 +73,7 @@ public class SafeDeleteExtendsClassUsageInfo extends SafeDeleteReferenceUsageInf
     }
   }
 
+  @Override
   public boolean isSafeDelete() {
     if (getElement() == null) return false;
     final PsiClass refClass = getReferencedElement();

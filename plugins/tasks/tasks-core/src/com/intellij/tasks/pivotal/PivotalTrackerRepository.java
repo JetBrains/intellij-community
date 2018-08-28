@@ -166,6 +166,7 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
         return summary;
       }
 
+      @Override
       public String getDescription() {
         return description;
       }
@@ -277,6 +278,7 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
     return Comparing.strEqual(projectId, myProjectId) ? split[1] : null;
   }
 
+  @Override
   @Nullable
   public String extractId(@NotNull final String taskName) {
     Matcher matcher = myPattern.matcher(taskName);
@@ -298,7 +300,7 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
   public String getProjectId() {
     return myProjectId;
   }
-  
+
   public void setProjectId(final String projectId) {
     myProjectId = projectId;
     myPattern = Pattern.compile("(" + projectId + "\\-\\d+):\\s+");

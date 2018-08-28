@@ -181,7 +181,12 @@ JNIEXPORT jobjectArray JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32
 
 // utility methods
 
-static inline LONGLONG pairToInt64(DWORD lowPart, DWORD highPart);
+static LONGLONG pairToInt64(DWORD lowPart, DWORD highPart) {
+    ULARGE_INTEGER large;
+    large.LowPart = lowPart;
+    large.HighPart = highPart;
+    return large.QuadPart;
+}
 
 static wchar_t *ToWinPath(JNIEnv *env, jstring path, boolean dirSuffix) {
   size_t len = (size_t)((*env)->GetStringLength(env, path));
@@ -305,11 +310,4 @@ static jobjectArray CopyObjectArray(JNIEnv *env, jobjectArray src, jclass aClass
   }
   (*env)->DeleteLocalRef(env, src);
   return dst;
-}
-
-static inline LONGLONG pairToInt64(DWORD lowPart, DWORD highPart) {
-  ULARGE_INTEGER large;
-  large.LowPart = lowPart;
-  large.HighPart = highPart;
-  return large.QuadPart;
 }

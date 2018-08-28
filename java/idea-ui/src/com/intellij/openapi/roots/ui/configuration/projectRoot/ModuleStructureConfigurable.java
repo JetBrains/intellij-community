@@ -761,7 +761,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
     @Override
     @Nullable
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (LangDataKeys.MODULE_CONTEXT_ARRAY.is(dataId)) {
         final TreePath[] paths = myTree.getSelectionPaths();
         if (paths != null) {

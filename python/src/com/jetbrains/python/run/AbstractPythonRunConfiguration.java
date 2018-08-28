@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.run;
 
 import com.google.common.collect.Lists;
@@ -64,14 +62,17 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     getConfigurationModule().init();
   }
 
+  @Override
   public List<Module> getValidModules() {
     return getValidModules(getProject());
   }
 
+  @Override
   public PathMappingSettings getMappingSettings() {
     return myMappingSettings;
   }
 
+  @Override
   public void setMappingSettings(@Nullable PathMappingSettings mappingSettings) {
     myMappingSettings = mappingSettings;
   }
@@ -185,6 +186,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     }
   }
 
+  @Override
   public String getSdkHome() {
     String sdkHome = mySdkHome;
     if (StringUtil.isEmptyOrSpaces(mySdkHome)) {
@@ -220,6 +222,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     }
   }
 
+  @Override
   public void readExternal(@NotNull Element element) throws InvalidDataException {
     super.readExternal(element);
     myInterpreterOptions = JDOMExternalizerUtil.readField(element, "INTERPRETER_OPTIONS");
@@ -248,6 +251,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     EnvironmentVariablesComponent.readExternal(element, getEnvs());
   }
 
+  @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     super.writeExternal(element);
     JDOMExternalizerUtil.writeField(element, "INTERPRETER_OPTIONS", myInterpreterOptions);
@@ -272,26 +276,32 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     EnvironmentVariablesComponent.writeExternal(element, getEnvs());
   }
 
+  @Override
   public String getInterpreterOptions() {
     return myInterpreterOptions;
   }
 
+  @Override
   public void setInterpreterOptions(String interpreterOptions) {
     myInterpreterOptions = interpreterOptions;
   }
 
+  @Override
   public String getWorkingDirectory() {
     return myWorkingDirectory;
   }
 
+  @Override
   public void setWorkingDirectory(String workingDirectory) {
     myWorkingDirectory = workingDirectory;
   }
 
+  @Override
   public void setSdkHome(String sdkHome) {
     mySdkHome = sdkHome;
   }
 
+  @Override
   @Nullable
   public Module getModule() {
     return getConfigurationModule().getModule();
@@ -306,10 +316,12 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     return module;
   }
 
+  @Override
   public boolean isUseModuleSdk() {
     return myUseModuleSdk;
   }
 
+  @Override
   public void setUseModuleSdk(boolean useModuleSdk) {
     myUseModuleSdk = useModuleSdk;
   }
@@ -353,6 +365,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
    *
    * @param commandLine what to patch
    */
+  @Override
   public void patchCommandLine(GeneralCommandLine commandLine) {
     final String interpreterPath = getInterpreterPath();
     Sdk sdk = getSdk();

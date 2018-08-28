@@ -1,19 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xmlb.Constants;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,17 +12,13 @@ import java.util.Collections;
 import java.util.List;
 
 public class JDOMExternalizerUtil {
-  private static final String OPTION_TAG = "option";
-  private static final String NAME_ATTR = "name";
-  private static final String VALUE_ATTR = "value";
-
   /**
    * Adds {@code <option name="{fieldName}" value="{value}"/>} element to the parent.
    */
   public static void writeField(@NotNull Element parent, @NotNull String fieldName, @Nullable String value) {
-    Element element = new Element(OPTION_TAG);
-    element.setAttribute(NAME_ATTR, fieldName);
-    element.setAttribute(VALUE_ATTR, value == null ? "" : value);
+    Element element = new Element(Constants.OPTION);
+    element.setAttribute(Constants.NAME, fieldName);
+    element.setAttribute(Constants.VALUE, value == null ? "" : value);
     parent.addContent(element);
   }
 
@@ -54,9 +39,9 @@ public class JDOMExternalizerUtil {
 
   @Nullable
   public static String readField(@NotNull Element parent, @NotNull String fieldName) {
-    for (Element element : parent.getChildren(OPTION_TAG)) {
-      if (fieldName.equals(element.getAttributeValue(NAME_ATTR))) {
-        return element.getAttributeValue(VALUE_ATTR);
+    for (Element element : parent.getChildren(Constants.OPTION)) {
+      if (fieldName.equals(element.getAttributeValue(Constants.NAME))) {
+        return element.getAttributeValue(Constants.VALUE);
       }
     }
     return null;
@@ -67,16 +52,16 @@ public class JDOMExternalizerUtil {
    */
   @NotNull
   public static Element writeOption(@NotNull Element parent, @NotNull String fieldName) {
-    Element element = new Element(OPTION_TAG);
-    element.setAttribute(NAME_ATTR, fieldName);
+    Element element = new Element(Constants.OPTION);
+    element.setAttribute(Constants.NAME, fieldName);
     parent.addContent(element);
     return element;
   }
 
   @Nullable
   public static Element readOption(@NotNull Element parent, @NotNull String fieldName) {
-    for (Element element : parent.getChildren(OPTION_TAG)) {
-      if (fieldName.equals(element.getAttributeValue(NAME_ATTR))) {
+    for (Element element : parent.getChildren(Constants.OPTION)) {
+      if (fieldName.equals(element.getAttributeValue(Constants.NAME))) {
         return element;
       }
     }
@@ -89,7 +74,7 @@ public class JDOMExternalizerUtil {
   public static void writeCustomField(@NotNull Element parent, @NotNull String tagName, @Nullable String value) {
     Element element = new Element(tagName);
     if (value != null) {
-      element.setAttribute(VALUE_ATTR, value);
+      element.setAttribute(Constants.VALUE, value);
     }
     parent.addContent(element);
   }
@@ -97,7 +82,7 @@ public class JDOMExternalizerUtil {
   @Nullable
   public static String readCustomField(@NotNull Element parent, @NotNull String tagName) {
     Element element = parent.getChild(tagName);
-    return element != null ? element.getAttributeValue(VALUE_ATTR) : null;
+    return element != null ? element.getAttributeValue(Constants.VALUE) : null;
   }
 
   @NotNull
@@ -107,12 +92,12 @@ public class JDOMExternalizerUtil {
       return Collections.emptyList();
     }
     if (children.size() == 1) {
-      String value = children.iterator().next().getAttributeValue(VALUE_ATTR);
+      String value = children.iterator().next().getAttributeValue(Constants.VALUE);
       return value == null ? Collections.<String>emptyList() : Collections.singletonList(value);
     }
     List<String> values = ContainerUtil.newArrayListWithCapacity(children.size());
     for (Element child : children) {
-      String value = child.getAttributeValue(VALUE_ATTR);
+      String value = child.getAttributeValue(Constants.VALUE);
       if (value != null) {
         values.add(value);
       }
@@ -126,7 +111,7 @@ public class JDOMExternalizerUtil {
     for (String value : attrValues) {
       if (value != null) {
         Element child = new Element(childTagName);
-        child.setAttribute(VALUE_ATTR, value);
+        child.setAttribute(Constants.VALUE, value);
         parent.addContent(child);
       }
     }

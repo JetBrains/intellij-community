@@ -28,6 +28,7 @@ import com.intellij.patterns.InitialPatternCondition;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.StringInterner;
@@ -304,19 +305,6 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
     return s;
   }
 
-  private static Class<?> getNonPrimitiveType(final Class<?> type) {
-    if (!type.isPrimitive()) return type;
-    if (type == boolean.class) return Boolean.class;
-    if (type == byte.class) return Byte.class;
-    if (type == short.class) return Short.class;
-    if (type == int.class) return Integer.class;
-    if (type == long.class) return Long.class;
-    if (type == float.class) return Float.class;
-    if (type == double.class) return Double.class;
-    if (type == char.class) return Character.class;
-    return type;
-  }
-
   private static Object invokeMethod(@Nullable final Object target, final String methodName, final Object[] arguments, final Collection<Method> staticMethods) throws Throwable {
     final Ref<Boolean> convertVarArgs = Ref.create(Boolean.FALSE);
     final Collection<Method> methods = target == null ? staticMethods : Arrays.asList(target.getClass().getMethods());
@@ -351,7 +339,8 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
       if (!method.isVarArgs() && parameterTypes.length != arguments.length) continue;
       convertVarArgs.set(false);
       for (int i = 0, parameterTypesLength = parameterTypes.length; i < arguments.length; i++) {
-        final Class<?> type = getNonPrimitiveType(i < parameterTypesLength ? parameterTypes[i] : parameterTypes[parameterTypesLength - 1]);
+        final Class<?> type = ReflectionUtil
+          .boxType(i < parameterTypesLength ? parameterTypes[i] : parameterTypes[parameterTypesLength - 1]);
         final Object argument = arguments[i];
         final Class<?> componentType =
           method.isVarArgs() && i < parameterTypesLength - 1 ? null : parameterTypes[parameterTypesLength - 1].getComponentType();

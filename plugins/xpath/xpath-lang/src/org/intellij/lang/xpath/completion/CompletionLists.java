@@ -152,7 +152,7 @@ public class CompletionLists {
           final String name = ((PsiNamedElement)o).getName();
           lookups.add(new VariableLookup("$" + name, type, ((PsiNamedElement)o).getIcon(0), (PsiElement)o));
         } else {
-          lookups.add(new VariableLookup("$" + String.valueOf(o), PlatformIcons.VARIABLE_ICON));
+          lookups.add(new VariableLookup("$" + o, PlatformIcons.VARIABLE_ICON));
         }
       }
       return lookups;
@@ -292,6 +292,7 @@ public class CompletionLists {
 
     for (PsiFile xpathFile : files) {
       xpathFile.accept(new PsiRecursiveElementVisitor() {
+        @Override
         public void visitElement(PsiElement e) {
           if (e instanceof XPathNodeTest) {
             final XPathNodeTest nodeTest = (XPathNodeTest)e;

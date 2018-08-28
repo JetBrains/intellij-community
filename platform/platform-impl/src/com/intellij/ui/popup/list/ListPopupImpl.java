@@ -408,6 +408,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     }
   }
 
+  @Override
   public void handleNextStep(final PopupStep nextStep, Object parentValue) {
     handleNextStep(nextStep, parentValue, null);
   }
@@ -424,7 +425,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       }
       final JComponent container = getContent();
       assert container != null : "container == null";
-      
+
       int y = point.y;
       if (parentValue != null && getListModel().isSeparatorAboveOf(parentValue)) {
         SeparatorWithText swt = new SeparatorWithText();
@@ -553,7 +554,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     }
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
        if (PlatformDataKeys.SELECTED_ITEM.is(dataId)){
         return myList.getSelectedValue();
       }

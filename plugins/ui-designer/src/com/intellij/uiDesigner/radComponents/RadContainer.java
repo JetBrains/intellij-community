@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -46,10 +32,12 @@ public class RadContainer extends RadComponent implements IContainer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.radComponents.RadContainer");
 
   public static class Factory extends RadComponentFactory {
+    @Override
     public RadComponent newInstance(ModuleProvider module, Class aClass, String id) {
       return new RadContainer(module, aClass, id);
     }
 
+    @Override
     public RadComponent newInstance(final Class componentClass, final String id, final Palette palette) {
       return new RadContainer(componentClass, id, palette);
     }
@@ -126,6 +114,7 @@ public class RadContainer extends RadComponent implements IContainer {
     }
   }
 
+  @Override
   public Property getInplaceProperty(final int x, final int y) {
     // 1. We have to check whether user clicked inside border (if any) or not.
     // In this case we have return inplace editor for border text
@@ -153,6 +142,7 @@ public class RadContainer extends RadComponent implements IContainer {
     return getBorderInPlaceEditorBounds(new MyBorderTitleProperty());
   }
 
+  @Override
   public Rectangle getInplaceEditorBounds(final Property property, final int x, final int y) {
     if (property instanceof MyBorderTitleProperty) { // If this is our property
       return getBorderInPlaceEditorBounds(property);
@@ -194,6 +184,7 @@ public class RadContainer extends RadComponent implements IContainer {
     }
   }
 
+  @Override
   public final boolean isXY() {
     return getLayout() instanceof XYLayoutManager;
   }
@@ -264,14 +255,17 @@ public class RadContainer extends RadComponent implements IContainer {
     firePropertyChanged(PROP_CHILDREN, oldChildren, newChildren);
   }
 
+  @Override
   public final RadComponent getComponent(final int index) {
     return myComponents.get(index);
   }
 
+  @Override
   public final int getComponentCount() {
     return myComponents.size();
   }
 
+  @Override
   public int indexOfComponent(IComponent component) {
     return myComponents.indexOf(component);
   }
@@ -334,6 +328,7 @@ public class RadContainer extends RadComponent implements IContainer {
    * @return border's type.
    * @see com.intellij.uiDesigner.shared.BorderType
    */
+  @Override
   @NotNull
   public final BorderType getBorderType() {
     return myBorderType;
@@ -357,6 +352,7 @@ public class RadContainer extends RadComponent implements IContainer {
    * @return border's title. If the container doesn't have any title then the
    *         method returns {@code null}.
    */
+  @Override
   @Nullable
   public final StringDescriptor getBorderTitle() {
     return myBorderTitle;
@@ -568,6 +564,7 @@ public class RadContainer extends RadComponent implements IContainer {
     }
   }
 
+  @Override
   public void write(final XmlWriter writer) {
     if (isXY()) {
       writer.startElement("xy");
@@ -601,6 +598,7 @@ public class RadContainer extends RadComponent implements IContainer {
     }
   }
 
+  @Override
   public boolean accept(ComponentVisitor visitor) {
     if (!super.accept(visitor)) {
       return false;
@@ -709,19 +707,23 @@ public class RadContainer extends RadComponent implements IContainer {
       return myEditor.getPreferredSize();
     }
 
+    @Override
     public StringDescriptor getValue(final RadContainer component) {
       return myBorderTitle;
     }
 
+    @Override
     protected void setValueImpl(final RadContainer container, final StringDescriptor value) throws Exception {
       setBorderTitle(value);
     }
 
+    @Override
     @NotNull
     public PropertyRenderer<StringDescriptor> getRenderer() {
       return null;
     }
 
+    @Override
     public PropertyEditor<StringDescriptor> getEditor() {
       return myEditor;
     }

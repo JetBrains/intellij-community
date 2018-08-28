@@ -810,7 +810,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   @Override
-  public Object getData(final String dataId) {
+  public Object getData(@NotNull final String dataId) {
     if (myEditor == null) {
       return null;
     }
@@ -1396,7 +1396,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
     final AnAction switchSoftWrapsAction = new ToggleUseSoftWrapsToolbarAction(SoftWrapAppliancePlaces.CONSOLE) {
       @Override
-      protected Editor getEditor(AnActionEvent e) {
+      protected Editor getEditor(@NotNull AnActionEvent e) {
         return myEditor;
       }
     };

@@ -44,6 +44,9 @@ public abstract class PsiElementBaseIntentionAction extends BaseIntentionAction 
     }
   }
 
+  /**
+   * Check whether this intention available in file.
+   */
   public boolean checkFile(@Nullable PsiFile file) {
     if (file == null) return false;
     PsiManager manager = file.getManager();

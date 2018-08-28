@@ -53,6 +53,7 @@ public class MavenNavigationUtil {
     if (file == null || !file.isValid()) return null;
     final PsiFile result = PsiManager.getInstance(project).findFile(file);
     return result == null ? null : new NavigatableAdapter() {
+      @Override
       public void navigate(boolean requestFocus) {
         int offset = 0;
         if (result instanceof XmlFile) {
@@ -75,6 +76,7 @@ public class MavenNavigationUtil {
   @Nullable
   public static Navigatable createNavigatableForDependency(final Project project, final VirtualFile file, final MavenArtifact artifact) {
     return new NavigatableAdapter() {
+      @Override
       public void navigate(boolean requestFocus) {
         if (!file.isValid()) return;
 

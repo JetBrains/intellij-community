@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.dependencyAnalysis;
 
 import com.intellij.ProjectTopics;
@@ -295,7 +293,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
      * {@inheritDoc}
      */
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (CommonDataKeys.PROJECT.is(dataId)) {
         return myModule.getProject();
       }
@@ -649,7 +647,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
      * The constructor
      */
     public UrlModeAction() {
-      super("Use URL mode", "If selected, the URLs are displayed, otherwise order entries", AllIcons.Nodes.PpFile);
+      super("Use URL mode", "If selected, the URLs are displayed, otherwise order entries", AllIcons.Nodes.Folder);
     }
 
     /**

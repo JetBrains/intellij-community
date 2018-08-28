@@ -83,6 +83,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
     myProjectDom = MavenDomUtil.getMavenDomProjectModel(myProject, mavenProject.getFile());
   }
 
+  @Override
   @Nullable
   public PsiElement resolve() {
     PsiElement result = doResolve();
@@ -343,6 +344,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
     }
 
     result = new MavenDomProjectProcessorUtils.DomParentProjectFileProcessor<PsiElement>(myProjectsManager) {
+      @Override
       protected PsiElement doProcessParent(VirtualFile parentFile) {
         MavenDomProjectModel parentProjectDom = MavenDomUtil.getMavenDomProjectModel(myProject, parentFile);
         if (parentProjectDom == null) return null;
@@ -366,6 +368,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
     return ElementManipulators.getManipulator(myElement).handleContentChange(myElement, myRange, newElementName);
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     List<Object> result = new ArrayList<>();

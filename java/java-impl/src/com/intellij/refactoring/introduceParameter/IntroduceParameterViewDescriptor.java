@@ -33,6 +33,7 @@ class IntroduceParameterViewDescriptor extends UsageViewDescriptorAdapter {
 
   }
 
+  @Override
   @NotNull
   public PsiElement[] getElements() {
 //    if(myMethodToReplaceIn.equals(myMethodToSearchFor)) {
@@ -42,6 +43,7 @@ class IntroduceParameterViewDescriptor extends UsageViewDescriptorAdapter {
   }
 
 
+  @Override
   public String getProcessedElementsHeader() {
     return RefactoringBundle.message("introduce.parameter.elements.header");
   }

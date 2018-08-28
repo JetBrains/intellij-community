@@ -51,8 +51,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.util.Pair.pair;
 
@@ -283,7 +283,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     DataManager.registerDataProvider(table, new DataProvider() {
       @Nullable
       @Override
-      public Object getData(String dataId) {
+      public Object getData(@NotNull String dataId) {
         if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
           return copyProvider;
         }
@@ -444,8 +444,9 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
       return gr;
     }
 
+    @NotNull
     @Override
-    public JComponent createCustomComponent(Presentation presentation) {
+    public JComponent createCustomComponent(@NotNull Presentation presentation) {
       final JComponent component = super.createCustomComponent(presentation);
       final JPanel panel = new JPanel(new BorderLayout());
       panel.setOpaque(false);

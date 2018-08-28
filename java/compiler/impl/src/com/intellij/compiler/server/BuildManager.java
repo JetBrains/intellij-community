@@ -97,8 +97,8 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -144,7 +144,7 @@ public class BuildManager implements Disposable {
   private final List<VFileEvent> myUnprocessedEvents = new ArrayList<>();
   private final ExecutorService myAutomakeTrigger = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
     "BuildManager Auto-Make Trigger");
-  private final Map<String, ProjectData> myProjectDataMap = Collections.synchronizedMap(new HashMap<String, ProjectData>());
+  private final Map<String, ProjectData> myProjectDataMap = Collections.synchronizedMap(new HashMap<>());
   private volatile int myFileChangeCounter;
 
   private final BuildManagerPeriodicTask myAutoMakeTask = new BuildManagerPeriodicTask() {
@@ -320,7 +320,7 @@ public class BuildManager implements Disposable {
 
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         if (Registry.is("compiler.document.save.enabled", true)) {
           final Document document = e.getDocument();
           if (FileDocumentManager.getInstance().isDocumentUnsaved(document)) {
@@ -551,7 +551,7 @@ public class BuildManager implements Disposable {
       }
     }
   }
-  
+
   private static boolean canStartAutoMake(@NotNull Project project) {
     if (project.isDisposed()) {
       return false;
@@ -570,18 +570,13 @@ public class BuildManager implements Disposable {
     if (FileDocumentManager.getInstance().getUnsavedDocuments().length > 0) {
       return true;
     }
-    final long threshold = (long)Registry.intValue("compiler.automake.postpone.when.idle.less.than", 3000); // todo: UI option instead of registry?
+    final long threshold = Registry.intValue("compiler.automake.postpone.when.idle.less.than", 3000); // todo: UI option instead of registry?
     final long idleSinceLastActivity = ApplicationManager.getApplication().getIdleTime();
     return idleSinceLastActivity < threshold;
   }
 
   @Nullable
   private Project getCurrentContextProject() {
-    return getContextProject(null);
-  }
-
-  @Nullable
-  private Project getContextProject(@Nullable Window window) {
     final List<Project> openProjects = getOpenProjects();
     if (openProjects.isEmpty()) {
       return null;
@@ -590,11 +585,9 @@ public class BuildManager implements Disposable {
       return openProjects.get(0);
     }
 
+    Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
     if (window == null) {
-      window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-      if (window == null) {
-        return null;
-      }
+      return null;
     }
 
     Component comp = window;
@@ -933,7 +926,7 @@ public class BuildManager implements Disposable {
     }
   }
 
-  private void ensureListening() throws Exception {
+  private void ensureListening() {
     if (myListenPort < 0) {
       synchronized (this) {
         if (myListenPort < 0) {
@@ -985,7 +978,7 @@ public class BuildManager implements Disposable {
       });
   }
 
-  private Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>> launchPreloadedBuildProcess(final Project project, ExecutorService projectTaskQueue) throws Exception {
+  private Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>> launchPreloadedBuildProcess(final Project project, ExecutorService projectTaskQueue) {
     ensureListening();
 
     // launching build process from projectTaskQueue ensures that no other build process for this project is currently running
@@ -1131,8 +1124,8 @@ public class BuildManager implements Disposable {
     if (shouldGenerateIndex != null) {
       cmdLine.addParameter("-D"+ GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION +"=" + shouldGenerateIndex);
     }
-    cmdLine.addParameter("-D"+ GlobalOptions.COMPILE_PARALLEL_OPTION +"=" + Boolean.toString(config.PARALLEL_COMPILATION));
-    cmdLine.addParameter("-D"+ GlobalOptions.REBUILD_ON_DEPENDENCY_CHANGE_OPTION + "=" + Boolean.toString(config.REBUILD_ON_DEPENDENCY_CHANGE));
+    cmdLine.addParameter("-D" + GlobalOptions.COMPILE_PARALLEL_OPTION + "=" + config.PARALLEL_COMPILATION);
+    cmdLine.addParameter("-D" + GlobalOptions.REBUILD_ON_DEPENDENCY_CHANGE_OPTION + "=" + config.REBUILD_ON_DEPENDENCY_CHANGE);
 
     if (Boolean.TRUE.equals(Boolean.valueOf(System.getProperty("java.net.preferIPv4Stack", "false")))) {
       cmdLine.addParameter("-Djava.net.preferIPv4Stack=true");
@@ -1316,7 +1309,8 @@ public class BuildManager implements Disposable {
     return PathManagerEx.getAppSystemDir().resolve(SYSTEM_ROOT);
   }
 
-  public File getBuildLogDirectory() {
+  @NotNull
+  private File getBuildLogDirectory() {
     return new File(PathManager.getLogPath(), "build-log");
   }
 
@@ -1375,16 +1369,16 @@ public class BuildManager implements Disposable {
     myChannelRegistrar.close();
   }
 
-  private int startListening() throws Exception {
+  private int startListening() {
     BuiltInServer mainServer = StartupUtil.getServer();
-    boolean isOwnEventLoopGroup = !Registry.is("compiler.shared.event.group", true) || mainServer == null || mainServer.getEventLoopGroup() instanceof OioEventLoopGroup;
+    boolean isOwnEventLoopGroup = mainServer == null || mainServer.getEventLoopGroup() instanceof OioEventLoopGroup;
     EventLoopGroup group = isOwnEventLoopGroup
                            ? MultiThreadEventLoopGroup(1, ConcurrencyUtil.newNamedThreadFactory("External compiler"))
                            : mainServer.getEventLoopGroup();
     final ServerBootstrap bootstrap = NettyKt.serverBootstrap(group);
     bootstrap.childHandler(new ChannelInitializer() {
       @Override
-      protected void initChannel(@NotNull Channel channel) throws Exception {
+      protected void initChannel(@NotNull Channel channel) {
         channel.pipeline().addLast(myChannelRegistrar,
                                    new ProtobufVarint32FrameDecoder(),
                                    new ProtobufDecoder(CmdlineRemoteProto.Message.getDefaultInstance()),
@@ -1954,7 +1948,7 @@ public class BuildManager implements Disposable {
 
   private class CancelBuildSessionAction<T extends BuilderMessageHandler> implements RequestFuture.CancelAction<T> {
     @Override
-    public void cancel(RequestFuture<T> future) throws Exception {
+    public void cancel(RequestFuture<T> future) {
       myMessageDispatcher.cancelSession(future.getRequestID());
     }
   }

@@ -107,7 +107,7 @@ public class GenerateAction extends DumbAwareAction {
     }
 
     @Override
-    public boolean canBePerformed(DataContext context) {
+    public boolean canBePerformed(@NotNull DataContext context) {
       return true;
     }
 

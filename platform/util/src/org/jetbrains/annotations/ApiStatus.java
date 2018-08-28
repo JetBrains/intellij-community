@@ -39,6 +39,8 @@ public class ApiStatus {
   /**
    * Indicates that a public API of the annotated element (class, method or field) is is subject to removal in a future version. It's a stronger
    * variant of {@link Deprecated} annotation.
+   * <br>
+   * Since many tools aren't aware of this annotation it should be used as an addition to {@code @Deprecated} annotation or {@code @deprecated} javadoc tag only.
    */
   @Documented
   @Retention(RetentionPolicy.CLASS)

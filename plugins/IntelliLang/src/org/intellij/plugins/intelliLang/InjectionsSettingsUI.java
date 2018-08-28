@@ -68,8 +68,8 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Gregory.Shrago
@@ -132,7 +132,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
     decorator.disableUpDownActions();
     decorator.setAddActionUpdater(new AnActionButtonUpdater() {
       @Override
-      public boolean isEnabled(AnActionEvent e) {
+      public boolean isEnabled(@NotNull AnActionEvent e) {
         return !myAddActions.isEmpty();
       }
     });
@@ -144,7 +144,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
     });
     decorator.setRemoveActionUpdater(new AnActionButtonUpdater() {
       @Override
-      public boolean isEnabled(AnActionEvent e) {
+      public boolean isEnabled(@NotNull AnActionEvent e) {
         boolean enabled = false;
         for (InjInfo info : getSelectedInjections()) {
           if (!info.bundled) {
@@ -164,7 +164,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
 
     decorator.setEditActionUpdater(new AnActionButtonUpdater() {
       @Override
-      public boolean isEnabled(AnActionEvent e) {
+      public boolean isEnabled(@NotNull AnActionEvent e) {
         AnAction edit = getEditAction();
         if (edit != null) edit.update(e);
         return edit != null && edit.getTemplatePresentation().isEnabled();
@@ -226,7 +226,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
         {
           addCustomUpdater(new AnActionButtonUpdater() {
             @Override
-            public boolean isEnabled(AnActionEvent e) {
+            public boolean isEnabled(@NotNull AnActionEvent e) {
               CfgInfo cfg = getTargetCfgInfo(getSelectedInjections());
               e.getPresentation().setText(cfg == getDefaultCfgInfo() ? "Move to IDE Scope" : "Move to Project Scope");
               return cfg != null;
@@ -386,10 +386,12 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
     });
   }
 
+  @Override
   public JComponent createComponent() {
     return myRoot;
   }
 
+  @Override
   public void reset() {
     for (CfgInfo info : myInfos) {
       info.reset();
@@ -398,6 +400,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
     updateCountLabel();
   }
 
+  @Override
   public void apply() {
     for (CfgInfo info : myInfos) {
       info.apply();
@@ -405,6 +408,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
     reset();
   }
 
+  @Override
   public boolean isModified() {
     return Arrays.stream(myInfos).anyMatch(CfgInfo::isModified);
   }
@@ -466,6 +470,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
                                                         () -> updateCountLabel(), -1).show(e.getPreferredPopupPoint());
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return "Language Injections";
@@ -641,6 +646,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
     return new TableCellRenderer() {
       final JLabel myLabel = new JLabel();
 
+      @Override
       public Component getTableCellRendererComponent(final JTable table, final Object value, final boolean isSelected, final boolean hasFocus,
                                                      final int row,
                                                      final int column) {
@@ -663,6 +669,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
       final SimpleColoredComponent myLabel = new SimpleColoredComponent();
       final SimpleColoredText myText = new SimpleColoredText();
 
+      @Override
       public Component getTableCellRendererComponent(final JTable table, final Object value, final boolean isSelected, final boolean hasFocus,
                                                      final int row,
                                                      final int column) {
@@ -686,6 +693,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
     return new TableCellRenderer() {
       final SimpleColoredComponent myLabel = new SimpleColoredComponent();
 
+      @Override
       public Component getTableCellRendererComponent(final JTable table, final Object value, final boolean isSelected, final boolean hasFocus,
                                                      final int row,
                                                      final int column) {

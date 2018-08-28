@@ -280,7 +280,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <artifactId><error>junit</error></artifactId>" +
                      "  <version><error>4.0</error></version>" +
                      "</parent>");
-    importProjectWithErrors(true);
+    importProjectWithErrors();
     checkHighlighting();
   }
 
@@ -293,7 +293,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <groupId>junit</groupId>" +
                      "  <version><error>4.0</error></version>" +
                      "</parent>");
-    importProjectWithErrors(true);
+    importProjectWithErrors();
     checkHighlighting();
   }
 
@@ -306,7 +306,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <groupId>junit</groupId>" +
                      "  <artifactId>junit</artifactId>" +
                      "</parent>");
-    importProjectWithErrors(true);
+    importProjectWithErrors();
     checkHighlighting();
   }
 

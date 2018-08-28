@@ -42,10 +42,12 @@ public class JpsJavaProjectExtensionImpl extends JpsElementBase<JpsJavaProjectEx
     return new JpsJavaProjectExtensionImpl(this);
   }
 
+  @Override
   public String getOutputUrl() {
     return myOutputUrl;
   }
 
+  @Override
   public void setOutputUrl(String outputUrl) {
     if (!Comparing.equal(myOutputUrl, outputUrl)) {
       myOutputUrl = outputUrl;
@@ -53,10 +55,12 @@ public class JpsJavaProjectExtensionImpl extends JpsElementBase<JpsJavaProjectEx
     }
   }
 
+  @Override
   public LanguageLevel getLanguageLevel() {
     return myLanguageLevel;
   }
 
+  @Override
   public void setLanguageLevel(LanguageLevel languageLevel) {
     if (!Comparing.equal(myLanguageLevel, languageLevel)) {
       myLanguageLevel = languageLevel;

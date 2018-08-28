@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.ui.DoubleClickListener;
@@ -176,7 +177,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
       }
     });
 
-    if (Boolean.valueOf(System.getProperty("xdebugger.variablesView.rss"))) {
+    if (Registry.is("debugger.variablesView.rss")) {
       new XDebuggerTreeSpeedSearch(this, SPEED_SEARCH_CONVERTER);
     }
     else {
@@ -315,7 +316,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
 
   @Override
   @Nullable
-  public Object getData(@NonNls final String dataId) {
+  public Object getData(@NotNull @NonNls final String dataId) {
     if (XDEBUGGER_TREE_KEY.is(dataId)) {
       return this;
     }

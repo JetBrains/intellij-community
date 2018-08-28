@@ -1949,7 +1949,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
   }
 
   public void testCollectingProfilesFromParentsAfterResolve() throws Exception {
-    MavenServerManager.getInstance().setUseMaven2(true);
+    MavenServerManager.getInstance().setUseMaven2();
 
     createModulePom("parent1",
                     "<groupId>test</groupId>" +

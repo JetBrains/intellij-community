@@ -7,12 +7,10 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.GrErrorVariableDeclarationElementType;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
@@ -54,8 +52,6 @@ public interface GroovyElementTypes {
 
   IElementType NONE = new GroovyElementType("no token"); //not a node
 
-  // Indicates the wrongway of parsing
-  IElementType WRONGWAY = new GroovyElementType("Wrong way!");
   GroovyElementType LITERAL = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.LITERAL;
   //Packaging
   GrPackageDefinitionElementType PACKAGE_DEFINITION = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.PACKAGE_DEFINITION;
@@ -68,18 +64,11 @@ public interface GroovyElementTypes {
 
   EmptyStubElementType<GrEnumConstantList> ENUM_CONSTANTS = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ENUM_CONSTANTS;
   GrImportStatementElementType IMPORT_STATEMENT = IMPORT;
-  IElementType IMPORT_ALIAS = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.IMPORT_ALIAS;
 
-  //Branch statements
-  IElementType BREAK_STATEMENT = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.BREAK_STATEMENT;
-  IElementType CONTINUE_STATEMENT = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CONTINUE_STATEMENT;
-
-  IElementType RETURN_STATEMENT = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.RETURN_STATEMENT;
   IElementType ASSERT_STATEMENT = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ASSERT_STATEMENT;
-  IElementType THROW_STATEMENT = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.THROW_STATEMENT;
   // Expression statements
   IElementType LABELED_STATEMENT = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.LABELED_STATEMENT;
-  GroovyElementType CALL_EXPRESSION = APPLICATION_EXPRESSION;
+  @Deprecated GroovyElementType CALL_EXPRESSION = APPLICATION_EXPRESSION;
   IElementType COMMAND_ARGUMENTS = APPLICATION_ARGUMENT_LIST;
   IElementType CONDITIONAL_EXPRESSION = TERNARY_EXPRESSION;
   IElementType ELVIS_EXPRESSION = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ELVIS_EXPRESSION;
@@ -99,32 +88,21 @@ public interface GroovyElementTypes {
   IElementType COMPOSITE_LSHIFT_SIGN = LEFT_SHIFT_SIGN;
   IElementType COMPOSITE_RSHIFT_SIGN = RIGHT_SHIFT_SIGN;
   IElementType COMPOSITE_TRIPLE_SHIFT_SIGN = RIGHT_SHIFT_UNSIGNED_SIGN;
-  IElementType MORE_OR_EQUALS_SIGN = new GroovyElementType(">=");
   IElementType ADDITIVE_EXPRESSION = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ADDITIVE_EXPRESSION;
   IElementType MULTIPLICATIVE_EXPRESSION = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.MULTIPLICATIVE_EXPRESSION;
   IElementType POWER_EXPRESSION = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.POWER_EXPRESSION;
   IElementType POWER_EXPRESSION_SIMPLE = new GroovyElementType("Simple power expression");
-  IElementType UNARY_EXPRESSION = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.UNARY_EXPRESSION;
-  IElementType CAST_EXPRESSION = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CAST_EXPRESSION;
-  IElementType SAFE_CAST_EXPRESSION = AS_EXPRESSION;
-  IElementType INSTANCEOF_EXPRESSION = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.INSTANCEOF_EXPRESSION;
   IElementType PATH_PROPERTY_REFERENCE = PROPERTY_EXPRESSION;
 
   GroovyElementType PATH_METHOD_CALL = METHOD_CALL_EXPRESSION;
 
   IElementType PATH_INDEX_PROPERTY = INDEX_EXPRESSION;
-  IElementType PARENTHESIZED_EXPRESSION = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.PARENTHESIZED_EXPRESSION;
 
   // Arguments
   IElementType ARGUMENTS = ARGUMENT_LIST;
   GroovyElementType NAMED_ARGUMENT = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.NAMED_ARGUMENT;
-  IElementType SPREAD_ARGUMENT = SPREAD_LIST_ARGUMENT;
   GroovyElementType ARGUMENT_LABEL = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ARGUMENT_LABEL;
   GroovyElementType REFERENCE_EXPRESSION = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.REFERENCE_EXPRESSION;
-
-  IElementType NEW_EXPRESSION = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.NEW_EXPRESSION;
-
-  IElementType BUILT_IN_TYPE_EXPRESSION = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.BUILT_IN_TYPE_EXPRESSION;
 
   // Lists & maps
   IElementType LIST_OR_MAP = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.LIST_OR_MAP;
@@ -152,15 +130,10 @@ public interface GroovyElementTypes {
 
   IStubElementType<GrReferenceListStub, GrReferenceList> TYPE_PARAMETER_EXTENDS_BOUND_LIST = TYPE_PARAMETER_BOUNDS_LIST;
 
-  IElementType DEFAULT_ANNOTATION_VALUE = new GroovyElementType("default annotation value");
-
   GrMethodElementType CONSTRUCTOR_DEFINITION = CONSTRUCTOR;
-
-  IElementType EXPLICIT_CONSTRUCTOR = CONSTRUCTOR_CALL_EXPRESSION;
 
   GrReferenceListElementType<GrThrowsClause> THROW_CLAUSE = THROWS_CLAUSE;
   //annotation
-  IElementType ANNOTATION_ARRAY_INITIALIZER = ANNOTATION_ARRAY_VALUE;
   GrAnnotationArgumentListElementType ANNOTATION_ARGUMENTS = ANNOTATION_ARGUMENT_LIST;
   GrNameValuePairElementType ANNOTATION_MEMBER_VALUE_PAIR = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ANNOTATION_MEMBER_VALUE_PAIR;
 
@@ -175,8 +148,6 @@ public interface GroovyElementTypes {
   EmptyStubElementType<GrEnumDefinitionBody> ENUM_BODY = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ENUM_BODY;
   //statements
   IElementType IF_STATEMENT = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.IF_STATEMENT;
-  IElementType FOR_STATEMENT = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.FOR_STATEMENT;
-  IElementType WHILE_STATEMENT = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.WHILE_STATEMENT;
   IElementType SWITCH_STATEMENT = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.SWITCH_STATEMENT;
   IElementType CASE_SECTION = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CASE_SECTION;
 
@@ -184,17 +155,11 @@ public interface GroovyElementTypes {
   //for clauses
   IElementType FOR_IN_CLAUSE = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.FOR_IN_CLAUSE;
   IElementType FOR_TRADITIONAL_CLAUSE = TRADITIONAL_FOR_CLAUSE;
-  IElementType TRY_BLOCK_STATEMENT = TRY_STATEMENT;
   IElementType CATCH_CLAUSE = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CATCH_CLAUSE;
   IElementType FINALLY_CLAUSE = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.FINALLY_CLAUSE;
-  IElementType SYNCHRONIZED_STATEMENT = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.SYNCHRONIZED_STATEMENT;
   IElementType CLASS_INITIALIZER = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CLASS_INITIALIZER;
 
-  EmptyStubElementType<GrVariableDeclaration> VARIABLE_DEFINITION_ERROR = new GrErrorVariableDeclarationElementType("variable definitions with errors");
   GrVariableDeclarationElementType VARIABLE_DEFINITION = VARIABLE_DECLARATION;
-  IElementType TUPLE_DECLARATION = new GroovyElementType("tuple declaration");
-  IElementType TUPLE = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.TUPLE;
-
   GrVariableElementType VARIABLE = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.VARIABLE;
 
   //modifiers

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -101,13 +87,14 @@ public final class LoadTextUtil {
 
   @NotNull
   private static ConvertResult convertLineSeparatorsToSlashN(@NotNull byte[] charsAsBytes, int startOffset, int endOffset) {
-    int index = ArrayUtil.indexOf(charsAsBytes, (byte)'\r', startOffset, endOffset);
+    int index = indexOf(charsAsBytes, (byte)'\r', startOffset, endOffset);
     if (index == -1) {
       // optimisation: if there is no CR in the file, no line separator conversion is necessary. we can re-use the passed byte buffer in place
       ByteArrayCharSequence sequence = new ByteArrayCharSequence(charsAsBytes, startOffset, endOffset);
-      String detectedLineSeparator = ArrayUtil.indexOf(charsAsBytes, (byte)'\n', startOffset, endOffset) == -1 ? null : "\n";
+      String detectedLineSeparator = indexOf(charsAsBytes, (byte)'\n', startOffset, endOffset) == -1 ? null : "\n";
       return new ConvertResult(sequence, detectedLineSeparator);
     }
+
     int dst = 0;
     char prev = ' ';
     int crCount = 0;
@@ -120,7 +107,6 @@ public final class LoadTextUtil {
       switch (c) {
         case '\r':
           result[dst++] = '\n';
-          
           crCount++;
           break;
         case '\n':
@@ -141,9 +127,15 @@ public final class LoadTextUtil {
     }
 
     String detectedLineSeparator = guessLineSeparator(crCount, lfCount, crlfCount);
-
     ByteArrayCharSequence sequence = new ByteArrayCharSequence(result, 0, dst);
     return new ConvertResult(sequence, detectedLineSeparator);
+  }
+
+  private static int indexOf(byte[] ints, byte value, int start, int end) {
+    for (int i = start; i < end; i++) {
+      if (ints[i] == value) return i;
+    }
+    return -1;
   }
 
   @Nullable
@@ -640,7 +632,7 @@ public final class LoadTextUtil {
       // optimisation: skip byte-to-char conversion for ascii chars
       return convertLineSeparatorsToSlashN(bytes, startOffset, endOffset);
     }
-    
+
     ByteBuffer byteBuffer = ByteBuffer.wrap(bytes, startOffset, endOffset - startOffset);
 
     CharBuffer charBuffer;

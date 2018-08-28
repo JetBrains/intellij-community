@@ -203,6 +203,7 @@ public class RefactoringHierarchyUtil {
     LOG.assertTrue(anInterface.isInterface());
     visited.add(anInterface);
     ClassInheritorsSearch.search(anInterface, false).forEach(new PsiElementProcessorAdapter<>(new PsiElementProcessor<PsiClass>() {
+      @Override
       public boolean execute(@NotNull PsiClass aClass) {
         if (!aClass.isInterface()) {
           result.add(aClass);

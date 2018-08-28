@@ -126,13 +126,14 @@ class JavaChangeSignatureUsageSearcher {
       final int oldParameterIndex = parameterInfo.getOldIndex();
       final String newName = parameterInfo.getName();
       if (oldParameterIndex >= 0 ) {
-        if (isOriginal && oldParameterIndex < parameters.length && !newName.equals(myChangeInfo.getOldParameterNames()[oldParameterIndex])) {   
+        if (isOriginal && oldParameterIndex < parameters.length && !newName.equals(myChangeInfo.getOldParameterNames()[oldParameterIndex])) {
           //Name changes take place only in primary method when name was actually changed
           final PsiParameter parameter = parameters[oldParameterIndex];
           if (!newName.equals(parameter.getName())) {
             JavaUnresolvableLocalCollisionDetector.visitLocalsCollisions(
               parameter, newName, method.getBody(), null,
               new JavaUnresolvableLocalCollisionDetector.CollidingVariableVisitor() {
+                @Override
                 public void visitCollidingElement(final PsiVariable collidingVariable) {
                   if (!deletedOrRenamedParameters.contains(collidingVariable)) {
                     result.add(new RenamedParameterCollidesWithLocalUsageInfo(parameter, collidingVariable, method));
@@ -146,6 +147,7 @@ class JavaChangeSignatureUsageSearcher {
         JavaUnresolvableLocalCollisionDetector.visitLocalsCollisions(
           method, newName, method.getBody(), null,
           new JavaUnresolvableLocalCollisionDetector.CollidingVariableVisitor() {
+            @Override
             public void visitCollidingElement(PsiVariable collidingVariable) {
               if (!deletedOrRenamedParameters.contains(collidingVariable)) {
                 result.add(new NewParameterCollidesWithLocalUsageInfo(
@@ -325,6 +327,7 @@ class JavaChangeSignatureUsageSearcher {
       myMethod = method;
     }
 
+    @Override
     public String getDescription() {
       return RefactoringBundle.message("there.is.already.a.0.in.the.1.it.will.conflict.with.the.renamed.parameter",
                                        RefactoringUIUtil.getDescription(myCollidingElement, true),

@@ -24,14 +24,17 @@ import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperHandler;
 import org.jetbrains.annotations.NotNull;
 
 public class TurnRefsToSuperAction extends BaseRefactoringAction {
+  @Override
   public boolean isAvailableInEditorOnly() {
     return false;
   }
 
+  @Override
   public boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
     return elements.length == 1 && elements[0] instanceof PsiClass && elements[0].getLanguage() == JavaLanguage.INSTANCE;
   }
 
+  @Override
   public RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     return new TurnRefsToSuperHandler();
   }

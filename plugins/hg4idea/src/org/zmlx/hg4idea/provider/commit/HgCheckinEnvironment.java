@@ -77,6 +77,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     myProject = project;
   }
 
+  @Override
   public RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel,
                                                              PairConsumer<Object, Object> additionalDataConsumer) {
     reset();
@@ -91,18 +92,22 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     myRepos = null;
   }
 
+  @Override
   public String getDefaultMessageFor(FilePath[] filesToCheckin) {
     return null;
   }
 
+  @Override
   public String getHelpId() {
     return null;
   }
 
+  @Override
   public String getCheckinOperationName() {
     return HgVcsMessages.message("hg4idea.commit");
   }
 
+  @Override
   public List<VcsException> commit(List<Change> changes,
                                    String preparedComment,
                                    @NotNull NullableFunction<Object, Object> parametersHolder,
@@ -211,10 +216,12 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     return choice[0] == Messages.OK;
   }
 
+  @Override
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
     return commit(changes, preparedComment, FunctionUtil.nullConstant(), null);
   }
 
+  @Override
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {
     final List<HgFile> filesWithRoots = new ArrayList<>();
     for (FilePath filePath : files) {
@@ -233,6 +240,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     return null;
   }
 
+  @Override
   public List<VcsException> scheduleUnversionedFilesForAddition(final List<VirtualFile> files) {
     new HgAddCommand(myProject).addWithProgress(files);
     return null;

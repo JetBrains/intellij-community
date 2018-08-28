@@ -179,6 +179,7 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     }
   }
 
+  @Override
   public void flush() {
     checkDisposed();
     myCommitIdEnumerator.force();

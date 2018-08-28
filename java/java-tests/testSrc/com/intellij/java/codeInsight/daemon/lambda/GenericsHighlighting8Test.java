@@ -1017,6 +1017,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testArrayTypeUpperBound() { doTest(); }
 
   public void testNonGenericInnerOfGenericOuter() { doTest(); }
+  public void testIDEA53597() { doTest(); }
 
   public void testTypeParameterBoundsWithSubstitutionWhenMethodHierarchyIsChecked() {
     doTest();

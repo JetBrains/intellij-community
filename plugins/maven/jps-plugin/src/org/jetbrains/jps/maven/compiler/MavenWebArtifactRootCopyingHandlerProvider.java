@@ -197,6 +197,7 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
       return result;
     }
 
+    @Override
     protected int configurationHash() {
       int hash = super.configurationHash();
       hash = 31 * hash + FileUtil.fileHashCode(myTargetDir);

@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase;
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.InspectionsKt;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.impl.GlobalInspectionContextForTests;
@@ -81,7 +82,7 @@ public class InspectionResultViewTest extends LightJava9ModulesCodeInsightFixtur
       UIUtil.dispatchAllInvocationEvents();
     }
     while (!context.isFinished());
-
+    Disposer.register(getTestRootDisposable(), () -> context.close(false));
     return context.getView();
   }
 

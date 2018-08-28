@@ -35,7 +35,7 @@ Groovy script
           PsiElement(,)(',')
           PsiWhiteSpace(' ')
           Literal
-            PsiElement(string)(''abc'')
+            PsiElement(single quoted string)(''abc'')
           PsiElement())(')')
         Type definition body
           PsiElement({)('{')

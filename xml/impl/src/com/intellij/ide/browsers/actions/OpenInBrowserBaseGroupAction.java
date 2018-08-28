@@ -15,13 +15,14 @@
  */
 package com.intellij.ide.browsers.actions;
 
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.browsers.WebBrowser;
 import com.intellij.ide.browsers.WebBrowserManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.util.CachedValueProvider;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -76,8 +77,10 @@ public abstract class OpenInBrowserBaseGroupAction extends ComputableActionGroup
 
     @Override
     public void update(@NotNull AnActionEvent e) {
+      Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
       final WebBrowserManager browserManager = WebBrowserManager.getInstance();
-      e.getPresentation().setVisible(browserManager.isShowBrowserHover() && !browserManager.getActiveBrowsers().isEmpty());
+      e.getPresentation().setVisible(browserManager.isShowBrowserHover() && !browserManager.getActiveBrowsers().isEmpty() &&
+                                     editor != null && !DiffUtil.isDiffEditor(editor));
     }
   }
 }

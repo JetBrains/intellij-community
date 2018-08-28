@@ -361,7 +361,7 @@ class UndoableGroup implements Dumpable {
     }
     return null;
   }
-  
+
   @Nullable
   public FinishMarkAction getFinishMark() {
     for (UndoableAction action : myActions) {
@@ -386,6 +386,7 @@ class UndoableGroup implements Dumpable {
     return myValid;
   }
 
+  @Override
   public String toString() {
     StringBuilder result = new StringBuilder("UndoableGroup[");
     final boolean multiline = myActions.size() > 1;

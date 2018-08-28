@@ -1,11 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.templates;
 
+import com.intellij.configurationStore.JbXmlOutputter;
 import com.intellij.ide.util.projectWizard.ProjectTemplateFileProcessor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
@@ -14,7 +14,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -83,8 +82,7 @@ public class SystemFileProcessor extends ProjectTemplateFileProcessor {
             }
           }, ModalityState.defaultModalityState());
         }
-        PathMacroManager.getInstance(project).collapsePaths(root);
-        return JDOMUtil.writeElement(root);
+        return JbXmlOutputter.collapseMacrosAndWrite(root, project);
       }
     }
     return null;

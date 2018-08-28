@@ -60,6 +60,7 @@ public class TypeFilter extends FilterAction {
         "<p>The type of the matched expression is checked against the provided \"|\"-separated patterns. " +
         "<p>Use \"!\" to invert the pattern.");
 
+      @Override
       protected void layoutComponents() {
         final GroupLayout layout = new GroupLayout(this);
         setLayout(layout);

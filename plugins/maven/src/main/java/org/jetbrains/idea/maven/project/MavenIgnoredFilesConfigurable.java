@@ -53,23 +53,28 @@ public class MavenIgnoredFilesConfigurable implements SearchableConfigurable, Co
     myIgnoredFilesPathsChooser.getEmptyText().setText(ProjectBundle.message("maven.ingored.no.file"));
   }
 
+  @Override
   public JComponent createComponent() {
     return myMainPanel;
   }
 
+  @Override
   public void disposeUIResources() {
   }
 
+  @Override
   public boolean isModified() {
     return !MavenUtil.equalAsSets(myOriginallyIgnoredFilesPaths, myIgnoredFilesPathsChooser.getMarkedElements()) ||
            !myOriginallyIgnoredFilesPatterns.equals(myIgnoredFilesPattersEditor.getText());
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     myManager.setIgnoredFilesPaths(myIgnoredFilesPathsChooser.getMarkedElements());
     myManager.setIgnoredFilesPatterns(Strings.tokenize(myIgnoredFilesPattersEditor.getText(), Strings.WHITESPACE + SEPARATOR));
   }
 
+  @Override
   public void reset() {
     myOriginallyIgnoredFilesPaths = myManager.getIgnoredFilesPaths();
     myOriginallyIgnoredFilesPatterns = Strings.detokenize(myManager.getIgnoredFilesPatterns(), SEPARATOR);
@@ -81,6 +86,7 @@ public class MavenIgnoredFilesConfigurable implements SearchableConfigurable, Co
     myIgnoredFilesPattersEditor.setText(myOriginallyIgnoredFilesPatterns);
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return ProjectBundle.message("maven.tab.ignored.files");
@@ -93,6 +99,7 @@ public class MavenIgnoredFilesConfigurable implements SearchableConfigurable, Co
     return "reference.settings.project.maven.ignored.files";
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();

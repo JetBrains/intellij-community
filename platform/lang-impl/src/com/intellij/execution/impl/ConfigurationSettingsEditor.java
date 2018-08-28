@@ -1,22 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.impl;
 
-import com.intellij.execution.*;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.Executor;
+import com.intellij.execution.ExecutorRegistry;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunnerSettings;
@@ -40,8 +29,8 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author dyoma
@@ -87,7 +76,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
 
       final Executor[] executors = ExecutorRegistry.getInstance().getRegisteredExecutors();
       for (final Executor executor : executors) {
-        ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), myConfiguration);
+        ProgramRunner runner = ProgramRunner.getRunner(executor.getId(), myConfiguration);
         if (runner != null) {
           JComponent perRunnerSettings = createCompositePerRunnerSettings(executor, runner);
           if (perRunnerSettings != null) {
@@ -180,7 +169,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
   public <T extends SettingsEditor> T selectExecutorAndGetEditor(final ProgramRunner runner, Class<T> editorClass) {
     myGroupSettingsBuilder.selectEditor(RUNNERS_TAB_NAME);
     Executor executor = ContainerUtil.find(myRunnersComponent.getExecutors(),
-                                           executor1 -> runner.equals(RunnerRegistry.getInstance().getRunner(executor1.getId(), myConfiguration)));
+                                           executor1 -> runner.equals(ProgramRunner.getRunner(executor1.getId(), myConfiguration)));
     if (executor == null) {
       return null;
     }
@@ -210,6 +199,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
     myConfiguration = settings.getConfiguration();
   }
 
+  @NotNull
   @Override
   public RunnerAndConfigurationSettings getSnapshot() throws ConfigurationException {
     RunnerAndConfigurationSettings settings = getFactory().create();

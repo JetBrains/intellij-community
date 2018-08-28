@@ -39,7 +39,7 @@ public class TabListAction extends AnAction {
     e.getPresentation().setEnabled(isTabListAvailable(e));
   }
 
-  private static boolean isTabListAvailable(AnActionEvent e) {
+  private static boolean isTabListAvailable(@NotNull AnActionEvent e) {
     JBTabsImpl tabs = e.getData(JBTabsImpl.NAVIGATION_ACTIONS_KEY);
     if (tabs == null || !tabs.isEditorTabs()) {
       return false;

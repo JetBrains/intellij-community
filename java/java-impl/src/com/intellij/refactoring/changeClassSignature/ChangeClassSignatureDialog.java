@@ -109,6 +109,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     init();
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     return new JLabel(RefactoringBundle.message("changeClassSignature.class.label.text", DescriptiveNameUtil.getDescriptiveName(myClass)));
   }
@@ -123,6 +124,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     return myTable;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     myTable = new JBTable(myTableModel);
     myTable.setStriped(true);
@@ -168,6 +170,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     return panel;
   }
 
+  @Override
   protected void doAction() {
     TableUtil.stopEditing(myTable);
     String message = validateAndCommitData();
@@ -241,19 +244,23 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
   }
 
   private class MyTableModel extends AbstractTableModel implements EditableModel {
+    @Override
     public int getColumnCount() {
       return 3;
     }
 
+    @Override
     public int getRowCount() {
       return myTypeParameterInfos.size();
     }
 
+    @Override
     @Nullable
     public Class getColumnClass(int columnIndex) {
       return columnIndex == NAME_COLUMN ? String.class : null;
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       switch (columnIndex) {
         case NAME_COLUMN:
@@ -267,10 +274,12 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
       return null;
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
       return myTypeParameterInfos.get(rowIndex) instanceof TypeParameterInfo.New;
     }
 
+    @Override
     public String getColumnName(int column) {
       switch (column) {
         case NAME_COLUMN:
@@ -285,6 +294,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
       return null;
     }
 
+    @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
       switch (columnIndex) {
         case NAME_COLUMN:
@@ -298,6 +308,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
       }
     }
 
+    @Override
     public void addRow() {
       TableUtil.stopEditing(myTable);
       myTypeParameterInfos.add(new TypeParameterInfo.New("", null, null));
@@ -309,6 +320,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
       fireTableRowsInserted(row, row);
     }
 
+    @Override
     public void removeRow(int index) {
       myTypeParameterInfos.remove(index);
       myBoundValueTypeCodeFragments.remove(index);
@@ -316,6 +328,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
       fireTableDataChanged();
     }
 
+    @Override
     public void exchangeRows(int index1, int index2) {
       ContainerUtil.swapElements(myTypeParameterInfos, index1, index2);
       ContainerUtil.swapElements(myBoundValueTypeCodeFragments, index1, index2);
@@ -332,6 +345,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
 
   private class MyCellRenderer extends ColoredTableCellRenderer {
 
+    @Override
     public void customizeCellRenderer(JTable table, Object value,
                                       boolean isSelected, boolean hasFocus, int row, int col) {
       if (value == null) return;
@@ -348,6 +362,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
       super(getProject());
     }
 
+    @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       final Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       //if (!myTableModel.isCellEditable(row, column)) {

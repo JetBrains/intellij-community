@@ -90,7 +90,7 @@ public class EmmetAbbreviationBalloon {
 
     final DocumentAdapter documentListener = new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         if (!isValid(customTemplateCallback)) {
           balloon.hide();
           return;

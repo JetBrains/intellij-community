@@ -33,7 +33,7 @@ internal const val PLUGIN_NAME = "Settings Repository"
 internal val LOG = logger<IcsManager>()
 
 internal val icsManager by lazy(LazyThreadSafetyMode.NONE) {
-  ApplicationLoadListener.EP_NAME.findExtension(IcsApplicationLoadListener::class.java).icsManager
+  ApplicationLoadListener.EP_NAME.findExtension(IcsApplicationLoadListener::class.java)!!.icsManager
 }
 
 class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: Lazy<SchemeManagerFactoryBase> = lazy { (SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase) }) {

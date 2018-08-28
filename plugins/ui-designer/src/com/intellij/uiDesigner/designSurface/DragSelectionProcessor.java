@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,8 +7,7 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.Component;
-import java.awt.Point;
+import java.awt.*;
 import java.awt.dnd.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -57,10 +42,12 @@ public final class DragSelectionProcessor extends EventProcessor {
                                                           DnDConstants.ACTION_COPY_OR_MOVE);
   }
 
+  @Override
   public boolean isDragActive() {
     return myDragStarted;
   }
 
+  @Override
   protected boolean cancelOperation() {
     if (!myDragStarted) {
       return true;
@@ -73,9 +60,11 @@ public final class DragSelectionProcessor extends EventProcessor {
     return true;
   }
 
+  @Override
   protected void processKeyEvent(final KeyEvent e) {
   }
 
+  @Override
   protected void processMouseEvent(final MouseEvent e) {
     if (e.getID() == MouseEvent.MOUSE_PRESSED) {
       myPressPoint = e.getPoint();
@@ -115,9 +104,11 @@ public final class DragSelectionProcessor extends EventProcessor {
       super(ds, c, sa);
     }
 
+    @Override
     protected void registerListeners() {
     }
 
+    @Override
     protected void unregisterListeners() {
     }
 
@@ -128,6 +119,7 @@ public final class DragSelectionProcessor extends EventProcessor {
   }
 
   private class MyDragSourceListener extends DragSourceAdapter {
+    @Override
     public void dropActionChanged(DragSourceDragEvent dsde) {
       final int shiftDownMask = (dsde.getGestureModifiersEx() & KeyEvent.SHIFT_DOWN_MASK);
       if (shiftDownMask != 0) {
@@ -138,6 +130,7 @@ public final class DragSelectionProcessor extends EventProcessor {
       }
     }
 
+    @Override
     public void dragDropEnd(DragSourceDropEvent dsde) {
       myDragStarted = false;
       myEditor.getDropTargetListener().setUseDragDelta(false);

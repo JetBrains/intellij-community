@@ -25,6 +25,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class ModuleStructureComponent extends SimpleToolWindowPanel implements Disposable, DataProvider {
   private final ModuleStructurePane myStructurePane;
@@ -39,7 +40,7 @@ public class ModuleStructureComponent extends SimpleToolWindowPanel implements D
   }
 
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     return myStructurePane.getData(dataId);
   }
 

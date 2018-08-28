@@ -117,7 +117,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
 
     @Nullable
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId) && myDeleteProvider != null) {
         return myDeleteProvider;
       }

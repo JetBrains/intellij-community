@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.impl.source.tree.injected;
 
@@ -502,27 +502,27 @@ class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowImpl imp
     checkValid();
     EditorMouseListener wrapper = new EditorMouseListener() {
       @Override
-      public void mousePressed(EditorMouseEvent e) {
+      public void mousePressed(@NotNull EditorMouseEvent e) {
         listener.mousePressed(new EditorMouseEvent(EditorWindowImpl.this, e.getMouseEvent(), e.getArea()));
       }
 
       @Override
-      public void mouseClicked(EditorMouseEvent e) {
+      public void mouseClicked(@NotNull EditorMouseEvent e) {
         listener.mouseClicked(new EditorMouseEvent(EditorWindowImpl.this, e.getMouseEvent(), e.getArea()));
       }
 
       @Override
-      public void mouseReleased(EditorMouseEvent e) {
+      public void mouseReleased(@NotNull EditorMouseEvent e) {
         listener.mouseReleased(new EditorMouseEvent(EditorWindowImpl.this, e.getMouseEvent(), e.getArea()));
       }
 
       @Override
-      public void mouseEntered(EditorMouseEvent e) {
+      public void mouseEntered(@NotNull EditorMouseEvent e) {
         listener.mouseEntered(new EditorMouseEvent(EditorWindowImpl.this, e.getMouseEvent(), e.getArea()));
       }
 
       @Override
-      public void mouseExited(EditorMouseEvent e) {
+      public void mouseExited(@NotNull EditorMouseEvent e) {
         listener.mouseExited(new EditorMouseEvent(EditorWindowImpl.this, e.getMouseEvent(), e.getArea()));
       }
     };

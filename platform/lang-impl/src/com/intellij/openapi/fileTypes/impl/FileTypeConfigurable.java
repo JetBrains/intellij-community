@@ -399,14 +399,14 @@ public class FileTypeConfigurable implements SearchableConfigurable, Configurabl
         })
         .setEditActionUpdater(new AnActionButtonUpdater() {
           @Override
-          public boolean isEnabled(AnActionEvent e) {
+          public boolean isEnabled(@NotNull AnActionEvent e) {
             final FileType fileType = getSelectedFileType();
             return canBeModified(fileType);
           }
         })
         .setRemoveActionUpdater(new AnActionButtonUpdater() {
           @Override
-          public boolean isEnabled(AnActionEvent e) {
+          public boolean isEnabled(@NotNull AnActionEvent e) {
             return canBeModified(getSelectedFileType());
           }
         })

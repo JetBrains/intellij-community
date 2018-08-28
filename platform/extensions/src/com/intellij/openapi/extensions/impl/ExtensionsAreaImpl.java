@@ -265,8 +265,6 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   @Override
   public void addAvailabilityListener(@NotNull String extensionPointName, @NotNull ExtensionPointAvailabilityListener listener) {
     synchronized (myAvailabilityListeners) {
-
-      
       myAvailabilityListeners.putValue(extensionPointName, listener);
     }
     ExtensionPointImpl<?> ep = myExtensionPoints.get(extensionPointName);
@@ -274,7 +272,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
       listener.extensionPointRegistered(ep);
     }
   }
-  
+
   private boolean hasAvailabilityListener(@NotNull String extensionPointName, @NotNull ExtensionPointAvailabilityListener listener) {
     Collection<ExtensionPointAvailabilityListener> listeners = myAvailabilityListeners.get(extensionPointName);
     return ContainerUtil.containsIdentity(listeners, listener);

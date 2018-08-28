@@ -60,7 +60,7 @@ public class RunInspectionAction extends GotoActionBase {
   }
 
   @Override
-  protected void gotoActionPerformed(final AnActionEvent e) {
+  protected void gotoActionPerformed(@NotNull final AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
 

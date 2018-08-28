@@ -91,7 +91,7 @@ public class ProjectWindowActionGroup extends DefaultActionGroup {
     return true;
   }
 
-  public void activateNextWindow(AnActionEvent e) {
+  public void activateNextWindow(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       return;
@@ -106,7 +106,7 @@ public class ProjectWindowActionGroup extends DefaultActionGroup {
     }
   }
 
-  public void activatePreviousWindow(AnActionEvent e) {
+  public void activatePreviousWindow(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       return;

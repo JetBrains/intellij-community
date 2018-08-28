@@ -156,10 +156,12 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
     return myListsHolder.getByPath(path);
   }
 
+  @Override
   public String getCommitterName() {
     return myAuthor;
   }
 
+  @Override
   @Nullable
   public Date getCommitDate() {
     return myDate;
@@ -176,6 +178,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
     myRevisionNumber = new SvnRevisionNumber(Revision.of(revision));
   }
 
+  @Override
   public Collection<Change> getChanges() {
     if (myListsHolder == null) {
       createLists();
@@ -185,7 +188,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
 
   private void createLists() {
     myListsHolder = new ChangesListCreationHelper();
-    
+
     // key: copied-from
     final Map<String, ExternallyRenamedChange> copiedAddedChanges = new HashMap<>();
 
@@ -557,15 +560,18 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
     return revision == null ? null : new SvnLazyPropertyContentRevision(myVcs, filePath, revision.getRevisionNumber(), url);
   }
 
+  @Override
   @NotNull
   public String getName() {
     return myMessage;
   }
 
+  @Override
   public String getComment() {
     return myMessage;
   }
 
+  @Override
   public long getNumber() {
     return myRevision;
   }
@@ -575,10 +581,12 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
     return null;
   }
 
+  @Override
   public AbstractVcs getVcs() {
     return myVcs;
   }
 
+  @Override
   public Collection<Change> getChangesWithMovedTrees() {
     if (myListsHolder == null) {
       createLists();

@@ -36,6 +36,7 @@ public class ContextHelpAction extends AnAction implements DumbAware {
     myHelpID = helpID;
   }
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     final String helpId = getHelpId(dataContext);
@@ -49,6 +50,7 @@ public class ContextHelpAction extends AnAction implements DumbAware {
     return myHelpID != null ? myHelpID : PlatformDataKeys.HELP_ID.getData(dataContext);
   }
 
+  @Override
   public void update(@NotNull AnActionEvent event){
     Presentation presentation = event.getPresentation();
     if (!ApplicationInfo.contextHelpAvailable()) {

@@ -104,7 +104,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private static final Key<String> SUB_ID_KEY = Key.create("pane-sub-id");
   private final CopyPasteDelegator myCopyPasteDelegator;
   private boolean isInitialized;
-  private boolean myExtensionsLoaded = false;
+  private boolean myExtensionsLoaded;
   @NotNull private final Project myProject;
 
   // + options
@@ -120,6 +120,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private static final boolean ourShowModulesDefaults = true;
   private final Map<String, Boolean> myFlattenModules = new THashMap<>();
   private static final boolean ourFlattenModulesDefaults = false;
+  private final Map<String, Boolean> myShowExcludedFiles = new THashMap<>();
+  private static final boolean ourShowExcludedFilesDefaults = true;
   private final Map<String, Boolean> myShowLibraryContents = new THashMap<>();
   private static final boolean ourShowLibraryContentsDefaults = true;
   private final Map<String, Boolean> myHideEmptyPackages = new THashMap<>();
@@ -162,6 +164,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @NonNls private static final String ELEMENT_FLATTEN_PACKAGES = "flattenPackages";
   @NonNls private static final String ELEMENT_SHOW_MEMBERS = "showMembers";
   @NonNls private static final String ELEMENT_SHOW_MODULES = "showModules";
+  @NonNls private static final String ELEMENT_SHOW_EXCLUDED_FILES = "showExcludedFiles";
   @NonNls private static final String ELEMENT_SHOW_LIBRARY_CONTENTS = "showLibraryContents";
   @NonNls private static final String ELEMENT_HIDE_EMPTY_PACKAGES = "hideEmptyPackages";
   @NonNls private static final String ELEMENT_COMPACT_DIRECTORIES = "compactDirectories";
@@ -247,8 +250,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @NotNull
   @Override
   public List<AnAction> getActions(boolean originalProvider) {
-    List<AnAction> result = new ArrayList<>();
-
     DefaultActionGroup views = new DefaultActionGroup("Change View", true);
 
     ChangeViewAction lastHeader = null;
@@ -272,6 +273,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       views.add(newHeader);
       lastHeader = newHeader;
     }
+    List<AnAction> result = new ArrayList<>();
     result.add(views);
     result.add(Separator.getInstance());
 
@@ -339,13 +341,13 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     for (int i = getContentManager().getContentCount() - 1; i >= 0; i--) {
       Content content = getContentManager().getContent(i);
       String id = content != null ? content.getUserData(ID_KEY) : null;
-      if (id != null && id.equals(idToRemove)) {
+      if (idToRemove.equals(id)) {
         getContentManager().removeContent(content, true);
       }
     }
     myId2Pane.remove(idToRemove);
     mySelectInTargets.remove(idToRemove);
-    viewSelectionChanged(false);
+    viewSelectionChanged();
   }
 
   private synchronized void doAddUninitializedPanes() {
@@ -507,11 +509,11 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       @Override
       public void selectionChanged(ContentManagerEvent event) {
         if (event.getOperation() == ContentManagerEvent.ContentOperation.add) {
-          viewSelectionChanged(true);
+          viewSelectionChanged();
         }
       }
     });
-    viewSelectionChanged(false);
+    viewSelectionChanged();
   }
 
   private void ensurePanesLoaded() {
@@ -535,7 +537,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
   }
 
-  private void viewSelectionChanged(boolean fromContentManager) {
+  private void viewSelectionChanged() {
     Content content = getContentManager().getSelectedContent();
     if (content == null) return;
     String id = content.getUserData(ID_KEY);
@@ -690,6 +692,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     myActionGroup.addAction(new ManualOrderAction()).setAsSecondary(true);
     myActionGroup.addAction(new SortByTypeAction()).setAsSecondary(true);
     myActionGroup.addAction(new FoldersAlwaysOnTopAction()).setAsSecondary(true);
+    myActionGroup.addAction(ShowExcludedFilesAction.INSTANCE).setAsSecondary(true);
 
     if (!myAutoScrollFromSourceHandler.isAutoScrollEnabled()) {
       titleActions.add(new ScrollFromSourceAction());
@@ -979,7 +982,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
             while (true) {
               PsiDirectory parent = directory.getParentDirectory();
               if (parent == null) break;
-              if (directoryHelper.skipDirectory(parent) || PsiDirectoryFactory.getInstance(myProject).getQualifiedName(parent, false).length() == 0) break;
+              if (directoryHelper.skipDirectory(parent) ||
+                  PsiDirectoryFactory.getInstance(myProject).getQualifiedName(parent, false).isEmpty()) break;
               PsiElement[] children = parent.getChildren();
               if (children.length == 0 || children.length == 1 && children[0] == directory) {
                 directory = parent;
@@ -1014,22 +1018,17 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       super(new BorderLayout());
       Collection<AbstractProjectViewPane> snapshot = new ArrayList<>(myId2Pane.values());
       UIUtil.putClientProperty(
-        this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, new Iterable<JComponent>() {
-          @Override
-          public Iterator<JComponent> iterator() {
-            return JBIterable.from(snapshot)
-              .map(pane -> {
-                JComponent last = null;
-                for (Component c : UIUtil.uiParents(pane.getComponentToFocus(), false)) {
-                  if (c == MyPanel.this || !(c instanceof JComponent)) return null;
-                  last = (JComponent)c;
-                }
-                return last;
-              })
-              .filter(Conditions.notNull())
-              .iterator();
-          }
-        });
+        this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, (Iterable<JComponent>)() -> JBIterable.from(snapshot)
+          .map(pane -> {
+            JComponent last = null;
+            for (Component c : UIUtil.uiParents(pane.getComponentToFocus(), false)) {
+              if (c == this || !(c instanceof JComponent)) return null;
+              last = (JComponent)c;
+            }
+            return last;
+          })
+          .filter(Conditions.notNull())
+          .iterator());
     }
 
     @Nullable
@@ -1053,7 +1052,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       final AbstractProjectViewPane currentProjectViewPane = getCurrentProjectViewPane();
       if (currentProjectViewPane != null) {
         final Object paneSpecificData = currentProjectViewPane.getData(dataId);
@@ -1192,7 +1191,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         }
         PsiDirectory directory = ((PsiDirectoryNode)userObject).getValue();
         VirtualFile virtualFile = directory.getVirtualFile();
-        Module module = (Module)(TreeUtil.getUserObject(AbstractTreeNode.class, parent.getParentPath().getLastPathComponent())).getValue();
+        Module module = (Module)TreeUtil.getUserObject(AbstractTreeNode.class, parent.getParentPath().getLastPathComponent()).getValue();
 
         if (module == null) return null;
         ModuleFileIndex index = ModuleRootManager.getInstance(module).getFileIndex();
@@ -1256,12 +1255,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         }
       }
 
-      if (result.isEmpty()) {
-        return null;
-      }
-      else {
-        return result.toArray(Module.EMPTY_ARRAY);
-      }
+      return result.isEmpty() ? null : result.toArray(Module.EMPTY_ARRAY);
     }
 
     private List<UnloadedModuleDescription> getSelectedUnloadedModules() {
@@ -1323,7 +1317,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   @Override
-  public void selectPsiElement(PsiElement element, boolean requestFocus) {
+  public void selectPsiElement(@NotNull PsiElement element, boolean requestFocus) {
     if (element == null) return;
     VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
     select(element, virtualFile, requestFocus);
@@ -1370,6 +1364,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       readOption(navigatorElement.getChild(ELEMENT_FLATTEN_PACKAGES), myFlattenPackages);
       readOption(navigatorElement.getChild(ELEMENT_SHOW_MEMBERS), myShowMembers);
       readOption(navigatorElement.getChild(ELEMENT_SHOW_MODULES), myShowModules);
+      readOption(navigatorElement.getChild(ELEMENT_SHOW_EXCLUDED_FILES), myShowExcludedFiles);
       readOption(navigatorElement.getChild(ELEMENT_SHOW_LIBRARY_CONTENTS), myShowLibraryContents);
       readOption(navigatorElement.getChild(ELEMENT_HIDE_EMPTY_PACKAGES), myHideEmptyPackages);
       readOption(navigatorElement.getChild(ELEMENT_COMPACT_DIRECTORIES), myCompactDirectories);
@@ -1407,7 +1402,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   private void readPaneState(@NotNull Element panesElement) {
-    @SuppressWarnings({"unchecked"})
+    @SuppressWarnings("unchecked")
     final List<Element> paneElements = panesElement.getChildren(ELEMENT_PANE);
 
     for (Element paneElement : paneElements) {
@@ -1449,6 +1444,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     writeOption(navigatorElement, myFlattenPackages, ELEMENT_FLATTEN_PACKAGES);
     writeOption(navigatorElement, myShowMembers, ELEMENT_SHOW_MEMBERS);
     writeOption(navigatorElement, myShowModules, ELEMENT_SHOW_MODULES);
+    writeOption(navigatorElement, myShowExcludedFiles, ELEMENT_SHOW_EXCLUDED_FILES);
     writeOption(navigatorElement, myShowLibraryContents, ELEMENT_SHOW_LIBRARY_CONTENTS);
     writeOption(navigatorElement, myHideEmptyPackages, ELEMENT_HIDE_EMPTY_PACKAGES);
     writeOption(navigatorElement, myCompactDirectories, ELEMENT_COMPACT_DIRECTORIES);
@@ -1496,11 +1492,11 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
   }
 
-  boolean isGlobalOptions() {
+  private static boolean isGlobalOptions() {
     return Registry.is("ide.projectView.globalOptions");
   }
 
-  ProjectViewSharedSettings getGlobalOptions() {
+  private static ProjectViewSharedSettings getGlobalOptions() {
     return ProjectViewSharedSettings.Companion.getInstance();
   }
 
@@ -1598,10 +1594,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     return getPaneOptionValue(myShowMembers, paneId, ourShowMembersDefaults);
   }
 
-  public void setShowMembers(boolean showMembers, String paneId) {
-    setPaneOption(myShowMembers, showMembers, paneId, true);
-  }
-
   @Override
   public boolean isHideEmptyMiddlePackages(String paneId) {
     if (isGlobalOptions()) {
@@ -1621,6 +1613,41 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   @Override
+  public boolean isShowExcludedFiles(String paneId) {
+    boolean showExcludedFiles = isGlobalOptions()
+                                ? getGlobalOptions().getShowExcludedFiles()
+                                : getPaneOptionValue(myShowExcludedFiles, paneId, ourShowExcludedFilesDefaults);
+
+    if (showExcludedFiles == ourShowExcludedFilesDefaults) {
+      AbstractProjectViewPane pane = getProjectViewPaneById(ProjectViewPane.ID);
+      if (pane instanceof ProjectViewPane) {
+        ProjectViewPane old = (ProjectViewPane)pane;
+        showExcludedFiles = old.myShowExcludedFiles;
+        if (showExcludedFiles != ourShowExcludedFilesDefaults) {
+          setShowExcludedFiles(showExcludedFiles, paneId, false);
+          setPaneOption(myShowExcludedFiles, showExcludedFiles, ProjectViewPane.ID, false);
+          old.myShowExcludedFiles = ourShowExcludedFilesDefaults; // reset old state after copying it
+        }
+      }
+    }
+    return showExcludedFiles;
+  }
+
+  void setShowExcludedFiles(boolean showExcludedFiles, @NotNull String paneId, boolean updatePane) {
+    if (isGlobalOptions()) {
+      getGlobalOptions().setShowExcludedFiles(showExcludedFiles);
+      for (String id : getPaneIds()) {
+        if (ShowExcludedFilesAction.INSTANCE.isSupported(this, id)) {
+          setPaneOption(myShowExcludedFiles, showExcludedFiles, id, updatePane);
+        }
+      }
+    }
+    else if (ShowExcludedFilesAction.INSTANCE.isSupported(this, paneId)) {
+      setPaneOption(myShowExcludedFiles, showExcludedFiles, paneId, updatePane);
+    }
+  }
+
+  @Override
   public boolean isShowLibraryContents(String paneId) {
     if (isGlobalOptions()) {
       return getGlobalOptions().getShowLibraryContents();
@@ -1630,7 +1657,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   @Override
-  public void setShowLibraryContents(boolean showLibraryContents, @NotNull String paneId) {
+  public void setShowLibraryContents(@NotNull String paneId, boolean showLibraryContents) {
     if (isGlobalOptions()) {
       getGlobalOptions().setShowLibraryContents(showLibraryContents);
     }
@@ -1652,7 +1679,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   @Override
-  public void setShowModules(boolean showModules, @NotNull String paneId) {
+  public void setShowModules(@NotNull String paneId, boolean showModules) {
     if (isGlobalOptions()) {
       getGlobalOptions().setShowModules(showModules);
     }
@@ -1669,7 +1696,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   @Override
-  public void setFlattenModules(boolean flattenModules, @NotNull String paneId) {
+  public void setFlattenModules(@NotNull String paneId, boolean flattenModules) {
     if (isGlobalOptions()) {
       getGlobalOptions().setFlattenModules(flattenModules);
     }
@@ -1700,7 +1727,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   @Override
-  public void setCompactDirectories(boolean compactDirectories, @NotNull String paneId) {
+  public void setCompactDirectories(@NotNull String paneId, boolean compactDirectories) {
     if (isGlobalOptions()) {
       getGlobalOptions().setCompactDirectories(compactDirectories);
       for (String pane: myCompactDirectories.keySet()) {
@@ -1865,7 +1892,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     }
 
-    public void scrollFromSource() {
+    void scrollFromSource() {
       FileEditorManager manager = FileEditorManager.getInstance(myProject);
       if (scrollFromSource(manager.getSelectedEditor())) return;
       for (FileEditor fileEditor : manager.getSelectedEditors()) {
@@ -1940,12 +1967,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       @Override
       @NotNull
       public FileEditorProvider getFileEditorProvider() {
-        return new FileEditorProvider() {
-          @Override
-          public FileEditor openFileEditor() {
-            return ArrayUtil.getFirstElement(myFileEditorManager.openFile(getVirtualFile(), false));
-          }
-        };
+        return () -> ArrayUtil.getFirstElement(myFileEditorManager.openFile(getVirtualFile(), false));
       }
 
       @Override

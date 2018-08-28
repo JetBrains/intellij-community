@@ -6,6 +6,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.ui.tree.BaseTreeModel;
@@ -40,7 +41,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
     root = new ProjectNode(project);
     updater = new ProjectFileNodeUpdater(project, invoker) {
       @Override
-      protected void updateStructure(boolean fromRoot, @NotNull Set<VirtualFile> updatedFiles) {
+      protected void updateStructure(boolean fromRoot, @NotNull Set<? extends VirtualFile> updatedFiles) {
         boolean filtered = root.filter != null;
         SmartHashSet<Node> nodes = fromRoot || filtered ? null : new SmartHashSet<>();
         root.children.forEach(child -> child.invalidateChildren(node -> {
@@ -80,7 +81,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
   }
 
   public void onValidThread(@NotNull Runnable task) {
-    invoker.invokeLaterIfNeeded(task);
+    invoker.runOrInvokeLater(task);
   }
 
   @Override
@@ -116,8 +117,9 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
     return result;
   }
 
-  private static boolean isVisible(@NotNull FileNode node, @Nullable VirtualFileFilter filter) {
-    if (!node.getVirtualFile().isValid()) return false;
+  private boolean isVisible(@NotNull FileNode node, @Nullable VirtualFileFilter filter) {
+    if (!node.file.isValid() || root.project.isDisposed()) return false;
+    if (!root.showExcludedFiles && ProjectFileIndex.getInstance(root.project).isExcluded(node.file)) return false;
     if (filter == null) return true;
     ThreeState visibility = node.visibility;
     if (visibility == ThreeState.NO) return false;
@@ -154,11 +156,17 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
     });
   }
 
-  public void setShowModules(boolean showModules) {
+  public void setSettings(boolean showExcludedFiles, boolean showModules) {
     onValidThread(() -> {
-      if (root.showModules == showModules) return;
-      root.showModules = showModules;
-      updater.updateFromRoot();
+      if (root.showExcludedFiles != showExcludedFiles) {
+        if (root.filter != null) root.resetVisibility();
+        root.showExcludedFiles = showExcludedFiles;
+        root.valid = false; // need to reload from root
+      }
+      if (root.showModules != showModules) {
+        root.showModules = showModules;
+        root.valid = false; // need to reload from root
+      }
     });
   }
 
@@ -226,6 +234,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
 
   private static class ProjectNode extends Node {
     volatile VirtualFileFilter filter;
+    volatile boolean showExcludedFiles;
     volatile boolean showModules;
     final Project project;
 
@@ -284,6 +293,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
       return id;
     }
 
+    @Override
     @NotNull
     public VirtualFile getVirtualFile() {
       return file;

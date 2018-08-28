@@ -26,6 +26,7 @@ public class SimpleLexerState implements LexerState {
     return myIntState;
   }
 
+  @Override
   public short intern() {
     return (short)myIntState;
   }

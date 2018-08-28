@@ -24,42 +24,51 @@ class CoverageTableModel extends AbstractTableModel implements AbstractListBuild
     COLUMN_INFOS = coverageEngine.createCoverageViewExtension(project, suitesBundle, stateBean).createColumnInfos();
   }
 
+  @Override
   public void removeAllElements() {
     myElements.clear();
     fireTableDataChanged();
   }
 
+  @Override
   public void addElement(final Object obj) {
     myElements.add(obj);
     fireTableDataChanged();
   }
 
+  @Override
   public void replaceElements(final List newElements) {
     removeAllElements();
     myElements.addAll(newElements);
     fireTableDataChanged();
   }
 
+  @Override
   public Object[] toArray() {
     return ArrayUtil.toObjectArray(myElements);
   }
 
+  @Override
   public int indexOf(final Object o) {
     return myElements.indexOf(o);
   }
 
+  @Override
   public int getSize() {
     return myElements.size();
   }
 
+  @Override
   public Object getElementAt(final int index) {
     return myElements.get(index);
   }
 
+  @Override
   public int getRowCount() {
     return myElements.size();
   }
 
+  @Override
   public int getColumnCount() {
     return COLUMN_INFOS.length;
   }
@@ -69,6 +78,7 @@ class CoverageTableModel extends AbstractTableModel implements AbstractListBuild
     return COLUMN_INFOS[column].getName();
   }
 
+  @Override
   public Object getValueAt(int rowIndex, int columnIndex) {
     final Object element = getElementAt(rowIndex);
     if (columnIndex == 0) {
@@ -80,21 +90,26 @@ class CoverageTableModel extends AbstractTableModel implements AbstractListBuild
     return element;
   }
 
+  @Override
   public ColumnInfo[] getColumnInfos() {
     return COLUMN_INFOS;
   }
 
+  @Override
   public void setSortable(boolean aBoolean) {
   }
 
+  @Override
   public boolean isSortable() {
     return true;
   }
 
+  @Override
   public Object getRowValue(int row) {
     return getElementAt(row);
   }
 
+  @Override
   public RowSorter.SortKey getDefaultSortKey() {
     return null;
   }

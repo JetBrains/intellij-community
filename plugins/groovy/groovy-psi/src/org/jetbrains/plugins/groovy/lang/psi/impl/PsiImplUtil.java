@@ -326,7 +326,7 @@ public class PsiImplUtil {
       return nameElement.getText();
     }
 
-    if (node.getElementType() == GroovyTokenTypes.mSTRING_LITERAL || node.getElementType() == GroovyTokenTypes.mGSTRING_LITERAL) {
+    if (GroovyTokenSets.STRING_LITERALS.contains(node.getElementType())) {
       final Object value = GrLiteralImpl.getLiteralValue(nameElement);
       if (value instanceof String) {
         return (String)value;

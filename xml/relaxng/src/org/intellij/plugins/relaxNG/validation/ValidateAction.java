@@ -88,7 +88,7 @@ public class ValidateAction extends AnAction {
     }
   }
 
-  private boolean actionPerformedImpl(AnActionEvent e) {
+  private boolean actionPerformedImpl(@NotNull AnActionEvent e) {
     final PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     if (file == null) {
       return false;

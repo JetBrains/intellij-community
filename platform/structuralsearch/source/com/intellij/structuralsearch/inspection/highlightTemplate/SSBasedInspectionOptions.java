@@ -31,6 +31,7 @@ public class SSBasedInspectionOptions {
     myConfigurations = configurations;
     myTemplatesList  = new JBList<>(new MyListModel());
     myTemplatesList.setCellRenderer(new DefaultListCellRenderer() {
+      @Override
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         JLabel component = (JLabel)super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         Configuration configuration = myConfigurations.get(index);
@@ -120,7 +121,7 @@ public class SSBasedInspectionOptions {
         }
       }).setEditActionUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled(AnActionEvent e) {
+        public boolean isEnabled(@NotNull AnActionEvent e) {
           final Project project = e.getProject();
           return project != null && !DumbService.isDumb(project);
         }
@@ -137,7 +138,7 @@ public class SSBasedInspectionOptions {
         }
       }).setRemoveActionUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled(AnActionEvent e) {
+        public boolean isEnabled(@NotNull AnActionEvent e) {
           final Project project = e.getProject();
           return project != null && !DumbService.isDumb(project);
         }

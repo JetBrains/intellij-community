@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.designSurface;
 
+import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
-import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.core.GridConstraints;
 
 import javax.swing.*;
 import java.awt.*;
@@ -46,9 +32,11 @@ public final class GroupSelectionProcessor extends EventProcessor {
     myRectangePainter=new MyRectanglePainter();
   }
 
+  @Override
   protected void processKeyEvent(final KeyEvent e){
   }
 
+  @Override
   protected void processMouseEvent(final MouseEvent e){
     if (e.getID() == MouseEvent.MOUSE_PRESSED) {
       myStartPoint = e.getPoint();
@@ -99,6 +87,7 @@ public final class GroupSelectionProcessor extends EventProcessor {
     }
   }
 
+  @Override
   protected boolean cancelOperation() {
     final JComponent dragLayer = myEditor.getDragLayer();
     dragLayer.remove(myRectangePainter);
@@ -135,7 +124,7 @@ public final class GroupSelectionProcessor extends EventProcessor {
     if (component instanceof RadContainer){
       final RadContainer container = (RadContainer)component;
       // [anton] it is very important to iterate through a STORED array because setSelected can
-      // change order of components so iteration via getComponent(i) is incorrect 
+      // change order of components so iteration via getComponent(i) is incorrect
       final RadComponent[] components = container.getComponents();
       for (RadComponent component1 : components) {
         markRectangle(component1, rectangle, coordinateOriginComponent);
@@ -155,6 +144,7 @@ public final class GroupSelectionProcessor extends EventProcessor {
       myColor = new Color(47, 67, 96);
     }
 
+    @Override
     protected void paintComponent(final Graphics g){
       final Graphics2D g2d = (Graphics2D)g;
       super.paintComponent(g);

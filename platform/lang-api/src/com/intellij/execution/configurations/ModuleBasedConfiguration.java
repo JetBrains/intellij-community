@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.openapi.application.ReadAction;
@@ -57,8 +55,9 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     return (ModuleBasedConfigurationOptions)super.getOptions();
   }
 
+  @NotNull
   @Override
-  protected Class<? extends ModuleBasedConfigurationOptions> getOptionsClass() {
+  protected Class<? extends ModuleBasedConfigurationOptions> getDefaultOptionsClass() {
     return ModuleBasedConfigurationOptions.class;
   }
 

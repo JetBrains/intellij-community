@@ -26,6 +26,7 @@ public class MavenDistributionStatusConverter extends MavenConstantListConverter
   private static final List<String> VALUES
     = Arrays.asList("none", "converted", "partner", "deployed", "verified");
 
+  @Override
   protected Collection<String> getValues(@NotNull ConvertContext context) {
     return VALUES;
   }

@@ -383,6 +383,7 @@ public class GitRebaser {
       myHasMerges = hasMerges;
     }
 
+    @Override
     public int editCommits(@NotNull String path) {
       if (!myRebaseEditorShown) {
         myRebaseEditorShown = true;

@@ -47,7 +47,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
 
   private final DocumentListener myDocumentListener = new DocumentListener() {
     @Override
-    public void beforeDocumentChange(DocumentEvent e) {
+    public void beforeDocumentChange(@NotNull DocumentEvent e) {
       if (!myEditor.getDocument().isInBulkUpdate()) {
         cancelAnimatedScrolling(true);
       }
@@ -198,7 +198,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     if (targetLocation.x < hOffset) {
       int inset = 4 * spaceWidth;
       if (scrollType == ScrollType.MAKE_VISIBLE && targetLocation.x < viewRect.width - inset) {
-        // if we need to scroll to the left to make target position visible, 
+        // if we need to scroll to the left to make target position visible,
         // let's scroll to the leftmost position (if that will make caret visible)
         hOffset = 0;
       }

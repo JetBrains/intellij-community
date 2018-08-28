@@ -11,8 +11,6 @@ import org.junit.Test
 import java.io.IOException
 import java.net.URL
 import java.text.SimpleDateFormat
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 
 class UpdateInfoParsingTest : BareTestFixtureTestCase() {
   @Test fun liveJetbrainsUpdateFile() {

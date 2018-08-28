@@ -3,6 +3,7 @@ package com.intellij.testGuiFramework.fixtures
 
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.testGuiFramework.framework.Timeouts
+import com.intellij.testGuiFramework.impl.actionButton
 import com.intellij.testGuiFramework.impl.popupMenu
 import com.intellij.ui.popup.PopupFactoryImpl
 import org.fest.swing.core.Robot
@@ -78,22 +79,18 @@ class RunConfigurationListFixture(val myRobot: Robot, val myIde: IdeFrameFixture
   }
 
   inner class RunActionFixture {
-    fun run() {
-      ActionButtonFixture.findByText("Run", myRobot, myIde.target()).click()
+
+    private fun clickActionButton(buttonName: String) {
+      with(myIde) { actionButton(buttonName) }.click()
     }
 
-    fun debug() {
-      ActionButtonFixture.findByText("Debug", myRobot, myIde.target()).click()
-    }
+    fun run() { clickActionButton("Run") }
 
-    fun runWithCoverage() {
-      ActionButtonFixture.findByText("Run with Coverage", myRobot, myIde.target()).click()
-    }
+    fun debug() { clickActionButton("Debug") }
 
-    fun stop() {
-      ActionButtonFixture.findByText("Stop", myRobot, myIde.target()).click()
+    fun runWithCoverage() { clickActionButton("Run with Coverage") }
 
-    }
+    fun stop() { clickActionButton("Stop") }
   }
 
   private fun showPopup() {

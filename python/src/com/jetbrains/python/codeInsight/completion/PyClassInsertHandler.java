@@ -17,10 +17,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PyClassInsertHandler implements InsertHandler<LookupElement> {
   public static PyClassInsertHandler INSTANCE = new PyClassInsertHandler();
-  
+
   private PyClassInsertHandler() {
   }
 
+  @Override
   public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
     final Editor editor = context.getEditor();
     final Document document = editor.getDocument();

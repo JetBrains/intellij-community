@@ -2,14 +2,18 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static com.intellij.codeInspection.InspectionsBundle.BUNDLE;
 
@@ -18,14 +22,17 @@ import static com.intellij.codeInspection.InspectionsBundle.BUNDLE;
  * @param <T> a type of anchor element which could be associated with given nullability problem kind
  */
 public class NullabilityProblemKind<T extends PsiElement> {
+  private static final Function<Object, PsiExpression> DEFAULT_DEREFERENCED_ELEMENT_FN = e -> ObjectUtils.tryCast(e, PsiExpression.class);
   private final String myName;
-  private final String myNullLiteralMessage;
+  private final String myAlwaysNullMessage;
   private final String myNormalMessage;
+  private final Function<? super T, ? extends PsiExpression> myDereferencedElementFunction;
 
   private NullabilityProblemKind(@NotNull String name) {
     myName = name;
-    myNullLiteralMessage = null;
+    myAlwaysNullMessage = null;
     myNormalMessage = null;
+    myDereferencedElementFunction = DEFAULT_DEREFERENCED_ELEMENT_FN;
   }
 
   private NullabilityProblemKind(@NotNull String name, @NotNull @PropertyKey(resourceBundle = BUNDLE) String message) {
@@ -33,22 +40,34 @@ public class NullabilityProblemKind<T extends PsiElement> {
   }
 
   private NullabilityProblemKind(@NotNull String name,
-                                 @NotNull @PropertyKey(resourceBundle = BUNDLE) String nullLiteralMessage,
+                                 @NotNull @PropertyKey(resourceBundle = BUNDLE) String alwaysNullMessage,
                                  @NotNull @PropertyKey(resourceBundle = BUNDLE) String normalMessage) {
-    myName = name;
-    myNullLiteralMessage = InspectionsBundle.message(nullLiteralMessage);
-    myNormalMessage = InspectionsBundle.message(normalMessage);
+    this(name, alwaysNullMessage, normalMessage, DEFAULT_DEREFERENCED_ELEMENT_FN);
   }
 
-  public static final NullabilityProblemKind<PsiMethodCallExpression> callNPE = new NullabilityProblemKind<>("callNPE");
+  private NullabilityProblemKind(@NotNull String name,
+                                 @NotNull @PropertyKey(resourceBundle = BUNDLE) String alwaysNullMessage,
+                                 @NotNull @PropertyKey(resourceBundle = BUNDLE) String normalMessage,
+                                 Function<? super T, ? extends PsiExpression> dereferencedElementFunction) {
+    myName = name;
+    myAlwaysNullMessage = InspectionsBundle.message(alwaysNullMessage);
+    myNormalMessage = InspectionsBundle.message(normalMessage);
+    myDereferencedElementFunction = dereferencedElementFunction;
+  }
+
+  public static final NullabilityProblemKind<PsiMethodCallExpression> callNPE =
+    new NullabilityProblemKind<>("callNPE", "dataflow.message.npe.method.invocation.sure", "dataflow.message.npe.method.invocation",
+                                 call -> call.getMethodExpression().getQualifierExpression());
   public static final NullabilityProblemKind<PsiMethodReferenceExpression> callMethodRefNPE =
     new NullabilityProblemKind<>("callMethodRefNPE", "dataflow.message.npe.methodref.invocation");
   public static final NullabilityProblemKind<PsiNewExpression> innerClassNPE =
-    new NullabilityProblemKind<>("innerClassNPE", "dataflow.message.npe.inner.class.construction");
+    new NullabilityProblemKind<>("innerClassNPE", "dataflow.message.npe.inner.class.construction.sure",
+                                 "dataflow.message.npe.inner.class.construction", PsiNewExpression::getQualifier);
   public static final NullabilityProblemKind<PsiExpression> fieldAccessNPE =
     new NullabilityProblemKind<>("fieldAccessNPE", "dataflow.message.npe.field.access.sure", "dataflow.message.npe.field.access");
   public static final NullabilityProblemKind<PsiArrayAccessExpression> arrayAccessNPE =
-    new NullabilityProblemKind<>("arrayAccessNPE", "dataflow.message.npe.array.access");
+    new NullabilityProblemKind<>("arrayAccessNPE", "dataflow.message.npe.array.access.sure", "dataflow.message.npe.array.access",
+                                 PsiArrayAccessExpression::getArrayExpression);
   public static final NullabilityProblemKind<PsiElement> unboxingNullable =
     new NullabilityProblemKind<>("unboxingNullable", "dataflow.message.unboxing");
   public static final NullabilityProblemKind<PsiExpression> assigningToNotNull =
@@ -138,13 +157,18 @@ public class NullabilityProblemKind<T extends PsiElement> {
     }
 
     @NotNull
-    public String getMessage() {
-      if (myKind.myNullLiteralMessage == null || myKind.myNormalMessage == null) {
+    public String getMessage(Map<PsiExpression, DataFlowInstructionVisitor.ConstantResult> expressions) {
+      if (myKind.myAlwaysNullMessage == null || myKind.myNormalMessage == null) {
         throw new IllegalStateException("This problem kind has no message associated: " + myKind);
       }
-      return myAnchor instanceof PsiExpression && ExpressionUtils.isNullLiteral((PsiExpression)myAnchor)
-             ? myKind.myNullLiteralMessage
-             : myKind.myNormalMessage;
+      PsiExpression expression =
+        PsiUtil.skipParenthesizedExprDown(ObjectUtils.tryCast(myKind.myDereferencedElementFunction.apply(myAnchor), PsiExpression.class));
+      if (expression != null) {
+        if (ExpressionUtils.isNullLiteral(expression) || expressions.get(expression) == DataFlowInstructionVisitor.ConstantResult.NULL) {
+          return myKind.myAlwaysNullMessage;
+        }
+      }
+      return myKind.myNormalMessage;
     }
 
     @Override

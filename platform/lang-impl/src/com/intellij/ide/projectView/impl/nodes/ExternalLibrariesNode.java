@@ -121,7 +121,7 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
     presentation.setPresentableText(IdeBundle.message("node.projectview.external.libraries"));
     presentation.setIcon(PlatformIcons.LIBRARY_ICON);
   }

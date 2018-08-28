@@ -74,7 +74,7 @@ public class SnapShotClient {
       return new SnapShotRemoteComponent[0];
     }
     List<SnapShotRemoteComponent> result = new ArrayList<>();
-    myWriter.write("L" + Integer.toString(id) + "\n");
+    myWriter.write("L" + id + "\n");
     myWriter.flush();
     while(true) {
       String line = myReader.readLine();

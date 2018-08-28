@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class BreakpointManager
@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiField;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
@@ -79,11 +80,8 @@ public class BreakpointManager {
   private final Project myProject;
   private final Map<String, String> myUIProperties = new LinkedHashMap<>();
 
-  private final StartupManager myStartupManager;
-
-  public BreakpointManager(@NotNull Project project, @NotNull StartupManager startupManager, @NotNull DebuggerManagerImpl debuggerManager) {
+  public BreakpointManager(@NotNull Project project, @NotNull DebuggerManagerImpl debuggerManager) {
     myProject = project;
-    myStartupManager = startupManager;
     debuggerManager.getContextManager().addListener(new DebuggerContextListener() {
       private DebuggerSession myPreviousSession;
 
@@ -113,9 +111,8 @@ public class BreakpointManager {
     return false;
   }
 
-  public void init() {
-    XBreakpointManager manager = XDebuggerManager.getInstance(myProject).getBreakpointManager();
-    manager.addBreakpointListener(new XBreakpointListener<XBreakpoint<?>>() {
+  public void addListeners(@NotNull MessageBusConnection busConnection) {
+    busConnection.subscribe(XBreakpointListener.TOPIC, new XBreakpointListener<XBreakpoint<?>>() {
       @Override
       public void breakpointAdded(@NotNull XBreakpoint<?> xBreakpoint) {
         Breakpoint breakpoint = getJavaBreakpoint(xBreakpoint);
@@ -296,7 +293,7 @@ public class BreakpointManager {
       myOriginalBreakpointsNodes.put(element.getName(), JDOMUtil.internElement(element));
     }
     if (!myProject.isDefault()) {
-      myStartupManager.runWhenProjectIsInitialized(() -> doRead(parentNode));
+      StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> doRead(parentNode));
     }
   }
 
@@ -597,7 +594,7 @@ public class BreakpointManager {
   public String getProperty(String name) {
     return myUIProperties.get(name);
   }
-  
+
   public String setProperty(String name, String value) {
     return myUIProperties.put(name, value);
   }

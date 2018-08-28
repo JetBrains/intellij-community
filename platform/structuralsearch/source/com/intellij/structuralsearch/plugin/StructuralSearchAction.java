@@ -16,6 +16,7 @@ public class StructuralSearchAction extends AnAction {
   /** Handles IDEA action event
    * @param event the event of action
    */
+  @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
     triggerAction(null, SearchContext.buildFromDataContext(event.getDataContext()));
   }
@@ -48,6 +49,7 @@ public class StructuralSearchAction extends AnAction {
   /** Updates the state of the action
    * @param event the action event
    */
+  @Override
   public void update(@NotNull AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
     final DataContext context = event.getDataContext();

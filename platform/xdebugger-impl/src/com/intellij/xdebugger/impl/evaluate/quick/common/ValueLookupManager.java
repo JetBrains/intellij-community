@@ -10,9 +10,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.EditorMouseAdapter;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
+import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -28,7 +28,7 @@ import org.jetbrains.concurrency.Promise;
 
 import java.awt.*;
 
-public class ValueLookupManager extends EditorMouseAdapter implements EditorMouseMotionListener {
+public class ValueLookupManager implements EditorMouseMotionListener, EditorMouseListener {
   /**
    * @see XDebuggerUtil#disableValueLookup(Editor)
    */
@@ -59,7 +59,7 @@ public class ValueLookupManager extends EditorMouseAdapter implements EditorMous
   }
 
   @Override
-  public void mouseExited(EditorMouseEvent e) {
+  public void mouseExited(@NotNull EditorMouseEvent e) {
     myAlarm.cancelAllRequests();
   }
 

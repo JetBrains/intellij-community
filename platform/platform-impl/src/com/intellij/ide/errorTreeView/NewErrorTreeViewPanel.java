@@ -213,7 +213,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   } 
 
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
       return this;
     }
@@ -681,7 +681,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     }
 
     @Override
-    protected Navigatable createDescriptorForNode(DefaultMutableTreeNode node) {
+    protected Navigatable createDescriptorForNode(@NotNull DefaultMutableTreeNode node) {
       Object userObject = node.getUserObject();
       if (!(userObject instanceof ErrorTreeNodeDescriptor)) {
         return null;

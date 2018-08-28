@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.maven.project.importing;
 
 import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
@@ -28,10 +15,7 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class MavenProjectTest extends MavenImportingTestCase {
   public void testCollectingPlugins() {
@@ -60,7 +44,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
 
     assertDeclaredPlugins(p("group1", "id1"), p("group1", "id2"), p("group2", "id1"));
   }
-            
+
   public void testPluginsContainDefaultPlugins() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -607,7 +591,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
                   "  </profile>" +
                   "</profiles>");
 
-    assertOrderedElementsAreEqual(getMavenProject().getProfilesIds(), "one");
+    assertOrderedElementsAreEqual(getMavenProject().getProfilesIds(), "one", "default");
   }
 
   public void testCollectingRepositories() {
@@ -899,7 +883,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
   }
 
   protected void assertDependenciesNodes(List<MavenArtifactNode> nodes, String expected) {
-    assertEquals(expected, MavenArtifactNode.formatNodesList(nodes));
+    assertEquals(expected, StringUtil.join(nodes, ","));
   }
 
   private String findPluginConfig(String groupId, String artifactId, String path) {
@@ -911,7 +895,19 @@ public class MavenProjectTest extends MavenImportingTestCase {
   }
 
   private void assertDeclaredPlugins(PluginInfo... expected) {
-    assertUnorderedElementsAreEqual(p(getMavenProject().getDeclaredPlugins()), expected);
+    List<PluginInfo> defaultPlugins = Arrays.asList(
+      p("org.apache.maven.plugins", "maven-site-plugin"),
+      p("org.apache.maven.plugins", "maven-deploy-plugin"),
+      p("org.apache.maven.plugins", "maven-compiler-plugin"),
+      p("org.apache.maven.plugins", "maven-install-plugin"),
+      p("org.apache.maven.plugins", "maven-jar-plugin"),
+      p("org.apache.maven.plugins", "maven-clean-plugin"),
+      p("org.apache.maven.plugins", "maven-resources-plugin"),
+      p("org.apache.maven.plugins", "maven-surefire-plugin"));
+    List<PluginInfo> expectedList = new ArrayList<>();
+    expectedList.addAll(defaultPlugins);
+    expectedList.addAll(Arrays.asList(expected));
+    assertUnorderedElementsAreEqual(p(getMavenProject().getDeclaredPlugins()), expectedList);
   }
 
   private MavenPlugin findPlugin(String groupId, String artifactId) {

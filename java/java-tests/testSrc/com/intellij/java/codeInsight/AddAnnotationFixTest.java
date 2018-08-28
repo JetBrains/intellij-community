@@ -5,6 +5,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExternalAnnotationsListener;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.generation.actions.CommentByLineCommentAction;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.impl.AnnotateIntentionAction;
 import com.intellij.codeInsight.intention.impl.DeannotateIntentionAction;
@@ -36,6 +37,7 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,6 +45,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.psi.impl.DebugUtil.sleep;
 
 /**
  * @author anna
@@ -366,6 +370,25 @@ public class AddAnnotationFixTest extends UsefulTestCase {
       file.refresh(false, false);
     });
     stopListeningAndCheckEvents();
+  }
+
+
+  public void testAnnotationsUpdatedWhenFileEdited() {
+    addDefaultLibrary();
+    final PsiFile[] files = myFixture.configureByFiles("/content/anno/edit/annotations.xml", "lib/edit/Foo.java");
+    final PsiClass fooJava = ((PsiClassOwner)files[1]).getClasses()[0];
+    ExternalAnnotationsManager.getInstance(myProject);
+
+    PsiAnnotation annotation = AnnotationUtil.findAnnotation(fooJava, "java.lang.Deprecated");
+    assertNotNull(annotation);
+    assertEquals("java.lang.Deprecated", annotation.getQualifiedName());
+
+    startListeningForExternalChanges();
+    myFixture.testAction(new CommentByLineCommentAction()); // comment out a line in annotations file
+    sleep(150);
+    UIUtil.dispatchAllInvocationEvents();
+    annotation = AnnotationUtil.findAnnotation(fooJava, "java.lang.Deprecated");
+    assertNull(annotation);
   }
 
   private class DefaultAnnotationsListener extends ExternalAnnotationsListener.Adapter {

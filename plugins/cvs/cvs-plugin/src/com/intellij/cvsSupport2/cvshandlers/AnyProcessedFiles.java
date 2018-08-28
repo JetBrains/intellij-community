@@ -30,11 +30,13 @@ public abstract class AnyProcessedFiles extends FileSetToBeUpdated {
   public abstract Collection<VirtualFile> getFiles();
 
 
+  @Override
   public void refreshFilesAsync(final Runnable postRunnable) {
     final VirtualFile[] files = VfsUtil.toVirtualFileArray(getFiles());
     final int[] index = new int[]{0};
     LOG.info("files.length=" + files.length);
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         if (index[0] < files.length){
           VirtualFile file = files[index[0]++];
@@ -67,6 +69,7 @@ public abstract class AnyProcessedFiles extends FileSetToBeUpdated {
     */
   }
 
+  @Override
   public void refreshFilesSync() {
     for(VirtualFile file: getFiles()) {
       file.refresh(false, true);

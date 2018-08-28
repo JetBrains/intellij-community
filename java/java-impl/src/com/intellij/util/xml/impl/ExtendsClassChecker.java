@@ -42,13 +42,15 @@ import java.util.List;
 public class ExtendsClassChecker extends DomCustomAnnotationChecker<ExtendClass>{
   private static final GenericValueReferenceProvider ourProvider = new GenericValueReferenceProvider();
 
+  @Override
   @NotNull
   public Class<ExtendClass> getAnnotationClass() {
     return ExtendClass.class;
   }
 
+  @Override
   public List<DomElementProblemDescriptor> checkForProblems(@NotNull final ExtendClass extend, @NotNull final DomElement _element, @NotNull final DomElementAnnotationHolder holder,
-                            @NotNull final DomHighlightingHelper helper) {
+                                                            @NotNull final DomHighlightingHelper helper) {
     if (!(_element instanceof GenericDomValue)) return Collections.emptyList();
     GenericDomValue element = (GenericDomValue)_element;
 

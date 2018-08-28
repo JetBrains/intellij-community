@@ -44,6 +44,7 @@ class LoadingNode extends DefaultMutableTreeNode {
     myModel = model;
   }
 
+  @Override
   public boolean getAllowsChildren() {
     return false;
   }
@@ -98,6 +99,7 @@ class LoadingNode extends DefaultMutableTreeNode {
 
   private void start(final Alarm alarm) {
     myPeriodRequest = new Runnable() {
+      @Override
       public void run() {
         if (getParent() != null) {
           updatePeriod();

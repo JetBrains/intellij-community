@@ -39,7 +39,7 @@ public class AddNewPropertyFileAction extends AnAction {
   }
 
   @Nullable
-  private static ResourceBundle getResourceBundle(AnActionEvent e) {
+  private static ResourceBundle getResourceBundle(@NotNull AnActionEvent e) {
     final Navigatable[] data = CommonDataKeys.NAVIGATABLE_ARRAY.getData(e.getDataContext());
     if (data == null || data.length != 1) return null;
     if (!(data[0] instanceof ResourceBundleAwareNode)) return null;

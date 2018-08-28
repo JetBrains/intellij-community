@@ -29,7 +29,8 @@ public final class IsModifiedRequest extends AbstractFileStateRequest {
 
 	// Implemented ============================================================
 
-	public String getRequestString() {
+	@Override
+        public String getRequestString() {
 		return "Is-modified " + getFileName() + "\n";
 	}
 }

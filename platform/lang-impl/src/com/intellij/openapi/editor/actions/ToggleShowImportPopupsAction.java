@@ -52,7 +52,7 @@ public class ToggleShowImportPopupsAction extends ToggleAction {
   }
 
   @Nullable
-  private static PsiFile getFile(AnActionEvent e) {
+  private static PsiFile getFile(@NotNull AnActionEvent e) {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     return editor == null ? null : e.getData(CommonDataKeys.PSI_FILE);
   }

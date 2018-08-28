@@ -44,6 +44,7 @@ class BackpointerUsageVisitor extends JavaRecursiveElementWalkingVisitor {
     myCheckThisExpression = checkThisExpression;
   }
 
+  @Override
   public void visitElement(PsiElement element) {
     if (myCause != null) {
       return;
@@ -51,6 +52,7 @@ class BackpointerUsageVisitor extends JavaRecursiveElementWalkingVisitor {
     super.visitElement(element);
   }
 
+  @Override
   public void visitReferenceExpression(PsiReferenceExpression expression) {
     if (myCause != null) {
       return;
@@ -74,6 +76,7 @@ class BackpointerUsageVisitor extends JavaRecursiveElementWalkingVisitor {
     }
   }
 
+  @Override
   public void visitMethodCallExpression(PsiMethodCallExpression expression) {
     if (myCause != null) {
       return;

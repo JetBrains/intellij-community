@@ -144,11 +144,11 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     ActionToolbar actionToolbar = actionManager.createActionToolbar(
       ImageEditorActions.ACTION_PLACE, actionGroup, true
     );
-    
-    // Make sure toolbar is 'ready' before it's added to component hierarchy 
+
+    // Make sure toolbar is 'ready' before it's added to component hierarchy
     // to prevent ActionToolbarImpl.updateActionsImpl(boolean, boolean) from increasing popup size unnecessarily
     actionToolbar.updateActionsImmediately();
-    
+
     actionToolbar.setTargetComponent(this);
 
     JComponent toolbarPanel = actionToolbar.getComponent();
@@ -215,6 +215,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     return imageComponent;
   }
 
+  @Override
   public void dispose() {
     Options options = OptionsManager.getInstance().getOptions();
     options.removePropertyChangeListener(optionsChangeListener);
@@ -253,6 +254,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     return imageComponent.isGridVisible();
   }
 
+  @Override
   public ImageZoomModel getZoomModel() {
     return zoomModel;
   }
@@ -302,7 +304,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
           ImageZoomModel model = editor != null ? editor.getZoomModel() : getZoomModel();
           double factor = model.getZoomFactor();
           model.setZoomFactor(scale * factor);
-          return new Point(((int)((at.x - Math.max(scale > 1.0 ? locationBefore.x : 0, 0)) * scale)), 
+          return new Point(((int)((at.x - Math.max(scale > 1.0 ? locationBefore.x : 0, 0)) * scale)),
                            ((int)((at.y - Math.max(scale > 1.0 ? locationBefore.y : 0, 0)) * scale)));
         }
       });
@@ -316,11 +318,13 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       imageComponent.setLocation(point);
     }
 
+    @Override
     public void invalidate() {
       centerComponents();
       super.invalidate();
     }
 
+    @Override
     public Dimension getPreferredSize() {
       return imageComponent.getSize();
     }
@@ -336,6 +340,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   }
 
   private final class ImageWheelAdapter implements MouseWheelListener {
+    @Override
     public void mouseWheelMoved(MouseWheelEvent e) {
       Options options = OptionsManager.getInstance().getOptions();
       EditorOptions editorOptions = options.getEditorOptions();
@@ -393,10 +398,12 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     };
     private double zoomFactor = 0.0d;
 
+    @Override
     public double getZoomFactor() {
       return zoomFactor;
     }
 
+    @Override
     public void setZoomFactor(double zoomFactor) {
       double oldZoomFactor = getZoomFactor();
 
@@ -424,6 +431,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       return Math.max(factor, MICRO_ZOOM_LIMIT);
     }
 
+    @Override
     public void fitZoomToWindow() {
       Options options = OptionsManager.getInstance().getOptions();
       ZoomOptions zoomOptions = options.getEditorOptions().getZoomOptions();
@@ -438,11 +446,13 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       myZoomLevelChanged = false;
     }
 
+    @Override
     public void zoomOut() {
       setZoomFactor(getNextZoomOut());
       myZoomLevelChanged = true;
     }
 
+    @Override
     public void zoomIn() {
       setZoomFactor(getNextZoomIn());
       myZoomLevelChanged = true;
@@ -476,11 +486,13 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       return Math.min(factor, getMaximumZoomFactor());
     }
 
+    @Override
     public boolean canZoomOut() {
       // Ignore small differences caused by floating-point arithmetic.
       return getZoomFactor() - 1.0e-14 > getMinimumZoomFactor();
     }
 
+    @Override
     public boolean canZoomIn() {
       return getZoomFactor() < getMaximumZoomFactor();
     }
@@ -490,6 +502,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       myZoomLevelChanged = value;
     }
 
+    @Override
     public boolean isZoomLevelChanged() {
       return myZoomLevelChanged;
     }
@@ -534,6 +547,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   }
 
   private class DocumentChangeListener implements ChangeListener {
+    @Override
     public void stateChanged(@NotNull ChangeEvent e) {
       updateImageComponentSize();
 
@@ -551,6 +565,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   }
 
   private class FocusRequester extends MouseAdapter {
+    @Override
     public void mousePressed(@NotNull MouseEvent e) {
       IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(ImageEditorUI.this, true));
     }
@@ -570,8 +585,9 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   }
 
 
+  @Override
   @Nullable
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (CommonDataKeys.PROJECT.is(dataId)) {
       return editor != null ? editor.getProject() : null;
     }
@@ -657,6 +673,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   }
 
   private class OptionsChangeListener implements PropertyChangeListener {
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
       Options options = (Options) evt.getSource();
       EditorOptions editorOptions = options.getEditorOptions();

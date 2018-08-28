@@ -107,10 +107,12 @@ public class JVMNameUtil {
     }
     else {
       buffer.append(new JVMName() {
+        @Override
         public String getName(DebugProcessImpl process) throws EvaluateException {
           return jvmName.getName(process).replace('.','/');
         }
 
+        @Override
         public String getDisplayName(DebugProcessImpl debugProcess) {
           return jvmName.getDisplayName(debugProcess);
         }
@@ -151,6 +153,7 @@ public class JVMNameUtil {
 
       return new JVMName() {
         String myName = null;
+        @Override
         public String getName(DebugProcessImpl process) throws EvaluateException {
           if(myName == null){
             String name = "";
@@ -162,6 +165,7 @@ public class JVMNameUtil {
           return myName;
         }
 
+        @Override
         public String getDisplayName(DebugProcessImpl debugProcess) {
           if(myName == null) {
             String displayName = "";
@@ -183,10 +187,12 @@ public class JVMNameUtil {
       myText = text;
     }
 
+    @Override
     public String getName(DebugProcessImpl process) throws EvaluateException {
       return myText;
     }
 
+    @Override
     public String getDisplayName(DebugProcessImpl debugProcess) {
       return myText;
     }
@@ -212,6 +218,7 @@ public class JVMNameUtil {
       mySourcePosition = sourcePosition;
     }
 
+    @Override
     public String getName(DebugProcessImpl process) throws EvaluateException {
       List<ReferenceType> allClasses = process.getPositionManager().getAllClasses(mySourcePosition);
       // If there are more than one available, try to match by name
@@ -230,6 +237,7 @@ public class JVMNameUtil {
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("error.class.not.loaded", getDisplayName(process)));
     }
 
+    @Override
     public String getDisplayName(final DebugProcessImpl debugProcess) {
       return ReadAction.compute(() -> getSourcePositionClassDisplayName(debugProcess, mySourcePosition));
     }
@@ -253,7 +261,7 @@ public class JVMNameUtil {
     PsiClass psiClass = PsiUtil.resolveClassInType(psiType);
     if (psiClass == null) {
       return getJVMRawText(psiType.getCanonicalText());
-    } 
+    }
     else {
       return getJVMQualifiedName(psiClass);
     }
@@ -403,15 +411,16 @@ public class JVMNameUtil {
     if (parent == null) {
       return null;
     }
-    
+
     final String name = aClass.getName();
     if (name != null) {
       return calcClassDisplayName(parent) + "$" + name;
     }
-    
+
     final Ref<Integer> classIndex = new Ref<>(0);
     try {
         parent.accept(new JavaRecursiveElementVisitor() {
+          @Override
           public void visitAnonymousClass(PsiAnonymousClass cls) {
             classIndex.set(classIndex.get() + 1);
             if (aClass.equals(cls)) {

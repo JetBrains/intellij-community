@@ -93,6 +93,7 @@ public class SvnBranchPointsCalculator {
   }
 
   private static class BranchDataExternalizer implements DataExternalizer<TreeMap<String, BranchCopyData>> {
+    @Override
     public void save(@NotNull DataOutput out, @NotNull TreeMap<String, BranchCopyData> value) throws IOException {
       out.writeInt(value.size());
       for (Map.Entry<String, BranchCopyData> entry : value.entrySet()) {
@@ -108,6 +109,7 @@ public class SvnBranchPointsCalculator {
       out.writeLong(value.getTargetRevision());
     }
 
+    @Override
     @NotNull
     public TreeMap<String, BranchCopyData> read(@NotNull DataInput in) throws IOException {
       TreeMap<String, BranchCopyData> result = newTreeMap();

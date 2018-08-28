@@ -78,7 +78,7 @@ public class ExecutionNode extends CachingSimpleNode {
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
     setIcon(getCurrentIcon());
     presentation.setPresentableText(myName);
     presentation.setIcon(getIcon());

@@ -2310,7 +2310,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
   }
 
   @Override
-  public void iterateIndexableFilesConcurrently(@NotNull ContentIterator processor, @NotNull Project project, ProgressIndicator indicator) {
+  public void iterateIndexableFilesConcurrently(@NotNull ContentIterator processor, @NotNull Project project, @NotNull ProgressIndicator indicator) {
     PushedFilePropertiesUpdaterImpl.invokeConcurrentlyIfPossible(collectScanRootRunnables(processor, project, indicator));
   }
 

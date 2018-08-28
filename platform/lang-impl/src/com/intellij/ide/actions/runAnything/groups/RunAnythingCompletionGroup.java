@@ -35,9 +35,9 @@ public class RunAnythingCompletionGroup<V, P extends RunAnythingProvider<V>> ext
 
   @NotNull
   @Override
-  public Collection<RunAnythingItem> getGroupItems(@NotNull DataContext dataContext) {
+  public Collection<RunAnythingItem> getGroupItems(@NotNull DataContext dataContext, @NotNull String pattern) {
     P provider = getProvider();
-    return provider.getValues(dataContext).stream().map(value -> provider.getMainListItem(dataContext, value)).collect(Collectors.toList());
+    return provider.getValues(dataContext, pattern).stream().map(value -> provider.getMainListItem(dataContext, value)).collect(Collectors.toList());
   }
 
   public static Collection<RunAnythingGroup> createCompletionGroups() {

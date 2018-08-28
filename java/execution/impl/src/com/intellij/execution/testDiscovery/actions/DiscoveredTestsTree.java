@@ -149,7 +149,7 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       TreePath[] paths = getSelectionModel().getSelectionPaths();
       List<PsiElement> result = ContainerUtil.newSmartList();

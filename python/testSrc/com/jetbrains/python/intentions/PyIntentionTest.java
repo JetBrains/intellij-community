@@ -352,6 +352,22 @@ public class  PyIntentionTest extends PyTestCase {
     doDocParamTypeTest(DocStringFormat.REST);
   }
 
+  public void testParamTypeInDocstringNotSuggestedForSelf() {
+    doNegativeTest(PyBundle.message("INTN.specify.type"));
+  }
+
+  public void testParamTypeInAnnotationNotSuggestedForSelf() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doNegativeTest(PyBundle.message("INTN.specify.type.in.annotation")));
+  }
+
+  public void testParamTypeInDocstringNotSuggestedForLambda() {
+    doNegativeTest(PyBundle.message("INTN.specify.type"));
+  }
+
+  public void testParamTypeInAnnotationNotSuggestedForLambda() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doNegativeTest(PyBundle.message("INTN.specify.type.in.annotation")));
+  }
+
   // PY-16456
   public void testReturnTypeInDocStringDifferentIndentationSize() {
     doDocReturnTypeTest(DocStringFormat.REST);

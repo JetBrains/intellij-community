@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner.history.actions;
 
 import com.intellij.execution.*;
@@ -90,33 +76,34 @@ public abstract class AbstractImportTestsAction extends AnAction {
     final Project project = e.getProject();
     LOG.assertTrue(project != null);
     final VirtualFile file = getFile(project);
-    if (file != null) {
-      try {
-        final ImportRunProfile profile = new ImportRunProfile(file, project);
-        SMTRunnerConsoleProperties properties = profile.getProperties();
-        if (properties == null) {
-          properties = myProperties;
-          LOG.info("Failed to detect test framework in " + file.getPath() +
-                   "; use " + (properties != null ? properties.getTestFrameworkName() + " from toolbar" : "no properties"));
-        }
-        final Executor executor = properties != null ? properties.getExecutor()
-                                                     : ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID);
-        ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.create(project, executor, profile);
-        ExecutionTarget target = profile.getTarget();
-        if (target != null) {
-          builder = builder.target(target);
-        }
-        final RunConfiguration initialConfiguration = profile.getInitialConfiguration();
-        final ProgramRunner runner =
-          initialConfiguration != null ? RunnerRegistry.getInstance().getRunner(executor.getId(), initialConfiguration) : null;
-        if (runner != null) {
-          builder = builder.runner(runner);
-        }
-        builder.buildAndExecute();
+    if (file == null) {
+      return;
+    }
+
+    try {
+      final ImportRunProfile profile = new ImportRunProfile(file, project);
+      SMTRunnerConsoleProperties properties = profile.getProperties();
+      if (properties == null) {
+        properties = myProperties;
+        LOG.info("Failed to detect test framework in " + file.getPath() +
+                 "; use " + (properties != null ? properties.getTestFrameworkName() + " from toolbar" : "no properties"));
       }
-      catch (ExecutionException e1) {
-        Messages.showErrorDialog(project, e1.getMessage(), "Import Failed");
+      final Executor executor = properties != null ? properties.getExecutor()
+                                                   : ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID);
+      ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.create(project, executor, profile);
+      ExecutionTarget target = profile.getTarget();
+      if (target != null) {
+        builder = builder.target(target);
       }
+      final RunConfiguration initialConfiguration = profile.getInitialConfiguration();
+      final ProgramRunner runner = initialConfiguration != null ? ProgramRunner.getRunner(executor.getId(), initialConfiguration) : null;
+      if (runner != null) {
+        builder.runner(runner);
+      }
+      builder.buildAndExecute();
+    }
+    catch (ExecutionException e1) {
+      Messages.showErrorDialog(project, e1.getMessage(), "Import Failed");
     }
   }
 
@@ -177,8 +164,7 @@ public abstract class AbstractImportTestsAction extends AnAction {
         if (DefaultExecutionTarget.INSTANCE.getId().equals(myTargetId)) {
           return DefaultExecutionTarget.INSTANCE;
         }
-        final RunnerAndConfigurationSettingsImpl settings =
-          new RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(myProject), myConfiguration, false);
+        final RunnerAndConfigurationSettingsImpl settings = new RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(myProject), myConfiguration, false);
         for (ExecutionTargetProvider provider : Extensions.getExtensions(ExecutionTargetProvider.EXTENSION_NAME)) {
           for (ExecutionTarget target : provider.getTargets(myProject, settings)) {
             if (myTargetId.equals(target.getId())) {

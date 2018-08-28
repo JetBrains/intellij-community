@@ -89,7 +89,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
   }
 
   @Override
-  public Object getData(final String dataId) {
+  public Object getData(@NotNull final String dataId) {
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       final PackageElement selectedPackageElement = getSelectedPackageElement();
       if (selectedPackageElement != null) {
@@ -168,7 +168,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
     @Override
     public void setSelected(AnActionEvent event, boolean flag) {
       final ProjectViewImpl projectView = (ProjectViewImpl)ProjectView.getInstance(myProject);
-      projectView.setShowLibraryContents(flag, getId());
+      projectView.setShowLibraryContents(getId(), flag);
     }
 
     @Override
@@ -189,8 +189,9 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
     if (editScopesAction != null) actionGroup.addAction(editScopesAction).setAsSecondary(true);
   }
 
+  @NotNull
   @Override
-  protected AbstractTreeUpdater createTreeUpdater(AbstractTreeBuilder treeBuilder) {
+  protected AbstractTreeUpdater createTreeUpdater(@NotNull AbstractTreeBuilder treeBuilder) {
     return new PackageViewTreeUpdater(treeBuilder);
   }
 
@@ -199,6 +200,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
     return new PackagesPaneSelectInTarget(myProject);
   }
 
+  @NotNull
   @Override
   protected ProjectAbstractTreeStructureBase createStructure() {
     return new ProjectTreeStructure(myProject, ID){
@@ -214,8 +216,9 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
     };
   }
 
+  @NotNull
   @Override
-  protected ProjectViewTree createTree(DefaultTreeModel treeModel) {
+  protected ProjectViewTree createTree(@NotNull DefaultTreeModel treeModel) {
     return new ProjectViewTree(treeModel) {
       public String toString() {
         return getTitle() + " " + super.toString();
@@ -338,7 +341,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
   }
 
   @Override
-  protected BaseProjectTreeBuilder createBuilder(DefaultTreeModel model) {
+  protected BaseProjectTreeBuilder createBuilder(@NotNull DefaultTreeModel model) {
     return null;
   }
 }

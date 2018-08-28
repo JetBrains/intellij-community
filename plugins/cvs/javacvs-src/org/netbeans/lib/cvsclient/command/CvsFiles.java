@@ -38,7 +38,8 @@ final class CvsFiles
 
 	// Implemented ============================================================
 
-	public void visit(ICvsFilesVisitor visitor) {
+	@Override
+        public void visit(ICvsFilesVisitor visitor) {
 		BugLog.getInstance().assertNotNull(visitor);
 
 		for (Iterator it = cvsFiles.iterator(); it.hasNext();) {

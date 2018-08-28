@@ -24,7 +24,7 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
   }
 
   @Override
-  public void moveTextHappened(int start, int end, int newBase) {
+  public void moveTextHappened(@NotNull Document document, int start, int end, int newBase) {
     reTarget(start, end, newBase);
   }
 
@@ -34,7 +34,7 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
   }
 
   @Override
-  public void documentChanged(DocumentEvent event) {
+  public void documentChanged(@NotNull DocumentEvent event) {
     updateMarkersOnChange(event);
   }
 
@@ -57,8 +57,8 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
 
     boolean stickyR1 = o1.isStickingToRight();
     boolean stickyR2 = o2.isStickingToRight();
-    if (stickyR1 != stickyR2) return stickyR1 ? -1 : 1; 
-                                     
+    if (stickyR1 != stickyR2) return stickyR1 ? -1 : 1;
+
     return 0;
   }
 
@@ -69,7 +69,7 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
   private static final int DUPLICATE_LIMIT = 30; // assertion: no more than DUPLICATE_LIMIT range markers are allowed to be registered at given (start, end)
   @NotNull
   @Override
-  public RMNode<T> addInterval(@NotNull T interval, int start, int end, 
+  public RMNode<T> addInterval(@NotNull T interval, int start, int end,
                                boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
     ((RangeMarkerImpl)interval).setValid(true);
     RMNode<T> node = (RMNode<T>)super.addInterval(interval, start, end, greedyToLeft, greedyToRight, stickingToRight, layer);
@@ -104,7 +104,7 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
 
   @NotNull
   @Override
-  protected RMNode<T> createNewNode(@NotNull T key, int start, int end, 
+  protected RMNode<T> createNewNode(@NotNull T key, int start, int end,
                                     boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
     return new RMNode<>(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight);
   }

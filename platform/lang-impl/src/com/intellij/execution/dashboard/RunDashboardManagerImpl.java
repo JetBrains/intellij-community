@@ -432,7 +432,14 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
           for (Content dashboardContent : myContentManager.getContents()) {
             addToolWindowContent(dashboardContent);
           }
-          Content contentToSelect = myDashboardToToolWindowContents.get(myContentManager.getSelectedContent());
+          Content dashboardSelectedContent = myContentManager.getSelectedContent();
+          if (dashboardSelectedContent == null && myContentManager.getContentCount() > 0) {
+            dashboardSelectedContent = myContentManager.getContent(0);
+            if (dashboardSelectedContent != null) {
+              myContentManager.setSelectedContent(dashboardSelectedContent);
+            }
+          }
+          Content contentToSelect = myDashboardToToolWindowContents.get(dashboardSelectedContent);
           if (contentToSelect != null) {
             myToolWindowContentManager.setSelectedContent(contentToSelect, true);
           }

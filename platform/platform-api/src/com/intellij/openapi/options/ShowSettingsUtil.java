@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 public abstract class ShowSettingsUtil {
   public static ShowSettingsUtil getInstance() {
@@ -41,7 +42,11 @@ public abstract class ShowSettingsUtil {
   public abstract <T extends Configurable> void showSettingsDialog(@Nullable Project project,
                                                                    @NotNull Class<T> configurableClass,
                                                                    @Nullable Consumer<T> additionalConfiguration);
-  
+
+  public abstract void showSettingsDialog(@Nullable Project project,
+                                          @NotNull Predicate<Configurable> predicate,
+                                          @Nullable Consumer<Configurable> additionalConfiguration);
+
   public abstract boolean editConfigurable(Project project, Configurable configurable);
 
   public abstract boolean editConfigurable(@Nullable Project project, Configurable configurable, @Nullable Runnable advancedInitialization);

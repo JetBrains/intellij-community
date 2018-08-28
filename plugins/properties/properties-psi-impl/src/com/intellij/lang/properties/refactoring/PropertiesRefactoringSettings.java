@@ -16,10 +16,12 @@ public class PropertiesRefactoringSettings implements PersistentStateComponent<P
     return ServiceManager.getService(PropertiesRefactoringSettings.class);
   }
 
+  @Override
   public PropertiesRefactoringSettings getState() {
     return this;
   }
 
+  @Override
   public void loadState(@NotNull PropertiesRefactoringSettings state) {
     XmlSerializerUtil.copyBean(state, this);
   }

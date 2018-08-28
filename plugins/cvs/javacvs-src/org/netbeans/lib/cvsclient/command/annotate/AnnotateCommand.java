@@ -13,13 +13,14 @@
 
 package org.netbeans.lib.cvsclient.command.annotate;
 
+import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IRequestProcessor;
-import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.command.AbstractCommand;
 import org.netbeans.lib.cvsclient.command.CommandException;
 import org.netbeans.lib.cvsclient.command.ICvsFiles;
 import org.netbeans.lib.cvsclient.command.IOCommandException;
+import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.event.ICvsListener;
 import org.netbeans.lib.cvsclient.event.ICvsListenerRegistry;
 import org.netbeans.lib.cvsclient.event.IEventSender;
@@ -27,7 +28,6 @@ import org.netbeans.lib.cvsclient.progress.IProgressViewer;
 import org.netbeans.lib.cvsclient.progress.sending.FileStateRequestsProgressHandler;
 import org.netbeans.lib.cvsclient.request.CommandRequest;
 import org.netbeans.lib.cvsclient.request.Requests;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 
@@ -51,6 +51,7 @@ public final class AnnotateCommand extends AbstractCommand {
 
   // Implemented ============================================================
 
+  @Override
   public boolean execute(IRequestProcessor requestProcessor, IEventSender eventManager, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException,
                                                                                                                                                                                                             AuthenticationException {
     final ICvsFiles cvsFiles;
@@ -80,6 +81,7 @@ public final class AnnotateCommand extends AbstractCommand {
     }
   }
 
+  @Override
   public void resetCvsCommand() {
     super.resetCvsCommand();
     setRecursive(true);
@@ -89,6 +91,7 @@ public final class AnnotateCommand extends AbstractCommand {
     setAnnotateBinary(false);
   }
 
+  @Override
   public String getCvsCommandLine() {
     @NonNls final StringBuffer cvsCommandLine = new StringBuffer("annotate ");
     cvsCommandLine.append(getCvsArguments());

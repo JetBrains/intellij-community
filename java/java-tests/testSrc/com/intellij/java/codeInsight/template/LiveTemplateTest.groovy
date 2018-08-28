@@ -956,7 +956,7 @@ class Foo {
   void "test finish template on moving caret by completion insert handler"() {
     TemplateManagerImpl templateManager = TemplateManager.getInstance(project) as TemplateManagerImpl
     myFixture.configureByText('a.html', '<selection><p></p></selection>')
-    def template = TemplateSettings.instance.getTemplate("T2", "html/xml")
+    def template = TemplateSettings.instance.getTemplate("T", "HTML/XML")
     myFixture.testAction(new InvokeTemplateAction(template, myFixture.editor, myFixture.project, ContainerUtil.newHashSet()))
     myFixture.complete(CompletionType.BASIC)
     myFixture.type("nofra")

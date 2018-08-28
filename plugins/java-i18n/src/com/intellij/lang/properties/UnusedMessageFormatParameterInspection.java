@@ -37,17 +37,20 @@ import java.util.Set;
 public class UnusedMessageFormatParameterInspection extends PropertiesInspectionBase {
   public static final String REGEXP = "regexp";
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return PropertiesBundle.message("unused.message.format.parameter.display.name");
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getShortName() {
     return "UnusedMessageFormatParameter";
   }
 
+  @Override
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (!(file instanceof PropertiesFile)) return null;

@@ -68,6 +68,7 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
     final CvsActionVisibility visibility = getVisibility();
     visibility.addCondition(FILES_ARENT_UNDER_CVS);
   }
+  @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     if (!e.getPresentation().isVisible()) return;
@@ -76,10 +77,12 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
     adjustName(CvsVcs2.getInstance(project).getAddOptions().getValue(), e);
   }
 
+  @Override
   protected String getTitle(VcsContext context) {
     return myTitle;
   }
 
+  @Override
   protected CvsHandler getCvsHandler(CvsContext context) {
     final Project project = context.getProject();
     final boolean showDialog = myOptions.isToBeShown(project) || OptionsDialog.shiftIsPressed(context.getModifiers());
@@ -127,7 +130,7 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
         dirtyScopeManager.dirDirtyRecursively(file);
       }
       else {
-        dirtyScopeManager.fileDirty(file);        
+        dirtyScopeManager.fileDirty(file);
       }
     }
   }

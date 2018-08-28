@@ -100,7 +100,7 @@ public class ResourceBundleEditorShowQuickFixesAction extends AnAction {
                                              editor.getSelectedElementIfOnlyOne() instanceof ResourceBundlePropertyStructureViewElement);
   }
 
-  private static ResourceBundleEditor getEditor(AnActionEvent e) {
+  private static ResourceBundleEditor getEditor(@NotNull AnActionEvent e) {
     final FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(e.getDataContext());
     return editor instanceof ResourceBundleEditor ? (ResourceBundleEditor)editor : null;
   }

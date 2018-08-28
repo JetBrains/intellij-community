@@ -45,6 +45,7 @@ public class CreateRendererAction extends AnAction {
     }
   }
 
+  @Override
   public void actionPerformed(@NotNull final AnActionEvent event) {
     final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(event.getDataContext());
     final List<JavaValue> values = ViewAsGroup.getSelectedValues(event);

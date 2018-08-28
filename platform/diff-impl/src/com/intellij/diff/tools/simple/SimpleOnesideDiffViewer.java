@@ -185,7 +185,7 @@ public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (DiffDataKeys.CURRENT_CHANGE_RANGE.is(dataId)) {
       int lineCount = getLineCount(getEditor().getDocument());
       return new LineRange(0, lineCount);

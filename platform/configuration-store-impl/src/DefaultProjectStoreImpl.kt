@@ -75,8 +75,6 @@ class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pat
 
     override fun getStateStorage(storageSpec: Storage) = storage
 
-    override fun startExternalization() = storage.startExternalization()?.let(::MyExternalizationSession)
-
     override fun expandMacros(path: String) = throw UnsupportedOperationException()
 
     override fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation) = storage
@@ -93,18 +91,6 @@ class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pat
 
   override fun setPath(path: String) {
   }
-}
-
-private class MyExternalizationSession(val externalizationSession: StateStorage.ExternalizationSession) : StateStorageManager.ExternalizationSession {
-  override fun setState(storageSpecs: List<Storage>, component: Any, componentName: String, state: Any) {
-    externalizationSession.setState(component, componentName, state)
-  }
-
-  override fun setStateInOldStorage(component: Any, componentName: String, state: Any) {
-    externalizationSession.setState(component, componentName, state)
-  }
-
-  override fun createSaveSessions() = listOfNotNull(externalizationSession.createSaveSession())
 }
 
 // ExportSettingsAction checks only "State" annotation presence, but doesn't require PersistentStateComponent implementation, so, we can just specify annotation

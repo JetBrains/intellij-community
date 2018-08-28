@@ -47,6 +47,7 @@ import java.util.Map;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public final class EditExternallyAction extends AnAction {
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
@@ -100,13 +101,14 @@ public final class EditExternallyAction extends AnAction {
     }
   }
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
 
     doUpdate(e);
   }
 
-  static void doUpdate(AnActionEvent e) {
+  static void doUpdate(@NotNull AnActionEvent e) {
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     final boolean isEnabled = isImages(files);
     if (e.getPlace().equals(ActionPlaces.PROJECT_VIEW_POPUP)) {

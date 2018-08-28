@@ -20,11 +20,13 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrMultiSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrRecursiveSignatureVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
@@ -597,7 +599,13 @@ public class GrClosureSignatureUtil {
     final GrClosureSignature signature;
     final PsiParameter[] parameters;
     final PsiElement element = resolveResult.getElement();
-    final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+    PsiSubstitutor substitutor;
+    if (resolveResult instanceof GroovyMethodResult) {
+      substitutor = ((GroovyMethodResult)resolveResult).getSubstitutor(false);
+    }
+    else {
+      substitutor = resolveResult.getSubstitutor();
+    }
     if (element instanceof PsiMethod) {
       signature = createSignature((PsiMethod)element, substitutor, eraseArgs);
       parameters = ((PsiMethod)element).getParameterList().getParameters();
@@ -962,5 +970,22 @@ public class GrClosureSignatureUtil {
       }
     });
     return result;
+  }
+
+  @Nullable
+  public static GrMethodCall findCall(@NotNull GrClosableBlock closure) {
+    PsiElement parent = closure.getParent();
+    if (parent instanceof GrMethodCall && ArrayUtil.contains(closure, ((GrMethodCall)parent).getClosureArguments())) {
+      return (GrMethodCall)parent;
+    }
+
+    if (parent instanceof GrArgumentList) {
+      PsiElement grandparent = parent.getParent();
+      if (grandparent instanceof GrMethodCall) {
+        return (GrMethodCall)grandparent;
+      }
+    }
+
+    return null;
   }
 }

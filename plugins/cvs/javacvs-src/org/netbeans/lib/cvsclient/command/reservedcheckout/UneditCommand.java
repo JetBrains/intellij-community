@@ -12,11 +12,12 @@
  */
 package org.netbeans.lib.cvsclient.command.reservedcheckout;
 
+import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IRequestProcessor;
-import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.*;
+import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.event.ICvsListenerRegistry;
 import org.netbeans.lib.cvsclient.event.IEventSender;
 import org.netbeans.lib.cvsclient.file.FileObject;
@@ -24,7 +25,6 @@ import org.netbeans.lib.cvsclient.progress.IProgressViewer;
 import org.netbeans.lib.cvsclient.progress.sending.FileStateRequestsProgressHandler;
 import org.netbeans.lib.cvsclient.request.CommandRequest;
 import org.netbeans.lib.cvsclient.request.Requests;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 
@@ -44,7 +44,8 @@ public final class UneditCommand extends AbstractCommand {
 
 	// Implemented ============================================================
 
-	public boolean execute(IRequestProcessor requestProcessor, IEventSender eventManager, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException,
+	@Override
+        public boolean execute(IRequestProcessor requestProcessor, IEventSender eventManager, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException,
                                                                                                                                                                                                                   AuthenticationException {
 		final ICvsFiles cvsFiles;
 		try {
@@ -61,7 +62,8 @@ public final class UneditCommand extends AbstractCommand {
 		return requestProcessor.processRequests(requests, FileStateRequestsProgressHandler.create(progressViewer, cvsFiles));
 	}
 
-	protected void addRequestForFile(FileObject fileObject, Entry entry, boolean fileExists, Requests requests, IClientEnvironment clientEnvironment) {
+	@Override
+        protected void addRequestForFile(FileObject fileObject, Entry entry, boolean fileExists, Requests requests, IClientEnvironment clientEnvironment) {
 		if (!fileExists || entry == null) {
 			return;
 		}
@@ -76,14 +78,16 @@ public final class UneditCommand extends AbstractCommand {
 		}
 	}
 
-	public String getCvsCommandLine() {
+	@Override
+        public String getCvsCommandLine() {
 		@NonNls final StringBuffer cvsCommandLine = new StringBuffer("unedit ");
 		cvsCommandLine.append(getCVSArguments());
 		appendFileArguments(cvsCommandLine);
 		return cvsCommandLine.toString();
 	}
 
-	public void resetCvsCommand() {
+	@Override
+        public void resetCvsCommand() {
 		super.resetCvsCommand();
 		setRecursive(true);
 	}

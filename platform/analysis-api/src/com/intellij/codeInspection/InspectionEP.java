@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -185,6 +186,18 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
   @Attribute("isInternal") 
   public boolean isInternal;
 
+  /**
+   * First IDE version when the inspection was introduced (e.g. "2018.2")
+   */
+  @Attribute("since")
+  public String since;
+
+  @NotNull
+  @NonNls
+  public String getSinceVersion() {
+    return StringUtil.notNullize(since);
+  }
+
   @Override
   public String toString() {
     return "InspectionEP{" +
@@ -203,6 +216,7 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
            ", hasStaticDescription=" + hasStaticDescription +
            ", presentation='" + presentation + '\'' +
            ", isInternal=" + isInternal +
+           ", since='" + since + '\'' +
            '}';
   }
 }

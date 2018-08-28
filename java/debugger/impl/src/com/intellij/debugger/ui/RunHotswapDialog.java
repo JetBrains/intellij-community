@@ -56,10 +56,12 @@ public class RunHotswapDialog extends OptionsDialog {
     this.init();
   }
 
+  @Override
   protected boolean isToBeShown() {
     return DebuggerSettings.RUN_HOTSWAP_ASK.equals(DebuggerSettings.getInstance().RUN_HOTSWAP_AFTER_COMPILE);
   }
 
+  @Override
   protected void setToBeShown(boolean value, boolean onOk) {
     if (value) {
       DebuggerSettings.getInstance().RUN_HOTSWAP_AFTER_COMPILE = DebuggerSettings.RUN_HOTSWAP_ASK;
@@ -74,10 +76,12 @@ public class RunHotswapDialog extends OptionsDialog {
     }
   }
 
+  @Override
   protected boolean shouldSaveOptionsOnCancel() {
     return true;
   }
 
+  @Override
   @NotNull
   protected Action[] createActions(){
     setOKButtonText(CommonBundle.getYesButtonText());
@@ -85,6 +89,7 @@ public class RunHotswapDialog extends OptionsDialog {
     return new Action[]{getOKAction(), getCancelAction()};
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     JLabel label = new JLabel(DebuggerBundle.message("hotswap.dialog.run.prompt"));
     JPanel panel = new JPanel(new BorderLayout());
@@ -100,6 +105,7 @@ public class RunHotswapDialog extends OptionsDialog {
     return panel;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myPanel;
   }

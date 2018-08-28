@@ -5,7 +5,7 @@ Groovy script
     PsiWhiteSpace(' ')
     Command arguments
       Literal
-        PsiElement(string)(''a'')
+        PsiElement(single quoted string)(''a'')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
       Closable block
@@ -21,7 +21,7 @@ Groovy script
     PsiWhiteSpace(' ')
     Command arguments
       Literal
-        PsiElement(string)(''a'')
+        PsiElement(single quoted string)(''a'')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
       Closable block

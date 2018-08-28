@@ -127,7 +127,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
 
         myDocument.addDocumentListener(new DocumentListener() {
             @Override
-            public void documentChanged(DocumentEvent e) {
+            public void documentChanged(@NotNull DocumentEvent e) {
                 updateOkAction();
             }
         });
@@ -298,7 +298,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
         // not sure why this is required...
         assert document != null;
         document.setReadOnly(false);
-        
+
         assert document.isWritable() : "WTF, document is not writable? Text = <" + expression + ">";
         return document;
     }

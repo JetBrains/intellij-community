@@ -32,6 +32,7 @@ public class CollapseAllAction extends AnAction implements DumbAware {
     myTree = tree;
   }
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     int row = getTree().getRowCount() - 1;
     while (row >= 0) {

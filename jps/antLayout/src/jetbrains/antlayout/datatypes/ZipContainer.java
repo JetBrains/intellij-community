@@ -15,10 +15,10 @@
  */
 package jetbrains.antlayout.datatypes;
 
-import jetbrains.antlayout.util.TempFileFactory;
 import jetbrains.antlayout.util.LayoutFileSet;
-import org.apache.tools.ant.taskdefs.Zip;
+import jetbrains.antlayout.util.TempFileFactory;
 import org.apache.tools.ant.BuildException;
+import org.apache.tools.ant.taskdefs.Zip;
 
 import java.io.File;
 import java.util.Arrays;
@@ -43,6 +43,7 @@ public class ZipContainer extends Container {
         this.name = name;
     }
 
+    @Override
     public List<LayoutFileSet> build(TempFileFactory temp) {
         List<LayoutFileSet> built = super.build(temp);
         File dest = temp.allocateTempFile(name);
@@ -88,6 +89,7 @@ public class ZipContainer extends Container {
         task.setBasedir(baseDir);
     }
 
+    @Override
     public void validateArguments() throws BuildException {
         super.validateArguments();
 

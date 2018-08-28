@@ -3,6 +3,6 @@
 <problem>
   <file>Test.java</file>
   <line>4</line>
-  <description>Dereference of 'path' may produce java.lang.NullPointerException</description>
+  <description>Dereference of 'path' may produce NullPointerException</description>
 </problem>
 </problems>

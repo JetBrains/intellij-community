@@ -9,7 +9,7 @@ import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.*;
-import com.intellij.codeInspection.java15api.Java15APIUsageInspectionBase;
+import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -478,7 +478,7 @@ public class JavaCompletionUtil {
 
   private static boolean shouldMarkRed(@NotNull Object object, @NotNull PsiElement place) {
     if (!(object instanceof PsiMember)) return false;
-    if (Java15APIUsageInspectionBase.getLastIncompatibleLanguageLevel((PsiMember)object, PsiUtil.getLanguageLevel(place)) != null) return true;
+    if (Java15APIUsageInspection.getLastIncompatibleLanguageLevel((PsiMember)object, PsiUtil.getLanguageLevel(place)) != null) return true;
 
     if (object instanceof PsiEnumConstant) {
       return findConstantsUsedInSwitch(place).contains(CompletionUtil.getOriginalOrSelf((PsiEnumConstant)object));

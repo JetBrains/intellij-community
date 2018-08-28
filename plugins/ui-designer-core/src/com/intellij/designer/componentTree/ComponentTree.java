@@ -36,6 +36,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -123,7 +124,7 @@ public final class ComponentTree extends Tree implements DataProvider {
   }
 
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (EditableArea.DATA_KEY.is(dataId)) {
       return myArea;
     }

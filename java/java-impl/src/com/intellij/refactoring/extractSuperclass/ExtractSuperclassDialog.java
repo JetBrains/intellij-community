@@ -38,6 +38,7 @@ import java.util.List;
 
 class ExtractSuperclassDialog extends JavaExtractSuperBaseDialog {
   private final InterfaceContainmentVerifier myContainmentVerifier = new InterfaceContainmentVerifier() {
+    @Override
     public boolean checkedInterfacesContain(PsiMethod psiMethod) {
       return PullUpProcessor.checkedInterfacesContain(myMemberInfos, psiMethod);
     }
@@ -59,6 +60,7 @@ class ExtractSuperclassDialog extends JavaExtractSuperBaseDialog {
     return myContainmentVerifier;
   }
 
+  @Override
   protected String getClassNameLabelText() {
     return isExtractSuperclass()
            ? RefactoringBundle.message("superclass.name")
@@ -72,6 +74,7 @@ class ExtractSuperclassDialog extends JavaExtractSuperBaseDialog {
            : RefactoringBundle.message("package.for.original.class");
   }
 
+  @Override
   protected String getEntityName() {
     return RefactoringBundle.message("ExtractSuperClass.superclass");
   }
@@ -81,6 +84,7 @@ class ExtractSuperclassDialog extends JavaExtractSuperBaseDialog {
     return RefactoringBundle.message("extract.superclass.from");
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
     final MemberSelectionPanel memberSelectionPanel = new MemberSelectionPanel(RefactoringBundle.message("members.to.form.superclass"),

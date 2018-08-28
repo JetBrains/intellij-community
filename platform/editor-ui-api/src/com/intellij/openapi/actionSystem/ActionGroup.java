@@ -88,7 +88,7 @@ public abstract class ActionGroup extends AnAction {
   /**
    * @return true if {@link #actionPerformed(AnActionEvent)} should be called
    */
-  public boolean canBePerformed(DataContext context) {
+  public boolean canBePerformed(@NotNull DataContext context) {
     return false;
   }
 
@@ -112,11 +112,11 @@ public abstract class ActionGroup extends AnAction {
     firePropertyChange(PROP_POPUP, oldPopup, myPopup);
   }
 
-  public final void addPropertyChangeListener(PropertyChangeListener l){
+  public final void addPropertyChangeListener(@NotNull PropertyChangeListener l){
     myChangeSupport.addPropertyChangeListener(l);
   }
 
-  public final void removePropertyChangeListener(PropertyChangeListener l){
+  public final void removePropertyChangeListener(@NotNull PropertyChangeListener l){
     myChangeSupport.removePropertyChangeListener(l);
   }
 
@@ -146,11 +146,11 @@ public abstract class ActionGroup extends AnAction {
     }
   }
 
-  public final boolean isPrimary(AnAction action) {
+  public final boolean isPrimary(@NotNull AnAction action) {
     return mySecondaryActions == null || !mySecondaryActions.contains(action);
   }
 
-  protected final void replace(AnAction originalAction, AnAction newAction) {
+  protected final void replace(@NotNull AnAction originalAction, @NotNull AnAction newAction) {
     if (mySecondaryActions != null) {
       if (mySecondaryActions.contains(originalAction)) {
         mySecondaryActions.remove(originalAction);

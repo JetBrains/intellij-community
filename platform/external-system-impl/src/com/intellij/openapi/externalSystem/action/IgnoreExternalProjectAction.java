@@ -31,6 +31,7 @@ import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.externalSystem.view.ModuleNode;
 import com.intellij.openapi.externalSystem.view.ProjectNode;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -73,7 +74,7 @@ public class IgnoreExternalProjectAction extends ExternalSystemToggleAction {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     boolean selected = super.isSelected(e);
     ProjectSystemId systemId = getSystemId(e);
     final String systemIdName = systemId != null ? systemId.getReadableName() : "external";
@@ -89,20 +90,20 @@ public class IgnoreExternalProjectAction extends ExternalSystemToggleAction {
   }
 
   @Override
-  protected boolean isEnabled(AnActionEvent e) {
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
     if (!super.isEnabled(e)) return false;
     return getProjectNode(e) != null;
   }
 
   @Override
-  protected boolean doIsSelected(AnActionEvent e) {
+  protected boolean doIsSelected(@NotNull AnActionEvent e) {
     final ExternalSystemNode projectNode = getProjectNode(e);
     if (projectNode == null) return false;
     return projectNode.isIgnored();
   }
 
   @Nullable
-  private static ExternalSystemNode<ExternalConfigPathAware> getProjectNode(AnActionEvent e) {
+  private static ExternalSystemNode<ExternalConfigPathAware> getProjectNode(@NotNull AnActionEvent e) {
     final List<ExternalSystemNode> selectedNodes = ExternalSystemDataKeys.SELECTED_NODES.getData(e.getDataContext());
     if (selectedNodes == null || selectedNodes.size() != 1) return null;
     final ExternalSystemNode<?> node = selectedNodes.get(0);

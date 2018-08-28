@@ -65,7 +65,7 @@ public class UngroupConfigurationsActions extends RunDashboardTreeActionImpl<Gro
   }
 
   @Override
-  protected void doActionPerformed(@NotNull RunDashboardContent content, AnActionEvent e, GroupingNode node) {
+  protected void doActionPerformed(@NotNull RunDashboardContent content, @NotNull AnActionEvent e, GroupingNode node) {
     Project project = e.getProject();
     if (project == null) return;
 

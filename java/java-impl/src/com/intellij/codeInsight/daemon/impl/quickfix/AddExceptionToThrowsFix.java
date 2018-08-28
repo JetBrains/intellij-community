@@ -180,9 +180,11 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
     }
     else {
       PsiElement parentStatement = RefactoringUtil.getParentStatement(myWrongElement, false);
-      if (parentStatement instanceof PsiDeclarationStatement && 
-          ((PsiDeclarationStatement)parentStatement).getDeclaredElements()[0] instanceof PsiClass) {
-        return null;
+      if (parentStatement instanceof PsiDeclarationStatement) {
+        PsiElement[] declaredElements = ((PsiDeclarationStatement)parentStatement).getDeclaredElements();
+        if (declaredElements.length > 0 && declaredElements[0] instanceof PsiClass) {
+          return null;
+        }
       }
 
       psiElement = PsiTreeUtil.getParentOfType(myWrongElement, PsiFunctionalExpression.class, PsiMethod.class);

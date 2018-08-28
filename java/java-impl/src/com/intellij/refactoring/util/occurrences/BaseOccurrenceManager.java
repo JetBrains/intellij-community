@@ -36,6 +36,7 @@ public abstract class BaseOccurrenceManager implements OccurrenceManager {
     myFilter = filter;
   }
 
+  @Override
   public PsiExpression[] getOccurrences() {
     if(myOccurrences == null) {
       myOccurrences = findOccurrences();
@@ -64,10 +65,12 @@ public abstract class BaseOccurrenceManager implements OccurrenceManager {
 
   protected abstract PsiExpression[] findOccurrences();
 
+  @Override
   public boolean isInFinalContext() {
     return needToDeclareFinal(myOccurrences);
   }
 
+  @Override
   public PsiElement getAnchorStatementForAll() {
     if(myAnchorStatement == null) {
       myAnchorStatement = getAnchorStatementForAllInScope(null);
@@ -75,6 +78,7 @@ public abstract class BaseOccurrenceManager implements OccurrenceManager {
     return myAnchorStatement;
 
   }
+  @Override
   public PsiElement getAnchorStatementForAllInScope(PsiElement scope) {
     return RefactoringUtil.getAnchorElementForMultipleExpressions(myOccurrences, scope);
   }

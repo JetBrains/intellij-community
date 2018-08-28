@@ -192,11 +192,13 @@ annotation class RunsInActiveStoreMode
 
 class ActiveStoreRule(private val projectRule: ProjectRule) : TestRule {
   override fun apply(base: Statement, description: Description): Statement {
-    return if (description.getOwnOrClassAnnotation(RunsInActiveStoreMode::class.java) == null) {
-      base
+    if (description.getOwnOrClassAnnotation(RunsInActiveStoreMode::class.java) == null) {
+      return base
     }
     else {
-      statement { projectRule.project.runInLoadComponentStateMode { base.evaluate() } }
+      return statement {
+        projectRule.project.runInLoadComponentStateMode { base.evaluate() }
+      }
     }
   }
 }
@@ -247,8 +249,8 @@ class DisposeNonLightProjectsRule : ExternalResource() {
 
 class DisposeModulesRule(private val projectRule: ProjectRule) : ExternalResource() {
   override fun after() {
-    projectRule.projectIfOpened?.let {
-      val moduleManager = ModuleManager.getInstance(it)
+    projectRule.projectIfOpened?.let { project ->
+      val moduleManager = ModuleManager.getInstance(project)
       runInEdtAndWait {
         moduleManager.modules.forEachGuaranteed {
           if (!it.isDisposed && it !== sharedModule) {

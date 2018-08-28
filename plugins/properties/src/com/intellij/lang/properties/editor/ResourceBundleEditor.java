@@ -902,7 +902,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
 
     @Override
     @Nullable
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       return ResourceBundleEditor.this.getData(dataId);
     }
   }

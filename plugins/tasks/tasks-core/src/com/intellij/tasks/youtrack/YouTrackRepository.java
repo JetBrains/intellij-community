@@ -81,6 +81,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
     myDefaultSearch = other.getDefaultSearch();
   }
 
+  @Override
   public Task[] getIssues(@Nullable String request, int max, long since) throws Exception {
 
     String query = getDefaultSearch();
@@ -169,6 +170,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
     return client;
   }
 
+  @Override
   @Nullable
   public Task findTask(@NotNull String id) throws Exception {
     final Element element = fetchRequestAsElement(id);
@@ -275,6 +277,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
         return summary;
       }
 
+      @Override
       public String getDescription() {
         return description;
       }

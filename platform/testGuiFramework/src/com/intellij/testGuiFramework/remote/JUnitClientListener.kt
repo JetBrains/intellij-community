@@ -34,7 +34,7 @@ class JUnitClientListener(private val sendObjectFun: (JUnitInfo) -> Unit) : RunL
   override fun testStarted(description: Description?) {
     description ?: throw Exception("Unable to send notification to JUnitServer that test is starter due to null description!")
     //don't send start state to server if it is a resumed test
-    if (GuiTestOptions.getResumeTestName() != JUnitInfo.getClassAndMethodName(description))
+    if (GuiTestOptions.resumeTestName != JUnitInfo.getClassAndMethodName(description))
       sendObjectFun(JUnitInfo(Type.STARTED, description, JUnitInfo.getClassAndMethodName(description)))
   }
 

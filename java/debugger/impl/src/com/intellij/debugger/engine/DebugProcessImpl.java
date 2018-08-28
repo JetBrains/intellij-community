@@ -13,6 +13,7 @@ import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 import com.intellij.debugger.engine.requests.MethodReturnValueWatcher;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.*;
+import com.intellij.debugger.impl.attach.PidRemoteConnection;
 import com.intellij.debugger.jdi.EmptyConnectorArgument;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
@@ -64,6 +65,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
@@ -82,6 +84,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -202,7 +205,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     Type type = descriptor.getType();
 
     // in case evaluation is not possible, force default renderer
-    if (!DebuggerManagerEx.getInstanceEx(getProject()).getContext().isEvaluationPossible()) {
+    if (!isEvaluationPossible()) {
       return getDefaultRenderer(type);
     }
 
@@ -439,7 +442,28 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
 
       final String address = myConnection.getAddress();
-      if (myConnection.isServerMode()) {
+
+      if (myConnection instanceof PidRemoteConnection) {
+        PidRemoteConnection pidRemoteConnection = (PidRemoteConnection)myConnection;
+        AttachingConnector connector = pidRemoteConnection.getConnector();
+        String pid = pidRemoteConnection.getPid();
+        if (StringUtil.isEmpty(pid)) {
+          throw new CantRunException(DebuggerBundle.message("error.no.pid"));
+        }
+        myArguments = connector.defaultArguments();
+        Connector.Argument pidArg = myArguments.get("pid");
+        if (pidArg != null) {
+          pidArg.setValue(pid);
+        }
+        myDebugProcessDispatcher.getMulticaster().connectorIsReady();
+        try {
+          return connector.attach(myArguments);
+        }
+        catch (IllegalArgumentException e) {
+          throw new CantRunException(e.getLocalizedMessage());
+        }
+      }
+      else if (myConnection.isServerMode()) {
         ListeningConnector connector = (ListeningConnector)findConnector(myConnection.isUseSockets(), true);
         myArguments = connector.defaultArguments();
         if (myArguments == null) {
@@ -566,7 +590,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   @NotNull
-  private static Connector findConnector(String connectorName) throws ExecutionException {
+  public static Connector findConnector(String connectorName) throws ExecutionException {
     VirtualMachineManager virtualMachineManager;
     try {
       virtualMachineManager = Bootstrap.virtualMachineManager();
@@ -575,16 +599,14 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       throw new ExecutionException(DebuggerBundle.message("debugger.jdi.bootstrap.error",
                                                           e.getClass().getName() + " : " + e.getLocalizedMessage()));
     }
-    Connector connector = StreamEx.of(virtualMachineManager.allConnectors()).findFirst(c -> connectorName.equals(c.name())).orElse(null);
-    if (connector == null) {
-      throw new CantRunException(DebuggerBundle.message("error.debug.connector.not.found", connectorName));
-    }
-    return connector;
+    return StreamEx.of(virtualMachineManager.allConnectors())
+      .findFirst(c -> connectorName.equals(c.name()))
+      .orElseThrow(() -> new CantRunException(DebuggerBundle.message("error.debug.connector.not.found", connectorName)));
   }
 
   private void checkVirtualMachineVersion(VirtualMachine vm) {
-    final String version = vm.version();
-    if ("1.4.0".equals(version)) {
+    final String versionString = vm.version();
+    if ("1.4.0".equals(versionString)) {
       DebuggerInvocationUtil.swingInvokeLater(myProject, () -> Messages.showMessageDialog(
         myProject,
         DebuggerBundle.message("warning.jdk140.unstable"), DebuggerBundle.message("title.jdk140.unstable"), Messages.getWarningIcon()
@@ -592,13 +614,14 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
     if (getSession().getAlternativeJre() == null) {
       Sdk runjre = getSession().getRunJre();
-      if ((runjre == null || runjre.getSdkType() instanceof JavaSdkType) && !versionMatch(runjre, version)) {
+      JavaVersion version = JavaVersion.tryParse(versionString);
+      if (version != null && (runjre == null || runjre.getSdkType() instanceof JavaSdkType) && !versionMatch(runjre, version)) {
         Arrays.stream(ProjectJdkTable.getInstance().getAllJdks())
           .filter(sdk -> versionMatch(sdk, version))
           .findFirst().ifPresent(sdk -> {
           XDebuggerManagerImpl.NOTIFICATION_GROUP.createNotification(
             DebuggerBundle.message("message.remote.jre.version.mismatch",
-                                   version,
+                                   versionString,
                                    runjre != null ? runjre.getVersionString() : "unknown",
                                    sdk.getName())
             , MessageType.INFO).notify(myProject);
@@ -608,10 +631,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
-  private static boolean versionMatch(@Nullable Sdk sdk, String version) {
+  private static boolean versionMatch(@Nullable Sdk sdk, @NotNull JavaVersion version) {
     if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) {
       String versionString = sdk.getVersionString();
-      return versionString != null && versionString.contains(version);
+      return versionString != null && version.equals(JavaVersion.tryParse(versionString));
     }
     return false;
   }
@@ -834,6 +857,14 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   public static String processIOException(@NotNull IOException e, @Nullable String address) {
     if (e instanceof UnknownHostException) {
       return DebuggerBundle.message("error.unknown.host") + (address != null ? " (" + address + ")" : "") + ":\n" + e.getLocalizedMessage();
+    }
+
+    // Failed SA attach
+    Throwable cause = e.getCause();
+    if (cause instanceof InvocationTargetException) {
+      if (cause.getCause() != null) {
+        return cause.getCause().getLocalizedMessage();
+      }
     }
 
     String message;
@@ -1449,7 +1480,13 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     @Override
     protected void action() {
       if (isAttached()) {
-        final VirtualMachineProxyImpl virtualMachineProxy = getVirtualMachineProxy();
+        VirtualMachineProxyImpl virtualMachineProxy = getVirtualMachineProxy();
+
+        if (!virtualMachineProxy.canBeModified()) {
+          closeProcess(false);
+          return;
+        }
+
         if (myIsTerminateTargetVM) {
           virtualMachineProxy.exit(-1);
         }
@@ -2201,5 +2238,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   static boolean isResumeOnlyCurrentThread() {
     return DebuggerSettings.getInstance().RESUME_ONLY_CURRENT_THREAD;
+  }
+
+  public boolean isEvaluationPossible() {
+    return getSuspendManager().getPausedContext() != null;
   }
 }

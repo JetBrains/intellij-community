@@ -28,6 +28,7 @@ public class RemoveImportUsageInfo extends FixableUsageInfo{
     myImportStatement = importStatement;
   }
 
+  @Override
   public void fixUsage() throws IncorrectOperationException {
     myImportStatement.delete();
   }

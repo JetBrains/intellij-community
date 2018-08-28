@@ -478,10 +478,10 @@ public class PsiTestUtil {
   public static void checkPsiStructureWithCommit(@NotNull PsiFile psiFile, Consumer<PsiFile> checker) {
     checker.accept(psiFile);
     Document document = psiFile.getViewProvider().getDocument();
-    Project project = psiFile.getProject();
-    if (document != null && PsiDocumentManager.getInstance(project).isUncommited(document)) {
-      PsiDocumentManager.getInstance(project).commitDocument(document);
-      checker.accept(psiFile);
+    PsiDocumentManager manager = PsiDocumentManager.getInstance(psiFile.getProject());
+    if (document != null && manager.isUncommited(document)) {
+      manager.commitDocument(document);
+      checker.accept(manager.getPsiFile(document));
     }
   }
 }

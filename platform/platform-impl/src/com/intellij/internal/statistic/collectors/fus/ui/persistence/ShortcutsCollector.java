@@ -48,11 +48,13 @@ public class ShortcutsCollector implements PersistentStateComponent<ShortcutsCol
 
   private MyState myState = new MyState();
 
+  @Override
   @NotNull
   public MyState getState() {
     return myState;
   }
 
+  @Override
   public void loadState(@NotNull final MyState state) {
     myState = state;
   }

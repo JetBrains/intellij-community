@@ -24,6 +24,7 @@ class Jdk5StringConcatenationPredicate extends SimpleStringConcatenationPredicat
     super(true);
   }
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!PsiUtil.isLanguageLevel5OrHigher(element)) {
       return false;

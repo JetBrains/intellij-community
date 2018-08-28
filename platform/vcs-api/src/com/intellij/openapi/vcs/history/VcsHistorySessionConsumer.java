@@ -2,5 +2,6 @@
 package com.intellij.openapi.vcs.history;
 
 public interface VcsHistorySessionConsumer extends VcsAppendableHistorySessionPartner {
+  @Override
   void finished();
 }

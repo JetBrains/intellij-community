@@ -25,6 +25,7 @@ class ArrayIterable<T> implements Iterable<T>
         this.contents = contents;
     }
 
+    @Override
     public Iterator<T> iterator(){
         return new ArrayIterator<>(contents);
     }

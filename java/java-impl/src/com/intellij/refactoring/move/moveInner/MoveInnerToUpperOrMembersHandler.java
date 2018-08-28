@@ -37,6 +37,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class MoveInnerToUpperOrMembersHandler extends MoveHandlerDelegate {
+  @Override
   public boolean canMove(final PsiElement[] elements, @Nullable final PsiElement targetContainer) {
     if (elements.length != 1) return false;
     PsiElement element = elements [0];
@@ -48,6 +49,7 @@ public class MoveInnerToUpperOrMembersHandler extends MoveHandlerDelegate {
            ((PsiClass) element).hasModifierProperty(PsiModifier.STATIC);
   }
 
+  @Override
   public void doMove(final Project project, final PsiElement[] elements, final PsiElement targetContainer, final MoveCallback callback) {
     SelectInnerOrMembersRefactoringDialog dialog = new SelectInnerOrMembersRefactoringDialog((PsiClass)elements[0], project);
     if (!dialog.showAndGet()) {
@@ -59,6 +61,7 @@ public class MoveInnerToUpperOrMembersHandler extends MoveHandlerDelegate {
     }
   }
 
+  @Override
   public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext, final PsiReference reference,
                            final Editor editor) {
     if (isStaticInnerClass(element) && !JavaMoveClassesOrPackagesHandler.isReferenceInAnonymousClass(reference)) {
@@ -89,18 +92,22 @@ public class MoveInnerToUpperOrMembersHandler extends MoveHandlerDelegate {
       init();
     }
 
+    @Override
     protected JComponent createNorthPanel() {
       return new JLabel(RefactoringBundle.message("what.would.you.like.to.do"));
     }
 
+    @Override
     public JComponent getPreferredFocusedComponent() {
       return myRbMoveInner;
     }
 
+    @Override
     protected String getDimensionServiceKey() {
       return "#com.intellij.refactoring.move.MoveHandler.SelectRefactoringDialog";
     }
 
+    @Override
     protected JComponent createCenterPanel() {
       JPanel panel = new JPanel(new BorderLayout());
       myRbMoveInner = new JRadioButton();

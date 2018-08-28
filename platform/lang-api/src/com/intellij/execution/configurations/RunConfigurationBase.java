@@ -8,6 +8,7 @@ import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.ExecutionTarget;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -40,16 +41,18 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   private final Project myProject;
   private String myName;
 
-  private RunConfigurationOptions myOptions = createOptions();
+  private RunConfigurationOptions myOptions;
 
   private List<PredefinedLogFile> myPredefinedLogFiles = new SmartList<>();
 
-  private List<BeforeRunTask> myBeforeRunTasks = Collections.emptyList();
+  private List<BeforeRunTask<?>> myBeforeRunTasks = Collections.emptyList();
 
   protected RunConfigurationBase(@NotNull Project project, @Nullable ConfigurationFactory factory, String name) {
     myProject = project;
     myFactory = factory;
     myName = name;
+    // must be after factory because factory is used to get options class
+    myOptions = createOptions();
   }
 
   @NotNull
@@ -64,12 +67,12 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   @Override
   @NotNull
   @Transient
-  public List<BeforeRunTask> getBeforeRunTasks() {
+  public List<BeforeRunTask<?>> getBeforeRunTasks() {
     return myBeforeRunTasks;
   }
 
   @Override
-  public void setBeforeRunTasks(@NotNull List<BeforeRunTask> value) {
+  public void setBeforeRunTasks(@NotNull List<BeforeRunTask<?>> value) {
     myBeforeRunTasks = value;
   }
 
@@ -208,11 +211,30 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
     myOptions = XmlSerializer.deserialize(element, getOptionsClass());
   }
 
+  // we can break compatibility and make this method final (API is new and used only by our plugins), but let's avoid any inconvenience and mark as "final" after/prior to 2018.3 release.
+  /**
+   * Do not override this method, use {@link ConfigurationFactory#getOptionsClass()}.
+   */
   protected Class<? extends RunConfigurationOptions> getOptionsClass() {
-    if (this instanceof PersistentStateComponent) {
+    Class<? extends BaseState> result = myFactory == null ? null : myFactory.getOptionsClass();
+    if (result != null) {
+      //noinspection unchecked
+      return (Class<? extends RunConfigurationOptions>)result;
+    }
+    else if (this instanceof PersistentStateComponent) {
       PersistentStateComponent instance = (PersistentStateComponent)this;
       return ComponentSerializationUtil.getStateClass(instance.getClass());
     }
+    else {
+      return getDefaultOptionsClass();
+    }
+  }
+
+  /**
+   * Do not override this method, it is intended to support old (not migrated to options class) run configurations.
+   */
+  @NotNull
+  protected Class<? extends RunConfigurationOptions> getDefaultOptionsClass() {
     return RunConfigurationOptions.class;
   }
 

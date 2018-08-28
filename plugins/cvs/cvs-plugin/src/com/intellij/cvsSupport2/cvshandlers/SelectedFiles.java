@@ -47,6 +47,7 @@ class SelectedFiles extends AnyProcessedFiles {
   }
 
 
+  @Override
   public Collection<VirtualFile> getFiles() {
     return myFiles;
   }

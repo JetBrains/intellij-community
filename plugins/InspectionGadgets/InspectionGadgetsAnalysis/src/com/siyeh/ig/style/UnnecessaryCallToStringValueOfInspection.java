@@ -25,6 +25,7 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiPolyadicExpression;
 import com.intellij.psi.PsiType;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -116,7 +117,8 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
 
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
-      final PsiMethodCallExpression call = (PsiMethodCallExpression)descriptor.getPsiElement();
+      final PsiMethodCallExpression call = ObjectUtils.tryCast(descriptor.getPsiElement(), PsiMethodCallExpression.class);
+      if (call == null) return;
       PsiExpression arg = tryUnwrapRedundantConversion(call);
       if (arg == null) return;
       CommentTracker tracker = new CommentTracker();

@@ -72,7 +72,7 @@ public abstract class AsyncUpdateAction<T> extends AnAction {
    * @param e action event original update() method have been called with.
    * @return prepared data for {@link #performUpdate} method.
    */
-  protected abstract T prepareDataFromContext(final AnActionEvent e);
+  protected abstract T prepareDataFromContext(@NotNull AnActionEvent e);
 
   /**
    * Perform real presentation tweaking here. Be aware of the fact this method may be called in thread other than Swing UI thread thus
@@ -80,14 +80,14 @@ public abstract class AsyncUpdateAction<T> extends AnAction {
    * @param presentation Presentation object to be tweaked.
    * @param data necessary data calculated by {@link #prepareDataFromContext(AnActionEvent)}.
    */
-  protected abstract void performUpdate(Presentation presentation, T data);
+  protected abstract void performUpdate(@NotNull Presentation presentation, T data);
 
   /**
    * Override this method to return {@code true} value if update method cannot be called asynchronously for whatever reason.
    * @param e action event original update() method have been called with.
    * @return {@code false} if async update is possible and {@code false} otherwise.
    */
-  protected boolean forceSyncUpdate(AnActionEvent e) {
+  protected boolean forceSyncUpdate(@NotNull AnActionEvent e) {
     return false;
   }
 }

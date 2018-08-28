@@ -1008,9 +1008,7 @@ public class AbstractPopup implements JBPopup {
         return;
       }
       if (myPreferredFocusedComponent != null && myInStack && myFocusable) {
-        if (myPreferredFocusedComponent instanceof JTextComponent) {
-          IJSwingUtilities.moveMousePointerOn(myPreferredFocusedComponent);
-        }
+        IJSwingUtilities.moveMousePointerOn(myPreferredFocusedComponent);
       }
 
       removeActivity();
@@ -1476,7 +1474,7 @@ public class AbstractPopup implements JBPopup {
 
     @Nullable
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       return myDataProvider != null ? myDataProvider.getData(dataId) : null;
     }
 

@@ -29,6 +29,7 @@ public class PaletteGroupComponent extends JCheckBox {
     setOpaque(true);
 
     addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         myItemsComponent.setVisible(isSelected());
       }
@@ -91,6 +92,7 @@ public class PaletteGroupComponent extends JCheckBox {
       myMoveDown = moveDown;
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
       Container container = kfm.getCurrentFocusCycleRoot();
@@ -129,6 +131,7 @@ public class PaletteGroupComponent extends JCheckBox {
       myExpand = expand;
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       if (myExpand != isSelected()) {
         setSelected(myExpand);

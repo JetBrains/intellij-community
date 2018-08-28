@@ -34,6 +34,7 @@ public class CardLayoutCodeGenerator extends SimpleLayoutCodeGenerator {
     super(Type.getType(CardLayout.class));
   }
 
+  @Override
   public void generateComponentLayout(LwComponent lwComponent,
                                       GeneratorAdapter generator,
                                       int componentLocal,

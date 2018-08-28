@@ -109,6 +109,9 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
           if (value == ']') {
             text.append(ch.getUnescapedText());
           }
+          else if (value == '-' && text.length() != 1) {
+            text.append("\\-");
+          }
           else {
             text.append((char)value);
           }
@@ -146,7 +149,6 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
               text.append("\\]");
               break;
             case '-':
-            case '^':
               if (text.length() != 1) {
                 text.append("\\-");
                 break;

@@ -67,14 +67,17 @@ public class TypeCookDialog extends RefactoringDialog {
     myClassNameLabel.setText(XmlStringUtil.wrapInHtml(name));
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return null;
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.TYPE_COOK);
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     JPanel optionsPanel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
@@ -152,6 +155,7 @@ public class TypeCookDialog extends RefactoringDialog {
     return optionsPanel;
   }
 
+  @Override
   protected void doAction() {
     JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
     settings.TYPE_COOK_DROP_CASTS = myCbDropCasts.isSelected();
@@ -173,26 +177,32 @@ public class TypeCookDialog extends RefactoringDialog {
     final boolean cookToWildcards = myCbCookToWildcards.isSelected();
 
     return new Settings() {
+      @Override
       public boolean dropObsoleteCasts() {
         return dropCasts;
       }
 
+      @Override
       public boolean preserveRawArrays() {
         return preserveRawArrays;
       }
 
+      @Override
       public boolean leaveObjectParameterizedTypesRaw() {
         return leaveObjectParameterizedTypesRaw;
       }
 
+      @Override
       public boolean exhaustive() {
         return exhaustive;
       }
 
+      @Override
       public boolean cookObjects() {
         return cookObjects;
       }
 
+      @Override
       public boolean cookToWildcards() {
         return cookToWildcards;
       }

@@ -383,7 +383,7 @@ public class FileTreeModelBuilder {
     }
     myFileIndex.iterateContentUnderDirectory(vFile, new MyContentIterator() {
       @Override
-      public boolean processFile(VirtualFile fileOrDir) {
+      public boolean processFile(@NotNull VirtualFile fileOrDir) {
         isMarked[0] |= myMarker.isMarked(fileOrDir);
         return super.processFile(fileOrDir);
       }
@@ -588,7 +588,7 @@ public class FileTreeModelBuilder {
     VirtualFile dir;
 
     @Override
-    public boolean processFile(VirtualFile fileOrDir) {
+    public boolean processFile(@NotNull VirtualFile fileOrDir) {
       ReadAction.run(() -> {
         if (!fileOrDir.isDirectory()) {
           if (lastParent != null && !Comparing.equal(dir, fileOrDir.getParent())) {

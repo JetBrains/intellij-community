@@ -743,7 +743,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
 
       addCustomUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled(AnActionEvent e) {
+        public boolean isEnabled(@NotNull AnActionEvent e) {
           return selectionState.getValue().isRequiredSelectionEnabled;
         }
       });

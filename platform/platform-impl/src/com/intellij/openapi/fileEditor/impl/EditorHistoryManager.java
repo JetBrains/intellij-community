@@ -9,6 +9,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -189,13 +190,13 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
         }
       }
     }
-    final Pair <FileEditor, FileEditorProvider> selectedEditorWithProvider = editorManager.getSelectedEditorWithProvider(file);
+    final FileEditorWithProvider selectedEditorWithProvider = editorManager.getSelectedEditorWithProvider(file);
     if (selectedEditorWithProvider != null) {
       //LOG.assertTrue(selectedEditorWithProvider != null);
-      entry.setSelectedProvider(selectedEditorWithProvider.getSecond());
+      entry.setSelectedProvider(selectedEditorWithProvider.getProvider());
       LOG.assertTrue(entry.getSelectedProvider() != null);
 
-      if(changeEntryOrderOnly){
+      if (changeEntryOrderOnly) {
         moveOnTop(entry);
       }
     }
@@ -352,7 +353,7 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
     }
     myEntriesList.clear();
   }
-  
+
   /**
    * Updates history
    */

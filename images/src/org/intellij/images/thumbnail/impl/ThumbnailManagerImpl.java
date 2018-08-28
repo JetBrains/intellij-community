@@ -35,6 +35,7 @@ final class ThumbnailManagerImpl extends ThumbnailManager implements Disposable 
     this.project = project;
   }
 
+  @Override
   @NotNull
   public final ThumbnailView getThumbnailView() {
     if (thumbnailView == null) {
@@ -43,6 +44,7 @@ final class ThumbnailManagerImpl extends ThumbnailManager implements Disposable 
     return thumbnailView;
   }
 
+  @Override
   public void dispose() {
     if (thumbnailView != null) {
       Disposer.dispose(thumbnailView);

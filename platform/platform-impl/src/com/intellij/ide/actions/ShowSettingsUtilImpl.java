@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.ui.search.SearchUtil;
@@ -38,6 +24,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /**
  * @author max
@@ -107,21 +94,36 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     showSettingsDialog(project, configurableClass, null);
   }
 
+  @Override
   public <T extends Configurable> void showSettingsDialog(@Nullable Project project,
                                                           @NotNull Class<T> configurableClass,
                                                           @Nullable Consumer<T> additionalConfiguration) {
     assert Configurable.class.isAssignableFrom(configurableClass) : "Not a configurable: " + configurableClass.getName();
+    showSettingsDialog(project, it -> ConfigurableWrapper.cast(configurableClass, it) != null, it -> {
+      if (additionalConfiguration != null) {
+        T toConfigure = ConfigurableWrapper.cast(configurableClass, it);
+        assert toConfigure != null : "Wrong configurable found: " + it.getClass();
+        additionalConfiguration.accept(toConfigure);
+      }
+    });
+  }
 
+  @Override
+  public void showSettingsDialog(@Nullable Project project,
+                                 @NotNull Predicate<Configurable> predicate,
+                                 @Nullable Consumer<Configurable> additionalConfiguration) {
     ConfigurableGroup[] groups = getConfigurableGroups(project, true);
+    Configurable config = new ConfigurableVisitor() {
+      @Override
+      protected boolean accept(Configurable configurable) {
+        return predicate.test(configurable);
+      }
+    }.find(groups);
 
-    Configurable config = new ConfigurableVisitor.ByType(configurableClass).find(groups);
-    
-    assert config != null : "Cannot find configurable: " + configurableClass.getName();
+    assert config != null : "Cannot find configurable for specified predicate";
 
     if (additionalConfiguration != null) {
-      T toConfigure = ConfigurableWrapper.cast(configurableClass, config);
-      assert toConfigure != null : "Wrong configurable found: " + config.getClass();
-      additionalConfiguration.accept(toConfigure);
+      additionalConfiguration.accept(config);
     }
 
     getDialog(project, groups, config).show();

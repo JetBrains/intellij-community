@@ -28,6 +28,7 @@ public class ClassReferenceSearchingScanner extends ClassReferenceScanner {
     super(aClass);
   }
 
+  @Override
   public PsiReference[] findReferences() {
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myClass.getProject());
     return ReferencesSearch.search(myClass, projectScope, false).toArray(PsiReference.EMPTY_ARRAY);

@@ -10,7 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public interface CustomComponentAction {
-
   Key<JComponent> COMPONENT_KEY = Key.create("customComponent");
   Key<AnAction> ACTION_KEY = Key.create("customComponentAction");
 

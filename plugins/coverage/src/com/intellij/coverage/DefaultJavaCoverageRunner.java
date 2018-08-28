@@ -25,6 +25,7 @@ import com.intellij.openapi.extensions.Extensions;
 import org.jetbrains.annotations.NotNull;
 
 public class DefaultJavaCoverageRunner extends DefaultJavaProgramRunner {
+  @Override
   public boolean canRun(@NotNull final String executorId, @NotNull final RunProfile profile) {
     try {
       return executorId.equals(CoverageExecutor.EXECUTOR_ID) &&

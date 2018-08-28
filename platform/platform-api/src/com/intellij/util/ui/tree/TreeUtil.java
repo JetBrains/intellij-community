@@ -15,6 +15,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Range;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
@@ -211,7 +212,7 @@ public final class TreeUtil {
 
   @Nullable
   public static DefaultMutableTreeNode findNode(@NotNull final DefaultMutableTreeNode aRoot,
-                                                @NotNull final Condition<DefaultMutableTreeNode> condition) {
+                                                @NotNull final Condition<? super DefaultMutableTreeNode> condition) {
     if (condition.value(aRoot)) {
       return aRoot;
     } else {
@@ -1045,25 +1046,7 @@ public final class TreeUtil {
   }
 
   public static <T extends TreeNode> int indexedBinarySearch(@NotNull T parent, @NotNull T key, @NotNull Comparator<? super T> comparator) {
-    int low = 0;
-    int high = parent.getChildCount() - 1;
-
-    while (low <= high) {
-      int mid = (low + high) / 2;
-      //noinspection unchecked
-      T treeNode = (T)parent.getChildAt(mid);
-      int cmp = comparator.compare(treeNode, key);
-      if (cmp < 0) {
-        low = mid + 1;
-      }
-      else if (cmp > 0) {
-        high = mid - 1;
-      }
-      else {
-        return mid; // key found
-      }
-    }
-    return -(low + 1);  // key not found
+    return ObjectUtils.binarySearch(0, parent.getChildCount(), mid -> comparator.compare((T)parent.getChildAt(mid), key));
   }
 
   @NotNull
@@ -1083,7 +1066,7 @@ public final class TreeUtil {
    * @param visitor  a visitor that controls expanding of tree nodes
    * @param consumer a path consumer called on done
    */
-  public static void expand(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull Consumer<TreePath> consumer) {
+  public static void expand(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull Consumer<? super TreePath> consumer) {
     promiseExpand(tree, visitor).onProcessed(path -> consumer.accept(path));
   }
 
@@ -1107,7 +1090,7 @@ public final class TreeUtil {
    * @param visitor  a visitor that controls expanding of tree nodes
    * @param consumer a path consumer called on done
    */
-  public static void makeVisible(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull Consumer<TreePath> consumer) {
+  public static void makeVisible(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull Consumer<? super TreePath> consumer) {
     promiseMakeVisible(tree, visitor).onProcessed(path -> consumer.accept(path));
   }
 
@@ -1137,7 +1120,7 @@ public final class TreeUtil {
    * @param visitor  a visitor that controls processing of tree nodes
    * @param consumer a path consumer called on done
    */
-  public static void visit(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull Consumer<TreePath> consumer) {
+  public static void visit(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull Consumer<? super TreePath> consumer) {
     promiseVisit(tree, visitor).onProcessed(consumer);
   }
 

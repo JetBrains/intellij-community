@@ -248,9 +248,11 @@ class SaxonFrameImpl extends AbstractSaxonFrame<Debugger.StyleFrame, StyleElemen
       substituteFor(element);
     }
 
+    @Override
     public void prepareAttributes() throws TransformerConfigurationException {
     }
 
+    @Override
     public void process(Context context) throws TransformerException {
     }
 

@@ -24,7 +24,6 @@ import com.intellij.openapi.vcs.actions.VcsQuickListContentProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -32,17 +31,20 @@ import java.util.List;
  * @author Roman.Chernyatchik
  */
 public class CvsQuickListContentProvider implements VcsQuickListContentProvider {
+  @Override
   public List<AnAction> getVcsActions(@Nullable Project project, @Nullable AbstractVcs activeVcs,
                                       @Nullable DataContext dataContext) {
     return null;
   }
 
+  @Override
   public List<AnAction> getNotInVcsActions(@Nullable Project project, @Nullable DataContext dataContext) {
     final AnAction action = ActionManager.getInstance().getAction("Cvs.Import");
     assert action != null;
     return Collections.singletonList(action);
   }
 
+  @Override
   public boolean replaceVcsActionsFor(@NotNull AbstractVcs activeVcs, @Nullable DataContext dataContext) {
     return false;
   }

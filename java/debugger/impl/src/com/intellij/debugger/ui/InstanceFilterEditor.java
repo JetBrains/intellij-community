@@ -14,6 +14,7 @@ public class InstanceFilterEditor extends PatternFilterEditor {
     super(project);
   }
 
+  @Override
   protected void addClassFilter() {
     String idString = Messages.showInputDialog(myProject,
                                                DebuggerBundle.message("add.instance.filter.dialog.prompt"),

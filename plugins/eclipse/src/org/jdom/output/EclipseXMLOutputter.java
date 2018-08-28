@@ -1477,6 +1477,7 @@ public class EclipseXMLOutputter implements Cloneable {
     /**
      * Returns a copy of this XMLOutputter.
      */
+    @Override
     public Object clone() {
         // Implementation notes: Since all state of an XMLOutputter is
         // embodied in simple private instance variables, Object.clone

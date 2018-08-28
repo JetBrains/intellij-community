@@ -13,15 +13,15 @@ import java.util.function.Supplier;
 
 public abstract class AbstractTreeNodeVisitor<T> implements TreeVisitor {
   protected static final Logger LOG = Logger.getInstance(AbstractTreeNodeVisitor.class);
-  private final Supplier<T> supplier;
-  private final Predicate<TreePath> predicate;
+  private final Supplier<? extends T> supplier;
+  private final Predicate<? super TreePath> predicate;
 
-  public AbstractTreeNodeVisitor(Supplier<T> supplier, Predicate<TreePath> predicate) {
+  public AbstractTreeNodeVisitor(Supplier<? extends T> supplier, Predicate<? super TreePath> predicate) {
     this.supplier = supplier;
     this.predicate = predicate;
   }
 
-  public AbstractTreeNodeVisitor(Supplier<T> supplier, Consumer<TreePath> consumer) {
+  public AbstractTreeNodeVisitor(Supplier<? extends T> supplier, Consumer<? super TreePath> consumer) {
     this(supplier, consumer == null ? null : path -> {
       consumer.accept(path);
       return false;

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.settings;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -48,8 +34,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.codeInsight.hints.HintUtilsKt.getBlackListInvalidLineNumbers;
@@ -60,11 +46,11 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
 
   private JPanel myConfigurable;
   private ComboBox<Language> myCurrentLanguageCombo;
-  
+
   private Map<Language, EditorTextField> myEditors;
   private Map<Language, Boolean> myIsValidPatterns;
   private Map<Option, JBCheckBox> myOptions;
-  
+
   private JPanel myPanel;
   private CardLayout myCardLayout;
 
@@ -77,7 +63,7 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
     super(null);
     setTitle("Configure Parameter Name Hints");
     init();
-    
+
     if (selectedLanguage != null) {
       showLanguagePanel(selectedLanguage);
       myCurrentLanguageCombo.setSelectedItem(selectedLanguage);
@@ -105,10 +91,10 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
   private void updateOkEnabled(@NotNull Language language, @NotNull EditorTextField editorTextField) {
     String text = editorTextField.getText();
     List<Integer> invalidLines = getBlackListInvalidLineNumbers(text);
-    
+
     myIsValidPatterns.put(language, invalidLines.isEmpty());
     boolean isEveryOneValid = !myIsValidPatterns.containsValue(false);
-    
+
     getOKAction().setEnabled(isEveryOneValid);
 
     Editor editor = editorTextField.getEditor();
@@ -135,7 +121,7 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
       String blacklist = editor.getText();
       storeBlackListDiff(language, blacklist);
     });
-    
+
     myOptions.forEach((option, checkBox) -> option.set(checkBox.isSelected()));
     saveLastEditedLanguage();
     ParameterHintsPassFactory.forceHintsUpdateOnNextPass();
@@ -227,7 +213,7 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
     if (optionsPanel != null) {
       panel.add(optionsPanel);
     }
-    
+
     return panel;
   }
 
@@ -241,12 +227,12 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
     EditorTextField editorTextField = createBlacklistEditorField(blackList);
     editorTextField.addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         updateOkEnabled(language, editorTextField);
       }
     });
     updateOkEnabled(language, editorTextField);
-    
+
     myEditors.put(language, editorTextField);
 
     JPanel blacklistPanel = new JPanel();
@@ -343,7 +329,7 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
 
   private void initLanguageCombo(Language selected, List<Language> languages) {
     ListComboBoxModel<Language> model = new ListComboBoxModel<>(languages);
-    
+
     myCurrentLanguageCombo = new ComboBox<>(model);
     myCurrentLanguageCombo.setSelectedItem(selected);
     myCurrentLanguageCombo.setRenderer(new ListCellRendererWrapper<Language>() {
@@ -367,7 +353,7 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
   private void showLanguagePanel(@NotNull Language language) {
     myCardLayout.show(myPanel, language.getID());
   }
-  
+
   private static List<Option> getOptions(Language language) {
     InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
     if (provider != null) {
@@ -396,7 +382,7 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
       .sorted(Comparator.comparing(l -> l.getDisplayName()))
       .collect(Collectors.toList());
   }
-  
+
   @NotNull
   private static EditorTextField createBlacklistEditorField(@NotNull String text) {
     Document document = EditorFactory.getInstance().createDocument(text);

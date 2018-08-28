@@ -163,19 +163,19 @@ public abstract class CompletionPhase implements Disposable {
       };
       final DocumentListener documentListener = new DocumentListener() {
         @Override
-        public void beforeDocumentChange(DocumentEvent e) {
+        public void beforeDocumentChange(@NotNull DocumentEvent e) {
           CompletionServiceImpl.setCompletionPhase(NoCompletion);
         }
       };
       final SelectionListener selectionListener = new SelectionListener() {
         @Override
-        public void selectionChanged(SelectionEvent e) {
+        public void selectionChanged(@NotNull SelectionEvent e) {
           CompletionServiceImpl.setCompletionPhase(NoCompletion);
         }
       };
       final CaretListener caretListener = new CaretListener() {
         @Override
-        public void caretPositionChanged(CaretEvent e) {
+        public void caretPositionChanged(@NotNull CaretEvent e) {
           CompletionServiceImpl.setCompletionPhase(NoCompletion);
         }
       };

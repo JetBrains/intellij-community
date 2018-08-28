@@ -151,7 +151,7 @@ public abstract class EditorAction extends AnAction implements DumbAware {
 
     return new DataContext() {
       @Override
-      public Object getData(String dataId) {
+      public Object getData(@NotNull String dataId) {
         if (PROJECT.is(dataId)) {
           final Project project = editor.getProject();
           if (project != null) {

@@ -74,8 +74,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 
 public class IntroduceParameterHandler extends IntroduceHandlerBase {
@@ -84,6 +84,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
   private JBPopup myEnclosingMethodsPopup;
   private InplaceIntroduceParameterPopup myInplaceIntroduceParameterPopup;
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
@@ -115,10 +116,12 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     });
   }
 
+  @Override
   protected boolean invokeImpl(Project project, PsiExpression tempExpr, Editor editor) {
     return invoke(editor, project, tempExpr, null, false);
   }
 
+  @Override
   protected boolean invokeImpl(Project project, PsiLocalVariable localVariable, Editor editor) {
     return invoke(editor, project, null, localVariable, true);
   }
@@ -219,6 +222,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     final TextAttributes attributes =
       EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     list.addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(final ListSelectionEvent e) {
         final PsiMethod selectedMethod = list.getSelectedValue();
         if (selectedMethod == null) return;
@@ -289,6 +293,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
                                                                           final Project project,
                                                                           final String enteredName) {
     return new NameSuggestionsGenerator() {
+      @Override
       public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
         final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
         SuggestedNameInfo info = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, propName, expr != null && expr.isValid() ? expr : null, type);
@@ -308,6 +313,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
   }
 
 
+  @Override
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     // Never called
     /* do nothing */
@@ -538,7 +544,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
       final PsiMethod containingMethodCopy = Util.getContainingMethod(elementsCopy[0]);
       LOG.assertTrue(containingMethodCopy != null);
       final List<PsiMethod> enclosingMethodsInCopy = getEnclosingMethods(containingMethodCopy);
-      final MyExtractMethodProcessor processor = new MyExtractMethodProcessor(project, editor, elementsCopy, 
+      final MyExtractMethodProcessor processor = new MyExtractMethodProcessor(project, editor, elementsCopy,
                                                                               enclosingMethodsInCopy.get(enclosingMethodsInCopy.size() - 1));
       try {
         if (!processor.prepare()) return false;
@@ -615,7 +621,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
                                            final List<PsiMethod> enclosingMethods,
                                            final Project project,
                                            final Editor editor,
-                                           final MyExtractMethodProcessor processor, 
+                                           final MyExtractMethodProcessor processor,
                                            final PsiElement[] elements) {
     final PairConsumer<PsiMethod, PsiMethod> consumer =
       (methodToIntroduceParameter, methodToSearchFor) -> introduceWrappedCodeBlockParameter(methodToIntroduceParameter, methodToSearchFor, editor, project, selectedType, processor, elements);
@@ -626,7 +632,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
                                                   PsiMethod methodToSearchFor, Editor editor,
                                                   final Project project,
                                                   final PsiType selectedType,
-                                                  final ExtractMethodProcessor processor, 
+                                                  final ExtractMethodProcessor processor,
                                                   final PsiElement[] elements) {
     if (!elements[0].isValid()) {
       return;

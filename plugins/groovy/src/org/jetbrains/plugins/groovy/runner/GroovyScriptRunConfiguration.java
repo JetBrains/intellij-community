@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
@@ -38,6 +36,7 @@ import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.util.JdomKt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
@@ -148,13 +147,17 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     JDOMExternalizer.write(element, "vmparams", vmParams);
     JDOMExternalizer.write(element, "params", scriptParams);
     JDOMExternalizer.write(element, "workDir", ExternalizablePath.urlValue(workDir));
-    JDOMExternalizer.write(element, "debug", isDebugEnabled);
-    if (isAddClasspathToTheRunner) JDOMExternalizer.write(element, "addClasspath", true);
+    JdomKt.addOptionTag(element, "debug", Boolean.toString(isDebugEnabled), "setting");
+    if (isAddClasspathToTheRunner) {
+      JdomKt.addOptionTag(element, "addClasspath", Boolean.toString(true), "setting");
+    }
     JDOMExternalizer.writeMap(element, envs, null, "env");
 
     if (myAlternativeJrePathEnabled) {
-      JDOMExternalizer.write(element, "alternativeJrePathEnabled", true);
-      if (StringUtil.isNotEmpty(myAlternativeJrePath)) JDOMExternalizer.write(element, "alternativeJrePath", myAlternativeJrePath);
+      JdomKt.addOptionTag(element, "alternativeJrePathEnabled", Boolean.toString(true), "setting");
+      if (StringUtil.isNotEmpty(myAlternativeJrePath)) {
+        JdomKt.addOptionTag(element, "alternativeJrePath", myAlternativeJrePath, "setting");
+      }
     }
   }
 

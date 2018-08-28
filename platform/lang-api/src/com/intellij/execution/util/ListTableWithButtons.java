@@ -47,7 +47,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
   private boolean myIsEnabled = true;
 
   protected ListTableWithButtons() {
-    myTableView = new TableView(createListModel()) {
+    myTableView = new TableView<T>(createListModel()) {
       @Override
       protected void createDefaultEditors() {
         super.createDefaultEditors();
@@ -82,10 +82,9 @@ public abstract class ListTableWithButtons<T> extends Observable {
         }
       }
     };
-    myTableView.setRowHeight(new JTextField().getPreferredSize().height);
     myTableView.setIntercellSpacing(JBUI.emptySize());
     myTableView.setStriped(true);
-    
+
     myTableView.getTableViewModel().setSortable(false);
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTableView);
     myPanel = decorator
@@ -112,7 +111,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
 
     ToolbarDecorator.findRemoveButton(myPanel).addCustomUpdater(new AnActionButtonUpdater() {
       @Override
-      public boolean isEnabled(AnActionEvent e) {
+      public boolean isEnabled(@NotNull AnActionEvent e) {
         List<T> selection = getSelection();
         if (selection.isEmpty() || !myIsEnabled) return false;
         for (T t : selection) {
@@ -123,7 +122,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
     });
     ToolbarDecorator.findAddButton(myPanel).addCustomUpdater(new AnActionButtonUpdater() {
       @Override
-      public boolean isEnabled(AnActionEvent e) {
+      public boolean isEnabled(@NotNull AnActionEvent e) {
         return myIsEnabled;
       }
     });

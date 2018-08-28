@@ -318,7 +318,7 @@ public class BuildView extends CompositeView<ExecutionConsole> implements BuildP
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (LangDataKeys.CONSOLE_VIEW.is(dataId)) {
       return getConsoleView();
     }

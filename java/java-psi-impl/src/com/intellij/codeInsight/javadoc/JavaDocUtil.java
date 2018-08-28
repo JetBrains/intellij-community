@@ -8,10 +8,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTagValue;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.StringTokenizer;
@@ -70,12 +73,12 @@ public class JavaDocUtil {
   }
 
   @Nullable
-  public static PsiElement findReferenceTarget(PsiManager manager, String refText, PsiElement context) {
+  public static PsiElement findReferenceTarget(@NotNull PsiManager manager, @NotNull String refText, PsiElement context) {
     return findReferenceTarget(manager, refText, context, true);
   }
 
   @Nullable
-  public static PsiElement findReferenceTarget(PsiManager manager, String refText, PsiElement context, boolean useNavigationElement) {
+  public static PsiElement findReferenceTarget(@NotNull PsiManager manager, @NotNull String refText, PsiElement context, boolean useNavigationElement) {
     LOG.assertTrue(context == null || context.isValid());
     if (context != null) {
       context = context.getNavigationElement();
@@ -84,9 +87,7 @@ public class JavaDocUtil {
     int poundIndex = refText.indexOf('#');
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     if (poundIndex < 0) {
-      PsiClass aClass = facade.getResolveHelper().resolveReferencedClass(refText, context);
-
-      if (aClass == null) aClass = facade.findClass(refText, context.getResolveScope());
+      PsiClass aClass = findClassFromRef(manager, facade, refText, context);
 
       if (aClass != null) {
         return useNavigationElement ? aClass.getNavigationElement() : aClass;
@@ -98,9 +99,7 @@ public class JavaDocUtil {
     else {
       String classRef = refText.substring(0, poundIndex).trim();
       if (!classRef.isEmpty()) {
-        PsiClass aClass = facade.getResolveHelper().resolveReferencedClass(classRef, context);
-
-        if (aClass == null) aClass = facade.findClass(classRef, context.getResolveScope());
+        PsiClass aClass = findClassFromRef(manager, facade, classRef, context);
 
         if (aClass == null) return null;
         PsiElement member = findReferencedMember(aClass, refText.substring(poundIndex + 1), context);
@@ -110,7 +109,7 @@ public class JavaDocUtil {
         String memberRefText = refText.substring(1);
         PsiElement scope = context;
         while (true) {
-          if (scope instanceof PsiFile) break;
+          if (scope instanceof PsiFile || scope == null) break;
           if (scope instanceof PsiClass) {
             PsiElement member = findReferencedMember((PsiClass)scope, memberRefText, context);
             if (member != null) {
@@ -122,6 +121,23 @@ public class JavaDocUtil {
         return null;
       }
     }
+  }
+
+  private static PsiClass findClassFromRef(@NotNull PsiManager manager,
+                                           @NotNull JavaPsiFacade facade,
+                                           @NotNull String refText, PsiElement context) {
+    PsiClass aClass = facade.getResolveHelper().resolveReferencedClass(refText, context);
+
+    GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
+    if (aClass == null) aClass = facade.findClass(refText, projectScope);
+    if (aClass == null && refText.indexOf('.') == -1 && context != null) {
+      // find short-named class in the same package (maybe in the different module)
+      PsiFile file = context.getContainingFile();
+      PsiDirectory directory = file == null ? null : file.getContainingDirectory();
+      PsiPackage aPackage = directory == null ? null : JavaDirectoryService.getInstance().getPackage(directory);
+      aClass = aPackage == null ? null : ArrayUtil.getFirstElement(aPackage.findClassByShortName(refText, projectScope));
+    }
+    return aClass;
   }
 
   @Nullable

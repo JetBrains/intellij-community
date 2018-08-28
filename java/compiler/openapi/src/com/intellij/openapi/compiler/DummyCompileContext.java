@@ -36,14 +36,17 @@ public class DummyCompileContext implements CompileContext {
     return OUR_INSTANCE;
   }
 
+  @Override
   public Project getProject() {
     return null;
   }
 
+  @Override
   public void addMessage(@NotNull CompilerMessageCategory category, String message, String url, int lineNum, int columnNum) {
   }
 
 
+  @Override
   public void addMessage(@NotNull CompilerMessageCategory category,
                          String message,
                          @Nullable String url,
@@ -52,52 +55,64 @@ public class DummyCompileContext implements CompileContext {
                          Navigatable navigatable) {
   }
 
+  @Override
   @NotNull
   public CompilerMessage[] getMessages(@NotNull CompilerMessageCategory category) {
     return CompilerMessage.EMPTY_ARRAY;
   }
 
+  @Override
   public int getMessageCount(CompilerMessageCategory category) {
     return 0;
   }
 
+  @Override
   @NotNull
   public ProgressIndicator getProgressIndicator() {
     return null;
   }
 
+  @Override
   public CompileScope getCompileScope() {
     return null;
   }
 
+  @Override
   public CompileScope getProjectCompileScope() {
     return null;
   }
 
+  @Override
   public void requestRebuildNextTime(String message) {
   }
 
+  @Override
   public boolean isRebuildRequested() {
     return false;
   }
 
+  @Override
   @Nullable
   public String getRebuildReason() {
     return null;
   }
 
+  @Override
   public Module getModuleByFile(@NotNull VirtualFile file) {
     return null;
   }
 
+  @Override
   public boolean isAnnotationProcessorsEnabled() {
     return false;
   }
 
+  @Override
   public VirtualFile getModuleOutputDirectory(@NotNull final Module module) {
     return ReadAction.compute(() -> CompilerModuleExtension.getInstance(module).getCompilerOutputPath());
   }
 
+  @Override
   public VirtualFile getModuleOutputDirectoryForTests(Module module) {
     return null;
   }
@@ -111,6 +126,7 @@ public class DummyCompileContext implements CompileContext {
   public <T> void putUserData(@NotNull Key<T> key, T value) {
   }
 
+  @Override
   public boolean isMake() {
     return false; // stub implementation
   }
@@ -120,6 +136,7 @@ public class DummyCompileContext implements CompileContext {
     return false;
   }
 
+  @Override
   public boolean isRebuild() {
     return false;
   }

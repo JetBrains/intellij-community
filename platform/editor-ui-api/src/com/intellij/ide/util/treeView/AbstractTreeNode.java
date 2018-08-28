@@ -68,7 +68,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     setForcedForeground(presentation);
   }
 
-  protected void setForcedForeground(@NotNull PresentationData presentation) {
+  private void setForcedForeground(@NotNull PresentationData presentation) {
     final FileStatus status = getFileStatus();
     Color fgColor = getFileStatusColor(status);
     fgColor = fgColor == null ? status.getColor() : fgColor;
@@ -105,6 +105,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     return getEqualityObject() != null ? this : null;
   }
 
+  @Override
   public boolean equals(Object object) {
     if (object == this) return true;
     if (object == null || !object.getClass().equals(getClass())) return false;
@@ -112,6 +113,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     return object instanceof AbstractTreeNode && Comparing.equal(myValue, ((AbstractTreeNode)object).myValue);
   }
 
+  @Override
   public int hashCode() {
     // we should not change hash code if value is set to null
     Object value = myValue;
@@ -177,12 +179,12 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   }
 
   /**
-   * @deprecated use toTestString
-   * @return
+   * @deprecated use {@link #toTestString(Queryable.PrintInfo)} instead
    */
   @Deprecated
   @Nullable
-  @NonNls public String getTestPresentation() {
+  @NonNls
+  public String getTestPresentation() {
     if (myName != null) {
       return myName;
     }

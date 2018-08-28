@@ -99,7 +99,7 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
   }
 
   @Override
-  protected void update(final PresentationData presentation) {
+  protected void update(@NotNull final PresentationData presentation) {
     try {
       if (validate()) {
         updateValidData(presentation, getValue());

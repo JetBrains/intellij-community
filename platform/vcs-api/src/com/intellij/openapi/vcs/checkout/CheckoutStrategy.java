@@ -40,6 +40,7 @@ public abstract class CheckoutStrategy implements Comparable{
     };
   }
 
+  @Override
   public int compareTo(Object o) {
     if (o instanceof CheckoutStrategy){
       return getResult().compareTo(((CheckoutStrategy)o).getResult());

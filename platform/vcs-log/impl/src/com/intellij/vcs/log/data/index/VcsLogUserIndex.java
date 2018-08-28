@@ -44,7 +44,7 @@ import java.util.Set;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
-public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void> {
+public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsFullCommitDetails> {
   private static final Logger LOG = Logger.getInstance(VcsLogUserIndex.class);
   public static final String USERS = "users";
   @NotNull private final VcsUserRegistryImpl myUserRegistry;

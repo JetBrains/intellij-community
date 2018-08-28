@@ -140,7 +140,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
   }
 
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (DATA_KEY.is(dataId)) {
       return this;
     }

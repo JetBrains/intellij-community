@@ -46,44 +46,54 @@ final class OptionsImpl implements Options, JDOMExternalizable {
         externalEditorOptions = new ExternalEditorOptionsImpl(propertyChangeSupport);
     }
 
+    @Override
     public EditorOptions getEditorOptions() {
         return editorOptions;
     }
 
+    @Override
     public ExternalEditorOptions getExternalEditorOptions() {
         return externalEditorOptions;
     }
 
+    @Override
     public void inject(Options options) {
         editorOptions.inject(options.getEditorOptions());
         externalEditorOptions.inject(options.getExternalEditorOptions());
     }
 
+    @Override
     public void addPropertyChangeListener(PropertyChangeListener listener) {
         propertyChangeSupport.addPropertyChangeListener(listener);
     }
 
+    @Override
     public void addPropertyChangeListener(String propertyName, PropertyChangeListener listener) {
         propertyChangeSupport.addPropertyChangeListener(propertyName, listener);
     }
 
+    @Override
     public void removePropertyChangeListener(PropertyChangeListener listener) {
         propertyChangeSupport.removePropertyChangeListener(listener);
     }
 
+    @Override
     public void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
         propertyChangeSupport.removePropertyChangeListener(propertyName, listener);
     }
 
+    @Override
     public boolean setOption(String name, Object value) {
         return editorOptions.setOption(name, value) || externalEditorOptions.setOption(name, value);
     }
 
+    @Override
     public void readExternal(Element element) throws InvalidDataException {
         ((JDOMExternalizable)editorOptions).readExternal(element);
         ((JDOMExternalizable)externalEditorOptions).readExternal(element);
     }
 
+    @Override
     public void writeExternal(Element element) throws WriteExternalException {
         ((JDOMExternalizable)editorOptions).writeExternal(element);
         ((JDOMExternalizable)externalEditorOptions).writeExternal(element);

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.hierarchy;
 
 import com.intellij.icons.AllIcons;
@@ -36,7 +34,6 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,8 +45,8 @@ import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.io.File;
 import java.text.MessageFormat;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implements OccurenceNavigator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.HierarchyBrowserBaseEx");
@@ -135,7 +132,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       myOccurrenceNavigators.put(key, new OccurenceNavigatorSupport(tree) {
         @Override
         @Nullable
-        protected Navigatable createDescriptorForNode(DefaultMutableTreeNode node) {
+        protected Navigatable createDescriptorForNode(@NotNull DefaultMutableTreeNode node) {
           HierarchyNodeDescriptor descriptor = getDescriptor(node);
           if (descriptor != null) {
             PsiElement psiElement = getOpenFileElementFromDescriptor(descriptor);
@@ -207,14 +204,17 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   @NotNull
   protected abstract String getBrowserDataKey();
 
+  @Nullable
+  protected Color getFileColorForNode(Object node) {
+    if (node instanceof HierarchyNodeDescriptor) {
+      PsiFile containingFile = ((HierarchyNodeDescriptor) node).getContainingFile();
+      return ProjectViewTree.getColorForElement(containingFile);
+    }
+    return null;
+  }
+
   protected final JTree createTree(boolean dndAware) {
     final Tree tree;
-    final NullableFunction<Object, PsiElement> toPsiConverter = o -> {
-      if (o instanceof HierarchyNodeDescriptor) {
-        return ((HierarchyNodeDescriptor)o).getContainingFile();
-      }
-      return null;
-    };
 
     if (dndAware) {
       //noinspection Duplicates
@@ -233,7 +233,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
         @Override
         public Color getFileColorFor(Object object) {
-          return ProjectViewTree.getColorForElement(toPsiConverter.fun(object));
+          return getFileColorForNode(object);
         }
       };
 
@@ -296,7 +296,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
         @Override
         public Color getFileColorFor(Object object) {
-          return ProjectViewTree.getColorForElement(toPsiConverter.fun(object));
+          return getFileColorForNode(object);
         }
       };
     }
@@ -322,10 +322,10 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     myAlarm.addRequest(() -> setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR)), 100);
   }
 
-  public final void changeView(@NotNull final String typeName) {
+  public void changeView(@NotNull final String typeName) {
     changeView(typeName, true);
   }
-  public final void changeView(@NotNull final String typeName, boolean requestFocus) {
+  public void changeView(@NotNull final String typeName, boolean requestFocus) {
     setCurrentViewType(typeName);
 
     final PsiElement element = mySmartPsiElementPointer.getElement();
@@ -476,7 +476,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   }
 
   @Override
-  public Object getData(final String dataId) {
+  public Object getData(@NotNull final String dataId) {
     if (getBrowserDataKey().equals(dataId)) {
       return this;
     }
@@ -689,7 +689,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       for(String name: getValidScopeNames()) {
         group.add(new MenuAction(name));
       }
-      
+
       group.add(new ConfigureScopesAction());
 
       return group;
@@ -704,8 +704,9 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       ApplicationManager.getApplication().invokeLater(() -> doRefresh(true));
     }
 
+    @NotNull
     @Override
-    public final JComponent createCustomComponent(final Presentation presentation) {
+    public final JComponent createCustomComponent(@NotNull final Presentation presentation) {
       final JPanel panel = new JPanel(new GridBagLayout());
       panel.add(new JLabel(IdeBundle.message("label.scope")),
                 new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.BOTH, JBUI.insetsLeft(5), 0, 0));
@@ -727,7 +728,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
         selectScope(myScopeType);
       }
     }
-    
+
     private final class ConfigureScopesAction extends AnAction {
       private ConfigureScopesAction() {
         super("Configure...");

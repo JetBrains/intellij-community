@@ -54,11 +54,13 @@ public class CannotUndoReportDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction()};
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
     return myPanel;

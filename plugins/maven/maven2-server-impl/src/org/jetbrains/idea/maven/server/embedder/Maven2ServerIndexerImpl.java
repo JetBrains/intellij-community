@@ -15,9 +15,6 @@
  */
 package org.jetbrains.idea.maven.server.embedder;
 
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.apache.lucene.document.Document;
@@ -67,7 +64,7 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
     myUpdater = myEmbedder.getComponent(IndexUpdater.class);
     myArtifactContextProducer = myEmbedder.getComponent(ArtifactContextProducer.class);
 
-    ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
+    MavenServerUtil.registerShutdownTask(new Runnable() {
       @Override
       public void run() {
         release();
@@ -75,6 +72,7 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
     });
   }
 
+  @Override
   public int createIndex(@NotNull String indexId,
                          @NotNull String repositoryId,
                          @Nullable File file,
@@ -98,6 +96,7 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
     }
   }
 
+  @Override
   public void releaseIndex(int id) throws MavenServerIndexerException {
     try {
       myIndexer.removeIndexingContext(getIndex(id), false);
@@ -134,10 +133,12 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
     return index.getRepository() != null;
   }
 
+  @Override
   public int getIndexCount() {
     return myIndexer.getIndexingContexts().size();
   }
 
+  @Override
   public void updateIndex(int id, MavenServerSettings settings, MavenServerProgressIndicator indicator) throws
                                                                                                         MavenServerIndexerException,
                                                                                                         MavenServerProcessCanceledException,
@@ -198,7 +199,7 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
     catch (RuntimeRemoteException e) {
       throw e.getCause();
     }
-    catch (ProcessCanceledException e) {
+    catch (MavenProcessCanceledRuntimeException e) {
       throw new MavenServerProcessCanceledException();
     }
     catch (Exception e) {
@@ -206,6 +207,7 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
     }
   }
 
+  @Override
   public void processArtifacts(int indexId, MavenServerIndicesProcessor processor) throws MavenServerIndexerException {
     try {
       final int CHUNK_SIZE = 10000;
@@ -220,11 +222,11 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
         Document doc = r.document(i);
         String uinfo = doc.get(ArtifactInfo.UINFO);
         if (uinfo == null) continue;
-        List<String> uInfoParts = StringUtil.split(uinfo, ArtifactInfo.FS);
-        String groupId = uInfoParts.get(0);
-        String artifactId = uInfoParts.get(1);
-        String version = uInfoParts.get(2);
-        if (groupId == null || artifactId == null || version == null) continue;
+        String[] uInfoParts = uinfo.split("\\|");
+        if (uInfoParts.length < 3) continue;
+        String groupId = uInfoParts[0];
+        String artifactId = uInfoParts[1];
+        String version = uInfoParts[2];
 
         String packaging = doc.get(ArtifactInfo.PACKAGING);
         String description = doc.get(ArtifactInfo.DESCRIPTION);
@@ -246,6 +248,7 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
     }
   }
 
+  @Override
   public IndexedMavenId addArtifact(int indexId, File artifactFile) throws MavenServerIndexerException {
     try {
       IndexingContext index = getIndex(indexId);
@@ -271,6 +274,7 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
     m.invoke(index);
   }
 
+  @Override
   public Set<MavenArtifactInfo> search(int indexId, Query query, int maxResult) throws MavenServerIndexerException {
     try {
       IndexingContext index = getIndex(indexId);
@@ -304,6 +308,7 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
     }
   }
 
+  @Override
   public Collection<MavenArchetype> getArchetypes() throws RemoteException {
     Set<MavenArchetype> result = new THashSet<MavenArchetype>();
     doCollectArchetypes("internal-catalog", result);
@@ -324,6 +329,7 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
     }
   }
 
+  @Override
   public void release() {
     try {
       myEmbedder.release();
@@ -340,30 +346,34 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
       p = indicator;
     }
 
+    @Override
     public void scanningStarted(IndexingContext ctx) {
       try {
-        if (p.isCanceled()) throw new ProcessCanceledException();
+        if (p.isCanceled()) throw new MavenProcessCanceledRuntimeException();
       }
       catch (RemoteException e) {
         throw new RuntimeRemoteException(e);
       }
     }
 
+    @Override
     public void scanningFinished(IndexingContext ctx, ScanningResult result) {
       try {
-        if (p.isCanceled()) throw new ProcessCanceledException();
+        if (p.isCanceled()) throw new MavenProcessCanceledRuntimeException();
       }
       catch (RemoteException e) {
         throw new RuntimeRemoteException(e);
       }
     }
 
+    @Override
     public void artifactError(ArtifactContext ac, Exception e) {
     }
 
+    @Override
     public void artifactDiscovered(ArtifactContext ac) {
       try {
-        if (p.isCanceled()) throw new ProcessCanceledException();
+        if (p.isCanceled()) throw new MavenProcessCanceledRuntimeException();
         ArtifactInfo info = ac.getArtifactInfo();
         p.setText2(info.groupId + ":" + info.artifactId + ":" + info.version);
       }

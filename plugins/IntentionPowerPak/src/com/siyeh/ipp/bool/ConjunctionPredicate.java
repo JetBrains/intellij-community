@@ -26,6 +26,7 @@ import java.util.Arrays;
 
 class ConjunctionPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof PsiPolyadicExpression)) {
       return false;

@@ -211,7 +211,8 @@ class SmartPointerTracker {
       return;
     }
 
-    if (cachedElement.isValid()) {
+    boolean cachedValid = cachedElement.isValid();
+    if (cachedValid) {
       if (pointerRange == null) {
         // document change could be damaging, but if PSI survived after reparse, let's point to it
         ((SelfElementInfo)pointer.getElementInfo()).switchToAnchor(cachedElement);
@@ -225,6 +226,10 @@ class SmartPointerTracker {
     }
 
     E actual = pointer.doRestoreElement();
+    if (actual == null && cachedValid && ((SelfElementInfo)pointer.getElementInfo()).updateRangeToPsi(pointerRange, cachedElement)) {
+      return;
+    }
+
     if (actual != cachedElement) {
       pointer.cacheElement(actual);
     }

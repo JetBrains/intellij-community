@@ -268,7 +268,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
       e -> IGNORE_PROPERTY_KEYS = optionsPanel.myIgnorePropertyKeyExpressions.isSelected());
     optionsPanel.myMinStringLengthField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(final DocumentEvent e) {
+      protected void textChanged(@NotNull final DocumentEvent e) {
         try {
           MIN_STRING_LENGTH = Integer.parseInt(optionsPanel.myMinStringLengthField.getText());
         }

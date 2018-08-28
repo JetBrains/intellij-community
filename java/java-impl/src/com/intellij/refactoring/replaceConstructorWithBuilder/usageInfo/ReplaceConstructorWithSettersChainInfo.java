@@ -37,6 +37,7 @@ public class ReplaceConstructorWithSettersChainInfo extends FixableUsageInfo {
     myParametersMap = parametersMap;
   }
 
+  @Override
   public void fixUsage() throws IncorrectOperationException {
     final PsiNewExpression expr = (PsiNewExpression)getElement();
     if (expr != null) {

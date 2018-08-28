@@ -108,6 +108,8 @@ public class SingleClassesTest {
   @Test public void testMissingConstructorCallGood() { doTest("pkg/TestMissingConstructorCallGood"); }
   @Test public void testMissingConstructorCallBad() { doTest("pkg/TestMissingConstructorCallBad"); }
   @Test public void testEmptyBlocks() { doTest("pkg/TestEmptyBlocks"); }
+  @Test public void testPrivateEmptyConstructor() { doTest("pkg/TestPrivateEmptyConstructor"); }
+  @Test public void testSynchronizedUnprotected() { doTest("pkg/TestSynchronizedUnprotected"); }
 
 
   // TODO: fix all below

@@ -27,6 +27,7 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public abstract class ColoredTableCellRenderer extends SimpleColoredRenderer implements TableCellRenderer {
+  @Override
   public final Component getTableCellRendererComponent(JTable table, @Nullable Object value,
                                                        boolean isSelected, boolean hasFocus, int row, int col) {
     clear();

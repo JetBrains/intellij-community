@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -224,7 +225,7 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
       if (ExpressionUtils.isStringConcatenationOperand(expression)) {
         return true;
       }
-      final PsiElement parent = expression.getParent();
+      final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
       if (parent instanceof PsiExpressionList) {
         final PsiExpressionList expressionList =
           (PsiExpressionList)parent;

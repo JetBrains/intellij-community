@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.editor.ex;
 
+import com.intellij.openapi.editor.Document;
+import org.jetbrains.annotations.NotNull;
+
 public interface PrioritizedInternalDocumentListener extends PrioritizedDocumentListener {
-  void moveTextHappened(int start, int end, int base);
+  void moveTextHappened(@NotNull Document document, int start, int end, int base);
 }

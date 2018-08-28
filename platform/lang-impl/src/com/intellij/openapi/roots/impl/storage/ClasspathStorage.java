@@ -43,7 +43,7 @@ import java.util.Set;
 
 // Boolean - false as not loaded, true as loaded
 public final class ClasspathStorage extends StateStorageBase<Boolean> {
-  private static final Key<Boolean> ERROR_NOTIFIED_KEY =Key.create("ClasspathStorage.ERROR_NOTIFIED_KEY"); 
+  private static final Key<Boolean> ERROR_NOTIFIED_KEY = Key.create("ClasspathStorage.ERROR_NOTIFIED_KEY");
   private static final Logger LOG = Logger.getInstance(ClasspathStorage.class);
 
   private final ClasspathStorageProvider.ClasspathConverter myConverter;
@@ -65,7 +65,7 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
         module.putUserData(ERROR_NOTIFIED_KEY, Boolean.TRUE);
         LOG.info("Classpath storage provider " + storageType + " not found");
       }
-      
+
       myConverter = new MissingClasspathConverter();
     } else {
       myConverter = provider.createConverter(module);
@@ -181,8 +181,8 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
   }
 
   @Override
-  @NotNull
-  public ExternalizationSession startExternalization() {
+  @Nullable
+  public SaveSessionProducer createSaveSessionProducer() {
     return myConverter.startExternalization();
   }
 
@@ -253,18 +253,6 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
     @Override
     public List<String> getFilePaths() {
       return Collections.emptyList();
-    }
-
-    @NotNull
-    @Override
-    public ExternalizationSession startExternalization() {
-      return new ExternalizationSession() {
-        @Nullable
-        @Override
-        public SaveSession createSaveSession() {
-          return null;
-        }
-      };
     }
 
     @Override

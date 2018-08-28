@@ -600,7 +600,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
         }
 
         @Override
-        public void updateButton(AnActionEvent e) {
+        public void updateButton(@NotNull AnActionEvent e) {
           e.getPresentation().setEnabled(getTemplate(getSingleSelectedIndex()) != null);
         }
       }).addExtraAction(new AnActionButton("Restore deleted defaults", AllIcons.General.TodoDefault) {

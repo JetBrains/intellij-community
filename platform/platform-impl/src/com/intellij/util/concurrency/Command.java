@@ -37,7 +37,7 @@ public interface Command<T> extends Supplier<T>, Consumer<T> {
      * Lets the specified consumer to accept the given value on the foreground thread.
      */
     public <T> void consume(Consumer<T> consumer, T value) {
-      if (consumer != null) foreground.invokeLaterIfNeeded(() -> consumer.accept(value));
+      if (consumer != null) foreground.runOrInvokeLater(() -> consumer.accept(value));
     }
 
     /**
@@ -45,16 +45,16 @@ public interface Command<T> extends Supplier<T>, Consumer<T> {
      * and to accept this value on the foreground thread.
      */
     public <T> void process(Command<T> command) {
-      if (command != null) background.invokeLaterIfNeeded(() -> consume(command, command.get()));
+      if (command != null) background.runOrInvokeLater(() -> consume(command, command.get()));
     }
 
     /**
      * Lets the specified supplier to produce a value on the background thread
      * and the specified consumer to accept this value on the foreground thread.
      */
-    public <T> void process(Supplier<T> supplier, Consumer<T> consumer) {
+    public <T> void process(Supplier<? extends T> supplier, Consumer<? super T> consumer) {
       if (supplier != null) {
-        background.invokeLaterIfNeeded(() -> consume(consumer, supplier.get()));
+        background.runOrInvokeLater(() -> consume(consumer, supplier.get()));
       }
       else {
         consume(consumer, null);

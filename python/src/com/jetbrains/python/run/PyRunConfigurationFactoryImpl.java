@@ -14,9 +14,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PyRunConfigurationFactoryImpl extends PyRunConfigurationFactory {
   @Override
-  public PythonRunConfigurationParams createPythonScriptRunConfiguration(Module module, String scriptName, boolean singleton) {
+  public PythonRunConfigurationParams createPythonScriptRunConfiguration(Module module, String scriptName) {
     RunnerAndConfigurationSettings settings = createRunConfiguration(module, PythonConfigurationType.getInstance().getFactory());
-    settings.setSingleton(singleton);
     PythonRunConfigurationParams configuration = (PythonRunConfigurationParams)settings.getConfiguration();
     configuration.setScriptName(scriptName);
     return configuration;

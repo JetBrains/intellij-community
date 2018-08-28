@@ -57,12 +57,14 @@ public class LineOffsetsUtil {
       myTextLength = textLength;
     }
 
+    @Override
     public int getLineStart(int line) {
       checkLineIndex(line);
       if (line == 0) return 0;
       return myLineEnds[line - 1] + 1;
     }
 
+    @Override
     public int getLineEnd(int line) {
       checkLineIndex(line);
       return myLineEnds[line];
@@ -86,10 +88,12 @@ public class LineOffsetsUtil {
       return bsResult >= 0 ? bsResult : -bsResult - 1;
     }
 
+    @Override
     public int getLineCount() {
       return myLineEnds.length;
     }
 
+    @Override
     public int getTextLength() {
       return myTextLength;
     }

@@ -168,6 +168,7 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
                          new JpsModuleSourcePackagingElementSerializer());
   }
 
+  @Override
   @NotNull
   public List<? extends JpsLibraryPropertiesSerializer<?>> getLibraryPropertiesSerializers() {
     return Collections.singletonList(new JpsRepositoryLibraryPropertiesSerializer());

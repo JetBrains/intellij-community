@@ -16,7 +16,9 @@
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.template.*;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -25,7 +27,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -36,7 +37,6 @@ import com.jetbrains.python.debugger.PySignature;
 import com.jetbrains.python.debugger.PySignatureCacheManager;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -67,28 +67,37 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
 
   @Override
   public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
-    final PyExpression problemElement = getProblemElement(elementAt);
-    final PsiReference reference = problemElement == null ? null : problemElement.getReference();
-
-    final PsiElement resolved = reference != null ? reference.resolve() : null;
-    final PyNamedParameter parameter = getParameter(problemElement, resolved);
-
+    final PyNamedParameter parameter = findOnlySuitableParameter(editor, file);
     if (parameter != null) {
-      annotateParameter(project, editor, parameter, true);
+      annotateParameter(project, editor, parameter);
+      return;
     }
-    else {
-      StreamEx
-        .of(getMultiCallable(elementAt))
-        .select(PyFunction.class)
-        .forEach(function -> annotateReturnType(project, function, true));
+
+    final PyFunction function = findOnlySuitableFunction(editor, file);
+    if (function != null) {
+      annotateReturnType(project, function);
     }
   }
 
-  static PyNamedParameter annotateParameter(Project project,
-                                            Editor editor,
-                                            @NotNull PyNamedParameter parameter,
-                                            boolean createTemplate) {
+  private static void annotateParameter(Project project, Editor editor, @NotNull PyNamedParameter parameter) {
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(parameter)) return;
+    WriteAction.run(() -> annotateParameter(project, editor, parameter, true));
+  }
+
+  private static void annotateReturnType(Project project, PyFunction function) {
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(function)) return;
+    WriteAction.run(() -> annotateReturnType(project, function, true));
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  public static PyNamedParameter annotateParameter(Project project,
+                                                   Editor editor,
+                                                   @NotNull PyNamedParameter parameter,
+                                                   boolean createTemplate) {
     final PyExpression defaultParamValue = parameter.getDefaultValue();
 
     final String paramName = StringUtil.notNullize(parameter.getName());
@@ -197,16 +206,8 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
   }
 
   @Override
-  protected boolean isParamTypeDefined(PyParameter parameter) {
-    return isDefinedInAnnotation(parameter);
-  }
-
-  private static boolean isDefinedInAnnotation(PyParameter parameter) {
-    if (LanguageLevel.forElement(parameter).isPython2()) {
-      return false;
-    }
-    if (parameter instanceof PyNamedParameter && (((PyNamedParameter)parameter).getAnnotation() != null)) return true;
-    return false;
+  protected boolean isParamTypeDefined(@NotNull PyNamedParameter parameter) {
+    return parameter.getAnnotation() != null;
   }
 
   @Override

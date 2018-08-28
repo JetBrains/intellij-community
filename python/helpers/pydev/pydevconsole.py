@@ -1,7 +1,10 @@
 '''
 Entry point module to start the interactive console.
 '''
+from _pydev_bundle._pydev_getopt import gnu_getopt
+from _pydev_comm.rpc import make_rpc_client, start_rpc_server, start_rpc_server_and_make_client
 from _pydev_imps._pydev_saved_modules import thread
+
 start_new_thread = thread.start_new_thread
 
 try:
@@ -73,7 +76,8 @@ except:
     pass
 
 # Pull in runfile, the interface to UMD that wraps execfile
-from _pydev_bundle.pydev_umd import runfile, _set_globals_function
+from _pydev_bundle.pydev_umd import runfile
+
 if sys.version_info[0] >= 3:
     import builtins  # @UnresolvedImport
     builtins.runfile = runfile
@@ -89,10 +93,8 @@ class InterpreterInterface(BaseInterpreterInterface):
         The methods in this class should be registered in the xml-rpc server.
     '''
 
-    def __init__(self, host, client_port, mainThread, connect_status_queue=None):
-        BaseInterpreterInterface.__init__(self, mainThread, connect_status_queue)
-        self.client_port = client_port
-        self.host = host
+    def __init__(self, mainThread, connect_status_queue=None, rpc_client=None):
+        BaseInterpreterInterface.__init__(self, mainThread, connect_status_queue, rpc_client)
         self.namespace = {}
         self.interpreter = InteractiveConsole(self.namespace)
         self._input_error_printed = False
@@ -246,92 +248,100 @@ def do_exit(*args):
             os._exit(0)
 
 
-#=======================================================================================================================
-# start_console_server
-#=======================================================================================================================
-def start_console_server(host, port, interpreter):
-    try:
-        if port == 0:
-            host = ''
+def enable_thrift_logging():
+    """Sets up `thriftpy` logger
 
-        #I.e.: supporting the internal Jython version in PyDev to create a Jython interactive console inside Eclipse.
-        from _pydev_bundle.pydev_imports import SimpleXMLRPCServer as XMLRPCServer  #@Reimport
+    The logger is used in `thriftpy/server.py` for logging exceptions.
+    """
+    import logging
 
-        try:
-            if IS_PY24:
-                server = XMLRPCServer((host, port), logRequests=False)
-            else:
-                server = XMLRPCServer((host, port), logRequests=False, allow_none=True)
+    # create logger
+    logger = logging.getLogger('_shaded_thriftpy')
+    logger.setLevel(logging.DEBUG)
 
-        except:
-            sys.stderr.write('Error starting server with host: "%s", port: "%s", client_port: "%s"\n' % (host, port, interpreter.client_port))
-            sys.stderr.flush()
-            raise
+    # create console handler and set level to debug
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
 
-        # Tell UMD the proper default namespace
-        _set_globals_function(interpreter.get_namespace)
+    # create formatter
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-        server.register_function(interpreter.execLine)
-        server.register_function(interpreter.execMultipleLines)
-        server.register_function(interpreter.getCompletions)
-        server.register_function(interpreter.getFrame)
-        server.register_function(interpreter.getVariable)
-        server.register_function(interpreter.changeVariable)
-        server.register_function(interpreter.getDescription)
-        server.register_function(interpreter.close)
-        server.register_function(interpreter.interrupt)
-        server.register_function(interpreter.handshake)
-        server.register_function(interpreter.connectToDebugger)
-        server.register_function(interpreter.hello)
-        server.register_function(interpreter.getArray)
-        server.register_function(interpreter.evaluate)
-        server.register_function(interpreter.ShowConsole)
-        server.register_function(interpreter.loadFullValue)
+    # add formatter to ch
+    ch.setFormatter(formatter)
 
-        # Functions for GUI main loop integration
-        server.register_function(interpreter.enableGui)
+    # add ch to logger
+    logger.addHandler(ch)
 
-        if port == 0:
-            (h, port) = server.socket.getsockname()
 
-            print(port)
-            print(interpreter.client_port)
+def create_server_handler_factory(interpreter):
+    def server_handler_factory(rpc_client):
+        interpreter.rpc_client = rpc_client
+        return interpreter
 
-        while True:
-            try:
-                server.serve_forever()
-            except:
-                # Ugly code to be py2/3 compatible
-                # https://sw-brainwy.rhcloud.com/tracker/PyDev/534:
-                # Unhandled "interrupted system call" error in the pydevconsol.py
-                e = sys.exc_info()[1]
-                retry = False
-                try:
-                    retry = e.args[0] == 4 #errno.EINTR
-                except:
-                    pass
-                if not retry:
-                    raise
-                    # Otherwise, keep on going
-        return server
-    except:
-        traceback.print_exc()
-        # Notify about error to avoid long waiting
-        connection_queue = interpreter.get_connect_status_queue()
-        if connection_queue is not None:
-            connection_queue.put(False)
+    return server_handler_factory
 
-def start_server(host, port, client_port, client_host = None):
-    if not client_host:
-        client_host = host
+def start_server(port):
+    if port is None:
+        port = 0
+
+    # 0. General stuff
 
     #replace exit (see comments on method)
     #note that this does not work in jython!!! (sys method can't be replaced).
     sys.exit = do_exit
 
-    interpreter = InterpreterInterface(client_host, client_port, threading.currentThread())
+    from pydev_console.protocol import PythonConsoleBackendService, PythonConsoleFrontendService
 
-    start_new_thread(start_console_server,(host, port, interpreter))
+    enable_thrift_logging()
+
+    server_service = PythonConsoleBackendService
+    client_service = PythonConsoleFrontendService
+
+    # 1. Start Python console server
+
+    # `InterpreterInterface` implements all methods required for `server_handler`
+    interpreter = InterpreterInterface(threading.currentThread())
+
+    server_socket = start_rpc_server_and_make_client('', port, server_service, client_service, create_server_handler_factory(interpreter))
+
+    # 2. Print server port for the IDE
+
+    _, server_port = server_socket.getsockname()
+    print(server_port)
+
+    # 3. Wait for IDE to connect to the server
+
+    process_exec_queue(interpreter)
+
+
+def start_client(host, port):
+    #replace exit (see comments on method)
+    #note that this does not work in jython!!! (sys method can't be replaced).
+    sys.exit = do_exit
+
+    from pydev_console.protocol import PythonConsoleBackendService, PythonConsoleFrontendService
+
+    enable_thrift_logging()
+
+    client_service = PythonConsoleFrontendService
+
+    client, server_transport = make_rpc_client(client_service, host, port)
+
+    interpreter = InterpreterInterface(threading.currentThread(), rpc_client=client)
+
+    # we do not need to start the server in a new thread because it does not need to accept a client connection, it already has it
+
+
+    # todo do we need the following:
+    # # Tell UMD the proper default namespace
+    # _set_globals_function(interpreter.get_namespace)
+
+    server_service = PythonConsoleBackendService
+
+    # `InterpreterInterface` implements all methods required for the handler
+    server_handler = interpreter
+
+    start_rpc_server(server_transport, server_service, server_handler)
 
     process_exec_queue(interpreter)
 
@@ -439,7 +449,10 @@ def console_exec(thread_id, frame_id, expression, dbg):
     frame = pydevd_vars.find_frame(thread_id, frame_id)
 
     is_multiline = expression.count('@LINE@') > 1
-    expression = str(expression.replace('@LINE@', '\n'))
+    try:
+        expression = str(expression.replace('@LINE@', '\n'))
+    except UnicodeEncodeError as e:
+        expression = expression.replace('@LINE@', '\n')
 
     #Not using frame.f_globals because of https://sourceforge.net/tracker2/?func=detail&aid=2541355&group_id=85796&atid=577329
     #(Names not resolved in generator expression in method)
@@ -494,18 +507,32 @@ if __name__ == '__main__':
     #'Variables' and 'Expressions' views stopped working when debugging interactive console
     import pydevconsole
     sys.stdin = pydevconsole.BaseStdIn(sys.stdin)
-    port, client_port = sys.argv[1:3]
-    from _pydev_bundle import pydev_localhost
 
-    if int(port) == 0 and int(client_port) == 0:
-        (h, p) = pydev_localhost.get_socket_name()
+    # parse command-line arguments
+    optlist, _ = gnu_getopt(sys.argv, 'm:h:p', ['mode=', 'host=', 'port='])
+    mode = None
+    host = None
+    port = None
+    for opt, arg in optlist:
+        if opt in ('-m', '--mode'):
+            mode = arg
+        elif opt in ('-h', '--host'):
+            host = arg
+        elif opt in ('-p', '--port'):
+            port = int(arg)
 
-        client_port = p
+    if mode not in ('client', 'server'):
+        sys.exit(-1)
 
-    if len(sys.argv) > 4:
-        host = sys.argv[3]
-        client_host = sys.argv[4]
-    else:
-        host = client_host = pydev_localhost.get_localhost()
+    if mode == 'client':
+        if not port:
+            # port must be set for client
+            sys.exit(-1)
 
-    pydevconsole.start_server(host, int(port), int(client_port), client_host)
+        if not host:
+            from _pydev_bundle import pydev_localhost
+            host = client_host = pydev_localhost.get_localhost()
+
+        pydevconsole.start_client(host, port)
+    elif mode == 'server':
+        pydevconsole.start_server(port)

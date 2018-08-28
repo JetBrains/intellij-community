@@ -27,32 +27,32 @@
 -----
 Groovy script
   Literal
-    PsiElement(string)('''''''')
+    PsiElement(triple single quoted string)('''''''')
   PsiElement(new line)('\n')
   Literal
-    PsiElement(string)(''''\\'''')
+    PsiElement(triple single quoted string)(''''\\'''')
   PsiElement(new line)('\n\n')
   Literal
-    PsiElement(string)(''''\\n'''')
+    PsiElement(triple single quoted string)(''''\\n'''')
   PsiElement(new line)('\n\n')
   Literal
-    PsiElement(string)(''''\\n\n\n'''')
+    PsiElement(triple single quoted string)(''''\\n\n\n'''')
   PsiElement(new line)('\n\n')
   Literal
-    PsiElement(string)(''''\\\n'''')
+    PsiElement(triple single quoted string)(''''\\\n'''')
   PsiElement(new line)('\n\n')
   Literal
-    PsiElement(string)(''''\'''\n'''')
+    PsiElement(triple single quoted string)(''''\'''\n'''')
   PsiElement(new line)('\n\n')
   Literal
-    PsiElement(string)(''''\n\n\n'''')
+    PsiElement(triple single quoted string)(''''\n\n\n'''')
   PsiElement(new line)('\n\n')
   Literal
-    PsiElement(string)(''''foo'''')
+    PsiElement(triple single quoted string)(''''foo'''')
   PsiElement(new line)('\n')
   Literal
-    PsiElement(string)(''''\r\n'''')
+    PsiElement(triple single quoted string)(''''\r\n'''')
   PsiElement(new line)('\n')
   Literal
-    PsiElement(string)(''''\j\i'''')
+    PsiElement(triple single quoted string)(''''\j\i'''')
   PsiElement(new line)('\n')

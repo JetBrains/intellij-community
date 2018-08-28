@@ -23,6 +23,7 @@ import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 
 public class HighlightableCellRenderer extends HighlightableComponent implements TreeCellRenderer, ListCellRenderer {
+  @Override
   public Component getTreeCellRendererComponent(
     JTree tree,
     Object value,
@@ -48,11 +49,12 @@ public class HighlightableCellRenderer extends HighlightableComponent implements
       myHasFocus = hasFocus;
       setDoNotHighlight(false);
     }
-    
+
     myHasFocus = hasFocus;
     return this;
   }
 
+  @Override
   public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
     setText((value == null) ? "" : value.toString());
     setFont(UIUtil.getListFont());

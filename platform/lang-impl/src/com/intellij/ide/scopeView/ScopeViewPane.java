@@ -309,7 +309,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   }
 
   @Override
-  protected void installComparator(AbstractTreeBuilder builder, Comparator<NodeDescriptor> comparator) {
+  protected void installComparator(AbstractTreeBuilder builder, @NotNull Comparator<? super NodeDescriptor> comparator) {
     myTreeModel.setComparator(comparator);
   }
 
@@ -320,7 +320,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   }
 
   @Override
-  public Object getData(final String dataId) {
+  public Object getData(@NotNull final String dataId) {
     Object data = super.getData(dataId);
     if (data != null) return data;
     //TODO:myViewPanel == null ? null : myViewPanel.getData(dataId);

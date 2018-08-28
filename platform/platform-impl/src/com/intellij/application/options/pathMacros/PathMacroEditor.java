@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.pathMacros;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -49,17 +35,20 @@ public class PathMacroEditor extends DialogWrapper {
     myValidator = validator;
     myNameField.setText(macroName);
     DocumentListener documentListener = new DocumentAdapter() {
-      public void textChanged(DocumentEvent event) {
+      @Override
+      public void textChanged(@NotNull DocumentEvent event) {
         updateControls();
       }
     };
     myNameField.getDocument().addDocumentListener(documentListener);
     myValueField.setText(value);
     myValueField.addBrowseFolderListener(null, null, null, new FileChooserDescriptor(false, true, true, false, true, false), new TextComponentAccessor<JTextField>() {
+      @Override
       public String getText(JTextField component) {
         return component.getText();
       }
 
+      @Override
       public void setText(JTextField component, @NotNull String text) {
         final int len = text.length();
         if (len > 0 && text.charAt(len - 1) == File.separatorChar) {
@@ -87,19 +76,23 @@ public class PathMacroEditor extends DialogWrapper {
     }
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myNameField;
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(PathMacroConfigurable.HELP_ID);
   }
 
+  @Override
   protected void doOKAction() {
     if (!myValidator.isOK(getName(), getValue())) return;
     super.doOKAction();
@@ -122,10 +115,12 @@ public class PathMacroEditor extends DialogWrapper {
     return path;
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     return myPanel;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return null;
   }

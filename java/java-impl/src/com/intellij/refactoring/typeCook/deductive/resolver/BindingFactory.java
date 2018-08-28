@@ -109,6 +109,7 @@ public class BindingFactory {
       myCyclic = false;
     }
 
+    @Override
     public PsiType apply(final PsiType type) {
       if (type instanceof PsiTypeVariable) {
         final PsiType t = myBindings.get(((PsiTypeVariable) type).getIndex());
@@ -174,6 +175,7 @@ public class BindingFactory {
       return true;
     }
 
+    @Override
     public Binding compose(final Binding b) {
       LOG.assertTrue(b instanceof BindingImpl);
 
@@ -276,6 +278,7 @@ public class BindingFactory {
       return t;
     }
 
+    @Override
     public int compare(final Binding binding) {
       final BindingImpl b2 = (BindingImpl)binding;
       final BindingImpl b1 = this;
@@ -464,14 +467,17 @@ public class BindingFactory {
       return directoin;
     }
 
+    @Override
     public boolean nonEmpty() {
       return myBindings.size() > 0;
     }
 
+    @Override
     public boolean isCyclic() {
       return myCyclic;
     }
 
+    @Override
     public Binding reduceRecursive() {
       final BindingImpl binding = (BindingImpl)create();
 
@@ -521,10 +527,12 @@ public class BindingFactory {
       return this;
     }
 
+    @Override
     public boolean binds(final PsiTypeVariable var) {
       return myBindings.get(var.getIndex()) != null;
     }
 
+    @Override
     public void merge(final Binding b, final boolean removeObject) {
       for (final PsiTypeVariable var : b.getBoundVariables()) {
         final int index = var.getIndex();
@@ -559,13 +567,16 @@ public class BindingFactory {
       }
     }
 
+    @Override
     public Set<PsiTypeVariable> getBoundVariables() {
       return myBoundVariables;
     }
 
+    @Override
     public int getWidth() {
       class MyProcecure implements TObjectProcedure<PsiType> {
         int width;
+        @Override
         public boolean execute(PsiType type) {
           if (substitute(type)  != null) width++;
           return true;
@@ -581,6 +592,7 @@ public class BindingFactory {
       return procedure.getWidth();
     }
 
+    @Override
     public boolean isValid() {
       for (final PsiTypeVariable var : myBoundVariables) {
         final PsiType type = substitute(var);
@@ -593,10 +605,12 @@ public class BindingFactory {
       return true;
     }
 
+    @Override
     public void addTypeVariable(final PsiTypeVariable var) {
       myBoundVariables.add(var);
     }
 
+    @Override
     public PsiType substitute(final PsiType t) {
       if (t instanceof PsiWildcardType) {
         final PsiWildcardType wcType = (PsiWildcardType)t;
@@ -781,6 +795,7 @@ public class BindingFactory {
                final PsiType yType = ySubst.substitute(aParm);
 
                final Binding b1 = unify(xType, yType, new Unifier() {
+                 @Override
                  public Binding unify(final PsiType x, final PsiType y) {
                    return balance(x, y, balancer, constraints);
                  }
@@ -879,6 +894,7 @@ public class BindingFactory {
 
   public Binding riseWithWildcard(final PsiType x, final PsiType y, final Set<Constraint> constraints) {
     final Binding binding = balance(x, y, new Balancer() {
+                                      @Override
                                       public Binding varType(final PsiTypeVariable x, final PsiType y) {
                                         if (y instanceof Bottom) {
                                           return create();
@@ -898,6 +914,7 @@ public class BindingFactory {
                                         return binding;
                                       }
 
+                                      @Override
                                       public Binding varVar(final PsiTypeVariable x, final PsiTypeVariable y) {
                                         final int xi = x.getIndex();
                                         final int yi = y.getIndex();
@@ -917,6 +934,7 @@ public class BindingFactory {
                                        } */
                                       }
 
+                                      @Override
                                       public Binding typeVar(final PsiType x, final PsiTypeVariable y) {
                                         if (x == null) {
                                           return create(y, Bottom.BOTTOM);
@@ -942,6 +960,7 @@ public class BindingFactory {
 
   public Binding rise(final PsiType x, final PsiType y, final Set<Constraint> constraints) {
     final Binding binding = balance(x, y, new Balancer() {
+                                      @Override
                                       public Binding varType(final PsiTypeVariable x, final PsiType y) {
                                         if (y instanceof Bottom || y instanceof PsiWildcardType) {
                                           return create();
@@ -950,6 +969,7 @@ public class BindingFactory {
                                         return create(x, y);
                                       }
 
+                                      @Override
                                       public Binding varVar(final PsiTypeVariable x, final PsiTypeVariable y) {
                                         final int xi = x.getIndex();
                                         final int yi = y.getIndex();
@@ -965,6 +985,7 @@ public class BindingFactory {
                                         }
                                       }
 
+                                      @Override
                                       public Binding typeVar(final PsiType x, final PsiTypeVariable y) {
                                         if (x == null) return create(y, Bottom.BOTTOM);
                                         if (x instanceof PsiWildcardType) return create();
@@ -978,14 +999,17 @@ public class BindingFactory {
 
   public Binding sink(final PsiType x, final PsiType y, final Set<Constraint> constraints) {
     return balance(x, y, new Balancer() {
+                     @Override
                      public Binding varType(final PsiTypeVariable x, final PsiType y) {
                        return create(x, y);
                      }
 
+                     @Override
                      public Binding varVar(final PsiTypeVariable x, final PsiTypeVariable y) {
                        return create(y, Bottom.BOTTOM);
                      }
 
+                     @Override
                      public Binding typeVar(final PsiType x, final PsiTypeVariable y) {
                        return create(y, Bottom.BOTTOM);
                      }

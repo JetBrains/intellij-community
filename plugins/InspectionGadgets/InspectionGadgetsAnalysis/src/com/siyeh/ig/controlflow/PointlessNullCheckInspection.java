@@ -205,6 +205,7 @@ public class PointlessNullCheckInspection extends BaseInspection {
       final PsiReferenceExpression explicitCheckReference = getReferenceFromNullCheck(binaryExpression);
       if (explicitCheckReference == null) return false;
       final PsiVariable variable = tryCast(explicitCheckReference.resolve(), PsiVariable.class);
+      if (variable == null) return false;
       final PsiReferenceExpression implicitCheckReference = getReferenceFromImplicitNullCheckExpression(implicitCheckCandidate);
       if (implicitCheckReference == null || !implicitCheckReference.isReferenceTo(variable)) return false;
       if (isVariableUsed(operands, i, j, variable)) return false;
@@ -284,6 +285,7 @@ public class PointlessNullCheckInspection extends BaseInspection {
       final PsiReferenceExpression referenceExpression = getReferenceFromImplicitNullCheckExpression(operands[0]);
       if (referenceExpression == null) return null;
       final PsiVariable variable = tryCast(referenceExpression.resolve(), PsiVariable.class);
+      if (variable == null) return null;
       for (int i = 1, operandsLength = operands.length; i < operandsLength; i++) {
         final PsiReferenceExpression reference2 = getReferenceFromImplicitNullCheckExpression(operands[i]);
         if (reference2 == null || !reference2.isReferenceTo(variable)) {

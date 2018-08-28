@@ -55,16 +55,19 @@ class SvnChangeProviderContext implements StatusReceiver {
     myBranchConfigurationManager = SvnBranchConfigurationManager.getInstance(myVcs.getProject());
   }
 
+  @Override
   public void process(FilePath path, Status status) throws SvnBindException {
     if (status != null) {
       processStatusFirstPass(path, status);
     }
   }
 
+  @Override
   public void processIgnored(VirtualFile vFile) {
     myChangelistBuilder.processIgnoredFile(vFile);
   }
 
+  @Override
   public void processUnversioned(VirtualFile vFile) {
     myChangelistBuilder.processUnversionedFile(vFile);
   }

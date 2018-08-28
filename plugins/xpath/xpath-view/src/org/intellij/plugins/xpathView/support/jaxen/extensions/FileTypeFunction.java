@@ -15,16 +15,16 @@
  */
 package org.intellij.plugins.xpathView.support.jaxen.extensions;
 
+import com.intellij.psi.PsiFile;
 import org.intellij.lang.xpath.context.functions.Parameter;
 import org.intellij.lang.xpath.psi.XPathType;
-
-import com.intellij.psi.PsiFile;
 
 class FileTypeFunction extends BasicFileInfoFunction {
     public FileTypeFunction() {
         super("file-type", XPathType.STRING, new Parameter(XPathType.NODESET, Parameter.Kind.OPTIONAL));
     }
 
+    @Override
     protected String extractInfo(PsiFile psiFile) {
         return psiFile.getFileType().getName();
     }

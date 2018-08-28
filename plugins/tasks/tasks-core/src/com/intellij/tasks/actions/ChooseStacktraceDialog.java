@@ -72,6 +72,7 @@ public class ChooseStacktraceDialog extends DialogWrapper {
     myEditor = AnalyzeStacktraceUtil.createEditorPanel(project, myDisposable);
     myEditorPanel.add(myEditor, BorderLayout.CENTER);
     myList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         Object value = myList.getSelectedValue();
         if (value instanceof Comment) {
@@ -91,6 +92,7 @@ public class ChooseStacktraceDialog extends DialogWrapper {
     return myList;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myPanel;
   }

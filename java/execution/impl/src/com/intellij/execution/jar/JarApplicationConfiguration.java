@@ -31,11 +31,18 @@ import java.util.Map;
 /**
  * @author nik
  */
-public class JarApplicationConfiguration extends LocatableConfigurationBase implements CommonJavaRunConfigurationParameters, SearchScopeProvidingRunProfile {
+public class JarApplicationConfiguration extends LocatableConfigurationBase implements CommonJavaRunConfigurationParameters, SearchScopeProvidingRunProfile, InputRedirectAware {
   private static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTERS = new SkipDefaultValuesSerializationFilters();
   private JarApplicationConfigurationBean myBean = new JarApplicationConfigurationBean();
   private Map<String, String> myEnvs = new LinkedHashMap<>();
   private JavaRunConfigurationModule myConfigurationModule;
+  private InputRedirectAware.InputRedirectOptions myInputRedirectOptions = new InputRedirectOptions();
+
+  @NotNull
+  @Override
+  public InputRedirectOptions getInputRedirectOptions() {
+    return myInputRedirectOptions;
+  }
 
   public JarApplicationConfiguration(Project project, ConfigurationFactory factory, String name) {
     super(project, factory, name);
@@ -59,6 +66,7 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
     XmlSerializer.deserializeInto(myBean, element);
     EnvironmentVariablesComponent.readExternal(element, getEnvs());
     myConfigurationModule.readExternal(element);
+    myInputRedirectOptions.readExternal(element);
   }
 
   @Override
@@ -68,6 +76,7 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
     clone.myConfigurationModule = new JavaRunConfigurationModule(getProject(), true);
     clone.myConfigurationModule.setModule(myConfigurationModule.getModule());
     clone.myBean = XmlSerializerUtil.createCopy(myBean);
+    clone.myInputRedirectOptions = myInputRedirectOptions.copy();
     return clone;
   }
 
@@ -88,6 +97,7 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
     if (myConfigurationModule.getModule() != null) {
       myConfigurationModule.writeExternal(element);
     }
+    myInputRedirectOptions.writeExternal(element);
   }
 
   @Override

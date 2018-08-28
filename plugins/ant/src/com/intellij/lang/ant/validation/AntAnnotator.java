@@ -28,9 +28,11 @@ import java.util.List;
 
 public class AntAnnotator implements DomElementsAnnotator {
 
+  @Override
   public void annotate(DomElement element, final DomElementAnnotationHolder holder) {
     element.accept(new AntDomRecursiveVisitor() {
 
+      @Override
       public void visitTypeDef(AntDomTypeDef typedef) {
         final List<String> errors = typedef.getErrorDescriptions();
         if (!errors.isEmpty()) {
@@ -49,6 +51,7 @@ public class AntAnnotator implements DomElementsAnnotator {
         super.visitTypeDef(typedef);
       }
 
+      @Override
       public void visitAntDomCustomElement(AntDomCustomElement custom) {
         if (custom.getDefinitionClass() == null) {
           final AntDomNamedElement declaringElement = custom.getDeclaringElement();

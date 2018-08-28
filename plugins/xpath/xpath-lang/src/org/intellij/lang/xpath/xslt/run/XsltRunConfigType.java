@@ -37,24 +37,30 @@ public class XsltRunConfigType implements ConfigurationType {
     return ConfigurationTypeUtil.findConfigurationType(XsltRunConfigType.class);
   }
 
+  @NotNull
+  @Override
   public String getDisplayName() {
     return "XSLT";
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getId() {
     return "XSLT";
   }
 
+  @Override
   public String getConfigurationTypeDescription() {
     return "Run XSLT Script";
   }
 
+  @Override
   public Icon getIcon() {
     return XpathIcons.Xslt;
   }
 
+  @Override
   public ConfigurationFactory[] getConfigurationFactories() {
     return new ConfigurationFactory[]{myFactory};
   }
@@ -64,8 +70,9 @@ public class XsltRunConfigType implements ConfigurationType {
       super(type);
     }
 
+    @Override
     @NotNull
-    public RunConfiguration createTemplateConfiguration(final Project project) {
+    public RunConfiguration createTemplateConfiguration(@NotNull final Project project) {
       return new XsltRunConfiguration(project, this);
     }
   }

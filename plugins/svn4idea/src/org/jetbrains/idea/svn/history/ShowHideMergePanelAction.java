@@ -33,10 +33,12 @@ public class ShowHideMergePanelAction extends DumbAwareToggleAction {
     presentation.setDescription(SvnBundle.message("committed.changes.action.enable.merge.highlighting.description.text"));
   }
 
+  @Override
   public boolean isSelected(final AnActionEvent e) {
     return myIsSelected;
   }
 
+  @Override
   public void setSelected(final AnActionEvent e, final boolean state) {
     myIsSelected = state;
     if (state) {

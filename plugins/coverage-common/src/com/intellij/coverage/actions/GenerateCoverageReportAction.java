@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class GenerateCoverageReportAction extends AnAction {
 
+  @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = e.getProject();
@@ -48,6 +49,7 @@ public class GenerateCoverageReportAction extends AnAction {
     coverageEngine.generateReport(project, dataContext, currentSuite);
   }
 
+  @Override
   public void update(@NotNull final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Presentation presentation = e.getPresentation();

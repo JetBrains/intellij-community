@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package net.sf.cglib.proxy;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -54,6 +40,7 @@ public class AdvancedProxy {
 
   private static final Map<ProxyDescription, Factory> ourFactories = ContainerUtil.createConcurrentWeakValueMap();
   private static final CallbackFilter NO_OBJECT_METHODS_FILTER = new CallbackFilter() {
+    @Override
     public int accept(Method method) {
       if (AdvancedProxy.FINALIZE_METHOD.equals(method)) {
         return 1;
@@ -67,6 +54,7 @@ public class AdvancedProxy {
     }
   };
   private static final CallbackFilter WITH_OBJECT_METHODS_FILTER = new CallbackFilter() {
+    @Override
     public int accept(Method method) {
       if (AdvancedProxy.FINALIZE_METHOD.equals(method)) {
         return 1;
@@ -94,6 +82,7 @@ public class AdvancedProxy {
 
   public static <T> T createProxy(final Class<T> superClass, final Class... otherInterfaces) {
     return createProxy(superClass, otherInterfaces, new InvocationHandler() {
+      @Override
       public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
         throw new AbstractMethodError(method.toString());
       }
@@ -181,10 +170,12 @@ public class AdvancedProxy {
       myInterfaces = interfaces;
     }
 
+    @Override
     public String toString() {
       return mySuperClass + " " + (myInterfaces != null ? Arrays.asList(myInterfaces) : "");
     }
 
+    @Override
     public boolean equals(final Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
@@ -197,6 +188,7 @@ public class AdvancedProxy {
       return true;
     }
 
+    @Override
     public int hashCode() {
       int result;
       result = (mySuperClass != null ? mySuperClass.hashCode() : 0);

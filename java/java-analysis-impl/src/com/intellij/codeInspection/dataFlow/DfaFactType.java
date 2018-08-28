@@ -40,51 +40,61 @@ public abstract class DfaFactType<T> extends Key<T> {
   /**
    * This fact specifies whether the value can be null. The absence of the fact means that the nullability is unknown.
    */
-  public static final DfaFactType<Boolean> CAN_BE_NULL = new DfaFactType<Boolean>("Nullability") {
+  public static final DfaFactType<DfaNullability> NULLABILITY = new DfaFactType<DfaNullability>("Nullability") {
     @NotNull
     @Override
-    public String toString(@NotNull Boolean fact) {
-      return fact ? "Nullable" : "NotNull";
+    public String toString(@NotNull DfaNullability fact) {
+      return fact.getInternalName();
+    }
+
+    @Override
+    boolean isUnknown(@NotNull DfaNullability fact) {
+      return fact == DfaNullability.UNKNOWN;
     }
 
     @NotNull
     @Override
-    public String getPresentationText(@NotNull Boolean fact, @Nullable PsiType type) {
+    public String getPresentationText(@NotNull DfaNullability fact, @Nullable PsiType type) {
       if (type instanceof PsiPrimitiveType) return "";
-      return fact ? "nullable" : "non-null";
+      return fact.getPresentationName();
     }
 
     @Override
-    boolean isSuper(@Nullable Boolean superFact, @Nullable Boolean subFact) {
-      return (superFact == null && Boolean.FALSE.equals(subFact)) || super.isSuper(superFact, subFact);
+    boolean isSuper(@Nullable DfaNullability superFact, @Nullable DfaNullability subFact) {
+      return (superFact == null && (subFact == DfaNullability.NOT_NULL || subFact == DfaNullability.FLUSHED)) ||
+             super.isSuper(superFact, subFact);
     }
 
     @Nullable
     @Override
-    Boolean intersectFacts(@NotNull Boolean left, @NotNull Boolean right) {
-      if (Boolean.FALSE.equals(left) || Boolean.FALSE.equals(right)) {
-        return Boolean.FALSE;
+    DfaNullability intersectFacts(@NotNull DfaNullability left, @NotNull DfaNullability right) {
+      if (left == DfaNullability.NOT_NULL || right == DfaNullability.NOT_NULL) {
+        return DfaNullability.NOT_NULL;
+      }
+      if (left == DfaNullability.FLUSHED && right == DfaNullability.NULLABLE ||
+          left == DfaNullability.NULLABLE && right == DfaNullability.FLUSHED) {
+        return DfaNullability.NULLABLE;
       }
       return super.intersectFacts(left, right);
     }
 
     @Nullable
     @Override
-    Boolean fromDfaValue(DfaValue value) {
+    DfaNullability fromDfaValue(DfaValue value) {
       if (value instanceof DfaConstValue) {
-        return ((DfaConstValue)value).getValue() == null;
+        return ((DfaConstValue)value).getValue() == null ? DfaNullability.NULLABLE : DfaNullability.NOT_NULL;
       }
-      if (value instanceof DfaBoxedValue || value instanceof DfaUnboxedValue) return false;
+      if (value instanceof DfaBoxedValue || value instanceof DfaUnboxedValue) return DfaNullability.NOT_NULL;
       if (value instanceof DfaFactMapValue) {
         DfaFactMapValue factValue = (DfaFactMapValue)value;
-        if (factValue.get(OPTIONAL_PRESENCE) != null || factValue.get(RANGE) != null) return false;
+        if (factValue.get(OPTIONAL_PRESENCE) != null || factValue.get(RANGE) != null) return DfaNullability.NOT_NULL;
       }
       return super.fromDfaValue(value);
     }
 
     @Nullable
     @Override
-    Boolean calcFromVariable(@NotNull DfaVariableValue value) {
+    DfaNullability calcFromVariable(@NotNull DfaVariableValue value) {
       return NullabilityUtil.calcCanBeNull(value);
     }
   };

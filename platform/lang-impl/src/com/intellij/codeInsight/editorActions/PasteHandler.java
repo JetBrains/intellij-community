@@ -88,7 +88,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
 
     DataContext context = new DataContext() {
       @Override
-      public Object getData(@NonNls String dataId) {
+      public Object getData(@NotNull @NonNls String dataId) {
         return PasteAction.TRANSFERABLE_PROVIDER.is(dataId) ? (Producer<Transferable>)() -> transferable : dataContext.getData(dataId);
       }
     };

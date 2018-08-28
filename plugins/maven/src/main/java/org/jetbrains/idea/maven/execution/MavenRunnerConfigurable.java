@@ -36,20 +36,24 @@ public abstract class MavenRunnerConfigurable extends MavenRunnerPanel implement
   @Nullable
   protected abstract MavenRunnerSettings getState();
 
+  @Override
   public boolean isModified() {
     MavenRunnerSettings s = new MavenRunnerSettings();
     setData(s);
     return !s.equals(getState());
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     setData(getState());
   }
 
+  @Override
   public void reset() {
     getData(getState());
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return RunnerBundle.message("maven.tab.runner");
@@ -62,12 +66,14 @@ public abstract class MavenRunnerConfigurable extends MavenRunnerPanel implement
     return "reference.settings.project.maven.runner";
   }
 
+  @Override
   @NotNull
   public String getId() {
     //noinspection ConstantConditions
     return getHelpTopic();
   }
 
+  @Override
   public void disposeUIResources() {
 
   }

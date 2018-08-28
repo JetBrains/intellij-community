@@ -462,7 +462,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
   @Override
   @Nullable
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       final AntBuildFile buildFile = getCurrentBuildFile();
       if (buildFile == null) {

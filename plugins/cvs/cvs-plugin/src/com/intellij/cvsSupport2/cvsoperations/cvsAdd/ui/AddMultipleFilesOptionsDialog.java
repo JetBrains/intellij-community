@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.ComboBoxTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.dualView.TreeTableView;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
@@ -33,7 +34,6 @@ import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.ui.ColumnInfo;
-import com.intellij.ui.ComboBoxTableCellRenderer;
 import com.intellij.util.ui.table.ComboBoxTableCellEditor;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -61,24 +61,29 @@ public class AddMultipleFilesOptionsDialog extends AbstractAddOptionsDialog {
 
   private final ColumnInfo INCLUDED = new ColumnInfo("") {
 
+    @Override
     public Object valueOf(Object object) {
       return Boolean.valueOf(((AddedFileInfo)object).included());
     }
 
+    @Override
     public Class getColumnClass() {
       return Boolean.class;
     }
 
+    @Override
     public boolean isCellEditable(Object o) {
       return true;
     }
 
+    @Override
     public void setValue(Object o, Object aValue) {
       final AddedFileInfo node = (AddedFileInfo)o;
       node.setIncluded(((Boolean)aValue).booleanValue());
       myModel.nodeChanged(node);
     }
 
+    @Override
     public int getWidth(JTable table) {
       return CHECKBOX.getPreferredSize().width + 4;
     }
@@ -87,14 +92,17 @@ public class AddMultipleFilesOptionsDialog extends AbstractAddOptionsDialog {
 
   private static final ColumnInfo<AddedFileInfo, AddedFileInfo> FILE =
     new ColumnInfo<AddedFileInfo, AddedFileInfo>(CvsBundle.message("add.multiple.files.file.column.name")) {
+      @Override
       public AddedFileInfo valueOf(AddedFileInfo object) {
         return object;
       }
 
+      @Override
       public Class getColumnClass() {
         return TreeTableModel.class;
       }
 
+      @Override
       public boolean isCellEditable(AddedFileInfo o) {
         return true;
       }
@@ -102,16 +110,19 @@ public class AddMultipleFilesOptionsDialog extends AbstractAddOptionsDialog {
 
   private static final ColumnInfo KEYWORD_SUBSTITUTION = new ColumnInfo(
     CvsBundle.message("add.multiple.files.keyword.substitution.column.name")) {
+    @Override
     public Object valueOf(Object object) {
       return ((AddedFileInfo)object).getKeywordSubstitutionsWithSelection();
     }
 
+    @Override
     public boolean isCellEditable(Object o) {
       AddedFileInfo addedFileInfo = (AddedFileInfo)o;
       if (addedFileInfo.getFile().isDirectory()) return false;
       return addedFileInfo.included();
     }
 
+    @Override
     public void setValue(Object o, Object aValue) {
       final AddedFileInfo fileInfo = (AddedFileInfo)o;
       final KeywordSubstitutionWrapper substitutionWrapper = (KeywordSubstitutionWrapper)aValue;
@@ -119,16 +130,19 @@ public class AddMultipleFilesOptionsDialog extends AbstractAddOptionsDialog {
       fileInfo.setKeywordSubstitution(substitution);
     }
 
+    @Override
     public TableCellRenderer getRenderer(Object o) {
       AddedFileInfo addedFileInfo = (AddedFileInfo)o;
       if (addedFileInfo.getFile().isDirectory()) return TABLE_CELL_RENDERER;
       return ComboBoxTableCellRenderer.INSTANCE;
     }
 
+    @Override
     public TableCellEditor getEditor(Object item) {
       return ComboBoxTableCellEditor.INSTANCE;
     }
 
+    @Override
     public int getWidth(JTable table) {
       return table.getFontMetrics(table.getFont()).stringWidth(getName()) + 10;
     }
@@ -140,6 +154,7 @@ public class AddMultipleFilesOptionsDialog extends AbstractAddOptionsDialog {
   private ListTreeTableModelOnColumns myModel;
   private static final JPanel J_PANEL = new JPanel();
   private static final TableCellRenderer TABLE_CELL_RENDERER = new TableCellRenderer() {
+    @Override
     public Component getTableCellRendererComponent(JTable table,
                                                    Object value,
                                                    boolean isSelected,
@@ -158,6 +173,7 @@ public class AddMultipleFilesOptionsDialog extends AbstractAddOptionsDialog {
 
     myRoots = roots;
     myObserver = new Observer() {
+          @Override
           public void update(Observable o, Object arg) {
             setOKButtonEnabling();
           }
@@ -186,6 +202,7 @@ public class AddMultipleFilesOptionsDialog extends AbstractAddOptionsDialog {
     return false;
   }
 
+  @Override
   public void dispose() {
     super.dispose();
     for (AddedFileInfo myRoot : myRoots) {
@@ -246,6 +263,7 @@ public class AddMultipleFilesOptionsDialog extends AbstractAddOptionsDialog {
     TreeUtil.installActions(tree);
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel result = new JPanel(new BorderLayout());
     JComponent toolbar = createToolbar();
@@ -267,6 +285,7 @@ public class AddMultipleFilesOptionsDialog extends AbstractAddOptionsDialog {
       super(text, null, icon);
     }
 
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       for (AddedFileInfo addedFileInfo : getAllFileInfos()) {
         addedFileInfo.setIncluded(includedValue());
@@ -298,6 +317,7 @@ public class AddMultipleFilesOptionsDialog extends AbstractAddOptionsDialog {
       super(CvsBundle.message("action.name.select.all"), AllIcons.Actions.Selectall);
     }
 
+    @Override
     protected boolean includedValue() {
       return true;
     }
@@ -308,6 +328,7 @@ public class AddMultipleFilesOptionsDialog extends AbstractAddOptionsDialog {
       super(CvsBundle.message("action.name.unselect.all"), AllIcons.Actions.Unselectall);
     }
 
+    @Override
     protected boolean includedValue() {
       return false;
     }

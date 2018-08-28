@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class JUnit5Framework extends JavaTestFramework {
+  @Override
   @NotNull
   public String getName() {
     return "JUnit5";
@@ -32,6 +33,7 @@ public class JUnit5Framework extends JavaTestFramework {
     return AllIcons.RunConfigurations.Junit;
   }
 
+  @Override
   protected String getMarkerClassFQName() {
     return JUnitUtil.TEST5_ANNOTATION;
   }
@@ -42,11 +44,13 @@ public class JUnit5Framework extends JavaTestFramework {
     return JUnitExternalLibraryDescriptor.JUNIT5;
   }
 
+  @Override
   @Nullable
   public String getDefaultSuperClass() {
     return null;
   }
 
+  @Override
   public boolean isTestClass(PsiClass clazz, boolean canBePotential) {
     if (canBePotential) return isUnderTestSources(clazz);
     return JUnitUtil.isJUnit5TestClass(clazz, false);
@@ -130,14 +134,17 @@ public class JUnit5Framework extends JavaTestFramework {
     return true;
   }
 
+  @Override
   public FileTemplateDescriptor getSetUpMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("JUnit5 SetUp Method.java");
   }
 
+  @Override
   public FileTemplateDescriptor getTearDownMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("JUnit5 TearDown Method.java");
   }
 
+  @Override
   @NotNull
   public FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("JUnit5 Test Method.java");

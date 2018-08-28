@@ -114,7 +114,7 @@ public class GridCellImpl implements GridCell {
     }.setDataProvider(new DataProvider() {
       @Override
       @Nullable
-      public Object getData(@NonNls final String dataId) {
+      public Object getData(@NotNull @NonNls final String dataId) {
         if (ViewContext.CONTENT_KEY.is(dataId)) {
           TabInfo target = myTabs.getTargetInfo();
           if (target != null) {
@@ -303,7 +303,7 @@ public class GridCellImpl implements GridCell {
 
     @Override
     @Nullable
-    public Object getData(@NonNls final String dataId) {
+    public Object getData(@NotNull @NonNls final String dataId) {
       if (ViewContext.CONTENT_KEY.is(dataId)) {
         return new Content[]{myContent};
       }

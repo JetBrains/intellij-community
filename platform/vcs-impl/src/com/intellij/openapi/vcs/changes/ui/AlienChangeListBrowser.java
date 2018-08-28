@@ -87,7 +87,7 @@ public class AlienChangeListBrowser extends CommitDialogChangesBrowser {
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (VcsDataKeys.CHANGE_LISTS.is(dataId)) {
       return new ChangeList[]{myChangeList};
     }

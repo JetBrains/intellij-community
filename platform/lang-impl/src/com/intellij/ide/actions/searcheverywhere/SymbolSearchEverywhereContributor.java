@@ -43,6 +43,11 @@ public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor
   }
 
   @Override
+  public int getElementPriority(Object element, String searchPattern) {
+    return super.getElementPriority(element, searchPattern) + 3;
+  }
+
+  @Override
   protected FilteringGotoByModel<Language> createModel(Project project) {
     return new GotoSymbolModel2(project);
   }

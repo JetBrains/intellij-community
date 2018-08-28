@@ -161,7 +161,7 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
     final JTextField specifiedExceptions = new JTextField(ignoreForSpecifiedExceptionConstructors);
     specifiedExceptions.getDocument().addDocumentListener(new DocumentAdapter(){
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         ignoreForSpecifiedExceptionConstructors = specifiedExceptions.getText();
       }
     });

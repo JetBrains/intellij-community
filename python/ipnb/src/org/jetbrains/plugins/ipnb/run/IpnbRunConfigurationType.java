@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.ipnb.run;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -18,23 +19,29 @@ public class IpnbRunConfigurationType implements ConfigurationType {
     return ConfigurationTypeUtil.findConfigurationType(IpnbRunConfigurationType.class);
   }
 
+  @NotNull
+  @Override
   public String getDisplayName() {
     return "Jupyter Notebook";
   }
 
+  @Override
   public String getConfigurationTypeDescription() {
     return "Jupyter Notebook";
   }
 
+  @Override
   public Icon getIcon() {
     return PythonIcons.Python.IpythonNotebook;
   }
 
+  @Override
   @NotNull
   public String getId() {
     return "JupiterNotebook";
   }
 
+  @Override
   public ConfigurationFactory[] getConfigurationFactories() {
     return new ConfigurationFactory[]{IPNB_FACTORY};
   }
@@ -45,15 +52,12 @@ public class IpnbRunConfigurationType implements ConfigurationType {
     }
 
     @Override
-    public boolean isConfigurationSingletonByDefault() {
-      return true;
-    }
-
     @NotNull
     public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
       return new IpnbRunConfiguration(project, this);
     }
 
+    @NotNull
     @Override
     public String getName() {
       return "Jupyter Notebook";

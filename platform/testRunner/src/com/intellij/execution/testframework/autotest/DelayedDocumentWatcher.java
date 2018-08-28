@@ -64,6 +64,7 @@ public class DelayedDocumentWatcher implements AutoTestWatcher {
     return myProject;
   }
 
+  @Override
   public void activate() {
     if (myConnection == null) {
       myDisposable = Disposer.newDisposable();
@@ -91,6 +92,7 @@ public class DelayedDocumentWatcher implements AutoTestWatcher {
     }
   }
 
+  @Override
   public void deactivate() {
     if (myDisposable != null) {
       Disposer.dispose(myDisposable);
@@ -102,13 +104,14 @@ public class DelayedDocumentWatcher implements AutoTestWatcher {
     }
   }
 
+  @Override
   public boolean isUpToDate(int modificationStamp) {
     return myModificationStamp == modificationStamp;
   }
 
   private class MyDocumentAdapter implements DocumentListener {
     @Override
-    public void documentChanged(DocumentEvent event) {
+    public void documentChanged(@NotNull DocumentEvent event) {
       if (myDocumentSavingInProgress) {
         /* When {@link FileDocumentManager#saveAllDocuments} is called,
            {@link com.intellij.openapi.editor.impl.TrailingSpacesStripper} can change a document.

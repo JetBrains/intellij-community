@@ -58,7 +58,7 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
         }
         final int caretOffset = selectionModel.getSelectionStart();
         final char c2 = getMatchingDelimiter(c);
-        final String newText = String.valueOf(c) + selectedText + c2;
+        final String newText = c + selectedText + c2;
         boolean ltrSelection = selectionModel.getLeadSelectionOffset() != selectionModel.getSelectionEnd();
         boolean restoreStickySelection = editor instanceof EditorEx && ((EditorEx)editor).isStickySelection();
         selectionModel.removeSelection();

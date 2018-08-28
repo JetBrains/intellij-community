@@ -28,5 +28,6 @@
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="netty-codec-http" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="netty-handler" level="project" />
+    <orderEntry type="library" name="maven-model" level="project" />
   </component>
 </module>

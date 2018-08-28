@@ -48,6 +48,7 @@ public class LibraryElementPresentation extends PackagingElementPresentation {
     myContext = context;
   }
 
+  @Override
   public String getPresentableName() {
     return myLibraryName;
   }
@@ -62,6 +63,7 @@ public class LibraryElementPresentation extends PackagingElementPresentation {
     myContext.selectLibrary(myLibrary);
   }
 
+  @Override
   public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
     if (myLibrary != null) {
       presentationData.setIcon(PlatformIcons.LIBRARY_ICON);
@@ -69,7 +71,7 @@ public class LibraryElementPresentation extends PackagingElementPresentation {
       presentationData.addText(getLibraryTableComment(myLibrary), commentAttributes);
     }
     else {
-      presentationData.addText(myLibraryName + " (" + (myModuleName != null ? "module '" + myModuleName + "'" : myLevel) + ")", 
+      presentationData.addText(myLibraryName + " (" + (myModuleName != null ? "module '" + myModuleName + "'" : myLevel) + ")",
                                SimpleTextAttributes.ERROR_ATTRIBUTES);
     }
   }

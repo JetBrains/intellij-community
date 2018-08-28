@@ -75,6 +75,7 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
       }
     });
     myCompiler.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final BackendCompiler compiler = (BackendCompiler)myCompiler.getSelectedItem();
         if (compiler != null) {
@@ -84,6 +85,7 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
     });
   }
 
+  @Override
   public String getDisplayName() {
     return CompilerBundle.message("java.compiler.description");
   }
@@ -93,15 +95,18 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
     return "reference.projectsettings.compiler.javacompiler";
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();
   }
 
+  @Override
   public JComponent createComponent() {
     return myPanel;
   }
 
+  @Override
   public boolean isModified() {
     if (!Comparing.equal(mySelectedCompiler, myCompilerConfiguration.getDefaultCompiler())) {
       return true;
@@ -123,10 +128,11 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
     return false;
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     try {
       myCompilerConfiguration.setUseReleaseOption(myCbUseReleaseOption.isSelected());
-      
+
       for (Configurable configurable : myConfigurables) {
         if (configurable.isModified()) {
           configurable.apply();
@@ -147,6 +153,7 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
     }
   }
 
+  @Override
   public void reset() {
     myCbUseReleaseOption.setSelected(myCompilerConfiguration.useReleaseOption());
 

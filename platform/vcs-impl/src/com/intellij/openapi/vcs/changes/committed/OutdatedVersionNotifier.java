@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -31,6 +16,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -42,8 +28,8 @@ import java.util.List;
  * @author yole
  * todo: use EditorNotifications
  */
-public class OutdatedVersionNotifier implements ProjectComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.committed.OutdatedVersionNotifier");
+public class OutdatedVersionNotifier {
+  private static final Logger LOG = Logger.getInstance(OutdatedVersionNotifier.class);
 
   private final FileEditorManager myFileEditorManager;
   private final CommittedChangesCache myCache;
@@ -57,7 +43,8 @@ public class OutdatedVersionNotifier implements ProjectComponent {
     myFileEditorManager = fileEditorManager;
     myCache = cache;
     myProject = project;
-    messageBus.connect().subscribe(CommittedChangesCache.COMMITTED_TOPIC, new CommittedChangesAdapter() {
+    MessageBusConnection busConnection = messageBus.connect();
+    busConnection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new CommittedChangesAdapter() {
       @Override
       public void incomingChangesUpdated(@Nullable final List<CommittedChangeList> receivedChanges) {
         if (myCache.getCachedIncomingChanges() == null) {
@@ -71,6 +58,24 @@ public class OutdatedVersionNotifier implements ProjectComponent {
       @Override
       public void changesCleared() {
         updateAllEditorsLater();
+      }
+    });
+
+    busConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+      @Override
+      public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+        if (myCache.getCachedIncomingChanges() == null) {
+          requestLoadIncomingChanges();
+        }
+        else {
+          final Pair<CommittedChangeList, Change> pair = myCache.getIncomingChangeList(file);
+          if (pair != null) {
+            final FileEditor[] fileEditors = source.getEditors(file);
+            for(FileEditor editor: fileEditors) {
+              initPanel(pair.first, pair.second, editor);
+            }
+          }
+        }
       }
     });
   }
@@ -88,19 +93,6 @@ public class OutdatedVersionNotifier implements ProjectComponent {
 
   private static void debug(@NonNls String message) {
     LOG.debug(message);
-  }
-
-  @Override
-  public void projectOpened() {
-    final FileEditorManagerListener myFileEditorManagerListener = new MyFileEditorManagerListener();
-    myFileEditorManager.addFileEditorManagerListener(myFileEditorManagerListener, myProject);
-  }
-
-  @Override
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "OutdatedVersionNotifier";
   }
 
   private void updateAllEditorsLater() {
@@ -143,24 +135,6 @@ public class OutdatedVersionNotifier implements ProjectComponent {
     final OutdatedRevisionPanel component = new OutdatedRevisionPanel(list, c);
     editor.putUserData(PANEL_KEY, component);
     myFileEditorManager.addTopComponent(editor, component);
-  }
-
-  private class MyFileEditorManagerListener implements FileEditorManagerListener {
-    @Override
-    public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-      if (myCache.getCachedIncomingChanges() == null) {
-        requestLoadIncomingChanges();
-      }
-      else {
-        final Pair<CommittedChangeList, Change> pair = myCache.getIncomingChangeList(file);
-        if (pair != null) {
-          final FileEditor[] fileEditors = source.getEditors(file);
-          for(FileEditor editor: fileEditors) {
-            initPanel(pair.first, pair.second, editor);
-          }
-        }
-      }
-    }
   }
 
   private static class OutdatedRevisionPanel extends EditorNotificationPanel {

@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.navigation;
 
-import com.intellij.ide.actions.searcheverywhere.ContributorSearchResult;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorFactory;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorFilter;
@@ -32,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereContributor<Language> {
@@ -72,21 +72,13 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
   }
 
   @Override
-  public ContributorSearchResult<Object> search(String pattern,
-                                                boolean everywhere,
-                                                SearchEverywhereContributorFilter<Language> filter,
-                                                ProgressIndicator progressIndicator,
-                                                int elementsLimit) {
-    if (myProject == null || DumbService.getInstance(myProject).isDumb()) {
-      return ContributorSearchResult.empty();
+  public void fetchElements(String pattern, boolean everywhere, SearchEverywhereContributorFilter<Language> filter,
+                            ProgressIndicator progressIndicator, Function<Object, Boolean> consumer) {
+    if (myProject == null || DumbService.getInstance(myProject).isDumb() || pattern.isEmpty()) {
+      return;
     }
 
-    if (pattern.isEmpty()) {
-      return ContributorSearchResult.empty();
-    }
-    List<Object> result = new ArrayList<>();
-    ApplicationManager.getApplication().runReadAction(() -> findKeys(result, pattern, everywhere, progressIndicator, elementsLimit));
-    return new ContributorSearchResult<>(result);
+    ApplicationManager.getApplication().runReadAction(() -> findKeys(consumer, pattern, everywhere, progressIndicator));
   }
 
   @Override
@@ -107,11 +99,10 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
     return null;
   }
 
-  private void findKeys(@NotNull List<Object> result,
+  private void findKeys(@NotNull Function<Object, Boolean> consumer,
                         @NotNull String pattern,
                         boolean everywhere,
-                        ProgressIndicator progressIndicator,
-                        int elementsLimit) {
+                        ProgressIndicator progressIndicator) {
     if (myProject == null) {
       return;
     }
@@ -144,9 +135,7 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
         }
         for (int pos : positions) {
           Navigatable navigatable = PsiNavigationSupport.getInstance().createNavigatable(myProject, file, pos);
-          result.add(new YAMLKeyNavigationItem(navigatable, name, file));
-
-          if (result.size() >= elementsLimit) {
+          if (!consumer.apply(new YAMLKeyNavigationItem(navigatable, name, file))) {
             return;
           }
         }

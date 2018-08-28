@@ -1151,7 +1151,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     }
 
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
         final int[] selected = getSelectedRows();
         if (selected.length == 1) {

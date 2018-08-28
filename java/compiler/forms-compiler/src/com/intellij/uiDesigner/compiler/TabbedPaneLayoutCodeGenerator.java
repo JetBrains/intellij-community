@@ -32,6 +32,7 @@ public class TabbedPaneLayoutCodeGenerator extends LayoutCodeGenerator {
   private final Method mySetDisabledIconAtMethod = Method.getMethod("void setDisabledIconAt(int,javax.swing.Icon)");
   private final Method mySetEnabledAtMethod = Method.getMethod("void setEnabledAt(int,boolean)");
 
+  @Override
   public void generateComponentLayout(final LwComponent lwComponent,
                                       final GeneratorAdapter generator,
                                       final int componentLocal,

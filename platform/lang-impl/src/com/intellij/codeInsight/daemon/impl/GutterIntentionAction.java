@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.intention.AbstractIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -29,7 +30,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * @author Dmitry Avdeev
  */
-class GutterIntentionAction extends AbstractIntentionAction implements Comparable<IntentionAction>, Iconable, ShortcutProvider {
+class GutterIntentionAction extends AbstractIntentionAction implements Comparable<IntentionAction>, Iconable, ShortcutProvider,
+                                                                       PriorityAction {
   private final AnAction myAction;
   private final int myOrder;
   private final Icon myIcon;
@@ -52,6 +54,12 @@ class GutterIntentionAction extends AbstractIntentionAction implements Comparabl
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myText != null ? StringUtil.isNotEmpty(myText) : isAvailable(createActionEvent((EditorEx)editor));
+  }
+
+  @NotNull
+  @Override
+  public Priority getPriority() {
+    return myAction instanceof PriorityAction ? ((PriorityAction)myAction).getPriority() : Priority.NORMAL;
   }
 
   @NotNull

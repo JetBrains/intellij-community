@@ -225,6 +225,7 @@ public class HeavyAwareExecutor implements Disposable {
       myFuture = SettableFuture.create();
     }
 
+    @Override
     public void run() {
       try {
         myFuture.set(myComputable.compute());

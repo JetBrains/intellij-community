@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.eclipse.conversion;
 
@@ -40,7 +26,7 @@ import org.jetbrains.idea.eclipse.EclipseXml;
 
 import java.io.File;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 public class EPathUtil {
   static final Logger LOG = Logger.getInstance(EPathUtil.class);
@@ -103,7 +89,7 @@ public class EPathUtil {
    */
   static String expandEclipsePath2Url(final String path,
                                       final ModifiableRootModel model,
-                                      final List<String> currentRoots, 
+                                      final List<String> currentRoots,
                                       @NotNull final VirtualFile contentRoot) {
     final String rootPath = contentRoot.getPath();
     String url = null;
@@ -209,7 +195,6 @@ public class EPathUtil {
           return path;
         }
       }
-      return ProjectRootManagerImpl.extractLocalPath(url);  //absolute path
     }
     else { //try to avoid absolute path for deleted file
       if (contentRoot != null) {
@@ -230,9 +215,8 @@ public class EPathUtil {
       if (path.startsWith(projectPath)) {
         return ProjectRootManagerImpl.extractLocalPath(path.substring(projectPath.length()));
       }
-
-      return ProjectRootManagerImpl.extractLocalPath(url);
     }
+    return ProjectRootManagerImpl.extractLocalPath(url);  //absolute path
   }
 
   @Nullable
@@ -264,10 +248,9 @@ public class EPathUtil {
       if (jarSeparatorIdx > -1) {
         filePath = filePath.substring(0, jarSeparatorIdx);
       }
-      final PathMacros pathMacros = PathMacros.getInstance();
-      final Set<String> names = pathMacros.getUserMacroNames();
-      for (String name : names) {
-        final String path = FileUtil.toSystemIndependentName(pathMacros.getValue(name));
+      final Map<String, String> pathMacros = PathMacros.getInstance().getUserMacros();
+      for (String name : pathMacros.keySet()) {
+        final String path = FileUtil.toSystemIndependentName(pathMacros.get(name));
         if (filePath.startsWith(path + "/")) {
           final String substr = filePath.substring(path.length());
           return name + (substr.startsWith("/") || substr.length() == 0 ? substr : "/" + substr);

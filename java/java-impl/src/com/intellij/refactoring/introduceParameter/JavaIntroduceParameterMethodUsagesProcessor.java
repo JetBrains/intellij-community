@@ -59,10 +59,12 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
     return e != null && e.getLanguage().is(myLanguage);
   }
 
+  @Override
   public boolean isMethodUsage(UsageInfo usage) {
     return RefactoringUtil.isMethodUsage(usage.getElement()) && isJavaUsage(usage);
   }
 
+  @Override
   public boolean processChangeMethodUsage(IntroduceParameterData data, UsageInfo usage, UsageInfo[] usages) throws IncorrectOperationException {
     PsiElement ref = usage.getElement();
     if (ref instanceof PsiMethodReferenceExpression) {
@@ -82,7 +84,7 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
     JavaResolveResult result = callExpression.resolveMethodGenerics();
     boolean varargs = result instanceof MethodCandidateInfo &&
     ((MethodCandidateInfo)result).getApplicabilityLevel() == MethodCandidateInfo.ApplicabilityLevel.VARARGS;
-   
+
 
     final PsiExpression anchor;
     final PsiMethod methodToSearchFor = data.getMethodToSearchFor();
@@ -182,6 +184,7 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
   }
 
 
+  @Override
   public void findConflicts(IntroduceParameterData data, UsageInfo[] usages, final MultiMap<PsiElement, String> conflicts) {
     final PsiMethod method = data.getMethodToReplaceIn();
     final int parametersCount = method.getParameterList().getParametersCount();
@@ -209,6 +212,7 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
     }
   }
 
+  @Override
   public boolean processChangeMethodSignature(IntroduceParameterData data, UsageInfo usage, UsageInfo[] usages) throws IncorrectOperationException {
     if (!(usage.getElement() instanceof PsiMethod) || !isJavaUsage(usage)) return true;
     PsiMethod method = (PsiMethod)usage.getElement();
@@ -269,6 +273,7 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
     return anchorParameter;
   }
 
+  @Override
   public boolean processAddDefaultConstructor(IntroduceParameterData data, UsageInfo usage, UsageInfo[] usages) {
     if (!(usage.getElement() instanceof PsiClass) || !isJavaUsage(usage)) return true;
     PsiClass aClass = (PsiClass)usage.getElement();
@@ -286,6 +291,7 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
     return false;
   }
 
+  @Override
   public boolean processAddSuperCall(IntroduceParameterData data, UsageInfo usage, UsageInfo[] usages) throws IncorrectOperationException {
     if (!(usage.getElement() instanceof PsiMethod) || !isJavaUsage(usage)) return true;
     PsiMethod constructor = (PsiMethod)usage.getElement();

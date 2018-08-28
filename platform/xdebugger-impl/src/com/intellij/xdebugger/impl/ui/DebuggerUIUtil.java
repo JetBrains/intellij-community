@@ -216,25 +216,25 @@ public class DebuggerUIUtil {
     final Balloon balloon = showBreakpointEditor(project, mainPanel, point, component, showMoreOptions, breakpoint);
     balloonRef.set(balloon);
 
-    final XBreakpointListener<XBreakpoint<?>> breakpointListener = new XBreakpointListener<XBreakpoint<?>>() {
+    Disposable disposable = Disposer.newDisposable();
+
+    balloon.addListener(new JBPopupListener() {
+      @Override
+      public void onClosed(LightweightWindowEvent event) {
+        Disposer.dispose(disposable);
+        propertiesPanel.saveProperties();
+        propertiesPanel.dispose();
+      }
+    });
+
+    project.getMessageBus().connect(disposable).subscribe(XBreakpointListener.TOPIC, new XBreakpointListener<XBreakpoint<?>>() {
       @Override
       public void breakpointRemoved(@NotNull XBreakpoint<?> removedBreakpoint) {
         if (removedBreakpoint.equals(breakpoint)) {
           balloon.hide();
         }
       }
-    };
-
-    balloon.addListener(new JBPopupListener() {
-      @Override
-      public void onClosed(LightweightWindowEvent event) {
-        propertiesPanel.saveProperties();
-        propertiesPanel.dispose();
-        breakpointManager.removeBreakpointListener(breakpointListener);
-      }
     });
-
-    breakpointManager.addBreakpointListener(breakpointListener);
     ApplicationManager.getApplication().invokeLater(() -> IdeFocusManager.findInstance().requestFocus(mainPanel, true));
   }
 

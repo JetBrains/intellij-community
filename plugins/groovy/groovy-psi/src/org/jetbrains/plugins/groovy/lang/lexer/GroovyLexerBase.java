@@ -9,14 +9,15 @@ import com.intellij.util.containers.Stack;
 import static com.intellij.util.ArrayUtil.indexOf;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.KEYWORDS;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.STRING_LITERALS;
 
 public abstract class GroovyLexerBase implements FlexLexer {
 
   // see groovy.g: allowRegexpLiteral()
-  private final static TokenSet DIVISION_IS_EXPECTED_AFTER = TokenSet.orSet(KEYWORDS, TokenSet.create(
+  private final static TokenSet DIVISION_IS_EXPECTED_AFTER = TokenSet.orSet(KEYWORDS, STRING_LITERALS, TokenSet.create(
     mINC, mDEC,
     mRPAREN, mRBRACK, mRCURLY,
-    mSTRING_LITERAL, mGSTRING_LITERAL, mGSTRING_END, mREGEX_END, mDOLLAR_SLASH_REGEX_END,
+    mGSTRING_END, mREGEX_END, mDOLLAR_SLASH_REGEX_END,
     mNUM_INT, mNUM_FLOAT, mNUM_DOUBLE, mNUM_BIG_INT, mNUM_BIG_DECIMAL,
     mIDENT,
     mDOLLAR

@@ -42,13 +42,15 @@ import com.intellij.ui.TitledSeparator;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -153,7 +155,7 @@ public class SearchDialog extends DialogWrapper {
 
     editor.getDocument().addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(final DocumentEvent event) {
+      public void documentChanged(@NotNull final DocumentEvent event) {
         initiateValidation();
       }
     });

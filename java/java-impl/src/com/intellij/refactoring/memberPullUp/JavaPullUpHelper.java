@@ -376,10 +376,12 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
       final Set<PsiField> initializedFields = fieldsToInitializers.keySet();
       Set<PsiField> unmovable = RefactoringUtil.transitiveClosure(
               new RefactoringUtil.Graph<PsiField>() {
+                @Override
                 public Set<PsiField> getVertices() {
                   return initializedFields;
                 }
 
+                @Override
                 public Set<PsiField> getTargets(PsiField source) {
                   return fieldsToInitializers.get(source).movedFieldsUsed;
                 }
@@ -661,10 +663,12 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
       // check default constructor
       if (constructor == null || constructor.getParameterList().isEmpty()) {
         RefactoringUtil.visitImplicitSuperConstructorUsages(mySourceClass, new RefactoringUtil.ImplicitConstructorUsageVisitor() {
+          @Override
           public void visitConstructor(PsiMethod constructor, PsiMethod baseConstructor) {
             referencingSubConstructors.add(constructor);
           }
 
+          @Override
           public void visitClassWithoutConstructors(PsiClass aClass) {
           }
         }, myTargetSuperClass);
@@ -725,6 +729,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
       return myReferences;
     }
 
+    @Override
     protected void visitClassMemberReferenceElement(PsiMember classMember, PsiJavaCodeReferenceElement classMemberReference) {
       if (classMember.hasModifierProperty(PsiModifier.STATIC)) {
         if (!myMembersToMove.contains(classMember) &&

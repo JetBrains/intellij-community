@@ -110,14 +110,17 @@ class TypoTolerantMatcher extends MinusculeMatcher {
     return ranges.prepend(range);
   }
 
+  @Override
   public int matchingDegree(@NotNull String name) {
     return matchingDegree(name, false);
   }
 
+  @Override
   public int matchingDegree(@NotNull String name, boolean valueStartCaseMatch) {
     return matchingDegree(name, valueStartCaseMatch, matchingFragments(name));
   }
 
+  @Override
   public int matchingDegree(@NotNull String name, boolean valueStartCaseMatch, @Nullable FList<TextRange> fragments) {
     if (fragments == null) return Integer.MIN_VALUE;
     if (fragments.isEmpty()) return 0;
@@ -202,6 +205,7 @@ class TypoTolerantMatcher extends MinusculeMatcher {
     return 0;
   }
 
+  @Override
   public boolean isStartMatch(@NotNull String name) {
     FList<TextRange> fragments = matchingFragments(name);
     return fragments != null && isStartMatch(fragments);
@@ -217,11 +221,13 @@ class TypoTolerantMatcher extends MinusculeMatcher {
     return matchingFragments(name) != null;
   }
 
+  @Override
   @NotNull
   public String getPattern() {
     return new String(myPattern);
   }
 
+  @Override
   @Nullable
   public FList<TextRange> matchingFragments(@NotNull String name) {
     FList<TextRange> ranges = new Session(name, false).matchingFragments();
@@ -929,6 +935,7 @@ class TypoTolerantMatcher extends MinusculeMatcher {
       return myErrorCount;
     }
 
+    @Override
     @NotNull
     public Range shiftRight(int delta) {
       if (delta == 0) return this;

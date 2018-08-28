@@ -44,7 +44,7 @@ public class AsyncStacksUtils {
 
   @Nullable
   public static List<StackFrameItem> getAgentRelatedStack(JavaStackFrame frame, @NotNull SuspendContextImpl suspendContext) {
-    if (isAgentEnabled()) {
+    if (isAgentEnabled() && suspendContext.getDebugProcess().isEvaluationPossible()) {
       Location location = frame.getDescriptor().getLocation();
       if (location != null) {
         Method method = DebuggerUtilsEx.getMethod(location);
@@ -143,7 +143,7 @@ public class AsyncStacksUtils {
         process.addDebugProcessListener(new DebugProcessAdapterImpl() {
           @Override
           public void paused(SuspendContextImpl suspendContext) {
-            if (process.getSuspendManager().getPausedContext() != null) { // evaluation is possible
+            if (process.isEvaluationPossible()) { // evaluation is possible
               try {
                 StackCapturingLineBreakpoint.deleteAll(process);
 

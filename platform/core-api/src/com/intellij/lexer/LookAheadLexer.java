@@ -56,6 +56,7 @@ public abstract class LookAheadLexer extends LexerBase{
     advanceLexer(baseLexer);
   }
 
+  @Override
   public void advance() {
     if (!myTypeCache.isEmpty()) {
       myTypeCache.pullFirst();
@@ -74,11 +75,13 @@ public abstract class LookAheadLexer extends LexerBase{
     assert !myTypeCache.isEmpty();
   }
 
+  @Override
   @NotNull
   public CharSequence getBufferSequence() {
     return myBaseLexer.getBufferSequence();
   }
 
+  @Override
   public int getBufferEnd() {
     return myBaseLexer.getBufferEnd();
   }
@@ -106,24 +109,29 @@ public abstract class LookAheadLexer extends LexerBase{
     return myEndOffsetCache.get(index);
   }
 
+  @Override
   public int getState() {
     int offset = myTokenStart - myLastOffset;
     return myLastState | (offset << 16);
   }
 
+  @Override
   public int getTokenEnd() {
     return myEndOffsetCache.peekFirst();
   }
 
+  @Override
   public int getTokenStart() {
     return myTokenStart;
   }
 
+  @Override
   @NotNull
   public LookAheadLexerPosition getCurrentPosition() {
     return new LookAheadLexerPosition(this, ImmutableUserMap.EMPTY);
   }
 
+  @Override
   public final void restore(@NotNull final LexerPosition _position) {
     restore((LookAheadLexerPosition) _position);
   }
@@ -135,6 +143,7 @@ public abstract class LookAheadLexer extends LexerBase{
     }
   }
 
+  @Override
   public IElementType getTokenType() {
     return myTypeCache.peekFirst();
   }
@@ -167,10 +176,12 @@ public abstract class LookAheadLexer extends LexerBase{
       return customMap;
     }
 
+    @Override
     public int getOffset() {
       return tokenStart;
     }
 
+    @Override
     public int getState() {
       return lastState;
     }

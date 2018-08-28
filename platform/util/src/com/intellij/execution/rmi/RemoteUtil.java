@@ -276,7 +276,4 @@ public class RemoteUtil {
       }
     }
   }
-
-  public interface CastableArgument<T> {
-  }
 }

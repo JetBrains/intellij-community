@@ -346,6 +346,11 @@ public final class ToolWindowImpl implements ToolWindowEx {
     return myContentManager;
   }
 
+  // to avoid ensureContentInitialized call - myContentManager can report canCloseContents without full initialization
+  public boolean canCloseContents() {
+    return myContentManager.canCloseContents();
+  }
+
   public ToolWindowContentUi getContentUI() {
     return myContentUI;
   }

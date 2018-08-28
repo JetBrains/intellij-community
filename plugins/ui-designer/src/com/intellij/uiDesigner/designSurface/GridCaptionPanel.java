@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.designSurface;
 
@@ -72,6 +58,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     myIsRow = isRow;
     mySelectionModel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     mySelectionModel.addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         repaint();
         myEditor.fireSelectedComponentChanged();
@@ -248,6 +235,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     return container;
   }
 
+  @Override
   public void selectedComponentChanged(GuiEditor source) {
     checkSelectionChanged();
     repaint();
@@ -262,7 +250,8 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     }
   }
 
-  @Nullable public Object getData(String dataId) {
+  @Override
+  @Nullable public Object getData(@NotNull String dataId) {
     if (GuiEditor.DATA_KEY.is(dataId)) {
       return myEditor;
     }
@@ -277,6 +266,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
 
   public void attachToScrollPane(final JScrollPane scrollPane) {
     scrollPane.getViewport().addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         repaint();
       }
@@ -410,6 +400,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       myEditor.refreshAndSave(true);
     }
 
+    @Override
     public void mouseMoved(MouseEvent e) {
       if (!canResizeCells()) {
         return;
@@ -431,6 +422,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       }
     }
 
+    @Override
     public void mouseDragged(MouseEvent e) {
       if (myResizeLine > 0) {
         Point pnt = SwingUtilities.convertPoint(GridCaptionPanel.this, e.getPoint(),
@@ -458,6 +450,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
   }
 
   private static class LineFeedbackPainter implements FeedbackPainter {
+    @Override
     public void paintFeedback(Graphics2D g, Rectangle rc) {
       g.setColor(LightColors.YELLOW);
       if (rc.width == 1) {
@@ -470,6 +463,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
   }
 
   private class MyDeleteProvider implements DeleteProvider {
+    @Override
     public void deleteElement(@NotNull DataContext dataContext) {
       int[] selection = getSelectedCells(null);
       if (selection.length > 0) {
@@ -477,6 +471,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       }
     }
 
+    @Override
     public boolean canDeleteElement(@NotNull DataContext dataContext) {
       if (mySelectedContainer == null || mySelectionModel.isSelectionEmpty()) {
         return false;
@@ -487,6 +482,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
   }
 
   private class MyDnDSource implements DnDSource {
+    @Override
     public boolean canStartDragging(DnDAction action, Point dragOrigin) {
       LOG.debug("canStartDragging(): dragOrigin=" + dragOrigin);
       if (myResizeLine != -1) {
@@ -520,23 +516,28 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       return true;
     }
 
+    @Override
     public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
       return new DnDDragStartBean(new MyDragBean(myIsRow, getSelectedCells(dragOrigin)));
     }
 
+    @Override
     @Nullable
     public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
       return null;
     }
 
+    @Override
     public void dragDropEnd() {
     }
 
+    @Override
     public void dropActionChanged(final int gestureModifiers) {
     }
   }
 
   private class MyDnDTarget implements DnDTarget {
+    @Override
     public boolean update(DnDEvent aEvent) {
       aEvent.setDropPossible(false);
       if (mySelectedContainer == null) {
@@ -571,6 +572,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       return mySelectedContainer.getGridLayoutManager().getGridLineNear(mySelectedContainer, myIsRow, point, 20);
     }
 
+    @Override
     public void drop(DnDEvent aEvent) {
       if (!(aEvent.getAttachedObject() instanceof MyDragBean)) {
         return;
@@ -585,11 +587,13 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       cleanUpOnLeave();
     }
 
+    @Override
     public void cleanUpOnLeave() {
       setDropInsertLine(-1);
       myEditor.getActiveDecorationLayer().removeFeedback();
     }
 
+    @Override
     public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
     }
 

@@ -45,6 +45,7 @@ public abstract class CompositeSettingsEditor<Settings> extends SettingsEditor<S
 
   public abstract CompositeSettingsBuilder<Settings> getBuilder();
 
+  @Override
   public void resetEditorFrom(@NotNull Settings settings) {
     for (final SettingsEditor<Settings> myEditor : myEditors) {
       try {
@@ -56,6 +57,7 @@ public abstract class CompositeSettingsEditor<Settings> extends SettingsEditor<S
     }
   }
 
+  @Override
   public void applyEditorTo(@NotNull Settings settings) throws ConfigurationException {
     for (final SettingsEditor<Settings> myEditor : myEditors) {
       try {
@@ -70,14 +72,17 @@ public abstract class CompositeSettingsEditor<Settings> extends SettingsEditor<S
     }
   }
 
+  @Override
   public void uninstallWatcher() {
     for (SettingsEditor<Settings> editor : myEditors) {
       editor.removeSettingsEditorListener(myChildSettingsListener);
     }
   }
 
+  @Override
   public void installWatcher(JComponent c) {
     myChildSettingsListener = new SettingsEditorListener<Settings>() {
+      @Override
       public void stateChanged(SettingsEditor<Settings> editor) {
         fireEditorStateChanged();
         if (mySyncController != null) mySyncController.handleStateChange(editor);
@@ -89,6 +94,7 @@ public abstract class CompositeSettingsEditor<Settings> extends SettingsEditor<S
     }
   }
 
+  @Override
   @NotNull
   protected final JComponent createEditor() {
     CompositeSettingsBuilder<Settings> builder = getBuilder();
@@ -100,6 +106,7 @@ public abstract class CompositeSettingsEditor<Settings> extends SettingsEditor<S
     return builder.createCompoundEditor();
   }
 
+  @Override
   public void disposeEditor() {
     myIsDisposed = true;
   }

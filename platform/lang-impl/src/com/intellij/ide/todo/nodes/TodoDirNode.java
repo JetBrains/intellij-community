@@ -25,6 +25,7 @@ import com.intellij.psi.impl.file.SourceRootIconProvider;
 import com.intellij.ui.HighlightedRegion;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -50,7 +51,7 @@ public final class TodoDirNode extends PsiDirectoryNode implements HighlightedRe
   }
 
   @Override
-  protected void updateImpl(PresentationData data) {
+  protected void updateImpl(@NotNull PresentationData data) {
     super.updateImpl(data);
     int fileCount = getFileCount(getValue());
     if (getValue() == null || !getValue().isValid() || fileCount == 0) {

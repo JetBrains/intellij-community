@@ -81,7 +81,7 @@ public class ModuleToDoNode extends BaseToDoNode<Module> implements HighlightedR
   }
 
   @Override
-  public void update(PresentationData presentation) {
+  public void update(@NotNull PresentationData presentation) {
     if (DumbService.getInstance(getProject()).isDumb()) return;
     String newName = getValue().getName();
     int nameEndOffset = newName.length();

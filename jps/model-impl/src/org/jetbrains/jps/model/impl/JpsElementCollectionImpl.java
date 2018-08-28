@@ -15,7 +15,6 @@
  */
 package org.jetbrains.jps.model.impl;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.FilteringIterator;
 import org.jetbrains.annotations.NotNull;
@@ -104,6 +103,7 @@ public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBa
     return new JpsElementCollectionImpl<>(this);
   }
 
+  @Override
   public void applyChanges(@NotNull JpsElementCollectionImpl<E> modified) {
     Set<E> toRemove = new LinkedHashSet<>(myElements);
     List<E> toAdd = new ArrayList<>();

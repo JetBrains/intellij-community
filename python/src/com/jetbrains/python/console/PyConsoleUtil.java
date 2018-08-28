@@ -20,17 +20,16 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -233,6 +232,51 @@ public class PyConsoleUtil {
       .registerCustomShortcutSet(KeyEvent.VK_C, InputEvent.CTRL_MASK, consoleView.getConsoleEditor().getComponent());
     anAction.getTemplatePresentation().setVisible(false);
     return anAction;
+  }
+
+  public static AnAction createScrollToEndAction(@NotNull final Editor editor) {
+    return new ScrollToTheEndToolbarAction(editor);
+  }
+
+  private static class ConsoleDataContext implements DataContext {
+    private final DataContext myOriginalDataContext;
+    private final PythonConsoleView myConsoleView;
+
+    public ConsoleDataContext(DataContext dataContext, PythonConsoleView consoleView) {
+      myOriginalDataContext = dataContext;
+      myConsoleView = consoleView;
+    }
+
+    @Nullable
+    @Override
+    public Object getData(String dataId) {
+      if (CommonDataKeys.EDITOR.is(dataId)) {
+        return myConsoleView.getEditor();
+      }
+      return myOriginalDataContext.getData(dataId);
+    }
+  }
+
+  private static AnActionEvent createActionEvent(@NotNull AnActionEvent e, PythonConsoleView consoleView) {
+    final ConsoleDataContext dataContext = new ConsoleDataContext(e.getDataContext(), consoleView);
+    return new AnActionEvent(e.getInputEvent(), dataContext, e.getPlace(), e.getPresentation(), e.getActionManager(), e.getModifiers());
+  }
+
+  public static AnAction createPrintAction(PythonConsoleView consoleView) {
+    final AnAction printAction = ActionManager.getInstance().getAction("Print");
+    final DumbAwareAction newPrintAction = new DumbAwareAction() {
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        printAction.update(createActionEvent(e, consoleView));
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        printAction.actionPerformed(createActionEvent(e, consoleView));
+      }
+    };
+    newPrintAction.copyFrom(printAction);
+    return newPrintAction;
   }
 }
 

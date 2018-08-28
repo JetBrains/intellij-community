@@ -13,7 +13,7 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -37,7 +37,7 @@ import static java.lang.Math.max;
 /**
  * @author yole
  */
-public class UpdateCheckerComponent implements Disposable, ApplicationComponent {
+public class UpdateCheckerComponent implements Disposable, BaseComponent {
   private static final Logger LOG = Logger.getInstance(UpdateCheckerComponent.class);
 
   private static final long CHECK_INTERVAL = DateFormatUtil.DAY;
@@ -93,7 +93,7 @@ public class UpdateCheckerComponent implements Disposable, ApplicationComponent 
       return;
     }
 
-    app.getMessageBus().connect(app).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+    app.getMessageBus().connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
         BuildNumber currentBuild = ApplicationInfo.getInstance().getBuild();

@@ -35,11 +35,13 @@ public class ValuesExtractionResultImpl implements ValuesExtractionResult {
     myValues = values;
   }
 
+  @Override
   @NotNull
   public List<Value> getValues() {
     return myValues;
   }
 
+  @Override
   public void applySelected() {
     for (Value value : myValues) {
       if (value.state == Value.STATE.SELECTED) {
@@ -60,6 +62,7 @@ public class ValuesExtractionResultImpl implements ValuesExtractionResult {
     }
   }
 
+  @Override
   @Contract("false -> null")
   public ValuesExtractionResult apply(boolean retPrevValue) {
     if (retPrevValue) {

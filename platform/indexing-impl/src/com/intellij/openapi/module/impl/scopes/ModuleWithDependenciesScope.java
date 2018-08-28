@@ -167,8 +167,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
 
   @TestOnly
   public Collection<VirtualFile> getRoots() {
-    //noinspection unchecked
-    List<VirtualFile> result = (List)ContainerUtil.newArrayList(myRoots.keys());
+    @SuppressWarnings("unchecked") List<VirtualFile> result = (List)ContainerUtil.newArrayList(myRoots.keys());
     Collections.sort(result, Comparator.comparingInt(myRoots::get));
     return result;
   }
@@ -189,10 +188,10 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
 
   @Override
   public String toString() {
-    return "Module with dependencies:" + myModule.getName() +
-           " compile only:" + hasOption(COMPILE_ONLY) +
-           " include libraries:" + hasOption(LIBRARIES) +
-           " include other modules:" + hasOption(MODULES) +
-           " include tests:" + hasOption(TESTS);
+    return "Module-with-dependencies:" + myModule.getName() +
+           " compile-only:" + hasOption(COMPILE_ONLY) +
+           " include-libraries:" + hasOption(LIBRARIES) +
+           " include-other-modules:" + hasOption(MODULES) +
+           " include-tests:" + hasOption(TESTS);
   }
 }

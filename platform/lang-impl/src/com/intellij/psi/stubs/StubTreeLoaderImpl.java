@@ -176,14 +176,18 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
   }
 
   private static void checkDeserializationCreatesNoPsi(ObjectStubTree<?> tree) {
-    if (ourStubReloadingProhibited) return;
+    if (ourStubReloadingProhibited || !(tree instanceof StubTree)) return;
 
-    for (Stub each : tree.getPlainListFromAllRoots()) {
-      if (each instanceof StubBase) {
-        PsiElement cachedPsi = ((StubBase)each).getCachedPsi();
-        if (cachedPsi != null) {
-          ourStubReloadingProhibited = true;
-          throw new AssertionError("Stub deserialization shouldn't create PSI: " + cachedPsi + "; " + each);
+    for (PsiFileStub root : ((PsiFileStubImpl<?>)tree.getRoot()).getStubRoots()) {
+      if (root instanceof StubBase) {
+        StubList stubList = ((StubBase)root).myStubList;
+        for (int i = 0; i < stubList.size(); i++) {
+          StubBase<?> each = stubList.getCachedStub(i);
+          PsiElement cachedPsi = each == null ? null : ((StubBase)each).getCachedPsi();
+          if (cachedPsi != null) {
+            ourStubReloadingProhibited = true;
+            throw new AssertionError("Stub deserialization shouldn't create PSI: " + cachedPsi + "; " + each);
+          }
         }
       }
     }

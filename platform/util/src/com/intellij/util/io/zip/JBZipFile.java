@@ -156,6 +156,7 @@ public class JBZipFile implements Closeable {
    *
    * @throws IOException if an error occurs closing the archive.
    */
+  @Override
   public void close() throws IOException {
     if (myOutputStream != null) {
       if (entries.isEmpty()) {

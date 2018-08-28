@@ -125,14 +125,14 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   }
 
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (myEditor.isDisposed()) return null;
 
     if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
       // enable copying from editor in renderer mode
       return myEditor.getCopyProvider();
     }
-    
+
     if (myEditor.isRendererMode()) return null;
 
     if (CommonDataKeys.EDITOR.is(dataId)) {
@@ -832,8 +832,8 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
         .leanForward(bias != Position.Bias.Forward);
       Point point = myEditor.logicalPositionToXY(pos);
       Point pointNext = myEditor.logicalPositionToXY(posNext);
-      return point.y == pointNext.y 
-             ? new Rectangle(Math.min(point.x, pointNext.x), point.y, Math.abs(point.x - pointNext.x), myEditor.getLineHeight()) 
+      return point.y == pointNext.y
+             ? new Rectangle(Math.min(point.x, pointNext.x), point.y, Math.abs(point.x - pointNext.x), myEditor.getLineHeight())
              : new Rectangle(point.x, point.y, 0, myEditor.getLineHeight());
     }
 
@@ -913,7 +913,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     private int myCaretPos;
 
     @Override
-    public void caretPositionChanged(CaretEvent e) {
+    public void caretPositionChanged(@NotNull CaretEvent e) {
       Caret caret = e.getCaret();
       if (caret == null) {
         return;
@@ -946,7 +946,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     // ---- Implements DocumentListener ----
 
     @Override
-    public void documentChanged(final DocumentEvent event) {
+    public void documentChanged(@NotNull final DocumentEvent event) {
       final Integer pos = event.getOffset();
       if (ApplicationManager.getApplication().isDispatchThread()) {
         firePropertyChange(ACCESSIBLE_TEXT_PROPERTY, null, pos);

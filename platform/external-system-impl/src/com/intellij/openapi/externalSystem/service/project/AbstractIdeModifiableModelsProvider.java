@@ -345,26 +345,31 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
     private final MyFacetsProvider myFacetsProvider = new MyFacetsProvider();
     private final ManifestFileProvider myManifestFileProvider = new DefaultManifestFileProvider(this);
 
+    @Override
     @NotNull
     public Project getProject() {
       return myProject;
     }
 
+    @Override
     @NotNull
     public ArtifactModel getArtifactModel() {
       return AbstractIdeModifiableModelsProvider.this.getModifiableArtifactModel();
     }
 
+    @Override
     @NotNull
     public ModulesProvider getModulesProvider() {
       return myModulesProvider;
     }
 
+    @Override
     @NotNull
     public FacetsProvider getFacetsProvider() {
       return myFacetsProvider;
     }
 
+    @Override
     public Library findLibrary(@NotNull String level, @NotNull String libraryName) {
       if (level.equals(LibraryTablesRegistrar.PROJECT_LEVEL)) {
         return getLibraryByName(libraryName);
@@ -381,35 +386,42 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
   }
 
   private class MyModulesProvider implements ModulesProvider {
+    @Override
     @NotNull
     public Module[] getModules() {
       return AbstractIdeModifiableModelsProvider.this.getModules();
     }
 
+    @Override
     public Module getModule(String name) {
       return AbstractIdeModifiableModelsProvider.this.findIdeModule(name);
     }
 
+    @Override
     public ModuleRootModel getRootModel(@NotNull Module module) {
       return AbstractIdeModifiableModelsProvider.this.getModifiableRootModel(module);
     }
 
+    @Override
     public FacetModel getFacetModel(@NotNull Module module) {
       return AbstractIdeModifiableModelsProvider.this.getModifiableFacetModel(module);
     }
   }
 
   private class MyFacetsProvider implements FacetsProvider {
+    @Override
     @NotNull
     public Facet[] getAllFacets(Module module) {
       return getModifiableFacetModel(module).getAllFacets();
     }
 
+    @Override
     @NotNull
     public <F extends Facet> Collection<F> getFacetsByType(Module module, FacetTypeId<F> type) {
       return getModifiableFacetModel(module).getFacetsByType(type);
     }
 
+    @Override
     public <F extends Facet> F findFacet(Module module, FacetTypeId<F> type, String name) {
       return getModifiableFacetModel(module).findFacet(type, name);
     }

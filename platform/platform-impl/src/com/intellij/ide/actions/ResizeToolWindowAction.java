@@ -294,18 +294,22 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
 
   private class DefaultToolWindowScrollable implements ToolWindowScrollable {
 
+    @Override
     public boolean isHorizontalScrollingNeeded() {
       return true;
     }
 
+    @Override
     public int getNextHorizontalScroll() {
       return getReferenceSize().width * Registry.intValue("ide.windowSystem.hScrollChars");
     }
 
+    @Override
     public boolean isVerticalScrollingNeeded() {
       return true;
     }
 
+    @Override
     public int getNextVerticalScroll() {
       return getReferenceSize().height * Registry.intValue("ide.windowSystem.vScrollChars");
     }

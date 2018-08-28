@@ -3,7 +3,7 @@
 Groovy script
   Method call
     Reference expression
-      PsiElement(string)(''foo'')
+      PsiElement(single quoted string)(''foo'')
     Arguments
       PsiElement(()('(')
       PsiElement())(')')

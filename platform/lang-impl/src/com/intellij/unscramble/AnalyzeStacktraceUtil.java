@@ -156,7 +156,7 @@ public class AnalyzeStacktraceUtil {
     }
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       if (CommonDataKeys.EDITOR.is(dataId)) {
         return myEditor;
       }

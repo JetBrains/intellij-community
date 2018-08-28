@@ -90,10 +90,6 @@ public class Restarter {
     return restarter != null && restarter.isFile() && restarter.canExecute() ? null : "not an executable file: " + restarter;
   }
 
-  public static void scheduleRestart(@NotNull String... beforeRestart) throws IOException {
-    scheduleRestart(false, beforeRestart);
-  }
-
   public static void scheduleRestart(boolean elevate, @NotNull String... beforeRestart) throws IOException {
     Logger.getInstance(Restarter.class).info("restart: " + Arrays.toString(beforeRestart));
     if (SystemInfo.isWindows) {
@@ -133,19 +129,18 @@ public class Restarter {
       argv[0] = Native.toString(buffer);
     }
 
-    ArrayList<String> args = new ArrayList<>();
+    List<String> args = new ArrayList<>();
     args.add(String.valueOf(pid));
-    args.add(String.valueOf(beforeRestart.length));
-    Collections.addAll(args, beforeRestart);
-    if (elevate) {
-      File launcher = PathManager.findBinFile("launcher.exe");
-      if (launcher != null) {
-        args.add(launcher.getPath());
-        args.add(String.valueOf(argv.length + 1));
-      }
-      else {
-        args.add(String.valueOf(argv.length));
-      }
+
+    if (beforeRestart.length > 0) {
+      args.add(String.valueOf(beforeRestart.length));
+      Collections.addAll(args, beforeRestart);
+    }
+
+    File launcher;
+    if (elevate && (launcher = PathManager.findBinFile("launcher.exe")) != null) {
+      args.add(String.valueOf(argv.length + 1));
+      args.add(launcher.getPath());
     }
     else {
       args.add(String.valueOf(argv.length));
@@ -153,9 +148,7 @@ public class Restarter {
     Collections.addAll(args, argv);
 
     File restarter = PathManager.findBinFile("restarter.exe");
-    if (restarter == null) {
-      throw new IOException("Can't find restarter.exe; please reinstall the IDE");
-    }
+    if (restarter == null) throw new IOException("Can't find restarter.exe; please reinstall the IDE");
     runRestarter(restarter, args);
 
     // Since the process ID is passed through the command line, we want to make sure that we don't exit before the "restarter"

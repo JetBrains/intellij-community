@@ -29,15 +29,18 @@ public class PressureShortcut extends MouseShortcut {
     this.myStage = stage;
   }
 
+  @Override
   public int getButton() {
     return MouseEvent.BUTTON1;
   }
 
+  @Override
   @JdkConstants.InputEventMask
   public int getModifiers() {
     return 0;
   }
 
+  @Override
   public int getClickCount() {
     return 1;
   }

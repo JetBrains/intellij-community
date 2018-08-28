@@ -25,6 +25,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
 
 public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer {
+  @Override
   public void set(MavenServerLogger logger, MavenServerDownloadListener downloadListener) throws RemoteException {
     try {
       Maven3ServerGlobals.set(logger, downloadListener);
@@ -46,6 +47,7 @@ public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer 
     }
   }
 
+  @Override
   public MavenServerIndexer createIndexer() throws RemoteException {
     try {
       Maven3ServerIndexerImpl result = new Maven3ServerIndexerImpl(new Maven30ServerEmbedderImpl(new MavenServerSettings())) {
@@ -62,6 +64,7 @@ public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer 
     }
   }
 
+  @Override
   @NotNull
   public MavenModel interpolateAndAlignModel(MavenModel model, File basedir) {
     try {
@@ -72,6 +75,7 @@ public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer 
     }
   }
 
+  @Override
   public MavenModel assembleInheritance(MavenModel model, MavenModel parentModel) {
     try {
       return Maven30ServerEmbedderImpl.assembleInheritance(model, parentModel);
@@ -81,6 +85,7 @@ public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer 
     }
   }
 
+  @Override
   public ProfileApplicationResult applyProfiles(MavenModel model,
                                                 File basedir,
                                                 MavenExplicitProfiles explicitProfiles,

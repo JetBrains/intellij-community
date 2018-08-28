@@ -34,7 +34,7 @@ public class ShowExternalSystemSettingsAction extends ExternalSystemAction {
   }
 
   @Override
-  protected boolean isEnabled(AnActionEvent e) {
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
     if (!super.isEnabled(e)) return false;
 
     ProjectSystemId systemId = getSystemId(e);

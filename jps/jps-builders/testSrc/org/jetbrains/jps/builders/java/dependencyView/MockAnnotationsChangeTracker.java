@@ -29,6 +29,7 @@ public class MockAnnotationsChangeTracker extends AnnotationsChangeTracker{
   private static final String ANOTATION_NAME = MockAnnotation.class.getName().replace('.', '/');
   private static final String HIERARCHY_ANOTATION_NAME = MockHierarchyAnnotation.class.getName().replace('.', '/');
 
+  @Override
   @NotNull
   public Set<Recompile> methodAnnotationsChanged(DependencyContext context, MethodRepr method, Difference.Specifier<TypeRepr.ClassType, Difference> annotationsDiff, Difference.Specifier<ParamAnnotation, Difference> paramAnnotationsDiff) {
     //return RECOMPILE_NONE;
@@ -40,12 +41,14 @@ public class MockAnnotationsChangeTracker extends AnnotationsChangeTracker{
     );
   }
 
+  @Override
   @NotNull
   public Set<Recompile> fieldAnnotationsChanged(NamingContext context, FieldRepr field, Difference.Specifier<TypeRepr.ClassType, Difference> annotationsDiff) {
     //return RECOMPILE_NONE;
     return handleChanges(context, ContainerUtil.concat(annotationsDiff.added(), annotationsDiff.removed()));
   }
 
+  @Override
   @NotNull
   public Set<Recompile> classAnnotationsChanged(NamingContext context, ClassRepr aClass, Difference.Specifier<TypeRepr.ClassType, Difference> annotationsDiff) {
     //return RECOMPILE_NONE;
@@ -68,17 +71,21 @@ public class MockAnnotationsChangeTracker extends AnnotationsChangeTracker{
 
   private static Iterable<TypeRepr.ClassType> toTypeCollection(final Iterable<ParamAnnotation> paramCollection) {
     return new Iterable<TypeRepr.ClassType>() {
+      @Override
       public Iterator<TypeRepr.ClassType> iterator() {
         final Iterator<ParamAnnotation> iterator = paramCollection.iterator();
         return new Iterator<TypeRepr.ClassType>() {
+          @Override
           public boolean hasNext() {
             return iterator.hasNext();
           }
 
+          @Override
           public TypeRepr.ClassType next() {
             return iterator.next().type;
           }
 
+          @Override
           public void remove() {
             iterator.remove();
           }

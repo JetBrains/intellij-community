@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.vars;
 
 import org.jetbrains.java.decompiler.modules.decompiler.decompose.IGraphNode;
@@ -31,6 +31,7 @@ public class VarVersionNode implements IGraphNode {
     this.version = version;
   }
 
+  @Override
   public List<IGraphNode> getPredecessors() {
     List<IGraphNode> lst = new ArrayList<>(preds.size());
     for (VarVersionEdge edge : preds) {

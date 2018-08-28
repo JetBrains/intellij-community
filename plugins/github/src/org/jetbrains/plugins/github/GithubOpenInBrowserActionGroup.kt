@@ -8,6 +8,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
@@ -32,7 +34,7 @@ import org.jetbrains.plugins.github.util.GithubNotifications
 import org.jetbrains.plugins.github.util.GithubUtil
 
 open class GithubOpenInBrowserActionGroup
-  : ActionGroup("Open on GitHub", "Open corresponding link in browser", AllIcons.Vcs.Vendors.Github) {
+  : ActionGroup("Open on GitHub", "Open corresponding link in browser", AllIcons.Vcs.Vendors.Github), DumbAware {
 
   override fun update(e: AnActionEvent) {
     val repositories = getData(e.dataContext)?.first
@@ -55,9 +57,7 @@ open class GithubOpenInBrowserActionGroup
     getData(e.dataContext)?.let { GithubOpenInBrowserAction(it.first.first(), it.second) }?.actionPerformed(e)
   }
 
-  override fun canBePerformed(context: DataContext?): Boolean {
-    if (context == null) return false
-
+  override fun canBePerformed(context: DataContext): Boolean {
     val data = getData(context)
     return data != null && data.first.size == 1
   }
@@ -133,7 +133,7 @@ open class GithubOpenInBrowserActionGroup
     private const val CANNOT_OPEN_IN_BROWSER = "Can't open in browser"
 
     class GithubOpenInBrowserAction(private val repoPath: GithubRepositoryPath, val data: Data)
-      : AnAction(repoPath.toString().replace('_', ' ')) {
+      : DumbAwareAction(repoPath.toString().replace('_', ' ')) {
 
       override fun actionPerformed(e: AnActionEvent) {
         when (data) {

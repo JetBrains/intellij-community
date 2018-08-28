@@ -15,17 +15,18 @@
  */
 package com.siyeh.ipp.forloop;
 
+import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class ReverseForLoopDirectionPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof PsiJavaToken)) {
       return false;

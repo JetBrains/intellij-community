@@ -169,6 +169,7 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
     return myCoverageFilePath;
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     // is enabled
     myIsCoverageEnabled = Boolean.parseBoolean(element.getAttributeValue(COVERAGE_ENABLED_ATTRIBUTE_NAME));
@@ -198,6 +199,7 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
     }
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     // enabled
     if (myIsCoverageEnabled) {

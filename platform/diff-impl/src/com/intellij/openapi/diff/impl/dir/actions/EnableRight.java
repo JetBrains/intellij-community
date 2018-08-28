@@ -33,6 +33,7 @@ public class EnableRight extends DirDiffAction {
     return getModel().isShowNewOnTarget();
   }
 
+  @Override
   public void updateState(boolean state) {
     getModel().setShowNewOnTarget(state);
   }

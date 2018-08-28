@@ -410,7 +410,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
     }
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       if (CommonDataKeys.PROJECT.is(dataId)) {
         return myProject;
       }

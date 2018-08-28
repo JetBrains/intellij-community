@@ -117,7 +117,7 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
         variable,
         refsSet,
         delete,
-        declaration -> anchor.replace(declaration)
+        declaration -> new CommentTracker().replaceAndRestoreComments(anchor, declaration)
       );
     }
 

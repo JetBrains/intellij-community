@@ -171,14 +171,14 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   }
 
   @Override
-  public void beforeDocumentChange(DocumentEvent event) {
+  public void beforeDocumentChange(@NotNull DocumentEvent event) {
     for (DocumentListener documentListener : myDocumentListeners) {
       documentListener.beforeDocumentChange(event);
     }
   }
 
   @Override
-  public void documentChanged(DocumentEvent event) {
+  public void documentChanged(@NotNull DocumentEvent event) {
     for (DocumentListener documentListener : myDocumentListeners) {
       documentListener.documentChanged(event);
     }
@@ -261,7 +261,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
       myEditor.setPlaceholder(text);
     }
   }
-  
+
   public void selectAll() {
     if (myEditor != null) {
       doSelectAll(myEditor);
@@ -812,7 +812,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   }
 
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (myEditor != null && myEditor.isRendererMode()) {
       if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
         return myEditor.getCopyProvider();
@@ -845,7 +845,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     myRendererBg = backgroundColor;
     myRendererFg = foregroundColor;
   }
-  
+
   public void addSettingsProvider(@NotNull EditorSettingsProvider provider) {
     mySettingsProviders.add(provider);
   }

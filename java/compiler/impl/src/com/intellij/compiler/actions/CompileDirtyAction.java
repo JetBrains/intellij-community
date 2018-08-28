@@ -24,10 +24,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class CompileDirtyAction extends CompileActionBase {
 
+  @Override
   protected void doAction(DataContext dataContext, Project project) {
     ProjectTaskManager.getInstance(project).buildAllModules();
   }
 
+  @Override
   public void update(@NotNull AnActionEvent e){
     super.update(e);
     Presentation presentation = e.getPresentation();

@@ -68,13 +68,13 @@ public final class FileTreeModel extends AbstractTreeModel implements Identifiab
     getApplication().getMessageBus().connect(this).subscribe(VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
-        invoker.invokeLaterIfNeeded(() -> process(events));
+        invoker.runOrInvokeLater(() -> process(events));
       }
     });
   }
 
   public void invalidate() {
-    invoker.invokeLaterIfNeeded(() -> {
+    invoker.runOrInvokeLater(() -> {
       if (roots != null) {
         for (Root root : roots) {
           root.tree.invalidate();
@@ -108,7 +108,7 @@ public final class FileTreeModel extends AbstractTreeModel implements Identifiab
     if (object == null) return Promises.rejectedPromise();
     if (object instanceof String && object.equals(state.toString())) return Promises.resolvedPromise(state.path);
     AsyncPromise<TreePath> promise = new AsyncPromise<>();
-    invoker.invokeLaterIfNeeded(() -> {
+    invoker.runOrInvokeLater(() -> {
       if (object instanceof Object[]) {
         resolveID(promise, (Object[])object);
       }

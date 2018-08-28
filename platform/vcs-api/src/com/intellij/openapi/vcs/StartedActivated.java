@@ -47,6 +47,7 @@ public abstract class StartedActivated {
     myLock = new Object();
 
     Disposer.register(parent, new Disposable() {
+      @Override
       public void dispose() {
         try {
           doShutdown();
@@ -88,7 +89,7 @@ public abstract class StartedActivated {
   public final void doActivate() throws VcsException {
     callImpl(myActivate, true);
   }
-  
+
   public final void doDeactivate() throws VcsException {
     callImpl(myActivate, false);
   }

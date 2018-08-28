@@ -1,9 +1,9 @@
 package org.netbeans.lib.cvsclient.file;
 
+import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.IConnectionStreams;
 import org.netbeans.lib.cvsclient.SmartCvsSrcBundle;
 import org.netbeans.lib.cvsclient.util.BugLog;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
 import java.util.Collection;
@@ -40,7 +40,8 @@ public final class LocalFileReader
 	 * Transmit a text file to the server, using the standard CVS protocol
 	 * conventions. CR/LFs are converted to the Unix format.
 	 */
-	public void transmitTextFile(FileObject fileObject, IConnectionStreams connectionStreams, ICvsFileSystem cvsFileSystem) throws IOException {
+	@Override
+        public void transmitTextFile(FileObject fileObject, IConnectionStreams connectionStreams, ICvsFileSystem cvsFileSystem) throws IOException {
 		final File file = cvsFileSystem.getLocalFileSystem().getFile(fileObject);
 		if (!file.exists()) {
 			throw new FileNotFoundException(
@@ -89,7 +90,8 @@ public final class LocalFileReader
 	 * Transmit a binary file to the server, using the standard CVS protocol
 	 * conventions.
 	 */
-	public void transmitBinaryFile(FileObject fileObject, IConnectionStreams connectionStreams, ICvsFileSystem cvsFileSystem) throws IOException {
+	@Override
+        public void transmitBinaryFile(FileObject fileObject, IConnectionStreams connectionStreams, ICvsFileSystem cvsFileSystem) throws IOException {
 		final File file = cvsFileSystem.getLocalFileSystem().getFile(fileObject);
 
 		// first write the length of the file
@@ -122,15 +124,18 @@ public final class LocalFileReader
 		}
 	}
 
-	public boolean exists(AbstractFileObject fileObject, ICvsFileSystem cvsFileSystem) {
+	@Override
+        public boolean exists(AbstractFileObject fileObject, ICvsFileSystem cvsFileSystem) {
 		return cvsFileSystem.getLocalFileSystem().getFile(fileObject).exists();
 	}
 
-	public boolean isWritable(FileObject fileObject, ICvsFileSystem cvsFileSystem) {
+	@Override
+        public boolean isWritable(FileObject fileObject, ICvsFileSystem cvsFileSystem) {
 		return cvsFileSystem.getLocalFileSystem().getFile(fileObject).canWrite();
 	}
 
-	public void listFilesAndDirectories(DirectoryObject directoryObject, Collection fileNames, Collection directoryNames, ICvsFileSystem cvsFileSystem) {
+	@Override
+        public void listFilesAndDirectories(DirectoryObject directoryObject, Collection fileNames, Collection directoryNames, ICvsFileSystem cvsFileSystem) {
 		final File directory = cvsFileSystem.getLocalFileSystem().getFile(directoryObject);
 		final File[] filesAndDirectories = directory.listFiles();
 		if (filesAndDirectories == null) {

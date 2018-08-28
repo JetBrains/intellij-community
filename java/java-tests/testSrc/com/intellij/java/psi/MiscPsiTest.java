@@ -312,8 +312,8 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
 
   }
 
-  public void testPsiModificationNotAffectingDocument() {
-    final PsiJavaFile file = (PsiJavaFile)myFixture.addFileToProject("a.java", "class A{public static void foo() { }}");
+  public void testAfterPsiModificationPsiDocumentStampsAreSame() {
+    PsiJavaFile file = (PsiJavaFile)myFixture.addFileToProject("a.java", "class A{public static void foo() { }}");
 
     PsiClass aClass = file.getClasses()[0];
     //noinspection ResultOfMethodCallIgnored

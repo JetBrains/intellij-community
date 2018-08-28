@@ -227,10 +227,8 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     assertVF(subTree.mySourceDir, "s1.txt");
     assertVF(subTree.myRootDir, "target");
 
+    assertVF(subTree.myTargetDir, "t10.txt");
     assertVF(subTree.myTargetDir, "t11.txt");
-    assertVF(subTree.myTargetDir, "t13.txt");
-    assertVF(subTree.myTargetDir, "t14.txt");
-    assertVF(subTree.myTargetDir, "t15.txt");
 
     changeListManager.ensureUpToDate(false);
     checkFilesAreInList(VirtualFile.EMPTY_ARRAY, changeListManager.getDefaultListName(), changeListManager);

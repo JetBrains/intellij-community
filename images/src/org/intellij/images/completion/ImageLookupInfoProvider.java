@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ImageLookupInfoProvider extends FileLookupInfoProvider {
 
+  @Override
   public Couple<String> getLookupInfo(@NotNull VirtualFile file, Project project) {
     final String[] s = new String[] {null};
     ImageInfoIndex.processValues(file, (file1, value) -> {

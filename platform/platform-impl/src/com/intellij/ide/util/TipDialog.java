@@ -69,6 +69,7 @@ public class TipDialog extends DialogWrapper {
     return component;
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     if (ApplicationManager.getApplication().isInternal()) {
@@ -77,10 +78,12 @@ public class TipDialog extends DialogWrapper {
     return new Action[]{new PreviousTipAction(), new NextTipAction(), getCancelAction()};
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myTipPanel;
   }
 
+  @Override
   public void dispose() {
     super.dispose();
   }
@@ -97,6 +100,7 @@ public class TipDialog extends DialogWrapper {
       super(IdeBundle.message("action.open.tip"));
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
       FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, true)
@@ -125,6 +129,7 @@ public class TipDialog extends DialogWrapper {
       super(IdeBundle.message("action.previous.tip"));
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       myTipPanel.prevTip();
     }
@@ -137,6 +142,7 @@ public class TipDialog extends DialogWrapper {
       putValue(DialogWrapper.FOCUSED_ACTION, Boolean.TRUE); // myPreferredFocusedComponent
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       myTipPanel.nextTip();
     }

@@ -686,6 +686,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     void setSource(JTextField field) {
       mySrc = field;
     }
+    @Override
     public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
       final boolean rgb = isRGBMode();
       char[] source = str.toCharArray();
@@ -1071,6 +1072,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       return false;
     }
 
+    @Override
     @NotNull
     @SuppressWarnings("UseJBColor")
     protected Dialog getOrCreatePickerDialog() {

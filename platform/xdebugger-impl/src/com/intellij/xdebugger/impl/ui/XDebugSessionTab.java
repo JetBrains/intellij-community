@@ -156,7 +156,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (XWatchesView.DATA_KEY.is(dataId)) {
       return myWatchesView;
     }
@@ -344,12 +344,12 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     }
   }
 
-  public static void showFramesView(@NotNull XDebugSessionImpl session) {
+  public static void showFramesView(@Nullable XDebugSessionImpl session) {
     showView(session, DebuggerContentInfo.FRAME_CONTENT);
   }
 
-  private static void showView(@NotNull XDebugSessionImpl session, String viewId) {
-    XDebugSessionTab tab = session.getSessionTab();
+  private static void showView(@Nullable XDebugSessionImpl session, String viewId) {
+    XDebugSessionTab tab = session != null ? session.getSessionTab() : null;
     if (tab != null) {
       tab.toFront(false, null);
       // restore watches tab if minimized

@@ -116,7 +116,7 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
     final JPanel panel = new JPanel(new BorderLayout());
     DataManager.registerDataProvider(panel, new DataProvider() {
       @Override
-      public Object getData(@NonNls String dataId) {
+      public Object getData(@NotNull @NonNls String dataId) {
         final TreePath path = myTree.getSelectionPath();
         if (path != null) {
           Object component = path.getLastPathComponent();

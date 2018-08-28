@@ -30,11 +30,13 @@ public final class VerboseAction extends ToggleAction {
     myAntBuildMessageView = antBuildMessageView;
   }
 
+  @Override
   public boolean isSelected(AnActionEvent event) {
     return myAntBuildMessageView.isVerboseMode();
   }
 
-  public void setSelected(AnActionEvent event,boolean flag) {
+  @Override
+  public void setSelected(AnActionEvent event, boolean flag) {
     myAntBuildMessageView.setVerboseMode(flag);
   }
 }

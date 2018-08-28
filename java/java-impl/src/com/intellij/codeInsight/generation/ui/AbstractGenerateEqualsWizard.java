@@ -22,9 +22,9 @@ import java.util.Map;
  * Nikolay.Tropin
  * 8/20/13
  */
-public abstract class AbstractGenerateEqualsWizard <C extends PsiElement, M extends PsiElement, I extends MemberInfoBase<M>> 
+public abstract class AbstractGenerateEqualsWizard <C extends PsiElement, M extends PsiElement, I extends MemberInfoBase<M>>
   extends AbstractWizard<Step> {
-  
+
   protected final C myClass;
 
   protected final AbstractMemberSelectionPanel<M, I> myEqualsPanel;
@@ -171,6 +171,7 @@ public abstract class AbstractGenerateEqualsWizard <C extends PsiElement, M exte
   }
 
   private class MyTableModelListener implements TableModelListener {
+    @Override
     public void tableChanged(TableModelEvent modelEvent) {
       updateButtons();
     }

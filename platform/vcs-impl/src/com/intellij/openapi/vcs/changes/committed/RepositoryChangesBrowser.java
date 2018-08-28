@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
@@ -57,7 +58,7 @@ public class RepositoryChangesBrowser extends ChangesBrowser implements DataProv
   }
 
   @Override
-  public Object getData(@NonNls final String dataId) {
+  public Object getData(@NotNull @NonNls final String dataId) {
     if (VcsDataKeys.SELECTED_CHANGES.is(dataId)) {
       final List<Change> list = myViewer.getSelectedChanges();
       return list.toArray(new Change[0]);

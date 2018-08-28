@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
  * @see com.intellij.ide.DataManager
  * @see DataProvider
  */
+@FunctionalInterface
 public interface DataContext {
   /**
    * Returns the object corresponding to the specified data identifier. Some of the supported
@@ -37,7 +38,7 @@ public interface DataContext {
    * @return the value, or null if no value is available in the current context for this identifier.
    */
   @Nullable
-  Object getData(@NonNls String dataId);
+  Object getData(@NotNull @NonNls String dataId);
 
   DataContext EMPTY_CONTEXT = dataId -> null;
 
@@ -50,6 +51,7 @@ public interface DataContext {
    */
   @Nullable
   default <T> T getData(@NotNull DataKey<T> key) {
+    //noinspection unchecked
     return (T)getData(key.getName());
   }
 }

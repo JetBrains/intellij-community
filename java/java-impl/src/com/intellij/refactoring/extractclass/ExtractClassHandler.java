@@ -46,6 +46,7 @@ public class ExtractClassHandler implements ElementsHandler, ContextAwareActionH
     return elements.length == 1 && PsiTreeUtil.getParentOfType(elements[0], PsiClass.class, false) != null;
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     final ScrollingModel scrollingModel = editor.getScrollingModel();
     scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE);
@@ -58,7 +59,7 @@ public class ExtractClassHandler implements ElementsHandler, ContextAwareActionH
       //todo
       return;
     }
-    
+
     PsiClass containingClass = selectedMember.getContainingClass();
 
     if (containingClass == null && selectedMember instanceof PsiClass) {
@@ -67,8 +68,8 @@ public class ExtractClassHandler implements ElementsHandler, ContextAwareActionH
 
     final String cannotRefactorMessage = getCannotRefactorMessage(containingClass);
     if (cannotRefactorMessage != null)  {
-      CommonRefactoringUtil.showErrorHint(project, editor, 
-                                          RefactorJBundle.message("cannot.perform.the.refactoring") + cannotRefactorMessage, 
+      CommonRefactoringUtil.showErrorHint(project, editor,
+                                          RefactorJBundle.message("cannot.perform.the.refactoring") + cannotRefactorMessage,
                                           ExtractClassProcessor.REFACTORING_NAME, getHelpID());
       return;
     }
@@ -104,6 +105,7 @@ public class ExtractClassHandler implements ElementsHandler, ContextAwareActionH
     return PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true) != null;
   }
 
+  @Override
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     if (elements.length != 1) {
       return;

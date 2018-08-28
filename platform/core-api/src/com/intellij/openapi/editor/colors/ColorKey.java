@@ -15,10 +15,8 @@
  */
 package com.intellij.openapi.editor.colors;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,23 +26,20 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public final class ColorKey implements Comparable<ColorKey> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.colors.ColorKey");
-
   private static final ConcurrentMap<String, ColorKey> ourRegistry = new ConcurrentHashMap<>();
 
+  @NotNull
   private final String myExternalName;
   private final Color myDefaultColor;
-  private final ColorKey myFallbackColorKey;
 
-  private ColorKey(@NotNull String externalName, Color defaultColor, ColorKey fallBackColorKey) {
+  private ColorKey(@NotNull String externalName, Color defaultColor) {
     myExternalName = externalName;
     myDefaultColor = defaultColor;
-    myFallbackColorKey = fallBackColorKey;
   }
 
   @NotNull
   public static ColorKey find(@NotNull String externalName) {
-    return ourRegistry.computeIfAbsent(externalName, s -> new ColorKey(s,null,null));
+    return ourRegistry.computeIfAbsent(externalName, name -> new ColorKey(name,null));
   }
 
   @Override
@@ -67,8 +62,9 @@ public final class ColorKey implements Comparable<ColorKey> {
   }
 
   @Nullable
+  @Deprecated
   public ColorKey getFallbackColorKey() {
-    return myFallbackColorKey;
+    return null;
   }
 
   @NotNull
@@ -77,28 +73,25 @@ public final class ColorKey implements Comparable<ColorKey> {
   }
 
   @NotNull
-  public static ColorKey createColorKey(@NonNls @NotNull String externalName, @Nullable ColorKey fallbackColorKey) {
-    ColorKey existing = ourRegistry.get(externalName);
-    if (existing != null) return existing;
-    ColorKey newKey = new ColorKey(externalName, null, fallbackColorKey);
-    ColorKey res = ConcurrencyUtil.cacheOrGet(ourRegistry, externalName, newKey);
-
-    if (fallbackColorKey != null) {
-      JBIterable<ColorKey> it = JBIterable.generate(fallbackColorKey, o -> o == res ? null : o.myFallbackColorKey);
-      if (it.find(o -> o == res) == res) {
-        String cycle = StringUtil.join(it.map(ColorKey::getExternalName), "->");
-        LOG.error("Cycle detected: " + cycle);
-      }
-    }
-
-    return res;
-  }
-
-  @NotNull
   public static ColorKey createColorKey(@NonNls @NotNull String externalName, @Nullable Color defaultColor) {
     ColorKey existing = ourRegistry.get(externalName);
-    if (existing != null) return existing;
-    ColorKey newKey = new ColorKey(externalName, defaultColor, null);
+    if (existing != null) {
+      if (Comparing.equal(existing.getDefaultColor(), defaultColor)) return existing;
+      // some crazy life cycle assumes we should overwrite default color
+      // (e.g. when read from external schema HintUtil.INFORMATION_COLOR_KEY with null color, then try to re-create it with not-null color in HintUtil initializer)
+      ourRegistry.remove(externalName, existing);
+    }
+    ColorKey newKey = new ColorKey(externalName, defaultColor);
     return ConcurrencyUtil.cacheOrGet(ourRegistry, externalName, newKey);
+  }
+
+  @Override
+  public int hashCode() {
+    return myExternalName.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return obj instanceof ColorKey && myExternalName.equals(((ColorKey)obj).myExternalName);
   }
 }

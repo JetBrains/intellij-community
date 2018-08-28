@@ -2,11 +2,13 @@
 package com.intellij.ui.paint;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUI.ScaleContext;
 import com.intellij.util.ui.JBUI.ScaleType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
@@ -217,6 +219,7 @@ public class PaintUtil {
    * @param alignY should the y-translate be aligned
    * @return the original graphics transform when aligned, otherwise null
    */
+  @Nullable
   public static AffineTransform alignTxToInt(@NotNull Graphics2D g, @Nullable Point2D offset, boolean alignX, boolean alignY, RoundingMode rm) {
     try {
       AffineTransform tx = g.getTransform();
@@ -257,6 +260,7 @@ public class PaintUtil {
    * @param whRM the rounding mode to apply to the clip's width/height
    * @return the original graphics clip when aligned, otherwise null
    */
+  @Nullable
   public static Shape alignClipToInt(@NotNull Graphics2D g, boolean alignH, boolean alignV, RoundingMode xyRM, RoundingMode whRM) {
     Shape clip = g.getClip();
     if ((clip instanceof Rectangle2D) && isFractionalScale(g.getTransform())) {
@@ -277,6 +281,57 @@ public class PaintUtil {
       return clip;
     }
     return null;
+  }
+
+  /**
+   * Returns (in user space) the fractional part of the XY {@code comp}'s offset relative to its {@code JRootPane} ancestor.
+   * <p>
+   * Used for repainting a {@code JComponent} in a UI hierarchy via an image buffer on fractional scale graphics.
+   * <pre>
+   * class MyPainter {
+   *   void paintToBuffer() {
+   *     JComponent myComp = getMyComp();
+   *     Point2D offset = getFractOffsetInRootPane(myComp);
+   *     Image buffer = getBufferForMyComp(myComp);
+   *     Graphics2D g2d = (Graphics2D)buffer.getGraphics();
+   *     // the fractional part of myComp's offset affects J2D rounding logic and so the final rasterization of myComp
+   *     // the offset is set on g2d to have the same myComp's rasterization as in original JRootPane full repaint
+   *     // otherwise pixel floating effect can be observed
+   *     g2d.translate(offset.getX(), offset.getY());
+   *     myComp.paint(g2d);
+   *   }
+   *   void paint(Graphics2D g2d) { // g2d is translated to myComp's parent XY
+   *     JComponent myComp = getMyComp();
+   *     Point2D offset = getFractOffsetInRootPane(myComp);
+   *     Image buffer = getBufferForMyComp(myComp); // already painted buffer
+   *     g2d.translate(myComp.getX() - offset.getX(), myComp.getY() - offset.getY()); // negate the fractional offset set above
+   *     UIUtil.paintImage(g2d, buffer, 0, 0, null);
+   *   }
+   * }
+   * </pre>
+   */
+  @NotNull
+  public static Point2D getFractOffsetInRootPane(@NotNull JComponent comp) {
+    if (!isFractionalScale(comp.getGraphicsConfiguration().getDefaultTransform()) || !comp.isShowing()) return new Point2D.Double();
+    int x = 0;
+    int y = 0;
+    while (!(comp instanceof JRootPane) && comp != null) {
+      x += comp.getX();
+      y += comp.getY();
+      comp = (JComponent)comp.getParent();
+    }
+    double scale = JBUI.sysScale(comp);
+    double sx = x * scale;
+    double sy = y * scale;
+    return new Point2D.Double((sx - (int)sx) / scale, (sy - (int)sy) / scale);
+  }
+
+  /**
+   * Returns negated Point2D instance.
+   */
+  @NotNull
+  public static Point2D negate(@NotNull Point2D pt) {
+    return new Point2D.Double(-pt.getX(), -pt.getY());
   }
 
   /**

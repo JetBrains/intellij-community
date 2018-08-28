@@ -17,6 +17,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -153,8 +154,9 @@ class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
       myList = list;
     }
 
+    @Override
     @Nullable
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (PlatformDataKeys.SELECTED_ITEM.is(dataId)){
         return myList.getSelectedValue();
       }
@@ -164,16 +166,19 @@ class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
       return null;
     }
 
+    @Override
     public void setBorder(Border border) {
       if (myList != null){
         myList.setBorder(border);
       }
     }
 
+    @Override
     public void requestFocus() {
       IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myList, true));
     }
 
+    @Override
     public synchronized void addMouseListener(MouseListener l) {
       myList.addMouseListener(l);
     }

@@ -13,7 +13,7 @@ import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion, Getter<FoldRegionImpl> {
+public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion, Getter<FoldRegionImpl> {
   private static final Key<Boolean> MUTE_INNER_HIGHLIGHTERS = Key.create("mute.inner.highlighters");
 
   private boolean myIsExpanded;

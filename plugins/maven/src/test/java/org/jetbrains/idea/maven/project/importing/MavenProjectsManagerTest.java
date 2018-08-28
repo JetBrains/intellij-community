@@ -31,6 +31,7 @@ import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 
 import java.io.File;
@@ -573,7 +574,8 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                               "  </properties>" +
                               "</profile>");
 
-    importProjectWithErrors(true); // structure warning, new style of profiles.xml expected
+    MavenServerManager.getInstance().setUseMaven2();
+    importProjectWithErrors(); // structure warning, new style of profiles.xml expected
 
     List<MavenProject> roots = myProjectsTree.getRootProjects();
 
@@ -852,7 +854,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1");
-    importProjectWithErrors(true);
+    importProjectWithErrors();
     assertModules("project");
     assertFalse(called[0]); // on import
 
@@ -868,7 +870,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
 
   public void testUpdatingFoldersAfterFoldersResolving() {
     createStdProjectFolders();
-    createProjectSubDirs("src1", "src2");
+    createProjectSubDirs("src1", "src2", "test1", "test2", "res1", "res2", "testres1", "testres2");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -882,7 +884,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                   "      <version>1.3</version>" +
                   "      <executions>" +
                   "        <execution>" +
-                  "          <id>someId</id>" +
+                  "          <id>someId1</id>" +
                   "          <phase>generate-sources</phase>" +
                   "          <goals>" +
                   "            <goal>add-source</goal>" +
@@ -894,13 +896,63 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                   "            </sources>" +
                   "          </configuration>" +
                   "        </execution>" +
+                  "        <execution>" +
+                  "          <id>someId2</id>" +
+                  "          <phase>generate-resources</phase>" +
+                  "          <goals>" +
+                  "            <goal>add-resource</goal>" +
+                  "          </goals>" +
+                  "          <configuration>" +
+                  "            <resources>" +
+                  "              <resource>" +
+                  "                 <directory>${basedir}/res1</directory>" +
+                  "              </resource>" +
+                  "              <resource>" +
+                  "                 <directory>${basedir}/res2</directory>" +
+                  "              </resource>" +
+                  "            </resources>" +
+                  "          </configuration>" +
+                  "        </execution>" +
+                  "        <execution>" +
+                  "          <id>someId3</id>" +
+                  "          <phase>generate-test-sources</phase>" +
+                  "          <goals>" +
+                  "            <goal>add-test-source</goal>" +
+                  "          </goals>" +
+                  "          <configuration>" +
+                  "            <sources>" +
+                  "              <source>${basedir}/test1</source>" +
+                  "              <source>${basedir}/test2</source>" +
+                  "            </sources>" +
+                  "          </configuration>" +
+                  "        </execution>" +
+                  "        <execution>" +
+                  "          <id>someId4</id>" +
+                  "          <phase>generate-test-resources</phase>" +
+                  "          <goals>" +
+                  "            <goal>add-test-resource</goal>" +
+                  "          </goals>" +
+                  "          <configuration>" +
+                  "            <resources>" +
+                  "              <resource>" +
+                  "                 <directory>${basedir}/testres1</directory>" +
+                  "              </resource>" +
+                  "              <resource>" +
+                  "                 <directory>${basedir}/testres2</directory>" +
+                  "              </resource>" +
+                  "            </resources>" +
+                  "          </configuration>" +
+                  "        </execution>" +
                   "      </executions>" +
                   "    </plugin>" +
                   "  </plugins>" +
                   "</build>");
 
     assertSources("project", "src/main/java", "src1", "src2");
-    assertResources("project", "src/main/resources");
+    assertResources("project", "res1", "res2", "src/main/resources");
+
+    assertTestSources("project", "src/test/java", "test1", "test2");
+    assertTestResources("project", "src/test/resources", "testres1", "testres2");
   }
 
   public void testForceReimport() {

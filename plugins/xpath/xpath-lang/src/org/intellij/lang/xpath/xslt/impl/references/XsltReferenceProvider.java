@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.xpath.xslt.impl.references;
 
 import com.intellij.javaee.ExternalResourceManager;
@@ -43,6 +44,7 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
   public XsltReferenceProvider() {
   }
 
+  @Override
   @NotNull
   public PsiReference[] getReferencesByElement(@NotNull PsiElement e, @NotNull ProcessingContext context) {
     final PsiElement element = e.getParent();
@@ -70,6 +72,7 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
       myAttribute = attribute;
     }
 
+    @Override
     public Result<PsiReference[]> compute() {
       final PsiReference[] referencesImpl = getReferencesImpl(myAttribute);
       final Object[] refs = new PsiElement[referencesImpl.length];
@@ -172,6 +175,7 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
       }
 
 
+      @Override
       public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
         if (!newElementName.equals(myParam.getName())) {
           myParam.setName(newElementName);
@@ -182,6 +186,7 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
         return attribute.getValueElement();
       }
 
+      @Override
       public boolean isReferenceTo(@NotNull PsiElement element) {
         // self-reference is only a trick to enable rename/find usages etc. but it shouldn't actually
         // refer to itself because this would list the element to be renamed/searched for twice

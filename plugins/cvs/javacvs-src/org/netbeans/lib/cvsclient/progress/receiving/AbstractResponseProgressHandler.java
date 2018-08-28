@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.netbeans.lib.cvsclient.progress.receiving;
 
 import org.netbeans.lib.cvsclient.admin.Entry;
@@ -36,12 +37,14 @@ public class AbstractResponseProgressHandler {
 		this.progressViewer = progressViewer;
 
 		cvsFiles.visit(new ICvsFilesVisitor() {
-			public void handleFile(FileObject fileObject, Entry entry, boolean exists) {
+			@Override
+                        public void handleFile(FileObject fileObject, Entry entry, boolean exists) {
 				fileObjects.add(fileObject);
 				addDirectory(fileObject.getParent());
 			}
 
-			public void handleDirectory(DirectoryObject directoryObject) {
+			@Override
+                        public void handleDirectory(DirectoryObject directoryObject) {
 			}
 		});
 

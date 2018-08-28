@@ -87,7 +87,7 @@ public class PackageViewLibrariesNode extends ProjectViewNode<LibrariesElement>{
   }
 
   @Override
-  public void update(final PresentationData presentation) {
+  public void update(@NotNull final PresentationData presentation) {
     presentation.setPresentableText(IdeBundle.message("node.projectview.libraries"));
     presentation.setIcon(PlatformIcons.LIBRARY_ICON);
   }

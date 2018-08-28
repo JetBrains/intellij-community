@@ -46,10 +46,10 @@ private const val RECENT = "recent_temporary"
 
 // open for Upsource (UpsourceRunManager overrides to disable loadState (empty impl))
 @State(name = "RunManager", storages = [(Storage(value = StoragePathMacros.WORKSPACE_FILE, useSaveThreshold = ThreeState.NO))])
-open class RunManagerImpl(internal val project: Project) : RunManagerEx(), PersistentStateComponent<Element>, Disposable {
+open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStateComponent<Element>, Disposable {
   companion object {
-    const val CONFIGURATION: String = "configuration"
-    const val NAME_ATTR: String = "name"
+    const val CONFIGURATION = "configuration"
+    const val NAME_ATTR = "name"
 
     internal val LOG = logger<RunManagerImpl>()
 
@@ -260,7 +260,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     val configuration = factory.createTemplateConfiguration(project, this)
     val template = RunnerAndConfigurationSettingsImpl(this, configuration,
                                                       isTemplate = true,
-                                                      isSingleton = factory.isConfigurationSingletonByDefault)
+                                                      isSingleton = factory.singletonPolicy.isSingleton)
     if (configuration is UnknownRunConfiguration) {
       configuration.isDoNotStore = true
     }
@@ -516,7 +516,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     isFirstLoadState.set(false)
     loadSharedRunConfigurations()
     runConfigurationFirstLoaded()
-    eventPublisher.stateLoaded()
+    eventPublisher.stateLoaded(this, true)
   }
 
   override fun loadState(parentNode: Element) {
@@ -596,7 +596,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       eventPublisher.runConfigurationSelected()
     }
 
-    eventPublisher.stateLoaded()
+    eventPublisher.stateLoaded(this, isFirstLoadState)
   }
 
   private fun loadSharedRunConfigurations() {
@@ -852,6 +852,10 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     return icon
   }
 
+  fun isInvalidInCache(settings: RunnerAndConfigurationSettings): Boolean {
+    return iconCache.isInvalid(settings.uniqueID)
+  }
+
   fun getConfigurationById(id: String): RunnerAndConfigurationSettings? = lock.read { idToSettings.get(id) }
 
   override fun findConfigurationByName(name: String?): RunnerAndConfigurationSettings? {
@@ -863,6 +867,12 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
 
   override fun findSettings(configuration: RunConfiguration): RunnerAndConfigurationSettings? {
     return allSettings.firstOrNull { it.configuration === configuration } ?: findConfigurationByName(configuration.name)
+  }
+
+  override fun isTemplate(configuration: RunConfiguration): Boolean {
+    lock.read {
+      return templateIdToConfiguration.values.any { it.configuration === configuration }
+    }
   }
 
   override fun <T : BeforeRunTask<*>> getBeforeRunTasks(settings: RunConfiguration, taskProviderId: Key<T>): List<T> {
@@ -883,12 +893,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     return result ?: emptyList()
   }
 
-  override fun getBeforeRunTasks(configuration: RunConfiguration): List<BeforeRunTask<*>> {
-    return when (configuration) {
-      is WrappingRunConfiguration<*> -> getBeforeRunTasks(configuration.peer)
-      else -> configuration.beforeRunTasks
-    }
-  }
+  override fun getBeforeRunTasks(configuration: RunConfiguration) = doGetBeforeRunTasks(configuration)
 
   fun shareConfiguration(settings: RunnerAndConfigurationSettings, value: Boolean) {
     if (settings.isShared == value) {
@@ -1030,9 +1035,13 @@ private inline fun Collection<RunnerAndConfigurationSettings>.forEachManaged(han
   }
 }
 
-fun getBeforeRunTasks(configuration: RunConfiguration): List<BeforeRunTask<*>> {
+internal fun doGetBeforeRunTasks(configuration: RunConfiguration): List<BeforeRunTask<*>> {
   return when (configuration) {
-    is WrappingRunConfiguration<*> -> getBeforeRunTasks(configuration.peer)
+    is WrappingRunConfiguration<*> -> doGetBeforeRunTasks(configuration.peer)
     else -> configuration.beforeRunTasks
   }
+}
+
+internal fun RunConfiguration.cloneBeforeRunTasks() {
+  beforeRunTasks = doGetBeforeRunTasks(this).mapSmart { it.clone() }
 }

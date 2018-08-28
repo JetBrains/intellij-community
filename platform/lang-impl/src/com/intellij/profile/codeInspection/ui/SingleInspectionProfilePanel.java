@@ -58,6 +58,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.*;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.html.HTMLDocument;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
@@ -66,8 +68,8 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionConfigTreeNode.updateUpHierarchy;
 import static com.intellij.util.containers.ContainerUtil.exists;
@@ -79,6 +81,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private static final float DIVIDER_PROPORTION_DEFAULT = 0.5f;
   public static final String SETTINGS = "settings://";
+  private static final String SINCE_VERSION_PREFIX = "New in ";
 
   private final Map<HighlightDisplayKey, ToolDescriptors> myInitialToolDescriptors = new THashMap<>();
   private final InspectionConfigTreeNode myRoot = new InspectionConfigTreeNode.Group(InspectionsBundle.message("inspection.root.node.title"));
@@ -117,7 +120,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   public void performProfileReset() {
-    //forcibly initialize configs to be able compare xmls after reset
+    //forcibly initialize configs to be able compare XMLs after reset
     TreeUtil.treeNodeTraverser(myRoot).traverse().processEach(n -> {
       InspectionConfigTreeNode node = (InspectionConfigTreeNode)n;
       if (node instanceof InspectionConfigTreeNode.Tool && node.isProperSetting()) {
@@ -193,7 +196,9 @@ public class SingleInspectionProfilePanel extends JPanel {
         return true;
       }
     }
+    if (isVersionFilter(descriptor, filter)) return true;
     for (String stripped : quoted) {
+      if (isVersionFilter(descriptor, stripped)) return true;
       if (StringUtil.containsIgnoreCase(descriptor.getText(),stripped)) {
         return true;
       }
@@ -220,6 +225,16 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
     }
     return forceInclude;
+  }
+
+  private static boolean isVersionFilter(Descriptor descriptor, @NonNls String filter) {
+    if (filter.startsWith(SINCE_VERSION_PREFIX.toLowerCase(Locale.ENGLISH))) {
+      String version = filter.substring(SINCE_VERSION_PREFIX.length());
+      if (!version.isEmpty() && descriptor.getToolWrapper().getSinceVersion().equals(version)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static void setConfigPanel(final JPanel configPanelAnchor, final ScopeToolState state) {
@@ -383,7 +398,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private void postProcessModification() {
     updateModificationMarker();
-    //resetup configs
+    //re-setup configs
     for (ScopeToolState state : myProfile.getAllTools()) {
       state.resetConfigPanel();
     }
@@ -725,6 +740,15 @@ public class SingleInspectionProfilePanel extends JPanel {
                       "; description: " +
                       description, t);
           }
+          final String version = defaultDescriptor.getToolWrapper().getSinceVersion();
+          if (!version.isEmpty()) {
+            HTMLDocument document = (HTMLDocument)myBrowser.getDocument();
+            try {
+              String html = "<p><small>" + SearchUtil.markup(SINCE_VERSION_PREFIX + version, myProfileFilter.getFilter()) + "</small></p>";
+              document.insertBeforeEnd(document.getDefaultRootElement(), html);
+            }
+            catch (BadLocationException | IOException ignored) { }
+          }
 
         }
         else {
@@ -775,7 +799,8 @@ public class SingleInspectionProfilePanel extends JPanel {
           ScopesAndSeveritiesTable.getSeverity(ContainerUtil.map(nodes, node -> node.getDefaultDescriptor().getState()));
         severityLevelChooser.setChosen(severity);
 
-        final ScopesChooser scopesChooser = new ScopesChooser(ContainerUtil.map(nodes, node -> node.getDefaultDescriptor()), myProfile, project, null) {
+        final ScopesChooser scopesChooser = new ScopesChooser(ContainerUtil.map(nodes, InspectionConfigTreeNode.Tool::getDefaultDescriptor),
+                                                              myProfile, project, null) {
           @Override
           protected void onScopesOrderChanged() {
             updateRecursively(nodes, true);
@@ -847,14 +872,11 @@ public class SingleInspectionProfilePanel extends JPanel {
             }
           });
 
-        final ToolbarDecorator wrappedTable = ToolbarDecorator.createDecorator(scopesAndScopesAndSeveritiesTable).disableUpDownActions().setRemoveActionUpdater(
-          new AnActionButtonUpdater() {
-            @Override
-            public boolean isEnabled(AnActionEvent e) {
-              final int selectedRow = scopesAndScopesAndSeveritiesTable.getSelectedRow();
-              final int rowCount = scopesAndScopesAndSeveritiesTable.getRowCount();
-              return rowCount - 1 != selectedRow;
-            }
+        final ToolbarDecorator wrappedTable = ToolbarDecorator.createDecorator(scopesAndScopesAndSeveritiesTable).disableUpDownActions()
+          .setRemoveActionUpdater(e -> {
+            final int selectedRow = scopesAndScopesAndSeveritiesTable.getSelectedRow();
+            final int rowCount = scopesAndScopesAndSeveritiesTable.getRowCount();
+            return rowCount - 1 != selectedRow;
           });
         final JPanel panel = wrappedTable.createPanel();
         panel.setMinimumSize(new Dimension(getMinimumSize().width, 3 * scopesAndScopesAndSeveritiesTable.getRowHeight()));

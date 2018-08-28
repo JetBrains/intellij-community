@@ -5,123 +5,123 @@
     <content url="file://$MODULE_DIR$" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.android" />
-    <orderEntry type="module" module-name="intellij.ant" />
-    <orderEntry type="module" module-name="intellij.platform.boot" />
-    <orderEntry type="module" module-name="intellij.platform.bootstrap" />
-    <orderEntry type="library" name="jetbrains-annotations-java5" level="project" />
-    <orderEntry type="module" module-name="intellij.java.compiler.impl" />
-    <orderEntry type="module" module-name="intellij.java.compiler" />
-    <orderEntry type="module" module-name="intellij.java.debugger.impl" />
-    <orderEntry type="module" module-name="intellij.java.debugger" />
-    <orderEntry type="module" module-name="intellij.platform.diff" />
-    <orderEntry type="module" module-name="intellij.platform.diff.impl" />
-    <orderEntry type="module" module-name="intellij.xml.dom.impl" />
-    <orderEntry type="module" module-name="intellij.xml.dom" />
-    <orderEntry type="module" module-name="intellij.java.execution.impl" />
-    <orderEntry type="module" module-name="intellij.java.execution" />
-    <orderEntry type="module" module-name="intellij.platform.extensions" />
-    <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
-    <orderEntry type="module" module-name="intellij.platform.icons" />
-    <orderEntry type="module" module-name="intellij.java.ui" />
-    <orderEntry type="module" module-name="intellij.java.impl" />
-    <orderEntry type="module" module-name="intellij.java.rt" />
-    <orderEntry type="module" module-name="intellij.jsp" />
-    <orderEntry type="module" module-name="intellij.jsp.spi" />
-    <orderEntry type="module" module-name="intellij.platform.lang" />
-    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
-    <orderEntry type="module" module-name="intellij.platform.lvcs" />
-    <orderEntry type="module" module-name="intellij.platform.lvcs.impl" />
-    <orderEntry type="module" module-name="intellij.java.compiler.instrumentationUtil" />
-    <orderEntry type="module" module-name="intellij.java" />
-    <orderEntry type="module" module-name="intellij.platform.ide" />
-    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
-    <orderEntry type="module" module-name="intellij.platform.main" />
-    <orderEntry type="module" module-name="intellij.platform.resources" />
-    <orderEntry type="module" module-name="intellij.platform.resources.en" />
-    <orderEntry type="module" module-name="intellij.properties" />
-    <orderEntry type="module" module-name="intellij.java.resources" />
-    <orderEntry type="module" module-name="intellij.java.resources.en" />
-    <orderEntry type="module" module-name="intellij.spellchecker" />
-    <orderEntry type="module" module-name="intellij.jsp.base" />
-    <orderEntry type="module" module-name="intellij.java.testFramework" />
-    <orderEntry type="module" module-name="intellij.platform.testRunner" />
-    <orderEntry type="module" module-name="intellij.platform.usageView" />
-    <orderEntry type="module" module-name="intellij.platform.util" />
-    <orderEntry type="module" module-name="intellij.platform.vcs" />
-    <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
-    <orderEntry type="module" module-name="intellij.platform.debugger" />
-    <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
-    <orderEntry type="module" module-name="intellij.xml.impl" />
-    <orderEntry type="module" module-name="intellij.xml" />
-    <orderEntry type="module" module-name="intellij.idea.community.resources" />
+    <orderEntry type="module" module-name="intellij.android" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.ant" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.boot" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.bootstrap" scope="RUNTIME" />
+    <orderEntry type="library" scope="RUNTIME" name="jetbrains-annotations-java5" level="project" />
+    <orderEntry type="module" module-name="intellij.java.compiler.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.compiler" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.debugger.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.debugger" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.diff" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.diff.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.xml.dom.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.xml.dom" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.execution.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.execution" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.extensions" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.guiForms.rt" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.icons" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.ui" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.rt" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.jsp" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.jsp.spi" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.lang" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.lvcs" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.lvcs.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.compiler.instrumentationUtil" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.ide" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.main" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.resources" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.resources.en" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.properties" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.resources" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.resources.en" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.spellchecker" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.jsp.base" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.testRunner" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.usageView" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.util" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.vcs" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.debugger" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.xml.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.xml" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.idea.community.resources" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.copyright" />
-    <orderEntry type="module" module-name="intellij.vcs.cvs" />
-    <orderEntry type="module" module-name="intellij.platform.testFramework" />
-    <orderEntry type="module" module-name="intellij.java.guiForms.designer" />
-    <orderEntry type="module" module-name="intellij.devkit" />
-    <orderEntry type="module" module-name="intellij.eclipse" />
-    <orderEntry type="module" module-name="intellij.vcs.git" />
-    <orderEntry type="module" module-name="intellij.platform.images" />
-    <orderEntry type="module" module-name="intellij.groovy" />
-    <orderEntry type="module" module-name="intellij.junit" />
-    <orderEntry type="module" module-name="intellij.maven" />
-    <orderEntry type="module" module-name="intellij.regexp" />
-    <orderEntry type="module" module-name="intellij.vcs.svn" />
+    <orderEntry type="module" module-name="intellij.copyright" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.vcs.cvs" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.guiForms.designer" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.devkit" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.eclipse" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.vcs.git" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.images" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.groovy" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.junit" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.maven" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.regexp" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.vcs.svn" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.svn.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.testng" />
-    <orderEntry type="module" module-name="intellij.java.langInjection" />
-    <orderEntry type="module" module-name="intellij.xml.langInjection" />
-    <orderEntry type="module" module-name="intellij.xpath" />
-    <orderEntry type="module" module-name="intellij.xslt.debugger" />
-    <orderEntry type="module" module-name="intellij.xslt.debugger.engine" />
-    <orderEntry type="module" module-name="intellij.java.i18n" />
-    <orderEntry type="module" module-name="intellij.tasks" />
-    <orderEntry type="module" module-name="intellij.tasks.java" />
+    <orderEntry type="module" module-name="intellij.testng" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.langInjection" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.xml.langInjection" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.xpath" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.xslt.debugger" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.xslt.debugger.engine" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.i18n" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.tasks" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.tasks.java" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.tasks.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.vcs.github" />
-    <orderEntry type="module" module-name="intellij.vcs.hg" />
-    <orderEntry type="module" module-name="intellij.relaxng" />
-    <orderEntry type="module" module-name="intellij.gradle.java" />
-    <orderEntry type="module" module-name="intellij.platform.remoteServers.impl" />
+    <orderEntry type="module" module-name="intellij.vcs.github" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.vcs.hg" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.relaxng" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.gradle.java" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.remoteServers.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xml.dom.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.colorSchemes" />
-    <orderEntry type="module" module-name="intellij.javaFX.community" />
-    <orderEntry type="module" module-name="intellij.javaFX.jps" />
+    <orderEntry type="module" module-name="intellij.platform.colorSchemes" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.javaFX.community" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.javaFX.jps" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.langInjection.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.manifest" />
-    <orderEntry type="module" module-name="intellij.yaml" />
+    <orderEntry type="module" module-name="intellij.java.manifest" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.yaml" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xml.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.devkit.jps" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.tasks.core" />
+    <orderEntry type="module" module-name="intellij.tasks.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.guiForms.jps" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.tasks.jira" />
-    <orderEntry type="module" module-name="intellij.java.decompiler" />
-    <orderEntry type="module" module-name="intellij.platform.structuralSearch" />
-    <orderEntry type="module" module-name="intellij.java.structuralSearch" />
+    <orderEntry type="module" module-name="intellij.tasks.jira" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.decompiler" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.structuralSearch" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.structuralSearch" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.structuralSearch.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.groovy.structuralSearch" />
-    <orderEntry type="module" module-name="intellij.json" />
+    <orderEntry type="module" module-name="intellij.groovy.structuralSearch" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.json" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.json.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.typeMigration" />
+    <orderEntry type="module" module-name="intellij.java.typeMigration" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.diff.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.updater" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.coverage" />
+    <orderEntry type="module" module-name="intellij.java.coverage" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.android.jps" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.scriptDebugger.ui" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.remoteServers.git" />
-    <orderEntry type="module" module-name="intellij.terminal" />
+    <orderEntry type="module" module-name="intellij.java.remoteServers.git" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.terminal" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.jps.javacRefScanner8" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.images.build" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.android.plugin" />
-    <orderEntry type="module" module-name="intellij.statsCollector" />
-    <orderEntry type="module" module-name="intellij.java.debugger.streams" />
+    <orderEntry type="module" module-name="intellij.android.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.statsCollector" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.debugger.streams" scope="RUNTIME" />
     <orderEntry type="library" scope="RUNTIME" name="jgoodies-common" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="commons-net" level="project" />
     <orderEntry type="module" module-name="intellij.devkit.java.tests" scope="TEST" />

@@ -103,7 +103,7 @@ public class JsonSchemaMappingsView implements Disposable {
                                                      FileChooserDescriptorFactory.createSingleFileDescriptor());
     mySchemaField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         mySchemaPathChangedCallback.accept(mySchemaField.getText());
       }
     });

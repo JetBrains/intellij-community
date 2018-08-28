@@ -35,6 +35,7 @@ public class ClassArrayConverterImpl extends ClassArrayConverter {
     REFERENCE_PROVIDER.setAllowEmpty(true);
   }
 
+  @Override
   @NotNull
   public PsiReference[] createReferences(final GenericDomValue genericDomValue, final PsiElement element, final ConvertContext context) {
     final String s = genericDomValue.getStringValue();

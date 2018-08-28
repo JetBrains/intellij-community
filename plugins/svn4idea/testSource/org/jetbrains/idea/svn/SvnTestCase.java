@@ -19,11 +19,9 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
+import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vcs.update.CommonUpdateProjectAction;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.testFramework.ApplicationRule;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
@@ -33,7 +31,6 @@ import com.intellij.testFramework.vcs.MockChangelistBuilder;
 import com.intellij.testFramework.vcs.TestClientRunner;
 import com.intellij.util.Processor;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.ZipUtil;
 import org.jetbrains.annotations.NotNull;
@@ -49,22 +46,26 @@ import org.junit.rules.ExternalResource;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.openapi.actionSystem.impl.SimpleDataContext.getProjectContext;
-import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.application.PluginPathManager.getPluginHomePath;
 import static com.intellij.openapi.util.io.FileUtil.*;
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
-import static com.intellij.testFramework.UsefulTestCase.IS_UNDER_TEAMCITY;
+import static com.intellij.testFramework.UsefulTestCase.*;
+import static com.intellij.util.FunctionUtil.nullConstant;
 import static com.intellij.util.ObjectUtils.notNull;
-import static com.intellij.util.ui.UIUtil.invokeAndWaitIfNeeded;
-import static java.util.Collections.singletonList;
+import static com.intellij.util.containers.ContainerUtil.map2Array;
+import static com.intellij.util.lang.CompoundRuntimeException.throwIfNotEmpty;
 import static java.util.Collections.singletonMap;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
@@ -75,6 +76,8 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
       ensureExists(new File(PathManager.getTempPath()));
     }
   };
+
+  private static final String ORIGINAL_TEMP_DIRECTORY = getTempDirectory();
 
   protected TempDirTestFixture myTempDirFixture;
   protected Url myRepositoryUrl;
@@ -103,18 +106,6 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
     myWcRootName = "wcroot";
   }
 
-  public static void imitateEvent(VirtualFile dir) {
-    final VirtualFile child = notNull(dir.findChild(".svn"));
-    final VirtualFile wcdb = notNull(child.findChild("wc.db"));
-    final BulkFileListener listener = getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
-    final VFileContentChangeEvent event =
-      new VFileContentChangeEvent(null, wcdb, wcdb.getModificationStamp() - 1, wcdb.getModificationStamp(), true);
-    final List<VFileContentChangeEvent> events = singletonList(event);
-
-    listener.before(events);
-    listener.after(events);
-  }
-
   @NotNull
   public static String getPluginHome() {
     return getPluginHomePath("svn4idea");
@@ -132,6 +123,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
     runInEdtAndWait(() -> {
       myTempDirFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
       myTempDirFixture.setUp();
+      resetCanonicalTempPathCache(myTempDirFixture.getTempDirPath());
 
       myPluginRoot = new File(getPluginHome());
       myClientBinaryPath = getSvnClientDirectory();
@@ -160,9 +152,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
       refreshSvnMappingsSynchronously();
     });
 
-    if (myInitChangeListManager) {
-      refreshChanges();
-    }
+    refreshChanges();
   }
 
   @NotNull
@@ -179,9 +169,6 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   }
 
   protected void refreshSvnMappingsSynchronously() {
-    if (! myInitChangeListManager) {
-      return;
-    }
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     ((SvnFileUrlMappingImpl) vcs.getSvnFileUrlMapping()).realRefresh(() -> semaphore.up());
@@ -191,6 +178,26 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   protected void refreshChanges() {
     dirtyScopeManager.markEverythingDirty();
     changeListManager.ensureUpToDate(false);
+  }
+
+  protected void waitChangesAndAnnotations() {
+    changeListManager.ensureUpToDate(false);
+    ((VcsAnnotationLocalChangesListenerImpl)vcsManager.getAnnotationLocalChangesListener()).calmDown();
+  }
+
+  @NotNull
+  protected Set<String> commit(@NotNull List<Change> changes, @NotNull String message) {
+    Set<String> feedback = new HashSet<>();
+    //noinspection unchecked
+    throwIfNotEmpty((List)vcs.getCheckinEnvironment().commit(changes, message, nullConstant(), feedback));
+    return feedback;
+  }
+
+  protected void rollback(@NotNull List<Change> changes) {
+    List<VcsException> exceptions = new ArrayList<>();
+    vcs.createRollbackEnvironment().rollbackChanges(changes, exceptions, RollbackProgressListener.EMPTY);
+    //noinspection unchecked
+    throwIfNotEmpty((List)exceptions);
   }
 
   @Override
@@ -203,17 +210,11 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
     runInEdtAndWait(() -> {
       tearDownProject();
 
-      if (myWcRoot != null && myWcRoot.exists()) {
-        delete(myWcRoot);
-      }
-      if (myRepoRoot != null && myRepoRoot.exists()) {
-        delete(myRepoRoot);
-      }
-
       if (myTempDirFixture != null) {
         myTempDirFixture.tearDown();
         myTempDirFixture = null;
       }
+      resetCanonicalTempPathCache(ORIGINAL_TEMP_DIRECTORY);
     });
   }
 
@@ -244,7 +245,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   }
 
   protected void undo() {
-    invokeAndWaitIfNeeded((Runnable)() -> {
+    runInEdtAndWait(() -> {
       final TestDialog oldTestDialog = Messages.setTestDialog(TestDialog.OK);
       try {
         UndoManager.getInstance(myProject).undo(null);
@@ -269,7 +270,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
       final File rootFile = virtualToIoFile(subTree.myRootDir);
       delete(rootFile);
       delete(new File(myWorkingCopyDir.getPath() + File.separator + ".svn"));
-      assertTrue(!rootFile.exists());
+      assertDoesntExist(rootFile);
       refreshVfs();
 
       runInAndVerifyIgnoreOutput("co", mainUrl);
@@ -316,14 +317,10 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
 
       myTargetDir = findChild(myRootDir, "target", null, create);
       myTargetFiles.clear();
-      for (int i = 0; i < 10; i++) {
+      for (int i = 0; i < 3; i++) {
         myTargetFiles.add(findChild(myTargetDir, "t" + (i + 10) + ".txt", ourS1Contents, create));
       }
     }
-  }
-
-  protected static void sleep(final int millis) {
-    TimeoutUtil.sleep(millis);
   }
 
   public String prepareBranchesStructure() throws Exception {
@@ -366,7 +363,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
       final File rootFile = virtualToIoFile(subTree.myRootDir);
       delete(rootFile);
       delete(new File(myWorkingCopyDir.getPath() + File.separator + ".svn"));
-      assertTrue(!rootFile.exists());
+      assertDoesntExist(rootFile);
       refreshVfs();
 
       final File sourceDir = new File(myWorkingCopyDir.getPath(), "source");
@@ -382,7 +379,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
 
       if (updateExternal) {
         refreshVfs();
-        assertTrue(new File(sourceDir, "external").exists());
+        assertExists(new File(sourceDir, "external"));
       }
     });
   }
@@ -414,17 +411,15 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
     action
       .actionPerformed(new AnActionEvent(null, getProjectContext(myProject), "test", new Presentation(), ActionManager.getInstance(), 0));
 
-    changeListManager.ensureUpToDate(false);
-    changeListManager.ensureUpToDate(false);  // wait for after-events like annotations recalculation
-    sleep(100); // zipper updater
+    waitChangesAndAnnotations();
   }
 
   protected void runAndVerifyStatusSorted(final String... stdoutLines) throws IOException {
-    runStatusAcrossLocks(myWcRoot, true, stdoutLines);
+    runStatusAcrossLocks(myWcRoot, true, map2Array(stdoutLines, String.class, it -> toSystemDependentName(it)));
   }
 
   protected void runAndVerifyStatus(final String... stdoutLines) throws IOException {
-    runStatusAcrossLocks(myWcRoot, false, stdoutLines);
+    runStatusAcrossLocks(myWcRoot, false, map2Array(stdoutLines, String.class, it -> toSystemDependentName(it)));
   }
 
   private void runStatusAcrossLocks(@Nullable File workingDir, final boolean sorted, final String... stdoutLines) throws IOException {

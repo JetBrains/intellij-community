@@ -84,16 +84,16 @@ class DfaVariableState {
 
   @NotNull
   Nullability getNullability() {
-    return NullabilityUtil.fromBoolean(myFactMap.get(DfaFactType.CAN_BE_NULL));
+    return DfaNullability.toNullability(myFactMap.get(DfaFactType.NULLABILITY));
   }
 
   public boolean isNotNull() {
-    return getNullability() == Nullability.NOT_NULL;
+    return DfaNullability.isNotNull(myFactMap);
   }
 
   @NotNull
   DfaVariableState withNotNull() {
-    return getNullability() == Nullability.NOT_NULL ? this : withoutFact(DfaFactType.CAN_BE_NULL);
+    return getNullability() == Nullability.NOT_NULL ? this : withoutFact(DfaFactType.NULLABILITY);
   }
 
   @NotNull

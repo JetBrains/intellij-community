@@ -16,7 +16,6 @@
 package org.intellij.lang.xpath.xslt.refactoring.introduceParameter;
 
 import com.intellij.lang.LanguageNamesValidation;
-
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.xslt.refactoring.BaseIntroduceDialog;
 import org.intellij.lang.xpath.xslt.refactoring.BaseIntroduceForm;
@@ -46,6 +45,7 @@ public class IntroduceParameterDialog extends BaseIntroduceDialog implements Int
         init(expression, numberOfExpressions, TITLE);
 
         getOKAction().addPropertyChangeListener(new PropertyChangeListener() {
+            @Override
             @SuppressWarnings({"AutoUnboxing"})
             public void propertyChange(PropertyChangeEvent evt) {
                 if (evt.getPropertyName().equals("enabled")) {
@@ -58,6 +58,7 @@ public class IntroduceParameterDialog extends BaseIntroduceDialog implements Int
             myCreateWithDefault.setVisible(false);
         } else {
             myCreateWithDefault.addItemListener(new ItemListener() {
+                @Override
                 public void itemStateChanged(ItemEvent e) {
                     myPreviewAction.setEnabled(getOKAction().isEnabled() && !myCreateWithDefault.isSelected());
                 }
@@ -66,6 +67,7 @@ public class IntroduceParameterDialog extends BaseIntroduceDialog implements Int
         myPreviewAction.setEnabled(false);
     }
 
+    @Override
     @NotNull
     protected Action[] createActions() {
         return myForceDefault ? super.createActions() : new Action[]{ getOKAction(), getPreviewAction(), getCancelAction() };
@@ -75,22 +77,27 @@ public class IntroduceParameterDialog extends BaseIntroduceDialog implements Int
         return myPreviewAction;
     }
 
+    @Override
     protected JComponent createCenterPanel() {
         return myContentPane;
     }
 
+    @Override
     public boolean isCreateDefault() {
         return myCreateWithDefault.isSelected();
     }
 
+    @Override
     public boolean isReplaceAll() {
         return myForm.isReplaceAll();
     }
 
+    @Override
     public boolean isPreview() {
         return myIsPreview;
     }
 
+    @Override
     protected BaseIntroduceForm getForm() {
         return myForm;
     }
@@ -100,6 +107,7 @@ public class IntroduceParameterDialog extends BaseIntroduceDialog implements Int
             super("&Preview");
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             myIsPreview = true;
             doOKAction();

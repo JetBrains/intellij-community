@@ -248,7 +248,7 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
   }
 
   @Override
-  protected boolean hasContributors(DataContext dataContext) {
+  protected boolean hasContributors(@NotNull DataContext dataContext) {
     return ChooseByNameRegistry.getInstance().getClassModelContributors().length > 0;
   }
 }

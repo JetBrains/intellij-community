@@ -25,8 +25,9 @@ public interface XmlAttributeValue extends XmlElement, PsiLiteralValue {
   /**
    * @return text inside XML attribute with quotes stripped off
    */
+  @Override
   String getValue();
-  
+
   /**
    * @return the range occupied by text inside XML attribute with quotes stripped off
    */

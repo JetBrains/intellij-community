@@ -55,6 +55,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
     myUiProperties.addChangeListener(myPropertiesListener);
   }
 
+  @Override
   protected void onVisiblePackUpdated(boolean permGraphChanged) {
     myMainFrame.updateDataPack(myVisiblePack, permGraphChanged);
     myPropertiesListener.onShowLongEdgesChanged();

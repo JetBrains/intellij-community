@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.make;
 
 import com.intellij.compiler.impl.CompilerUtil;
@@ -66,15 +52,18 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
     return containingFile.getVirtualFile();
   }
 
+  @Override
   @NotNull
   public String getDescription() {
     return UIDesignerBundle.message("component.gui.designer.form.to.source.compiler");
   }
 
+  @Override
   public boolean validateConfiguration(CompileScope scope) {
     return true;
   }
 
+  @Override
   @NotNull
   public ProcessingItem[] getProcessingItems(final CompileContext context) {
     final Project project = context.getProject();
@@ -150,6 +139,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
     return items.toArray(ProcessingItem.EMPTY_ARRAY);
   }
 
+  @Override
   public ProcessingItem[] process(final CompileContext context, final ProcessingItem[] items) {
     final ArrayList<ProcessingItem> compiledItems = new ArrayList<>();
 
@@ -223,7 +213,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
     if (formFile != null) {
       FormElementNavigatable navigatable = new FormElementNavigatable(context.getProject(), formFile, e.getComponentId());
       context.addMessage(CompilerMessageCategory.ERROR,
-                         formFile.getPresentableUrl() + ": " + e.getErrorMessage(), 
+                         formFile.getPresentableUrl() + ": " + e.getErrorMessage(),
                          formFile.getUrl(), -1, -1, navigatable);
     }
     else {
@@ -231,6 +221,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
     }
   }
 
+  @Override
   public ValidityState createValidityState(final DataInput in) throws IOException {
     return TimestampValidityState.load(in);
   }
@@ -246,6 +237,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
       myState = new TimestampValidityState(formFile.getTimeStamp());
     }
 
+    @Override
     @NotNull
     public VirtualFile getFile() {
       return mySourceFile;
@@ -255,6 +247,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
       return myFormFile;
     }
 
+    @Override
     public ValidityState getValidityState() {
       return myState;
     }

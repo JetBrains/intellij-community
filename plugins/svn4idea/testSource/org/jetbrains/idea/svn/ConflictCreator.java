@@ -4,12 +4,9 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
-import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.status.StatusType;
@@ -20,8 +17,12 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static com.intellij.openapi.util.io.FileUtil.*;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.empty;
+import static org.junit.Assert.assertThat;
 
+// TODO Seems we could just apply corresponding patches with "svn patch" without custom code
 public class ConflictCreator {
   private final SvnVcs myVcs;
   private final VirtualFile myTheirsDir;
@@ -42,13 +43,11 @@ public class ConflictCreator {
   }
 
   public void create() throws PatchSyntaxException, IOException {
-    // local changes, do not commit
     for (TreeConflictData.FileData data : myData.getLeftFiles()) {
       applyFileData(myMineDir, data);
     }
 
-    final PatchReader reader = new PatchReader(myData.getTheirsPatch());
-    final List<TextFilePatch> patches = reader.readTextPatches();
+    final List<TextFilePatch> patches = new PatchReader(myData.getTheirsPatch()).readTextPatches();
     final List<FilePatch> filePatchList = new ArrayList<>(patches);
     for (Iterator<FilePatch> iterator = filePatchList.iterator(); iterator.hasNext(); ) {
       final FilePatch patch = iterator.next();
@@ -58,30 +57,25 @@ public class ConflictCreator {
       }
     }
 
-    if (! filePatchList.isEmpty()) {
-      PatchApplier<BinaryFilePatch> applier =
-        new PatchApplier<>(myVcs.getProject(), myTheirsDir, filePatchList, (LocalChangeList)null, null);
+    if (!filePatchList.isEmpty()) {
+      PatchApplier<BinaryFilePatch> applier = new PatchApplier<>(myVcs.getProject(), myTheirsDir, filePatchList, null, null);
       applier.setIgnoreContentRootsCheck();
       applier.execute();
-      assertEquals(0, applier.getRemainingPatches().size());
+      assertThat(applier.getRemainingPatches(), is(empty()));
     }
 
-    TimeoutUtil.sleep(10);
-
     for (TextFilePatch patch : patches) {
-      if (patch.isNewFile() || ! Comparing.equal(patch.getAfterName(), patch.getBeforeName())) {
-        final String afterName = patch.getAfterName();
-        final String[] parts = afterName.split("/");
+      if (patch.isNewFile() || !Comparing.equal(patch.getAfterName(), patch.getBeforeName())) {
         String subPath = "";
-        for (String part : parts) {
+        for (String part : patch.getAfterName().split("/")) {
           final String path = subPath + part;
           Info info = myVcs.getInfo(new File(myTheirsDir.getPath(), path));
           if (info == null || info.getURL() == null) {
             myClientRunner.add(myTheirsDir, path);
           }
-          subPath += part + "/";
+          subPath = path + "/";
         }
-        if (! patch.isNewFile()) {
+        if (!patch.isNewFile()) {
           myClientRunner.delete(myTheirsDir, patch.getBeforeName());
         }
       }
@@ -113,39 +107,35 @@ public class ConflictCreator {
   private void applyFileData(final VirtualFile root, final TreeConflictData.FileData fileData) throws IOException {
     final File target = new File(root.getPath(), fileData.myRelativePath);
 
-    // we dont apply properties changes fow now
+    // we don't apply property changes for now
     if (StatusType.STATUS_MISSING.equals(fileData.myNodeStatus)) {
-      // delete existing only from fs
-      FileUtil.delete(target);
-      return;
-    } else if (StatusType.STATUS_UNVERSIONED.equals(fileData.myNodeStatus)) {
-      // create new unversioned
-      createFile(root, fileData, target);
-      return;
-    } else if (StatusType.STATUS_ADDED.equals(fileData.myNodeStatus)) {
+      delete(target);
+    }
+    else if (StatusType.STATUS_UNVERSIONED.equals(fileData.myNodeStatus)) {
+      createFile(fileData, target);
+    }
+    else if (StatusType.STATUS_ADDED.equals(fileData.myNodeStatus)) {
       if (fileData.myCopyFrom != null) {
         myClientRunner.copy(root, fileData.myCopyFrom, fileData.myRelativePath);
-        return;
       }
-      createFile(root, fileData, target);
-      myClientRunner.add(root, fileData.myRelativePath);
-      return;
-    } else if (StatusType.STATUS_DELETED.equals(fileData.myNodeStatus)) {
+      else {
+        createFile(fileData, target);
+        myClientRunner.add(root, fileData.myRelativePath);
+      }
+    }
+    else if (StatusType.STATUS_DELETED.equals(fileData.myNodeStatus)) {
       myClientRunner.delete(root, fileData.myRelativePath);
-      return;
-    } else if (StatusType.STATUS_NORMAL.equals(fileData.myNodeStatus)) {
-      if (StatusType.STATUS_MODIFIED.equals(fileData.myContentsStatus)) {
-        createFile(root, fileData, target);
-        return;
-      }
+    }
+    else if (StatusType.STATUS_NORMAL.equals(fileData.myNodeStatus) && StatusType.STATUS_MODIFIED.equals(fileData.myContentsStatus)) {
+      createFile(fileData, target);
     }
   }
 
-  private void createFile(final VirtualFile root, final TreeConflictData.FileData fileData, File target) throws IOException {
+  private static void createFile(final TreeConflictData.FileData fileData, File target) throws IOException {
     if (fileData.myIsDir) {
-      target.mkdirs();
+      ensureExists(target);
     } else {
-      FileUtil.writeToFile(target, fileData.myContents);
+      writeToFile(target, fileData.myContents);
     }
   }
 }

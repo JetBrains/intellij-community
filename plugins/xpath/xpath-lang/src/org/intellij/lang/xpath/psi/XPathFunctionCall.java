@@ -25,6 +25,7 @@ public interface XPathFunctionCall extends XPathExpression, QNameElement {
     @NotNull
     String getFunctionName();
 
+    @Override
     @NotNull
     PrefixedName getQName();
 

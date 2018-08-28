@@ -1,12 +1,15 @@
 import os
 import sys
 import traceback
-from _pydev_bundle.pydev_imports import xmlrpclib, _queue, Exec
-from  _pydev_bundle._pydev_calltip_util import get_description
+
+from _pydev_bundle import _pydev_imports_tipper
+from _pydev_bundle._pydev_calltip_util import get_description
+from _pydev_bundle.pydev_imports import _queue, Exec
 from _pydev_imps._pydev_saved_modules import thread
+from _pydevd_bundle import pydevd_thrift
 from _pydevd_bundle import pydevd_vars
-from _pydevd_bundle import pydevd_xml
-from _pydevd_bundle.pydevd_constants import IS_JYTHON, dict_iter_items, NEXT_VALUE_SEPARATOR
+from _pydevd_bundle.pydevd_constants import IS_JYTHON, dict_iter_items
+from pydev_console.protocol import CompletionOption, CompletionOptionType
 
 try:
     import cStringIO as StringIO #may not always be available @UnusedImport
@@ -15,6 +18,25 @@ except:
         import StringIO #@Reimport
     except:
         import io as StringIO
+
+# translation to Thrift `CompletionOptionType` enumeration
+COMPLETION_OPTION_TYPES = {
+    _pydev_imports_tipper.TYPE_IMPORT: CompletionOptionType.IMPORT,
+    _pydev_imports_tipper.TYPE_CLASS: CompletionOptionType.CLASS,
+    _pydev_imports_tipper.TYPE_FUNCTION: CompletionOptionType.FUNCTION,
+    _pydev_imports_tipper.TYPE_ATTR: CompletionOptionType.ATTR,
+    _pydev_imports_tipper.TYPE_BUILTIN: CompletionOptionType.BUILTIN,
+    _pydev_imports_tipper.TYPE_PARAM: CompletionOptionType.PARAM,
+    _pydev_imports_tipper.TYPE_IPYTHON: CompletionOptionType.IPYTHON,
+    _pydev_imports_tipper.TYPE_IPYTHON_MAGIC: CompletionOptionType.IPYTHON_MAGIC,
+}
+
+
+def _to_completion_option(word):
+    name, documentation, args, ret_type = word
+    completion_option_type = COMPLETION_OPTION_TYPES[ret_type]
+    return CompletionOption(name, documentation, args.split(), completion_option_type)
+
 
 # =======================================================================================================================
 # Null
@@ -111,17 +133,15 @@ class StdIn(BaseStdIn):
         Object to be added to stdin (to emulate it as non-blocking while the next line arrives)
     '''
 
-    def __init__(self, interpreter, host, client_port, original_stdin=sys.stdin):
+    def __init__(self, interpreter, rpc_client, original_stdin=sys.stdin):
         BaseStdIn.__init__(self, original_stdin)
         self.interpreter = interpreter
-        self.client_port = client_port
-        self.host = host
+        self.rpc_client = rpc_client
 
     def readline(self, *args, **kwargs):
         # Ok, callback into the client to get the new input
         try:
-            server = xmlrpclib.Server('http://%s:%s' % (self.host, self.client_port))
-            requested_input = server.RequestInput()
+            requested_input = self.rpc_client.requestInput()
             if not requested_input:
                 return '\n'  # Yes, a readline must return something (otherwise we can get an EOFError on the input() call).
             return requested_input
@@ -177,7 +197,7 @@ class CodeFragment:
 # BaseInterpreterInterface
 # =======================================================================================================================
 class BaseInterpreterInterface:
-    def __init__(self, mainThread, connect_status_queue=None):
+    def __init__(self, mainThread, connect_status_queue=None, rpc_client=None):
         self.mainThread = mainThread
         self.interruptable = False
         self.exec_queue = _queue.Queue(0)
@@ -186,6 +206,8 @@ class BaseInterpreterInterface:
         self.connect_status_queue = connect_status_queue
         self.mpl_modules_for_patching = {}
         self.init_mpl_modules_for_patching()
+
+        self.rpc_client = rpc_client
 
     def build_banner(self):
         return 'print({0})\n'.format(repr(self.get_greeting_msg()))
@@ -233,7 +255,7 @@ class BaseInterpreterInterface:
 
     def create_std_in(self, debugger=None, original_std_in=None):
         if debugger is None:
-            return StdIn(self, self.host, self.client_port, original_stdin=original_std_in)
+            return StdIn(self, self.rpc_client, original_stdin=original_std_in)
         else:
             return DebugConsoleStdIn(dbg=debugger, original_stdin=original_std_in)
 
@@ -449,8 +471,8 @@ class BaseInterpreterInterface:
         self.interruptable = True
 
     def get_server(self):
-        if getattr(self, 'host', None) is not None:
-            return xmlrpclib.Server('http://%s:%s' % (self.host, self.client_port))
+        if getattr(self, 'rpc_client', None) is not None:
+            return self.rpc_client
         else:
             return None
 
@@ -459,7 +481,7 @@ class BaseInterpreterInterface:
     def ShowConsole(self):
         server = self.get_server()
         if server is not None:
-            server.ShowConsole()
+            server.showConsole()
 
     def finish_exec(self, more):
         self.interruptable = False
@@ -467,22 +489,16 @@ class BaseInterpreterInterface:
         server = self.get_server()
 
         if server is not None:
-            return server.NotifyFinished(more)
+            return server.notifyFinished(more)
         else:
             return True
 
     def getFrame(self):
-        xml = StringIO.StringIO()
         hidden_ns = self.get_ipython_hidden_vars_dict()
-        xml.write("<xml>")
-        xml.write(pydevd_xml.frame_vars_to_xml(self.get_namespace(), hidden_ns))
-        xml.write("</xml>")
-
-        return xml.getvalue()
+        return pydevd_thrift.frame_vars_to_struct(self.get_namespace(), hidden_ns)
 
     def getVariable(self, attributes):
-        xml = StringIO.StringIO()
-        xml.write("<xml>")
+        debug_values = []
         val_dict = pydevd_vars.resolve_compound_var_object_fields(self.get_namespace(), attributes)
         if val_dict is None:
             val_dict = {}
@@ -490,27 +506,41 @@ class BaseInterpreterInterface:
         keys = val_dict.keys()
         for k in keys:
             val = val_dict[k]
-            evaluate_full_value = pydevd_xml.should_evaluate_full_value(val)
-            xml.write(pydevd_vars.var_to_xml(val, k, evaluate_full_value=evaluate_full_value))
+            evaluate_full_value = pydevd_thrift.should_evaluate_full_value(val)
+            debug_values.append(pydevd_thrift.var_to_struct(val, k, evaluate_full_value=evaluate_full_value))
 
-        xml.write("</xml>")
-
-        return xml.getvalue()
+        return debug_values
 
     def getArray(self, attr, roffset, coffset, rows, cols, format):
         name = attr.split("\t")[-1]
         array = pydevd_vars.eval_in_context(name, self.get_namespace(), self.get_namespace())
-        return pydevd_vars.table_like_struct_to_xml(array, name, roffset, coffset, rows, cols, format)
+        return pydevd_thrift.table_like_struct_to_thrift_struct(array, name, roffset, coffset, rows, cols, format)
 
     def evaluate(self, expression):
-        xml = StringIO.StringIO()
-        xml.write("<xml>")
-        result = pydevd_vars.eval_in_context(expression, self.get_namespace(), self.get_namespace())
-        xml.write(pydevd_vars.var_to_xml(result, expression))
-        xml.write("</xml>")
-        return xml.getvalue()
+        # returns `DebugValue` of evaluated expression
 
-    def getCompletions(self, text, act_tok):
+        result = pydevd_vars.eval_in_context(expression, self.get_namespace(), self.get_namespace())
+        return [pydevd_thrift.var_to_struct(result, expression)]
+
+    def do_get_completions(self, text, act_tok):
+        """Retrieves completion options.
+
+        Returns the array with completion options tuples.
+
+        :param text: the full text of the expression to complete
+        :param act_tok: resolved part of the expression
+        :return: the array of tuples `(name, documentation, args, ret_type)`
+
+        :Example:
+
+            Let us execute ``import time`` line in the Python console. Then try
+            to complete ``time.sle`` expression. At this point the method would
+            receive ``time.sle`` as ``text`` parameter and ``time.`` as
+            ``act_tok`` parameter. The result would contain the array with the
+            following tuple among others: ``[..., ('sleep',
+            'sleep(seconds)\\n\\nDelay execution ...', '(seconds)', '2'),
+            ...]``.
+        """
         try:
             from _pydev_bundle._pydev_completer import Completer
 
@@ -522,6 +552,10 @@ class BaseInterpreterInterface:
             traceback.print_exc()
             return []
 
+    def getCompletions(self, text, act_tok):
+        words = self.do_get_completions(text, act_tok)
+        return [_to_completion_option(word) for word in words]
+
     def loadFullValue(self, seq, scope_attrs):
         """
         Evaluate full value for async Console variables in a separate thread and send results to IDE side
@@ -532,7 +566,8 @@ class BaseInterpreterInterface:
         """
         frame_variables = self.get_namespace()
         var_objects = []
-        vars = scope_attrs.split(NEXT_VALUE_SEPARATOR)
+        # vars = scope_attrs.split(NEXT_VALUE_SEPARATOR)
+        vars = scope_attrs
         for var_attrs in vars:
             if '\t' in var_attrs:
                 name, attrs = var_attrs.split('\t', 1)
@@ -547,8 +582,8 @@ class BaseInterpreterInterface:
                 var_object = pydevd_vars.eval_in_context(name, frame_variables, frame_variables)
                 var_objects.append((var_object, name))
 
-        from _pydevd_bundle.pydevd_comm import GetValueAsyncThreadConsole
-        t = GetValueAsyncThreadConsole(self.get_server(), seq, var_objects)
+        from _pydevd_bundle.pydevd_comm import ThriftGetValueAsyncThreadConsole
+        t = ThriftGetValueAsyncThreadConsole(self.get_server(), seq, var_objects)
         t.start()
 
     def changeVariable(self, attr, value):
@@ -574,7 +609,7 @@ class BaseInterpreterInterface:
         else:
             return self.orig_find_frame(thread_id, frame_id)
 
-    def connectToDebugger(self, debuggerPort, debugger_options=None):
+    def connectToDebugger(self, debuggerPort, debugger_options=None, extra_envs=None):
         '''
         Used to show console with variables connection.
         Mainly, monkey-patches things in the debugger structure so that the debugger protocol works.
@@ -582,18 +617,15 @@ class BaseInterpreterInterface:
 
         if debugger_options is None:
             debugger_options = {}
-        env_key = "PYDEVD_EXTRA_ENVS"
-        if env_key in debugger_options:
-            for (env_name, value) in dict_iter_items(debugger_options[env_key]):
-                existing_value = os.environ.get(env_name, None)
-                if existing_value:
-                    os.environ[env_name] = "%s%c%s" % (existing_value, os.path.pathsep, value)
-                else:
-                    os.environ[env_name] = value
-                if env_name == "PYTHONPATH":
-                    sys.path.append(value)
 
-            del debugger_options[env_key]
+        for (env_name, value) in dict_iter_items(extra_envs):
+            existing_value = os.environ.get(env_name, None)
+            if existing_value:
+                os.environ[env_name] = "%s%c%s" % (existing_value, os.path.pathsep, value)
+            else:
+                os.environ[env_name] = value
+            if env_name == "PYTHONPATH":
+                sys.path.append(value)
 
         def do_connect_to_debugger():
             try:

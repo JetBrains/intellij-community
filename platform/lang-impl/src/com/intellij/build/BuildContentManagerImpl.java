@@ -101,7 +101,7 @@ public class BuildContentManagerImpl implements BuildContentManager {
         private int myInsideGetData = 0;
 
         @Override
-        public Object getData(String dataId) {
+        public Object getData(@NotNull String dataId) {
           myInsideGetData++;
           try {
             return myInsideGetData == 1 ? DataManager.getInstance().getDataContext(contentManager.getComponent()).getData(dataId) : null;

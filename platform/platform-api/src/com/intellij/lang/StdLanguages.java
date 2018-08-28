@@ -77,7 +77,7 @@ public class StdLanguages {
   public static Language PROPERTIES = StdFileTypes.PROPERTIES.getLanguage();
 
   /**
-   * @deprecated use CssSupportLoader
+   * @deprecated use {@link com.intellij.psi.css.CssSupportLoader} instead
    */
   @Deprecated
   public static Language CSS;

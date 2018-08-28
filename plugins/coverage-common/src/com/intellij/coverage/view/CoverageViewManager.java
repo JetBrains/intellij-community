@@ -47,10 +47,12 @@ public class CoverageViewManager implements PersistentStateComponent<CoverageVie
     new ContentManagerWatcher(toolWindow, myContentManager);
   }
 
+  @Override
   public StateBean getState() {
     return myStateBean;
   }
 
+  @Override
   public void loadState(@NotNull StateBean state) {
     myStateBean = state;
   }

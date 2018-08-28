@@ -232,9 +232,11 @@ public final class PyClassRefactoringUtil {
       @Override
       public void visitPyStringLiteralExpression(PyStringLiteralExpression node) {
         super.visitPyStringLiteralExpression(node);
-        for (PsiReference ref : node.getReferences()) {
-          if (ref.isReferenceTo(oldElement)) {
-            ref.bindToElement(newElement);
+        if (oldElement != null) {
+          for (PsiReference ref : node.getReferences()) {
+            if (ref.isReferenceTo(oldElement)) {
+              ref.bindToElement(newElement);
+            }
           }
         }
       }

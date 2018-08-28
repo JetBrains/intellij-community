@@ -105,6 +105,7 @@ public class Javac2 extends Javac {
    *
    * @param v the option value
    */
+  @Override
   public void setDebugLevel(String v) {
     unsupportedOptionMessage("debugLevel");
     super.setDebugLevel(v);
@@ -115,6 +116,7 @@ public class Javac2 extends Javac {
    *
    * @param list the option value
    */
+  @Override
   public void setListfiles(boolean list) {
     unsupportedOptionMessage("listFiles");
     super.setListfiles(list);
@@ -125,6 +127,7 @@ public class Javac2 extends Javac {
    *
    * @param memoryInitialSize the option value
    */
+  @Override
   public void setMemoryInitialSize(String memoryInitialSize) {
     unsupportedOptionMessage("memoryInitialSize");
     super.setMemoryInitialSize(memoryInitialSize);
@@ -135,6 +138,7 @@ public class Javac2 extends Javac {
    *
    * @param memoryMaximumSize the option value
    */
+  @Override
   public void setMemoryMaximumSize(String memoryMaximumSize) {
     unsupportedOptionMessage("memoryMaximumSize");
     super.setMemoryMaximumSize(memoryMaximumSize);
@@ -145,6 +149,7 @@ public class Javac2 extends Javac {
    *
    * @param encoding the option value
    */
+  @Override
   public void setEncoding(String encoding) {
     unsupportedOptionMessage("encoding");
     super.setEncoding(encoding);
@@ -155,6 +160,7 @@ public class Javac2 extends Javac {
    *
    * @param optimize the option value
    */
+  @Override
   public void setOptimize(boolean optimize) {
     unsupportedOptionMessage("optimize");
     super.setOptimize(optimize);
@@ -165,6 +171,7 @@ public class Javac2 extends Javac {
    *
    * @param depend the option value
    */
+  @Override
   public void setDepend(boolean depend) {
     unsupportedOptionMessage("depend");
     super.setDepend(depend);
@@ -175,6 +182,7 @@ public class Javac2 extends Javac {
    *
    * @param f the option value
    */
+  @Override
   public void setFork(boolean f) {
     unsupportedOptionMessage("fork");
     super.setFork(f);
@@ -185,6 +193,7 @@ public class Javac2 extends Javac {
    *
    * @param forkExec the option value
    */
+  @Override
   public void setExecutable(String forkExec) {
     unsupportedOptionMessage("executable");
     super.setExecutable(forkExec);
@@ -195,6 +204,7 @@ public class Javac2 extends Javac {
    *
    * @param compiler the option value
    */
+  @Override
   public void setCompiler(String compiler) {
     unsupportedOptionMessage("compiler");
     super.setCompiler(compiler);
@@ -237,6 +247,7 @@ public class Javac2 extends Javac {
    * The overridden compile method that does not actually compiles java sources but only instruments
    * class files.
    */
+  @Override
   protected void compile() {
     // compile java
     if (areJavaClassesCompiled()) {
@@ -463,7 +474,7 @@ public class Javac2 extends Javac {
             FailSafeClassReader reader = new FailSafeClassReader(inputStream);
 
             int version = getClassFileVersion(reader);
-            
+
             if (version >= Opcodes.V1_5 && !shouldBeSkippedByAnnotationPattern(reader)) {
               ClassWriter writer = new InstrumenterClassWriter(reader, getAsmClassWriterFlags(version), finder);
 
@@ -501,6 +512,7 @@ public class Javac2 extends Javac {
   private static int getClassFileVersion(ClassReader reader) {
     final int[] classfileVersion = new int[1];
     reader.accept(new ClassVisitor(Opcodes.API_VERSION) {
+      @Override
       public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
         classfileVersion[0] = version;
       }
@@ -516,6 +528,7 @@ public class Javac2 extends Javac {
 
     final boolean[] result = new boolean[]{false};
     reader.accept(new ClassVisitor(Opcodes.API_VERSION) {
+      @Override
       public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
         if (!result[0]) {
           String internalName = Type.getType(desc).getInternalName();
@@ -556,11 +569,13 @@ public class Javac2 extends Javac {
     return getClassOrInnerName(className.substring(0, position) + '$' + className.substring(position + 1));
   }
 
+  @Override
   protected void resetFileLists() {
     super.resetFileLists();
     myFormFiles = new ArrayList();
   }
 
+  @Override
   protected void scanDir(final File srcDir, final File destDir, final String[] files) {
     super.scanDir(srcDir, destDir, files);
     for (int i = 0; i < files.length; i++) {
@@ -598,6 +613,7 @@ public class Javac2 extends Javac {
       myNestedFormPathList = nestedFormPathList;
     }
 
+    @Override
     public LwRootContainer loadForm(String formFilePath) throws Exception {
       if (myFormCache.containsKey(formFilePath)) {
         return (LwRootContainer)myFormCache.get(formFilePath);
@@ -636,6 +652,7 @@ public class Javac2 extends Javac {
       return container;
     }
 
+    @Override
     public String getClassToBindName(LwRootContainer container) {
       final String className = container.getClassToBind();
       String result = getClassOrInnerName(className.replace('.', '/'));

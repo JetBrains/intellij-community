@@ -81,7 +81,7 @@ public class ImportModuleFromImlFileAction extends AnAction {
     presentation.setText(text);
   }
 
-  private static List<VirtualFile> getModuleNames(AnActionEvent e) {
+  private static List<VirtualFile> getModuleNames(@NotNull AnActionEvent e) {
     final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     final Project project = getEventProject(e);
     if (project == null || files == null || files.length == 0) {

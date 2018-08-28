@@ -52,9 +52,8 @@ class PyTypeShedNode(project: Project?, sdk: Sdk, viewSettings: ViewSettings) : 
 
   override fun contains(file: VirtualFile): Boolean = PyTypeShed.isInside(file)
 
-  override fun update(presentation: PresentationData?) {
-    val p = presentation ?: return
-    p.presentableText = "Typeshed Stubs"
-    p.setIcon(PlatformIcons.LIBRARY_ICON)
+  override fun update(presentation: PresentationData) {
+    presentation.presentableText = "Typeshed Stubs"
+    presentation.setIcon(PlatformIcons.LIBRARY_ICON)
   }
 }

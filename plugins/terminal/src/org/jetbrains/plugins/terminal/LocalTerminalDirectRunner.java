@@ -30,11 +30,13 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import java.util.HashMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
 import com.pty4j.util.PtyUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -116,7 +118,9 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   @Override
   protected PtyProcess createProcess(@Nullable String directory) throws ExecutionException {
-    Map<String, String> envs = new HashMap<>(System.getenv());
+    Map<String, String> envs = new THashMap<>(SystemInfo.isWindows ? CaseInsensitiveStringHashingStrategy.INSTANCE
+                                                                   : ContainerUtil.canonicalStrategy());
+    envs.putAll(System.getenv());
     if (!SystemInfo.isWindows) {
       envs.put("TERM", "xterm-256color");
     }

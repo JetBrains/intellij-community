@@ -49,16 +49,19 @@ public class TestIntegrationUtils {
 
   public enum MethodKind {
     SET_UP("setUp") {
+      @Override
       public FileTemplateDescriptor getFileTemplateDescriptor(@NotNull TestFramework framework) {
         return framework.getSetUpMethodFileTemplateDescriptor();
       }
     },
     TEAR_DOWN("tearDown") {
+      @Override
       public FileTemplateDescriptor getFileTemplateDescriptor(@NotNull TestFramework framework) {
         return framework.getTearDownMethodFileTemplateDescriptor();
       }
     },
     TEST("test") {
+      @Override
       public FileTemplateDescriptor getFileTemplateDescriptor(@NotNull TestFramework framework) {
         return framework.getTestMethodFileTemplateDescriptor();
       }
@@ -125,6 +128,7 @@ public class TestIntegrationUtils {
 
     do {
       MemberInfo.extractClassMembers(clazz, result, new MemberInfo.Filter<PsiMember>() {
+        @Override
         public boolean includeMember(PsiMember member) {
           if (!(member instanceof PsiMethod)) return false;
           PsiModifierList list = member.getModifierList();

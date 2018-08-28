@@ -30,8 +30,8 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -41,7 +41,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
   private final ElementsChooser<T> myEntriesChooser;
   private final JList myDependenciesList;
   private final ModuleInsight myInsight;
-  
+
   private final Comparator<T> COMPARATOR = (o1, o2) -> {
     final int w1 = getWeight(o1);
     final int w2 = getWeight(o2);
@@ -57,6 +57,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     myInsight = insight;
 
     myEntriesChooser = new ElementsChooser<T>(true) {
+      @Override
       public String getItemText(@NotNull T element) {
         return getElementText(element);
       }
@@ -75,7 +76,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     depsPanel.add(depsPane, BorderLayout.CENTER);
     depsPanel.setBorder(IdeBorderFactory.createTitledBorder(getDependenciesTitle(), false));
     splitter.setSecondComponent(depsPanel);
-    
+
     JPanel groupPanel = new JPanel(new BorderLayout());
     groupPanel.add(createEntriesActionToolbar().getComponent(), BorderLayout.NORTH);
     groupPanel.add(splitter, BorderLayout.CENTER);
@@ -84,8 +85,9 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     final MultiLineLabel description = new MultiLineLabel(getStepDescriptionText());
     add(description, BorderLayout.NORTH);
     add(groupPanel, BorderLayout.CENTER);
-    
+
     myEntriesChooser.addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(final ListSelectionEvent e) {
         if (e.getValueIsAdjusting()) {
           return;
@@ -116,7 +118,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     final SplitAction split = new SplitAction();
     split.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0)), this);
     entriesActions.add(split);
-    
+
     return ActionManager.getInstance().createActionToolbar("ProjectLayoutPanel.Entries", entriesActions, true);
   }
 
@@ -207,7 +209,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       }
       return builder.toString();
     }
-    
+
     if (element instanceof File) {
       final StringBuilder builder = new StringBuilder();
       builder.append(((File)element).getName());
@@ -219,7 +221,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       }
       return builder.toString();
     }
-    
+
     if (element instanceof ModuleDescriptor) {
       final ModuleDescriptor moduleDescriptor = (ModuleDescriptor)element;
       final StringBuilder builder = new StringBuilder();
@@ -250,7 +252,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       }
       return builder.toString();
     }
-    
+
     return "";
   }
 
@@ -275,11 +277,11 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
   protected abstract String getNameAlreadyUsedMessage(final String name);
 
   protected abstract String getStepDescriptionText();
-  
+
   protected abstract String getEntriesChooserTitle();
-  
+
   protected abstract String getDependenciesTitle();
-  
+
   protected abstract String getElementTypeName();
 
   private boolean isNameAlreadyUsed(String entryName) {
@@ -300,6 +302,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       super("Merge", "", AllIcons.Modules.Merge); // todo
     }
 
+    @Override
     public void actionPerformed(@NotNull final AnActionEvent e) {
       final List<T> elements = myEntriesChooser.getSelectedElements();
       if (elements.size() > 1) {
@@ -308,10 +311,12 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
           "Enter new name for merge result:",
           "Merge",
           Messages.getQuestionIcon(), getElementName(elements.get(0)), new InputValidator() {
+          @Override
           public boolean checkInput(final String inputString) {
             return true;
           }
 
+          @Override
           public boolean canClose(final String inputString) {
             if (isNameAlreadyUsed(inputString.trim())) {
               Messages.showErrorDialog(getNameAlreadyUsedMessage(inputString), "");
@@ -333,6 +338,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       }
     }
 
+    @Override
     public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabled(myEntriesChooser.getSelectedElements().size() > 1);
@@ -345,6 +351,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       super("Split", "", AllIcons.Modules.Split); // todo
     }
 
+    @Override
     public void actionPerformed(@NotNull final AnActionEvent e) {
       final List<T> elements = myEntriesChooser.getSelectedElements();
 
@@ -369,6 +376,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
         }
       }
     }
+    @Override
     public void update(@NotNull final AnActionEvent e) {
       final List<T> elements = myEntriesChooser.getSelectedElements();
       e.getPresentation().setEnabled(elements.size() == 1 && getContent(elements.get(0)).size() > 1);
@@ -380,6 +388,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       super("Rename", "", IconUtil.getEditIcon()); // todo
     }
 
+    @Override
     public void actionPerformed(@NotNull final AnActionEvent e) {
       final List<T> elements = myEntriesChooser.getSelectedElements();
       if (elements.size() == 1) {
@@ -389,10 +398,12 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
           Messages.getQuestionIcon(),
           getElementName(element),
           new InputValidator() {
+            @Override
             public boolean checkInput(final String inputString) {
               return true;
             }
 
+            @Override
             public boolean canClose(final String inputString) {
               if (isNameAlreadyUsed(inputString.trim())) {
                 Messages.showErrorDialog(getNameAlreadyUsedMessage(inputString), "");
@@ -410,6 +421,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       }
     }
 
+    @Override
     public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabled(myEntriesChooser.getSelectedElements().size() == 1);
@@ -417,6 +429,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
   }
 
   private class MyListCellRenderer extends DefaultListCellRenderer {
+    @Override
     public Component getListCellRendererComponent(final JList list, final Object value, final int index, final boolean isSelected, final boolean cellHasFocus) {
       final Component comp = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       setText(getElementText(value));
@@ -435,12 +448,14 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
       myNameField = new JTextField();
       myChooser = new ElementsChooser<File>(true) {
+        @Override
         protected String getItemText(@NotNull final File value) {
           return getElementText(value);
         }
       };
       for (final File file : files) {
         myChooser.addElement(file, false, new ElementsChooser.ElementProperties() {
+          @Override
           public Icon getIcon() {
             return getElementIcon(file);
           }
@@ -455,7 +470,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       });
       myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
-        protected void textChanged(DocumentEvent e) {
+        protected void textChanged(@NotNull DocumentEvent e) {
           updateOkButton();
         }
       });
@@ -468,6 +483,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       setOKActionEnabled(!getName().isEmpty() && !getChosenFiles().isEmpty());
     }
 
+    @Override
     protected void doOKAction() {
       final String name = getName();
       if (isNameAlreadyUsed(name)) {
@@ -477,6 +493,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       super.doOKAction();
     }
 
+    @Override
     @Nullable
     protected JComponent createCenterPanel() {
       FormBuilder builder = FormBuilder.createFormBuilder().setVertical(true);
@@ -486,6 +503,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       return builder.getPanel();
     }
 
+    @Override
     public JComponent getPreferredFocusedComponent() {
       return myNameField;
     }
@@ -506,6 +524,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       myEntry = entry;
     }
 
+    @Override
     public Icon getIcon() {
       return getElementIcon(myEntry);
     }

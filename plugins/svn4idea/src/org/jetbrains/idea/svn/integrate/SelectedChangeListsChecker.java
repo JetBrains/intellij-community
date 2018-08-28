@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -23,6 +23,7 @@ public class SelectedChangeListsChecker implements SelectedCommittedStuffChecker
     myChangeListsList = new ArrayList<>();
   }
 
+  @Override
   public void execute(final AnActionEvent event) {
     isValid = false;
     myChangeListsList.clear();
@@ -33,10 +34,12 @@ public class SelectedChangeListsChecker implements SelectedCommittedStuffChecker
     }
   }
 
+  @Override
   public boolean isValid() {
     return isValid;
   }
 
+  @Override
   public List<CommittedChangeList> getSelectedLists() {
     return myChangeListsList;
   }
@@ -59,10 +62,12 @@ public class SelectedChangeListsChecker implements SelectedCommittedStuffChecker
     myVcsRoot = sameRoot.getSameValue();
   }
 
+  @Override
   public Url getSameBranch() {
     return mySameBranch;
   }
 
+  @Override
   public VirtualFile getRoot() {
     return myVcsRoot;
   }

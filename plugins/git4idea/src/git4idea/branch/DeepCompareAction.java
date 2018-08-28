@@ -46,21 +46,22 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
   public boolean isSelected(AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    if (project == null || ui == null) {
+    VcsLogDataProvider dataProvider = e.getData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER);
+    if (project == null || ui == null || dataProvider == null) {
       return false;
     }
-    return DeepComparator.getInstance(project, ui).hasHighlightingOrInProgress();
+    return DeepComparator.getInstance(project, dataProvider, ui).hasHighlightingOrInProgress();
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean selected) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     final VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    final VcsLogDataProvider dataProvider = e.getData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER);
+    VcsLogDataProvider dataProvider = e.getData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER);
     if (project == null || ui == null || dataProvider == null) {
       return;
     }
-    final DeepComparator dc = DeepComparator.getInstance(project, ui);
+    final DeepComparator dc = DeepComparator.getInstance(project, dataProvider, ui);
     if (selected) {
       VcsLogUtil.triggerUsage(e);
 
@@ -68,11 +69,11 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
       if (singleBranchName == null) {
         selectBranchAndPerformAction(ui, e, selectedBranch -> {
           ui.getFilterUi().setFilter(VcsLogBranchFilterImpl.fromBranch(selectedBranch));
-          dc.highlightInBackground(selectedBranch, dataProvider);
+          dc.highlightInBackground(selectedBranch);
         }, getGitRoots(project, ui));
         return;
       }
-      dc.highlightInBackground(singleBranchName, dataProvider);
+      dc.highlightInBackground(singleBranchName);
     }
     else {
       dc.stopAndUnhighlight();

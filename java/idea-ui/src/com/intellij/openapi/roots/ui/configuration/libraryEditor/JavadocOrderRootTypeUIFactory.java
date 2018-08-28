@@ -79,7 +79,7 @@ public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
       specifyUrlButton.setShortcut(CustomShortcutSet.fromString("alt S"));
       specifyUrlButton.addCustomUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled(AnActionEvent e) {
+        public boolean isEnabled(@NotNull AnActionEvent e) {
           return myEnabled;
         }
       });

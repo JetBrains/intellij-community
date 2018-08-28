@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.xml.XmlFile;
-import java.util.HashMap;
 import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -101,6 +100,7 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
     }
   }
 
+  @Override
   public void visitTarget(AntDomTarget target) {
     if (myStage == Stage.TARGETS_WALKUP_STAGE) {
       final String targetEffectiveName = myCurrentTargetEffectiveName.peek();
@@ -126,7 +126,7 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
           final String alias = myNameContext.getShortPrefix() + declaredTargetName;
           if (!myTargetsResolveMap.containsKey(declaredTargetName)) {
             effectiveTargetName = declaredTargetName;
-            myTargetsResolveMap.put(alias, target); 
+            myTargetsResolveMap.put(alias, target);
           }
           else {
             effectiveTargetName = alias;
@@ -172,7 +172,7 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
   @Override
   public void visitAntDomElement(AntDomElement element) {
     if (myStopped) {
-      return; 
+      return;
     }
     if (element.equals(myContextElement)) {
       stop();
@@ -221,14 +221,17 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
   protected abstract void propertyProviderFound(PropertiesProvider propertiesProvider);
 
 
+  @Override
   public void visitInclude(AntDomInclude includeTag) {
     processFileInclusion(includeTag, InclusionKind.INCLUDE);
   }
 
+  @Override
   public void visitImport(AntDomImport importTag) {
     processFileInclusion(importTag, InclusionKind.IMPORT);
   }
 
+  @Override
   public void visitProject(AntDomProject project) {
     if (myVisitedProjects.add(project)) {
       try {

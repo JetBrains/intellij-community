@@ -65,6 +65,7 @@ public final class TextEditorState implements FileEditorState {
     myDelayedFoldInfoProducer = null;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (!(o instanceof TextEditorState)) {
       return false;
@@ -81,6 +82,7 @@ public final class TextEditorState implements FileEditorState {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result = 0;
     if (CARETS != null) {
@@ -103,6 +105,7 @@ public final class TextEditorState implements FileEditorState {
            && Math.abs(CARETS[0].LINE - other.CARETS[0].LINE) < MIN_CHANGE_DISTANCE;
   }
 
+  @Override
   public String toString() {
     return Arrays.toString(CARETS);
   }
@@ -117,6 +120,7 @@ public final class TextEditorState implements FileEditorState {
     int   SELECTION_END_LINE;
     int   SELECTION_END_COLUMN;
 
+    @Override
     public boolean equals(Object o) {
       if (!(o instanceof CaretState)) {
         return false;
@@ -141,6 +145,7 @@ public final class TextEditorState implements FileEditorState {
       return LINE + COLUMN;
     }
 
+    @Override
     public String toString() {
       return "[" + LINE + "," + COLUMN + "]";
     }

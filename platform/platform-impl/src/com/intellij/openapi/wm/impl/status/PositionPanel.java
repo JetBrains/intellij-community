@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.util.EditorGotoLineNumberDialog;
@@ -129,36 +115,36 @@ public class PositionPanel extends EditorBasedWidget
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
     connection.subscribe(DocumentBulkUpdateListener.TOPIC, this);
     KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(SWING_FOCUS_OWNER_PROPERTY, this);
-    Disposer.register(this, 
-                      () -> KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener(SWING_FOCUS_OWNER_PROPERTY, 
+    Disposer.register(this,
+                      () -> KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener(SWING_FOCUS_OWNER_PROPERTY,
                                                                                                                this));
   }
 
   @Override
-  public void selectionChanged(final SelectionEvent e) {
+  public void selectionChanged(@NotNull final SelectionEvent e) {
     Editor editor = e.getEditor();
     if (isFocusedEditor(editor)) updatePosition(editor);
   }
 
   @Override
-  public void caretPositionChanged(final CaretEvent e) {
+  public void caretPositionChanged(@NotNull final CaretEvent e) {
     Editor editor = e.getEditor();
     // When multiple carets exist in editor, we don't show information about caret positions
     if (editor.getCaretModel().getCaretCount() == 1 && isFocusedEditor(editor)) updatePosition(editor);
   }
 
   @Override
-  public void caretAdded(CaretEvent e) {
+  public void caretAdded(@NotNull CaretEvent e) {
     updatePosition(e.getEditor());
   }
 
   @Override
-  public void caretRemoved(CaretEvent e) {
+  public void caretRemoved(@NotNull CaretEvent e) {
     updatePosition(e.getEditor());
   }
 
   @Override
-  public void documentChanged(DocumentEvent event) {
+  public void documentChanged(@NotNull DocumentEvent event) {
     Document document = event.getDocument();
     if (document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate()) return;
     onDocumentUpdate(document);

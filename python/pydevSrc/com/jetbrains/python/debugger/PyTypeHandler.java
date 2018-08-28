@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -14,12 +15,14 @@ public class PyTypeHandler {
   }
 
   private static final Formatter DEFAULT_FORMATTER = new Formatter() {
+    @Override
     public String format(final String value) {
       return value;
     }
   };
 
   private static final Formatter STR_FORMATTER = new Formatter() {
+    @Override
     public String format(final String value) {
       return new StringBuilder(value.length() + 2).append('\'').append(StringUtil.replace(value, "'", "\\'").replace("\\", "\\\\")).append(
         '\'').toString();
@@ -27,6 +30,7 @@ public class PyTypeHandler {
   };
 
   private static final Formatter UNI_FORMATTER = new Formatter() {
+    @Override
     public String format(final String value) {
       return new StringBuilder(value.length() + 3).append("u'").append(StringUtil.replace(value, "'", "\\'").replace("\\", "\\\\")).append('\'').toString();
     }

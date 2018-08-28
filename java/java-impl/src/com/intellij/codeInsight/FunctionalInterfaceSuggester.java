@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.codeInspection.java15api.Java15APIUsageInspectionBase;
+import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -155,7 +155,7 @@ public class FunctionalInterfaceSuggester {
     final Project project = element.getProject();
     final Set<PsiType> types = new HashSet<>();
     final Processor<PsiMember> consumer = member -> {
-      if (member instanceof PsiClass && Java15APIUsageInspectionBase.getLastIncompatibleLanguageLevel(member, PsiUtil.getLanguageLevel(element)) == null) {
+      if (member instanceof PsiClass && Java15APIUsageInspection.getLastIncompatibleLanguageLevel(member, PsiUtil.getLanguageLevel(element)) == null) {
         if (!JavaPsiFacade.getInstance(project).getResolveHelper().isAccessible(member, element, null)) {
           return true;
         }

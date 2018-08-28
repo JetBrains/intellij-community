@@ -42,12 +42,14 @@ public class TablePassInfo extends LayoutPassInfo {
     myTabs = tabs;
   }
 
+  @Override
   @Nullable
   public TabInfo getPreviousFor(final TabInfo info) {
     final TableRow row = myInfo2Row.get(info);
     return row != null ? getPrevious(row.myColumns, row.myColumns.indexOf(info)) : null;
   }
 
+  @Override
   @Nullable
   public TabInfo getNextFor(final TabInfo info) {
     final TableRow row = myInfo2Row.get(info);
@@ -60,18 +62,22 @@ public class TablePassInfo extends LayoutPassInfo {
     return index != -1 && index == table.size() - 1;
   }
 
+  @Override
   public int getRowCount() {
     return table.size();
   }
 
+  @Override
   public int getColumnCount(final int row) {
     return table.get(row).myColumns.size();
   }
 
+  @Override
   public TabInfo getTabAt(final int row, final int column) {
     return table.get(row).myColumns.get(column);
   }
 
+  @Override
   public boolean hasCurveSpaceFor(final TabInfo tabInfo) {
     final TableRow row = myInfo2Row.get(tabInfo);
     return row != null ? row.myColumns.indexOf(tabInfo) < row.myColumns.size() - 1 : false;

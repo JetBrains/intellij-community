@@ -41,7 +41,7 @@ public class AnalyzeStacktraceOnErrorAction extends AnAction {
     AnalyzeStacktraceUtil.addConsole(project, null, "<Stacktrace>", message);
   }
 
-  private static String getMessage(AnActionEvent e) {
+  private static String getMessage(@NotNull AnActionEvent e) {
     return IdeErrorsDialog.CURRENT_TRACE_KEY.getData(e.getDataContext());
   }
 }

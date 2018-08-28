@@ -24,6 +24,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -268,7 +269,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
   }
 
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     return Settings.KEY.is(dataId) ? mySettings : SearchTextField.KEY.is(dataId) ? mySearch : null;
   }
 

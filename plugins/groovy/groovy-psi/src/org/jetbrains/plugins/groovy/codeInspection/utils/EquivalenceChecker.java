@@ -521,8 +521,9 @@ public class EquivalenceChecker {
   }
 
   private static boolean listOrMapExpressionsAreEquivalent(GrListOrMap expression1, GrListOrMap expression2) {
-    return expressionListsAreEquivalent(expression1.getInitializers(), expression2.getInitializers()) &&
-        namedArgumentListsAreEquivalent(expression1.getNamedArguments(), expression2.getNamedArguments());
+    return expression1.isMap() == expression2.isMap() &&
+           expressionListsAreEquivalent(expression1.getInitializers(), expression2.getInitializers()) &&
+           namedArgumentListsAreEquivalent(expression1.getNamedArguments(), expression2.getNamedArguments());
   }
 
   private static boolean arrayDeclarationsAreEquivalent(GrArrayDeclaration expression1,

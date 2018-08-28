@@ -108,7 +108,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (ExternalSystemDataKeys.VIEW.is(dataId)) return this;
 
     if (PlatformDataKeys.HELP_ID.is(dataId)) return "reference.toolwindows.gradle";

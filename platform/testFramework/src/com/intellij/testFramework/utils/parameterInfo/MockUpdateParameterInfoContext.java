@@ -34,22 +34,28 @@ public class MockUpdateParameterInfoContext implements UpdateParameterInfoContex
     myCompEnabled = items == null ? null : new boolean[items.length];
   }
 
+  @Override
   public void removeHint() {}
 
+  @Override
   public void setParameterOwner(PsiElement o) {
     myParameterOwner = o;
   }
 
+  @Override
   public PsiElement getParameterOwner() { return myParameterOwner; }
 
+  @Override
   public void setHighlightedParameter(Object parameter) {
     myHighlightedParameter = parameter;
   }
 
+  @Override
   public Object getHighlightedParameter() {
     return myHighlightedParameter;
   }
 
+  @Override
   public void setCurrentParameter(int index) {
     myCurrentParameter = index;
   }
@@ -58,20 +64,24 @@ public class MockUpdateParameterInfoContext implements UpdateParameterInfoContex
     return myCurrentParameter;
   }
 
+  @Override
   public boolean isUIComponentEnabled(int index) {
     return myCompEnabled != null && myCompEnabled[index];
   }
 
+  @Override
   public void setUIComponentEnabled(int index, boolean b) {
     if (myCompEnabled != null) {
       myCompEnabled[index] = b;
     }
   }
 
+  @Override
   public int getParameterListStart() {
     return myEditor.getCaretModel().getOffset();
   }
 
+  @Override
   public Object[] getObjectsToView() {
     return myItems;
   }
@@ -92,22 +102,31 @@ public class MockUpdateParameterInfoContext implements UpdateParameterInfoContex
   }
 
   @Override
+  public boolean isSingleParameterInfo() {
+    return false;
+  }
+
+  @Override
   public UserDataHolderEx getCustomContext() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public Project getProject() {
     return myFile.getProject();
   }
 
+  @Override
   public PsiFile getFile() {
     return myFile;
   }
 
+  @Override
   public int getOffset() {
     return myEditor.getCaretModel().getOffset();
   }
 
+  @Override
   @NotNull
   public Editor getEditor() {
     return myEditor;

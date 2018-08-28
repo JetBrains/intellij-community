@@ -11,6 +11,26 @@ import org.junit.Test
 import java.util.*
 
 internal class XmlSerializerMapTest {
+  @Test
+  fun `empty map`() {
+    @Tag("bean")
+    class Bean {
+      @JvmField
+      var values = emptyMap<String, String>()
+    }
+
+    val data = Bean()
+    data.values = mapOf("foo" to "boo")
+    testSerializer("""
+        <bean>
+          <option name="values">
+            <map>
+              <entry key="foo" value="boo" />
+            </map>
+          </option>
+        </bean>""", data)
+  }
+
   @Test fun mapAtTopLevel() {
     @Tag("bean")
     class BeanWithMapAtTopLevel {

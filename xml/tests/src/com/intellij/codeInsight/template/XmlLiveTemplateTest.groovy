@@ -64,13 +64,13 @@ class XmlLiveTemplateTest extends LightCodeInsightFixtureTestCase {
   }
 
   void testAvailabilityCDATA() {
-    final TemplateImpl template = TemplateSettings.getInstance().getTemplate("CD", "html/xml")
+    final TemplateImpl template = TemplateSettings.getInstance().getTemplate("CD", "HTML/XML")
     assertTrue(isApplicable("<foo><caret> </foo>", template))
     assertFalse(isApplicable("<foo bar=\"<caret>\"></foo>", template))
   }
 
   void testAvailabilityT() {
-    final TemplateImpl template = TemplateSettings.getInstance().getTemplate("T", "html/xml")
+    final TemplateImpl template = TemplateSettings.getInstance().getTemplate("T", "HTML/XML")
     assertTrue(isApplicable("<foo><caret> </foo>", template))
     assertFalse(isApplicable("<foo bar=\"<caret>\"></foo>", template))
   }

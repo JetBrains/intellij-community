@@ -84,16 +84,20 @@ public class ModifierKeyDoubleClickHandlerTest extends LightPlatformTestCase {
 
   @Override
   public void tearDown() throws Exception {
-    ModifierKeyDoubleClickHandler.getInstance().unregisterAction(MY_SHIFT_SHIFT_KEY_ACTION);
-    ModifierKeyDoubleClickHandler.getInstance().unregisterAction(MY_SHIFT_SHIFT_ACTION);
-    KeymapManager.getInstance().getActiveKeymap().removeShortcut(MY_SHIFT_OTHER_KEY_ACTION, SHIFT_OTHER_KEY_SHORTCUT);
-    KeymapManager.getInstance().getActiveKeymap().removeShortcut(MY_SHIFT_KEY_ACTION, SHIFT_KEY_SHORTCUT);
-    ActionManager.getInstance().unregisterAction(MY_SHIFT_OTHER_KEY_ACTION);
-    ActionManager.getInstance().unregisterAction(MY_SHIFT_SHIFT_KEY_ACTION);
-    ActionManager.getInstance().unregisterAction(MY_SHIFT_KEY_ACTION);
-    ActionManager.getInstance().unregisterAction(MY_SHIFT_SHIFT_ACTION);
-    Clock.reset();
-    super.tearDown();
+    try {
+      ModifierKeyDoubleClickHandler.getInstance().unregisterAction(MY_SHIFT_SHIFT_KEY_ACTION);
+      ModifierKeyDoubleClickHandler.getInstance().unregisterAction(MY_SHIFT_SHIFT_ACTION);
+      KeymapManager.getInstance().getActiveKeymap().removeShortcut(MY_SHIFT_OTHER_KEY_ACTION, SHIFT_OTHER_KEY_SHORTCUT);
+      KeymapManager.getInstance().getActiveKeymap().removeShortcut(MY_SHIFT_KEY_ACTION, SHIFT_KEY_SHORTCUT);
+      ActionManager.getInstance().unregisterAction(MY_SHIFT_OTHER_KEY_ACTION);
+      ActionManager.getInstance().unregisterAction(MY_SHIFT_SHIFT_KEY_ACTION);
+      ActionManager.getInstance().unregisterAction(MY_SHIFT_KEY_ACTION);
+      ActionManager.getInstance().unregisterAction(MY_SHIFT_SHIFT_ACTION);
+      Clock.reset();
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testShiftShiftSuccessfulCase() {

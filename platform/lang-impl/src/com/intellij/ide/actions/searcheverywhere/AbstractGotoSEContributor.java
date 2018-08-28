@@ -4,7 +4,6 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.actions.SearchEverywherePsiRenderer;
 import com.intellij.ide.util.EditSourceUtil;
-import com.intellij.ide.util.gotoByName.ChooseByNameModel;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
 import com.intellij.navigation.NavigationItem;
@@ -28,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -65,9 +65,10 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
   private static final Logger LOG = Logger.getInstance(AbstractGotoSEContributor.class);
 
   @Override
-  public ContributorSearchResult<Object> search(String pattern, boolean everywhere, SearchEverywhereContributorFilter<F> filter, ProgressIndicator progressIndicator, int elementsLimit) {
+  public void fetchElements(String pattern, boolean everywhere, SearchEverywhereContributorFilter<F> filter,
+                            ProgressIndicator progressIndicator, Function<Object, Boolean> consumer) {
     if (!isDumbModeSupported() && DumbService.getInstance(myProject).isDumb()) {
-      return ContributorSearchResult.empty();
+      return;
     }
 
     String suffix = pattern.endsWith(fullMatchSearchSuffix) ? fullMatchSearchSuffix : "";
@@ -75,37 +76,23 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
     FilteringGotoByModel<F> model = createModel(myProject);
     model.setFilterItems(filter.getSelectedElements());
     ChooseByNamePopup popup = ChooseByNamePopup.createPopup(myProject, model, (PsiElement)null);
-    ContributorSearchResult.Builder<Object> builder = ContributorSearchResult.builder();
     ApplicationManager.getApplication().runReadAction(() -> {
-      popup.getProvider().filterElements(popup, searchString, everywhere, progressIndicator,
-                                         o -> addFoundElement(o, model, builder, progressIndicator, elementsLimit)
-      );
+      popup.getProvider().filterElements(popup, searchString, everywhere, progressIndicator, element -> {
+        if (progressIndicator.isCanceled()) return false;
+        if (element == null) {
+          LOG.error("Null returned from " + model + " in " + this);
+          return true;
+        }
+        return consumer.apply(element);
+      });
     });
     Disposer.dispose(popup);
-
-    return builder.build();
-  }
-
-  protected boolean addFoundElement(Object element, ChooseByNameModel model, ContributorSearchResult.Builder<Object> resultBuilder,
-                                    ProgressIndicator progressIndicator, int elementsLimit) {
-    if (progressIndicator.isCanceled()) return false;
-    if (element == null) {
-      LOG.error("Null returned from " + model + " in " + this);
-      return true;
-    }
-
-    if (resultBuilder.itemsCount() < elementsLimit ) {
-      resultBuilder.addItem(element);
-      return true;
-    } else {
-      resultBuilder.setHasMore(true);
-      return false;
-    }
   }
 
   //todo param is unnecessary #UX-1
   protected abstract FilteringGotoByModel<F> createModel(Project project);
 
+  @Override
   public String filterControlSymbols(String pattern) {
     if (StringUtil.containsAnyChar(pattern, ":,;@[( #") || pattern.contains(" line ") || pattern.contains("?l=")) { // quick test if reg exp should be used
       return applyPatternFilter(pattern, patternToDetectLinesAndColumns);
@@ -179,6 +166,11 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
         return super.getElementText(element);
       }
     };
+  }
+
+  @Override
+  public int getElementPriority(Object element, String searchPattern) {
+    return 50;
   }
 
   protected boolean isDumbModeSupported() {

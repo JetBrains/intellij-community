@@ -34,6 +34,7 @@ import java.util.List;
 
 public abstract class HgAbstractGlobalAction extends DumbAwareAction {
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);

@@ -39,6 +39,7 @@ class RevisionWrapper implements Comparable<RevisionWrapper> {
     myBranch = branch;
   }
 
+  @Override
   public int compareTo(final RevisionWrapper o) {
     final long diff = myTime - o.myTime;
     if (diff < 0) {

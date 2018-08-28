@@ -31,7 +31,7 @@ import java.util.*;
  * Immutable class representing a number of non-primitive type constraints applied to some value.
  * There are two types of constrains: value is instance of some type and value is not an instance of some type.
  * Unlike usual Java semantics, the {@code null} value is considered to be instanceof any type (non-null instanceof can be expressed
- * via additional restriction {@link DfaFactType#CAN_BE_NULL} {@code = false}).
+ * via additional restriction {@link DfaFactType#NULLABILITY} {@code = NOT_NULL}).
  */
 public abstract class TypeConstraint {
 
@@ -67,6 +67,8 @@ public abstract class TypeConstraint {
   public abstract boolean isEmpty();
 
   public abstract boolean isExact();
+
+  public abstract boolean isExact(String typeName);
 
 
   static final class Exact extends TypeConstraint {
@@ -157,6 +159,11 @@ public abstract class TypeConstraint {
     @Override
     public boolean isExact() {
       return true;
+    }
+
+    @Override
+    public boolean isExact(String typeName) {
+      return myType.getPsiType().equalsToText(typeName);
     }
 
     @Override
@@ -401,6 +408,11 @@ public abstract class TypeConstraint {
 
     @Override
     public boolean isExact() {
+      return false;
+    }
+
+    @Override
+    public boolean isExact(String typeName) {
       return false;
     }
 

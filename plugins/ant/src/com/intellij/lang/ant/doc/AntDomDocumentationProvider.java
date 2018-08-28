@@ -50,7 +50,8 @@ import java.util.List;
 public class AntDomDocumentationProvider implements DocumentationProvider {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.doc.AntDomDocumentationProvider");
-  
+
+  @Override
   public String generateDoc(PsiElement element, PsiElement originalElement) {
     final String mainDoc = getMainDocumentation(originalElement);
     final String additionalDoc = getAdditionalDocumentation(originalElement);
@@ -84,7 +85,7 @@ public class AntDomDocumentationProvider implements DocumentationProvider {
     }
     return null;
   }
-  
+
   @Nullable
   private static String getAdditionalDocumentation(PsiElement elem) {
     final XmlTag xmlTag = PsiTreeUtil.getParentOfType(elem, XmlTag.class);
@@ -118,7 +119,7 @@ public class AntDomDocumentationProvider implements DocumentationProvider {
     }
     return null;
   }
-  
+
   @Nullable
   private static VirtualFile getHelpFile(final PsiElement element) {
     final XmlTag xmlTag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
@@ -142,7 +143,7 @@ public class AntDomDocumentationProvider implements DocumentationProvider {
     if (antHomeDir == null) {
       return null;
     }
-    
+
     @NonNls String path = antHomeDir + "/docs/manual";
     String url;
     if (new File(path).exists()) {
@@ -162,10 +163,10 @@ public class AntDomDocumentationProvider implements DocumentationProvider {
     if (documentationRoot == null) {
       return null;
     }
-    
+
     return getHelpFile(antElement, documentationRoot);
   }
-  
+
   public static final String[] DOC_FOLDER_NAMES = new String[] {
     "Tasks", "Types", "CoreTasks", "OptionalTasks", "CoreTypes", "OptionalTypes"
   };
@@ -195,6 +196,7 @@ public class AntDomDocumentationProvider implements DocumentationProvider {
     return null;
   }
 
+  @Override
   @Nullable
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {  // todo!
     if (element instanceof PomTargetPsiElement) {
@@ -262,6 +264,7 @@ public class AntDomDocumentationProvider implements DocumentationProvider {
     return null;
   }
 
+  @Override
   public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
     final VirtualFile helpFile = getHelpFile(originalElement);
     if (helpFile == null || !(helpFile.getFileSystem() instanceof LocalFileSystem)) {
@@ -270,10 +273,12 @@ public class AntDomDocumentationProvider implements DocumentationProvider {
     return Collections.singletonList(helpFile.getUrl());
   }
 
+  @Override
   public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
     return null;
   }
 
+  @Override
   public PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
     return null;
   }

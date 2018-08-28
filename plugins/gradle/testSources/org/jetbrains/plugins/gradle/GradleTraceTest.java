@@ -62,8 +62,7 @@ public class GradleTraceTest extends GradleImportingTestCase {
     assertTrue(trace.size() > 20);
     assertTrue(sum(trace.values()) > 0);
 
-    final int threshold = 85;
-    assertTracedTimePercentAtLeast(trace, importDoneTime - testStartTime, 85);
+    assertTracedTimePercentAtLeast(trace, importDoneTime - testStartTime, 80);
   }
 
   private static void assertTracedTimePercentAtLeast(@NotNull final Map<String, Long> trace, long time, int threshold) {

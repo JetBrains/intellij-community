@@ -383,6 +383,7 @@ class ExtractedClassBuilder {
       this.out = out;
     }
 
+    @Override
     public void visitElement(PsiElement element) {
 
       super.visitElement(element);
@@ -398,6 +399,7 @@ class ExtractedClassBuilder {
       }
     }
 
+    @Override
     public void visitReferenceExpression(PsiReferenceExpression expression) {
       final JavaResolveResult resolveResult = expression.advancedResolve(true);
       final boolean staticImported = resolveResult.getCurrentFileResolveScope() instanceof PsiImportStaticStatement;
@@ -451,6 +453,7 @@ class ExtractedClassBuilder {
       }
     }
 
+    @Override
     public void visitAssignmentExpression(PsiAssignmentExpression expression) {
       PsiExpression lhs = expression.getLExpression();
       final PsiExpression rhs = expression.getRExpression();
@@ -499,6 +502,7 @@ class ExtractedClassBuilder {
     }
 
 
+    @Override
     public void visitUnaryExpression(PsiUnaryExpression expression) {
       PsiExpression operand = expression.getOperand();
       final IElementType tokenType = expression.getOperationSign().getTokenType();
@@ -541,12 +545,14 @@ class ExtractedClassBuilder {
     }
 
 
+    @Override
     public void visitThisExpression(PsiThisExpression expression) {
       out.append(backPointerName);
     }
 
 
 
+    @Override
     public void visitMethodCallExpression(PsiMethodCallExpression call) {
       final PsiReferenceExpression expression = call.getMethodExpression();
       final JavaResolveResult resolveResult = expression.advancedResolve(false);
@@ -579,6 +585,7 @@ class ExtractedClassBuilder {
       }
     }
 
+    @Override
     public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
       final String referenceText = reference.getCanonicalText();
       out.append(referenceText);

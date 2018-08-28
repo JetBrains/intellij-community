@@ -570,13 +570,6 @@ public class RefJavaManagerImpl extends RefJavaManager {
       final PsiJavaCodeReferenceElement qualifier = expression.getQualifier();
       if (qualifier != null) {
         myRefUtil.addTypeReference(expression, expression.getType(), myRefManager);
-        RefClass ownerClass = myRefUtil.getOwnerClass(myRefManager, expression);
-        if (ownerClass != null) {
-          RefClassImpl refClass = (RefClassImpl)myRefManager.getReference(qualifier.resolve());
-          if (refClass != null) {
-            refClass.addInstanceReference(ownerClass);
-          }
-        }
       }
     }
 

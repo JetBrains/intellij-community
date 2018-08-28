@@ -196,4 +196,17 @@ public class LightOptimizeImportsTest extends LightCodeInsightFixtureTestCase {
                           "    }\n" +
                           "}");
   }
+
+  public void testDontOptimizeIncompleteCode() {
+    String fileText = "import java.util.ArrayList;\n" +
+                  "public class A {\n" +
+                  "    public static void main( String[] args)\n" +
+                  "    {\n" +
+                  "       ArrayList\n" +
+                  "    }\n" +
+                  "}";
+    myFixture.configureByText(StdFileTypes.JAVA, fileText);
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> JavaCodeStyleManager.getInstance(getProject()).optimizeImports(getFile()));
+    myFixture.checkResult(fileText);
+  }
 }

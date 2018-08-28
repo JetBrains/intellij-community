@@ -29,7 +29,7 @@ public class MavenActionGroup extends DefaultActionGroup implements DumbAware {
     e.getPresentation().setVisible(available);
   }
 
-  protected boolean isAvailable(AnActionEvent e) {
+  protected boolean isAvailable(@NotNull AnActionEvent e) {
     return !MavenActionUtil.getMavenProjects(e.getDataContext()).isEmpty();
   }
 }

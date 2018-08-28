@@ -952,11 +952,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return myEditorTestFixture.complete(type, invocationCount);
   }
 
-  @Nullable
-  protected Editor getCompletionEditor() {
-    return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, getFile());
-  }
-
   @Override
   @Nullable
   public LookupElement[] completeBasic() {
@@ -1112,7 +1107,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       return;
     }
 
-    LookupManager.getInstance(project).hideActiveLookup();
+    LookupManager.hideActiveLookup(project);
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     FileEditorManagerEx.getInstanceEx(project).closeAllFiles();
     EditorHistoryManager.getInstance(project).removeAllFiles();
@@ -1147,9 +1142,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final String extension = fileType.getDefaultExtension();
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     if (fileTypeManager.getFileTypeByExtension(extension) != fileType) {
-      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-        fileTypeManager.associateExtension(fileType, extension);
-      });
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> fileTypeManager.associateExtension(fileType, extension));
     }
     final String fileName = "aaa." + extension;
     return configureByText(fileName, text);
@@ -1230,7 +1223,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private PsiFile configureInner(@NotNull final VirtualFile copy, @NotNull final SelectionAndCaretMarkupLoader loader) {
     assertInitialized();
 
-    EdtTestUtil.runInEdtAndWait(() -> {
+    EdtTestUtilKt.runInEdtAndWait(() -> {
       if (!copy.getFileType().isBinary()) {
         try {
           WriteAction.run(() -> copy.setBinaryContent(loader.newFileText.getBytes(copy.getCharset())));
@@ -1257,6 +1250,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       if (myCaresAboutInjection) {
         setupEditorForInjectedLanguage();
       }
+
+      return null;
     });
 
     return getFile();

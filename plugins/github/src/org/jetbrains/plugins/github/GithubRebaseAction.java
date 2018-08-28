@@ -3,12 +3,12 @@ package org.jetbrains.plugins.github;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
@@ -40,7 +40,7 @@ import java.util.List;
 
 import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.CHECKOUT;
 
-public class GithubRebaseAction extends LegacySingleAccountActionGroup {
+public class GithubRebaseAction extends AbstractGithubUrlGroupingAction {
   private static final Logger LOG = GithubUtil.LOG;
   private static final String CANNOT_PERFORM_GITHUB_REBASE = "Can't perform GitHub rebase";
 
@@ -49,37 +49,30 @@ public class GithubRebaseAction extends LegacySingleAccountActionGroup {
   }
 
   @Override
-  public void actionPerformed(@NotNull Project project,
-                              @Nullable VirtualFile file,
-                              @NotNull GitRepository gitRepository,
+  public void actionPerformed(@NotNull AnActionEvent e,
+                              @NotNull Project project,
+                              @NotNull GitRepository repository,
+                              @NotNull GitRemote remote,
+                              @NotNull String remoteUrl,
                               @NotNull GithubAccount account) {
     BasicAction.saveAll();
     GithubApiRequestExecutor executor = GithubApiRequestExecutorManager.getInstance().getExecutor(account, project);
     if (executor == null) return;
-    new RebaseTask(project, executor, Git.getInstance(), account.getServer(), gitRepository, "upstream/master").queue();
-  }
 
-  @Nullable
-  @Override
-  protected Pair<GitRemote, String> getRemote(@NotNull GithubServerPath server, @NotNull GitRepository repository) {
-    for (GitRemote gitRemote : repository.getRemotes()) {
-      String remoteName = gitRemote.getName();
-      if ("upstream".equals(remoteName)) {
-        for (String remoteUrl : gitRemote.getUrls()) {
-          if (server.matches(remoteUrl)) {
-            return Pair.pair(gitRemote, remoteUrl);
-          }
-        }
-      }
+    GithubFullPath repoPath = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(remoteUrl);
+    if (repoPath == null) {
+      GithubNotifications.showError(project, CANNOT_PERFORM_GITHUB_REBASE, "Invalid Github remote: " + remoteUrl);
+      return;
     }
-    return null;
+    new RebaseTask(project, executor, Git.getInstance(), account.getServer(), repository, repoPath, "upstream/master").queue();
   }
 
-  private class RebaseTask extends Task.Backgroundable {
+  private static class RebaseTask extends Task.Backgroundable {
     @NotNull private final GithubApiRequestExecutor myRequestExecutor;
     @NotNull private final Git myGit;
     @NotNull private final GithubServerPath myServer;
     @NotNull private final GitRepository myRepository;
+    @NotNull private final GithubFullPath myRepoPath;
     @NotNull private final String myOnto;
 
     public RebaseTask(@NotNull Project project,
@@ -87,20 +80,21 @@ public class GithubRebaseAction extends LegacySingleAccountActionGroup {
                       @NotNull Git git,
                       @NotNull GithubServerPath server,
                       @NotNull GitRepository repository,
+                      @NotNull GithubFullPath repoPath,
                       @NotNull String rebaseOnto) {
       super(project, "Rebasing GitHub Fork...");
       myRequestExecutor = requestExecutor;
       myGit = git;
       myServer = server;
       myRepository = repository;
+      myRepoPath = repoPath;
       myOnto = rebaseOnto;
     }
 
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
       myRepository.update();
-      Pair<GitRemote, String> remote = getRemote(myServer, myRepository);
-      String upstreamRemoteUrl = Pair.getSecond(remote);
+      String upstreamRemoteUrl = findUpstreamRemoteUrl();
       if (upstreamRemoteUrl == null) {
         indicator.setText("Configuring upstream remote...");
         LOG.info("Configuring upstream remote");
@@ -124,6 +118,16 @@ public class GithubRebaseAction extends LegacySingleAccountActionGroup {
       rebaseCurrentBranch(indicator);
     }
 
+    @Nullable
+    private String findUpstreamRemoteUrl() {
+      return myRepository.getRemotes().stream()
+        .filter(remote -> remote.getName().equals("upstream") &&
+                          remote.getFirstUrl() != null &&
+                          myServer.matches(remote.getFirstUrl()))
+        .findFirst()
+        .map(GitRemote::getFirstUrl).orElse(null);
+    }
+
     private boolean isUpstreamWithSameUsername(@NotNull ProgressIndicator indicator, @NotNull String upstreamRemoteUrl) {
       try {
         GithubFullPath userAndRepo = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(upstreamRemoteUrl);
@@ -141,27 +145,8 @@ public class GithubRebaseAction extends LegacySingleAccountActionGroup {
     }
 
     @Nullable
-    private GithubFullPath findGithubRepositoryPath() {
-      for (GitRemote gitRemote : myRepository.getRemotes()) {
-        for (String remoteUrl : gitRemote.getUrls()) {
-          if (myServer.matches(remoteUrl)) {
-            GithubFullPath fullPath = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(remoteUrl);
-            if (fullPath != null) return fullPath;
-          }
-        }
-      }
-      return null;
-    }
-
-    @Nullable
     private String configureUpstreamRemote(@NotNull ProgressIndicator indicator) {
-      GithubFullPath fullPath = findGithubRepositoryPath();
-      if (fullPath == null) {
-        GithubNotifications.showError(myProject, CANNOT_PERFORM_GITHUB_REBASE, "Can't find GitHub remote");
-        return null;
-      }
-
-      GithubRepoDetailed repositoryInfo = loadRepositoryInfo(indicator, fullPath);
+      GithubRepoDetailed repositoryInfo = loadRepositoryInfo(indicator, myRepoPath);
       if (repositoryInfo == null) {
         return null;
       }
@@ -173,7 +158,7 @@ public class GithubRebaseAction extends LegacySingleAccountActionGroup {
         return null;
       }
 
-      String parentRepoUrl = GithubGitHelper.getInstance().getRemoteUrl(myServer, fullPath);
+      String parentRepoUrl = GithubGitHelper.getInstance().getRemoteUrl(myServer, repositoryInfo.getParent().getFullPath());
 
       LOG.info("Adding GitHub parent as a remote host");
       indicator.setText("Adding GitHub parent as a remote host...");

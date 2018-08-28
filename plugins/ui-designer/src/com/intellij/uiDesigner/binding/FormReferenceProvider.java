@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.binding;
 
 import com.intellij.ide.highlighter.XmlFileType;
@@ -21,7 +7,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -65,6 +50,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
 
   private static final Key<CachedValue<CachedFormData>> CACHED_DATA = Key.create("Cached form reference");
 
+  @Override
   @NotNull
   public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull final ProcessingContext context) {
     if (element instanceof PsiPlainTextFile) {
@@ -344,8 +330,10 @@ public class FormReferenceProvider extends PsiReferenceProvider {
     if(data == null) {
       data = CachedValuesManager.getManager(element.getProject()).createCachedValue(new CachedValueProvider<CachedFormData>() {
         final Map<String, Pair<PsiType, TextRange>> map = new HashMap<>();
+        @Override
         public Result<CachedFormData> compute() {
           final PsiReferenceProcessor.CollectElements processor = new PsiReferenceProcessor.CollectElements() {
+            @Override
             public boolean execute(PsiReference ref) {
               if (ref instanceof FieldFormReference) {
                 final FieldFormReference fieldRef = ((FieldFormReference)ref);

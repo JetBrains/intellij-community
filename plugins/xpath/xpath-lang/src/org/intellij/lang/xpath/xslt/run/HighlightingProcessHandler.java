@@ -59,11 +59,13 @@ class HighlightingProcessHandler extends ProcessHandler {
             myHandler = handler;
         }
 
+        @Override
         public void run() {
             myHandler.startNotify();
             super.run();
         }
 
+        @Override
         protected void textAvailable(final String s) {
             myHandler.notifyTextAvailable(s, ProcessOutputTypes.SYSTEM);
         }

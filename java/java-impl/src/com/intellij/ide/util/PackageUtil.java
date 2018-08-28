@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
@@ -142,6 +142,7 @@ public class PackageUtil {
     final IncorrectOperationException[] exception = new IncorrectOperationException[1];
 
     CommandProcessor.getInstance().executeCommand(project, () -> psiDirectory[0] = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
+      @Override
       public PsiDirectory compute() {
         try {
           return oldDirectory.createSubdirectory(name);

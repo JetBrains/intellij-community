@@ -328,7 +328,8 @@ public class MergeFuncTest extends PlatformTestCase {
   }
 
   private static void pressApplyActionIcon(@NotNull Editor editor, int index) {
-    safeFindAction(editor, index, "ccept").actionPerformed(null);
+    MergeList.ApplyAction action = (MergeList.ApplyAction)safeFindAction(editor, index, "ccept");
+    action.perform();
   }
 
   private static AnAction safeFindAction(@NotNull Editor editor, int index, String text) {
@@ -357,7 +358,8 @@ public class MergeFuncTest extends PlatformTestCase {
   }
 
   private static void pressIgnoreActionIcon(Editor editor, int index) {
-    safeFindAction(editor, index, "gnore").actionPerformed(null);
+    MergeList.IgnoreAction action = (MergeList.IgnoreAction)safeFindAction(editor, index, "gnore");
+    action.perform();
   }
 
   @Override

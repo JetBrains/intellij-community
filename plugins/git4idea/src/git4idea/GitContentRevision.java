@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea;
 
 import com.intellij.openapi.project.Project;
@@ -27,6 +13,9 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import git4idea.diff.GitSubmoduleContentRevision;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +42,7 @@ public class GitContentRevision implements ByteBackedContentRevision {
     myCharset = charset;
   }
 
+  @Override
   @Nullable
   public String getContent() throws VcsException {
     byte[] bytes = getContentAsBytes();
@@ -79,11 +69,13 @@ public class GitContentRevision implements ByteBackedContentRevision {
     return GitFileUtils.getFileContent(myProject, root, myRevision.getRev(), VcsFileUtil.relativePath(root, myFile));
   }
 
+  @Override
   @NotNull
   public FilePath getFile() {
     return myFile;
   }
 
+  @Override
   @NotNull
   public VcsRevisionNumber getRevisionNumber() {
     return myRevision;
@@ -127,12 +119,54 @@ public class GitContentRevision implements ByteBackedContentRevision {
   private static ContentRevision createRevision(@NotNull FilePath filePath,
                                                 @Nullable VcsRevisionNumber revisionNumber,
                                                 @NotNull Project project) {
+    SubmoduleAndParent submoduleAndParent = getRepositoryIfSubmodule(project, filePath);
     if (revisionNumber != null && revisionNumber != VcsRevisionNumber.NULL) {
+      if (submoduleAndParent != null) {
+        return GitSubmoduleContentRevision.createRevision(submoduleAndParent.parent, submoduleAndParent.submodule, revisionNumber);
+      }
       return createRevisionImpl(filePath, (GitRevisionNumber)revisionNumber, project, null);
+    }
+    else if (submoduleAndParent != null) {
+      return GitSubmoduleContentRevision.createCurrentRevision(submoduleAndParent.submodule);
     }
     else {
       return CurrentContentRevision.create(filePath);
     }
+  }
+
+  private static class SubmoduleAndParent {
+    @NotNull private final GitRepository submodule;
+    @NotNull private final GitRepository parent;
+
+    SubmoduleAndParent(@NotNull GitRepository submodule, @NotNull GitRepository parent) {
+      this.submodule = submodule;
+      this.parent = parent;
+    }
+  }
+
+  @Nullable
+  private static SubmoduleAndParent getRepositoryIfSubmodule(@NotNull Project project, @NotNull FilePath path) {
+    if (!path.isDirectory()) {
+      return null;
+    }
+
+    VirtualFile file = path.getVirtualFile();
+    if (file == null) { // TODO support deletion of a submodule if possible
+      return null;
+    }
+
+    GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(project);
+    GitRepository candidate = repositoryManager.getRepositoryForRoot(file);
+    if (candidate == null) { // not a root
+      return null;
+    }
+
+    for (GitRepository repo : repositoryManager.getRepositories()) {
+      if (repositoryManager.getDirectSubmodules(repo).contains(candidate)) {
+        return new SubmoduleAndParent(candidate, repo);
+      }
+    }
+    return null;
   }
 
   @NotNull

@@ -52,10 +52,12 @@ public class CheckoutFileAction extends ActionOnSelectedElement {
     visibility.addCondition(FILES_EXIST_IN_CVS);
   }
 
+  @Override
   protected String getTitle(VcsContext context) {
     return CvsBundle.getCheckoutOperationName();
   }
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     if (!e.getPresentation().isVisible()) {
@@ -66,6 +68,7 @@ public class CheckoutFileAction extends ActionOnSelectedElement {
     adjustName(CvsVcs2.getInstance(project).getCheckoutOptions().getValue(), e);
   }
 
+  @Override
   protected CvsHandler getCvsHandler(CvsContext context) {
     if (myModifiedFiles != null) {
       if (!myModifiedFiles.isEmpty()) {
@@ -92,6 +95,7 @@ public class CheckoutFileAction extends ActionOnSelectedElement {
                                                        VcsConfiguration.getInstance(project).getCheckoutOption());
   }
 
+  @Override
   protected void beforeActionPerformed(VcsContext context) {
     super.beforeActionPerformed(context);
     myModifiedFiles =

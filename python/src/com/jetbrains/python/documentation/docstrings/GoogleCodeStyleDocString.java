@@ -16,10 +16,12 @@
 package com.jetbrains.python.documentation.docstrings;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.regex.Matcher;
@@ -47,36 +49,54 @@ public class GoogleCodeStyleDocString extends SectionBasedDocString {
                                                                                 "Notes",
                                                                                 "Warnings");
 
+  private static final ImmutableMap<String, FieldType> ourSectionFieldMapping =
+    ImmutableMap.<String, FieldType>builder()
+      .put(RETURNS_SECTION, FieldType.OPTIONAL_TYPE)
+      .put(YIELDS_SECTION, FieldType.OPTIONAL_TYPE)
+      .put(RAISES_SECTION, FieldType.ONLY_TYPE)
+      .put(METHODS_SECTION, FieldType.ONLY_NAME)
+      .put(KEYWORD_ARGUMENTS_SECTION, FieldType.NAME_WITH_OPTIONAL_TYPE)
+      .put(PARAMETERS_SECTION, FieldType.NAME_WITH_OPTIONAL_TYPE)
+      .put(ATTRIBUTES_SECTION, FieldType.NAME_WITH_OPTIONAL_TYPE)
+      .put(OTHER_PARAMETERS_SECTION, FieldType.NAME_WITH_OPTIONAL_TYPE)
+      .build();
+
   public GoogleCodeStyleDocString(@NotNull Substring text) {
     super(text);
+  }
+
+  @Nullable
+  @Override
+  protected FieldType getFieldType(@NotNull String title) {
+    return ourSectionFieldMapping.get(title);
   }
 
   /**
    * <h3>Examples</h3>
    * <ol>
    * <li>
-   * mayHaveType=true, preferType=false
+   * canHaveBothNameAndType=true, preferType=false
    * <pre>{@code
    * Attributes:
    *     arg1 (int): description; `(int)` is optional
    * }</pre>
    * </li>
    * <li>
-   * mayHaveType=true, preferType=true
+   * canHaveBothNameAndType=true, preferType=true
    * <pre>{@code
    * Returns:
    *     code (int): description; `(int)` is optional
    * }</pre>
    * </li>
    * <li>
-   * mayHaveType=false, preferType=false
+   * canHaveBothNameAndType=false, preferType=false
    * <pre>{@code
    * Methods:
    *     my_method() : description
    * }</pre>
    * </li>
    * <li>
-   * mayHaveType=false, preferType=true
+   * canHaveBothNameAndType=false, preferType=true
    * <pre>{@code
    * Raises:
    *     Exception : description
@@ -86,41 +106,52 @@ public class GoogleCodeStyleDocString extends SectionBasedDocString {
    * </ol>
    */
   @Override
-  protected Pair<SectionField, Integer> parseSectionField(int lineNum,
-                                                          int sectionIndent,
-                                                          boolean mayHaveType,
-                                                          boolean preferType) {
+  protected Pair<SectionField, Integer> parseSectionField(int lineNum, int sectionIndent, @NotNull FieldType fieldType) {
     final Substring line = getLine(lineNum);
-    Substring name, type = null;
+    Substring name = null;
+    Substring type = null;
+    Substring description;
     // Napoleon requires that each parameter line contains a colon - we don't because
     // we need to parse and complete parameter names before colon is typed
     final List<Substring> colonSeparatedParts = splitByFirstColon(line);
     assert colonSeparatedParts.size() <= 2;
     final Substring textBeforeColon = colonSeparatedParts.get(0);
-    name = textBeforeColon.trim();
-    if (mayHaveType) {
-      final Matcher matcher = FIELD_NAME_AND_TYPE.matcher(textBeforeColon);
-      if (matcher.matches()) {
-        name = textBeforeColon.getMatcherGroup(matcher, 1).trim();
-        type = textBeforeColon.getMatcherGroup(matcher, 2).trim();
+
+    // In cases like the following:
+    //
+    // Returns:
+    //   Foo
+    //
+    // Napoleon treats "Foo" as the return value description, not type, since there is no subsequent colon.
+    if (colonSeparatedParts.size() == 2 || !fieldType.canHaveOnlyDescription) {
+      description = colonSeparatedParts.size() == 2 ? colonSeparatedParts.get(1) : null;
+      name = textBeforeColon.trim();
+      if (fieldType.canHaveBothNameAndType) {
+        final Matcher matcher = FIELD_NAME_AND_TYPE.matcher(textBeforeColon);
+        if (matcher.matches()) {
+          name = textBeforeColon.getMatcherGroup(matcher, 1).trim();
+          type = textBeforeColon.getMatcherGroup(matcher, 2).trim();
+        }
+      }
+
+      if (fieldType.preferType && type == null) {
+        type = name;
+        name = null;
+      }
+      if (name != null) {
+        name = cleanUpName(name);
+      }
+      if (name != null ? !isValidName(name.toString()) : !isValidType(type.toString())) {
+        return Pair.create(null, lineNum);
       }
     }
+    else {
+      description = textBeforeColon;
+    }
 
-    if (preferType && type == null) {
-      type = name;
-      name = null;
-    }
-    if (name != null) {
-      name = cleanUpName(name);
-    }
-    if (name != null ? !isValidName(name.toString()) : !isValidType(type.toString())) {
-      return Pair.create(null, lineNum);
-    }
-    final Pair<List<Substring>, Integer> pair;
-    if (colonSeparatedParts.size() == 2) {
-      Substring description = colonSeparatedParts.get(1);
+    if (description != null) {
       // parse line with indentation at least one space greater than indentation of the field
-      pair = parseIndentedBlock(lineNum + 1, getLineIndentSize(lineNum));
+      final Pair<List<Substring>, Integer> pair = parseIndentedBlock(lineNum + 1, getLineIndentSize(lineNum));
       final List<Substring> nestedBlock = pair.getFirst();
       if (!nestedBlock.isEmpty()) {
         //noinspection ConstantConditions

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
@@ -129,6 +115,7 @@ public class ExportToFileUtil {
       init();
       try {
         myListener = new ChangeListener() {
+          @Override
           public void stateChanged(ChangeEvent e) {
             initText();
           }
@@ -141,6 +128,7 @@ public class ExportToFileUtil {
       initText();
     }
 
+    @Override
     public void dispose() {
       myExporter.removeSettingsChangedListener(myListener);
       EditorFactory.getInstance().releaseEditor(myTextArea);
@@ -151,6 +139,7 @@ public class ExportToFileUtil {
       myTextArea.getDocument().setText(myExporter.getReportText());
     }
 
+    @Override
     protected JComponent createCenterPanel() {
       final Document document = ((EditorFactoryImpl)EditorFactory.getInstance()).createDocument(true);
       ((DocumentImpl)document).setAcceptSlashR(true);
@@ -169,6 +158,7 @@ public class ExportToFileUtil {
       return myTextArea.getComponent();
     }
 
+    @Override
     protected JComponent createNorthPanel() {
       JPanel filePanel = createFilePanel();
       JComponent settingsPanel = myExporter.getSettingsEditor();
@@ -218,11 +208,13 @@ public class ExportToFileUtil {
       return myTfFile.getText();
     }
 
+    @Override
     @NotNull
     protected Action[] createActions() {
       return new Action[]{getOKAction(), new CopyToClipboardAction(), getCancelAction()};
     }
 
+    @Override
     protected String getDimensionServiceKey() {
       return "#com.intellij.ide.util.ExportDialog";
     }
@@ -233,6 +225,7 @@ public class ExportToFileUtil {
         putValue(Action.SHORT_DESCRIPTION, IdeBundle.message("description.copy.text.to.clipboard"));
       }
 
+      @Override
       public void actionPerformed(ActionEvent e) {
         String s = StringUtil.convertLineSeparators(getText());
         CopyPasteManager.getInstance().setContents(new StringSelection(s));

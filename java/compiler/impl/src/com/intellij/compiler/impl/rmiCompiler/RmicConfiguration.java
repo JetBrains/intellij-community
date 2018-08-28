@@ -14,11 +14,13 @@ import org.jetbrains.jps.model.java.compiler.RmicCompilerOptions;
 public class RmicConfiguration implements PersistentStateComponent<RmicCompilerOptions> {
   private final RmicCompilerOptions mySettings = new RmicCompilerOptions();
 
+  @Override
   @NotNull
   public RmicCompilerOptions getState() {
     return mySettings;
   }
 
+  @Override
   public void loadState(@NotNull RmicCompilerOptions state) {
     XmlSerializerUtil.copyBean(state, mySettings);
   }

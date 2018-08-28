@@ -28,7 +28,7 @@ class XmlElementStorageTest {
   @Test fun `set state overrides old state`() {
     val storage = MyXmlElementStorage(Element("root").addContent(Element("component").setAttribute("name", "test").addContent(Element("foo"))))
     val newState = Element("component").setAttribute("name", "test").addContent(Element("bar"))
-    val externalizationSession = storage.startExternalization()!!
+    val externalizationSession = storage.createSaveSessionProducer()!!
     externalizationSession.setState(null, "test", newState)
     externalizationSession.createSaveSession()!!.save()
     assertThat(storage.savedElement).isNotNull

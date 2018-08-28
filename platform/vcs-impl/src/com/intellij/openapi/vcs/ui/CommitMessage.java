@@ -101,7 +101,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (VcsDataKeys.COMMIT_MESSAGE_CONTROL.is(dataId)) {
       return this;
     }

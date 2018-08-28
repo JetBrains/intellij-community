@@ -49,16 +49,19 @@ public abstract class BasicAttributeValueReference implements PsiReference {
     myRange = range;
   }
 
+  @Override
   @NotNull
   public PsiElement getElement() {
     return myElement;
   }
 
+  @Override
   @NotNull
   public TextRange getRangeInElement() {
     return myRange;
   }
 
+  @Override
   @NotNull
   public String getCanonicalText() {
     final String s = myElement.getText();
@@ -68,6 +71,7 @@ public abstract class BasicAttributeValueReference implements PsiReference {
     return "";
   }
 
+  @Override
   public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     return ElementManipulators.getManipulator(myElement).handleContentChange(
       myElement,
@@ -76,10 +80,12 @@ public abstract class BasicAttributeValueReference implements PsiReference {
     );
   }
 
+  @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     return null;
   }
 
+  @Override
   public boolean isReferenceTo(@NotNull PsiElement element) {
     return myElement.getManager().areElementsEquivalent(element, resolve());
   }

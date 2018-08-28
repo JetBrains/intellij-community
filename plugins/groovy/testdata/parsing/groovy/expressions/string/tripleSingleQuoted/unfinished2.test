@@ -2,4 +2,4 @@
 -----
 Groovy script
   Literal
-    PsiElement(string)(''''foo''')
+    PsiElement(triple single quoted string)(''''foo''')

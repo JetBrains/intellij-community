@@ -7,6 +7,7 @@ import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.jdi.DecompiledLocalVariable;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationManager;
@@ -52,6 +53,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -97,6 +99,19 @@ public class CaptureConfigurable implements SearchableConfigurable {
 
     JBTable table = new JBTable(myTableModel);
     table.setColumnSelectionAllowed(false);
+
+    JTextField stringCellEditor = new JTextField();
+    stringCellEditor.putClientProperty(DarculaUIUtil.COMPACT_PROPERTY, Boolean.TRUE);
+    table.setDefaultEditor(String.class, new DefaultCellEditor(stringCellEditor));
+    table.setDefaultRenderer(String.class, new DefaultTableCellRenderer() {
+      @Override
+      public Dimension getPreferredSize() {
+        Dimension size = super.getPreferredSize();
+        Dimension editorSize = stringCellEditor.getPreferredSize();
+        size.height = Math.max(size.height, editorSize.height);
+        return size;
+      }
+    });
 
     TableColumnModel columnModel = table.getColumnModel();
     TableUtil.setupCheckboxColumn(columnModel.getColumn(MyTableModel.ENABLED_COLUMN));

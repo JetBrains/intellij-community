@@ -46,7 +46,7 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 public class AnnotateLocalFileAction {
   private static final Logger LOG = Logger.getInstance(AnnotateLocalFileAction.class);
 
-  private static boolean isEnabled(AnActionEvent e) {
+  private static boolean isEnabled(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null || project.isDisposed()) return false;
 
@@ -67,12 +67,12 @@ public class AnnotateLocalFileAction {
     return true;
   }
 
-  private static boolean isSuspended(AnActionEvent e) {
+  private static boolean isSuspended(@NotNull AnActionEvent e) {
     VirtualFile file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE);
     return VcsAnnotateUtil.getBackgroundableLock(e.getRequiredData(CommonDataKeys.PROJECT), file).isLocked();
   }
 
-  private static boolean isAnnotated(AnActionEvent e) {
+  private static boolean isAnnotated(@NotNull AnActionEvent e) {
     List<Editor> editors = getEditors(e.getDataContext());
     return ContainerUtil.exists(editors, editor -> editor.getGutter().isAnnotationsShown());
   }
@@ -175,7 +175,7 @@ public class AnnotateLocalFileAction {
     }
 
     @Override
-    public boolean isSuspended(AnActionEvent e) {
+    public boolean isSuspended(@NotNull AnActionEvent e) {
       return AnnotateLocalFileAction.isSuspended(e);
     }
 
@@ -185,7 +185,7 @@ public class AnnotateLocalFileAction {
     }
 
     @Override
-    public void perform(AnActionEvent e, boolean selected) {
+    public void perform(@NotNull AnActionEvent e, boolean selected) {
       AnnotateLocalFileAction.perform(e, selected);
     }
   }

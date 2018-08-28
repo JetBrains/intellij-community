@@ -44,8 +44,8 @@ import java.awt.geom.Line2D;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
@@ -60,6 +60,7 @@ public class JBTabsImpl extends JComponent
 
   public static final Color MAC_AQUA_BG_COLOR = Gray._200;
   private static final Comparator<TabInfo> ABC_COMPARATOR = (o1, o2) -> StringUtil.naturalCompare(o1.getText(), o2.getText());
+  private static final JBValue ACTIVE_TAB_UNDERLINE_HEIGHT = new JBValue.Float(4);
 
   @NotNull final ActionManager myActionManager;
   private final List<TabInfo> myVisibleInfos = new ArrayList<>();
@@ -351,7 +352,7 @@ public class JBTabsImpl extends JComponent
   }
 
   public int getActiveTabUnderlineHeight() {
-    return TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT;
+    return ACTIVE_TAB_UNDERLINE_HEIGHT.get();
   }
 
   public boolean isEditorTabs() {
@@ -3125,7 +3126,7 @@ public class JBTabsImpl extends JComponent
 
   @Override
   @Nullable
-  public Object getData(@NonNls final String dataId) {
+  public Object getData(@NotNull @NonNls final String dataId) {
     if (myDataProvider != null) {
       final Object value = myDataProvider.getData(dataId);
       if (value != null) return value;

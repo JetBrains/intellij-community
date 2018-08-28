@@ -25,6 +25,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogFilterCollection;
@@ -76,11 +77,11 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
     myLogId = logId;
     myState = new State(filters, sortType);
 
-    myTaskController = new SingleTaskController<Request, State>(project, "visible", state -> {
+    myTaskController = new SingleTaskController<Request, State>(project, "visible " + StringUtil.trimMiddle(logId, 40), state -> {
       boolean hasChanges = myState.getVisiblePack() != state.getVisiblePack();
       myState = state;
       if (hasChanges) {
-        for (VisiblePackChangeListener listener: myVisiblePackChangeListeners) {
+        for (VisiblePackChangeListener listener : myVisiblePackChangeListeners) {
           listener.onVisiblePackChange(state.getVisiblePack());
         }
       }
@@ -142,6 +143,11 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
   @Override
   public boolean isValid() {
     return myState.isValid();
+  }
+
+  @Override
+  public String toString() {
+    return "VisiblePackRefresher \'" + myLogId + "\' state = " + myState;
   }
 
   @Override

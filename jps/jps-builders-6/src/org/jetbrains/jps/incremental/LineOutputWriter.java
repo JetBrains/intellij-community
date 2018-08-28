@@ -219,10 +219,12 @@ public abstract class LineOutputWriter extends Writer {
       myCh = ch;
     }
 
+    @Override
     public int length() {
       return 1;
     }
 
+    @Override
     public char charAt(int index) {
       if (index != 0) {
         throw new IndexOutOfBoundsException("Index out of bounds: " + index);
@@ -230,6 +232,7 @@ public abstract class LineOutputWriter extends Writer {
       return myCh;
     }
 
+    @Override
     public CharSequence subSequence(int start, int end) {
       throw new RuntimeException("Method subSequence not implemented");
     }

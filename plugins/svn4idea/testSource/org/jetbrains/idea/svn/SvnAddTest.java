@@ -1,17 +1,18 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.openapi.command.WriteCommandAction.writeCommandAction;
+import static com.intellij.testFramework.UsefulTestCase.assertDoesntExist;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author yole
@@ -30,17 +31,12 @@ public class SvnAddTest extends SvnTestCase {
   @Test
   public void testDirAndFileInCommand() throws Exception {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    WriteCommandAction.writeCommandAction(myProject).run(() -> {
-      try {
-        VirtualFile dir = myWorkingCopyDir.createChildDirectory(this, "child");
-        dir.createChildData(this, "a.txt");
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+    writeCommandAction(myProject).run(() -> {
+      VirtualFile dir = myWorkingCopyDir.createChildDirectory(this, "child");
+      dir.createChildData(this, "a.txt");
     });
 
-    runAndVerifyStatusSorted("A child", "A child" + File.separatorChar + "a.txt");
+    runAndVerifyStatusSorted("A child", "A child/a.txt");
   }
 
   // IDEADEV-19308
@@ -56,7 +52,7 @@ public class SvnAddTest extends SvnTestCase {
     files.add(file);
     files.add(dir);
     final List<VcsException> errors = vcs.getCheckinEnvironment().scheduleUnversionedFilesForAddition(files);
-    Assert.assertEquals(0, errors.size());
+    assertEquals(0, errors.size());
   }
 
   @Test
@@ -67,6 +63,6 @@ public class SvnAddTest extends SvnTestCase {
     checkin();
     undo();
     runAndVerifyStatusSorted("D a.txt");
-    Assert.assertFalse(new File(myWorkingCopyDir.getPath(), "a.txt").exists());
+    assertDoesntExist(new File(myWorkingCopyDir.getPath(), "a.txt"));
   }
 }

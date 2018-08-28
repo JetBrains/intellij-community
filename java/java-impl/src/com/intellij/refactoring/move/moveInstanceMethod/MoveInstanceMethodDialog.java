@@ -27,7 +27,6 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.ObjectUtils;
-import java.util.HashMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -37,6 +36,7 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -58,10 +58,12 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
     init();
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return KEY;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel mainPanel = new JPanel(new GridBagLayout());
     final TitledSeparator separator = new TitledSeparator();
@@ -70,6 +72,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
 
     myList = createTargetVariableChooser();
     myList.addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         validateTextFields(e.getFirstIndex());
       }
@@ -137,6 +140,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
     return panel;
   }
 
+  @Override
   protected void doAction() {
     Map<PsiClass, String> parameterNames = new LinkedHashMap<>();
     for (final PsiClass aClass : myThisClassesMap.keySet()) {
@@ -175,6 +179,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
     }
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.MOVE_INSTANCE_METHOD);
   }

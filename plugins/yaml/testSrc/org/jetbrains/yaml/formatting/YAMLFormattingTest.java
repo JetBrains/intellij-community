@@ -82,6 +82,12 @@ public class YAMLFormattingTest extends LightPlatformCodeInsightFixtureTestCase 
     doPartialReformatTest(10, 11);
   }
 
+  // Thicket IDEA-197964
+  @Bombed(year = 2018, month = Calendar.SEPTEMBER, day = 3, user = "alexey.merkulov", description = "IDEA-197964")
+  public void testPartialFormattingBugIdea197964() {
+    doPartialReformatTest(7, 8);
+  }
+
   public void testComments_default() {
     doWholeFileTest();
   }

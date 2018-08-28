@@ -36,7 +36,7 @@ import java.util.List;
 public class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
   private WeakReference<JBPopup> myActivePopupRef = null;
 
-  private static boolean isPlaceGlobal(AnActionEvent e) {
+  private static boolean isPlaceGlobal(@NotNull AnActionEvent e) {
     return ActionPlaces.isMainMenuOrActionSearch(e.getPlace())
            || ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())
            || ActionPlaces.NAVIGATION_BAR_TOOLBAR.equals(e.getPlace())

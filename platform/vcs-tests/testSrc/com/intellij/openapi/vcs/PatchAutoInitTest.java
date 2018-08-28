@@ -32,6 +32,8 @@ import com.intellij.testFramework.VfsTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -39,6 +41,21 @@ import java.util.List;
 @PlatformTestCase.WrapInCommand
 public class PatchAutoInitTest extends PlatformTestCase {
   private static final String BINARY_FILENAME = "binary.png";
+
+  @NotNull
+  @Override
+  protected Path getProjectDirOrFile() {
+    try {
+      // create extra space for test with files above `getBaseDir`
+      File root = createTempDir("project");
+      File projectRoot = new File(root, "test/test/test/root");
+      assert projectRoot.mkdirs();
+      return projectRoot.toPath();
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
 
   public void testSimple() {
     final VirtualFile root = myProject.getBaseDir();
@@ -251,6 +268,28 @@ public class PatchAutoInitTest extends PlatformTestCase {
     final MatchPatchPaths iterator = new MatchPatchPaths(myProject);
     final List<AbstractFilePatchInProgress> result = iterator.execute(Collections.singletonList(patch));
     checkPath(result, ".idea/module.xml", Collections.singletonList(root), 0);
+  }
+
+  public void testFileModificationAboveProjectDir() {
+    final VirtualFile root = myProject.getBaseDir();
+    VirtualFile grandRoot = root.getParent().getParent();
+
+    PsiTestUtil.addContentRoot(myModule, root);
+    VfsTestUtil.createFile(grandRoot, "module-1/.idea/module.xml", "1\n2\n3\n4\n5\n6\n");
+    VfsTestUtil.createFile(grandRoot, "module-2/.idea/module.xml", "1\n2\n3\n4\n5\n6\n");
+    VfsTestUtil.createFile(root, "module-1/.idea/module.xml", "1\n2\n3\n4\n5\n6\n");
+    VfsTestUtil.createFile(root, ".idea/module.xml", "1\n2\n3\n4\n5\n6\n");
+
+    TextFilePatch patch1 = create("../../module-1/.idea/module.xml");
+    TextFilePatch patch2 = create("../../module-2/.idea/module.xml");
+
+    final MatchPatchPaths iterator1 = new MatchPatchPaths(myProject);
+    final List<AbstractFilePatchInProgress> result1 = iterator1.execute(Collections.singletonList(patch1), true);
+    checkPath(result1, "module-1/.idea/module.xml", Collections.singletonList(grandRoot), 2);
+
+    final MatchPatchPaths iterator2 = new MatchPatchPaths(myProject);
+    final List<AbstractFilePatchInProgress> result2 = iterator2.execute(Collections.singletonList(patch2), true);
+    checkPath(result2, "module-2/.idea/module.xml", Collections.singletonList(grandRoot), 2);
   }
 
   public void testBinaryModificationWithMultipleSimilarModules() {

@@ -182,7 +182,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (DATA_KEY.is(dataId)) {
       return this;
     }

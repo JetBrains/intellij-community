@@ -23,6 +23,7 @@ import com.intellij.codeInspection.ui.InspectionTreeState;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobLauncherImpl;
 import com.intellij.concurrency.SensitiveProgressWrapper;
+import com.intellij.configurationStore.JbXmlOutputter;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -31,7 +32,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.*;
@@ -43,6 +43,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -69,11 +70,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.lang.reflect.Constructor;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
@@ -258,15 +257,12 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       final String toolName = entry.getValue().getShortName();
       Element element = entry.getKey();
       element.setAttribute(LOCAL_TOOL_ATTRIBUTE, Boolean.toString(false));
-      final org.jdom.Document doc = new org.jdom.Document(element);
-      PathMacroManager.getInstance(getProject()).collapsePaths(doc.getRootElement());
       try {
-        new File(outputPath).mkdirs();
+        FileUtilRt.createDirectory(new File(outputPath));
         final File file = new File(outputPath, toolName + ext);
         inspectionsResults.add(file);
-
-        try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(file), CharsetToolkit.UTF8_CHARSET)) {
-          JDOMUtil.writeDocument(doc, writer, "\n");
+        try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8))) {
+          JbXmlOutputter.collapseMacrosAndWrite(element, getProject(), writer);
         }
       }
       catch (IOException e) {
@@ -666,7 +662,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         if (!state.isEnabled()) continue;
         NamedScope stateScope = state.getScope(getProject());
         if (stateScope == null) continue;
-        
+
         AnalysisScope scopeForState = new AnalysisScope(GlobalSearchScopesCore.filterScope(getProject(), stateScope)
                                                                               .intersectWith(initialSearchScope), getProject());
         final InspectionToolWrapper toolWrapper = state.getTool();

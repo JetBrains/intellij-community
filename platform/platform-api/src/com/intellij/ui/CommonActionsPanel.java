@@ -272,7 +272,7 @@ public class CommonActionsPanel extends JPanel {
     }
 
     @Override
-    public void updateButton(AnActionEvent e) {
+    public void updateButton(@NotNull AnActionEvent e) {
       super.updateButton(e);
       if (!e.getPresentation().isEnabled()) return;
 

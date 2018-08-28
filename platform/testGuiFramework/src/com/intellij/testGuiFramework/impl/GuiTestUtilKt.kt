@@ -3,9 +3,10 @@ package com.intellij.testGuiFramework.impl
 
 import com.intellij.diagnostic.MessagePool
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.Ref
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.framework.Timeouts
-import com.intellij.testGuiFramework.framework.toSec
+import com.intellij.testGuiFramework.framework.toPrintable
 import com.intellij.ui.EngravedLabel
 import org.fest.swing.core.ComponentMatcher
 import org.fest.swing.core.GenericTypeMatcher
@@ -143,8 +144,8 @@ object GuiTestUtilKt {
     }
   }
 
-  fun findComponentByText(robot: Robot, container: Container, text: String): Component {
-    return withPauseWhenNull {
+  private fun findComponentByText(robot: Robot, container: Container, text: String, timeout: Timeout = Timeouts.seconds30): Component {
+    return withPauseWhenNull(timeout = timeout) {
       robot.finder().findAll(container, ComponentMatcher { component ->
         component!!.isShowing && component.isTextComponent() && component.getComponentText() == text
       }).firstOrNull()
@@ -154,15 +155,16 @@ object GuiTestUtilKt {
   fun <BoundedComponent> findBoundedComponentByText(robot: Robot,
                                                     container: Container,
                                                     text: String,
-                                                    componentType: Class<BoundedComponent>): BoundedComponent {
-    val componentWithText = findComponentByText(robot, container, text)
+                                                    componentType: Class<BoundedComponent>,
+                                                    timeout: Timeout = Timeouts.seconds30): BoundedComponent {
+    val componentWithText = findComponentByText(robot, container, text, timeout)
     if (componentWithText is JLabel && componentWithText.labelFor != null) {
       val labeledComponent = componentWithText.labelFor
       if (componentType.isInstance(labeledComponent)) return labeledComponent as BoundedComponent
       return robot.finder().find(labeledComponent as Container) { component -> componentType.isInstance(component) } as BoundedComponent
     }
     try {
-      return withPauseWhenNull {
+      return withPauseWhenNull(timeout = timeout) {
         val componentsOfInstance = robot.finder().findAll(container, ComponentMatcher { component -> componentType.isInstance(component) })
         componentsOfInstance.filter { it.isShowing && it.onHeightCenter(componentWithText, true) }
           .sortedBy { it.bounds.x }
@@ -200,7 +202,9 @@ object GuiTestUtilKt {
    *
    * @throws WaitTimedOutError with the text: "Timed out waiting for $timeout second(s) until {@code conditionText} will be not null"
    */
-  fun <ReturnType> withPauseWhenNull(conditionText: String = "function to probe will", timeout: Timeout = Timeouts.defaultTimeout, functionProbeToNull: () -> ReturnType?): ReturnType {
+  fun <ReturnType> withPauseWhenNull(conditionText: String = "function to probe will",
+                                            timeout: Timeout = Timeouts.defaultTimeout,
+                                            functionProbeToNull: () -> ReturnType?): ReturnType {
     var result: ReturnType? = null
     waitUntil("$conditionText will be not null", timeout) {
       result = functionProbeToNull()
@@ -210,9 +214,33 @@ object GuiTestUtilKt {
   }
 
   fun waitUntil(condition: String, timeout: Timeout = Timeouts.defaultTimeout, conditionalFunction: () -> Boolean) {
-    Pause.pause(object : Condition("${timeout.toSec()} second(s) until $condition") {
+    Pause.pause(object : Condition("${timeout.toPrintable()} until $condition") {
       override fun test() = conditionalFunction()
     }, timeout)
+  }
+
+  inline fun <R> tryWithPause(exceptionClass: Class<out Exception>,
+                   condition: String = "try block will not throw ${exceptionClass.name} exception",
+                   timeout: Timeout,
+                   crossinline tryBlock: () -> R): R {
+    val exceptionRef: Ref<Exception> = Ref.create()
+    try {
+      return withPauseWhenNull (condition, timeout) {
+        try {
+          tryBlock()
+        }
+        catch (e: Exception) {
+          if (exceptionClass.isInstance(e)) {
+            exceptionRef.set(e)
+            return@withPauseWhenNull null
+          }
+          throw e
+        }
+      }
+    }
+    catch (e: WaitTimedOutError) {
+      throw Exception("Timeout for $condition exceeded ${timeout.toPrintable()}", exceptionRef.get())
+    }
   }
 
   fun silentWaitUntil(condition: String, timeoutInSeconds: Int = 60, conditionalFunction: () -> Boolean) {
@@ -221,7 +249,8 @@ object GuiTestUtilKt {
         override fun test() = conditionalFunction()
       }, Timeout.timeout(timeoutInSeconds.toLong(), TimeUnit.SECONDS))
     }
-    catch (ignore: WaitTimedOutError) { }
+    catch (ignore: WaitTimedOutError) {
+    }
   }
 
   fun <ComponentType : Component> findAllWithBFS(container: Container, clazz: Class<ComponentType>): List<ComponentType> {
@@ -252,7 +281,9 @@ object GuiTestUtilKt {
     return GuiTestUtil.waitUntilGone(root, timeout, matcher)
   }
 
-  fun GuiTestCase.waitProgressDialogUntilGone(dialogTitle: String, timeoutToAppear: Timeout = Timeouts.seconds05, timeoutToGone: Timeout = Timeouts.defaultTimeout) {
+  fun GuiTestCase.waitProgressDialogUntilGone(dialogTitle: String,
+                                              timeoutToAppear: Timeout = Timeouts.seconds05,
+                                              timeoutToGone: Timeout = Timeouts.defaultTimeout) {
     waitProgressDialogUntilGone(this.robot(), dialogTitle, timeoutToAppear, timeoutToGone)
   }
 
@@ -305,6 +336,12 @@ object GuiTestUtilKt {
     })
     if (result?.second != null) throw result.second!!
     return result?.first
+  }
+
+  inline fun ignoreComponentLookupException(action: () -> Unit) = try {
+    action()
+  }
+  catch (ignore: ComponentLookupException) {
   }
 
   fun ensureCreateHasDone(guiTestCase: GuiTestCase) {

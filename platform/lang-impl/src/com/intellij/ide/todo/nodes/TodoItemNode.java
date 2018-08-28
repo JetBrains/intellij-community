@@ -66,7 +66,7 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
   }
 
   @Override
-  public void update(PresentationData presentation) {
+  public void update(@NotNull PresentationData presentation) {
     TodoItem todoItem=getValue().getTodoItem();
     RangeMarker myRangeMarker=getValue().getRangeMarker();
     if (!todoItem.getFile().isValid() || !myRangeMarker.isValid() || myRangeMarker.getStartOffset() == myRangeMarker.getEndOffset()) {

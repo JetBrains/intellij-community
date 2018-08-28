@@ -174,7 +174,6 @@ public class ImageLoader implements Serializable {
       void add(boolean retina, boolean dark, ImageDesc.Type type) {
         String _ext = SVG == type ? "svg" : ext;
         double _scale = SVG == type ? scale : retina ? 2 : 1;
-        if (SVG == type && retina) _scale /= 2d;
 
         list.add(new ImageDesc(name + (dark ? "_dark" : "") + (retina ? "@2x" : "") + "." + _ext, cls, _scale, type));
         if (retina && dark) {

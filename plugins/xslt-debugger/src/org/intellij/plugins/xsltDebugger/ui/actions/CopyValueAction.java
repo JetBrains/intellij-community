@@ -45,6 +45,7 @@ public class CopyValueAction extends AnAction {
     e.getPresentation().setEnabled(isEnabled(e));
   }
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final DefaultMutableTreeNode node = e.getData(SELECTED_NODE);
     if (node instanceof GeneratedStructureModel.StructureNode) {

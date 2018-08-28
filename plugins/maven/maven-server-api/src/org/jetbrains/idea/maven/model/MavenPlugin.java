@@ -16,7 +16,6 @@
 
 package org.jetbrains.idea.maven.model;
 
-import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -147,7 +146,7 @@ public class MavenPlugin implements Serializable {
     if (myGroupId != null ? !myGroupId.equals(that.myGroupId) : that.myGroupId != null) return false;
     if (myArtifactId != null ? !myArtifactId.equals(that.myArtifactId) : that.myArtifactId != null) return false;
     if (myVersion != null ? !myVersion.equals(that.myVersion) : that.myVersion != null) return false;
-    if (!JDOMUtil.areElementsEqual(myConfiguration, that.myConfiguration)) return false;
+    if (!MavenJDOMUtil.areElementsEqual(myConfiguration, that.myConfiguration)) return false;
     if (myExecutions != null ? !myExecutions.equals(that.myExecutions) : that.myExecutions != null) return false;
     if (myDependencies != null ? !myDependencies.equals(that.myDependencies) : that.myDependencies != null) return false;
 
@@ -161,7 +160,7 @@ public class MavenPlugin implements Serializable {
     result = 31 * result + (myGroupId != null ? myGroupId.hashCode() : 0);
     result = 31 * result + (myArtifactId != null ? myArtifactId.hashCode() : 0);
     result = 31 * result + (myVersion != null ? myVersion.hashCode() : 0);
-    result = 31 * result + (myConfiguration != null ? JDOMUtil.getTreeHash(myConfiguration) : 0);
+    result = 31 * result + (myConfiguration != null ? MavenJDOMUtil.getTreeHash(myConfiguration) : 0);
     result = 31 * result + (myExecutions != null ? myExecutions.hashCode() : 0);
     result = 31 * result + (myDependencies != null ? myDependencies.hashCode() : 0);
     return result;
@@ -211,7 +210,7 @@ public class MavenPlugin implements Serializable {
       if (!myGoals.equals(that.myGoals)) return false;
       if (myExecutionId != null ? !myExecutionId.equals(that.myExecutionId) : that.myExecutionId != null) return false;
       if (myPhase != null ? !myPhase.equals(that.myPhase) : that.myPhase != null) return false;
-      if (!JDOMUtil.areElementsEqual(myConfiguration, that.myConfiguration)) return false;
+      if (!MavenJDOMUtil.areElementsEqual(myConfiguration, that.myConfiguration)) return false;
 
       return true;
     }

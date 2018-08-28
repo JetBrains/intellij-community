@@ -70,7 +70,7 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
     else {
       myTextOffset = target.getXmlTag().getTextOffset();
     }
-    
+
     final String desc = target.getDescription().getRawText();
     myDescription = (desc != null && desc.trim().length() > 0) ? desc : null;
   }
@@ -87,37 +87,45 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
     return Comparing.equal(myName, that.myName) && Comparing.equal(myFile, that.myFile);
   }
 
+  @Override
   public Project getProject() {
     return myProject;
   }
 
+  @Override
   @Nullable
   public String getName() {
     return myName;
   }
 
+  @Override
   @Nullable
   public String getDisplayName() {
     return myDisplayName;
   }
 
+  @Override
   @Nullable
   public String getNotEmptyDescription() {
     return myDescription;
   }
 
+  @Override
   public boolean isDefault() {
     return myIsDefault;
   }
 
+  @Override
   public VirtualFile getContainingFile() {
     return myFile;
   }
 
+  @Override
   public AntBuildModelBase getModel() {
     return myModel;
   }
 
+  @Override
   @Nullable
   public String getActionId() {
     final StringBuilder name = new StringBuilder();
@@ -132,6 +140,7 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
     return name.toString();
   }
 
+  @Override
   @Nullable
   public BuildTask findTask(final String taskName) {
     final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(myFile);
@@ -141,6 +150,7 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
       if (antTarget != null) {
         final Ref<AntDomElement> result = new Ref<>(null);
         antTarget.accept(new AntDomRecursiveVisitor() {
+          @Override
           public void visitAntDomElement(AntDomElement element) {
             if (result.get() != null) {
               return;
@@ -161,12 +171,14 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
     return null;
   }
 
+  @Override
   public Navigatable getOpenFileDescriptor() {
     return (myFile == null)
            ? null
            : PsiNavigationSupport.getInstance().createNavigatable(myProject, myFile, myTextOffset);
   }
 
+  @Override
   public void run(DataContext dataContext, List<BuildFileProperty> additionalProperties, AntBuildListener buildListener) {
     AntBuildModel model = getModel();
     if (model == null) {

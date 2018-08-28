@@ -78,16 +78,19 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     return PsiUtilEx.isStringOrCharacterLiteral(psiElement);
   }
 
+  @Override
   @NotNull
   public String getId() {
     return JAVA_SUPPORT_ID;
   }
 
+  @Override
   @NotNull
   public Class[] getPatternClasses() {
     return new Class[] { PsiJavaPatterns.class };
   }
 
+  @Override
   public Configurable[] createSettings(final Project project, final Configuration configuration) {
     return new Configurable[]{new AdvancedSettingsUI(project, configuration)};
   }
@@ -105,11 +108,13 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     return compiled ? null : super.findCommentInjection(host, commentRef);
   }
 
+  @Override
   public boolean addInjectionInPlace(final Language language, final PsiLanguageInjectionHost psiElement) {
     if (!isMine(psiElement)) return false;
     return doInjectInJava(psiElement.getProject(), psiElement, psiElement, language.getID());
   }
 
+  @Override
   public boolean removeInjectionInPlace(final PsiLanguageInjectionHost psiElement) {
     if (!isMine(psiElement)) return false;
     final HashMap<BaseInjection, Pair<PsiMethod, Integer>> injectionsMap = new HashMap<>();
@@ -133,6 +138,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     return true;
   }
 
+  @Override
   public boolean editInjectionInPlace(final PsiLanguageInjectionHost psiElement) {
     if (!isMine(psiElement)) return false;
     final HashMap<BaseInjection, Pair<PsiMethod, Integer>> injectionsMap = new HashMap<>();
@@ -178,6 +184,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     return null;
   }
 
+  @Override
   public BaseInjection createInjection(final Element element) {
     return new BaseInjection(JAVA_SUPPORT_ID);
   }
@@ -552,7 +559,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
         final BaseInjection originalInjection = producer.create();
         final MethodParameterInjection injection = createFrom(project, originalInjection, null, false);
         if (injection != null) {
-          final boolean mergeEnabled = !project.isInitialized() || 
+          final boolean mergeEnabled = !project.isInitialized() ||
             JavaPsiFacade.getInstance(project).findClass(injection.getClassName(), GlobalSearchScope.allScope(project)) == null;
           final BaseInjection newInjection = showInjectionUI(project, injection);
           if (newInjection != null) {

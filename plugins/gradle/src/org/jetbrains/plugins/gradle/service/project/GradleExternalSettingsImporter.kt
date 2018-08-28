@@ -52,7 +52,7 @@ class GradleTaskTriggersImporter : ConfigurationHandler {
   override fun apply(project: Project,
                      modelsProvider: IdeModifiableModelsProvider,
                      configuration: ConfigurationData) {
-    val obj = configuration.find("taskTriggersConfig") as? Map<*, *> ?: return
+    val obj = configuration.find("taskTriggers") as? Map<*, *> ?: return
 
     val taskTriggerConfig = obj as Map<String, Collection<*>>
     val activator = ExternalProjectsManagerImpl.getInstance(project).taskActivator
@@ -83,7 +83,7 @@ class GradleTaskTriggersImporter : ConfigurationHandler {
 
 class ActionDelegateConfigImporter: ConfigurationHandler {
   override fun apply(project: Project, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) {
-    val config = configuration.find("actionDelegationConfig") as? Map<String, *> ?: return
+    val config = configuration.find("delegateActions") as? Map<String, *> ?: return
     val settings = GradleSystemRunningSettings.getInstance()
 
     consumeIfCast(config["delegateBuildRunToGradle"], java.lang.Boolean::class.java) { settings.isUseGradleAwareMake = it.booleanValue() }

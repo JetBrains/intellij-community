@@ -6,6 +6,7 @@ import com.intellij.json.psi.JsonContainer;
 import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -147,60 +148,68 @@ class JsonSchemaAnnotatorChecker {
 
   public void checkByScheme(@NotNull JsonValueAdapter value, @NotNull JsonSchemaObject schema) {
     final JsonSchemaType type = JsonSchemaType.getType(value);
+    checkForEnum(value.getDelegate(), schema);
+    boolean checkedNumber = false;
+    boolean checkedString = false;
+    boolean checkedArray = false;
+    boolean checkedObject = false;
     if (type != null) {
       JsonSchemaType schemaType = getMatchingSchemaType(schema, type);
       if (schemaType != null && !schemaType.equals(type)) {
         typeError(value.getDelegate(), schemaType);
       }
       else {
-        if (JsonSchemaType._boolean.equals(type)) {
-          checkForEnum(value.getDelegate(), schema);
-        }
-        else if (JsonSchemaType._string_number.equals(type)) {
+        if (JsonSchemaType._string_number.equals(type)) {
           checkNumber(value.getDelegate(), schema, type);
+          checkedNumber = true;
           checkString(value.getDelegate(), schema);
-          checkForEnum(value.getDelegate(), schema);
+          checkedString = true;
         }
         else if (JsonSchemaType._number.equals(type) || JsonSchemaType._integer.equals(type)) {
           checkNumber(value.getDelegate(), schema, type);
-          checkForEnum(value.getDelegate(), schema);
+          checkedNumber = true;
         }
         else if (JsonSchemaType._string.equals(type)) {
           checkString(value.getDelegate(), schema);
-          checkForEnum(value.getDelegate(), schema);
+          checkedString = true;
         }
         else if (JsonSchemaType._array.equals(type)) {
           checkArray(value, schema);
-          checkForEnum(value.getDelegate(), schema);
+          checkedArray = true;
         }
         else if (JsonSchemaType._object.equals(type)) {
           checkObject(value, schema);
-          checkForEnum(value.getDelegate(), schema);
+          checkedObject = true;
         }
       }
     }
 
     if ((!myHadTypeError || myErrors.isEmpty()) && !value.isShouldBeIgnored()) {
       PsiElement delegate = value.getDelegate();
-      checkForEnum(delegate, schema);
-      if (hasNumberChecks(schema) && value.isNumberLiteral()) {
+      if (!checkedNumber && schema.hasNumericChecks() && value.isNumberLiteral()) {
         checkNumber(delegate, schema, JsonSchemaType._number);
       }
-      if (hasStringChecks(schema) && value.isStringLiteral()) {
+      if (!checkedString && schema.hasStringChecks() && value.isStringLiteral()) {
         checkString(delegate, schema);
+        checkedString = true;
       }
-      if (hasArrayChecks(schema) && value.isArray()) {
+      if (!checkedArray && schema.hasArrayChecks() && value.isArray()) {
         checkArray(value, schema);
+        checkedArray = true;
       }
       if (hasMinMaxLengthChecks(schema)) {
         if (value.isStringLiteral()) {
-          checkString(delegate, schema);
+          if (!checkedString) {
+            checkString(delegate, schema);
+          }
         }
         else if (value.isArray()) {
-          checkArray(value, schema);
+          if (!checkedArray) {
+            checkArray(value, schema);
+          }
         }
       }
-      if (hasObjectChecks(schema) && value.isObject()) {
+      if (!checkedObject && schema.hasObjectChecks() && value.isObject()) {
         checkObject(value, schema);
       }
     }
@@ -252,16 +261,6 @@ class JsonSchemaAnnotatorChecker {
       myHadTypeError = checker.isHadTypeError();
       myErrors.putAll(checker.getErrors());
     }
-  }
-
-  private static boolean hasObjectChecks(JsonSchemaObject schema) {
-    return !schema.getProperties().isEmpty()
-           || schema.getPropertyNamesSchema() != null
-           || schema.getPropertyDependencies() != null
-           || schema.hasPatternProperties()
-           || schema.getRequired() != null
-           || schema.getMinProperties() != null
-           || schema.getMaxProperties() != null;
   }
 
   private void checkObject(@NotNull JsonValueAdapter value, @NotNull JsonSchemaObject schema) {
@@ -341,6 +340,19 @@ class JsonSchemaAnnotatorChecker {
     validateAsJsonSchema(object.getDelegate());
   }
 
+  @Nullable
+  private static Object getDefaultValueFromEnum(@NotNull JsonSchemaObject propertySchema, @NotNull Ref<Integer> enumCount) {
+    List<Object> enumValues = propertySchema.getEnum();
+    if (enumValues != null) {
+      enumCount.set(enumValues.size());
+      if (enumValues.size() == 1) {
+        Object defaultObject = enumValues.get(0);
+        return defaultObject instanceof String ? StringUtil.unquoteString((String)defaultObject) : defaultObject;
+      }
+    }
+    return null;
+  }
+
   @NotNull
   private static JsonValidationError.MissingMultiplePropsIssueData createMissingPropertiesData(@NotNull JsonSchemaObject schema,
                                                                                                HashSet<String> requiredNames) {
@@ -348,15 +360,39 @@ class JsonSchemaAnnotatorChecker {
     for (String req: requiredNames) {
       JsonSchemaObject propertySchema = resolvePropertySchema(schema, req);
       Object defaultValue = propertySchema == null ? null : propertySchema.getDefault();
-      int enumCount = 0;
-      if (propertySchema != null && propertySchema.getEnum() != null && (enumCount = propertySchema.getEnum().size()) == 1) {
-        Object defaultObject = propertySchema.getEnum().get(0);
-        defaultValue = defaultObject instanceof String ? StringUtil.unquoteString((String)defaultObject) : defaultObject;
+      Ref<Integer> enumCount = Ref.create(0);
+
+      JsonSchemaType type = null;
+
+      if (propertySchema != null) {
+        MatchResult result = null;
+        Object valueFromEnum = getDefaultValueFromEnum(propertySchema, enumCount);
+        if (valueFromEnum != null) {
+          defaultValue = valueFromEnum;
+        }
+        else {
+          result = new JsonSchemaResolver(propertySchema).detailedResolve();
+          if (result.mySchemas.size() == 1) {
+            valueFromEnum = getDefaultValueFromEnum(result.mySchemas.get(0), enumCount);
+            if (valueFromEnum != null) {
+              defaultValue = valueFromEnum;
+            }
+          }
+        }
+        type = propertySchema.getType();
+        if (type == null) {
+          if (result == null) {
+            result = new JsonSchemaResolver(propertySchema).detailedResolve();
+          }
+          if (result.mySchemas.size() == 1) {
+            type = result.mySchemas.get(0).getType();
+          }
+        }
       }
       allProps.add(new JsonValidationError.MissingPropertyIssueData(req,
-                                                                    propertySchema == null ? null : propertySchema.getType(),
+                                                                    type,
                                                                     defaultValue,
-                                                                    enumCount));
+                                                                    enumCount.get()));
     }
 
     return new JsonValidationError.MissingMultiplePropsIssueData(allProps);
@@ -506,17 +542,16 @@ class JsonSchemaAnnotatorChecker {
   }
 
   private void checkForEnum(PsiElement value, JsonSchemaObject schema) {
-    //enum values + pattern -> don't check enum values
-    if (schema.getEnum() == null || schema.getPattern() != null) return;
+    List<Object> enumItems = schema.getEnum();
+    if (enumItems == null) return;
     final JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(value, schema);
     if (walker == null) return;
     final String text = StringUtil.notNullize(walker.getNodeTextForValidation(value));
-    final List<Object> objects = schema.getEnum();
     BiFunction<String, String, Boolean> eq = myOptions.isCaseInsensitiveEnumCheck() ? String::equalsIgnoreCase : String::equals;
-    for (Object object : objects) {
+    for (Object object : enumItems) {
       if (checkEnumValue(object, walker, walker.createValueAdapter(value), text, eq)) return;
     }
-    error(ENUM_MISMATCH_PREFIX + StringUtil.join(objects, o -> o.toString(), ", "), value,
+    error(ENUM_MISMATCH_PREFIX + StringUtil.join(enumItems, o -> o.toString(), ", "), value,
           JsonValidationError.FixableIssueKind.NonEnumValue, null, JsonErrorPriority.MEDIUM_PRIORITY);
   }
 
@@ -633,15 +668,6 @@ class JsonSchemaAnnotatorChecker {
     return null;
   }
 
-  private static boolean hasArrayChecks(JsonSchemaObject schema) {
-    return schema.isUniqueItems()
-           || schema.getContainsSchema() != null
-           || schema.getItemsSchema() != null
-           || schema.getItemsSchemaList() != null
-           || schema.getMinItems() != null
-           || schema.getMaxItems() != null;
-  }
-
   private void checkArrayItems(@NotNull JsonValueAdapter array, @NotNull final List<JsonValueAdapter> list, final JsonSchemaObject schema) {
     if (schema.isUniqueItems()) {
       final MultiMap<String, JsonValueAdapter> valueTexts = new MultiMap<>();
@@ -701,10 +727,6 @@ class JsonSchemaAnnotatorChecker {
     }
   }
 
-  private static boolean hasStringChecks(JsonSchemaObject schema) {
-    return schema.getPattern() != null || schema.getFormat() != null;
-  }
-
   private static boolean hasMinMaxLengthChecks(JsonSchemaObject schema) {
     return schema.getMinLength() != null || schema.getMaxLength() != null;
   }
@@ -739,14 +761,6 @@ class JsonSchemaAnnotatorChecker {
     if (schema.getFormat() != null) {
       LOG.info("Unsupported property used: 'format'");
     }*/
-  }
-
-  private static boolean hasNumberChecks(JsonSchemaObject schema) {
-    return schema.getMultipleOf() != null
-           || schema.getExclusiveMinimumNumber() != null
-           || schema.getExclusiveMaximumNumber() != null
-           || schema.getMaximum() != null
-           || schema.getMinimum() != null;
   }
 
   private void checkNumber(PsiElement propValue, JsonSchemaObject schema, JsonSchemaType schemaType) {

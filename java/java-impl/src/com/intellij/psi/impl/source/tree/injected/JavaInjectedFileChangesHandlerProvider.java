@@ -5,8 +5,12 @@ import com.intellij.codeInsight.editorActions.CopyPastePreProcessor;
 import com.intellij.codeInsight.intention.impl.QuickEditHandler;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.InjectedFileChangesHandler;
+import com.intellij.injected.editor.InjectedFileChangesHandlerProvider;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.extensions.Extensions;
@@ -30,10 +34,10 @@ public class JavaInjectedFileChangesHandlerProvider implements InjectedFileChang
 
   @Override
   public InjectedFileChangesHandler createFileChangesHandler(List<PsiLanguageInjectionHost.Shred> shreds,
-                                                             Editor editor,
+                                                             Editor hostEditor,
                                                              Document newDocument,
                                                              PsiFile injectedFile) {
-    return new JavaInjectedFileChangesHandler(shreds, editor, newDocument, injectedFile);
+    return new JavaInjectedFileChangesHandler(shreds, hostEditor, newDocument, injectedFile);
   }
 }
 
@@ -119,8 +123,8 @@ class JavaInjectedFileChangesHandler extends BaseInjectedFileChangesHandler {
   }
 
   @Override
-  public boolean handlesRange(@NotNull TextRange range) {
-    return range.intersects(myAltFullRange.getStartOffset(), myAltFullRange.getEndOffset());
+  public boolean handlesRange(@NotNull TextRange hostRange) {
+    return hostRange.intersects(myAltFullRange.getStartOffset(), myAltFullRange.getEndOffset());
   }
 
   private static void fixDocumentQuotes(Document doc, int offset) {

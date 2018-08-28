@@ -15,13 +15,88 @@
  */
 package com.siyeh.ig.naming;
 
+import com.intellij.psi.PsiClass;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
+import org.jetbrains.annotations.NotNull;
 
-public class ClassNameSameAsAncestorNameInspection extends ClassNameSameAsAncestorNameInspectionBase {
+import java.util.HashSet;
+import java.util.Set;
+
+public class ClassNameSameAsAncestorNameInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new RenameFix();
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "class.name.same.as.ancestor.name.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "class.name.same.as.ancestor.name.problem.descriptor");
+  }
+
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new ClassNameSameAsAncestorNameVisitor();
+  }
+
+  private static class ClassNameSameAsAncestorNameVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      // no call to super, so it doesn't drill down into inner classes
+      final String className = aClass.getName();
+      if (className == null) {
+        return;
+      }
+      final Set<PsiClass> alreadyVisited = new HashSet<>(8);
+      final PsiClass[] supers = aClass.getSupers();
+      for (final PsiClass aSuper : supers) {
+        if (hasMatchingName(aSuper, className, alreadyVisited)) {
+          registerClassError(aClass);
+        }
+      }
+    }
+
+    private static boolean hasMatchingName(PsiClass aSuper,
+                                           String className,
+                                           Set<PsiClass> alreadyVisited) {
+      if (aSuper == null) {
+        return false;
+      }
+      if (alreadyVisited.contains(aSuper)) {
+        return false;
+      }
+      alreadyVisited.add(aSuper);
+      final String superName = aSuper.getName();
+      if (className.equals(superName)) {
+        return true;
+      }
+      final PsiClass[] supers = aSuper.getSupers();
+      for (PsiClass aSupers : supers) {
+        if (hasMatchingName(aSupers, className, alreadyVisited)) {
+          return true;
+        }
+      }
+      return false;
+    }
   }
 }

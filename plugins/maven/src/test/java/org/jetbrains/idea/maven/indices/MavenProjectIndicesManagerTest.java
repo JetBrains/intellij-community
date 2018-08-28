@@ -56,7 +56,7 @@ public class MavenProjectIndicesManagerTest extends MavenIndicesTestCase {
     assertEquals(2, indices.size());
 
     assertTrue(indices.get(0).getRepositoryPathOrUrl().endsWith("local1"));
-    assertEquals("http://repo1.maven.org/maven2", indices.get(1).getRepositoryPathOrUrl());
+    assertEquals("https://repo.maven.apache.org/maven2", indices.get(1).getRepositoryPathOrUrl());
   }
 
   public void testUpdatingIndicesOnResolution() {

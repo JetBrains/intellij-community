@@ -26,6 +26,7 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
   private static final String DEFAULT_ID = "third.party.plugin.action";
   private final Set<String> myJBActions = new THashSet<>();
 
+  @Override
   public void record(@Nullable String actionId, @NotNull Class context) {
     if (actionId == null) return;
 

@@ -34,7 +34,8 @@ List<String> projectLibraries = [
   "Slf4j",
   "jna",
   "jgoodies-forms",
-  "http-client"
+  "http-client",
+  "maven-model"
 ]
 
 dependencies {

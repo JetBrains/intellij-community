@@ -10,7 +10,6 @@ import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.SuppressionUtilCore;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
-import com.intellij.codeInspection.javaDoc.JavaDocLocalInspectionBase;
 import com.intellij.codeInspection.javaDoc.JavadocHighlightUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -312,7 +311,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
       InspectionProfile inspectionProfile =
         InspectionProjectProfileManager.getInstance(position.getProject()).getCurrentProfile();
       JavaDocLocalInspection inspection =
-        (JavaDocLocalInspection)inspectionProfile.getUnwrappedTool(JavaDocLocalInspectionBase.SHORT_NAME, position);
+        (JavaDocLocalInspection)inspectionProfile.getUnwrappedTool(JavaDocLocalInspection.SHORT_NAME, position);
       if (inspection != null) {
         final StringTokenizer tokenizer = new StringTokenizer(inspection.myAdditionalJavadocTags, ", ");
         while (tokenizer.hasMoreTokens()) {

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.autoimport;
 
 import com.intellij.ProjectTopics;
@@ -47,7 +45,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -56,7 +54,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import gnu.trove.THashSet;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,15 +77,13 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
   private static final ExtensionPointName<Contributor> EP_NAME =
     ExtensionPointName.create("com.intellij.externalProjectWatcherContributor");
 
-  private static final Key<Long> CRC_WITHOUT_SPACES_CURRENT =
-    Key.create("ExternalSystemProjectsWatcher.CRC_WITHOUT_SPACES_CURRENT");
+  private static final Key<Long> CRC_WITHOUT_SPACES_CURRENT = Key.create("ExternalSystemProjectsWatcher.CRC_WITHOUT_SPACES_CURRENT");
   private static final Key<Long> CRC_WITHOUT_SPACES_BEFORE_LAST_IMPORT =
     Key.create("ExternalSystemProjectsWatcher.CRC_WITHOUT_SPACES_BEFORE_LAST_IMPORT");
   private static final int DOCUMENT_SAVE_DELAY = 1000;
   private static final int REFRESH_MERGING_TIME_SPAN = 2000;
 
   private final Project myProject;
-  private final Set<Document> myChangedDocuments = new THashSet<>();
   private final MergingUpdateQueue myChangedDocumentsQueue;
   private final List<ExternalSystemAutoImportAware> myImportAwareManagers;
   private final MergingUpdateQueue myUpdatesQueue;
@@ -168,8 +164,10 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
     myRefreshRequestsQueue.activate();
 
     DocumentListener myDocumentListener = new DocumentListener() {
+      private final Map<Document, String> myChangedDocuments = new THashMap<>();
+
       @Override
-      public void documentChanged(DocumentEvent event) {
+      public void documentChanged(@NotNull DocumentEvent event) {
         Document doc = event.getDocument();
         VirtualFile file = FileDocumentManager.getInstance().getFile(doc);
         if (file == null) return;
@@ -177,24 +175,36 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
         if (externalProjectPath == null) return;
 
         synchronized (myChangedDocuments) {
-          myChangedDocuments.add(doc);
+          myChangedDocuments.put(doc, externalProjectPath);
         }
         myChangedDocumentsQueue.queue(new Update(ExternalSystemProjectsWatcherImpl.this) {
           @Override
           public void run() {
-            final Document[] copy;
+            final Map<Document, String> copy;
 
             synchronized (myChangedDocuments) {
-              copy = myChangedDocuments.toArray(Document.EMPTY_ARRAY);
+              copy = new THashMap<>(myChangedDocuments);
               myChangedDocuments.clear();
             }
 
-            ExternalSystemUtil.invokeLater(myProject, () -> WriteAction.run(()-> {
-                for (Document each : copy) {
-                  PsiDocumentManager.getInstance(myProject).commitDocument(each);
-                  ((FileDocumentManagerImpl)FileDocumentManager.getInstance()).saveDocument(each, false);
+            ExternalSystemUtil.invokeLater(myProject, () -> WriteAction.run(
+              () -> copy.forEach((document, projectPath) -> {
+                PsiDocumentManager.getInstance(myProject).commitDocument(document);
+                FileDocumentManagerImpl fileDocumentManager = (FileDocumentManagerImpl)FileDocumentManager.getInstance();
+                fileDocumentManager.saveDocumentAsIs(document);
+                Long beforeImport = file.getUserData(CRC_WITHOUT_SPACES_BEFORE_LAST_IMPORT);
+                Long current = file.getUserData(CRC_WITHOUT_SPACES_CURRENT);
+                if (current != null && current.equals(beforeImport)) {
+                  VirtualFile virtualFile = fileDocumentManager.getFile(document);
+                  if (virtualFile != null) {
+                    Long newCrc = calculateCrc(virtualFile);
+                    virtualFile.putUserData(CRC_WITHOUT_SPACES_CURRENT, newCrc);
+                    if (!current.equals(newCrc)) {
+                      scheduleUpdate(externalProjectPath, false);
+                    }
+                  }
                 }
-              }
+              })
             ));
           }
         });
@@ -369,6 +379,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
               else {
                 UIUtil.invokeLaterIfNeeded(() -> {
                   Long newCrc = calculateCrc(virtualFile);
+                  virtualFile.putUserData(CRC_WITHOUT_SPACES_CURRENT, newCrc);
                   virtualFile.putUserData(CRC_WITHOUT_SPACES_BEFORE_LAST_IMPORT, newCrc);
                   modificationStamps.put(path, newCrc);
                 });
@@ -444,14 +455,14 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
 
       multicaster.addCaretListener(new CaretListener() {
         @Override
-        public void caretPositionChanged(CaretEvent e) {
+        public void caretPositionChanged(@NotNull CaretEvent e) {
           mergingUpdateQueue.restartTimer();
         }
       }, mergingUpdateQueue);
 
       multicaster.addDocumentListener(new DocumentListener() {
         @Override
-        public void documentChanged(DocumentEvent event) {
+        public void documentChanged(@NotNull DocumentEvent event) {
           mergingUpdateQueue.restartTimer();
         }
       }, mergingUpdateQueue);

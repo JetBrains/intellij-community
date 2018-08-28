@@ -192,6 +192,7 @@ public class BuildFilePropertiesPanel {
       }
     }
 
+    @Override
     public void dispose() {
     }
   }
@@ -202,32 +203,39 @@ public class BuildFilePropertiesPanel {
 
     private static final ColumnInfo<BuildFileProperty, String> NAME_COLUMN = new ColumnInfo<BuildFileProperty, String>(
       AntBundle.message("edit.ant.properties.name.column.name")) {
+      @Override
       public String valueOf(BuildFileProperty buildFileProperty) {
         return buildFileProperty.getPropertyName();
       }
 
+      @Override
       public boolean isCellEditable(BuildFileProperty buildFileProperty) {
         return true;
       }
 
+      @Override
       public void setValue(BuildFileProperty buildFileProperty, String name) {
         buildFileProperty.setPropertyName(name);
       }
     };
     private static final ColumnInfo<BuildFileProperty, String> VALUE_COLUMN = new ColumnInfo<BuildFileProperty, String>(
       AntBundle.message("edit.ant.properties.value.column.name")) {
+      @Override
       public boolean isCellEditable(BuildFileProperty buildFileProperty) {
         return true;
       }
 
+      @Override
       public String valueOf(BuildFileProperty buildFileProperty) {
         return buildFileProperty.getPropertyValue();
       }
 
+      @Override
       public void setValue(BuildFileProperty buildFileProperty, String value) {
         buildFileProperty.setPropertyValue(value);
       }
 
+      @Override
       public TableCellEditor getEditor(BuildFileProperty item) {
         return new AntUIUtil.PropertyValueCellEditor();
       }
@@ -272,15 +280,18 @@ public class BuildFilePropertiesPanel {
       myWholePanel.setBorder(null);
     }
 
+    @Override
     public JComponent getComponent() {
       return myWholePanel;
     }
 
+    @Override
     @Nullable
     public String getDisplayName() {
       return AntBundle.message("edit.ant.properties.tab.display.name");
     }
 
+    @Override
     public JComponent getPreferedFocusComponent() {
       return myPropertiesTable;
     }
@@ -292,22 +303,27 @@ public class BuildFilePropertiesPanel {
 
     private static final int PREFERRED_CHECKBOX_COLUMN_WIDTH = new JCheckBox().getPreferredSize().width + 4;
     private static final ColumnInfo<TargetFilter, Boolean> CHECK_BOX_COLUMN = new ColumnInfo<TargetFilter, Boolean>("") {
+      @Override
       public Boolean valueOf(TargetFilter targetFilter) {
         return targetFilter.isVisible();
       }
 
+      @Override
       public void setValue(TargetFilter targetFilter, Boolean aBoolean) {
         targetFilter.setVisible(aBoolean.booleanValue());
       }
 
+      @Override
       public int getWidth(JTable table) {
         return PREFERRED_CHECKBOX_COLUMN_WIDTH;
       }
 
+      @Override
       public Class getColumnClass() {
         return Boolean.class;
       }
 
+      @Override
       public boolean isCellEditable(TargetFilter targetFilter) {
         return true;
       }
@@ -322,10 +338,12 @@ public class BuildFilePropertiesPanel {
     };
     private static final ColumnInfo<TargetFilter, String> NAME_COLUMN = new ColumnInfo<TargetFilter, String>(
       AntBundle.message("ant.target")) {
+      @Override
       public String valueOf(TargetFilter targetFilter) {
         return targetFilter.getTargetName();
       }
 
+      @Override
       public Comparator<TargetFilter> getComparator() {
         return NAME_COMPARATOR;
       }
@@ -344,10 +362,12 @@ public class BuildFilePropertiesPanel {
     };
     private static final ColumnInfo<TargetFilter, String> DESCRIPTION = new ColumnInfo<TargetFilter, String>(
       AntBundle.message("edit.ant.properties.description.column.name")) {
+      @Override
       public String valueOf(TargetFilter targetFilter) {
         return targetFilter.getDescription();
       }
 
+      @Override
       public Comparator<TargetFilter> getComparator() {
         return DESCRIPTION_COMPARATOR;
       }
@@ -362,15 +382,18 @@ public class BuildFilePropertiesPanel {
       tableListBinding.setSortable(true);
     }
 
+    @Override
     public JComponent getComponent() {
       return myWholePanel;
     }
 
+    @Override
     @Nullable
     public String getDisplayName() {
       return AntBundle.message("edit.ant.properties.filters.tab.display.name");
     }
 
+    @Override
     public JComponent getPreferedFocusComponent() {
       return myFiltersTable;
     }
@@ -401,6 +424,7 @@ public class BuildFilePropertiesPanel {
       setLabelFor(myJDKLabel, myJDKs);
 
       myJDKsController = new ChooseAndEditComboBoxController<Sdk, String>(myJDKs, jdk -> jdk != null ? jdk.getName() : "", String.CASE_INSENSITIVE_ORDER) {
+        @Override
         public Iterator<Sdk> getAllListItems() {
           Application application = ApplicationManager.getApplication();
           if (application == null) {
@@ -411,6 +435,7 @@ public class BuildFilePropertiesPanel {
           return allJdks.iterator();
         }
 
+        @Override
         public Sdk openConfigureDialog(Sdk jdk, JComponent parent) {
           ProjectJdksEditor editor = new ProjectJdksEditor(jdk, myJDKs.getComboBox());
           editor.show();
@@ -424,6 +449,7 @@ public class BuildFilePropertiesPanel {
       binding.addBinding(new RunWithAntBinding(myUseDefaultAnt, myUseCastomAnt, myAnts, myAntGlobalConfiguration));
 
       mySetDefaultAnt.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           AntSetPanel antSetPanel = new AntSetPanel(myAntGlobalConfiguration);
           antSetPanel.reset();
@@ -438,15 +464,18 @@ public class BuildFilePropertiesPanel {
       });
     }
 
+    @Override
     public JComponent getComponent() {
       return myWholePanel;
     }
 
+    @Override
     @Nullable
     public String getDisplayName() {
       return AntBundle.message("edit.ant.properties.execution.tab.display.name");
     }
 
+    @Override
     public void reset(AbstractProperty.AbstractPropertyContainer options) {
       String projectJdkName = AntConfigurationImpl.DEFAULT_JDK_NAME.get(options);
       myJDKsController.setRenderer(new AntUIUtil.ProjectJdkRenderer(true, projectJdkName));
@@ -463,11 +492,13 @@ public class BuildFilePropertiesPanel {
       myDefaultAnt.repaint();
     }
 
+    @Override
     public void apply(AbstractProperty.AbstractPropertyContainer options) {
       AntConfigurationImpl.DEFAULT_ANT.set(options, myProjectDefaultAnt);
       super.apply(options);
     }
 
+    @Override
     public JComponent getPreferedFocusComponent() {
       return myAntCommandLine.getTextField();
     }
@@ -481,15 +512,18 @@ public class BuildFilePropertiesPanel {
       getBinding().addBinding(myClasspath.setClasspathProperty(AntBuildFileImpl.ADDITIONAL_CLASSPATH));
     }
 
+    @Override
     public JComponent getComponent() {
       return myWholePanel;
     }
 
+    @Override
     @Nullable
     public String getDisplayName() {
       return AntBundle.message("edit.ant.properties.additional.classpath.tab.display.name");
     }
 
+    @Override
     public JComponent getPreferedFocusComponent() {
       return myClasspath.getPreferedFocusComponent();
     }

@@ -14,12 +14,9 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 
 class ImportProjectFromScriptAction: ExternalSystemAction() {
 
-  override fun isEnabled(e: AnActionEvent?): Boolean = true
+  override fun isEnabled(e: AnActionEvent): Boolean = true
 
-  override fun isVisible(e: AnActionEvent?): Boolean {
-    if (e == null) {
-      return false
-    }
+  override fun isVisible(e: AnActionEvent): Boolean {
     val virtualFile = e.getData<VirtualFile>(CommonDataKeys.VIRTUAL_FILE) ?: return false
     val project = e.getData<Project>(CommonDataKeys.PROJECT) ?: return false
 

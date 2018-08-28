@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.impl
 
 import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl
@@ -25,7 +11,7 @@ import com.intellij.testGuiFramework.framework.GuiTestLocalRunner
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.framework.IdeTestApplication.getTestScreenshotDirPath
 import com.intellij.testGuiFramework.framework.Timeouts
-import com.intellij.testGuiFramework.framework.toSec
+import com.intellij.testGuiFramework.framework.toPrintable
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.typeMatcher
 import com.intellij.testGuiFramework.launcher.system.SystemInfo
 import com.intellij.testGuiFramework.launcher.system.SystemInfo.isMac
@@ -153,7 +139,7 @@ open class GuiTestCase {
         }
       }
       catch (timeoutError: WaitTimedOutError) {
-        throw ComponentLookupException("Unable to find file chooser dialog in ${timeout.toSec()} seconds")
+        throw ComponentLookupException("Unable to find file chooser dialog in ${timeout.toPrintable()}")
       }
       val dialogFixture = JDialogFixture(robot(), fileChooserDialog)
       with(dialogFixture) {
@@ -333,7 +319,7 @@ open class GuiTestCase {
         return JDialogFixture(robot(), dialog)
       }
       catch (timeoutError: WaitTimedOutError) {
-        throw ComponentLookupException("Timeout error for finding JDialog by title \"$title\" for ${timeout.toSec()} seconds")
+        throw ComponentLookupException("Timeout error for finding JDialog by title \"$title\" for ${timeout.toPrintable()}")
       }
     }
   }
@@ -387,7 +373,7 @@ open class GuiTestCase {
     return fixture.rowCount()
   }
 
-  fun waitForPanelToDisappear(panelTitle: String, timeout: Long = 300000) {
+  fun waitForPanelToDisappear(panelTitle: String, timeout: Timeout = Timeouts.minutes05) {
     Pause.pause(object : Condition("Wait for $panelTitle panel appears") {
       override fun test(): Boolean {
         try {
@@ -414,7 +400,7 @@ open class GuiTestCase {
         }
         return false
       }
-    })
+    }, timeout)
 
   }
 
