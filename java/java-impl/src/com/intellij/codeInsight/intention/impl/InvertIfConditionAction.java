@@ -227,7 +227,7 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
         }
       } else {
         if (!(thenBranch instanceof PsiReturnStatement)) {
-          ifStatement = addAfterWithinCodeBlock(ifStatement, thenBranch);
+          ifStatement = addAfterWithinCodeBlock(ifStatement, ct.markUnchanged(thenBranch));
         }
       }
       ct.replaceAndRestoreComments(Objects.requireNonNull(ifStatement.getThenBranch()), statement);
@@ -241,14 +241,14 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
         element instanceof PsiForeachStatement && flow.getStartOffset(element) + 1 == endOffset) {
       PsiStatement statement = factory.createStatementFromText("continue;", ifStatement);
       statement = (PsiStatement)codeStyle.reformat(statement);
-      ifStatement = addAfterWithinCodeBlock(ifStatement, thenBranch);
+      ifStatement = addAfterWithinCodeBlock(ifStatement, ct.markUnchanged(thenBranch));
       Objects.requireNonNull(ifStatement.getThenBranch()).replace(statement);
       return ifStatement;
     }
 
     if (element instanceof PsiReturnStatement) {
       PsiReturnStatement returnStatement = (PsiReturnStatement) element;
-      ifStatement = addAfterWithinCodeBlock(ifStatement, thenBranch);
+      ifStatement = addAfterWithinCodeBlock(ifStatement, ct.markUnchanged(thenBranch));
       ct.replaceAndRestoreComments(Objects.requireNonNull(ifStatement.getThenBranch()), returnStatement.copy());
 
       ControlFlow flow2 = buildControlFlow(findCodeBlock(ifStatement));
