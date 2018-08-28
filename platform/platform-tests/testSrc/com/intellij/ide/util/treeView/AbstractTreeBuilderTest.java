@@ -425,7 +425,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
       public NodeDescriptor doCreateDescriptor(final Object element, final NodeDescriptor parentDescriptor) {
       return new PresentableNodeDescriptor(null, parentDescriptor) {
         @Override
-        protected void update(PresentationData presentation) {
+        protected void update(@NotNull PresentationData presentation) {
           onElementAction("update", (NodeElement)element);
           presentation.clear();
           presentation.addText(new ColoredFragment(getElement().toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES));
@@ -500,7 +500,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
 
 
     @Override
-    protected void sortChildren(Comparator<TreeNode> nodeComparator, DefaultMutableTreeNode node, ArrayList<TreeNode> children) {
+    protected void sortChildren(Comparator<? super TreeNode> nodeComparator, DefaultMutableTreeNode node, List<? extends TreeNode> children) {
       super.sortChildren(nodeComparator, node, children);
       addEntry(node.toString());
     }

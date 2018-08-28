@@ -1,17 +1,17 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.lang.reflect.Array;
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Stream;
-
-import static java.util.Arrays.asList;
 
 public class TreePathUtil {
   /**
@@ -68,7 +68,7 @@ public class TreePathUtil {
    * or a path component is {@code null}
    * or a path component is converted to {@code null}
    */
-  public static <T> T[] convertTreePathToArray(@NotNull TreePath path, @NotNull Function<Object, T> converter, @NotNull Class<T> type) {
+  public static <T> T[] convertTreePathToArray(@NotNull TreePath path, @NotNull Function<Object, ? extends T> converter, @NotNull Class<T> type) {
     int count = path.getPathCount();
     if (count <= 0) return null;
     //noinspection unchecked
@@ -91,6 +91,7 @@ public class TreePathUtil {
    * or a path component is {@code null}
    * or a path component is converted to {@code null}
    */
+  @SafeVarargs
   public static <T> TreePath convertArrayToTreePath(@NotNull T... array) {
     return convertArrayToTreePath(array, object -> object);
   }
@@ -103,8 +104,8 @@ public class TreePathUtil {
    * or a path component is {@code null}
    * or a path component is converted to {@code null}
    */
-  public static <T> TreePath convertArrayToTreePath(@NotNull T[] array, @NotNull Function<T, Object> converter) {
-    return array.length == 0 ? null : convertCollectionToTreePath(asList(array), converter);
+  public static <T> TreePath convertArrayToTreePath(@NotNull T[] array, @NotNull Function<? super T, Object> converter) {
+    return array.length == 0 ? null : convertCollectionToTreePath(Arrays.asList(array), converter);
   }
 
   /**
@@ -114,7 +115,7 @@ public class TreePathUtil {
    * or a path component is {@code null}
    * or a path component is converted to {@code null}
    */
-  public static <T> TreePath convertCollectionToTreePath(@NotNull Iterable<T> collection) {
+  public static <T> TreePath convertCollectionToTreePath(@NotNull Iterable<? extends T> collection) {
     return convertCollectionToTreePath(collection, object -> object);
   }
 
@@ -126,7 +127,7 @@ public class TreePathUtil {
    * or a path component is {@code null}
    * or a path component is converted to {@code null}
    */
-  public static <T> TreePath convertCollectionToTreePath(@NotNull Iterable<T> collection, @NotNull Function<T, Object> converter) {
+  public static <T> TreePath convertCollectionToTreePath(@NotNull Iterable<? extends T> collection, @NotNull Function<? super T, Object> converter) {
     TreePath path = null;
     for (T object : collection) {
       Object component = convert(object, converter);
@@ -153,7 +154,7 @@ public class TreePathUtil {
    * if a path component is {@code null}
    * or a path component is converted to {@code null}
    */
-  public static TreePath pathToTreeNode(@NotNull TreeNode node, @NotNull Function<TreeNode, Object> converter) {
+  public static TreePath pathToTreeNode(@NotNull TreeNode node, @NotNull Function<? super TreeNode, Object> converter) {
     return pathToCustomNode(node, TreeNode::getParent, converter);
   }
 
@@ -164,7 +165,7 @@ public class TreePathUtil {
    * if a path component is {@code null}
    * or a path component is converted to {@code null}
    */
-  public static <T> TreePath pathToCustomNode(@NotNull T node, @NotNull Function<T, T> getParent) {
+  public static <T> TreePath pathToCustomNode(@NotNull T node, @NotNull Function<? super T, ? extends T> getParent) {
     return pathToCustomNode(node, getParent, object -> object);
   }
 
@@ -176,7 +177,7 @@ public class TreePathUtil {
    * if a path component is {@code null}
    * or a path component is converted to {@code null}
    */
-  public static <T> TreePath pathToCustomNode(@NotNull T node, @NotNull Function<T, T> getParent, @NotNull Function<T, Object> converter) {
+  public static <T> TreePath pathToCustomNode(@NotNull T node, @NotNull Function<? super T, ? extends T> getParent, @NotNull Function<? super T, Object> converter) {
     ArrayDeque<T> deque = new ArrayDeque<>();
     while (node != null) {
       deque.addFirst(node);
@@ -194,6 +195,7 @@ public class TreePathUtil {
     return component instanceof TreeNode ? (TreeNode)component : null;
   }
 
+  @Contract("!null->!null")
   public static TreeNode[] toTreeNodes(TreePath... paths) {
     return paths == null ? null : Stream.of(paths).map(TreePathUtil::toTreeNode).filter(Objects::nonNull).toArray(TreeNode[]::new);
   }

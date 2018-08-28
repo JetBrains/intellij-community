@@ -65,7 +65,7 @@ public class XsltTreeStructureProvider implements TreeStructureProvider {
     }
 
     @Override
-    public void updateImpl(PresentationData presentationData) {
+    public void updateImpl(@NotNull PresentationData presentationData) {
       super.updateImpl(presentationData);
       final PsiFile[] psiFiles = myInstance.getAssociationsFor(getValue());
 

@@ -87,8 +87,8 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   private final Map<String,TreeState> myReadTreeState = new HashMap<>();
   private final AtomicBoolean myTreeStateRestored = new AtomicBoolean();
   private String mySubId;
-  @NonNls private static final String ELEMENT_SUBPANE = "subPane";
-  @NonNls private static final String ATTRIBUTE_SUBID = "subId";
+  @NonNls private static final String ELEMENT_SUB_PANE = "subPane";
+  @NonNls private static final String ATTRIBUTE_SUB_ID = "subId";
 
   private DnDTarget myDropTarget;
   private DnDSource myDragSource;
@@ -132,7 +132,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     myTreeChangeListener = listener;
   }
 
-  public final void removeTreeChangeListener() {
+  final void removeTreeChangeListener() {
     myTreeChangeListener = null;
   }
 
@@ -202,9 +202,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     TreePath treePath = new TreePath(node.getPath());
     myTree.expandPath(treePath);
     if (requestFocus) {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(myTree, true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTree, true));
     }
     TreeUtil.selectPath(myTree, treePath);
   }
@@ -283,7 +281,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   protected ToggleAction createFlattenModulesAction(BooleanSupplier isApplicable) {
     return new FlattenModulesToggleAction(myProject, () -> isApplicable.getAsBoolean() && ProjectView.getInstance(myProject).isShowModules(getId()),
                                           () -> ProjectView.getInstance(myProject).isFlattenModules(getId()),
-                                          (value) -> ProjectView.getInstance(myProject).setFlattenModules(value, getId()));
+                                          value -> ProjectView.getInstance(myProject).setFlattenModules(getId(), value));
   }
 
   @NotNull
@@ -322,12 +320,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
           navigatables.add((Navigatable)node);
         }
       }
-      if (navigatables.isEmpty()) {
-        return null;
-      }
-      else {
-        return navigatables.toArray(new Navigatable[0]);
-      }
+      return navigatables.isEmpty() ? null : navigatables.toArray(new Navigatable[0]);
     }
     return null;
   }
@@ -462,9 +455,9 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   public void readExternal(@NotNull Element element)  {
-    List<Element> subPanes = element.getChildren(ELEMENT_SUBPANE);
+    List<Element> subPanes = element.getChildren(ELEMENT_SUB_PANE);
     for (Element subPane : subPanes) {
-      String subId = subPane.getAttributeValue(ATTRIBUTE_SUBID);
+      String subId = subPane.getAttributeValue(ATTRIBUTE_SUB_ID);
       TreeState treeState = TreeState.createFrom(subPane);
       if (!treeState.isEmpty()) {
         myReadTreeState.put(subId, treeState);
@@ -476,9 +469,9 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     saveExpandedPaths();
     for (String subId : myReadTreeState.keySet()) {
       TreeState treeState = myReadTreeState.get(subId);
-      Element subPane = new Element(ELEMENT_SUBPANE);
+      Element subPane = new Element(ELEMENT_SUB_PANE);
       if (subId != null) {
-        subPane.setAttribute(ATTRIBUTE_SUBID, subId);
+        subPane.setAttribute(ATTRIBUTE_SUB_ID, subId);
       }
       treeState.writeExternal(subPane);
       element.addContent(subPane);
@@ -506,6 +499,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     }
   }
 
+  @NotNull
   protected Comparator<NodeDescriptor> createComparator() {
     return new GroupByTypeComparator(ProjectView.getInstance(myProject), getId());
   }
@@ -514,17 +508,17 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     installComparator(getTreeBuilder());
   }
 
-  public void installComparator(AbstractTreeBuilder treeBuilder) {
+  void installComparator(AbstractTreeBuilder treeBuilder) {
     installComparator(treeBuilder, createComparator());
   }
 
   @TestOnly
-  public void installComparator(Comparator<NodeDescriptor> comparator) {
+  public void installComparator(@NotNull Comparator<? super NodeDescriptor> comparator) {
     installComparator(getTreeBuilder(), comparator);
   }
 
-  protected void installComparator(AbstractTreeBuilder builder, Comparator<NodeDescriptor> comparator) {
-    if (builder != null) builder.setNodeDescriptorComparator(comparator);
+  protected void installComparator(AbstractTreeBuilder builder, @NotNull Comparator<? super NodeDescriptor> comparator) {
+    if (builder != null) builder.setNodeDescriptorComparator((Comparator)comparator);
   }
 
   public JTree getTree() {

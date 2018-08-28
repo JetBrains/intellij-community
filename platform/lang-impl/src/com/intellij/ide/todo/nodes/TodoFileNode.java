@@ -24,6 +24,7 @@ import com.intellij.ui.HighlightedRegion;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -146,7 +147,7 @@ public final class TodoFileNode extends PsiFileNode implements HighlightedRegion
   }
 
   @Override
-  protected void updateImpl(PresentationData data) {
+  protected void updateImpl(@NotNull PresentationData data) {
     super.updateImpl(data);
     String newName;
     if(myBuilder.getTodoTreeStructure().isPackagesShown()){

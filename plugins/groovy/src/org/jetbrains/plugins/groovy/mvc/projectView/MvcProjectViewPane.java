@@ -195,7 +195,7 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
 
   @NotNull
   @Override
-  protected BaseProjectTreeBuilder createBuilder(final DefaultTreeModel treeModel) {
+  protected BaseProjectTreeBuilder createBuilder(@NotNull final DefaultTreeModel treeModel) {
     return new ProjectTreeBuilder(myProject, myTree, treeModel, null, (ProjectAbstractTreeStructureBase)myTreeStructure) {
       @Override
       protected AbstractTreeUpdater createUpdater() {
@@ -204,6 +204,7 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     };
   }
 
+  @NotNull
   @Override
   protected ProjectAbstractTreeStructureBase createStructure() {
     final Project project = myProject;
@@ -222,8 +223,9 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     };
   }
 
+  @NotNull
   @Override
-  protected ProjectViewTree createTree(final DefaultTreeModel treeModel) {
+  protected ProjectViewTree createTree(@NotNull final DefaultTreeModel treeModel) {
     return new ProjectViewTree(treeModel) {
       public String toString() {
         return myDescriptor.getFramework().getDisplayName() + " " + super.toString();
@@ -231,8 +233,9 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     };
   }
 
+  @NotNull
   @Override
-  protected AbstractTreeUpdater createTreeUpdater(final AbstractTreeBuilder treeBuilder) {
+  protected AbstractTreeUpdater createTreeUpdater(@NotNull final AbstractTreeBuilder treeBuilder) {
     return new AbstractTreeUpdater(treeBuilder);
   }
 

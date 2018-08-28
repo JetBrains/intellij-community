@@ -329,7 +329,7 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
             }
 
             @Override
-            public void update(PresentationData presentation) {
+            public void update(@NotNull PresentationData presentation) {
             }
 
             @Override

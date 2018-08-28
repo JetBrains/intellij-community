@@ -82,7 +82,7 @@ public final class TodoPackageNode extends PackageElementNode implements Highlig
   }
 
   @Override
-  protected void update(PresentationData data) {
+  protected void update(@NotNull PresentationData data) {
     super.update(data);
     final PackageElement packageElement = getValue();
 

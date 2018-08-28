@@ -41,7 +41,7 @@ public class SingleFileToDoNode extends BaseToDoNode<PsiFile>{
   }
 
   @Override
-  public void update(PresentationData presentation) {
+  public void update(@NotNull PresentationData presentation) {
   }
 
   public Object getFileNode() {
