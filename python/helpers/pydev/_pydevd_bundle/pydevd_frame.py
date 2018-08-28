@@ -234,8 +234,6 @@ class PyDBFrame:
 
     def handle_exception(self, frame, event, arg):
         try:
-            print('handle_exception', frame.f_lineno, frame.f_code.co_name)
-
             # We have 3 things in arg: exception type, description, traceback object
             trace_obj = arg[2]
             main_debugger = self._args[0]
