@@ -6,100 +6,121 @@ import com.intellij.openapi.components.buildJsonSchema
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ReflectionUtil
-import org.jetbrains.io.JsonUtil
 
 @Suppress("JsonStandardCompliance")
 private const val ref = "\$ref"
 
-internal inline fun processConfigurationTypes(processor: (configurationType: ConfigurationType, propertyName: CharSequence, isLast: Boolean) -> Unit) {
+internal inline fun processConfigurationTypes(processor: (configurationType: ConfigurationType, propertyName: CharSequence) -> Unit) {
   val configurationTypes = ConfigurationType.CONFIGURATION_TYPE_EP.extensionList
-  val last = configurationTypes.lastOrNull() ?: return
   for (configurationType in configurationTypes) {
     val propertyName = rcTypeIdToPropertyName(configurationType) ?: continue
-    processor(configurationType, propertyName, configurationType === last)
+    processor(configurationType, propertyName)
   }
 }
 
-internal class RunConfigurationJsonSchemaGenerator(private val definitions: StringBuilder) {
-  fun generate(properties: StringBuilder) {
-    processConfigurationTypes { configurationType, propertyName, isLast ->
-      val definitionId = "${propertyName}RC"
-      val description = configurationType.configurationTypeDescription
-      val descriptionField: CharSequence = when {
-        StringUtil.equals(propertyName, description) -> ""
-        else -> {
-          val builder = StringBuilder()
-          builder.append('"').append("description").append('"').append(':')
-          JsonUtil.escape(description, builder)
-          builder.append(',')
-          builder
-        }
-      }
-      properties.append("""
-      "$propertyName": {
-        "type": [
-          "array",
-          "object"
-        ],
-        $descriptionField
-        "items": {
-          "$ref": "#/definitions/$definitionId"
-        },
-        "$ref": "#/definitions/$definitionId"
-      }
-      """.trimIndent())
-      if (!isLast) {
-        properties.append(',')
+internal class RunConfigurationJsonSchemaGenerator(private val definitions: JsonObjectBuilder) {
+  fun generate(properties: JsonObjectBuilder) {
+    processConfigurationTypes { type, typePropertyName ->
+      val definitionId = "${typePropertyName}RC"
+      val factories = type.configurationFactories
+      if (factories.isEmpty()) {
+        LOG.error("Configuration type \"${type.displayName}\" is not valid: factory list is empty")
       }
 
-      describeFactories(configurationType, definitionId)
+      val isMultiFactory = factories.size > 1
+      addPropertyForConfigurationType(properties, typePropertyName, isMultiFactory, type, definitionId)
+
+      if (isMultiFactory) {
+        definitions.map(definitionId) {
+          "type" to "object"
+
+          if (!StringUtil.equals(typePropertyName, type.configurationTypeDescription)) {
+            "description" toUnescaped type.configurationTypeDescription
+          }
+
+          map("properties") {
+            for (factory in factories) {
+              val factoryPropertyName = rcFactoryIdToPropertyName(factory) ?: continue
+              val factoryDefinitionId = "${factoryPropertyName}RCF"
+              addPropertyForFactory(factoryPropertyName, factory, factoryDefinitionId)
+              describeFactory(factory, factoryDefinitionId)
+            }
+          }
+        }
+      }
+      else {
+        describeFactory(factories.first(), definitionId)
+      }
     }
   }
 
-  private fun describeFactories(configurationType: ConfigurationType, definitionId: String) {
-    val factories = configurationType.configurationFactories
-    if (factories.isEmpty()) {
-      LOG.error("Configuration type \"${configurationType.displayName}\" is not valid: factory list is empty")
-    }
-
-    val rcProperties = StringBuilder()
-    if (factories.size > 1) {
-      for (factory in factories) {
-        rcProperties.append("""
-          "${rcFactoryIdToPropertyName(factory)}": {
-            "type": "object"
-          },
-        """.trimIndent())
-        // todo describe factory object with properties
+  private fun addPropertyForConfigurationType(properties: JsonObjectBuilder, typePropertyName: CharSequence, isMultiFactory: Boolean, type: ConfigurationType, definitionId: String) {
+    val description = type.configurationTypeDescription
+    properties.map(typePropertyName) {
+      if (isMultiFactory) {
+        "type" toRaw """["array", "object"]"""
       }
-      return
-    }
+      else {
+        "type" to "object"
+      }
 
-    val factory = factories[0]
+      if (!StringUtil.equals(typePropertyName, description)) {
+        "description" toUnescaped description
+      }
+
+      if (isMultiFactory) {
+        map("items") {
+          rawScalar(ref) {
+            append("#/definitions/")
+            append(definitionId)
+          }
+        }
+      }
+
+      rawScalar(ref) {
+        append("#/definitions/")
+        append(definitionId)
+      }
+    }
+  }
+
+  private fun JsonObjectBuilder.addPropertyForFactory(factoryPropertyName: CharSequence, factory: ConfigurationFactory, factoryDefinitionId: String) {
+    map(factoryPropertyName) {
+      "type" toRaw """["array", "object"]"""
+
+      if (!StringUtil.equals(factoryPropertyName, factory.name)) {
+        "description" toUnescaped factory.name
+      }
+
+      map("items") {
+        rawScalar(ref) {
+          append("#/definitions/")
+          append(factoryDefinitionId)
+        }
+      }
+      rawScalar(ref) {
+        append("#/definitions/")
+        append(factoryDefinitionId)
+      }
+    }
+  }
+
+  private fun describeFactory(factory: ConfigurationFactory, definitionId: String) {
     val optionsClass = factory.optionsClass
     if (optionsClass == null) {
       LOG.debug { "Configuration factory \"${factory.name}\" is not described because options class not defined" }
 
-      definitions.append("""
-      "$definitionId": {
-        "additionalProperties": true
-      },
-      """.trimIndent())
+      definitions.map(definitionId) {
+        "additionalProperties" to true
+      }
       return
     }
 
     val state = ReflectionUtil.newInstance(optionsClass)
-    val stateProperties = StringBuilder()
-    buildJsonSchema(state, stateProperties)
-
-    definitions.append("""
-    "$definitionId": {
-      "properties": {
-        ${stateProperties}
-      },
-      "additionalProperties": false
-    },
-    """.trimIndent())
+    definitions.map(definitionId) {
+      rawMap("properties") { buildJsonSchema(state, it) }
+    }
+    "additionalProperties" to false
   }
 }
 

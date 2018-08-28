@@ -2,8 +2,11 @@
 package com.intellij.configurationScript
 
 import com.intellij.json.JsonFileType
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
@@ -17,8 +20,20 @@ import java.nio.charset.StandardCharsets
 
 internal val LOG = logger<IntellijConfigurationJsonSchemaProviderFactory>()
 
+private fun projectManagerListener(file: MyLightVirtualFile): ProjectManagerListener {
+  return object : ProjectManagerListener {
+    override fun projectClosed(project: Project) {
+      file.clearUserData()
+    }
+  }
+}
+
 internal class IntellijConfigurationJsonSchemaProviderFactory : JsonSchemaProviderFactory, JsonSchemaFileProvider {
-  private val schemeFile: VirtualFile by lazy { generateConfigurationSchema() }
+  private val schemeFile: VirtualFile by lazy {
+    val file = generateConfigurationSchemaFile()
+    ApplicationManager.getApplication().messageBus.connect().subscribe(ProjectManager.TOPIC, projectManagerListener(file))
+    file
+  }
 
   override fun getProviders(project: Project) = listOf(this)
 
@@ -35,7 +50,7 @@ internal class IntellijConfigurationJsonSchemaProviderFactory : JsonSchemaProvid
     }
     else {
       // simplify development - ability to apply changes on hotswap
-      return generateConfigurationSchema()
+      return generateConfigurationSchemaFile()
     }
   }
 
@@ -44,7 +59,17 @@ internal class IntellijConfigurationJsonSchemaProviderFactory : JsonSchemaProvid
   override fun getSchemaVersion() = JsonSchemaVersion.SCHEMA_7
 }
 
-private fun generateConfigurationSchema(): LightVirtualFile {
+private fun generateConfigurationSchemaFile(): MyLightVirtualFile {
+  return MyLightVirtualFile(generateConfigurationSchema())
+}
+
+private class MyLightVirtualFile(data: CharSequence) : LightVirtualFile("scheme.json", JsonFileType.INSTANCE, data, StandardCharsets.UTF_8, 0) {
+  override public fun clearUserData() {
+    super.clearUserData()
+  }
+}
+
+internal fun generateConfigurationSchema(): CharSequence {
   // fake vars to avoid escaping
   @Suppress("JsonStandardCompliance")
   val schema = "\$schema"
@@ -53,26 +78,28 @@ private fun generateConfigurationSchema(): LightVirtualFile {
   @Suppress("JsonStandardCompliance")
   val ref = "\$ref"
 
-  val runConfigurationsProperties = StringBuilder()
-  val definitions = StringBuilder()
-  RunConfigurationJsonSchemaGenerator(definitions).generate(runConfigurationsProperties)
+  val defBuilder = StringBuilder()
+  val definitions = JsonObjectBuilder(defBuilder)
 
+  val rcProperties = JsonObjectBuilder(StringBuilder())
+  RunConfigurationJsonSchemaGenerator(definitions).generate(rcProperties)
+
+  definitions.map("RunConfigurations") {
+    rawBuilder("properties", rcProperties)
+    "additionalProperties" to false
+  }
+
+  @Suppress("UnnecessaryVariable")
   @Language("JSON")
   val data = """
   {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "https://jetbrains.com/intellij-configuration.schema.json",
     "title": "IntelliJ Configuration",
-    "description": "IntelliJ Configuration File to configure IDE behavior, run configurations and so on",
+    "description": "IntelliJ Configuration to configure IDE behavior, run configurations and so on",
     "type": "object",
     "definitions": {
-      $definitions
-      "RunConfigurations": {
-        "properties": {
-          $runConfigurationsProperties
-        },
-        "additionalProperties": false
-      }
+      $defBuilder
     },
     "properties": {
       "${Keys.runConfigurations}": {
@@ -84,7 +111,7 @@ private fun generateConfigurationSchema(): LightVirtualFile {
     "additionalProperties": false
   }
   """
-  return LightVirtualFile("scheme.json", JsonFileType.INSTANCE, data.trimIndent(), StandardCharsets.UTF_8, 0)
+  return data
 }
 
 @Suppress("JsonStandardCompliance")

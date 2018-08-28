@@ -1,10 +1,12 @@
 package com.intellij.configurationScript
 
+import com.google.gson.Gson
 import com.intellij.execution.application.ApplicationConfigurationOptions
 import com.intellij.execution.configurations.ConfigurationTypeBase
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.SmartList
+import com.intellij.util.text.CharSequenceReader
 import org.intellij.lang.annotations.Language
 import org.junit.ClassRule
 import org.junit.Test
@@ -15,6 +17,14 @@ class ConfigurationFileTest {
     @JvmField
     @ClassRule
     val projectRule = ProjectRule()
+  }
+
+  @Test
+  fun schema() {
+    // check that parseable
+    val schema = generateConfigurationSchema()
+    val jsonReader = Gson().fromJson(CharSequenceReader(schema), Any::class.java)
+    assertThat(jsonReader).isNotNull
   }
 
   @Test
