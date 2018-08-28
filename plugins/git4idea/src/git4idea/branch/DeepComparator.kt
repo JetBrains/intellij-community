@@ -62,7 +62,7 @@ class DeepComparator(private val project: Project,
 
   fun highlightInBackground(branchToCompare: String) {
     if (task != null) {
-      LOG.error("Shouldn't be possible")
+      LOG.error("$task is already in progress")
       return
     }
 
@@ -255,6 +255,10 @@ class DeepComparator(private val project: Project,
       }
       Git.getInstance().runCommandWithoutCollectingOutput(handler)
       return pickedCommits
+    }
+
+    override fun toString(): String {
+      return "Task for '$comparedBranch' in $repositoriesWithCurrentBranches${if (isCancelled) " (cancelled)" else ""})"
     }
   }
 
