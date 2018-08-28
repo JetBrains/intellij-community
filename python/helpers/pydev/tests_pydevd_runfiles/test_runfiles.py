@@ -1,6 +1,6 @@
 import os.path
 import sys
-from tests_python.test_debugger import IS_PY26
+from tests_pydevd_python.test_debugger import IS_PY26
 
 IS_JYTHON = sys.platform.find('java') != -1
 
@@ -77,7 +77,7 @@ class RunfilesTest(unittest.TestCase):
         self.filtered_tests = self.MyTestRunner.filter_tests(self.all_tests)
 
     def setUp(self):
-        self.file_dir = [os.path.abspath(os.path.join(desired_runfiles_path, 'tests_runfiles/samples'))]
+        self.file_dir = [os.path.abspath(os.path.join(desired_runfiles_path, 'tests_pydevd_runfiles/samples'))]
         self._setup_scenario(self.file_dir, None)
 
 

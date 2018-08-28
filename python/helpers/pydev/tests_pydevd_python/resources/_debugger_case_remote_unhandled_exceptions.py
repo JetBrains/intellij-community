@@ -11,5 +11,5 @@ if __name__ == '__main__':
     print('before pydevd.settrace')
     pydevd.settrace(port=port)
     print('after pydevd.settrace')
-    print('TEST SUCEEDED!')
+    raise ValueError('TEST SUCEEDED!')
     
