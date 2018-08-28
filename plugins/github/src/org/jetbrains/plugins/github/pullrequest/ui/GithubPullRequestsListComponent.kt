@@ -7,7 +7,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -23,6 +22,7 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsLoader
+import org.jetbrains.plugins.github.pullrequest.data.SingleWorkerProcessExecutor
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchComponent
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchModel
 import java.util.*
@@ -36,7 +36,7 @@ class GithubPullRequestsListComponent(project: Project,
                                       autoPopupController: AutoPopupController,
                                       popupFactory: JBPopupFactory,
                                       private val loader: GithubPullRequestsLoader)
-  : BorderLayoutPanel(), Disposable, GithubPullRequestsLoader.StateListener {
+  : BorderLayoutPanel(), Disposable, GithubPullRequestsLoader.PullRequestsLoadingListener, SingleWorkerProcessExecutor.ProcessStateListener {
 
   private val tableModel = GithubPullRequestsTableModel()
   private val table = GithubPullRequestsTable(tableModel)
@@ -57,7 +57,8 @@ class GithubPullRequestsListComponent(project: Project,
   private val selectionEventDispatcher = EventDispatcher.create(PullRequestSelectionListener::class.java)
 
   init {
-    loader.addStateListener(this, this)
+    loader.addProcessListener(this, this)
+    loader.addLoadingListener(this, this)
 
     searchModel.addListener(object : GithubPullRequestSearchModel.StateListener {
       override fun queryChanged() {
@@ -122,38 +123,32 @@ class GithubPullRequestsListComponent(project: Project,
     return true
   }
 
-  override fun loadingStarted() {
-    invokeAndWaitIfNeed {
-      table.emptyText.text = "Loading pull requests..."
-      errorPanel.setError(null)
-      progressStripe.startLoading()
-    }
+  override fun processStarted() {
+    table.emptyText.text = "Loading pull requests..."
+    errorPanel.setError(null)
+    progressStripe.startLoading()
   }
 
-  override fun loadingStopped() {
-    invokeAndWaitIfNeed {
-      progressStripe.stopLoading()
-    }
+  override fun processFinished() {
+    progressStripe.stopLoading()
   }
 
   override fun moreDataLoaded(data: List<GithubSearchedIssue>, hasNext: Boolean) {
-    invokeAndWaitIfNeed {
-      if (searchModel.query.isEmpty()) {
-        table.emptyText.text = "No pull requests loaded."
-      }
-      else {
-        table.emptyText.text = "No pull requests matching filters."
-        table.emptyText.appendSecondaryText("Reset Filters", SimpleTextAttributes.LINK_ATTRIBUTES) {
-          resetSearch()
-        }
-      }
-      loadOnScrollThreshold = hasNext
-      tableModel.addItems(data)
-
-      //otherwise scrollbar will have old values (before data insert)
-      scrollPane.viewport.validate()
-      potentiallyLoadMore()
+    if (searchModel.query.isEmpty()) {
+      table.emptyText.text = "No pull requests loaded."
     }
+    else {
+      table.emptyText.text = "No pull requests matching filters."
+      table.emptyText.appendSecondaryText("Reset Filters", SimpleTextAttributes.LINK_ATTRIBUTES) {
+        resetSearch()
+      }
+    }
+    loadOnScrollThreshold = hasNext
+    tableModel.addItems(data)
+
+    //otherwise scrollbar will have old values (before data insert)
+    scrollPane.viewport.validate()
+    potentiallyLoadMore()
   }
 
   private fun resetSearch() {
@@ -161,25 +156,21 @@ class GithubPullRequestsListComponent(project: Project,
   }
 
   override fun loaderReset() {
-    invokeAndWaitIfNeed {
-      loadOnScrollThreshold = false
-      tableModel.clear()
-      loader.requestLoadMore()
-    }
+    loadOnScrollThreshold = false
+    tableModel.clear()
+    loader.requestLoadMore()
   }
 
   override fun loadingErrorOccurred(error: Throwable) {
-    invokeAndWaitIfNeed {
-      loadOnScrollThreshold = false
-      val prefix = if (table.isEmpty) "Cannot load pull requests." else "Cannot load full pull requests list."
-      table.emptyText.clear().appendText(prefix, SimpleTextAttributes.ERROR_ATTRIBUTES)
-        .appendSecondaryText(getLoadingErrorText(error), SimpleTextAttributes.ERROR_ATTRIBUTES, null)
-        .appendSecondaryText("Retry", SimpleTextAttributes.LINK_ATTRIBUTES) { loadMore() }
-      if (!table.isEmpty) {
-        //language=HTML
-        val errorText = "<html><body>$prefix ${getLoadingErrorText(error)}<a href=''>Retry</a></body></html>"
-        errorPanel.setError(errorText, linkActivationListener = { loadMore() })
-      }
+    loadOnScrollThreshold = false
+    val prefix = if (table.isEmpty) "Cannot load pull requests." else "Cannot load full pull requests list."
+    table.emptyText.clear().appendText(prefix, SimpleTextAttributes.ERROR_ATTRIBUTES)
+      .appendSecondaryText(getLoadingErrorText(error), SimpleTextAttributes.ERROR_ATTRIBUTES, null)
+      .appendSecondaryText("Retry", SimpleTextAttributes.LINK_ATTRIBUTES) { loadMore() }
+    if (!table.isEmpty) {
+      //language=HTML
+      val errorText = "<html><body>$prefix ${getLoadingErrorText(error)}<a href=''>Retry</a></body></html>"
+      errorPanel.setError(errorText, linkActivationListener = { loadMore() })
     }
   }
 
