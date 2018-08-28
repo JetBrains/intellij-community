@@ -163,7 +163,12 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
         return RunnerMediator.destroyProcess(myProcess, true);
       }
       if (myShouldKillProcessSoftlyWithWinP) {
-        return new WinProcess(myProcess).sendCtrlC();
+        try {
+          return new WinProcess(myProcess).sendCtrlC();
+        }
+        catch (Exception e) {
+          LOG.warn("Failed to send Ctrl+C, fallback to default termination: " + getCommandLine(), e);
+        }
       }
     }
     else if (SystemInfo.isUnix) {
