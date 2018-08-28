@@ -4,7 +4,7 @@ package com.intellij.codeInsight.navigation.actions
 import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.findAllTargets
 import com.intellij.codeInsight.hint.HintManager
-import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction.underModalProgress
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction.*
 import com.intellij.codeInsight.navigation.chooseTarget
 import com.intellij.concurrency.UnconfinedEdt
 import com.intellij.featureStatistics.FeatureUsageTracker
@@ -38,7 +38,7 @@ object GotoDeclarationActionHandler : CodeInsightActionHandler {
     }
 
     if (targets.isEmpty()) {
-      if (tryFindUsages()) return
+      if (tryFindUsages(project, editor)) return
       notifyCantGoAnywhere(project, editor, file)
       return
     }
@@ -48,7 +48,13 @@ object GotoDeclarationActionHandler : CodeInsightActionHandler {
     }
   }
 
-  private fun tryFindUsages(): Boolean = TODO()
+  private fun tryFindUsages(project: Project, editor: Editor): Boolean {
+    // TODO symbol based implementation
+    return startFindUsages(
+      editor, project,
+      findElementToShowUsagesOf(editor, editor.caretModel.offset)
+    )
+  }
 
   private fun notifyCantGoAnywhere(project: Project, editor: Editor, file: PsiFile) {
     //disable 'no declaration found' notification for keywords

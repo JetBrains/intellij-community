@@ -135,7 +135,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     }
   }
 
-  private static boolean startFindUsages(@NotNull Editor editor, @NotNull Project project, PsiElement element) {
+  static boolean startFindUsages(@NotNull Editor editor, @NotNull Project project, PsiElement element) {
     if (element == null) {
       return false;
     }
