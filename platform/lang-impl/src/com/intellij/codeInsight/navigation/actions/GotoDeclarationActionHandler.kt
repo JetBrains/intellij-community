@@ -2,10 +2,14 @@
 package com.intellij.codeInsight.navigation.actions
 
 import com.intellij.codeInsight.CodeInsightActionHandler
+import com.intellij.codeInsight.findAllTargets
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction.underModalProgress
+import com.intellij.codeInsight.navigation.chooseTarget
+import com.intellij.concurrency.UnconfinedEdt
 import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.lang.LanguageNamesValidation
+import com.intellij.navigation.NavigationTarget
 import com.intellij.openapi.command.runCommand
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -15,8 +19,7 @@ import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiFile
-
-private typealias Target = Navigatable
+import kotlinx.coroutines.experimental.launch
 
 object GotoDeclarationActionHandler : CodeInsightActionHandler {
 
@@ -26,7 +29,7 @@ object GotoDeclarationActionHandler : CodeInsightActionHandler {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.symbol.declaration")
     val targets = try {
       underModalProgress(project, "Resolving Reference...") {
-        listOfTargets()
+        findAllTargets(project, editor, file)
       }
     }
     catch (e: IndexNotReadyException) {
@@ -35,19 +38,15 @@ object GotoDeclarationActionHandler : CodeInsightActionHandler {
     }
 
     if (targets.isEmpty()) {
-      if (!tryFindUsages()) {
-        notifyCantGoAnywhere(project, editor, file)
-      }
+      if (tryFindUsages()) return
+      notifyCantGoAnywhere(project, editor, file)
+      return
     }
-    else {
-      val target = chooseTarget(targets) ?: return
-      if (!navigateInCurrentEditor(project, editor, file, target)) {
-        target.goIfCan()
-      }
+    else launch(UnconfinedEdt) {
+      val target = chooseTarget(project, editor, targets.toList())
+      gotoTarget(project, editor, file, target)
     }
   }
-
-  private fun listOfTargets(): List<Target> = TODO()
 
   private fun tryFindUsages(): Boolean = TODO()
 
@@ -61,20 +60,22 @@ object GotoDeclarationActionHandler : CodeInsightActionHandler {
     HintManager.getInstance().showErrorHint(editor, "Cannot find declaration to go to")
   }
 
-  private fun chooseTarget(targets: List<Target>): Target? = TODO()
+  private fun gotoTarget(project: Project, editor: Editor, file: PsiFile, target: NavigationTarget) {
+    val navigatable = target.navigatable ?: return
+    if (navigateInCurrentEditor(project, editor, file, navigatable)) {
+      return
+    }
+    if (navigatable.canNavigate()) {
+      navigatable.navigate(true)
+    }
+  }
 
-  private fun navigateInCurrentEditor(project: Project, editor: Editor, file: PsiFile, target: Target): Boolean {
+  private fun navigateInCurrentEditor(project: Project, editor: Editor, file: PsiFile, target: Navigatable): Boolean {
     if (editor.isDisposed || target !is OpenFileDescriptor || target.file != file.virtualFile) return false
     runCommand {
       IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation()
       target.navigateIn(editor)
     }
     return true
-  }
-
-  private fun Target.goIfCan() {
-    if (canNavigate()) {
-      navigate(true)
-    }
   }
 }
