@@ -3,7 +3,7 @@
  */
 package com.intellij.spellchecker.engine;
 
-import com.google.common.collect.*;
+import com.google.common.collect.MinMaxPriorityQueue;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -145,13 +145,17 @@ public class BaseSpellChecker implements SpellCheckerEngine {
 
   @Override
   public boolean isCorrect(@NotNull String word) {
+    return isCorrect(word, false);
+  }
+
+  public boolean isCorrect(@NotNull String word, boolean strictly) {
     final String transformed = transform.transform(word);
     if (myLoadingDictionaries.get() || transformed == null) {
       return true;
     }
     int bundled = isCorrect(transformed, bundledDictionaries);
     int user = isCorrect(transformed, dictionaries);
-    return bundled == 0 || user == 0 || bundled > 0 && user > 0;
+    return bundled == 0 || user == 0 || (!strictly && bundled > 0 && user > 0);
   }
 
   @Override
