@@ -7,18 +7,21 @@ import com.intellij.projectImport.ProjectOpenProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.EnumSet;
-
 /**
- * Handles requests to open a project from the command line. This interface needs to be implemented by extensions registered
+ * Handles requests to open a non-project file from the command line. This interface needs to be implemented by extensions registered
  * in {@link ProjectOpenProcessor#EXTENSION_POINT_NAME} extension point.
  */
 public interface CommandLineProjectOpenProcessor {
+  /**
+   * Opens a non-project file in a new project window.
+   *
+   * @param file the file to open
+   * @param line the line to navigate to
+   * @param tempProject if true, always opens the file in a new temporary project. If false, searches the parent directories of the file
+   *                    for a .idea subdirectory, and if found, opens that directory.
+   */
   @Nullable
-  Project doOpenProject(@NotNull VirtualFile file,
-                        @Nullable Project projectToClose,
-                        int line,
-                        @NotNull EnumSet<PlatformProjectOpenProcessor.Option> options);
+  Project openProjectAndFile(@NotNull VirtualFile file, int line, boolean tempProject);
 
   static CommandLineProjectOpenProcessor getInstance() {
     for (ProjectOpenProcessor extension : ProjectOpenProcessor.EXTENSION_POINT_NAME.getExtensions()) {
