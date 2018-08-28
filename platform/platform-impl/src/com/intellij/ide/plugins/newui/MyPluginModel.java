@@ -219,8 +219,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
         listComponent.showProgress();
       }
     }
-    if (detailPanel != null) {
-      assert detailPanel.myPlugin == descriptor;
+    if (detailPanel != null && detailPanel.myPlugin == descriptor) {
       detailPanel.showProgress();
     }
 
@@ -246,8 +245,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
         listComponent.hideProgress(success);
       }
     }
-    if (detailPanel != null) {
-      assert detailPanel.myPlugin == descriptor;
+    if (detailPanel != null && detailPanel.myPlugin == descriptor) {
       detailPanel.hideProgress(success);
     }
 
