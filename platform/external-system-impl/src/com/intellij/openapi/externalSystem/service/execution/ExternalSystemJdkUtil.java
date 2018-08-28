@@ -167,7 +167,7 @@ public class ExternalSystemJdkUtil {
   private static Sdk getInternalJdk() {
     ProjectJdkTable projectJdkTable = ProjectJdkTable.getInstance();
     if (projectJdkTable instanceof JavaAwareProjectJdkTableImpl) {
-      return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+      return ((JavaAwareProjectJdkTableImpl)projectJdkTable).getInternalJdk();
     }
     else {
       final String jdkHome = SystemProperties.getJavaHome();
