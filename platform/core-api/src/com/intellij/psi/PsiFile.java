@@ -2,9 +2,13 @@
 package com.intellij.psi;
 
 import com.intellij.lang.FileASTNode;
+import com.intellij.model.SymbolReference;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * A PSI element representing a file.
@@ -100,5 +104,21 @@ public interface PsiFile extends PsiFileSystemItem {
    */
   default void clearCaches() {
 
+  }
+
+  /**
+   * Finds references at the specified offset from the start of the file:<br/>
+   * - references are not expected to have same ranges;<br/>
+   * - references are not expected to be backed by same elements;<br/>
+   * - references ranges must contain specified offset.<br/>
+   *
+   * @param offset the absolute (i.e. relative to the file) offset for which the reference is requested
+   * @return read-only unordered collection of references at the offset, or empty list if none are found
+   */
+  @NotNull
+  default Collection<? extends SymbolReference> findAllReferencesAt(int offset) {
+    PsiReference referenceAt = findReferenceAt(offset);
+    if (referenceAt == null) return Collections.emptyList();
+    return Collections.singletonList(referenceAt);
   }
 }
