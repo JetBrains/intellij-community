@@ -43,7 +43,7 @@ import java.util.EnumSet;
 /**
  * @author max
  */
-public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
+public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implements CommandLineProjectOpenProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.platform.PlatformProjectOpenProcessor");
 
   public enum Option {
@@ -90,6 +90,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     return doOpenProject(virtualFile, projectToClose, -1, null, options);
   }
 
+  @Override
   @Nullable
   public Project doOpenProject(@NotNull VirtualFile file, @Nullable Project projectToClose, int line, @NotNull EnumSet<Option> options) {
     return doOpenProject(file, projectToClose, line, null, options);

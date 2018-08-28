@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.platform.CommandLineProjectOpenProcessor;
 import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectOpenProcessor;
@@ -64,7 +65,7 @@ public class CommandLineProcessor {
         options.add(PlatformProjectOpenProcessor.Option.TEMP_PROJECT);
         options.add(PlatformProjectOpenProcessor.Option.FORCE_NEW_FRAME);
       }
-      Project project = PlatformProjectOpenProcessor.getInstance().doOpenProject(file, null, line, options);
+      Project project = CommandLineProjectOpenProcessor.getInstance().doOpenProject(file, null, line, options);
       if (project == null) {
         Messages.showErrorDialog("No project found to open file in", "Cannot Open File");
       }
