@@ -24,11 +24,17 @@ public interface CommandLineProjectOpenProcessor {
   Project openProjectAndFile(@NotNull VirtualFile file, int line, boolean tempProject);
 
   static CommandLineProjectOpenProcessor getInstance() {
+    CommandLineProjectOpenProcessor extension = getInstanceIfExists();
+    return extension != null ? extension : PlatformProjectOpenProcessor.getInstance();
+  }
+
+  @Nullable
+  static CommandLineProjectOpenProcessor getInstanceIfExists() {
     for (ProjectOpenProcessor extension : ProjectOpenProcessor.EXTENSION_POINT_NAME.getExtensions()) {
       if (extension instanceof CommandLineProjectOpenProcessor) {
         return (CommandLineProjectOpenProcessor)extension;
       }
     }
-    return PlatformProjectOpenProcessor.getInstance();
+    return null;
   }
 }
