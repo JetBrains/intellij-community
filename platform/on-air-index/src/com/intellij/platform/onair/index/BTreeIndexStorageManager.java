@@ -201,6 +201,7 @@ public class BTreeIndexStorageManager implements IndexStorageManager {
   }
 
   public BTree save(final FSRecords fs) {
+    // TODO: apply localToRemote mapping to ensure structural sharing with already published tree
     final BTree tree = BTree.create(indexNovelty, storage, 8);
     for (final FSRecords.NameId root : fs.listRootsWithLock()) {
       addChild(tree, Integer.MIN_VALUE, root.id, root.name);
