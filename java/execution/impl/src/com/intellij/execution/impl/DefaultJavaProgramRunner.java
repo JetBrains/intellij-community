@@ -4,7 +4,7 @@ package com.intellij.execution.impl;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.impl.attach.JavaDebuggerAttachUtil;
-import com.intellij.debugger.impl.attach.SAPidRemoteConnection;
+import com.intellij.debugger.impl.attach.PidRemoteConnection;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -256,8 +256,8 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
           void processEvent(@NotNull XDebugProcess debugProcess, boolean started) {
             if (debugProcess instanceof JavaDebugProcess) {
               RemoteConnection connection = ((JavaDebugProcess)debugProcess).getDebuggerSession().getProcess().getConnection();
-              if (connection instanceof SAPidRemoteConnection) {
-                if (((SAPidRemoteConnection)connection).getPid()
+              if (connection instanceof PidRemoteConnection) {
+                if (((PidRemoteConnection)connection).getPid()
                   .equals(String.valueOf(OSProcessUtil.getProcessID(myProcessHandler.getProcess())))) {
                   myAttached.set(started);
                 }

@@ -2,10 +2,8 @@
 package com.intellij.debugger.impl.attach;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.util.SystemProperties;
 import com.sun.jdi.connect.AttachingConnector;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,26 +16,20 @@ import java.net.URLClassLoader;
 /**
  * @author egor
  */
-public class SAPidRemoteConnection extends RemoteConnection {
-  @NonNls private static final String SA_PID_ATTACHING_CONNECTOR_NAME = "sun.jvm.hotspot.jdi.SAPIDAttachingConnector";
+public class SAPidRemoteConnection extends PidRemoteConnection {
   private static ClassLoader BASE_SA_JDI_CLASS_LOADER;
 
-  private final String myPid;
   private final String mySAJarPath;
 
   public SAPidRemoteConnection(String pid, String saJarPath) {
-    super(false, null, null, false);
-    myPid = pid;
+    super(pid);
     mySAJarPath = saJarPath;
   }
 
-  public String getPid() {
-    return myPid;
-  }
-
+  @Override
   public AttachingConnector getConnector() throws ExecutionException {
     try {
-      Class<?> connectorClass = Class.forName(SA_PID_ATTACHING_CONNECTOR_NAME,
+      Class<?> connectorClass = Class.forName("sun.jvm.hotspot.jdi.SAPIDAttachingConnector",
                                               true,
                                               new JBSAJDIClassLoader(getBaseSAJDIClassLoader(mySAJarPath), mySAJarPath));
       return (AttachingConnector)connectorClass.newInstance();
