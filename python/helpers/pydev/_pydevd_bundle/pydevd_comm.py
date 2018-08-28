@@ -79,7 +79,7 @@ try:
     from urllib import quote_plus, unquote, unquote_plus
 except:
     from urllib.parse import quote_plus, unquote, unquote_plus  #@Reimport @UnresolvedImport
-    
+
 if IS_IRONPYTHON:
     # redefine `unquote` for IronPython, since we use it only for logging messages, but it leads to SOF with IronPython
     def unquote(s):
@@ -96,6 +96,7 @@ import os
 import sys
 import traceback
 from _pydevd_bundle.pydevd_utils import quote_smart as quote, compare_object_attrs_key, to_string
+from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
 from _pydev_bundle import pydev_log
 from _pydev_bundle import _pydev_completer
 
@@ -146,7 +147,6 @@ CMD_REMOVE_DJANGO_EXCEPTION_BREAK = 126
 CMD_SET_NEXT_STATEMENT = 127
 CMD_SMART_STEP_INTO = 128
 CMD_EXIT = 129
-
 CMD_SIGNATURE_CALL_TRACE = 130
 
 CMD_SET_PY_EXCEPTION = 131
@@ -193,6 +193,7 @@ CMD_SET_PROJECT_ROOTS = 202
 
 CMD_VERSION = 501
 CMD_RETURN = 502
+CMD_SET_PROTOCOL = 503
 CMD_ERROR = 901
 
 ID_TO_MEANING = {
@@ -225,7 +226,6 @@ ID_TO_MEANING = {
     '127': 'CMD_SET_NEXT_STATEMENT',
     '128': 'CMD_SMART_STEP_INTO',
     '129': 'CMD_EXIT',
-    
     '130': 'CMD_SIGNATURE_CALL_TRACE',
 
     '131': 'CMD_SET_PY_EXCEPTION',
@@ -262,8 +262,9 @@ ID_TO_MEANING = {
 
     '501': 'CMD_VERSION',
     '502': 'CMD_RETURN',
+    '503': 'CMD_SET_PROTOCOL',
     '901': 'CMD_ERROR',
-    }
+}
 
 MAX_IO_MSG_SIZE = 1000  #if the io is too big, we'll not send all (could make the debugger too non-responsive)
 #this number can be changed if there's need to do so
@@ -463,16 +464,11 @@ class WriterThread(PyDBDaemonThread):
         """ just loop and write responses """
 
         self._stop_trace()
-        get_has_timeout = sys.hexversion >= 0x02030000 # 2.3 onwards have it.
         try:
             while True:
                 try:
                     try:
-                        if get_has_timeout:
-                            cmd = self.cmdQueue.get(1, 0.1)
-                        else:
-                            time.sleep(.01)
-                            cmd = self.cmdQueue.get(0)
+                        cmd = self.cmdQueue.get(1, 0.1)
                     except _queue.Empty:
                         if self.killReceived:
                             try:
@@ -489,21 +485,8 @@ class WriterThread(PyDBDaemonThread):
                     #when liberating the thread here, we could have errors because we were shutting down
                     #but the thread was still not liberated
                     return
-                out = cmd.outgoing
+                cmd.send(self.sock)
 
-                if DebugInfoHolder.DEBUG_TRACE_LEVEL >= 1:
-                    out_message = 'sending cmd --> '
-                    out_message += "%20s" % ID_TO_MEANING.get(out[:3], 'UNKNOWN')
-                    out_message += ' '
-                    out_message += unquote(unquote(out)).replace('\n', ' ')
-                    try:
-                        sys.stderr.write('%s\n' % (out_message,))
-                    except:
-                        pass
-
-                if IS_PY3K:
-                    out = bytearray(out, 'utf-8')
-                self.sock.send(out) #TODO: this does not guarantee that all message are sent (and jython does not have a send all)
                 if cmd.id == CMD_EXIT:
                     break
                 if time is None:
@@ -551,7 +534,6 @@ def start_server(port):
         sys.stderr.write("Could not bind to port: %s\n" % (port,))
         sys.stderr.flush()
         traceback.print_exc()
-        sys.exit(1) #TODO: is it safe?
 
 #=======================================================================================================================
 # start_client
@@ -603,18 +585,85 @@ class NetCommand:
     """
     next_seq = 0 # sequence numbers
 
-    def __init__(self, id, seq, text):
-        """ smart handling of parameters
-        if sequence is 0, new sequence will be generated
-        if text has carriage returns they'll be replaced"""
-        self.id = id
+    # Protocol where each line is a new message (text is quoted to prevent new lines).
+    QUOTED_LINE_PROTOCOL = 'quoted-line'
+
+    # Uses http protocol to provide a new message.
+    # i.e.: Content-Length:xxx\r\n\r\npayload
+    HTTP_PROTOCOL = 'http'
+
+    protocol = QUOTED_LINE_PROTOCOL
+
+    _showing_debug_info = 0
+    _show_debug_info_lock = threading.RLock()
+
+    def __init__(self, cmd_id, seq, text):
+        """
+        If sequence is 0, new sequence will be generated (otherwise, this was the response
+        to a command from the client).
+        """
+        self.id = cmd_id
         if seq == 0:
             NetCommand.next_seq += 2
             seq = NetCommand.next_seq
         self.seq = seq
-        self.text = text
-        encoded = quote(to_string(text), '/<>_=" \t')
-        self.outgoing = '%s\t%s\t%s\n' % (id, seq, encoded)
+
+        if IS_PY2:
+            if isinstance(text, unicode):
+                text = text.encode('utf-8')
+        else:
+            assert isinstance(text, str)
+
+        if DebugInfoHolder.DEBUG_TRACE_LEVEL >= 1:
+            self._show_debug_info(cmd_id, seq, text)
+
+        if self.protocol == self.HTTP_PROTOCOL:
+            msg = '%s\t%s\t%s\n' % (cmd_id, seq, text)
+        else:
+            encoded = quote(to_string(text), '/<>_=" \t')
+            msg = '%s\t%s\t%s\n' % (cmd_id, seq, encoded)
+
+
+        if IS_PY2:
+            assert isinstance(msg, str)  # i.e.: bytes
+            as_bytes = msg
+        else:
+            if isinstance(msg, str):
+                msg = msg.encode('utf-8')
+
+            assert isinstance(msg, bytes)
+            as_bytes = msg
+        self._as_bytes = as_bytes
+
+    def send(self, sock):
+        as_bytes = self._as_bytes
+        if self.protocol == self.HTTP_PROTOCOL:
+            sock.sendall(('Content-Length: %s\r\n\r\n' % len(as_bytes)).encode('ascii'))
+
+        sock.sendall(as_bytes)
+
+    @classmethod
+    def _show_debug_info(cls, cmd_id, seq, text):
+        with cls._show_debug_info_lock:
+            # Only one thread each time (rlock).
+            if cls._showing_debug_info:
+                # avoid recursing in the same thread (just printing could create
+                # a new command when redirecting output).
+                return
+
+            cls._showing_debug_info += 1
+            try:
+                out_message = 'sending cmd --> '
+                out_message += "%20s" % ID_TO_MEANING.get(str(cmd_id), 'UNKNOWN')
+                out_message += ' '
+                out_message += text.replace('\n', ' ')
+                try:
+                    sys.stderr.write('%s\n' % (out_message,))
+                except:
+                    pass
+            finally:
+                cls._showing_debug_info -= 1
+
 
 #=======================================================================================================================
 # NetCommandFactory
@@ -632,6 +681,9 @@ class NetCommandFactory:
         if DebugInfoHolder.DEBUG_TRACE_LEVEL > 2:
             sys.stderr.write("Error: %s" % (text,))
         return cmd
+
+    def make_protocol_set_message(self, seq):
+        return NetCommand(CMD_SET_PROTOCOL, seq, '')
 
     def make_thread_created_message(self, thread):
         cmdText = "<xml>" + self._thread_to_xml(thread) + "</xml>"
@@ -656,13 +708,9 @@ class NetCommandFactory:
     def make_list_threads_message(self, seq):
         """ returns thread listing as XML """
         try:
-            t = threading.enumerate()
             threads = threading.enumerate()
             cmd_text = ["<xml>"]
             append = cmd_text.append
-            for i in t:
-                if is_thread_alive(i):
-                    append(self._thread_to_xml(i))
             for thread in threads:
                 if is_thread_alive(thread) and not getattr(thread, 'is_pydev_daemon_thread', False):
                     append(self._thread_to_xml(thread))
@@ -778,17 +826,17 @@ class NetCommandFactory:
         return ''.join(cmd_text_list)
 
     def make_thread_suspend_str(
-        self,
-        thread_id,
-        frame,
-        stop_reason=None,
-        message=None,
-        suspend_type="trace",
-        ):
+            self,
+            thread_id,
+            frame,
+            stop_reason=None,
+            message=None,
+            suspend_type="trace",
+    ):
         """
         :return tuple(str,str):
             Returns tuple(thread_suspended_str, thread_stack_str).
-            
+
             i.e.:
             (
                 '''
@@ -830,7 +878,7 @@ class NetCommandFactory:
 
     def make_thread_suspend_message(self, thread_id, frame, stop_reason, message, suspend_type):
         try:
-            
+
             thread_suspend_str, thread_stack_str = self.make_thread_suspend_str(
                 thread_id, frame, stop_reason, message, suspend_type)
             cmd = NetCommand(CMD_THREAD_SUSPEND, 0, thread_suspend_str)
@@ -1179,9 +1227,9 @@ class InternalGetVariable(InternalThreadCommand):
             if val_dict is None:
                 val_dict = {}
 
-            keys = dict_keys(val_dict)
             # assume properly ordered if resolver returns 'OrderedDict'
             # check type as string to support OrderedDict backport for older Python
+            keys = dict_keys(val_dict)
             if not (_typeName == "OrderedDict" or val_dict.__class__.__name__ == "OrderedDict" or IS_PY36_OR_GREATER):
                 keys.sort(key=compare_object_attrs_key)
 
@@ -1452,7 +1500,7 @@ class InternalGetBreakpointException(InternalThreadCommand):
                     filename = filename.decode(file_system_encoding).encode("utf-8")
 
                 callstack += '<frame thread_id = "%s" file="%s" line="%s" name="%s" obj="%s" />' \
-                                    % (self.thread_id, makeValid(filename), line, makeValid(methodname), makeValid(methodobj))
+                             % (self.thread_id, makeValid(filename), line, makeValid(methodname), makeValid(methodobj))
             callstack += "</xml>"
 
             cmd = dbg.cmd_factory.make_send_breakpoint_exception_message(self.sequence, self.exc_type + "\t" + callstack)
@@ -1545,7 +1593,7 @@ class InternalEvaluateConsoleExpression(InternalThreadCommand):
                 console_message.add_console_message(
                     pydevd_console.CONSOLE_ERROR,
                     "Select the valid frame in the debug view (thread: %s, frame: %s invalid)" % (self.thread_id, self.frame_id),
-                )
+                    )
                 cmd = dbg.cmd_factory.make_error_message(self.sequence, console_message.to_xml())
         except:
             exc = get_exception_traceback_str()
@@ -1572,7 +1620,7 @@ class InternalRunCustomOperation(InternalThreadCommand):
     def do_it(self, dbg):
         try:
             res = pydevd_vars.custom_operation(self.thread_id, self.frame_id, self.scope, self.attrs,
-                                              self.style, self.code_or_file, self.fnname)
+                                               self.style, self.code_or_file, self.fnname)
             resEncoded = quote_plus(res)
             cmd = dbg.cmd_factory.make_custom_operation_message(self.sequence, resEncoded)
             dbg.writer.add_command(cmd)
@@ -1649,7 +1697,9 @@ class InternalConsoleExec(InternalThreadCommand):
 # InternalLoadFullValue
 #=======================================================================================================================
 class InternalLoadFullValue(InternalThreadCommand):
-    """ changes the value of a variable """
+    """
+    Loads values asynchronously
+    """
     def __init__(self, seq, thread_id, frame_id, vars):
         self.sequence = seq
         self.thread_id = thread_id
@@ -1657,7 +1707,7 @@ class InternalLoadFullValue(InternalThreadCommand):
         self.vars = vars
 
     def do_it(self, dbg):
-        """ Converts request into python variable """
+        """Starts a thread that will load values asynchronously"""
         try:
             var_objects = []
             for variable in self.vars:

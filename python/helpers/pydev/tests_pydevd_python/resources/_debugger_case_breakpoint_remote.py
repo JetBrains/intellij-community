@@ -9,7 +9,7 @@ if __name__ == '__main__':
         
     import pydevd
     print('before pydevd.settrace')
-    pydevd.settrace(port=port)
+    breakpoint(port=port)
     print('after pydevd.settrace')
     print('TEST SUCEEDED!')
     

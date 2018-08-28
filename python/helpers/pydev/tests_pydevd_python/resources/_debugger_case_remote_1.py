@@ -3,6 +3,7 @@ if __name__ == '__main__':
     import sys
     import os
     import _debugger_case_remote_2
+    port = int(sys.argv[1])
     root_dirname = os.path.dirname(os.path.dirname(__file__))
 
     if root_dirname not in sys.path:
@@ -12,7 +13,7 @@ if __name__ == '__main__':
 
     print('before pydevd.settrace')
     sys.stdout.flush()
-    pydevd.settrace(host='127.0.0.1', port=8787, patch_multiprocessing=True)
+    pydevd.settrace(port=port, patch_multiprocessing=True)
     print('after pydevd.settrace')
     sys.stdout.flush()
     f = _debugger_case_remote_2.__file__
