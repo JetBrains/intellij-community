@@ -217,8 +217,8 @@ class FailedTest internal constructor(val module: String, val message: String, v
   internal constructor(module: JpsModule, message: String, image: ImagePaths) :
     this(module.name, message, image.id, image.files.map { it.toAbsolutePath().toString() }.joinToString("\n"))
 
-  internal constructor(module: JpsModule, message: String, file: File, details: String) :
-    this(module.name, message, file.name, "${file.path}\n\n$details")
+  internal constructor(module: JpsModule, message: String, file: Path, details: CharSequence) :
+    this(module.name, message, file.fileName.toString(), "$file\n\n$details")
 
   fun getTestName(): String = "'${module}' - $id - ${message.substringBefore('\n')}"
   fun getException(): Throwable = Exception("${message}\n\n$details".trim())
