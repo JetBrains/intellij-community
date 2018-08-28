@@ -73,6 +73,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
   private static final Logger LOG = Logger.getInstance(SearchEverywhereUI.class);
   public static final int SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT = 30;
   public static final int MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT = 15;
+  public static final int THROTTLING_TIMEOUT = 200;
 
   private final List<SearchEverywhereContributor> myServiceContributors;
   private final List<SearchEverywhereContributor> myShownContributors;
@@ -228,7 +229,8 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       }
     };
 
-    return new MultithreadSearcher(listener, runnable -> listOperationsAlarm.addRequest(runnable, 0));
+    ThrottlingListenerWrapper throttlingListener = new ThrottlingListenerWrapper(THROTTLING_TIMEOUT, listener, Runnable::run);
+    return new MultithreadSearcher(throttlingListener, run -> ApplicationManager.getApplication().invokeLater(run));
   }
 
   private JPanel createSuggestionsPanel() {
