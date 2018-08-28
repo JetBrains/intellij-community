@@ -202,24 +202,19 @@ public class BTreeIndexStorageManager implements IndexStorageManager {
 
   public BTree save(final FSRecords fs) {
     // TODO: apply localToRemote mapping to ensure structural sharing with already published tree
-    final BTree tree = BTree.create(indexNovelty, storage, 8);
+    final Novelty novelty = indexNovelty.unsynchronizedCopy();
+    final BTree tree = BTree.create(novelty, storage, 8);
     for (final FSRecords.NameId root : fs.listRootsWithLock()) {
-      addChild(tree, Integer.MIN_VALUE, root.id, root.name);
-      addChildren(fs, tree, root.id);
+      addChild(tree, novelty, Integer.MIN_VALUE, root.id, root.name);
+      addChildren(fs, tree, novelty, root.id);
     }
     return tree;
   }
 
-  private void addChildren(FSRecords fs, BTree tree, int rootId) {
-    for (final FSRecords.NameId child : fs.listAll(rootId)) {
-      addChild(tree, rootId, child.id, child.name.toString());
-      addChildren(fs, tree, child.id);
-    }
-  }
-
   public void remap(final FSRecords fs, final BTree remoteTree) {
+    final Novelty novelty = indexNovelty.unsynchronizedCopy();
     final LinkedList<NodeMapping> queue = new LinkedList<>();
-    processChildren(remoteTree, queue, Integer.MIN_VALUE, getRootMap(fs));
+    processChildren(remoteTree, novelty, queue, Integer.MIN_VALUE, getRootMap(fs));
 
     final IntIntHashMap localToRemote = new IntIntHashMap();
     final IntIntHashMap remoteToLocal = new IntIntHashMap();
@@ -240,7 +235,7 @@ public class BTreeIndexStorageManager implements IndexStorageManager {
         }
       }
 
-      processChildren(remoteTree, queue, mapping.remoteId, children);
+      processChildren(remoteTree, novelty, queue, mapping.remoteId, children);
 
       mapping = queue.poll();
     }
@@ -249,11 +244,15 @@ public class BTreeIndexStorageManager implements IndexStorageManager {
     this.remoteToLocal = remote -> remoteToLocal.get(remote);
   }
 
-  private void processChildren(BTree remoteTree, LinkedList<NodeMapping> queue, int remoteParentId, Map<CharSequence, Integer> children) {
+  private static void processChildren(BTree remoteTree,
+                                      Novelty novelty,
+                                      LinkedList<NodeMapping> queue,
+                                      int remoteParentId,
+                                      Map<CharSequence, Integer> children) {
     final byte[] rangeKey = new byte[4 + 4];
     ByteUtils.writeUnsignedInt(remoteParentId ^ 0x80000000, rangeKey, 0);
     ByteUtils.writeUnsignedInt(0, rangeKey, 4);
-    remoteTree.forEach(indexNovelty, rangeKey, (key, value) -> {
+    remoteTree.forEach(novelty, rangeKey, (key, value) -> {
       final int parentId = (int)(ByteUtils.readUnsignedInt(key, 0) ^ 0x80000000);
       final boolean matchingId = parentId == remoteParentId;
       if (matchingId) {
@@ -268,12 +267,19 @@ public class BTreeIndexStorageManager implements IndexStorageManager {
     });
   }
 
-  private void addChild(BTree tree, int rootId, int childId, CharSequence childName) {
+  private static void addChildren(FSRecords fs, BTree tree, Novelty novelty, int rootId) {
+    for (final FSRecords.NameId child : fs.listAll(rootId)) {
+      addChild(tree, novelty, rootId, child.id, child.name.toString());
+      addChildren(fs, tree, novelty, child.id);
+    }
+  }
+
+  private static void addChild(BTree tree, Novelty novelty, int rootId, int childId, CharSequence childName) {
     final byte[] key = new byte[8];
     ByteUtils.writeUnsignedInt(rootId ^ 0x80000000, key, 0);
     ByteUtils.writeUnsignedInt(childId ^ 0x80000000, key, 4);
     // TODO: better string binding?
-    if (!tree.put(indexNovelty, key, childName.toString().getBytes(StandardCharsets.UTF_8))) {
+    if (!tree.put(novelty, key, childName.toString().getBytes(StandardCharsets.UTF_8))) {
       throw new RuntimeException("inconsistent tree");
     }
   }
