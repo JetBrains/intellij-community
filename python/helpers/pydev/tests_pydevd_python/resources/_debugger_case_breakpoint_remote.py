@@ -6,10 +6,10 @@ if __name__ == '__main__':
     
     if root_dirname not in sys.path:
         sys.path.append(root_dirname)
-        
     import pydevd
     print('before pydevd.settrace')
-    breakpoint(port=port)
+    from _pydev_bundle import pydev_localhost
+    breakpoint(host=pydev_localhost.get_localhost(), port=port)
     print('after pydevd.settrace')
     print('TEST SUCEEDED!')
     
