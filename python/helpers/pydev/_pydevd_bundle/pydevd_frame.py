@@ -216,6 +216,9 @@ class PyDBFrame:
                     except:
                         info.pydev_message = exception_breakpoint.qname.encode('utf-8')
 
+                    # Always add exception to frame (must remove later after we proceed).
+                    add_exception_to_frame(frame, (exception, value, trace))
+
                 else:
                     # No regular exception breakpoint, let's see if some plugin handles it.
                     try:
