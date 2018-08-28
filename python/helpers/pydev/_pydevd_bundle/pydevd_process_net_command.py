@@ -280,14 +280,18 @@ def process_net_command(py_db, cmd_id, seq, text):
                 # func name: 'None': match anything. Empty: match global, specified: only method context.
                 # command to add some breakpoint.
                 # text is file\tline. Add to breakpoints dictionary
-                suspend_policy = "NONE"
+                suspend_policy = "NONE" # Can be 'NONE' or 'ALL'
                 is_logpoint = False
                 hit_condition = None
                 if py_db._set_breakpoints_with_id:
                     try:
-                        breakpoint_id, type, file, line, func_name, condition, expression, hit_condition, is_logpoint = text.split('\t', 8)
+                        try:
+                            breakpoint_id, type, file, line, func_name, condition, expression, hit_condition, is_logpoint, suspend_policy = text.split('\t', 9)
+                        except ValueError: # not enough values to unpack
+                            # No suspend_policy passed (use default).
+                            breakpoint_id, type, file, line, func_name, condition, expression, hit_condition, is_logpoint = text.split('\t', 8)
                         is_logpoint = is_logpoint == 'True'
-                    except Exception:
+                    except ValueError: # not enough values to unpack
                         breakpoint_id, type, file, line, func_name, condition, expression = text.split('\t', 6)
 
                     breakpoint_id = int(breakpoint_id)
@@ -295,14 +299,14 @@ def process_net_command(py_db, cmd_id, seq, text):
 
                     # We must restore new lines and tabs as done in
                     # AbstractDebugTarget.breakpointAdded
-                    condition = condition.replace("@_@NEW_LINE_CHAR@_@", '\n').\
+                    condition = condition.replace("@_@NEW_LINE_CHAR@_@", '\n'). \
                         replace("@_@TAB_CHAR@_@", '\t').strip()
 
-                    expression = expression.replace("@_@NEW_LINE_CHAR@_@", '\n').\
+                    expression = expression.replace("@_@NEW_LINE_CHAR@_@", '\n'). \
                         replace("@_@TAB_CHAR@_@", '\t').strip()
                 else:
-                    #Note: this else should be removed after PyCharm migrates to setting
-                    #breakpoints by id (and ideally also provides func_name).
+                    # Note: this else should be removed after PyCharm migrates to setting
+                    # breakpoints by id (and ideally also provides func_name).
                     type, file, line, func_name, suspend_policy, condition, expression = text.split('\t', 6)
                     # If we don't have an id given for each breakpoint, consider
                     # the id to be the line.
@@ -320,8 +324,8 @@ def process_net_command(py_db, cmd_id, seq, text):
                 file = pydevd_file_utils.norm_file_to_server(file)
 
                 if not pydevd_file_utils.exists(file):
-                    sys.stderr.write('pydev debugger: warning: trying to add breakpoint'\
-                        ' to file that does not exist: %s (will have no effect)\n' % (file,))
+                    sys.stderr.write('pydev debugger: warning: trying to add breakpoint' \
+                                     ' to file that does not exist: %s (will have no effect)\n' % (file,))
                     sys.stderr.flush()
 
 
