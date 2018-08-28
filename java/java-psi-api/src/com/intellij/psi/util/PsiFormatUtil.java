@@ -23,7 +23,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
 
   @MagicConstant(flags = {
     SHOW_MODIFIERS, SHOW_NAME, SHOW_ANONYMOUS_CLASS_VERBOSE, SHOW_FQ_NAME, MODIFIERS_AFTER,
-    SHOW_EXTENDS_IMPLEMENTS, SHOW_REDUNDANT_MODIFIERS, JAVADOC_MODIFIERS_ONLY})
+    SHOW_EXTENDS_IMPLEMENTS, SHOW_REDUNDANT_MODIFIERS, JAVADOC_MODIFIERS_ONLY, SHOW_RAW_TYPE})
   public @interface FormatClassOptions { }
 
   public static String formatVariable(@NotNull PsiVariable variable, @FormatVariableOptions int options, PsiSubstitutor substitutor) {
@@ -326,10 +326,19 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
 
   public static String formatReferenceList(PsiReferenceList list, int options) {
     StringBuilder buffer = new StringBuilder();
-    PsiJavaCodeReferenceElement[] refs = list.getReferenceElements();
-    for (int i = 0; i < refs.length; i++) {
-      if (i > 0) buffer.append(", ");
-      buffer.append(formatReference(refs[i], options));
+    if (BitUtil.isSet(options, SHOW_RAW_TYPE)) {
+      PsiClassType[] types = list.getReferencedTypes();
+      for (int i = 0; i < types.length; i++) {
+        if (i > 0) buffer.append(", ");
+        buffer.append(formatType(types[i], options, PsiSubstitutor.EMPTY));
+      }
+    }
+    else {
+      PsiJavaCodeReferenceElement[] refs = list.getReferenceElements();
+      for (int i = 0; i < refs.length; i++) {
+        if (i > 0) buffer.append(", ");
+        buffer.append(formatReference(refs[i], options));
+      }
     }
     return buffer.toString();
   }
