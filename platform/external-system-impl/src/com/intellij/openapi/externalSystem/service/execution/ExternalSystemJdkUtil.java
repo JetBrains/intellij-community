@@ -148,7 +148,7 @@ public class ExternalSystemJdkUtil {
       jdk = simpleJavaSdkType.createJdk(simpleJavaSdkType.suggestSdkName(null, homePath), homePath);
     }
     else {
-      jdk = ((JavaSdk)javaSdk).createJdk(javaSdk.suggestSdkName(null, homePath), homePath, JdkUtil.checkForJdk(homePath));
+      jdk = ((JavaSdk)javaSdk).createJdk(javaSdk.suggestSdkName(null, homePath), homePath, !JdkUtil.checkForJdk(homePath));
     }
     SdkConfigurationUtil.addSdk(jdk);
     return jdk;
