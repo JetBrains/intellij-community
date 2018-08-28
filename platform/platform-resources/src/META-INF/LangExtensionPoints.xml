@@ -690,6 +690,9 @@
       <with attribute="implementationClass" implements="com.intellij.lang.LanguageCodeInsightActionHandler"/>
     </extensionPoint>
 
+    <extensionPoint name="codeInsight.gotoDeclaration"
+                    interface="com.intellij.codeInsight.navigation.GotoDeclarationProvider"/>
+
     <extensionPoint name="codeInsight.gotoSuper" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.CodeInsightActionHandler"/>
     </extensionPoint>
