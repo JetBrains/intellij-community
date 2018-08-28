@@ -2,6 +2,7 @@ import dis
 import sys
 import unittest
 from io import StringIO
+import pytest
 
 from _pydevd_frame_eval.pydevd_modify_bytecode import insert_code
 from opcode import EXTENDED_ARG
@@ -22,7 +23,7 @@ def bar(a, b):
 IS_PY36 = sys.version_info[0] == 3 and sys.version_info[1] == 6
 
 
-@unittest.skipIf(not IS_PY36, reason='Test requires Python 3.6')
+@pytest.mark.skipif(not IS_PY36, reason='Test requires Python 3.6')
 class TestInsertCode(unittest.TestCase):
     lines_separator = "---Line tested---"
 

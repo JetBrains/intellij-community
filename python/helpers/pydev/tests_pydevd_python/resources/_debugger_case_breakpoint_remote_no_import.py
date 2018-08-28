@@ -7,9 +7,8 @@ if __name__ == '__main__':
     if root_dirname not in sys.path:
         sys.path.append(root_dirname)
         
-    import pydevd
     print('before pydevd.settrace')
-    pydevd.settrace(port=port)
+    breakpoint(port=port)  # Set up through custom sitecustomize.py
     print('after pydevd.settrace')
     print('TEST SUCEEDED!')
     
