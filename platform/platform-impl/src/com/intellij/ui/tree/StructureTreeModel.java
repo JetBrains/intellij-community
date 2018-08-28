@@ -11,6 +11,7 @@ import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.ui.tree.AbstractTreeModel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
@@ -77,7 +78,11 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
     return false;
   }
 
-  public final void invalidate(Runnable onDone) {
+  public final void invalidate() {
+    invalidate(null);
+  }
+
+  public final void invalidate(@Nullable Runnable onDone) {
     invoker.runOrInvokeLater(() -> {
       if (disposed) return;
       root.invalidate();
