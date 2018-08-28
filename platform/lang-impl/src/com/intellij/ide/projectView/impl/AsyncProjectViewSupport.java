@@ -27,6 +27,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -196,7 +197,8 @@ class AsyncProjectViewSupport {
 
   public void updateAll(Runnable onDone) {
     LOG.debug(new RuntimeException("reload a whole tree"));
-    myStructureTreeModel.invalidate(onDone == null ? null : () -> myAsyncTreeModel.onValidThread(onDone));
+    Promise<?> promise = myStructureTreeModel.invalidate();
+    if (onDone != null) promise.onSuccess(res -> myAsyncTreeModel.onValidThread(onDone));
   }
 
   public void update(@NotNull TreePath path, boolean structure) {
