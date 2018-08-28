@@ -47,7 +47,6 @@ from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads, wra
 from pydevd_file_utils import get_fullname, rPath, get_package_dir
 import pydev_ipython  # @UnusedImport
 
-
 __version_info__ = (1, 3, 3)
 __version_info_str__ = []
 for v in __version_info__:
