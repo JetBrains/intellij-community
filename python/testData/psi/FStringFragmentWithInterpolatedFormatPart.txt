@@ -5,7 +5,7 @@ PyFile:FStringFragmentWithInterpolatedFormatPart.py
     PsiWhiteSpace(' ')
     PsiElement(Py:EQ)('=')
     PsiWhiteSpace(' ')
-    PyStringLiteralExpression: 
+    PyStringLiteralExpression: result: {value:{width}.{precision}}
       PyFormattedStringNode
         PsiElement(Py:FSTRING_START)('f'')
         PsiElement(Py:FSTRING_TEXT)('result: ')

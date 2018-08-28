@@ -41,9 +41,7 @@ public class PyLiteralStringNodeImpl extends LeafPsiElement implements PyLiteral
   @NotNull
   @Override
   public List<Pair<TextRange, String>> getDecodedFragments() {
-    final PyStringLiteralDecoder decoder = new PyStringLiteralDecoder(this);
-    decoder.decodeContent();
-    return decoder.getResult();
+    return new PyStringLiteralDecoder(this).decodeContent();
   }
 
   @NotNull
@@ -106,25 +104,16 @@ public class PyLiteralStringNodeImpl extends LeafPsiElement implements PyLiteral
     return result;
   }
 
-  /**
-   * @return true if given string node contains "u" or "U" prefix
-   */
   @Override
   public boolean isUnicode() {
     return StringUtil.containsIgnoreCase(getPrefix(), "u");
   }
 
-  /**
-   * @return true if given string node contains "r" or "R" prefix
-   */
   @Override
   public boolean isRaw() {
     return StringUtil.containsIgnoreCase(getPrefix(), "r");
   }
 
-  /**
-   * @return true if given string node contains "b" or "B" prefix
-   */
   @Override
   public boolean isBytes() {
     return StringUtil.containsIgnoreCase(getPrefix(), "b");

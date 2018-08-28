@@ -15,8 +15,6 @@
  */
 package com.jetbrains.python;
 
-import com.intellij.lang.ASTFactory;
-import com.intellij.lang.LanguageASTFactory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.LiteralTextEscaper;
@@ -147,6 +145,13 @@ public class PyStringLiteralTest extends PyTestCase {
 
   public void testNonUnicodeCodePointValue() {
     assertEquals("\\U12345678", createLiteralFromText("u'\\U12345678'").getStringValue());
+  }
+
+  public void testFStringEscapes() {
+    assertEquals("{", createLiteralFromText("f'{{'").getStringValue());
+    assertEquals("}", createLiteralFromText("f'}}'").getStringValue());
+    assertEquals("{{foo}}", createLiteralFromText("f'{{{foo}}}'").getStringValue());
+    assertEquals("\n{foo}\r\"", createLiteralFromText("f'\\n{foo}\\r\"'").getStringValue());
   }
 
   private static String decodeRange(PyStringLiteralExpression expr, TextRange range) {

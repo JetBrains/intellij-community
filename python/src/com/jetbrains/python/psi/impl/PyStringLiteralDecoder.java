@@ -19,18 +19,25 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PyStringLiteralDecoder {
-  public static final Pattern PATTERN_ESCAPE = Pattern
-    .compile("\\\\(\n|\\\\|'|\"|a|b|f|n|r|t|v|([0-7]{1,3})|x([0-9a-fA-F]{1,2})" + "|N(\\{.*?\\})|u([0-9a-fA-F]{4})|U([0-9a-fA-F]{8}))");
-  //            -> 1                        ->   2      <-->     3          <-     ->   4     <-->    5      <-   ->  6           <-<-
+  public static final Pattern PATTERN_ESCAPE = Pattern.compile("(\\{\\{|}})|" +                // 1
+                                                               "\\\\(" +
+                                                               "\n|\\\\|'|\"|a|b|f|n|r|t|v|" + // 2
+                                                               "([0-7]{1,3})|" +               // 3
+                                                               "x([0-9a-fA-F]{1,2})|" +        // 4
+                                                               "N(\\{.*?})|" +                 // 5
+                                                               "u([0-9a-fA-F]{4})|" +          // 6 
+                                                               "U([0-9a-fA-F]{8})" +           // 7
+                                                               ")");
 
   private enum EscapeRegexGroup {
     WHOLE_MATCH,
+    FSTRING_BRACE,
     ESCAPED_SUBSTRING,
     OCTAL,
     HEXADECIMAL,
     UNICODE_NAMED,
     UNICODE_16BIT,
-    UNICODE_32BIT
+    UNICODE_32BIT,
   }
 
   private static final Map<String, String> escapeMap = initializeEscapeMap();
@@ -53,29 +60,26 @@ public class PyStringLiteralDecoder {
   }
 
   private final PyRichStringNode myNode;
-  private final List<Pair<TextRange, String>> myResult = new ArrayList<>();
 
   public PyStringLiteralDecoder(@NotNull PyRichStringNode node) {
     myNode = node;
   }
 
-  public void decodeContent() {
-    decodeRange(myNode.getContentRange());
-  }
-
-  public void decodeRange(@NotNull TextRange range) {
-    myResult.addAll(decodeFragment(range.substring(myNode.getText()), range.getStartOffset()));
+  @NotNull
+  public List<Pair<TextRange, String>> decodeContent() {
+    return decodeRange(myNode.getContentRange());
   }
 
   @NotNull
-  public List<Pair<TextRange, String>> getResult() {
-    return myResult;
+  public List<Pair<TextRange, String>> decodeRange(@NotNull TextRange range) {
+    return decodeFragment(range.substring(myNode.getText()), range.getStartOffset());
   }
 
   @NotNull
   private List<Pair<TextRange, String>> decodeFragment(@NotNull String encoded, int offset) {
     final boolean raw = myNode.isRaw();
     final boolean unicode = myNode.isUnicode() || isUnicodeByDefault();
+    final boolean formatted = myNode.isFormatted();
 
     final List<Pair<TextRange, String>> result = new ArrayList<>();
     final Matcher escMatcher = PATTERN_ESCAPE.matcher(encoded);
@@ -87,17 +91,22 @@ public class PyStringLiteralDecoder {
         result.add(Pair.create(offsetRange, range.substring(encoded)));
       }
 
+      final String fStringBrace = escapeRegexGroup(escMatcher, EscapeRegexGroup.FSTRING_BRACE);
       final String octal = escapeRegexGroup(escMatcher, EscapeRegexGroup.OCTAL);
       final String hex = escapeRegexGroup(escMatcher, EscapeRegexGroup.HEXADECIMAL);
       // TODO: Implement unicode character name escapes: EscapeRegexGroup.UNICODE_NAMED
       final String unicode16 = escapeRegexGroup(escMatcher, EscapeRegexGroup.UNICODE_16BIT);
       final String unicode32 = escapeRegexGroup(escMatcher, EscapeRegexGroup.UNICODE_32BIT);
       final String wholeMatch = escapeRegexGroup(escMatcher, EscapeRegexGroup.WHOLE_MATCH);
+      assert wholeMatch != null;
 
       final boolean escapedUnicode = raw && unicode || !raw;
 
       final String str;
-      if (!raw && octal != null) {
+      if (fStringBrace != null) {
+        str = formatted ? wholeMatch.substring(0, 1) : wholeMatch;
+      }
+      else if (!raw && octal != null) {
         str = new String(new char[]{(char)Integer.parseInt(octal, 8)});
       }
       else if (!raw && hex != null) {

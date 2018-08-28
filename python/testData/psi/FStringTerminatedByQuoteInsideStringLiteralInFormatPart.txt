@@ -5,7 +5,7 @@ PyFile:FStringTerminatedByQuoteInsideStringLiteralInFormatPart.py
     PsiWhiteSpace(' ')
     PsiElement(Py:EQ)('=')
     PsiWhiteSpace(' ')
-    PyStringLiteralExpression: }}'
+    PyStringLiteralExpression: {42:{"}}'
       PyFormattedStringNode
         PsiElement(Py:FSTRING_START)('f'')
         PyFStringFragment

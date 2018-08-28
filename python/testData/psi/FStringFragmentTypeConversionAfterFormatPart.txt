@@ -5,7 +5,7 @@ PyFile:FStringFragmentTypeConversionAfterFormatPart.py
     PsiWhiteSpace(' ')
     PsiElement(Py:EQ)('=')
     PsiWhiteSpace(' ')
-    PyStringLiteralExpression: 
+    PyStringLiteralExpression: {42:{width}!r}
       PyFormattedStringNode
         PsiElement(Py:FSTRING_START)('f'')
         PyFStringFragment

@@ -5,12 +5,12 @@ PyFile:FStringTerminatedByQuoteInNestedFormatPart.py
     PsiWhiteSpace(' ')
     PsiElement(Py:EQ)('=')
     PsiWhiteSpace(' ')
-    PyStringLiteralExpression: 
+    PyStringLiteralExpression: {f"{42:
       PyFormattedStringNode
         PsiElement(Py:FSTRING_START)('f'')
         PyFStringFragment
           PsiElement(Py:FSTRING_FRAGMENT_START)('{')
-          PyStringLiteralExpression: 
+          PyStringLiteralExpression: {42:
             PyFormattedStringNode
               PsiElement(Py:FSTRING_START)('f"')
               PyFStringFragment

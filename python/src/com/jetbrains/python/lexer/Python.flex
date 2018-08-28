@@ -205,11 +205,6 @@ return yylength()-s.length();
 
 %%
 
-[\ ]                        { return PyTokenTypes.SPACE; }
-[\t]                        { return PyTokenTypes.TAB; }
-[\f]                        { return PyTokenTypes.FORMFEED; }
-"\\"                        { return PyTokenTypes.BACKSLASH; }
-
 <FSTRING> {
   {FSTRING_TEXT_NO_QUOTES} { return PyTokenTypes.FSTRING_TEXT; }
   {FSTRING_QUOTES} { return hasMatchingFStringStart(yytext().toString()) ? PyTokenTypes.FSTRING_END : PyTokenTypes.FSTRING_TEXT; }
@@ -248,6 +243,11 @@ return yylength()-s.length();
   // format part of a fragment can contain quotes
   {FSTRING_QUOTES} { return hasMatchingFStringStart(yytext().toString())? PyTokenTypes.FSTRING_END : PyTokenTypes.FSTRING_TEXT; }
 }
+
+[\ ]                        { return PyTokenTypes.SPACE; }
+[\t]                        { return PyTokenTypes.TAB; }
+[\f]                        { return PyTokenTypes.FORMFEED; }
+"\\"                        { return PyTokenTypes.BACKSLASH; }
 
 <YYINITIAL> {
 [\n]                        { if (zzCurrentPos == 0) yybegin(PENDING_DOCSTRING); return PyTokenTypes.LINE_BREAK; }
