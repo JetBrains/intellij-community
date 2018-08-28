@@ -2,6 +2,7 @@
 package com.intellij.configurationStore.properties
 
 import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.JsonSchemaType
 import com.intellij.openapi.components.StoredProperty
 import com.intellij.openapi.components.StoredPropertyBase
 import com.intellij.util.SmartList
@@ -11,8 +12,8 @@ import kotlin.reflect.KProperty
  * AbstractCollectionBinding modifies collection directly, so, we cannot use null as default null and return empty list on get.
  */
 internal open class CollectionStoredProperty<E, C : MutableCollection<E>>(protected val value: C) : StoredPropertyBase<C>() {
-  override val jsonType: String
-    get() = "array"
+  override val jsonType: JsonSchemaType
+    get() = JsonSchemaType.ARRAY
 
   override fun isEqualToDefault() = value.isEmpty()
 
@@ -40,7 +41,7 @@ internal open class CollectionStoredProperty<E, C : MutableCollection<E>>(protec
 
   override fun toString() = "$name = ${if (isEqualToDefault()) "" else value.joinToString(" ")}"
 
-  override fun setValue(other: StoredProperty): Boolean {
+  override fun setValue(other: StoredProperty<C>): Boolean {
     @Suppress("UNCHECKED_CAST")
     return doSetValue(value, (other as CollectionStoredProperty<E, C>).value)
   }
@@ -51,8 +52,8 @@ internal class ListStoredProperty<T> : CollectionStoredProperty<T, SmartList<T>>
 }
 
 internal class MapStoredProperty<K: Any, V>(private val value: MutableMap<K, V>) : StoredPropertyBase<MutableMap<K, V>>() {
-  override val jsonType: String
-    get() = "object"
+  override val jsonType: JsonSchemaType
+    get() = JsonSchemaType.OBJECT
 
   override fun isEqualToDefault() = value.isEmpty()
 
@@ -80,7 +81,7 @@ internal class MapStoredProperty<K: Any, V>(private val value: MutableMap<K, V>)
 
   override fun toString() = if (isEqualToDefault()) "" else value.toString()
 
-  override fun setValue(other: StoredProperty): Boolean {
+  override fun setValue(other: StoredProperty<MutableMap<K, V>>): Boolean {
     @Suppress("UNCHECKED_CAST")
     return doSetValue(value, (other as MapStoredProperty<K, V>).value)
   }

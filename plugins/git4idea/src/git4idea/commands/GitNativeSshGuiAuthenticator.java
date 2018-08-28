@@ -46,7 +46,7 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
   @Nullable
   private String askKeyPassphraseInput(@NotNull String description) {
     Matcher matcher = SSHUtil.PASSPHRASE_PROMPT.matcher(description);
-    assert matcher.matches();
+    if (!matcher.matches()) throw new IllegalStateException(description);
     String keyPath = matcher.group(1);
 
     boolean resetPassword = keyPath.equals(myLastAskedKeyPath);
@@ -59,7 +59,7 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
       });
     }
     else {
-      return GitSSHGUIHandler.askPassphrase(myProject, keyPath, resetPassword, myIgnoreAuthenticationRequest, myLastAskedKeyPath);
+      return GitSSHGUIHandler.askPassphrase(myProject, keyPath, resetPassword, myIgnoreAuthenticationRequest, null);
     }
   }
 

@@ -34,8 +34,13 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     buildCrossPlatformDistribution = true
 
     productLayout.productApiModules = JAVA_API_MODULES
-    productLayout.productImplementationModules =  JAVA_IMPLEMENTATION_MODULES +
-                                                 ["intellij.platform.duplicates.analysis", "intellij.platform.structuralSearch", "intellij.java.structuralSearch", "intellij.java.typeMigration", "intellij.platform.main"]
+    productLayout.productImplementationModules =  JAVA_IMPLEMENTATION_MODULES + [
+      "intellij.platform.duplicates.analysis",
+      "intellij.platform.structuralSearch",
+      "intellij.java.structuralSearch",
+      "intellij.java.typeMigration",
+      "intellij.platform.main"
+    ]
     productLayout.additionalPlatformJars.put("resources.jar", "intellij.idea.community.resources")
     productLayout.bundledPluginModules = BUNDLED_PLUGIN_MODULES
     productLayout.mainModules = ["intellij.idea.community.main"]

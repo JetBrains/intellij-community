@@ -113,7 +113,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     LOG.assertTrue(!application.isWriteAccessAllowed());
 
     final Project project = myPsiManager.getProject();
-    final PsiFile containingFile = listOwner.getContainingFile();
+    final PsiFile containingFile = listOwner.getOriginalElement().getContainingFile();
     if (!(containingFile instanceof PsiJavaFile)) {
       notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
       return;
@@ -456,7 +456,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
   @NotNull
   public AnnotationPlace chooseAnnotationsPlace(@NotNull final PsiElement element) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (!element.isPhysical()) return AnnotationPlace.IN_CODE; //element just created
+    if (!element.isPhysical() && !(element.getOriginalElement() instanceof PsiCompiledElement)) return AnnotationPlace.IN_CODE; //element just created
     if (!element.getManager().isInProject(element)) return AnnotationPlace.EXTERNAL;
     final Project project = myPsiManager.getProject();
 

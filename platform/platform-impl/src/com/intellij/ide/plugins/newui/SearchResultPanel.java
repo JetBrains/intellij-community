@@ -96,7 +96,7 @@ public abstract class SearchResultPanel {
             myGroup.titleWithCount();
           }
 
-          myPanel.initialSelection();
+          myPanel.initialSelection(false);
           fullRepaint();
         }, ModalityState.any());
       });
@@ -107,7 +107,7 @@ public abstract class SearchResultPanel {
       if (!myGroup.descriptors.isEmpty()) {
         myPanel.addGroup(myGroup);
         myGroup.titleWithCount();
-        //myPanel.initialSelection();
+        myPanel.initialSelection(false);
       }
 
       fullRepaint();

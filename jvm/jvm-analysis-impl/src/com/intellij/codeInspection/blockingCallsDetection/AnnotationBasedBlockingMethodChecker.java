@@ -3,6 +3,7 @@ package com.intellij.codeInspection.blockingCallsDetection;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -40,7 +41,6 @@ public class AnnotationBasedBlockingMethodChecker implements BlockingMethodCheck
     if (externalAnnotations == null) return false;
     Set<String> externalAnnotationsFQNames =
       Arrays.stream(externalAnnotations).map(PsiAnnotation::getQualifiedName).collect(Collectors.toSet());
-    return annotationsFQNames.stream()
-      .anyMatch(annotation -> externalAnnotationsFQNames.contains(annotation));
+    return ContainerUtil.intersects(annotationsFQNames, externalAnnotationsFQNames);
   }
 }

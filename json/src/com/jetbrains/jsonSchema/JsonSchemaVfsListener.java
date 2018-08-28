@@ -3,7 +3,6 @@ package com.jetbrains.jsonSchema;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.json.JsonFileType;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -20,6 +19,7 @@ import com.intellij.psi.PsiTreeAnyChangeAbstractAdapter;
 import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl;
@@ -36,10 +36,9 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
   public static final Topic<Runnable> JSON_SCHEMA_CHANGED = Topic.create("JsonSchemaVfsListener.Json.Schema.Changed", Runnable.class);
   public static final Topic<Runnable> JSON_DEPS_CHANGED = Topic.create("JsonSchemaVfsListener.Json.Deps.Changed", Runnable.class);
 
-  public static void startListening(@NotNull Project project, @NotNull final JsonSchemaService service) {
+  public static void startListening(@NotNull Project project, @NotNull JsonSchemaService service, @NotNull MessageBusConnection connection) {
     final MyUpdater updater = new MyUpdater(project, service);
-    ApplicationManager.getApplication().getMessageBus().connect(project)
-      .subscribe(VirtualFileManager.VFS_CHANGES, new JsonSchemaVfsListener(updater));
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new JsonSchemaVfsListener(updater));
     PsiManager.getInstance(project).addPsiTreeChangeListener(new PsiTreeAnyChangeAbstractAdapter() {
       @Override
       protected void onChange(@Nullable PsiFile file) {

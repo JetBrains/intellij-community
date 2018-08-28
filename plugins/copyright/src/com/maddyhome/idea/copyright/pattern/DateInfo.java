@@ -52,6 +52,16 @@ public class DateInfo
         return calendar.get(Calendar.HOUR);
     }
 
+    /**
+     * Support for hour24 property: the current hour (0-23).
+     * @return
+     */
+    @SuppressWarnings("unused")
+    public int getHour24()
+    {
+        return calendar.get(Calendar.HOUR_OF_DAY);
+    }
+
     public int getMinute()
     {
         return calendar.get(Calendar.MINUTE);

@@ -154,8 +154,7 @@ public class DefaultPatchBaseVersionProvider {
 
       if (found) {
         try {
-          fileRevision.loadContent();
-          CharSequence content = LoadTextUtil.getTextByBinaryPresentation(fileRevision.getContent(), myFile, false, false);
+          CharSequence content = LoadTextUtil.getTextByBinaryPresentation(fileRevision.loadContent(), myFile, false, false);
           processor.process(content.toString());
           // TODO: try to download more than one version
           break;

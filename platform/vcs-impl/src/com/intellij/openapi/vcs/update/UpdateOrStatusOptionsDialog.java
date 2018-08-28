@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.update;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.CancelledConfigurationException;
 import com.intellij.openapi.options.Configurable;
@@ -11,19 +12,20 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.util.ui.OptionsDialog;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.awt.event.ActionEvent;
 import java.util.List;
+import java.util.*;
 
 public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
   protected final Project myProject;
 
   private final JComponent myMainPanel;
   private final List<Configurable> myConfigurables = new ArrayList<>();
-  private final boolean myHelpAvailable;
+  private final Action myHelpAction = new MyHelpAction();
 
   public UpdateOrStatusOptionsDialog(Project project, String title, Map<Configurable, AbstractVcs> envToConfMap) {
     super(project);
@@ -40,7 +42,6 @@ public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
         .sorted(Comparator.comparing(entry -> entry.getValue().getDisplayName()))
         .forEach(entry -> addComponent(entry.getKey(), entry.getKey().getDisplayName()));
     }
-    myHelpAvailable = myConfigurables.stream().anyMatch(c -> c.getHelpTopic() != null);
     init();
   }
 
@@ -84,14 +85,13 @@ public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
     return myMainPanel;
   }
 
-  @Nullable
+  @NotNull
   @Override
-  protected String getHelpId() {
-    return myHelpAvailable ? "(fake)" : null;
+  protected Action getHelpAction() {
+    return myHelpAction;
   }
 
-  @Override
-  protected void doHelpAction() {
+  private String helpTopic() {
     String helpTopic = null;
     if (myMainPanel instanceof JTabbedPane) {
       int idx = ((JTabbedPane)myMainPanel).getSelectedIndex();
@@ -102,8 +102,22 @@ public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
     else {
       helpTopic = myConfigurables.get(0).getHelpTopic();
     }
-    if (helpTopic != null) {
-      HelpManager.getInstance().invokeHelp(helpTopic);
+    return helpTopic;
+  }
+
+  private class MyHelpAction extends AbstractAction {
+    private MyHelpAction() {
+      super(CommonBundle.getHelpButtonText());
+    }
+
+    @Override
+    public boolean isEnabled() {
+      return super.isEnabled() && helpTopic() != null;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      HelpManager.getInstance().invokeHelp(helpTopic());
     }
   }
 }

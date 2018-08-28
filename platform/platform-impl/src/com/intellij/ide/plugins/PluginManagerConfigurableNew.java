@@ -193,8 +193,8 @@ public class PluginManagerConfigurableNew
     mySearchTextField.setBorder(JBUI.Borders.customLine(new JBColor(0xC5C5C5, 0x515151)));
 
     JBTextField editor = mySearchTextField.getTextEditor();
-    editor.putClientProperty("JTextField.Search.Gap", JBUI.scale(8 - 25));
-    editor.putClientProperty("JTextField.Search.GapEmptyText", JBUI.scale(8));
+    editor.putClientProperty("JTextField.Search.Gap", JBUI.scale(-24));
+    editor.putClientProperty("JTextField.Search.GapEmptyText", JBUI.scale(-1));
     editor.putClientProperty("StatusVisibleFunction", (BooleanFunction<JBTextField>)field -> field.getText().isEmpty());
     editor.setBorder(JBUI.Borders.empty(0, 25));
     editor.setOpaque(true);
@@ -394,6 +394,7 @@ public class PluginManagerConfigurableNew
 
   private void updateSearchForSelectedTab(int index) {
     String text;
+    String historyPropertyName;
     SearchResultPanel searchPanel;
     if (index == TRENDING_TAB) {
       text = "Search trending plugins";
@@ -401,14 +402,17 @@ public class PluginManagerConfigurableNew
         text += " and custom repositories";
       }
       searchPanel = myTrendingSearchPanel;
+      historyPropertyName = "TrendingPluginsSearchHistory";
     }
     else if (index == INSTALLED_TAB) {
       text = "Search installed plugins";
       searchPanel = myInstalledSearchPanel;
+      historyPropertyName = "InstalledPluginsSearchHistory";
     }
     else {
       text = "Search available updates";
       searchPanel = myUpdatesSearchPanel;
+      historyPropertyName = "UpdatePluginsSearchHistory";
     }
 
     StatusText emptyText = mySearchTextField.getTextEditor().getEmptyText();
@@ -416,6 +420,8 @@ public class PluginManagerConfigurableNew
     emptyText.appendText(text, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, CellPluginComponent.GRAY_COLOR));
 
     myCurrentSearchPanel = searchPanel;
+    mySearchTextField.addCurrentTextToHistory();
+    mySearchTextField.setHistoryPropertyName(historyPropertyName);
     mySearchTextField.setTextIgnoreEvents(searchPanel.getQuery());
   }
 

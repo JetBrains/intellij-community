@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.text.nullize
+import org.jetbrains.annotations.ApiStatus
 import java.util.regex.Pattern
 
 /**
@@ -211,6 +212,11 @@ abstract class RunManager {
   abstract fun removeConfiguration(settings: RunnerAndConfigurationSettings?)
 
   abstract fun setTemporaryConfiguration(tempConfiguration: RunnerAndConfigurationSettings?)
+
+  // due to historical reasons findSettings() searches by name in addition to instance and this behavior is bad for isTemplate,
+  // so, client cannot for now use `findSettings()?.isTemplate() ?: false`.
+  @ApiStatus.Experimental
+  abstract fun isTemplate(configuration: RunConfiguration): Boolean
 }
 
 private const val UNNAMED = "Unnamed"

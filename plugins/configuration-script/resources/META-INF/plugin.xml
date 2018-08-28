@@ -9,6 +9,9 @@
   <!--<scriptDefinitionContributor implementation="com.intellij.configurationScript.ConfigurationScriptContributor" order="first"/>-->
   <!--</extensions>-->
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
-    <ProviderFactory implementation="com.intellij.configurationScript.IdeConfigurationJsonSchemaProviderFactory"/>
+    <ProviderFactory implementation="com.intellij.configurationScript.IntellijConfigurationJsonSchemaProviderFactory"/>
+  </extensions>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationInitializedListener implementation="com.intellij.configurationScript.IntellijConfigurationAppInitializer"/>
   </extensions>
 </idea-plugin>
