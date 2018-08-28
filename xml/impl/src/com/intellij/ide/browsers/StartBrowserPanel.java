@@ -73,7 +73,7 @@ public class StartBrowserPanel {
   }
 
   @Nullable
-  public String getUrl() {
+  public String getNormalizedUrl() {
     String url = StringUtil.nullize(myUrlField.getText(), true);
     if (url != null) {
       url = url.trim();
@@ -124,7 +124,7 @@ public class StartBrowserPanel {
     browserSettings.setSelected(isSelected());
     browserSettings.setBrowser(myBrowserSelector.getSelected());
     browserSettings.setStartJavaScriptDebugger(myStartJavaScriptDebuggerCheckBox.isSelected());
-    browserSettings.setUrl(getUrl());
+    browserSettings.setUrl(getNormalizedUrl());
     return browserSettings;
   }
 
