@@ -11,17 +11,14 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.Pair.pair;
@@ -171,9 +168,8 @@ public class ExternalSystemJdkUtil {
     }
     else {
       final String jdkHome = SystemProperties.getJavaHome();
-      Optional<Sdk> internalJdk =
-        Arrays.stream(projectJdkTable.getAllJdks()).filter(sdk -> FileUtil.pathsEqual(sdk.getHomePath(), jdkHome)).findFirst();
-      return internalJdk.orElseGet(() -> addJdk(jdkHome));
+      SimpleJavaSdkType simpleJavaSdkType = SimpleJavaSdkType.getInstance();
+      return simpleJavaSdkType.createJdk(simpleJavaSdkType.suggestSdkName(null, jdkHome), jdkHome);
     }
   }
 }
