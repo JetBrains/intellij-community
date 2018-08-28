@@ -13,7 +13,8 @@ if __name__ == '__main__':
 
     print('before pydevd.settrace')
     sys.stdout.flush()
-    pydevd.settrace(port=port, patch_multiprocessing=True)
+    from _pydev_bundle import pydev_localhost
+    pydevd.settrace(host=pydev_localhost.get_localhost(), port=port, patch_multiprocessing=True)
     print('after pydevd.settrace')
     sys.stdout.flush()
     f = _debugger_case_remote_2.__file__
