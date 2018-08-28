@@ -73,5 +73,13 @@
       <add-to-group group-id="EditorTabPopupMenu"/>
       <add-to-group group-id="ConsoleEditorPopupMenu"/>
     </action>
+    <group id="Github.PullRequest.ToolWindow.List.Toolbar">
+      <action id="Github.PullRequest.List.Refresh"
+              class="org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestRefreshListAction"/>
+    </group>
+    <group id="Github.PullRequest.ToolWindow.List.Popup">
+      <action id="Github.PullRequest.Branch.Create"
+              class="org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestCreateBranchAction"/>
+    </group>
   </actions>
 </idea-plugin>

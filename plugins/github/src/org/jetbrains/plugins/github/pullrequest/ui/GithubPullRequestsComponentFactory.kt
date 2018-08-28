@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.ui
 import com.intellij.codeInsight.AutoPopupController
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -15,6 +16,7 @@ import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
+import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsChangesLoader
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDetailsLoader
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsLoader
@@ -35,11 +37,19 @@ class GithubPullRequestsComponentFactory(private val project: Project,
     val requestExecutorHolder = requestExecutorManager.getManagedHolder(account, project) ?: return null
     val listLoader = GithubPullRequestsLoader(progressManager, requestExecutorHolder,
                                               account.server, GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(remoteUrl)!!)
-    val list = GithubPullRequestsListComponent(project, actionManager, autoPopupController, popupFactory, listLoader)
     val detailsLoader = GithubPullRequestsDetailsLoader(progressManager, requestExecutorHolder, git, repository, remote)
+    val gitDataProvider = DataProvider {
+      when {
+        GithubPullRequestKeys.REPOSITORY.`is`(it) -> repository
+        GithubPullRequestKeys.REMOTE.`is`(it) -> remote
+        GithubPullRequestKeys.REMOTE_URL.`is`(it) -> remoteUrl
+        else -> null
+      }
+    }
+    val list = GithubPullRequestsListComponent(project, actionManager, autoPopupController, popupFactory,
+                                               gitDataProvider, detailsLoader, listLoader)
     val changesLoader = GithubPullRequestsChangesLoader(project, progressManager, detailsLoader, repository)
     val changes = GithubPullRequestChangesComponent(project, changesLoader)
-    list.addSelectionListener(detailsLoader, list)
     list.addSelectionListener(changesLoader, list)
     list.setToolbarHeightReferent(changes.toolbarComponent)
 

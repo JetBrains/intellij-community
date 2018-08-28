@@ -2,29 +2,27 @@
 package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.codeInsight.AutoPopupController
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.progress.util.ProgressWindow
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.ui.IdeBorderFactory
-import com.intellij.ui.ScrollPaneFactory
-import com.intellij.ui.SideBorder
-import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.*
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
+import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
+import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDetailsLoader
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsLoader
 import org.jetbrains.plugins.github.pullrequest.data.SingleWorkerProcessExecutor
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchComponent
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchModel
+import java.awt.Component
 import java.util.*
 import javax.swing.JComponent
 import javax.swing.JScrollBar
@@ -35,8 +33,12 @@ class GithubPullRequestsListComponent(project: Project,
                                       actionManager: ActionManager,
                                       autoPopupController: AutoPopupController,
                                       popupFactory: JBPopupFactory,
+                                      private val gitDataProvider: DataProvider,
+                                      private val detailsLoader: GithubPullRequestsDetailsLoader,
                                       private val loader: GithubPullRequestsLoader)
-  : BorderLayoutPanel(), Disposable, GithubPullRequestsLoader.PullRequestsLoadingListener, SingleWorkerProcessExecutor.ProcessStateListener {
+  : BorderLayoutPanel(), Disposable,
+    GithubPullRequestsLoader.PullRequestsLoadingListener, SingleWorkerProcessExecutor.ProcessStateListener,
+    DataProvider {
 
   private val tableModel = GithubPullRequestsTableModel()
   private val table = GithubPullRequestsTable(tableModel)
@@ -73,13 +75,29 @@ class GithubPullRequestsListComponent(project: Project,
         else selectionEventDispatcher.multicaster.selectionChanged(tableModel.getValueAt(table.selectedRow, 0))
       }
     }
+    selectionEventDispatcher.addListener(detailsLoader, this)
 
-    val refreshAction = object : DumbAwareAction("Refresh", null, AllIcons.Actions.Refresh) {
-      override fun actionPerformed(e: AnActionEvent) = loader.reset()
+    val toolbar = actionManager.createActionToolbar("GithubPullRequestListToolbar",
+                                                    actionManager.getAction("Github.PullRequest.ToolWindow.List.Toolbar") as ActionGroup,
+                                                    true)
+      .apply {
+        setReservePlaceAutoPopupIcon(false)
+        setTargetComponent(this@GithubPullRequestsListComponent)
+      }
+
+    val popupHandler = object : PopupHandler() {
+      override fun invokePopup(comp: Component, x: Int, y: Int) {
+        if (TableUtil.isPointOnSelection(table, x, y)) {
+          val popupMenu = actionManager
+            .createActionPopupMenu("GithubPullRequestListPopup",
+                                   actionManager.getAction("Github.PullRequest.ToolWindow.List.Popup") as ActionGroup)
+          popupMenu.setTargetComponent(this@GithubPullRequestsListComponent)
+          popupMenu.component.show(comp, x, y)
+        }
+      }
     }
-    val actionGroup = DefaultActionGroup(refreshAction)
-    val toolbar = actionManager.createActionToolbar("GithubPullRequestsToolWindowListToolbar", actionGroup, true)
-    toolbar.setReservePlaceAutoPopupIcon(false)
+    table.addMouseListener(popupHandler)
+
     tableToolbarWrapper = Wrapper(toolbar.component)
 
     val headerPanel = JBUI.Panels.simplePanel(0, 0).addToCenter(search).addToRight(tableToolbarWrapper)
@@ -92,6 +110,14 @@ class GithubPullRequestsListComponent(project: Project,
     addToTop(headerPanel)
 
     resetSearch()
+  }
+
+  override fun getData(dataId: String): Any? {
+    return when {
+      GithubPullRequestKeys.PULL_REQUESTS_LOADER.`is`(dataId) -> loader
+      GithubPullRequestKeys.PULL_REQUESTS_DETAILS_LOADER.`is`(dataId) -> detailsLoader
+      else -> gitDataProvider.getData(dataId) ?: table.getData(dataId)
+    }
   }
 
   fun setToolbarHeightReferent(referent: JComponent) {
