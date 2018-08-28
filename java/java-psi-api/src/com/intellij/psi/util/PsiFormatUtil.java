@@ -324,7 +324,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
     buffer.append(modifier);
   }
 
-  public static String formatReferenceList(PsiReferenceList list, int options) {
+  private static String formatReferenceList(PsiReferenceList list, int options) {
     StringBuilder buffer = new StringBuilder();
     if (BitUtil.isSet(options, SHOW_RAW_TYPE)) {
       PsiClassType[] types = list.getReferencedTypes();
