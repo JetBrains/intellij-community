@@ -35,19 +35,21 @@ class GithubPullRequestsComponentFactory(private val project: Project,
   fun createComponent(repository: GitRepository, remote: GitRemote, remoteUrl: String, account: GithubAccount): JComponent? {
 
     val requestExecutorHolder = requestExecutorManager.getManagedHolder(account, project) ?: return null
+    val repoPath = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(remoteUrl)!!
     val listLoader = GithubPullRequestsLoader(progressManager, requestExecutorHolder,
-                                              account.server, GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(remoteUrl)!!)
+                                              account.server, repoPath)
     val detailsLoader = GithubPullRequestsDetailsLoader(progressManager, requestExecutorHolder, git, repository, remote)
-    val gitDataProvider = DataProvider {
+    val parametersDataProvider = DataProvider {
       when {
         GithubPullRequestKeys.REPOSITORY.`is`(it) -> repository
         GithubPullRequestKeys.REMOTE.`is`(it) -> remote
-        GithubPullRequestKeys.REMOTE_URL.`is`(it) -> remoteUrl
+        GithubPullRequestKeys.FULL_PATH.`is`(it) -> repoPath
+        GithubPullRequestKeys.SERVER_PATH.`is`(it) -> account.server
         else -> null
       }
     }
     val list = GithubPullRequestsListComponent(project, actionManager, autoPopupController, popupFactory,
-                                               gitDataProvider, detailsLoader, listLoader)
+                                               parametersDataProvider, detailsLoader, listLoader)
     val changesLoader = GithubPullRequestsChangesLoader(project, progressManager, detailsLoader, repository)
     val changes = GithubPullRequestChangesComponent(project, changesLoader)
     list.addSelectionListener(changesLoader, list)

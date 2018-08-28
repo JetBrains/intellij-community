@@ -13,15 +13,12 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.history.VcsFileRevision
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.vcs.log.VcsLog
 import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitFileRevision
@@ -29,6 +26,7 @@ import git4idea.GitRevisionNumber
 import git4idea.GitUtil
 import git4idea.history.GitHistoryUtils
 import org.jetbrains.plugins.github.api.GithubRepositoryPath
+import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
 import org.jetbrains.plugins.github.util.GithubGitHelper
 import org.jetbrains.plugins.github.util.GithubNotifications
 import org.jetbrains.plugins.github.util.GithubUtil
@@ -42,13 +40,11 @@ open class GithubOpenInBrowserActionGroup
   }
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-    if (e != null) {
-      val data = getData(e.dataContext)
-      if (data != null && data.first.size > 1) {
-        return data.first.map { GithubOpenInBrowserAction(it, data.second) }.toTypedArray()
-      }
-    }
-    return emptyArray()
+    e ?: return emptyArray()
+    val data = getData(e.dataContext) ?: return emptyArray()
+    if (data.first.size <= 1) return emptyArray()
+
+    return data.first.map { GithubOpenInBrowserAction(it, data.second) }.toTypedArray()
   }
 
   override fun isPopup(): Boolean = true
@@ -58,27 +54,33 @@ open class GithubOpenInBrowserActionGroup
   }
 
   override fun canBePerformed(context: DataContext): Boolean {
-    val data = getData(context)
-    return data != null && data.first.size == 1
+    return getData(context)?.first?.size == 1
   }
 
   override fun disableIfNoVisibleChildren(): Boolean = false
 
   protected open fun getData(dataContext: DataContext): Pair<Set<GithubRepositoryPath>, Data>? {
-    val project = dataContext.getData(CommonDataKeys.PROJECT)
-    if (project == null) return null
+    val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return null
 
-    return getDataFromHistory(project, dataContext.getData(VcsDataKeys.FILE_PATH), dataContext.getData(VcsDataKeys.VCS_FILE_REVISION))
-           ?: getDataFromLog(project, dataContext.getData(VcsLogDataKeys.VCS_LOG))
-           ?: getDataFromVirtualFile(project, dataContext.getData(CommonDataKeys.VIRTUAL_FILE))
+    return getDataFromPullRequest(project, dataContext)
+           ?: getDataFromHistory(project, dataContext)
+           ?: getDataFromLog(project, dataContext)
+           ?: getDataFromVirtualFile(project, dataContext)
   }
 
-  private fun getDataFromHistory(project: Project,
-                                 filePath: FilePath?,
-                                 fileRevision: VcsFileRevision?): Pair<Set<GithubRepositoryPath>, Data>? {
-    if (filePath == null
-        || fileRevision == null
-        || fileRevision !is GitFileRevision) return null
+  private fun getDataFromPullRequest(project: Project, dataContext: DataContext): Pair<Set<GithubRepositoryPath>, Data>? {
+    val pullRequest = dataContext.getData(GithubPullRequestKeys.SELECTED_PULL_REQUEST) ?: return null
+    val serverPath = dataContext.getData(GithubPullRequestKeys.SERVER_PATH) ?: return null
+    val fullPath = dataContext.getData(GithubPullRequestKeys.FULL_PATH) ?: return null
+
+    val htmlUrl = pullRequest.pullRequestLinks?.htmlUrl ?: return null
+    return setOf(GithubRepositoryPath(serverPath, fullPath)) to Data.URL(project, htmlUrl)
+  }
+
+  private fun getDataFromHistory(project: Project, dataContext: DataContext): Pair<Set<GithubRepositoryPath>, Data>? {
+    val filePath = dataContext.getData(VcsDataKeys.FILE_PATH) ?: return null
+    val fileRevision = dataContext.getData(VcsDataKeys.VCS_FILE_REVISION) ?: return null
+    if (fileRevision !is GitFileRevision) return null
 
     val repository = GitUtil.getRepositoryManager(project).getRepositoryForFile(filePath)
     if (repository == null) return null
@@ -89,8 +91,8 @@ open class GithubOpenInBrowserActionGroup
     return accessibleRepositories to Data.Revision(project, fileRevision.revisionNumber.asString())
   }
 
-  private fun getDataFromLog(project: Project, log: VcsLog?): Pair<Set<GithubRepositoryPath>, Data>? {
-    if (log == null) return null
+  private fun getDataFromLog(project: Project, dataContext: DataContext): Pair<Set<GithubRepositoryPath>, Data>? {
+    val log = dataContext.getData(VcsLogDataKeys.VCS_LOG) ?: return null
 
     val selectedCommits = log.selectedCommits
     if (selectedCommits.size != 1) return null
@@ -106,8 +108,8 @@ open class GithubOpenInBrowserActionGroup
     return accessibleRepositories to Data.Revision(project, commit.hash.asString())
   }
 
-  private fun getDataFromVirtualFile(project: Project, virtualFile: VirtualFile?): Pair<Set<GithubRepositoryPath>, Data>? {
-    if (virtualFile == null) return null
+  private fun getDataFromVirtualFile(project: Project, dataContext: DataContext): Pair<Set<GithubRepositoryPath>, Data>? {
+    val virtualFile = dataContext.getData(CommonDataKeys.VIRTUAL_FILE) ?: return null
 
     val repository = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(virtualFile)
     if (repository == null) return null
@@ -127,6 +129,8 @@ open class GithubOpenInBrowserActionGroup
     class File(project: Project, val gitRepoRoot: VirtualFile, val virtualFile: VirtualFile) : Data(project)
 
     class Revision(project: Project, val revisionHash: String) : Data(project)
+
+    class URL(project: Project, val htmlUrl: String) : Data(project)
   }
 
   private companion object {
@@ -139,6 +143,7 @@ open class GithubOpenInBrowserActionGroup
         when (data) {
           is Data.Revision -> openCommitInBrowser(repoPath, data.revisionHash)
           is Data.File -> openFileInBrowser(data.project, data.gitRepoRoot, repoPath, data.virtualFile, e.getData(CommonDataKeys.EDITOR))
+          is Data.URL -> BrowserUtil.browse(data.htmlUrl)
         }
       }
 

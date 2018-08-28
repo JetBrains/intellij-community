@@ -4,6 +4,8 @@ package org.jetbrains.plugins.github.pullrequest.action
 import com.intellij.openapi.actionSystem.DataKey
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
+import org.jetbrains.plugins.github.api.GithubFullPath
+import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDetailsLoader
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsLoader
@@ -22,5 +24,7 @@ object GithubPullRequestKeys {
   @JvmStatic
   val REMOTE = DataKey.create<GitRemote>("org.jetbrains.plugins.github.pullrequest.remote")
   @JvmStatic
-  val REMOTE_URL = DataKey.create<String>("org.jetbrains.plugins.github.pullrequest.remote.url")
+  val FULL_PATH = DataKey.create<GithubFullPath>("org.jetbrains.plugins.github.pullrequest.remote.fullpath")
+  @JvmStatic
+  val SERVER_PATH = DataKey.create<GithubServerPath>("org.jetbrains.plugins.github.pullrequest.server.path")
 }

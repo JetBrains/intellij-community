@@ -33,7 +33,7 @@ class GithubPullRequestsListComponent(project: Project,
                                       actionManager: ActionManager,
                                       autoPopupController: AutoPopupController,
                                       popupFactory: JBPopupFactory,
-                                      private val gitDataProvider: DataProvider,
+                                      private val externalDataProvider: DataProvider,
                                       private val detailsLoader: GithubPullRequestsDetailsLoader,
                                       private val loader: GithubPullRequestsLoader)
   : BorderLayoutPanel(), Disposable,
@@ -116,7 +116,7 @@ class GithubPullRequestsListComponent(project: Project,
     return when {
       GithubPullRequestKeys.PULL_REQUESTS_LOADER.`is`(dataId) -> loader
       GithubPullRequestKeys.PULL_REQUESTS_DETAILS_LOADER.`is`(dataId) -> detailsLoader
-      else -> gitDataProvider.getData(dataId) ?: table.getData(dataId)
+      else -> externalDataProvider.getData(dataId) ?: table.getData(dataId)
     }
   }
 

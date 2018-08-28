@@ -80,6 +80,7 @@
     <group id="Github.PullRequest.ToolWindow.List.Popup">
       <action id="Github.PullRequest.Branch.Create"
               class="org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestCreateBranchAction"/>
+      <reference id="Github.Open.In.Browser"/>
     </group>
   </actions>
 </idea-plugin>

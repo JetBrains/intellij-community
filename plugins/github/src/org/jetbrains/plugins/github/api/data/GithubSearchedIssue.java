@@ -123,6 +123,11 @@ public class GithubSearchedIssue extends GithubIssueBase {
     }
 
     @NotNull
+    public String getHtmlUrl() {
+      return htmlUrl;
+    }
+
+    @NotNull
     public String getPatchUrl() {
       return patchUrl;
     }
