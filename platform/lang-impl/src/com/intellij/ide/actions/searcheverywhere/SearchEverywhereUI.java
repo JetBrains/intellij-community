@@ -210,7 +210,6 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
           list.stream().collect(Collectors.groupingBy(info -> info.getContributor()));
 
         map.forEach((key, lst) -> myListModel.addElements(lst, key));
-        ScrollingUtil.ensureSelectionExists(myResultsList);
       }
 
       @Override
