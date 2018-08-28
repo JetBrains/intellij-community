@@ -4,11 +4,9 @@ package com.intellij.codeInspection;
 import com.intellij.analysis.JvmAnalysisBundle;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -17,10 +15,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.UElement;
 import org.jetbrains.uast.UImportStatement;
 import org.jetbrains.uast.UastContextKt;
-import org.jetbrains.uast.UastUtils;
 
 import javax.swing.*;
 import java.awt.*;
@@ -66,6 +62,10 @@ public class UnstableApiUsageInspection extends LocalInspectionTool {
       @Override
       public void visitElement(PsiElement element) {
         super.visitElement(element);
+        if (element instanceof PsiLiteralExpression) {
+          return; // better performance
+        }
+
         if (myIgnoreInsideImports && isInsideImport(element)) {
           return;
         }
