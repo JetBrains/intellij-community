@@ -20,15 +20,19 @@ class TestCase(unittest.TestCase):
             SetupHolder.setup = {'client': '127.0.0.1', 'port': '0'}
             check = '''C:\\bin\\python.exe -u -c connect(\\"127.0.0.1\\")'''
             debug_command = (
-                                'import sys; '
-                                'sys.path.append(r\'%s\'); '
-                                'import pydevd; pydevd.settrace(host=\'127.0.0.1\', port=0, suspend=False, '
-                                'trace_only_current_thread=False, patch_multiprocessing=True); '
-                                'from pydevd import SetupHolder; SetupHolder.setup = %s; '
-                                'connect("127.0.0.1")') % (pydev_src_dir, SetupHolder.setup)
+                'import sys; '
+                'sys.path.append(r\'%s\'); '
+                "import pydevd; pydevd.settrace(host='127.0.0.1', port=0, suspend=False, "
+                'trace_only_current_thread=False, patch_multiprocessing=True); '
+                ''
+                "from pydevd import SetupHolder; "
+                "SetupHolder.setup = %s; "
+                ''
+                'connect("127.0.0.1")') % (pydev_src_dir, SetupHolder.setup)
             if sys.platform == "win32":
                 debug_command = debug_command.replace('"', '\\"')
                 debug_command = '"%s"' % debug_command
+                
             self.assertEqual(
                 'C:\\bin\\python.exe -u -c %s' % debug_command,
                 pydev_monkey.patch_arg_str_win(check))
@@ -45,10 +49,13 @@ class TestCase(unittest.TestCase):
             SetupHolder.setup = {'client': '127.0.0.1', 'port': '0'}
             check = ['C:\\bin\\python.exe', '-u', '-c', 'connect("127.0.0.1")']
             debug_command = (
-                                'import sys; sys.path.append(r\'%s\'); import pydevd; '
-                                'pydevd.settrace(host=\'127.0.0.1\', port=0, suspend=False, trace_only_current_thread=False, patch_multiprocessing=True); '
-                                'from pydevd import SetupHolder; SetupHolder.setup = %s; '
-                                'connect("127.0.0.1")') % (pydev_src_dir, SetupHolder.setup)
+                'import sys; sys.path.append(r\'%s\'); import pydevd; '
+                'pydevd.settrace(host=\'127.0.0.1\', port=0, suspend=False, trace_only_current_thread=False, patch_multiprocessing=True); '
+                ''
+                "from pydevd import SetupHolder; "
+                "SetupHolder.setup = %s; "
+                ''
+                'connect("127.0.0.1")') % (pydev_src_dir, SetupHolder.setup)
             if sys.platform == "win32":
                 debug_command = debug_command.replace('"', '\\"')
                 debug_command = '"%s"' % debug_command
@@ -159,18 +166,6 @@ class TestCase(unittest.TestCase):
                 '-c',
                 '-another_arg'
             ])
-        finally:
-            SetupHolder.setup = original
-
-    # PY-27594
-    def test_skip_stdin(self):
-        original = SetupHolder.setup
-        try:
-            SetupHolder.setup = {'client': '127.0.0.1', 'port': '0'}
-            check = ['C:\\bin\\python.exe', '-', 'pip', 'setuptools']
-
-            self.assertEqual(pydev_monkey.patch_args(check), [
-                'C:\\bin\\python.exe', '-', 'pip', 'setuptools'])
         finally:
             SetupHolder.setup = original
 
