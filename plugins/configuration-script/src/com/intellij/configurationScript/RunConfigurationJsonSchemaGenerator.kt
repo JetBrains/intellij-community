@@ -20,21 +20,22 @@ internal inline fun processConfigurationTypes(processor: (configurationType: Con
   }
 }
 
-internal fun buildRunConfigurationTypeSchema(properties: StringBuilder, definitions: StringBuilder) {
-  processConfigurationTypes { configurationType, propertyName, isLast ->
-    val definitionId = "${propertyName}RC"
-    val description = configurationType.configurationTypeDescription
-    val descriptionField: CharSequence = when {
-      StringUtil.equals(propertyName, description) -> ""
-      else -> {
-        val builder = StringBuilder()
-        builder.append('"').append("description").append('"').append(':')
-        JsonUtil.escape(description, builder)
-        builder.append(',')
-        builder
+internal class RunConfigurationJsonSchemaGenerator(private val definitions: StringBuilder) {
+  fun generate(properties: StringBuilder) {
+    processConfigurationTypes { configurationType, propertyName, isLast ->
+      val definitionId = "${propertyName}RC"
+      val description = configurationType.configurationTypeDescription
+      val descriptionField: CharSequence = when {
+        StringUtil.equals(propertyName, description) -> ""
+        else -> {
+          val builder = StringBuilder()
+          builder.append('"').append("description").append('"').append(':')
+          JsonUtil.escape(description, builder)
+          builder.append(',')
+          builder
+        }
       }
-    }
-    properties.append("""
+      properties.append("""
       "$propertyName": {
         "type": [
           "array",
@@ -47,51 +48,51 @@ internal fun buildRunConfigurationTypeSchema(properties: StringBuilder, definiti
         "$ref": "#/definitions/$definitionId"
       }
       """.trimIndent())
-    if (!isLast) {
-      properties.append(',')
+      if (!isLast) {
+        properties.append(',')
+      }
+
+      describeFactories(configurationType, definitionId)
+    }
+  }
+
+  private fun describeFactories(configurationType: ConfigurationType, definitionId: String) {
+    val factories = configurationType.configurationFactories
+    if (factories.isEmpty()) {
+      LOG.error("Configuration type \"${configurationType.displayName}\" is not valid: factory list is empty")
     }
 
-    describeFactories(configurationType, definitions, definitionId)
-  }
-}
-
-private fun describeFactories(configurationType: ConfigurationType, definitions: StringBuilder, definitionId: String) {
-  val factories = configurationType.configurationFactories
-  if (factories.isEmpty()) {
-    LOG.error("Configuration type \"${configurationType.displayName}\" is not valid: factory list is empty")
-  }
-
-  val rcProperties = StringBuilder()
-  if (factories.size > 1) {
-    for (factory in factories) {
-      rcProperties.append("""
+    val rcProperties = StringBuilder()
+    if (factories.size > 1) {
+      for (factory in factories) {
+        rcProperties.append("""
           "${rcFactoryIdToPropertyName(factory)}": {
             "type": "object"
           },
         """.trimIndent())
-      // todo describe factory object with properties
+        // todo describe factory object with properties
+      }
+      return
     }
-    return
-  }
 
-  val factory = factories[0]
-  val optionsClass = factory.optionsClass
-  if (optionsClass == null) {
-    LOG.debug { "Configuration factory \"${factory.name}\" is not described because options class not defined" }
+    val factory = factories[0]
+    val optionsClass = factory.optionsClass
+    if (optionsClass == null) {
+      LOG.debug { "Configuration factory \"${factory.name}\" is not described because options class not defined" }
 
-    definitions.append("""
+      definitions.append("""
       "$definitionId": {
         "additionalProperties": true
       },
       """.trimIndent())
-    return
-  }
+      return
+    }
 
-  val state = ReflectionUtil.newInstance(optionsClass)
-  val stateProperties = StringBuilder()
-  buildJsonSchema(state, stateProperties)
+    val state = ReflectionUtil.newInstance(optionsClass)
+    val stateProperties = StringBuilder()
+    buildJsonSchema(state, stateProperties)
 
-  definitions.append("""
+    definitions.append("""
     "$definitionId": {
       "properties": {
         ${stateProperties}
@@ -99,6 +100,7 @@ private fun describeFactories(configurationType: ConfigurationType, definitions:
       "additionalProperties": false
     },
     """.trimIndent())
+  }
 }
 
 // returns null if id is not valid

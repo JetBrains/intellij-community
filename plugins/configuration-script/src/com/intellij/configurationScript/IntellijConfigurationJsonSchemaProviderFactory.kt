@@ -55,7 +55,7 @@ private fun generateConfigurationSchema(): LightVirtualFile {
 
   val runConfigurationsProperties = StringBuilder()
   val definitions = StringBuilder()
-  buildRunConfigurationTypeSchema(runConfigurationsProperties, definitions)
+  RunConfigurationJsonSchemaGenerator(definitions).generate(runConfigurationsProperties)
 
   @Language("JSON")
   val data = """
