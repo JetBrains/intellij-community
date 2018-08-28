@@ -176,11 +176,11 @@ class PyDBFrame:
                 is_real = is_real_file(frame.f_code.co_filename)
 
                 if exception_breakpoint is not None:
-                    # Always add exception to frame (must remove later after we proceed).
-                    add_exception_to_frame(frame, (exception, value, trace))
-
                     if exception_breakpoint.condition is not None:
+                        # Always add exception to frame (must remove later after we proceed).
+                        add_exception_to_frame(frame, (exception, value, trace))
                         eval_result = handle_breakpoint_condition(main_debugger, info, exception_breakpoint, frame)
+                        remove_exception_from_frame(frame)
                         if not eval_result:
                             return False, frame
 
@@ -442,7 +442,6 @@ class PyDBFrame:
             has_exception_breakpoints = main_debugger.break_on_caught_exceptions or main_debugger.has_plugin_exception_breaks
 
             if is_exception_event:
-                print("exception event")
                 if has_exception_breakpoints:
                     should_stop, frame = self.should_stop_on_exception(frame, event, arg)
                     if should_stop:
