@@ -20,7 +20,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.Balloon
@@ -53,7 +55,9 @@ class DeepComparator(private val project: Project,
                      private val dataProvider: VcsLogDataProvider,
                      private val ui: VcsLogUi,
                      parent: Disposable) : VcsLogHighlighter, Disposable {
-  private var task: MyTask? = null
+  private var progressIndicator: ProgressIndicator? = null
+  private var comparedBranch: String? = null
+  private var repositoriesWithCurrentBranches: Map<GitRepository, GitBranch>? = null
   private var nonPickedCommits: TIntHashSet? = null
 
   init {
@@ -61,20 +65,27 @@ class DeepComparator(private val project: Project,
   }
 
   fun highlightInBackground(branchToCompare: String) {
-    if (task != null) {
-      LOG.error("$task is already in progress")
+    if (comparedBranch != null) {
+      LOG.error("Already comparing with branch $comparedBranch")
       return
     }
 
     val repositories = getRepositories(ui.dataPack.logProviders, branchToCompare)
-    LOG.debug("Highlighting requested: $repositories")
     if (repositories.isEmpty()) {
-      removeHighlighting()
+      LOG.debug("Could not find suitable repositories for selected branch $comparedBranch")
       return
     }
 
-    task = MyTask(repositories, branchToCompare)
-    task!!.queue()
+    comparedBranch = branchToCompare
+    repositoriesWithCurrentBranches = repositories
+    highlightInBackground()
+  }
+
+  private fun highlightInBackground() {
+    LOG.debug("Highlighting requested for $repositoriesWithCurrentBranches")
+    val task = MyTask(repositoriesWithCurrentBranches!!, comparedBranch!!)
+    progressIndicator = BackgroundableProcessIndicator(task)
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, progressIndicator!!)
   }
 
   private fun getRepositories(providers: Map<VirtualFile, VcsLogProvider>,
@@ -97,15 +108,17 @@ class DeepComparator(private val project: Project,
   }
 
   private fun stopTask() {
-    if (task != null) {
-      task!!.cancel()
-      task = null
+    if (progressIndicator != null) {
+      progressIndicator!!.cancel()
+      progressIndicator = null
     }
   }
 
   private fun removeHighlighting() {
     ApplicationManager.getApplication().assertIsDispatchThread()
     nonPickedCommits = null
+    comparedBranch = null
+    repositoriesWithCurrentBranches = null
   }
 
   override fun dispose() {
@@ -113,7 +126,7 @@ class DeepComparator(private val project: Project,
   }
 
   fun hasHighlightingOrInProgress(): Boolean {
-    return task != null
+    return comparedBranch != null
   }
 
   override fun getStyle(commitId: Int, commitDetails: VcsShortCommitDetails, isSelected: Boolean): VcsLogHighlighter.VcsCommitStyle {
@@ -122,11 +135,10 @@ class DeepComparator(private val project: Project,
   }
 
   override fun update(dataPack: VcsLogDataPack, refreshHappened: Boolean) {
-    if (task == null) { // no task in progress => not interested in refresh events
+    if (comparedBranch == null) { // no branch is selected => not interested in refresh events
       return
     }
 
-    val comparedBranch = task!!.comparedBranch
     val singleFilteredBranch = VcsLogUtil.getSingleFilteredBranch(dataPack.filters, dataPack.refs)
     if (comparedBranch != singleFilteredBranch) {
       LOG.debug("Branch filter changed. Compared branch: $comparedBranch, filtered branch: $singleFilteredBranch")
@@ -136,15 +148,13 @@ class DeepComparator(private val project: Project,
     }
 
     if (refreshHappened) {
-      val repositoriesWithCurrentBranches = task!!.repositoriesWithCurrentBranches
-
       stopTask()
 
       // highlight again
-      val repositories = getRepositories(dataPack.logProviders, comparedBranch)
+      val repositories = getRepositories(dataPack.logProviders, comparedBranch!!)
       if (repositories == repositoriesWithCurrentBranches) {
         // but not if current branch changed
-        highlightInBackground(comparedBranch)
+        highlightInBackground()
       }
       else {
         LOG.debug("Repositories with current branches changed. Actual:\n$repositories\nExpected:\n$repositoriesWithCurrentBranches")
@@ -184,12 +194,12 @@ class DeepComparator(private val project: Project,
     }
   }
 
-  private inner class MyTask(val repositoriesWithCurrentBranches: Map<GitRepository, GitBranch>,
-                             val comparedBranch: String) : Task.Backgroundable(project, "Comparing Branches...") {
+  private inner class MyTask(private val repositoriesWithCurrentBranches: Map<GitRepository, GitBranch>,
+                             private val comparedBranch: String) :
+    Task.Backgroundable(project, "Comparing Branches...") {
 
     private val collectedNonPickedCommits = TIntHashSet()
     private var exception: VcsException? = null
-    private var isCancelled: Boolean = false
 
     override fun run(indicator: ProgressIndicator) {
       try {
@@ -201,25 +211,19 @@ class DeepComparator(private val project: Project,
         LOG.warn(e)
         exception = e
       }
+    }
 
+    override fun onFinished() {
+      progressIndicator = null
     }
 
     override fun onSuccess() {
-      if (isCancelled) {
-        return
-      }
-
-      removeHighlighting()
-
       if (exception != null) {
+        nonPickedCommits = null
         VcsNotifier.getInstance(project).notifyError("Couldn't compare with branch $comparedBranch", exception!!.message)
         return
       }
       nonPickedCommits = collectedNonPickedCommits
-    }
-
-    fun cancel() {
-      isCancelled = true
     }
 
     @Throws(VcsException::class)
@@ -254,7 +258,7 @@ class DeepComparator(private val project: Project,
     }
 
     override fun toString(): String {
-      return "Task for '$comparedBranch' in $repositoriesWithCurrentBranches${if (isCancelled) " (cancelled)" else ""})"
+      return "Task for '$comparedBranch' in $repositoriesWithCurrentBranches"
     }
   }
 
