@@ -2,10 +2,11 @@
 package com.intellij.platform.onair.index;
 
 import com.intellij.platform.onair.storage.api.Address;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-public class RevisionDescritor {
+public class RevisionDescriptor {
   public final int R;
   public final int baseR;
 
@@ -22,15 +23,20 @@ public class RevisionDescritor {
     }
   }
 
+  @Nullable
   public final Heads heads;
 
-  public RevisionDescritor(int r, int baseR, Heads heads) {
+  public RevisionDescriptor(final int r, final int baseR, @Nullable final Heads heads) {
     R = r;
     this.baseR = baseR;
     this.heads = heads;
   }
 
-  public static RevisionDescritor fromRevision(String revision) {
+  public static RevisionDescriptor fromRevision(String revision) {
+    if (revision == null || revision.isEmpty()) {
+      return new RevisionDescriptor(17, -1, null);
+    }
+
     throw new UnsupportedOperationException();
     /*Map m = (Map)(((Map)indexHeads.get("inverted-indices")).get(indexId.getName()));
     final List<String> invertedAddress = (List<String>)m.get("inverted");

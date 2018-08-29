@@ -46,20 +46,20 @@ public class BTreeIndexStorageManager implements IndexStorageManager {
     public final PersistentHashMap indexStorages;
     public final PersistentHashMap forwardIndices;
     public final Novelty novelty;
-    public final RevisionDescritor revisionDescritor;
+    public final RevisionDescriptor revisionDescriptor;
     public final BTree forwardIndexTree;
     public final RemoteVFS.Mapping vfsMapping;
 
     public IndexState(Storage storage,
                       Novelty novelty,
-                      RevisionDescritor revisionDescritor,
+                      RevisionDescriptor revisionDescriptor,
                       BTree forwardIndexTree,
                       RemoteVFS.Mapping vfsMapping,
                       PersistentHashMap indexStorages,
                       PersistentHashMap forwardIndices) {
       this.storage = storage;
       this.novelty = novelty;
-      this.revisionDescritor = revisionDescritor;
+      this.revisionDescriptor = revisionDescriptor;
       this.forwardIndexTree = forwardIndexTree;
       this.vfsMapping = vfsMapping;
       this.indexStorages = indexStorages;
@@ -67,12 +67,12 @@ public class BTreeIndexStorageManager implements IndexStorageManager {
     }
 
     public IndexState withNewForwardIndexStorage(String indexId, BTreeForwardIndexStorage forwardIndexStorage) {
-      return new IndexState(storage, novelty, revisionDescritor, forwardIndexTree, vfsMapping, indexStorages,
+      return new IndexState(storage, novelty, revisionDescriptor, forwardIndexTree, vfsMapping, indexStorages,
                             (PersistentHashMap)forwardIndices.assoc(indexId, forwardIndexStorage));
     }
 
     public IndexState withNewInvertedIndexStorage(String indexId, BTreeIndexStorage indexStorage) {
-      return new IndexState(storage, novelty, revisionDescritor, forwardIndexTree, vfsMapping,
+      return new IndexState(storage, novelty, revisionDescriptor, forwardIndexTree, vfsMapping,
                             (PersistentHashMap)indexStorages.assoc(indexId, indexStorage), forwardIndices);
     }
   }
@@ -138,10 +138,10 @@ public class BTreeIndexStorageManager implements IndexStorageManager {
                                             PersistentHashMap oldForwardIndexStorages,
                                             Storage storage,
                                             String revision) {
-    final RevisionDescritor revisionDescriptor = RevisionDescritor.fromRevision(revision);
+    final RevisionDescriptor revisionDescriptor = RevisionDescriptor.fromRevision(revision);
     final NoveltyImpl novelty = NoveltyImpl.createNovelty();
 
-    RevisionDescritor.Heads heads = revisionDescriptor.heads;
+    RevisionDescriptor.Heads heads = revisionDescriptor.heads;
     RemoteVFS.Mapping mapping = null;
     if (heads != null) {
       BTree remoteVFS = BTree.load(storage, RemoteVFS.VFS_TREE_KEY_SIZE, heads.vfsHead);
@@ -250,12 +250,12 @@ public class BTreeIndexStorageManager implements IndexStorageManager {
                                                                 valueExternalizer,
                                                                 state.storage,
                                                                 state.novelty,
-                                                                state.revisionDescritor.heads != null
-                                                                ? state.revisionDescritor.heads.invertedIndicesHeads.get(indexId.getName())
+                                                                state.revisionDescriptor.heads != null
+                                                                ? state.revisionDescriptor.heads.invertedIndicesHeads.get(indexId.getName())
                                                                 : null,
                                                                 cacheSize,
-                                                                state.revisionDescritor.R,
-                                                                state.revisionDescritor.baseR)));
+                                                                state.revisionDescriptor.R,
+                                                                state.revisionDescriptor.baseR)));
 
     return new BTreeIndexStorageManagerDelegatingIndexStorage<>(this, indexId, localToRemote, remoteToLocal);
   }
