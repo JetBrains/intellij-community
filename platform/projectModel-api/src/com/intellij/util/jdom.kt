@@ -135,3 +135,8 @@ fun loadDocumentAndKeepBoundaryWhitespace(stream: InputStream): Document {
 fun loadElementAndKeepBoundaryWhitespace(chars: CharSequence): Element {
   return getSpecialSaxBuilder().build(CharSequenceReader(chars)).detachRootElement()
 }
+
+@Throws(IOException::class, JDOMException::class)
+fun loadElementAndKeepBoundaryWhitespace(stream: InputStream): Element {
+  return stream.use { getSpecialSaxBuilder().build(it) }.detachRootElement()
+}
