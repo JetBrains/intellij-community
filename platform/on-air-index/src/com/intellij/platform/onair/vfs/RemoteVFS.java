@@ -22,16 +22,6 @@ public class RemoteVFS {
 
   public static final int VFS_TREE_KEY_SIZE = 8;
 
-  public static class Mapping {
-    public final IntIntHashMap localToRemote;
-    public final IntIntHashMap remoteToLocal;
-
-    public Mapping(IntIntHashMap localToRemote, IntIntHashMap remoteToLocal) {
-      this.localToRemote = localToRemote;
-      this.remoteToLocal = remoteToLocal;
-    }
-  }
-
   public static Pair<BTree, Novelty> save(final Storage storage, final FSRecords fs) {
     // TODO: apply localToRemote mapping to ensure structural sharing with already published tree
     Novelty novelty;
@@ -145,5 +135,15 @@ public class RemoteVFS {
 
   public static void publishVFS(BTree vfs, Novelty novelty) {
     vfs.store(novelty.access());
+  }
+
+  public static class Mapping {
+    public final IntIntHashMap localToRemote;
+    public final IntIntHashMap remoteToLocal;
+
+    public Mapping(IntIntHashMap localToRemote, IntIntHashMap remoteToLocal) {
+      this.localToRemote = localToRemote;
+      this.remoteToLocal = remoteToLocal;
+    }
   }
 }
