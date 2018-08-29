@@ -26,48 +26,11 @@ import java.util.function.Function;
 
 public class BTreeIndexStorageManager implements IndexStorageManager {
   private static final int FORWARD_STORAGE_KEY_SIZE = 6;
+
   private final Function<Integer, Integer> localToRemote;
   private final Function<Integer, Integer> remoteToLocal;
 
-  public static class IndexState {
-    public final Storage storage;
-
-    public final PersistentHashMap indexStorages;
-    public final PersistentHashMap forwardIndices;
-    public final Novelty novelty;
-    public final RevisionDescriptor revisionDescriptor;
-    public final BTree forwardIndexTree;
-    public final RemoteVFS.Mapping vfsMapping;
-
-    public IndexState(Storage storage,
-                      Novelty novelty,
-                      RevisionDescriptor revisionDescriptor,
-                      BTree forwardIndexTree,
-                      RemoteVFS.Mapping vfsMapping,
-                      PersistentHashMap indexStorages,
-                      PersistentHashMap forwardIndices) {
-      this.storage = storage;
-      this.novelty = novelty;
-      this.revisionDescriptor = revisionDescriptor;
-      this.forwardIndexTree = forwardIndexTree;
-      this.vfsMapping = vfsMapping;
-      this.indexStorages = indexStorages;
-      this.forwardIndices = forwardIndices;
-    }
-
-    public IndexState withNewForwardIndexStorage(String indexId, BTreeForwardIndexStorage forwardIndexStorage) {
-      return new IndexState(storage, novelty, revisionDescriptor, forwardIndexTree, vfsMapping, indexStorages,
-                            (PersistentHashMap)forwardIndices.assoc(indexId, forwardIndexStorage));
-    }
-
-    public IndexState withNewInvertedIndexStorage(String indexId, BTreeIndexStorage indexStorage) {
-      return new IndexState(storage, novelty, revisionDescriptor, forwardIndexTree, vfsMapping,
-                            (PersistentHashMap)indexStorages.assoc(indexId, indexStorage), forwardIndices);
-    }
-  }
-
   public final AtomicReference<IndexState> stateRef;
-
 
   public BTreeIndexStorageManager() {
     this(
@@ -111,15 +74,44 @@ public class BTreeIndexStorageManager implements IndexStorageManager {
     };
   }
 
-  public static <T> T swap(AtomicReference<T> atom, Function<T, T> update) {
-    synchronized (atom) {
-      T t = atom.get();
-      T newT = update.apply(t);
-      if (!atom.compareAndSet(t, newT)) {
-        throw new ConcurrentModificationException();
-      }
-      return newT;
-    }
+  @Override
+  public <V> PersistentMap<Integer, V> createForwardIndexStorage(ID<?, ?> indexId, DataExternalizer<V> valueExternalizer) {
+    swap(stateRef, state -> state.withNewForwardIndexStorage(
+      indexId.getName(),
+      new BTreeForwardIndexStorage<V>(indexId.getUniqueId(),
+                                      valueExternalizer,
+                                      state.novelty,
+                                      state.forwardIndexTree)));
+    return new BTreeIndexStorageManagerDelegatingPersistentMap<>(this, indexId, localToRemote, remoteToLocal);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public <K, V> VfsAwareIndexStorage<K, V> createIndexStorage(ID<?, ?> indexId,
+                                                              KeyDescriptor<K> keyDescriptor,
+                                                              DataExternalizer<V> valueExternalizer,
+                                                              int cacheSize,
+                                                              boolean keyIsUniqueForIndexedFile,
+                                                              boolean buildKeyHashToVirtualFileMapping) {
+    swap(stateRef, state ->
+      state.withNewInvertedIndexStorage(
+        indexId.getName(),
+        new BTreeIndexStorage<>(keyDescriptor,
+                                valueExternalizer,
+                                state.storage,
+                                state.novelty,
+                                state.revisionDescriptor.heads != null
+                                ? state.revisionDescriptor.heads.invertedIndicesHeads.get(indexId.getName())
+                                : null,
+                                cacheSize,
+                                state.revisionDescriptor.R,
+                                state.revisionDescriptor.baseR)));
+
+    return new BTreeIndexStorageManagerDelegatingIndexStorage<>(this, indexId, localToRemote, remoteToLocal);
+  }
+
+  public void close() throws IOException {
+    stateRef.get().novelty.close();
   }
 
   @SuppressWarnings("unchecked")
@@ -140,7 +132,8 @@ public class BTreeIndexStorageManager implements IndexStorageManager {
     BTree forwardTree;
     if (heads != null) {
       forwardTree = BTree.load(storage, FORWARD_STORAGE_KEY_SIZE, heads.forwardIndexHead);
-    } else {
+    }
+    else {
       forwardTree = BTree.create(novelty.access(), storage, FORWARD_STORAGE_KEY_SIZE);
     }
 
@@ -152,7 +145,8 @@ public class BTreeIndexStorageManager implements IndexStorageManager {
         BTreeIndexStorage old = (BTreeIndexStorage)oldInvertedIndexStorages.get(indexId);
         if (old != null) {
           newInvertedIndexStorages =
-            (PersistentHashMap)newInvertedIndexStorages.assoc(indexId, old.withNewHead(novelty, addr, revisionDescriptor.R, revisionDescriptor.baseR));
+            (PersistentHashMap)newInvertedIndexStorages
+              .assoc(indexId, old.withNewHead(novelty, addr, revisionDescriptor.R, revisionDescriptor.baseR));
         }
       }
     }
@@ -173,41 +167,51 @@ public class BTreeIndexStorageManager implements IndexStorageManager {
                           newForwardIndexStorages);
   }
 
-  @Override
-  public <V> PersistentMap<Integer, V> createForwardIndexStorage(ID<?, ?> indexId, DataExternalizer<V> valueExternalizer) {
-    swap(stateRef, state -> state.withNewForwardIndexStorage(indexId.getName(),
-                                                             new BTreeForwardIndexStorage<V>(indexId.getUniqueId(),
-                                                                                             valueExternalizer,
-                                                                                             state.novelty,
-                                                                                             state.forwardIndexTree)));
-    return new BTreeIndexStorageManagerDelegatingPersistentMap<>(this, indexId, localToRemote, remoteToLocal);
+  public static <T> T swap(AtomicReference<T> atom, Function<T, T> update) {
+    synchronized (atom) {
+      T t = atom.get();
+      T newT = update.apply(t);
+      if (!atom.compareAndSet(t, newT)) {
+        throw new ConcurrentModificationException();
+      }
+      return newT;
+    }
   }
 
-  @SuppressWarnings("unchecked")
-  @Override
-  public <K, V> VfsAwareIndexStorage<K, V> createIndexStorage(ID<?, ?> indexId,
-                                                              KeyDescriptor<K> keyDescriptor,
-                                                              DataExternalizer<V> valueExternalizer,
-                                                              int cacheSize,
-                                                              boolean keyIsUniqueForIndexedFile,
-                                                              boolean buildKeyHashToVirtualFileMapping) {
-    swap(stateRef, state ->
-      state.withNewInvertedIndexStorage(indexId.getName(),
-                                        new BTreeIndexStorage<>(keyDescriptor,
-                                                                valueExternalizer,
-                                                                state.storage,
-                                                                state.novelty,
-                                                                state.revisionDescriptor.heads != null
-                                                                ? state.revisionDescriptor.heads.invertedIndicesHeads.get(indexId.getName())
-                                                                : null,
-                                                                cacheSize,
-                                                                state.revisionDescriptor.R,
-                                                                state.revisionDescriptor.baseR)));
+  public static class IndexState {
+    public final Storage storage;
 
-    return new BTreeIndexStorageManagerDelegatingIndexStorage<>(this, indexId, localToRemote, remoteToLocal);
-  }
+    public final PersistentHashMap indexStorages;
+    public final PersistentHashMap forwardIndices;
+    public final Novelty novelty;
+    public final RevisionDescriptor revisionDescriptor;
+    public final BTree forwardIndexTree;
+    public final RemoteVFS.Mapping vfsMapping;
 
-  public void close() throws IOException {
-    stateRef.get().novelty.close();
+    public IndexState(Storage storage,
+                      Novelty novelty,
+                      RevisionDescriptor revisionDescriptor,
+                      BTree forwardIndexTree,
+                      RemoteVFS.Mapping vfsMapping,
+                      PersistentHashMap indexStorages,
+                      PersistentHashMap forwardIndices) {
+      this.storage = storage;
+      this.novelty = novelty;
+      this.revisionDescriptor = revisionDescriptor;
+      this.forwardIndexTree = forwardIndexTree;
+      this.vfsMapping = vfsMapping;
+      this.indexStorages = indexStorages;
+      this.forwardIndices = forwardIndices;
+    }
+
+    public IndexState withNewForwardIndexStorage(String indexId, BTreeForwardIndexStorage forwardIndexStorage) {
+      return new IndexState(storage, novelty, revisionDescriptor, forwardIndexTree, vfsMapping, indexStorages,
+                            (PersistentHashMap)forwardIndices.assoc(indexId, forwardIndexStorage));
+    }
+
+    public IndexState withNewInvertedIndexStorage(String indexId, BTreeIndexStorage indexStorage) {
+      return new IndexState(storage, novelty, revisionDescriptor, forwardIndexTree, vfsMapping,
+                            (PersistentHashMap)indexStorages.assoc(indexId, indexStorage), forwardIndices);
+    }
   }
 }

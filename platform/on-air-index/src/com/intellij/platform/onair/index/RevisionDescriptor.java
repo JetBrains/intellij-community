@@ -23,21 +23,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class RevisionDescriptor {
+
   public final int R;
   public final int baseR;
-
-  public static class Heads {
-    public final Address forwardIndexHead;
-    public final Map<String, BTreeIndexStorage.AddressDescriptor> invertedIndicesHeads;
-    public final Address vfsHead;
-
-    public Heads(Address forwardIndexHead,
-                 Map<String, BTreeIndexStorage.AddressDescriptor> invertedIndicesHeads, Address vfsHead) {
-      this.forwardIndexHead = forwardIndexHead;
-      this.invertedIndicesHeads = invertedIndicesHeads;
-      this.vfsHead = vfsHead;
-    }
-  }
 
   @Nullable
   public final Heads heads;
@@ -128,6 +116,19 @@ public class RevisionDescriptor {
     }
     catch (Exception e) {
       throw new RuntimeException("exception downloading index data for revision " + revision, e);
+    }
+  }
+
+  public static class Heads {
+    public final Address forwardIndexHead;
+    public final Map<String, BTreeIndexStorage.AddressDescriptor> invertedIndicesHeads;
+    public final Address vfsHead;
+
+    public Heads(Address forwardIndexHead,
+                 Map<String, BTreeIndexStorage.AddressDescriptor> invertedIndicesHeads, Address vfsHead) {
+      this.forwardIndexHead = forwardIndexHead;
+      this.invertedIndicesHeads = invertedIndicesHeads;
+      this.vfsHead = vfsHead;
     }
   }
 }
