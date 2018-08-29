@@ -260,7 +260,7 @@ def _get_template_file_name(frame):
             pydev_log.debug("Source name is %s\n" % fname)
             return None
         else:
-            abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_file(fname)
+            abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_file(str(fname))
             return abs_path_real_path_and_base[1]
     except:
         pydev_log.debug(traceback.format_exc())
