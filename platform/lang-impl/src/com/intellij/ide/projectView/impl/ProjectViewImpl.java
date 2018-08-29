@@ -507,7 +507,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     getContentManager().addContentManagerListener(new ContentManagerAdapter() {
       @Override
-      public void selectionChanged(ContentManagerEvent event) {
+      public void selectionChanged(@NotNull ContentManagerEvent event) {
         if (event.getOperation() == ContentManagerEvent.ContentOperation.add) {
           viewSelectionChanged();
         }
@@ -623,7 +623,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         @Override
         public void setSelected(AnActionEvent event, boolean flag) {
           if (isGlobalOptions()) {
-            setAbbreviatePackageNames(flag, myCurrentViewId);
+            setAbbreviatePackageNames(myCurrentViewId, flag);
           }
           setPaneOption(myOptionsMap, flag, myCurrentViewId, true);
         }
@@ -1709,7 +1709,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   @Override
-  public void setHideEmptyPackages(boolean hideEmptyPackages, @NotNull String paneId) {
+  public void setHideEmptyPackages(@NotNull String paneId, boolean hideEmptyPackages) {
     if (isGlobalOptions()) {
       getGlobalOptions().setHideEmptyPackages(hideEmptyPackages);
       for (String pane : myHideEmptyPackages.keySet()) {
@@ -1738,7 +1738,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   @Override
-  public void setAbbreviatePackageNames(boolean abbreviatePackageNames, @NotNull String paneId) {
+  public void setAbbreviatePackageNames(@NotNull String paneId, boolean abbreviatePackageNames) {
     if (isGlobalOptions()) {
       getGlobalOptions().setAbbreviatePackages(abbreviatePackageNames);
     }
