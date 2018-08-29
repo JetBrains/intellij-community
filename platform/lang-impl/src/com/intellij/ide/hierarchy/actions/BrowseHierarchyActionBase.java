@@ -10,6 +10,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbUnawareHider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -74,7 +75,10 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
 
     if (selectedContent != null && !selectedContent.isPinned()) {
       content = selectedContent;
-      final Component component = content.getComponent();
+      Component component = content.getComponent();
+      if (component instanceof DumbUnawareHider) {
+        component = ((DumbUnawareHider)component).getContent();
+      }
       if (component instanceof Disposable) {
         Disposer.dispose((Disposable)component);
       }
