@@ -464,6 +464,7 @@ public class PluginManagerConfigurableNew
   public void disposeUIResources() {
     myPluginsModel.toBackground();
     Disposer.dispose(mySearchUpdateAlarm);
+    myTrendingSearchPanel.loading(false);
 
     if (myShutdownCallback != null) {
       myShutdownCallback.run();

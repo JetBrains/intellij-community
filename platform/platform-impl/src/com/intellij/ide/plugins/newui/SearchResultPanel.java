@@ -116,7 +116,7 @@ public abstract class SearchResultPanel {
 
   protected abstract void handleQuery(@NotNull String query, @NotNull PluginsGroup result);
 
-  private void loading(boolean start) {
+  public void loading(boolean start) {
     PluginsGroupComponentWithProgress panel = (PluginsGroupComponentWithProgress)myPanel;
     if (start) {
       panel.startLoading();
