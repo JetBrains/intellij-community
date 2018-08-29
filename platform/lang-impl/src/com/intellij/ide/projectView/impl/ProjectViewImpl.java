@@ -567,7 +567,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
           final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
           final SelectionInfo selectionInfo = SelectionInfo.create(viewPane);
           if (isGlobalOptions()) {
-            setFlattenPackages(flag, viewPane.getId());
+            setFlattenPackages(viewPane.getId(), flag);
           }
           super.setSelected(event, flag);
 
@@ -1541,7 +1541,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     return getPaneOptionValue(myFlattenPackages, paneId, ourFlattenPackagesDefaults);
   }
 
-  public void setFlattenPackages(boolean flattenPackages, String paneId) {
+  public void setFlattenPackages(String paneId, boolean flattenPackages) {
     if (isGlobalOptions()) {
       getGlobalOptions().setFlattenPackages(flattenPackages);
       for (String pane : myFlattenPackages.keySet()) {
@@ -1624,7 +1624,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         ProjectViewPane old = (ProjectViewPane)pane;
         showExcludedFiles = old.myShowExcludedFiles;
         if (showExcludedFiles != ourShowExcludedFilesDefaults) {
-          setShowExcludedFiles(showExcludedFiles, paneId, false);
+          setShowExcludedFiles(paneId, showExcludedFiles, false);
           setPaneOption(myShowExcludedFiles, showExcludedFiles, ProjectViewPane.ID, false);
           old.myShowExcludedFiles = ourShowExcludedFilesDefaults; // reset old state after copying it
         }
@@ -1633,7 +1633,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     return showExcludedFiles;
   }
 
-  void setShowExcludedFiles(boolean showExcludedFiles, @NotNull String paneId, boolean updatePane) {
+  void setShowExcludedFiles(@NotNull String paneId, boolean showExcludedFiles, boolean updatePane) {
     if (isGlobalOptions()) {
       getGlobalOptions().setShowExcludedFiles(showExcludedFiles);
       for (String id : getPaneIds()) {
@@ -1665,7 +1665,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   @NotNull
-  public ActionCallback setShowLibraryContentsCB(boolean showLibraryContents, String paneId) {
+  public ActionCallback setShowLibraryContentsCB(String paneId, boolean showLibraryContents) {
     return setPaneOption(myShowLibraryContents, showLibraryContents, paneId, true);
   }
 

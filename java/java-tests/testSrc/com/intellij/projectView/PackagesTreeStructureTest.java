@@ -210,7 +210,7 @@ public class PackagesTreeStructureTest extends TestSourceBasedTestCase {
 
     projectView.setShowLibraryContents(PackageViewPane.ID, showLibraryContents);
 
-    projectView.setFlattenPackages(flattenPackages, PackageViewPane.ID);
+    projectView.setFlattenPackages(PackageViewPane.ID, flattenPackages);
     projectView.setAbbreviatePackageNames(PackageViewPane.ID, abbreviatePackageNames);
     projectView.setHideEmptyPackages(PackageViewPane.ID, true);
 
