@@ -283,6 +283,7 @@ public class PluginManagerConfigurableNew
     };
 
     mySearchListener = (_0, query) -> {
+      removeDetailsPanel();
       mySearchTextField.setTextIgnoreEvents(query);
       showSearchPanel(query);
     };
