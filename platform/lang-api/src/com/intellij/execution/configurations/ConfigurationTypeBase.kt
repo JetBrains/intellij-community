@@ -48,7 +48,6 @@ abstract class ConfigurationTypeBase protected constructor(private val id: Strin
   override final fun getConfigurationTypeDescription(): String = description
 
   // open due to backward compatibility
-  @Deprecated("Do not override", level = DeprecationLevel.ERROR)
   override fun getIcon(): Icon? = icon?.value
 
   override final fun getId(): String = id
