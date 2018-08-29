@@ -2,38 +2,27 @@
 package com.intellij.platform.onair.index;
 
 import clojure.lang.PersistentHashMap;
-import com.google.common.base.Charsets;
-import com.google.common.io.CharStreams;
-import com.google.gson.GsonBuilder;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.platform.onair.storage.StorageImpl;
-import com.intellij.platform.onair.storage.api.NoveltyImpl;
 import com.intellij.platform.onair.storage.api.Novelty;
+import com.intellij.platform.onair.storage.api.NoveltyImpl;
 import com.intellij.platform.onair.storage.api.Storage;
 import com.intellij.platform.onair.tree.BTree;
 import com.intellij.platform.onair.vfs.RemoteVFS;
 import com.intellij.util.indexing.ID;
-import com.intellij.util.indexing.IndexInfrastructure;
 import com.intellij.util.indexing.IndexStorageManager;
 import com.intellij.util.indexing.VfsAwareIndexStorage;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentMap;
-import org.jdom.Element;
 
-import java.io.*;
+import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.URL;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
 import java.util.ConcurrentModificationException;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class BTreeIndexStorageManager implements IndexStorageManager {
   private static final int FORWARD_STORAGE_KEY_SIZE = 6;
@@ -182,48 +171,6 @@ public class BTreeIndexStorageManager implements IndexStorageManager {
                           mapping,
                           newInvertedIndexStorages,
                           newForwardIndexStorages);
-  }
-
-  public static Map downloadIndexData(String revision) {
-    String bucket = "onair-index-data";
-    String region = "eu-central-1";
-    try {
-      InputStream stream =
-        new URL("https://s3." + region + ".amazonaws.com/" + bucket + "?prefix=" + revision + "/index_meta").openStream();
-      Element element = JDOMUtil.load(stream);
-
-      List<String> files = element.getChildren().stream()
-                                  .filter(e -> e.getName().equals("Contents"))
-                                  .flatMap(e -> e.getChildren().stream())
-                                  .filter(o -> o.getName().equals("Key"))
-                                  .map(e -> e.getText())
-                                  .map(s -> s.split("/")[2])
-                                  .collect(Collectors.toList());
-
-      for (String file : files) {
-        String s3url = "https://s3." + region + ".amazonaws.com/" + bucket + "/" + revision + "/index_meta/" + file;
-        ReadableByteChannel source = Channels.newChannel(new URL(s3url).openStream());
-        File base = IndexInfrastructure.getIndexMeta();
-        if (!base.exists()) {
-          if (!base.mkdirs()) {
-            throw new RuntimeException("can't mkdir " + base.getCanonicalPath());
-          }
-        }
-
-        try (FileOutputStream fos = new FileOutputStream(new File(base, file))) {
-          fos.getChannel().transferFrom(source, 0, Long.MAX_VALUE);
-        }
-      }
-
-      InputStream is = new URL("https://s3." + region + ".amazonaws.com/" + bucket + "/" + revision + "/meta").openStream();
-
-      String str = CharStreams.toString(new InputStreamReader(is, Charsets.UTF_8));
-
-      return new GsonBuilder().create().fromJson(str, Map.class);
-    }
-    catch (Exception e) {
-      throw new RuntimeException("exception downloading index data for revision " + revision, e);
-    }
   }
 
   @Override
