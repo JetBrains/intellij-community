@@ -166,7 +166,7 @@ class DeepComparator(private val project: Project,
         .setFadeoutTime(5000)
         .createBalloon()
       val component = ui.table
-      balloon.show(RelativePoint(component, JBPoint(component.width / 2, 0)), Balloon.Position.below)
+      balloon.show(RelativePoint(component, JBPoint(component.width / 2, component.visibleRect.y)), Balloon.Position.below)
       Disposer.register(this, balloon)
     }
   }
