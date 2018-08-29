@@ -384,7 +384,7 @@ public class ParameterInfoComponent extends JPanel {
     }
 
     private String setup(String text,
-                         Function<String, String> escapeFunction,
+                         Function<? super String, String> escapeFunction,
                          int highlightStartOffset,
                          int highlightEndOffset,
                          boolean isDisabled,
@@ -432,14 +432,14 @@ public class ParameterInfoComponent extends JPanel {
       return buf.toString();
     }
 
-    private String escapeString(String line, Function<String, String> escapeFunction) {
+    private String escapeString(String line, Function<? super String, String> escapeFunction) {
       line = XmlStringUtil.escapeString(line);
       return escapeFunction == null ? line : escapeFunction.fun(line);
     }
 
     public String setup(final ParameterInfoController.Model result,
                         final String[] texts,
-                        Function<String, String> escapeFunction,
+                        Function<? super String, String> escapeFunction,
                         final EnumSet<ParameterInfoUIContextEx.Flag>[] flags,
                         final Color background) {
       StringBuilder buf = new StringBuilder();

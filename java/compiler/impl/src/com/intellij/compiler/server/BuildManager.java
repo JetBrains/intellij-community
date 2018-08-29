@@ -375,11 +375,11 @@ public class BuildManager implements Disposable {
     return ApplicationManager.getApplication().getComponent(BuildManager.class);
   }
 
-  public void notifyFilesChanged(final Collection<File> paths) {
+  public void notifyFilesChanged(final Collection<? extends File> paths) {
     doNotify(paths, false);
   }
 
-  public void notifyFilesDeleted(Collection<File> paths) {
+  public void notifyFilesDeleted(Collection<? extends File> paths) {
     doNotify(paths, true);
   }
 
@@ -387,7 +387,7 @@ public class BuildManager implements Disposable {
     myRequestsProcessor.submit(command);
   }
 
-  private void doNotify(final Collection<File> paths, final boolean notifyDeletion) {
+  private void doNotify(final Collection<? extends File> paths, final boolean notifyDeletion) {
     // ensure events processed in the order they arrived
     runCommand(() -> {
       final List<String> filtered = new ArrayList<>(paths.size());
@@ -481,7 +481,7 @@ public class BuildManager implements Disposable {
     }
   }
 
-  private static List<String> convertToStringPaths(final Collection<InternedPath> interned) {
+  private static List<String> convertToStringPaths(final Collection<? extends InternedPath> interned) {
     final ArrayList<String> list = new ArrayList<>(interned.size());
     for (InternedPath path : interned) {
       list.add(path.getValue());
@@ -570,18 +570,13 @@ public class BuildManager implements Disposable {
     if (FileDocumentManager.getInstance().getUnsavedDocuments().length > 0) {
       return true;
     }
-    final long threshold = (long)Registry.intValue("compiler.automake.postpone.when.idle.less.than", 3000); // todo: UI option instead of registry?
+    final long threshold = Registry.intValue("compiler.automake.postpone.when.idle.less.than", 3000); // todo: UI option instead of registry?
     final long idleSinceLastActivity = ApplicationManager.getApplication().getIdleTime();
     return idleSinceLastActivity < threshold;
   }
 
   @Nullable
   private Project getCurrentContextProject() {
-    return getContextProject(null);
-  }
-
-  @Nullable
-  private Project getContextProject(@Nullable Window window) {
     final List<Project> openProjects = getOpenProjects();
     if (openProjects.isEmpty()) {
       return null;
@@ -590,11 +585,9 @@ public class BuildManager implements Disposable {
       return openProjects.get(0);
     }
 
+    Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
     if (window == null) {
-      window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-      if (window == null) {
-        return null;
-      }
+      return null;
     }
 
     Component comp = window;
@@ -985,7 +978,7 @@ public class BuildManager implements Disposable {
       });
   }
 
-  private Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>> launchPreloadedBuildProcess(final Project project, ExecutorService projectTaskQueue) throws Exception {
+  private Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>> launchPreloadedBuildProcess(final Project project, ExecutorService projectTaskQueue) {
     ensureListening();
 
     // launching build process from projectTaskQueue ensures that no other build process for this project is currently running
@@ -1131,8 +1124,8 @@ public class BuildManager implements Disposable {
     if (shouldGenerateIndex != null) {
       cmdLine.addParameter("-D"+ GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION +"=" + shouldGenerateIndex);
     }
-    cmdLine.addParameter("-D"+ GlobalOptions.COMPILE_PARALLEL_OPTION +"=" + Boolean.toString(config.PARALLEL_COMPILATION));
-    cmdLine.addParameter("-D"+ GlobalOptions.REBUILD_ON_DEPENDENCY_CHANGE_OPTION + "=" + Boolean.toString(config.REBUILD_ON_DEPENDENCY_CHANGE));
+    cmdLine.addParameter("-D" + GlobalOptions.COMPILE_PARALLEL_OPTION + "=" + config.PARALLEL_COMPILATION);
+    cmdLine.addParameter("-D" + GlobalOptions.REBUILD_ON_DEPENDENCY_CHANGE_OPTION + "=" + config.REBUILD_ON_DEPENDENCY_CHANGE);
 
     if (Boolean.TRUE.equals(Boolean.valueOf(System.getProperty("java.net.preferIPv4Stack", "false")))) {
       cmdLine.addParameter("-Djava.net.preferIPv4Stack=true");
@@ -1316,7 +1309,8 @@ public class BuildManager implements Disposable {
     return PathManagerEx.getAppSystemDir().resolve(SYSTEM_ROOT);
   }
 
-  public File getBuildLogDirectory() {
+  @NotNull
+  private File getBuildLogDirectory() {
     return new File(PathManager.getLogPath(), "build-log");
   }
 
@@ -1696,7 +1690,7 @@ public class BuildManager implements Disposable {
     }
 
     @Override
-    public void projectClosed(Project project) {
+    public void projectClosed(@NotNull Project project) {
       myProjectDataMap.remove(getProjectPath(project));
       final MessageBusConnection conn = myConnections.remove(project);
       if (conn != null) {

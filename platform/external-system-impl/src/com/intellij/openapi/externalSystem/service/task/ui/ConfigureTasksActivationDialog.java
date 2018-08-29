@@ -523,7 +523,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       super.update(presentation);
       presentation.setIcon(ExternalSystemIcons.TaskGroup);
     }
@@ -553,7 +553,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       super.update(presentation);
       presentation.setIcon(ExternalSystemIcons.TaskGroup);
     }
@@ -584,7 +584,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       super.update(presentation);
       presentation.setIcon(uiAware.getTaskIcon());
     }

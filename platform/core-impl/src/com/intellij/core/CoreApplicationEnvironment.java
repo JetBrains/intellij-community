@@ -60,6 +60,7 @@ import org.picocontainer.MutablePicoContainer;
 import java.io.File;
 import java.lang.reflect.Modifier;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -162,35 +163,11 @@ public class CoreApplicationEnvironment {
 
       @NotNull
       @Override
-      public Job<Void> submitToJobThread(@NotNull Runnable action, Consumer<Future> onDoneCallback) {
+      public Job<Void> submitToJobThread(@NotNull Runnable action, Consumer<? super Future<?>> onDoneCallback) {
         action.run();
-        if (onDoneCallback != null)
-          onDoneCallback.consume(new Future() {
-            @Override
-            public boolean cancel(boolean mayInterruptIfRunning) {
-              return false;
-            }
-
-            @Override
-            public boolean isCancelled() {
-              return false;
-            }
-
-            @Override
-            public boolean isDone() {
-              return true;
-            }
-
-            @Override
-            public Object get() {
-              return null;
-            }
-
-            @Override
-            public Object get(long timeout, @NotNull TimeUnit unit) {
-              return null;
-            }
-          });
+        if (onDoneCallback != null) {
+          onDoneCallback.consume(CompletableFuture.completedFuture(null));
+        }
         return Job.NULL_JOB;
       }
     };

@@ -311,7 +311,12 @@ public class LocalVariablesUtil {
       throw e;
     }
     catch (Exception e) {
-      LOG.error(e);
+      if (vm.canBeModified()) { // do not care in read only vms
+        LOG.debug(e);
+      }
+      else {
+        LOG.warn(e);
+      }
     }
     return Collections.emptyList();
   }

@@ -666,14 +666,14 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   }
 
   public static class GotoActionListCellRenderer extends DefaultListCellRenderer {
-    private final Function<OptionDescription, String> myGroupNamer;
+    private final Function<? super OptionDescription, String> myGroupNamer;
     private final boolean myUseListFont;
 
-    public GotoActionListCellRenderer(Function<OptionDescription, String> groupNamer) {
+    public GotoActionListCellRenderer(Function<? super OptionDescription, String> groupNamer) {
       this(groupNamer, false);
     }
 
-    public GotoActionListCellRenderer(Function<OptionDescription, String> groupNamer, boolean useListFont) {
+    public GotoActionListCellRenderer(Function<? super OptionDescription, String> groupNamer, boolean useListFont) {
       myGroupNamer = groupNamer;
       myUseListFont = useListFont;
     }

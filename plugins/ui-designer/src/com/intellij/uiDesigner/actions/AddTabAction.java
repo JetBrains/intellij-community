@@ -24,7 +24,7 @@ public class AddTabAction extends AbstractGuiEditorAction {
   }
 
   @Override
-  protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
+  protected void actionPerformed(final GuiEditor editor, final List<? extends RadComponent> selection, final AnActionEvent e) {
     RadTabbedPane tabbedPane = (RadTabbedPane) selection.get(0);
     Palette palette = Palette.getInstance(editor.getProject());
 
@@ -34,7 +34,7 @@ public class AddTabAction extends AbstractGuiEditorAction {
                              new ComponentItemDragObject(palette.getPanelItem()));
   }
 
-  @Override protected void update(@NotNull GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
+  @Override protected void update(@NotNull GuiEditor editor, final ArrayList<? extends RadComponent> selection, final AnActionEvent e) {
     e.getPresentation().setVisible(selection.size() == 1 && selection.get(0) instanceof RadTabbedPane);
   }
 }

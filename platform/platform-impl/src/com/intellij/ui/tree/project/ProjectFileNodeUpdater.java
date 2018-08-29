@@ -220,9 +220,8 @@ public abstract class ProjectFileNodeUpdater {
 
   /**
    * This method is called on invoker's thread to report changes in virtual files.
-   *
-   * @param fromRoot     {@code true} if roots are changed
+   *  @param fromRoot     {@code true} if roots are changed
    * @param updatedFiles a set of modified files
    */
-  protected abstract void updateStructure(boolean fromRoot, @NotNull Set<VirtualFile> updatedFiles);
+  protected abstract void updateStructure(boolean fromRoot, @NotNull Set<? extends VirtualFile> updatedFiles);
 }

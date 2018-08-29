@@ -299,8 +299,8 @@ public class PluginManagerCore {
   }
 
   public static void checkDependants(@NotNull IdeaPluginDescriptor pluginDescriptor,
-                                     @NotNull Function<PluginId, IdeaPluginDescriptor> pluginId2Descriptor,
-                                     @NotNull Condition<PluginId> check) {
+                                     @NotNull Function<? super PluginId, ? extends IdeaPluginDescriptor> pluginId2Descriptor,
+                                     @NotNull Condition<? super PluginId> check) {
     checkDependants(pluginDescriptor, pluginId2Descriptor, check, new THashSet<>());
   }
 
@@ -1100,7 +1100,7 @@ public class PluginManagerCore {
   }
 
   @NotNull
-  public static IdeaPluginDescriptorImpl[] loadDescriptors(@Nullable StartupProgress progress, @NotNull List<String> errors) {
+  public static IdeaPluginDescriptorImpl[] loadDescriptors(@Nullable StartupProgress progress, @NotNull List<? super String> errors) {
     if (ClassUtilCore.isLoadingOfExternalPluginsDisabled()) {
       return IdeaPluginDescriptorImpl.EMPTY_ARRAY;
     }
@@ -1125,7 +1125,7 @@ public class PluginManagerCore {
   }
 
   @NotNull // used in upsource
-  public static IdeaPluginDescriptorImpl[] topoSortPlugins(@NotNull List<IdeaPluginDescriptorImpl> result, @NotNull List<String> errors) {
+  public static IdeaPluginDescriptorImpl[] topoSortPlugins(@NotNull List<IdeaPluginDescriptorImpl> result, @NotNull List<? super String> errors) {
     IdeaPluginDescriptorImpl[] pluginDescriptors = result.toArray(IdeaPluginDescriptorImpl.EMPTY_ARRAY);
 
     Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap = new THashMap<>();
@@ -1414,7 +1414,7 @@ public class PluginManagerCore {
     }
   }
 
-  private static void fixDependencies(@NotNull List<IdeaPluginDescriptorImpl> result,
+  private static void fixDependencies(@NotNull List<? extends IdeaPluginDescriptorImpl> result,
                                       @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap) {
     for (IdeaPluginDescriptorImpl descriptor : result) {
       idToDescriptorMap.put(descriptor.getPluginId(), descriptor);
@@ -1432,20 +1432,15 @@ public class PluginManagerCore {
     addModulesAsDependents(idToDescriptorMap);
   }
 
-  private static void registerExtensionPointsAndExtensions(@NotNull ExtensionsArea area, @NotNull List<IdeaPluginDescriptorImpl> loadedPlugins) {
+  private static void registerExtensionPointsAndExtensions(@NotNull ExtensionsArea area, @NotNull List<? extends IdeaPluginDescriptorImpl> loadedPlugins) {
     for (IdeaPluginDescriptorImpl descriptor : loadedPlugins) {
       descriptor.registerExtensionPoints(area);
     }
 
     ExtensionPoint[] extensionPoints = area.getExtensionPoints();
-    Set<String> epNames = new THashSet<>(extensionPoints.length);
-    for (ExtensionPoint point : extensionPoints) {
-      epNames.add(point.getName());
-    }
-
     for (IdeaPluginDescriptorImpl descriptor : loadedPlugins) {
-      for (String epName : epNames) {
-        descriptor.registerExtensions(area, epName);
+      for (ExtensionPoint extensionPoint : extensionPoints) {
+        descriptor.registerExtensions(area, extensionPoint);
       }
     }
   }

@@ -13,6 +13,7 @@ import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 import com.intellij.debugger.engine.requests.MethodReturnValueWatcher;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.*;
+import com.intellij.debugger.impl.attach.PidRemoteConnection;
 import com.intellij.debugger.jdi.EmptyConnectorArgument;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
@@ -96,7 +97,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   @NonNls private static final String SHMEM_ATTACHING_CONNECTOR_NAME = "com.sun.jdi.SharedMemoryAttach";
   @NonNls private static final String SOCKET_LISTENING_CONNECTOR_NAME = "com.sun.jdi.SocketListen";
   @NonNls private static final String SHMEM_LISTENING_CONNECTOR_NAME = "com.sun.jdi.SharedMemoryListen";
-  @NonNls static final String SAPID_ATTACHING_CONNECTOR_NAME = "sun.jvm.hotspot.jdi.SAPIDAttachingConnector";
 
   private final Project myProject;
   private final RequestManagerImpl myRequestManager;
@@ -205,7 +205,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     Type type = descriptor.getType();
 
     // in case evaluation is not possible, force default renderer
-    if (!DebuggerManagerEx.getInstanceEx(getProject()).getContext().isEvaluationPossible()) {
+    if (!isEvaluationPossible()) {
       return getDefaultRenderer(type);
     }
 
@@ -443,17 +443,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
       final String address = myConnection.getAddress();
 
-      if (myConnection instanceof SAPidRemoteConnection) {
-        SAPidRemoteConnection pidRemoteConnection = (SAPidRemoteConnection)myConnection;
-        AttachingConnector connector;
-        try {
-          Class<?> connectorClass = Class.forName(SAPID_ATTACHING_CONNECTOR_NAME, true,
-                                                  new SAJDIClassLoader(getClass().getClassLoader(), pidRemoteConnection.getSAJarPath()));
-          connector = (AttachingConnector)connectorClass.newInstance();
-        }
-        catch (Exception e) {
-          throw new ExecutionException(processError(e), e);
-        }
+      if (myConnection instanceof PidRemoteConnection) {
+        PidRemoteConnection pidRemoteConnection = (PidRemoteConnection)myConnection;
+        AttachingConnector connector = pidRemoteConnection.getConnector();
         String pid = pidRemoteConnection.getPid();
         if (StringUtil.isEmpty(pid)) {
           throw new CantRunException(DebuggerBundle.message("error.no.pid"));
@@ -598,7 +590,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   @NotNull
-  static Connector findConnector(String connectorName) throws ExecutionException {
+  public static Connector findConnector(String connectorName) throws ExecutionException {
     VirtualMachineManager virtualMachineManager;
     try {
       virtualMachineManager = Bootstrap.virtualMachineManager();
@@ -2246,5 +2238,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   static boolean isResumeOnlyCurrentThread() {
     return DebuggerSettings.getInstance().RESUME_ONLY_CURRENT_THREAD;
+  }
+
+  public boolean isEvaluationPossible() {
+    return getSuspendManager().getPausedContext() != null;
   }
 }

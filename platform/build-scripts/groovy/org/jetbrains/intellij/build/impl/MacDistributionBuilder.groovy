@@ -141,9 +141,6 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
         }
       }
     }
-    buildContext.ant.copy(todir: "$target/lib/libpty/macosx") {
-      fileset(dir: "$buildContext.paths.communityHome/lib/libpty/macosx")
-    }
 
     buildContext.ant.copy(todir: target) {
       fileset(dir: "$buildContext.paths.communityHome/platform/build-scripts/resources/mac/Contents")

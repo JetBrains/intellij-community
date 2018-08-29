@@ -37,6 +37,7 @@ public class XsltRunConfigType implements ConfigurationType {
     return ConfigurationTypeUtil.findConfigurationType(XsltRunConfigType.class);
   }
 
+  @NotNull
   @Override
   public String getDisplayName() {
     return "XSLT";

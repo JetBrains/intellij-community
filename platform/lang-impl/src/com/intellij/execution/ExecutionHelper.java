@@ -247,8 +247,8 @@ public class ExecutionHelper {
 
   public static void selectContentDescriptor(final @NotNull DataContext dataContext,
                                              final @NotNull Project project,
-                                             @NotNull Collection<RunContentDescriptor> consoles,
-                                             String selectDialogTitle, final Consumer<RunContentDescriptor> descriptorConsumer) {
+                                             @NotNull Collection<? extends RunContentDescriptor> consoles,
+                                             String selectDialogTitle, final Consumer<? super RunContentDescriptor> descriptorConsumer) {
     if (consoles.size() == 1) {
       RunContentDescriptor descriptor = consoles.iterator().next();
       descriptorConsumer.consume(descriptor);

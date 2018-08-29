@@ -98,7 +98,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
     return ProjectStructureValidator.getUsagesInElement(element);
   }
 
-  private void updateUsages(ProjectStructureElement element, List<ProjectStructureElementUsage> usages) {
+  private void updateUsages(ProjectStructureElement element, List<? extends ProjectStructureElementUsage> usages) {
     removeUsagesInElement(element);
     for (ProjectStructureElementUsage usage : usages) {
       addUsage(usage);
@@ -308,10 +308,10 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
 
   private class UsagesCollectedUpdate extends Update {
     private final ProjectStructureElement myElement;
-    private final List<ProjectStructureElementUsage> myUsages;
+    private final List<? extends ProjectStructureElementUsage> myUsages;
     private final Object[] myEqualityObjects;
 
-    public UsagesCollectedUpdate(ProjectStructureElement element, List<ProjectStructureElementUsage> usages) {
+    public UsagesCollectedUpdate(ProjectStructureElement element, List<? extends ProjectStructureElementUsage> usages) {
       super(element);
       myElement = element;
       myUsages = usages;

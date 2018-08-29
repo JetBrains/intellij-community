@@ -2,10 +2,6 @@
 
 package com.intellij.openapi.vcs.vfs;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -21,8 +17,10 @@ import java.util.Map;
  */
 public class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
   @NotNull private final ContentRevision myContentRevision;
-  private byte[] myContent;
-  private boolean myContentLoadFailed;
+
+  private volatile byte[] myContent;
+  private volatile boolean myContentLoadFailed;
+  private final Object LOCK = new Object();
 
   private static final Map<ContentRevision, ContentRevisionVirtualFile> ourMap = ContainerUtil.createWeakMap();
 
@@ -51,7 +49,7 @@ public class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
   @Override
   @NotNull
   public byte[] contentsToByteArray() {
-    if (myContentLoadFailed || myProcessingBeforeContentsChange) {
+    if (myContentLoadFailed) {
       return ArrayUtil.EMPTY_BYTE_ARRAY;
     }
     if (myContent == null) {
@@ -61,10 +59,8 @@ public class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
   }
 
   private void loadContent() {
-    final VcsFileSystem vcsFileSystem = ((VcsFileSystem)getFileSystem());
-
     try {
-      byte[] bytes = null;
+      byte[] bytes;
       if (myContentRevision instanceof ByteBackedContentRevision) {
         bytes = ((ByteBackedContentRevision)myContentRevision).getContentAsBytes();
       }
@@ -76,46 +72,20 @@ public class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
       if (bytes == null) {
         throw new VcsException("Could not load content");
       }
-      fireBeforeContentsChange();
 
-      myContent = bytes;
-
-      myModificationStamp++;
-      setRevision(myContentRevision.getRevisionNumber().asString());
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          vcsFileSystem.fireContentsChanged(this, ContentRevisionVirtualFile.this, 0);
-        }
-      });
-
+      synchronized (LOCK) {
+        myContent = bytes;
+        myContentLoadFailed = false;
+        setRevision(myContentRevision.getRevisionNumber().asString());
+      }
     }
     catch (VcsException e) {
-      myContentLoadFailed = true;
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          vcsFileSystem.fireBeforeFileDeletion(this, ContentRevisionVirtualFile.this);
-        }
-      });
-      myContent = ArrayUtil.EMPTY_BYTE_ARRAY;
-      setRevision("0");
-
-      Messages.showMessageDialog(
-        VcsBundle.message("message.text.could.not.load.virtual.file.content", getPresentableUrl(), e.getLocalizedMessage()),
-                                 VcsBundle.message("message.title.could.not.load.content"),
-                                 Messages.getInformationIcon());
-
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          vcsFileSystem.fireFileDeleted(this, ContentRevisionVirtualFile.this, getName(), getParent());
-        }
-      });
-
-    }
-    catch (ProcessCanceledException ex) {
-      myContent = ArrayUtil.EMPTY_BYTE_ARRAY;
+      synchronized (LOCK) {
+        myContentLoadFailed = true;
+        myContent = ArrayUtil.EMPTY_BYTE_ARRAY;
+        setRevision("0");
+      }
+      showLoadingContentFailedMessage(e);
     }
   }
 

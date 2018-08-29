@@ -198,7 +198,7 @@ public class ConfigImportHelper {
   }
 
   @Nullable
-  private static File getSettingsPath(File ideHome, String propertyName, Function<String, String> pathBySelector) {
+  private static File getSettingsPath(File ideHome, String propertyName, Function<? super String, String> pathBySelector) {
     List<File> files = new ArrayList<>();
     if (SystemInfo.isMac) {
       files.add(new File(ideHome, CONTENTS + '/' + BIN + '/' + PathManager.PROPERTIES_FILE_NAME));

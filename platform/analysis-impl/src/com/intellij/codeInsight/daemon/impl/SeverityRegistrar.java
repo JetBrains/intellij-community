@@ -144,7 +144,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
     severitiesChanged();
   }
 
-  private OrderMap ensureAllStandardIncluded(List<HighlightSeverity> read, final List<HighlightSeverity> knownSeverities) {
+  private OrderMap ensureAllStandardIncluded(List<? extends HighlightSeverity> read, final List<? extends HighlightSeverity> knownSeverities) {
     OrderMap orderMap = fromList(read);
     if (orderMap.isEmpty()) {
       orderMap = fromList(knownSeverities);
@@ -290,7 +290,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
   private static final AtomicFieldUpdater<SeverityRegistrar, OrderMap> ORDER_MAP_UPDATER = AtomicFieldUpdater.forFieldOfType(SeverityRegistrar.class, OrderMap.class);
 
   @NotNull
-  private static OrderMap fromList(@NotNull List<HighlightSeverity> orderList) {
+  private static OrderMap fromList(@NotNull List<? extends HighlightSeverity> orderList) {
     if (orderList.size() != new HashSet<>(orderList).size()) {
       LOG.error("Severities order list MUST contain only unique severities: " + orderList);
     }
@@ -316,7 +316,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
     return order;
   }
 
-  public void setOrder(@NotNull List<HighlightSeverity> orderList) {
+  public void setOrder(@NotNull List<? extends HighlightSeverity> orderList) {
     myOrderMap = ensureAllStandardIncluded(orderList, getDefaultOrder());
     myReadOrder = null;
     severitiesChanged();
@@ -338,7 +338,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
   }
 
   private static class OrderMap extends TObjectIntHashMap<HighlightSeverity> {
-    private OrderMap(@NotNull TObjectIntHashMap<HighlightSeverity> map) {
+    private OrderMap(@NotNull TObjectIntHashMap<? extends HighlightSeverity> map) {
       super(map.size());
       map.forEachEntry((key, value) -> {
         super.put(key, value);

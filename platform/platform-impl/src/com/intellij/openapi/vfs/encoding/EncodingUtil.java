@@ -195,7 +195,7 @@ public class EncodingUtil {
   }
 
   @Nullable
-  static FailReason checkCanReload(@NotNull VirtualFile virtualFile, @Nullable Ref<Charset> current) {
+  static FailReason checkCanReload(@NotNull VirtualFile virtualFile, @Nullable Ref<? super Charset> current) {
     if (virtualFile.isDirectory()) {
       return FailReason.IS_DIRECTORY;
     }

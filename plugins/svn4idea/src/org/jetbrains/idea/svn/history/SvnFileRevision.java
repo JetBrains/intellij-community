@@ -140,8 +140,7 @@ public class SvnFileRevision implements VcsFileRevision {
     return myMergeSources;
   }
 
-  @Override
-  public byte[] loadContent() throws VcsException {
+  private byte[] loadRevisionContent() throws VcsException {
     ContentLoader loader = new ContentLoader();
     if (ApplicationManager.getApplication().isDispatchThread() && !getRevision().isLocal()) {
       ProgressManager.getInstance()
@@ -166,19 +165,24 @@ public class SvnFileRevision implements VcsFileRevision {
   }
 
   @Override
-  public byte[] getContent() throws IOException, VcsException {
+  public byte[] loadContent() throws IOException, VcsException {
     byte[] result;
 
     if (Revision.HEAD.equals(getRevision())) {
-      result = loadContent();
+      result = loadRevisionContent();
     }
     else {
       result = ContentRevisionCache
         .getOrLoadAsBytes(myVCS.getProject(), getFilePathOnNonLocal(myURL.toDecodedString(), false), getRevisionNumber(),
-                          myVCS.getKeyInstanceMethod(), ContentRevisionCache.UniqueType.REMOTE_CONTENT, () -> loadContent());
+                          myVCS.getKeyInstanceMethod(), ContentRevisionCache.UniqueType.REMOTE_CONTENT, () -> loadRevisionContent());
     }
 
     return result;
+  }
+
+  @Override
+  public byte[] getContent() throws IOException, VcsException {
+    return loadContent();
   }
 
   public String getCopyFromPath() {

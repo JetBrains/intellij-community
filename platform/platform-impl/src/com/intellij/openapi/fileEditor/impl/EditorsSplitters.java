@@ -256,7 +256,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   private static int countFiles(Element element) {
     Integer value = new ConfigTreeReader<Integer>() {
       @Override
-      protected Integer processFiles(@NotNull List<Element> fileElements, Element parent, @Nullable Integer context) {
+      protected Integer processFiles(@NotNull List<? extends Element> fileElements, Element parent, @Nullable Integer context) {
         return fileElements.size();
       }
 
@@ -798,7 +798,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
 
     @Nullable
-    abstract T processFiles(@NotNull List<Element> fileElements, Element parent, @Nullable T context);
+    abstract T processFiles(@NotNull List<? extends Element> fileElements, Element parent, @Nullable T context);
     @Nullable
     abstract T processSplitter(@NotNull Element element, @Nullable Element firstChild, @Nullable Element secondChild, @Nullable T context);
   }
@@ -806,7 +806,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   private class UIBuilder extends ConfigTreeReader<JPanel> {
 
     @Override
-    protected JPanel processFiles(@NotNull List<Element> fileElements, Element parent, final JPanel context) {
+    protected JPanel processFiles(@NotNull List<? extends Element> fileElements, Element parent, final JPanel context) {
       final Ref<EditorWindow> windowRef = new Ref<>();
       UIUtil.invokeAndWaitIfNeeded((Runnable)() -> windowRef.set(context == null ? createEditorWindow() : findWindowWith(context)));
       final EditorWindow window = windowRef.get();

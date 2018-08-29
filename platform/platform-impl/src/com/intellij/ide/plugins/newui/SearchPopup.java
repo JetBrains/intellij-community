@@ -34,6 +34,8 @@ public class SearchPopup implements CaretListener {
 
   public boolean skipCaretEvent;
 
+  public Object data;
+
   public enum Type {
     AttributeName, AttributeValue, SearchQuery
   }

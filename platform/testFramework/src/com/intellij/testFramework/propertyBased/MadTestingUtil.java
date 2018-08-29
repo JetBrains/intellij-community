@@ -96,7 +96,7 @@ public class MadTestingUtil {
     });
   }
 
-  private static <E extends Throwable> void watchDocumentChanges(ThrowableRunnable<E> r, Consumer<DocumentEvent> eventHandler) throws E {
+  private static <E extends Throwable> void watchDocumentChanges(ThrowableRunnable<E> r, Consumer<? super DocumentEvent> eventHandler) throws E {
     Disposable disposable = Disposer.newDisposable();
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
@@ -242,8 +242,8 @@ public class MadTestingUtil {
    */
   @NotNull
   public static Supplier<MadTestingAction> actionsOnFileContents(CodeInsightTestFixture fixture, String rootPath,
-                                                                  FileFilter fileFilter,
-                                                                  Function<PsiFile, ? extends Generator<? extends MadTestingAction>> actions) {
+                                                                 FileFilter fileFilter,
+                                                                 Function<? super PsiFile, ? extends Generator<? extends MadTestingAction>> actions) {
     Generator<File> randomFiles = randomFiles(rootPath, fileFilter);
     return () -> env -> new RunAll()
       .append(() -> {
@@ -455,7 +455,7 @@ public class MadTestingUtil {
     }
 
     @Nullable
-    private File generateRandomFile(DataStructure data, File file, Set<File> exhausted) {
+    private File generateRandomFile(DataStructure data, File file, Set<? super File> exhausted) {
       while (true) {
         File[] children = file.listFiles(f -> !exhausted.contains(f) && containsAtLeastOneFileDeep(f) && myFilter.accept(f));
         if (children == null) {

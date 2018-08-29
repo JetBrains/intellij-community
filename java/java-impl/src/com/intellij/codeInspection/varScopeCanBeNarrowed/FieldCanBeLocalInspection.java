@@ -175,8 +175,8 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
   }
 
   private static void removeReadFields(PsiClass aClass,
-                                       final Set<PsiField> candidates,
-                                       final Set<PsiField> usedFields,
+                                       final Set<? super PsiField> candidates,
+                                       final Set<? super PsiField> usedFields,
                                        final boolean ignoreFieldsUsedInMultipleMethods) {
     final Set<PsiField> ignored = new HashSet<>();
     aClass.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -213,10 +213,10 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
   }
 
   private static void checkCodeBlock(final PsiElement body,
-                                     final Set<PsiField> candidates,
-                                     Set<PsiField> usedFields,
+                                     final Set<? super PsiField> candidates,
+                                     Set<? super PsiField> usedFields,
                                      boolean ignoreFieldsUsedInMultipleMethods,
-                                     Set<PsiField> ignored) {
+                                     Set<? super PsiField> ignored) {
     try {
       final Ref<Collection<PsiVariable>> writtenVariables = new Ref<>();
       final ControlFlow controlFlow = ControlFlowFactory.getInstance(body.getProject())
@@ -342,7 +342,7 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
       return element;
     }
 
-    private static boolean groupByCodeBlocks(final Collection<PsiReference> allReferences, Map<PsiCodeBlock, Collection<PsiReference>> refs) {
+    private static boolean groupByCodeBlocks(final Collection<? extends PsiReference> allReferences, Map<PsiCodeBlock, Collection<PsiReference>> refs) {
       for (PsiReference psiReference : allReferences) {
         final PsiElement element = psiReference.getElement();
         final PsiCodeBlock block = PsiTreeUtil.getTopmostParentOfType(element, PsiCodeBlock.class);

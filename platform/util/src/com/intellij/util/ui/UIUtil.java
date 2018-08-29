@@ -2342,7 +2342,7 @@ public class UIUtil {
     drawImage(g, image, x, y, -1, -1, op, null);
   }
 
-  public static void paintWithXorOnRetina(@NotNull Dimension size, @NotNull Graphics g, Consumer<Graphics2D> paintRoutine) {
+  public static void paintWithXorOnRetina(@NotNull Dimension size, @NotNull Graphics g, Consumer<? super Graphics2D> paintRoutine) {
     paintWithXorOnRetina(size, g, true, paintRoutine);
   }
 
@@ -2352,7 +2352,7 @@ public class UIUtil {
   public static void paintWithXorOnRetina(@NotNull Dimension size,
                                           @NotNull Graphics g,
                                           boolean useRetinaCondition,
-                                          Consumer<Graphics2D> paintRoutine) {
+                                          Consumer<? super Graphics2D> paintRoutine) {
     if (!useRetinaCondition || !isJreHiDPI((Graphics2D)g) || Registry.is("ide.mac.retina.disableDrawingFix")) {
       paintRoutine.consume((Graphics2D)g);
     }
@@ -3610,7 +3610,7 @@ public class UIUtil {
     return result;
   }
 
-  private static <T extends JComponent> void findComponentsOfType(JComponent parent, Class<T> cls, ArrayList<T> result) {
+  private static <T extends JComponent> void findComponentsOfType(JComponent parent, Class<T> cls, ArrayList<? super T> result) {
     if (parent == null) return;
     if (cls.isAssignableFrom(parent.getClass())) {
       @SuppressWarnings("unchecked") final T t = (T)parent;
@@ -4238,7 +4238,7 @@ public class UIUtil {
     });
   }
 
-  public static void playSoundFromStream(final Factory<InputStream> streamProducer) {
+  public static void playSoundFromStream(final Factory<? extends InputStream> streamProducer) {
     new Thread(new Runnable() {
       // The wrapper thread is unnecessary, unless it blocks on the
       // Clip finishing; see comments.

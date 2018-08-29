@@ -149,6 +149,9 @@ object GithubApiRequests {
 
     object PullRequests : Entity("/pulls") {
       @JvmStatic
+      fun get(url: String) = Get.json<GithubPullRequest>(url).withOperationName("get pull request")
+
+      @JvmStatic
       fun create(server: GithubServerPath,
                  username: String, repoName: String,
                  title: String, description: String, head: String, base: String) =

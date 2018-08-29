@@ -151,7 +151,7 @@ public class FunctionalInterfaceSuggester {
     });
   }
 
-  private static <T extends PsiElement> Collection<? extends PsiType> suggestFunctionalInterfaces(final @NotNull T element, final NullableFunction<PsiClass, PsiType> acceptanceChecker) {
+  private static <T extends PsiElement> Collection<? extends PsiType> suggestFunctionalInterfaces(final @NotNull T element, final NullableFunction<? super PsiClass, ? extends PsiType> acceptanceChecker) {
     final Project project = element.getProject();
     final Set<PsiType> types = new HashSet<>();
     final Processor<PsiMember> consumer = member -> {

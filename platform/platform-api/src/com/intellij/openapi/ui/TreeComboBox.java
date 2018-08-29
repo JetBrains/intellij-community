@@ -215,7 +215,7 @@ public class TreeComboBox extends ComboBoxWithWidePopup {
       }
     }
 
-    private static void accumulateChildren(@NotNull final TreeNode node, @NotNull final List<TreeNode> list, final boolean showRoot) {
+    private static void accumulateChildren(@NotNull final TreeNode node, @NotNull final List<? super TreeNode> list, final boolean showRoot) {
       if (showRoot || node.getParent() != null) list.add(node);
 
       final int count = node.getChildCount();

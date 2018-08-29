@@ -35,6 +35,7 @@
       <action id="ImplementMethods" class="com.intellij.codeInsight.generation.actions.ImplementMethodsAction"/>
       <action id="DelegateMethods" class="com.intellij.codeInsight.generation.actions.DelegateMethodsAction"/>
       <action id="GeneratePattern" class="com.intellij.codeInsight.generation.GenerateByPatternAction" text="Generate by Pattern..."/>
+      <group id="GenerateFromTestCreatorsGroup" class="com.intellij.testIntegration.GenerateFromTestCreatorsGroup"/>
     </group>
 
     <action id="ShowIntentionActions" class="com.intellij.codeInsight.intention.actions.ShowIntentionActionsAction"/>
@@ -1108,6 +1109,9 @@
         <group id="TouchBarDefaultOptionalGroup" text="Optional Actions">
           <reference ref="Vcs.UpdateProject"/>
           <reference ref="CheckinProject"/>
+        </group>
+        <group id="TouchBarDefault_ctrl" text="Default with Ctrl key">
+          <separator/>
         </group>
         <group id="TouchBarDefault_alt" text="Default with Alt key">
           <reference ref="SelectInProjectView"/>

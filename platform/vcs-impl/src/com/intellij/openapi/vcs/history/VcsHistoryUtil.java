@@ -42,6 +42,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
+import static com.intellij.diff.DiffRequestFactoryImpl.DIFF_TITLE_RENAME_SEPARATOR;
+
 public class VcsHistoryUtil {
   @Deprecated
   public static final Key<Pair<FilePath, VcsRevisionNumber>> REVISION_INFO_KEY = DiffUserDataKeysEx.REVISION_INFO;
@@ -92,7 +94,7 @@ public class VcsHistoryUtil {
 
     String title;
     if (path1 != null && path2 != null) {
-      title = DiffRequestFactoryImpl.getTitle(path1, path2, " -> ");
+      title = DiffRequestFactoryImpl.getTitle(path1, path2, DIFF_TITLE_RENAME_SEPARATOR);
     }
     else {
       title = DiffRequestFactoryImpl.getContentTitle(path);
@@ -132,11 +134,7 @@ public class VcsHistoryUtil {
 
   @NotNull
   public static byte[] loadRevisionContent(@NotNull VcsFileRevision revision) throws VcsException, IOException {
-    byte[] content = revision.getContent();
-    if (content == null) {
-      revision.loadContent();
-      content = revision.getContent();
-    }
+    byte[] content = revision.loadContent();
     if (content == null) throw new VcsException("Failed to load content for revision " + revision.getRevisionNumber().asString());
     return content;
   }

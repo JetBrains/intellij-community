@@ -66,6 +66,32 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
     });
   }
 
+
+  @Test
+  public void testDiff() {
+    runPythonTest(
+      new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/diff", SdkCreationType.EMPTY_SDK) {
+
+        @NotNull
+        @Override
+        protected PyTestTestProcessRunner createProcessRunner() {
+          return new PyTestTestProcessRunner("test_diff.py", 1);
+        }
+
+        @Override
+        protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
+                                        @NotNull final String stdout,
+                                        @NotNull final String stderr,
+                                        @NotNull final String all) {
+
+          final String expectedConsoleText = "Expected :expected\n" +
+                                             "Actual   :actual\n" +
+                                             " <Click to see difference>";
+          Assert.assertThat("No diff", runner.getAllConsoleText(), Matchers.containsString(expectedConsoleText));
+        }
+      });
+  }
+
   /**
    * Provides existing .xml and checks that configuration is able to parse it
    */

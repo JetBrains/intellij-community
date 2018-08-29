@@ -31,7 +31,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
   private final static TObjectIntHashMap<JavacRef> EMPTY_T_OBJ_INT_MAP = new TObjectIntHashMap<JavacRef>(0);
 
   private final boolean myDivideImportRefs;
-  private final Consumer<JavacFileData> myDataConsumer;
+  private final Consumer<? super JavacFileData> myDataConsumer;
   private final JavacTask myJavacTask;
   private final JavacTreeRefScanner myAstScanner;
   private final boolean myAtLeastJdk8;
@@ -46,7 +46,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
 
   static void installOn(JavaCompiler.CompilationTask task,
                         boolean divideImportRefs,
-                        Consumer<JavacFileData> dataConsumer) {
+                        Consumer<? super JavacFileData> dataConsumer) {
     JavacTask javacTask = (JavacTask)task;
     Method addTaskMethod; // jdk >= 8
     try {
@@ -77,7 +77,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
   }
 
   private JavacReferenceCollectorListener(boolean divideImportRefs,
-                                          Consumer<JavacFileData> dataConsumer,
+                                          Consumer<? super JavacFileData> dataConsumer,
                                           JavacTask javacTask,
                                           boolean atLeastJdk8) {
     myDivideImportRefs = divideImportRefs;

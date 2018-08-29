@@ -52,19 +52,19 @@ public abstract class ReorderableListController <T> {
 
   protected abstract void addActionDescription(ActionDescription description);
 
-  public AddActionDescription addAddAction(final String actionName, final Factory<T> creator, final boolean createShortcut) {
+  public AddActionDescription addAddAction(final String actionName, final Factory<? extends T> creator, final boolean createShortcut) {
     final AddActionDescription description = new AddActionDescription(actionName, creator, createShortcut);
     addActionDescription(description);
     return description;
   }
 
-  public AddMultipleActionDescription addAddMultipleAction(final String actionName, final Factory<Collection<T>> creator, final boolean createShortcut) {
+  public AddMultipleActionDescription addAddMultipleAction(final String actionName, final Factory<? extends Collection<T>> creator, final boolean createShortcut) {
     final AddMultipleActionDescription description = new AddMultipleActionDescription(actionName, creator, createShortcut);
     addActionDescription(description);
     return description;
   }
 
-  public CopyActionDescription addCopyAction(final String actionName, final Convertor<T, T> copier, final Condition<T> enableCondition) {
+  public CopyActionDescription addCopyAction(final String actionName, final Convertor<? super T, ? extends T> copier, final Condition<? super T> enableCondition) {
     final CopyActionDescription description = new CopyActionDescription(actionName, copier, enableCondition);
     addActionDescription(description);
     return description;
@@ -164,11 +164,11 @@ public abstract class ReorderableListController <T> {
     }
 
     protected static class BaseAction<V> extends DumbAwareAction {
-      private final ActionBehaviour<V> myBehaviour;
-      private final CustomActionDescription<V> myCustomActionDescription;
+      private final ActionBehaviour<? extends V> myBehaviour;
+      private final CustomActionDescription<? super V> myCustomActionDescription;
 
-      public BaseAction(final CustomActionDescription<V> customActionDescription,
-                        final String text, final String description, final Icon icon, final ActionBehaviour<V> behaviour) {
+      public BaseAction(final CustomActionDescription<? super V> customActionDescription,
+                        final String text, final String description, final Icon icon, final ActionBehaviour<? extends V> behaviour) {
         super(text, description, icon);
         myBehaviour = behaviour;
         this.myCustomActionDescription = customActionDescription;
@@ -188,10 +188,10 @@ public abstract class ReorderableListController <T> {
     }
 
     private static class ActionWithText<V> extends BaseAction  {
-      public ActionWithText(final CustomActionDescription<V> customActionDescription, final String text,
+      public ActionWithText(final CustomActionDescription<? super V> customActionDescription, final String text,
                             final String description,
                             final Icon icon,
-                            final ActionBehaviour<V> behaviour) {
+                            final ActionBehaviour<? extends V> behaviour) {
         super(customActionDescription, text, description, icon, behaviour);
       }
 
@@ -209,8 +209,8 @@ public abstract class ReorderableListController <T> {
 
   public class RemoveActionDescription extends CustomActionDescription<List<T>> {
     private final String myActionName;
-    private Condition<List<T>> myConfirmation;
-    private Condition<T> myEnableCondition;
+    private Condition<? super List<T>> myConfirmation;
+    private Condition<? super T> myEnableCondition;
 
     public RemoveActionDescription(final String actionName) {
       myActionName = actionName;
@@ -247,11 +247,11 @@ public abstract class ReorderableListController <T> {
       return myActionName;
     }
 
-    public void setConfirmation(final Condition<List<T>> confirmation) {
+    public void setConfirmation(final Condition<? super List<T>> confirmation) {
       myConfirmation = confirmation;
     }
 
-    public void setEnableCondition(final Condition<T> enableCondition) {
+    public void setEnableCondition(final Condition<? super T> enableCondition) {
       myEnableCondition = enableCondition;
     }
 
@@ -262,11 +262,11 @@ public abstract class ReorderableListController <T> {
 
   public abstract class AddActionDescriptionBase<V> extends CustomActionDescription<V> {
     private final String myActionDescription;
-    private final Factory<V> myAddHandler;
+    private final Factory<? extends V> myAddHandler;
     private final boolean myCreateShortcut;
     private Icon myIcon = IconUtil.getAddIcon();
 
-    public AddActionDescriptionBase(final String actionDescription, final Factory<V> addHandler, final boolean createShortcut) {
+    public AddActionDescriptionBase(final String actionDescription, final Factory<? extends V> addHandler, final boolean createShortcut) {
       myActionDescription = actionDescription;
       myAddHandler = addHandler;
       myCreateShortcut = createShortcut;
@@ -309,7 +309,7 @@ public abstract class ReorderableListController <T> {
   }
 
   public class AddActionDescription extends AddActionDescriptionBase<T> {
-    public AddActionDescription(final String actionDescription, final Factory<T> addHandler, final boolean createShortcut) {
+    public AddActionDescription(final String actionDescription, final Factory<? extends T> addHandler, final boolean createShortcut) {
       super(actionDescription, addHandler, createShortcut);
     }
 
@@ -323,7 +323,7 @@ public abstract class ReorderableListController <T> {
   }
 
   public class AddMultipleActionDescription extends AddActionDescriptionBase<Collection<T>> {
-    public AddMultipleActionDescription(final String actionDescription, final Factory<Collection<T>> addHandler, final boolean createShortcut) {
+    public AddMultipleActionDescription(final String actionDescription, final Factory<? extends Collection<T>> addHandler, final boolean createShortcut) {
       super(actionDescription, addHandler, createShortcut);
     }
 
@@ -339,12 +339,12 @@ public abstract class ReorderableListController <T> {
   }
 
   public class CopyActionDescription extends CustomActionDescription<T> {
-    private final Convertor<T, T> myCopier;
-    private final Condition<T> myEnabled;
+    private final Convertor<? super T, ? extends T> myCopier;
+    private final Condition<? super T> myEnabled;
     private final String myActionName;
     private boolean myVisibleWhenDisabled;
 
-    public CopyActionDescription(final String actionName, final Convertor<T, T> copier, final Condition<T> enableCondition) {
+    public CopyActionDescription(final String actionName, final Convertor<? super T, ? extends T> copier, final Condition<? super T> enableCondition) {
       myActionName = actionName;
       myCopier = copier;
       myEnabled = enableCondition;

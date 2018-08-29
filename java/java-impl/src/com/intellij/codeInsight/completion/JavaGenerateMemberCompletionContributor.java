@@ -71,7 +71,7 @@ public class JavaGenerateMemberCompletionContributor {
     }
   }
 
-  private static void addGetterSetterElements(CompletionResultSet result, PsiClass parent, Set<MethodSignature> addedSignatures) {
+  private static void addGetterSetterElements(CompletionResultSet result, PsiClass parent, Set<? super MethodSignature> addedSignatures) {
     int count = 0;
     for (PsiField field : parent.getFields()) {
       if (isConstant(field)) continue;
@@ -111,7 +111,7 @@ public class JavaGenerateMemberCompletionContributor {
     context.commitDocument();
   }
 
-  private static void addSuperSignatureElements(PsiClass parent, boolean implemented, CompletionResultSet result, Set<MethodSignature> addedSignatures, boolean generateDefaultMethods) {
+  private static void addSuperSignatureElements(PsiClass parent, boolean implemented, CompletionResultSet result, Set<? super MethodSignature> addedSignatures, boolean generateDefaultMethods) {
     for (CandidateInfo candidate : OverrideImplementExploreUtil.getMethodsToOverrideImplement(parent, implemented)) {
       PsiMethod baseMethod = (PsiMethod)candidate.getElement();
       PsiClass baseClass = baseMethod.getContainingClass();

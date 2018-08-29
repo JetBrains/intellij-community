@@ -361,7 +361,7 @@ public class JavaCompletionUtil {
                                     @NotNull PsiTypeLookupItem castTypeItem,
                                     @Nullable PsiType plainQualifier,
                                     @NotNull JavaCompletionProcessor processor,
-                                    @NotNull Set<PsiType> expectedTypes) {
+                                    @NotNull Set<? extends PsiType> expectedTypes) {
     PsiType castType = castTypeItem.getType();
     if (plainQualifier != null) {
       Object o = item.getObject();
@@ -439,8 +439,8 @@ public class JavaCompletionUtil {
   }
 
   private static PsiTypeLookupItem findQualifierCast(@NotNull LookupElement item,
-                                                     @NotNull List<PsiTypeLookupItem> castTypeItems,
-                                                     @Nullable PsiType plainQualifier, JavaCompletionProcessor processor, Set<PsiType> expectedTypes) {
+                                                     @NotNull List<? extends PsiTypeLookupItem> castTypeItems,
+                                                     @Nullable PsiType plainQualifier, JavaCompletionProcessor processor, Set<? extends PsiType> expectedTypes) {
     return ContainerUtil.find(castTypeItems, c -> shouldCast(item, c, plainQualifier, processor, expectedTypes));
   }
 

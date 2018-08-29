@@ -81,8 +81,9 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
 
     /**
      * Additional check to make sure that relationships between elements is suitable for current strategy
+     * @param elements
      */
-    default boolean isSuitableElements(List<PsiElement> elements) {
+    default boolean isSuitableElements(List<? extends PsiElement> elements) {
       return true;
     }
   }
@@ -144,7 +145,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
     }
 
     @Override
-    public boolean isSuitableElements(@NotNull List<PsiElement> elements) {
+    public boolean isSuitableElements(@NotNull List<? extends PsiElement> elements) {
       PsiElement first = elements.get(0);
       PsiType firstType = extractType(first);
       if (firstType == null) return false;
@@ -167,7 +168,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
     }
 
     @Override
-    public boolean isSuitableElements(List<PsiElement> elements) {
+    public boolean isSuitableElements(List<? extends PsiElement> elements) {
       Set<String> names = elements.stream().map(element -> ((PsiEnumConstant)element).getName()).collect(Collectors.toSet());
       for (PsiElement element: elements) {
         PsiEnumConstant enumConstant = (PsiEnumConstant)element;
@@ -183,11 +184,11 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
   private static class SortableEntry {
     private final @NotNull PsiElement myElement;
     private final @NotNull List<PsiComment> myBeforeSeparator;
-    private final @NotNull List<PsiComment> myAfterSeparator;
+    private final @NotNull List<? extends PsiComment> myAfterSeparator;
 
     private SortableEntry(@NotNull PsiElement element,
                           @NotNull List<PsiComment> beforeSeparator,
-                          @NotNull List<PsiComment> afterSeparator) {
+                          @NotNull List<? extends PsiComment> afterSeparator) {
       myElement = element;
       myBeforeSeparator = beforeSeparator;
       myAfterSeparator = afterSeparator;
@@ -245,12 +246,12 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
     private final List<SortableEntry> myEntries;
     private final SortingStrategy mySortingStrategy;
     private final LineLayout myLineLayout;
-    private final List<PsiElement> myBeforeFirstElements;
+    private final List<? extends PsiElement> myBeforeFirstElements;
 
     private SortableList(List<SortableEntry> entries,
                          SortingStrategy strategy,
                          LineLayout layout,
-                         List<PsiElement> beforeFirstElements) {
+                         List<? extends PsiElement> beforeFirstElements) {
       myEntries = entries;
       mySortingStrategy = strategy;
       myLineLayout = layout;
@@ -271,7 +272,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
 
     PsiElement getLastElement() {
       SortableEntry last = myEntries.get(myEntries.size() - 1);
-      List<PsiComment> beforeSeparator = last.myBeforeSeparator;
+      List<? extends PsiComment> beforeSeparator = last.myBeforeSeparator;
       if (beforeSeparator.isEmpty()) {
         return last.myElement;
       }
@@ -349,7 +350,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
     }
 
     @Nullable
-    private SortingStrategy findSortingStrategy(List<PsiElement> elements) {
+    private SortingStrategy findSortingStrategy(List<? extends PsiElement> elements) {
 
       return Arrays.stream(sortStrategies())
                    .filter(strategy -> elements.stream().allMatch(strategy::isSuitableEntryElement))
@@ -472,7 +473,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
         myEntryElement = null;
         }
 
-      private void addIntermediateEntryElement(@NotNull PsiElement element, List<PsiComment> target) {
+      private void addIntermediateEntryElement(@NotNull PsiElement element, List<? super PsiComment> target) {
         if (element instanceof PsiWhiteSpace) {
           int newLineCount = (int)element.getText().chars().filter(value -> value == '\n').count();
           if (newLineCount != 0) {
@@ -515,7 +516,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       myEntryCountOnLines.set(myCurrent, myEntryCountOnLines.get(myCurrent) + 1);
     }
 
-    private void generate(StringBuilder sb, List<SortableEntry> entries) {
+    private void generate(StringBuilder sb, List<? extends SortableEntry> entries) {
       int entryIndex = 0;
       int lines = myEntryCountOnLines.size();
       int currentEntryIndex = 0;

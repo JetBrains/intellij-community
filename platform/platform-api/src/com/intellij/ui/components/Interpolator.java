@@ -37,7 +37,7 @@ public class Interpolator {
   private static final long TIMEOUT = 500_000000L; // ns
 
   private final Supplier<Integer> myInput;
-  private final Consumer<Integer> myOutput;
+  private final Consumer<? super Integer> myOutput;
 
   private final Timer myTimer = new Timer(PERIOD, new TimerListener());
   private final Deque<Segment> mySegments = new ArrayDeque<>();
@@ -51,7 +51,7 @@ public class Interpolator {
    * @param input  a getter of the value
    * @param output a setter of the value
    */
-  public Interpolator(@NotNull Supplier<Integer> input, @NotNull Consumer<Integer> output) {
+  public Interpolator(@NotNull Supplier<Integer> input, @NotNull Consumer<? super Integer> output) {
     myInput = input;
     myOutput = output;
   }

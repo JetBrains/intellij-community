@@ -298,7 +298,7 @@ public class NavigationGutterIconBuilder<T> {
 
   private static <T> List<SmartPsiElementPointer> calcPsiTargets(@NotNull Project project,
                                                                  @NotNull Collection<? extends T> targets,
-                                                                 @NotNull NotNullFunction<T, ? extends Collection<? extends PsiElement>> converter) {
+                                                                 @NotNull NotNullFunction<? super T, ? extends Collection<? extends PsiElement>> converter) {
     SmartPointerManager manager = SmartPointerManager.getInstance(project);
     Set<PsiElement> elements = new THashSet<>();
     final List<SmartPsiElementPointer> list = new ArrayList<>(targets.size());

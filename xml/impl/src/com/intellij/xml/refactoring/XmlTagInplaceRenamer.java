@@ -144,7 +144,7 @@ public class XmlTagInplaceRenamer {
     return Pair.create(selected, other);
   }
 
-  private static Template buildTemplate(@NotNull final XmlTag tag, @NotNull final Pair<ASTNode, ASTNode> pair) {
+  private static Template buildTemplate(@NotNull final XmlTag tag, @NotNull final Pair<? extends ASTNode, ? extends ASTNode> pair) {
     final TemplateBuilderImpl builder = new TemplateBuilderImpl(tag);
 
     final ASTNode selected = pair.first;
@@ -169,7 +169,7 @@ public class XmlTagInplaceRenamer {
     return builder.buildInlineTemplate();
   }
 
-  private static void addHighlights(List<TextRange> ranges, Editor editor, ArrayList<RangeHighlighter> highlighters) {
+  private static void addHighlights(List<? extends TextRange> ranges, Editor editor, ArrayList<RangeHighlighter> highlighters) {
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     final TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES);
 

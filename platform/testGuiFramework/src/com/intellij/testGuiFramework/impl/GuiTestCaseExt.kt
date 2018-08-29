@@ -14,8 +14,6 @@ import org.junit.Rule
 import org.junit.rules.ErrorCollector
 import org.junit.rules.TemporaryFolder
 import org.junit.rules.TestName
-import java.nio.file.Files
-import java.nio.file.Path
 
 open class GuiTestCaseExt : GuiTestCase() {
 
@@ -175,9 +173,10 @@ fun GuiTestCase.checkProjectIsCompiled(expectedStatus: String) {
     toolwindow(id = textEventLog) {
       content(tabName = "") {
         editor{
-          val lastLine = this.getCurrentFileContents(false)?.lines()?.last { it.trim().isNotEmpty() } ?: ""
-          assert(lastLine.contains(expectedStatus)) {
-            "Line `$lastLine` doesn't contain expected status `$expectedStatus`"
+          GuiTestUtilKt.waitUntil("Wait for '$expectedStatus' appears") {
+            val output = this.getCurrentFileContents(false)?.lines() ?: emptyList()
+            val lastLine = output.lastOrNull { it.trim().isNotEmpty() } ?: ""
+            lastLine.contains(expectedStatus)
           }
         }
       }
@@ -208,19 +207,21 @@ fun GuiTestCase.checkProjectIsRun(configuration: String, message: String) {
   }
 }
 
-fun GuiTestCase.checkRunGutterIcons(expectedNumberOfRunIcons: Int, expectedRunLines: List<String>) {
+fun GuiTestCase.checkGutterIcons(gutterIcon: GutterFixture.GutterIcon,
+                                 expectedNumberOfIcons: Int,
+                                 expectedLines: List<String>) {
   ideFrame {
-    logTestStep("Going to check whether $expectedNumberOfRunIcons `Run` gutter icons are present")
+    logTestStep("Going to check whether $expectedNumberOfIcons $gutterIcon gutter icons are present")
     editor {
       waitUntilFileIsLoaded()
       waitUntilErrorAnalysisFinishes()
-      gutter.waitUntilIconsShown(mapOf(GutterFixture.GutterIcon.RUN_SCRIPT to expectedNumberOfRunIcons))
-      val gutterRunLines = gutter.linesWithGutterIcon(GutterFixture.GutterIcon.RUN_SCRIPT)
+      gutter.waitUntilIconsShown(mapOf(gutterIcon to expectedNumberOfIcons))
+      val gutterLinesWithIcon = gutter.linesWithGutterIcon(gutterIcon)
       val contents = this@editor.getCurrentFileContents(false)?.lines() ?: listOf()
-      for ((index, line) in gutterRunLines.withIndex()) {
+      for ((index, line) in gutterLinesWithIcon.withIndex()) {
         // line numbers start with 1, but index in the contents list starts with 0
         val currentLine = contents[line - 1]
-        val expectedLine = expectedRunLines[index]
+        val expectedLine = expectedLines[index]
         assert(currentLine.contains(expectedLine)) {
           "At line #$line the actual text is `$currentLine`, but it was expected `$expectedLine`"
         }

@@ -51,6 +51,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import static org.jetbrains.plugins.gradle.util.GradleUtil.determineRootProject;
+
 /**
  * @author Denis Zhdanov
  * @since 3/14/13 5:09 PM
@@ -126,7 +128,9 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
         throw projectResolverChain.getUserFriendlyError(e, projectPath, null);
       }
     };
-    myHelper.ensureInstalledWrapper(id, projectPath, effectiveSettings, listener, cancellationTokenSource.token());
+    if (effectiveSettings.getDistributionType() == DistributionType.WRAPPED) {
+      myHelper.ensureInstalledWrapper(id, determineRootProject(projectPath), effectiveSettings, listener, cancellationTokenSource.token());
+    }
     myHelper.execute(projectPath, effectiveSettings, f);
   }
 

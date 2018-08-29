@@ -174,6 +174,8 @@
     <statistics.projectUsagesCollector implementation="git4idea.GitUsagesTriggerCollector"/>
     <statistics.projectUsagesCollector implementation="git4idea.GitProjectMigrationStatisticsCollector"/>
     <vcsRepositoryInitializer implementation="git4idea.repo.GitRepositoryInitializer"/>
+    <openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider
+        implementation="git4idea.diff.GitSubmoduleDiffRequestProvider"/>
 
     <projectService serviceImplementation="git4idea.repo.GitRepositoryManager"/>
     <projectService serviceImplementation="git4idea.ui.branch.GitBranchManager"/>

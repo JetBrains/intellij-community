@@ -61,7 +61,7 @@ public class FragmentListImpl implements FragmentList {
   }
 
   @Override
-  public Fragment getFragmentAt(int offset, FragmentSide side, Condition<Fragment> condition) {
+  public Fragment getFragmentAt(int offset, FragmentSide side, Condition<? super Fragment> condition) {
     for (Iterator<Fragment> iterator = iterator(); iterator.hasNext();) {
       Fragment fragment = iterator.next();
       TextRange range = fragment.getRange(side);

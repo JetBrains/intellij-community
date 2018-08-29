@@ -121,7 +121,7 @@ public class TypePresentationServiceImpl extends TypePresentationService {
     }
   );
 
-  private void walkSupers(Class aClass, Set<Class> classes, Set<PresentationTemplate> templates) {
+  private void walkSupers(Class aClass, Set<? super Class> classes, Set<? super PresentationTemplate> templates) {
     if (!classes.add(aClass)) {
       return;
     }

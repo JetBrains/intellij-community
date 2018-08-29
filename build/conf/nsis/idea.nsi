@@ -361,7 +361,7 @@ Function ConfirmDesktopShortcut
 
   ; if jre x86 for the build is available then add checkbox to Installation Options dialog
   StrCmp "${LINK_TO_JRE}" "null" custom_pre_actions 0
-  inetc::head /SILENT /TOSTACK ${LINK_TO_JRE} "" /END
+  inetc::head /SILENT /TOSTACK /CONNECTTIMEOUT 2 ${LINK_TO_JRE} "" /END
   Pop $0
   ${If} $0 == "OK"
     ; download jre x86: optional if OS is not 32-bit

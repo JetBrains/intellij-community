@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
   private static final Logger LOG = Logger.getInstance(ExternalAnnotatorInspectionVisitor.class);
@@ -124,8 +125,8 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
   }
 
   @NotNull
-  private static LocalQuickFix[] toLocalQuickFixes(@Nullable List<Annotation.QuickFixInfo> fixInfos,
-                                                   @NotNull IdentityHashMap<IntentionAction, LocalQuickFix> quickFixMappingCache) {
+  private static LocalQuickFix[] toLocalQuickFixes(@Nullable List<? extends Annotation.QuickFixInfo> fixInfos,
+                                                   @NotNull Map<IntentionAction, LocalQuickFix> quickFixMappingCache) {
     if (fixInfos == null || fixInfos.isEmpty()) {
       return LocalQuickFix.EMPTY_ARRAY;
     }

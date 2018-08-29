@@ -25,6 +25,7 @@ public class AntRunConfigurationType implements ConfigurationType {
   }
 
 
+  @NotNull
   @Override
   public String getDisplayName() {
     return "Ant Target";

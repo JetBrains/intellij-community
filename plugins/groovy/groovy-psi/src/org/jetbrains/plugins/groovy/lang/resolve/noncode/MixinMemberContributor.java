@@ -102,7 +102,7 @@ public class MixinMemberContributor extends NonCodeMembersContributor {
     return place.getParent() instanceof GrAnnotation || place.getParent() instanceof GrAnnotationArrayInitializer;
   }
 
-  private static void addMixin(GrAnnotationMemberValue value, List<PsiClass> mixins) {
+  private static void addMixin(GrAnnotationMemberValue value, List<? super PsiClass> mixins) {
     if (value instanceof GrReferenceExpression) {
       final PsiElement resolved = ((GrReferenceExpression)value).resolve();
       if (resolved instanceof PsiClass) {

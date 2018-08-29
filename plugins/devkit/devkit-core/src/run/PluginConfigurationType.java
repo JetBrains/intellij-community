@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.run;
 
 import com.intellij.diagnostic.VMOptions;
@@ -48,11 +46,6 @@ public class PluginConfigurationType implements ConfigurationType {
       }
 
       @Override
-      public boolean isConfigurationSingletonByDefault() {
-        return true;
-      }
-
-      @Override
       public RunConfiguration createConfiguration(String name, RunConfiguration template) {
         PluginRunConfiguration pluginRunConfiguration = (PluginRunConfiguration)template;
         if (pluginRunConfiguration.getModule() == null) {
@@ -64,6 +57,7 @@ public class PluginConfigurationType implements ConfigurationType {
     };
   }
 
+  @NotNull
   @Override
   public String getDisplayName() {
     return DevKitBundle.message("run.configuration.title");
@@ -88,6 +82,12 @@ public class PluginConfigurationType implements ConfigurationType {
   @Override
   public String getId() {
     return "#org.jetbrains.idea.devkit.run.PluginConfigurationType";
+  }
+
+  @NotNull
+  @Override
+  public String getConfigurationPropertyName() {
+    return "plugin";
   }
 
   @NotNull

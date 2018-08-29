@@ -118,6 +118,11 @@ public class GithubSearchedIssue extends GithubIssueBase {
     @Mandatory private String patchUrl;
 
     @NotNull
+    public String getUrl() {
+      return url;
+    }
+
+    @NotNull
     public String getPatchUrl() {
       return patchUrl;
     }

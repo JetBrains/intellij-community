@@ -130,7 +130,7 @@ public class XsltStackFrame extends XStackFrame {
 
       final Value v = myVariable.getValue();
       if (v.getType() == Value.XPathType.STRING) {
-        node.setPresentation(icon, v.getType().getName(), "'" + String.valueOf(v.getValue()) + "'", false);
+        node.setPresentation(icon, v.getType().getName(), "'" + v.getValue() + "'", false);
       } else {
         final boolean hasChildren = myVariable.getValue().getValue() instanceof Value.NodeSet;
         node.setPresentation(icon, v.getType().getName(), String.valueOf(v.getValue()), hasChildren);

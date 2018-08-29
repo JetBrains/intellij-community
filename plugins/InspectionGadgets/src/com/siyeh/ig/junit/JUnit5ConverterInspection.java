@@ -163,9 +163,9 @@ public class JUnit5ConverterInspection extends BaseInspection {
     private static class MyJUnit5MigrationProcessor extends MigrationProcessor {
 
       private final Project myProject;
-      private final Set<PsiFile> myFiles;
+      private final Set<? extends PsiFile> myFiles;
 
-      public MyJUnit5MigrationProcessor(Project project, MigrationMap migrationMap, Set<PsiFile> files) {
+      public MyJUnit5MigrationProcessor(Project project, MigrationMap migrationMap, Set<? extends PsiFile> files) {
         super(project, migrationMap, GlobalSearchScope.filesWithoutLibrariesScope(project, ContainerUtil.map(files, file -> file.getVirtualFile())));
         setPrepareSuccessfulSwingThreadCallback(EmptyRunnable.INSTANCE);
         myProject = project;

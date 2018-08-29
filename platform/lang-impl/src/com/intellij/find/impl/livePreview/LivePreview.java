@@ -414,7 +414,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
   }
 
   @NotNull
-  private RangeHighlighter highlightRange(TextRange textRange, TextAttributes attributes, Set<RangeHighlighter> highlighters) {
+  private RangeHighlighter highlightRange(TextRange textRange, TextAttributes attributes, Set<? super RangeHighlighter> highlighters) {
     if (myInSmartUpdate) {
       for (RangeHighlighter highlighter : myHighlighters) {
         if (highlighter.isValid() && highlighter.getStartOffset() == textRange.getStartOffset() && highlighter.getEndOffset() == textRange.getEndOffset()) {
@@ -435,7 +435,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
     return highlighter;
   }
 
-  private RangeHighlighter doHightlightRange(final TextRange textRange, final TextAttributes attributes, Set<RangeHighlighter> highlighters) {
+  private RangeHighlighter doHightlightRange(final TextRange textRange, final TextAttributes attributes, Set<? super RangeHighlighter> highlighters) {
     HighlightManager highlightManager = HighlightManager.getInstance(mySearchResults.getProject());
 
     MarkupModelEx markupModel = (MarkupModelEx)mySearchResults.getEditor().getMarkupModel();

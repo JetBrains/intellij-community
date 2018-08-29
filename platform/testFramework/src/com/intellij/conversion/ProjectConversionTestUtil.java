@@ -64,7 +64,7 @@ public class ProjectConversionTestUtil {
     }
 
     @Override
-    public void cannotWriteToFiles(List<File> readonlyFiles) {
+    public void cannotWriteToFiles(List<? extends File> readonlyFiles) {
     }
 
     public boolean isConversionNeeded() {

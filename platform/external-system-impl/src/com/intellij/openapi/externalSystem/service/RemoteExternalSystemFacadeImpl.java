@@ -162,7 +162,7 @@ public class RemoteExternalSystemFacadeImpl<S extends ExternalSystemExecutionSet
         @Override
         public void write(int b) {
           char c = (char)b;
-          myBuffer.append(Character.toString(c));
+          myBuffer.append(c);
           if (c == '\n') {
             doFlush();
           }

@@ -77,7 +77,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   private final JUnitConfiguration myConfiguration;
   protected File myListenersFile;
   protected <T> void addClassesListToJavaParameters(Collection<? extends T> elements,
-                                                    Function<T, String> nameFunction,
+                                                    Function<? super T, String> nameFunction,
                                                     String packageName,
                                                     boolean createTempFile, JavaParameters javaParameters) throws CantRunException {
     try {

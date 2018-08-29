@@ -53,9 +53,10 @@ public interface PsiSearchHelper {
    *
    * @param identifier  the identifier to search.
    * @param searchScope the scope in which occurrences are searched.
+   * @param processor
    * @return false if processor returned false, true otherwise
    */
-  boolean processCommentsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope, @NotNull Processor<PsiElement> processor);
+  boolean processCommentsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope, @NotNull Processor<? super PsiElement> processor);
 
   /**
    * Returns the list of files which contain the specified word in "plain text"

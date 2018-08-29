@@ -39,6 +39,7 @@ public final class PythonTestConfigurationType implements ConfigurationType {
   public PythonTestConfigurationType() {
   }
 
+  @NotNull
   @Override
   public String getDisplayName() {
     return PyBundle.message("runcfg.test.display_name");
@@ -66,6 +67,7 @@ public final class PythonTestConfigurationType implements ConfigurationType {
       return new PythonUnitTestRunConfiguration(project, this);
     }
 
+    @NotNull
     @Override
     public String getName() {
       return PyBundle.message("runcfg.unittest.display_name");
@@ -83,6 +85,7 @@ public final class PythonTestConfigurationType implements ConfigurationType {
       return new PythonDocTestRunConfiguration(project, this);
     }
 
+    @NotNull
     @Override
     public String getName() {
       return PyBundle.message("runcfg.doctest.display_name");
@@ -100,6 +103,7 @@ public final class PythonTestConfigurationType implements ConfigurationType {
       return new PyTestRunConfiguration(project, this);
     }
 
+    @NotNull
     @Override
     public String getName() {
       return PyBundle.message("runcfg.pytest.display_name");
@@ -117,6 +121,7 @@ public final class PythonTestConfigurationType implements ConfigurationType {
       return new PythonNoseTestRunConfiguration(project, this);
     }
 
+    @NotNull
     @Override
     public String getName() {
       return PyBundle.message("runcfg.nosetests.display_name");

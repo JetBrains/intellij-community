@@ -17,6 +17,7 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.UtilKt;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
@@ -50,8 +51,8 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   @NonNls public static final DataKey<List<FilePath>> MISSING_FILES_DATA_KEY = DataKey.create("ChangeListView.MissingFiles");
   @NonNls public static final DataKey<List<LocallyDeletedChange>> LOCALLY_DELETED_CHANGES = DataKey.create("ChangeListView.LocallyDeletedChanges");
 
-  public ChangesListView(@NotNull Project project) {
-    super(project, false, true);
+  public ChangesListView(@NotNull Project project, boolean showCheckboxes) {
+    super(project, showCheckboxes, true);
     setDragEnabled(true);
   }
 
@@ -174,7 +175,7 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
       return getSelectedModifiedWithoutEditing().findAny().isPresent();
     }
     if (VcsDataKeys.HAVE_SELECTED_CHANGES.is(dataId)) {
-      return haveSelectedChanges();
+      return !UtilKt.isEmpty(getSelectedChanges());
     }
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return HELP_ID;
@@ -303,12 +304,6 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
       getFiles(getSelectedChanges()),
       getSelectedVirtualFiles(null)
     ).distinct();
-  }
-
-  // TODO: Does not correspond to getSelectedChanges() - for instance, hijacked changes are not tracked here
-  private boolean haveSelectedChanges() {
-    return getSelectionNodesStream().anyMatch(
-      node -> node instanceof ChangesBrowserChangeNode || node instanceof ChangesBrowserChangeListNode && node.getChildCount() > 0);
   }
 
   @NotNull

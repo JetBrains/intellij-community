@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.ui;
 
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -29,7 +30,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -207,6 +210,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       });
 
       JTextField cellEditor = new JTextField();
+      cellEditor.putClientProperty(DarculaUIUtil.COMPACT_PROPERTY, Boolean.TRUE);
       cellEditor.getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
         protected void textChanged(@NotNull DocumentEvent e) {
@@ -215,7 +219,18 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         }
       });
 
-      table.getColumnModel().getColumn(0).setCellEditor(new DefaultCellEditor(cellEditor));
+
+      TableColumn col0 = table.getColumnModel().getColumn(0);
+      col0.setCellEditor(new DefaultCellEditor(cellEditor));
+      col0.setCellRenderer(new DefaultTableCellRenderer() {
+        @Override
+        public Dimension getPreferredSize() {
+          Dimension size = super.getPreferredSize();
+          Dimension editorSize = cellEditor.getPreferredSize();
+          size.height = Math.max(size.height, editorSize.height);
+          return size;
+        }
+      });
 
       JComboBox<Integer> rightEditor = new ComboBox<>(Arrays.stream(data).map(i -> Integer.valueOf(i[1])).toArray(Integer[]::new));
       table.getColumnModel().getColumn(1).setCellEditor(new DefaultCellEditor(rightEditor));

@@ -50,7 +50,7 @@ public abstract class JavaHomeFinder {
     return new DefaultFinder();
   }
 
-  protected void scanFolder(File folder, List<String> result) {
+  protected void scanFolder(File folder, List<? super String> result) {
     if (JdkUtil.checkForJdk(folder))
       result.add(folder.getAbsolutePath());
 

@@ -82,7 +82,7 @@ public class ContainerUtilRt {
 
   @NotNull
   @Contract(value = "_ -> new", pure = true)
-  public static <K extends Comparable, V> TreeMap<K, V> newTreeMap(@NotNull Map<K, V> map) {
+  public static <K extends Comparable, V> TreeMap<K, V> newTreeMap(@NotNull Map<? extends K, ? extends V> map) {
     return new TreeMap<K, V>(map);
   }
 

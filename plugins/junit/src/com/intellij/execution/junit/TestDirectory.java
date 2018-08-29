@@ -186,14 +186,14 @@ class TestDirectory extends TestPackage {
 
 
   @Override
-  protected void collectClassesRecursively(TestClassFilter classFilter, Condition<PsiClass> acceptClassCondition, Set<PsiClass> classes) throws CantRunException {
+  protected void collectClassesRecursively(TestClassFilter classFilter, Condition<? super PsiClass> acceptClassCondition, Set<? super PsiClass> classes) throws CantRunException {
     collectClassesRecursively(getDirectory(getConfiguration().getPersistentData()), acceptClassCondition, classes);
   }
 
 
   private static void collectClassesRecursively(PsiDirectory directory,
-                                                Condition<PsiClass> acceptAsTest,
-                                                Set<PsiClass> classes) {
+                                                Condition<? super PsiClass> acceptAsTest,
+                                                Set<? super PsiClass> classes) {
     PsiDirectory[] subDirectories = ReadAction.compute(() -> directory.getSubdirectories());
     for (PsiDirectory subDirectory : subDirectories) {
       collectClassesRecursively(subDirectory, acceptAsTest, classes);

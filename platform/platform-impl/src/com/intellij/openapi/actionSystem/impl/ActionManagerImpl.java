@@ -1432,7 +1432,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       }
     }
 
-    private void notifyListeners(final List<TimerListener> timerListeners, final Set<TimerListener> notified) {
+    private void notifyListeners(final List<TimerListener> timerListeners, final Set<? super TimerListener> notified) {
       for (TimerListener listener : timerListeners) {
         if (notified.add(listener)) {
           runListenerAction(listener);

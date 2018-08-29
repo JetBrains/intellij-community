@@ -385,8 +385,8 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     replaceInjections(newInjections, originalInjections, true);
   }
 
-  static void importInjections(final Collection<BaseInjection> existingInjections, final Collection<BaseInjection> importingInjections,
-                               final Collection<BaseInjection> originalInjections, final Collection<BaseInjection> newInjections) {
+  static void importInjections(final Collection<? extends BaseInjection> existingInjections, final Collection<? extends BaseInjection> importingInjections,
+                               final Collection<? super BaseInjection> originalInjections, final Collection<? super BaseInjection> newInjections) {
     final MultiValuesMap<InjectionPlace, BaseInjection> placeMap = new MultiValuesMap<>();
     for (BaseInjection exising : existingInjections) {
       for (InjectionPlace place : exising.getInjectionPlaces()) {
@@ -467,7 +467,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     return false;
   }
 
-  protected void setInjections(Collection<BaseInjection> injections) {
+  protected void setInjections(Collection<? extends BaseInjection> injections) {
     for (BaseInjection injection : injections) {
       myInjections.get(injection.getSupportId()).add(injection);
     }

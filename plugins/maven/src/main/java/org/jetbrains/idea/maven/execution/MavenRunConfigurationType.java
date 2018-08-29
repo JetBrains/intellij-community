@@ -87,6 +87,7 @@ public class MavenRunConfigurationType implements ConfigurationType {
     };
   }
 
+  @NotNull
   @Override
   public String getDisplayName() {
     return RunnerBundle.message("maven.run.configuration.name");

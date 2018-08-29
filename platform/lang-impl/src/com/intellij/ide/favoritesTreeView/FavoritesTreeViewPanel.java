@@ -139,7 +139,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     });
     myTree.setCellRenderer(new NodeRenderer() {
       @Override
-      public void customizeCellRenderer(JTree tree,
+      public void customizeCellRenderer(@NotNull JTree tree,
                                         Object value,
                                         boolean selected,
                                         boolean expanded,

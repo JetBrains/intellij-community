@@ -97,7 +97,7 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   }
 
   @Override
-  protected void prependActions(final DefaultActionGroup actionGroup) {
+  protected void prependActions(@NotNull final DefaultActionGroup actionGroup) {
     actionGroup.add(new ViewClassHierarchyAction());
     actionGroup.add(new ViewSupertypesHierarchyAction());
     actionGroup.add(new ViewSubtypesHierarchyAction());
@@ -170,7 +170,7 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
     }
 
     @Override
-    protected String correctViewType(HierarchyBrowserBaseEx browser, String viewType) {
+    protected String correctViewType(@NotNull HierarchyBrowserBaseEx browser, String viewType) {
       if (((TypeHierarchyBrowserBase)browser).myIsInterface && TYPE_HIERARCHY_TYPE.equals(viewType)) return SUBTYPES_HIERARCHY_TYPE;
       return viewType;
     }

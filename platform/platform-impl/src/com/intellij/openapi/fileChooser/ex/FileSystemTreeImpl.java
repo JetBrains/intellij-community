@@ -150,7 +150,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
     if (renderer == null) {
       renderer = new NodeRenderer() {
         @Override
-        public void customizeCellRenderer(JTree tree,
+        public void customizeCellRenderer(@NotNull JTree tree,
                                           Object value,
                                           boolean selected,
                                           boolean expanded,

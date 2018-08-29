@@ -30,4 +30,6 @@ public abstract class ProjectUsagesCollector extends FeatureUsagesCollector {
 
   @NotNull
   public abstract Set<UsageDescriptor> getUsages(@NotNull Project project);
+
+  public FUSUsageContext getContext(@NotNull Project project) {return null;}
 }

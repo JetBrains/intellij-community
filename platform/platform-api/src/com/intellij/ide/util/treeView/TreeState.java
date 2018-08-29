@@ -97,8 +97,8 @@ public class TreeState implements JDOMExternalizable {
     private Match getMatchTo(Object object) {
       Object userObject = TreeUtil.getUserObject(object);
       if (this.userObject != null && this.userObject.equals(userObject)) return Match.OBJECT;
-      return Comparing.equal(this.id, calcId(userObject)) &&
-             Comparing.equal(this.type, calcType(userObject)) ? Match.ID_TYPE : null;
+      return Comparing.equal(id, calcId(userObject)) &&
+             Comparing.equal(type, calcType(userObject)) ? Match.ID_TYPE : null;
     }
   }
 
@@ -340,7 +340,7 @@ public class TreeState implements JDOMExternalizable {
     });
   }
 
-  static abstract class TreeFacade {
+  abstract static class TreeFacade {
 
     final JTree tree;
 
@@ -441,7 +441,7 @@ public class TreeState implements JDOMExternalizable {
    */
   @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
-  public static void expand(@NotNull JTree tree, @NotNull Consumer<AsyncPromise<Void>> consumer) {
+  public static void expand(@NotNull JTree tree, @NotNull Consumer<? super AsyncPromise<Void>> consumer) {
     Promise<Void> expanding = UIUtil.getClientProperty(tree, EXPANDING);
     LOG.debug("EXPANDING: ", expanding);
     if (expanding == null) expanding = Promises.resolvedPromise();

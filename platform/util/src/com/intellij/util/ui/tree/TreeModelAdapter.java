@@ -30,7 +30,7 @@ public abstract class TreeModelAdapter implements TreeModelListener {
   public enum EventType {StructureChanged, NodesChanged, NodesInserted, NodesRemoved}
   
   @NotNull
-  public static TreeModelListener create(@NotNull final PairConsumer<TreeModelEvent, EventType> consumer) {
+  public static TreeModelListener create(@NotNull final PairConsumer<? super TreeModelEvent, ? super EventType> consumer) {
     return new TreeModelAdapter() {
       @Override
       protected void process(TreeModelEvent event, EventType type) {

@@ -621,10 +621,6 @@ idea.fatal.error.notification=disabled
     jarsBuilder.buildJARs()
     layoutShared()
 
-    //todo[nik]
-    buildContext.ant.copy(todir: "$targetDirectory/lib/libpty/") {
-      fileset(dir: "$buildContext.paths.communityHome/lib/libpty/")
-    }
 /*
     //todo[nik] uncomment this to update os-specific files (e.g. in 'bin' directory) as well
     def propertiesFile = patchIdeaPropertiesFile()

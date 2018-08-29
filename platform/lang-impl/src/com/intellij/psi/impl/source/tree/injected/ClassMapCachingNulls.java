@@ -30,10 +30,10 @@ import java.util.stream.Collectors;
 class ClassMapCachingNulls<T> {
   private final Map<Class, T[]> myBackingMap;
   private final T[] myEmptyArray;
-  private final List<T> myOrderingArray;
+  private final List<? extends T> myOrderingArray;
   private final Map<Class, T[]> myMap = ContainerUtil.newConcurrentMap();
 
-  ClassMapCachingNulls(@NotNull Map<Class, T[]> backingMap, T[] emptyArray, @NotNull List<T> orderingArray) {
+  ClassMapCachingNulls(@NotNull Map<Class, T[]> backingMap, T[] emptyArray, @NotNull List<? extends T> orderingArray) {
     myBackingMap = backingMap;
     myEmptyArray = emptyArray;
     myOrderingArray = orderingArray;

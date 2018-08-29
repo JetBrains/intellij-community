@@ -108,7 +108,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     return actions;
   }
   
-  protected void addAdditionalActions(@NotNull List<AnAction> defaultActions) {}
+  protected void addAdditionalActions(@NotNull List<? super AnAction> defaultActions) {}
 
   private class CopyToProjectAction extends DumbAwareAction {
 
@@ -258,7 +258,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
 
   private static AnAction createImportExportAction(@NotNull String groupName,
                                                    @NotNull Collection<String> actionNames,
-                                                   @NotNull BiFunction<String, String, AnAction> createActionByName) {
+                                                   @NotNull BiFunction<? super String, ? super String, ? extends AnAction> createActionByName) {
     if (actionNames.size() == 1) {
       return createActionByName.apply(ContainerUtil.getFirstItem(actionNames), groupName + "...");
     } else {

@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Ref
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.framework.toPrintable
-import com.intellij.testGuiFramework.framework.toSec
 import com.intellij.ui.EngravedLabel
 import org.fest.swing.core.ComponentMatcher
 import org.fest.swing.core.GenericTypeMatcher
@@ -203,9 +202,9 @@ object GuiTestUtilKt {
    *
    * @throws WaitTimedOutError with the text: "Timed out waiting for $timeout second(s) until {@code conditionText} will be not null"
    */
-  inline fun <ReturnType> withPauseWhenNull(conditionText: String = "function to probe will",
+  fun <ReturnType> withPauseWhenNull(conditionText: String = "function to probe will",
                                             timeout: Timeout = Timeouts.defaultTimeout,
-                                            crossinline functionProbeToNull: () -> ReturnType?): ReturnType {
+                                            functionProbeToNull: () -> ReturnType?): ReturnType {
     var result: ReturnType? = null
     waitUntil("$conditionText will be not null", timeout) {
       result = functionProbeToNull()
@@ -214,16 +213,16 @@ object GuiTestUtilKt {
     return result!!
   }
 
-  inline fun waitUntil(condition: String, timeout: Timeout = Timeouts.defaultTimeout, crossinline conditionalFunction: () -> Boolean) {
-    Pause.pause(object : Condition("${timeout.toSec()} second(s) until $condition") {
+  fun waitUntil(condition: String, timeout: Timeout = Timeouts.defaultTimeout, conditionalFunction: () -> Boolean) {
+    Pause.pause(object : Condition("${timeout.toPrintable()} until $condition") {
       override fun test() = conditionalFunction()
     }, timeout)
   }
 
-  inline fun <R> tryWithPause(exceptionClass: Class<out Exception>,
+  fun <R> tryWithPause(exceptionClass: Class<out Exception>,
                    condition: String = "try block will not throw ${exceptionClass.name} exception",
                    timeout: Timeout,
-                   crossinline tryBlock: () -> R): R {
+                   tryBlock: () -> R): R {
     val exceptionRef: Ref<Exception> = Ref.create()
     try {
       return withPauseWhenNull (condition, timeout) {

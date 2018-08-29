@@ -24,8 +24,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Path2D;
 
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.Outline;
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isTableCellEditor;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
 import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI.HOVER_PROPERTY;
 
 /**
@@ -36,7 +35,7 @@ public class WinIntelliJTextBorder extends DarculaTextBorder {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return JBUI.insets(isTableCellEditor(c) ? 0 : 1).asUIResource();
+    return JBUI.insets(isTableCellEditor(c) || isCompact(c) ? 0 : 1).asUIResource();
   }
 
   @Override

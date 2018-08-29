@@ -98,7 +98,7 @@ public class UnnecessaryReturnInspection extends BaseInspection {
   public static boolean isReturnRedundant(@NotNull PsiReturnStatement statement,
                                           boolean ignoreInThenBranch,
                                           boolean checkReturnType,
-                                          @Nullable Ref<Boolean> isInConstructorRef) {
+                                          @Nullable Ref<? super Boolean> isInConstructorRef) {
     if (statement.getReturnValue() != null) {
       return false;
     }

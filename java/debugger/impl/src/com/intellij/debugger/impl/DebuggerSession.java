@@ -516,8 +516,12 @@ public class DebuggerSession implements AbstractDebuggerSession {
             // heuristics: display the first thread with RUNNABLE status
             for (final ThreadReferenceProxyImpl thread : allThreads) {
               currentThread = thread;
-              if (currentThread.status() == ThreadReference.THREAD_STATUS_RUNNING) {
-                break;
+              try {
+                if (currentThread.status() == ThreadReference.THREAD_STATUS_RUNNING && currentThread.frameCount() > 0) {
+                  break;
+                }
+              }
+              catch (EvaluateException ignored) {
               }
             }
           }

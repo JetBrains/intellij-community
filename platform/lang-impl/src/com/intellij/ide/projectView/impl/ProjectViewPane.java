@@ -11,15 +11,25 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewSettings;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.*;
+import com.intellij.ide.scratch.ScratchProjectViewPane;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.psi.PsiDirectory;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -33,7 +43,7 @@ import java.awt.*;
 
 public class ProjectViewPane extends AbstractProjectViewPSIPane {
   @NonNls public static final String ID = "ProjectPane";
-  public static final String SHOW_EXCLUDED_FILES_OPTION = "show-excluded-files";
+  private static final String SHOW_EXCLUDED_FILES_OPTION = "show-excluded-files";
   private static final String USE_FILE_NESTING_RULES = "use-file-nesting-rules";
 
   boolean myShowExcludedFiles = true;
@@ -65,19 +75,23 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
     return new ProjectPaneSelectInTarget(myProject);
   }
 
+  @NotNull
   @Override
-  protected AbstractTreeUpdater createTreeUpdater(AbstractTreeBuilder treeBuilder) {
+  protected AbstractTreeUpdater createTreeUpdater(@NotNull AbstractTreeBuilder treeBuilder) {
     return new ProjectViewTreeUpdater(treeBuilder);
   }
 
+  @NotNull
   @Override
   protected ProjectAbstractTreeStructureBase createStructure() {
     return new ProjectViewPaneTreeStructure();
   }
 
+  @NotNull
   @Override
-  protected ProjectViewTree createTree(DefaultTreeModel treeModel) {
+  protected ProjectViewTree createTree(@NotNull DefaultTreeModel treeModel) {
     return new ProjectViewTree(treeModel) {
+      @Override
       public String toString() {
         return getTitle() + " " + super.toString();
       }
@@ -153,7 +167,7 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
     return false;
   }
 
-  public boolean isUseFileNestingRules() {
+  boolean isUseFileNestingRules() {
     return myUseFileNestingRules;
   }
 
@@ -198,7 +212,7 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
   }
 
   private class ProjectViewPaneTreeStructure extends ProjectTreeStructure implements ProjectViewSettings {
-    public ProjectViewPaneTreeStructure() {
+    ProjectViewPaneTreeStructure() {
       super(ProjectViewPane.this.myProject, ID);
     }
 
@@ -247,7 +261,24 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
   }
 
   @Override
-  protected BaseProjectTreeBuilder createBuilder(DefaultTreeModel model) {
+  protected BaseProjectTreeBuilder createBuilder(@NotNull DefaultTreeModel model) {
     return null;
+  }
+
+  public static boolean canBeSelectedInProjectView(@NotNull Project project, @NotNull VirtualFile file) {
+    final VirtualFile archiveFile;
+
+    if(file.getFileSystem() instanceof ArchiveFileSystem)
+      archiveFile = ((ArchiveFileSystem)file.getFileSystem()).getLocalByEntry(file);
+    else
+      archiveFile = null;
+
+    ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
+    return (archiveFile != null && index.getContentRootForFile(archiveFile, false) != null) ||
+           index.getContentRootForFile(file, false) != null ||
+           index.isInLibraryClasses(file) ||
+           index.isInLibrarySource(file) ||
+           Comparing.equal(file.getParent(), project.getBaseDir()) ||
+           ScratchProjectViewPane.isScratchesMergedIntoProjectTab() && ScratchUtil.isScratch(file);
   }
 }

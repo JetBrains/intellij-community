@@ -23,7 +23,7 @@ import java.util.List;
 
 interface MultiNodeBinding {
   @Nullable
-  Object deserializeList(@Nullable Object context, @NotNull List<Element> elements);
+  Object deserializeList(@Nullable Object context, @NotNull List<? extends Element> elements);
 
   boolean isMulti();
 }

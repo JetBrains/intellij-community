@@ -36,7 +36,7 @@ public class PyUserSkeletonsNode extends PsiDirectoryNode {
   }
 
   @Override
-  protected void updateImpl(PresentationData data) {
+  protected void updateImpl(@NotNull PresentationData data) {
     data.setPresentableText("Extended Definitions");
     data.setIcon(PlatformIcons.LIBRARY_ICON);
   }

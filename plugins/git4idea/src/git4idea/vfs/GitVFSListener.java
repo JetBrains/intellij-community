@@ -66,27 +66,30 @@ public class GitVFSListener extends VcsVFSListener {
   }
 
   @Override
-  protected boolean isEventIgnored(VirtualFileEvent event, boolean putInDirty) {
+  protected boolean isEventIgnored(@NotNull VirtualFileEvent event, boolean putInDirty) {
     return super.isEventIgnored(event, putInDirty) || myEventsSuppressLevel.get() != 0;
   }
 
+  @NotNull
   @Override
   protected String getAddTitle() {
     return GitBundle.getString("vfs.listener.add.title");
   }
 
+  @NotNull
   @Override
   protected String getSingleFileAddTitle() {
     return GitBundle.getString("vfs.listener.add.single.title");
   }
 
+  @NotNull
   @Override
   protected String getSingleFileAddPromptTemplate() {
     return GitBundle.getString("vfs.listener.add.single.prompt");
   }
 
   @Override
-  protected void executeAdd(final List<VirtualFile> addedFiles, final Map<VirtualFile, VirtualFile> copiedFiles) {
+  protected void executeAdd(@NotNull final List<VirtualFile> addedFiles, @NotNull final Map<VirtualFile, VirtualFile> copiedFiles) {
     // Filter added files before further processing
     Map<VirtualFile, List<VirtualFile>> sortedFiles;
     try {
@@ -129,7 +132,7 @@ public class GitVFSListener extends VcsVFSListener {
   }
 
   @Override
-  protected void performAdding(final Collection<VirtualFile> addedFiles, final Map<VirtualFile, VirtualFile> copyFromMap) {
+  protected void performAdding(@NotNull final Collection<VirtualFile> addedFiles, @NotNull final Map<VirtualFile, VirtualFile> copyFromMap) {
     // copied files (copyFromMap) are ignored, because they are included into added files.
     performAdding(ObjectsConvertor.vf2fp(new ArrayList<>(addedFiles)));
   }
@@ -154,6 +157,7 @@ public class GitVFSListener extends VcsVFSListener {
     });
   }
 
+  @NotNull
   @Override
   protected String getDeleteTitle() {
     return GitBundle.getString("vfs.listener.delete.title");
@@ -170,7 +174,7 @@ public class GitVFSListener extends VcsVFSListener {
   }
 
   @Override
-  protected void performDeletion(final List<FilePath> filesToDelete) {
+  protected void performDeletion(@NotNull final List<FilePath> filesToDelete) {
     performBackgroundOperation(filesToDelete, GitBundle.getString("remove.removing"), new LongOperationPerRootExecutor() {
       HashSet<File> filesToRefresh = new HashSet<>();
 
@@ -196,7 +200,7 @@ public class GitVFSListener extends VcsVFSListener {
   }
 
   @Override
-  protected void performMoveRename(final List<MovedFileInfo> movedFiles) {
+  protected void performMoveRename(@NotNull final List<MovedFileInfo> movedFiles) {
     List<FilePath> toAdd = ContainerUtil.newArrayList();
     List<FilePath> toRemove = ContainerUtil.newArrayList();
     List<MovedFileInfo> toForceMove = ContainerUtil.newArrayList();
@@ -246,7 +250,7 @@ public class GitVFSListener extends VcsVFSListener {
   }
 
   @Override
-  protected Collection<FilePath> selectFilePathsToDelete(final List<FilePath> deletedFiles) {
+  protected Collection<FilePath> selectFilePathsToDelete(@NotNull final List<FilePath> deletedFiles) {
     // For git asking about vcs delete does not make much sense. The result is practically identical.
     return deletedFiles;
   }

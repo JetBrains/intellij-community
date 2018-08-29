@@ -25,7 +25,7 @@ public abstract class ClearableLazyValue<T> {
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("ClearableLazyValue");
 
   @NotNull
-  public static <T> ClearableLazyValue<T> create(final Computable<T> computable) {
+  public static <T> ClearableLazyValue<T> create(final Computable<? extends T> computable) {
     return new ClearableLazyValue<T>() {
       @NotNull
       @Override

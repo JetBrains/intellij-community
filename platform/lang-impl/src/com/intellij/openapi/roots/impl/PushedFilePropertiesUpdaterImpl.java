@@ -211,7 +211,7 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
   }
 
   @Override
-  public void filePropertiesChanged(@NotNull VirtualFile fileOrDir, @NotNull Condition<VirtualFile> acceptFileCondition) {
+  public void filePropertiesChanged(@NotNull VirtualFile fileOrDir, @NotNull Condition<? super VirtualFile> acceptFileCondition) {
     if (fileOrDir.isDirectory()) {
       for (VirtualFile child : fileOrDir.getChildren()) {
         if (!child.isDirectory() && acceptFileCondition.value(child)) {

@@ -140,8 +140,8 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
 
   @Override
   protected boolean finishCommitInWriteAction(@NotNull Document document,
-                                              @NotNull List<BooleanRunnable> finishProcessors,
-                                              @NotNull List<BooleanRunnable> reparseInjectedProcessors,
+                                              @NotNull List<? extends BooleanRunnable> finishProcessors,
+                                              @NotNull List<? extends BooleanRunnable> reparseInjectedProcessors,
                                               boolean synchronously,
                                               boolean forceNoPsiCommit) {
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) { // can be false for non-physical PSI

@@ -31,12 +31,12 @@ class PopupTableAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<
   }
 
   @Override
-  public void setItemChosenCallback(Consumer<T> callback) {
+  public void setItemChosenCallback(Consumer<? super T> callback) {
     throw new UnsupportedOperationException("setItemChosenCallback with element callback is not implemented for tables yet");
   }
 
   @Override
-  public void setItemsChosenCallback(Consumer<Set<T>> callback) {
+  public void setItemsChosenCallback(Consumer<? super Set<T>> callback) {
     throw new UnsupportedOperationException("setItemsChosenCallback with element callback is not implemented for tables yet");
   }
 

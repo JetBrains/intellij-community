@@ -342,7 +342,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     getPersistentData().setScope(searchScope);
   }
 
-  public void beFromSourcePosition(PsiLocation<PsiMethod> sourceLocation) {
+  public void beFromSourcePosition(PsiLocation<? extends PsiMethod> sourceLocation) {
     myData.setTestMethod(sourceLocation);
     myData.TEST_OBJECT = BY_SOURCE_POSITION;
   }
@@ -698,7 +698,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
       return UNIQUE_ID;
     }
 
-    public Module setTestMethod(final Location<PsiMethod> methodLocation) {
+    public Module setTestMethod(final Location<? extends PsiMethod> methodLocation) {
       final PsiMethod method = methodLocation.getPsiElement();
       METHOD_NAME = getMethodPresentation(method);
       TEST_OBJECT = TEST_METHOD;

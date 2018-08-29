@@ -19,6 +19,7 @@ public class IpnbRunConfigurationType implements ConfigurationType {
     return ConfigurationTypeUtil.findConfigurationType(IpnbRunConfigurationType.class);
   }
 
+  @NotNull
   @Override
   public String getDisplayName() {
     return "Jupyter Notebook";
@@ -51,16 +52,12 @@ public class IpnbRunConfigurationType implements ConfigurationType {
     }
 
     @Override
-    public boolean isConfigurationSingletonByDefault() {
-      return true;
-    }
-
-    @Override
     @NotNull
     public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
       return new IpnbRunConfiguration(project, this);
     }
 
+    @NotNull
     @Override
     public String getName() {
       return "Jupyter Notebook";

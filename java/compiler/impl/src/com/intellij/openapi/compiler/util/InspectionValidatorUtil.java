@@ -38,13 +38,13 @@ public class InspectionValidatorUtil {
   private InspectionValidatorUtil() {
   }
 
-  public static void addDescriptor(@NotNull final Collection<VirtualFile> result, @Nullable final ConfigFile configFile) {
+  public static void addDescriptor(@NotNull final Collection<? super VirtualFile> result, @Nullable final ConfigFile configFile) {
     if (configFile != null) {
       ContainerUtil.addIfNotNull(result, configFile.getVirtualFile());
     }
   }
 
-  public static void addFile(@NotNull final Collection<VirtualFile> result, @Nullable final PsiFile psiFile) {
+  public static void addFile(@NotNull final Collection<? super VirtualFile> result, @Nullable final PsiFile psiFile) {
     if (psiFile != null) {
       ContainerUtil.addIfNotNull(result, psiFile.getVirtualFile());
     }

@@ -32,6 +32,7 @@ public class RemoteConfigurationType implements ConfigurationType {
     };
   }
 
+  @NotNull
   @Override
   public String getDisplayName() {
     return ExecutionBundle.message("remote.debug.configuration.display.name");
@@ -61,6 +62,12 @@ public class RemoteConfigurationType implements ConfigurationType {
   @NotNull
   public String getId() {
     return "Remote";
+  }
+
+  @NotNull
+  @Override
+  public String getConfigurationPropertyName() {
+    return "jvmRemote";
   }
 
   @NotNull

@@ -122,7 +122,7 @@ class TouchBar implements NSTLibrary.ItemCreator {
   }
 
   boolean isManualClose() { return myCustomEsc != null; }
-  boolean isEmpty() { return myItems.isEmpty(); }
+  boolean isEmpty() { return myItems.isEmpty() || !myItems.anyMatchDeep(item -> item != null && !(item instanceof SpacingItem)); }
 
   @Override
   public String toString() { return myItems.toString() + "_" + myNativePeer; }

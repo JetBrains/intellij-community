@@ -1,10 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -13,62 +16,117 @@ import java.util.Set;
 public abstract class SearchQueryParser {
   public String searchQuery;
 
-  protected void parse(@NotNull String query) {
+  @NotNull
+  public static List<String> split(@NotNull String name, @NotNull String query) {
+    List<String> result = new ArrayList<>();
+
+    int length = name.length();
+    int queryLength = query.length();
+    int index = 0;
+
+    while (true) {
+      int end = StringUtil.indexOfIgnoreCase(name, query, index);
+      if (end == -1) {
+        break;
+      }
+      result.add(name.substring(index, end));
+      index = end + queryLength;
+      result.add(name.substring(end, index));
+    }
+
+    if (index < length) {
+      result.add(name.substring(index));
+    }
+
+    return result;
+  }
+
+  @NotNull
+  private static List<String> splitQuery(@NotNull String query) {
+    List<String> words = new ArrayList<>();
+
     int length = query.length();
     int index = 0;
 
     while (index < length) {
-      int attributeEnd = query.indexOf(':', index);
-      if (attributeEnd == -1) {
-        searchQuery = query.substring(index);
-        return;
+      char startCh = query.charAt(index++);
+      if (startCh == ' ') {
+        continue;
       }
-      else {
-        String name = query.substring(index, attributeEnd);
-        boolean invert = name.startsWith("-");
-        if (invert) {
-          name = name.substring(1);
+      if (startCh == '"') {
+        int end = query.indexOf('"', index);
+        if (end == -1) {
+          break;
         }
-        index = attributeEnd + 1;
-        if (index == length) {
+        words.add(query.substring(index, end));
+        index = end + 1;
+        continue;
+      }
+
+      int start = index - 1;
+      while (index < length) {
+        char nextCh = query.charAt(index++);
+        if (nextCh == ':' || nextCh == ' ' || index == length) {
+          words.add(query.substring(start, nextCh == ' ' ? index - 1 : index));
+          break;
+        }
+      }
+    }
+
+    if (words.isEmpty() && length > 0) {
+      words.add(query);
+    }
+
+    return words;
+  }
+
+  protected final void parse(@NotNull String query) {
+    List<String> words = splitQuery(query);
+    int size = words.size();
+
+    if (size == 0) {
+      return;
+    }
+    if (size == 1) {
+      searchQuery = words.get(0);
+      return;
+    }
+
+    int index = 0;
+    while (index < size) {
+      String name = words.get(index++);
+      if (name.endsWith(":")) {
+        if (index < size) {
+          boolean invert = name.startsWith("-");
+          name = name.substring(invert ? 1 : 0, name.length() - 1);
+          handleAttribute(name, words.get(index++), invert);
+        }
+        else {
           searchQuery = query;
           return;
         }
-
-        int valueEnd;
-        if (query.charAt(index) == '"') {
-          index = attributeEnd + 1;
-          if (index == length) {
-            searchQuery = query;
-            return;
-          }
-          valueEnd = query.indexOf('"', index);
-          if (valueEnd == -1) {
-            searchQuery = query;
-            return;
-          }
-        }
-        else {
-          valueEnd = query.indexOf(' ', index);
-          if (valueEnd == -1) {
-            valueEnd = length;
-          }
-        }
-
-        String value = query.substring(index, valueEnd);
-        handleAttribute(name, value, invert);
-        index = valueEnd + 1;
+      }
+      else if (searchQuery == null) {
+        searchQuery = name;
+      }
+      else {
+        searchQuery = query;
+        return;
       }
     }
   }
 
   protected abstract void handleAttribute(@NotNull String name, @NotNull String value, boolean invert);
 
+  @NotNull
+  public static String getTagQuery(@NotNull String tag) {
+    return "tag:" + (tag.indexOf(' ') == -1 ? tag : StringUtil.wrapWithDoubleQuote(tag));
+  }
+
   public static class Trending extends SearchQueryParser {
     public final Set<String> tags = new HashSet<>();
-    public final Set<String> excludeTags = new HashSet<>();
+    public final Set<String> repositories = new HashSet<>();
     public String sortBy;
-    public String repository;
 
     public Trending(@NotNull String query) {
       parse(query);
@@ -114,20 +172,13 @@ public abstract class SearchQueryParser {
     @Override
     protected void handleAttribute(@NotNull String name, @NotNull String value, boolean invert) {
       if (name.equals("tag")) {
-        if (invert) {
-          if (!tags.remove(value)) {
-            excludeTags.add(value);
-          }
-        }
-        else if (!excludeTags.remove(value)) {
-          tags.add(value);
-        }
+        tags.add(value);
       }
       else if (name.equals("sort_by")) {
         sortBy = value;
       }
       else if (name.equals("repository")) {
-        repository = value;
+        repositories.add(value);
       }
     }
   }

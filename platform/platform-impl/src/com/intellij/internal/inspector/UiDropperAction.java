@@ -553,7 +553,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
       g2d.fillRect(insets.left, insets.top, bounds.width - insets.left - insets.right, bounds.height - insets.top - insets.bottom);
       g2d.setColor(getForeground());
 
-      final String sizeString = String.valueOf(myWidth) + " x " + myHeight;
+      final String sizeString = myWidth + " x " + myHeight;
 
       FontMetrics fm = g2d.getFontMetrics();
       int sizeWidth = fm.stringWidth(sizeString);
@@ -704,7 +704,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
   private static class DimensionRenderer extends JLabel implements Renderer<Dimension> {
     @Override
     public JComponent setValue(@NotNull final Dimension value) {
-      setText(String.valueOf(value.width) + "x" + value.height);
+      setText(value.width + "x" + value.height);
       return this;
     }
   }

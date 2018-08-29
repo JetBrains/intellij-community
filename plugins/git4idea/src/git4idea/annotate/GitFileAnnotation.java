@@ -64,7 +64,7 @@ public class GitFileAnnotation extends FileAnnotation {
   private final LineAnnotationAspect REVISION_ASPECT = new GitAnnotationAspect(LineAnnotationAspect.REVISION, false) {
     @Override
     protected String doGetValue(LineInfo lineInfo) {
-      return String.valueOf(lineInfo.getRevisionNumber().getShortRev());
+      return lineInfo.getRevisionNumber().getShortRev();
     }
   };
 

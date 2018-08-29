@@ -381,7 +381,7 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       consumer.accept(myIdentity);
       myUpdater.registerReusedElements(consumer);
     }
@@ -404,7 +404,7 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       myUpdater.registerReusedElements(consumer);
     }
 
@@ -445,7 +445,7 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       mySupplier.registerReusedElements(consumer);
       myAccumulator.registerReusedElements(consumer);
     }
@@ -573,7 +573,7 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       myFn.registerReusedElements(consumer);
     }
 
@@ -602,7 +602,7 @@ abstract class TerminalOperation extends Operation {
     // Non-trivial finishers are not supported
     default void transform(StreamToLoopReplacementContext context, String item) {}
     default void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {}
-    default void registerReusedElements(Consumer<PsiElement> consumer) {}
+    default void registerReusedElements(Consumer<? super PsiElement> consumer) {}
     String getSupplier();
     String getAccumulatorUpdater(StreamVariable inVar, String acc);
 
@@ -647,7 +647,7 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       mySupplier.registerReusedElements(consumer);
     }
 
@@ -756,7 +756,7 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       myDelegate.registerReusedElements(consumer);
       myWrapper.registerReusedElements(consumer);
     }
@@ -825,7 +825,7 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       if(myComparator != null) {
         myComparator.registerReusedElements(consumer);
       }
@@ -918,7 +918,7 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       super.registerReusedElements(consumer);
       myKeyExtractor.registerReusedElements(consumer);
       myValueExtractor.registerReusedElements(consumer);
@@ -986,7 +986,7 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       super.registerReusedElements(consumer);
       myKeyExtractor.registerReusedElements(consumer);
       myCollector.registerReusedElements(consumer);
@@ -1028,7 +1028,7 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       myPredicate.registerReusedElements(consumer);
       myCollector.registerReusedElements(consumer);
     }
@@ -1068,7 +1068,7 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       myMapper.registerReusedElements(consumer);
       myDownstream.registerReusedElements(consumer);
     }
@@ -1175,7 +1175,7 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       myFn.registerReusedElements(consumer);
     }
 
@@ -1205,7 +1205,7 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       myFn.registerReusedElements(consumer);
     }
 
@@ -1238,7 +1238,7 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       myOrigin.registerReusedElements(consumer);
       if(myComparator != null) {
         consumer.accept(myComparator);

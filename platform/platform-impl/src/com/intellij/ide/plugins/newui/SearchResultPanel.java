@@ -96,8 +96,8 @@ public abstract class SearchResultPanel {
             myGroup.titleWithCount();
           }
 
-          myPanel.doLayout();
-          myPanel.initialSelection();
+          myPanel.initialSelection(false);
+          fullRepaint();
         }, ModalityState.any());
       });
     }
@@ -107,7 +107,7 @@ public abstract class SearchResultPanel {
       if (!myGroup.descriptors.isEmpty()) {
         myPanel.addGroup(myGroup);
         myGroup.titleWithCount();
-        //myPanel.initialSelection();
+        myPanel.initialSelection(false);
       }
 
       fullRepaint();
@@ -116,7 +116,7 @@ public abstract class SearchResultPanel {
 
   protected abstract void handleQuery(@NotNull String query, @NotNull PluginsGroup result);
 
-  private void loading(boolean start) {
+  public void loading(boolean start) {
     PluginsGroupComponentWithProgress panel = (PluginsGroupComponentWithProgress)myPanel;
     if (start) {
       panel.startLoading();

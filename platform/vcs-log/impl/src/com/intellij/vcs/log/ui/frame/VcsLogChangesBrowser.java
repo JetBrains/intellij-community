@@ -42,6 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.tree.DefaultTreeModel;
 import java.util.*;
 
@@ -92,7 +93,6 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
 
     init();
 
-    getViewerScrollPane().setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
     myViewer.setEmptyText(EMPTY_SELECTION_TEXT);
     myViewer.rebuildTree();
   }
@@ -101,6 +101,12 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
   @Override
   protected JComponent createToolbarComponent() {
     return myToolbarWrapper;
+  }
+
+  @NotNull
+  @Override
+  protected Border createViewerBorder() {
+    return IdeBorderFactory.createBorder(SideBorder.TOP);
   }
 
   public void setToolbarHeightReferent(@NotNull JComponent referent) {

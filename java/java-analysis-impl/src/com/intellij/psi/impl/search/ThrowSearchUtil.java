@@ -58,7 +58,7 @@ public class ThrowSearchUtil {
   /**
    * @return true, if we should continue processing
    */
-  private static boolean processExn(@NotNull PsiParameter aCatch, @NotNull Processor<UsageInfo> processor, @NotNull Root root) {
+  private static boolean processExn(@NotNull PsiParameter aCatch, @NotNull Processor<? super UsageInfo> processor, @NotNull Root root) {
     final PsiType type = aCatch.getType();
     if (type.isAssignableFrom(root.myType)) {
       processor.process(new UsageInfo(aCatch));
@@ -72,10 +72,10 @@ public class ThrowSearchUtil {
   }
 
   private static boolean scanCatches(@NotNull PsiElement elem,
-                                     @NotNull Processor<UsageInfo> processor,
+                                     @NotNull Processor<? super UsageInfo> processor,
                                      @NotNull Root root,
                                      @NotNull FindUsagesOptions options,
-                                     @NotNull Set<PsiMethod> processed) {
+                                     @NotNull Set<? super PsiMethod> processed) {
     while (elem != null) {
       final PsiElement parent = elem.getParent();
       if (elem instanceof PsiMethod) {
@@ -111,7 +111,7 @@ public class ThrowSearchUtil {
     return true;
   }
 
-  public static boolean addThrowUsages(@NotNull Processor<UsageInfo> processor, @NotNull Root root, @NotNull FindUsagesOptions options) {
+  public static boolean addThrowUsages(@NotNull Processor<? super UsageInfo> processor, @NotNull Root root, @NotNull FindUsagesOptions options) {
     Set<PsiMethod> processed = new HashSet<>();
     return scanCatches(root.myElement, processor, root, options, processed);
   }

@@ -22,30 +22,6 @@ import java.io.*
 import java.nio.file.Path
 import javax.xml.XMLConstants
 
-private val cachedSaxBuilder = ThreadLocal<SoftReference<SAXBuilder>>()
-
-private fun getSaxBuilder(): SAXBuilder {
-  val reference = cachedSaxBuilder.get()
-  var saxBuilder = SoftReference.dereference<SAXBuilder>(reference)
-  if (saxBuilder == null) {
-    saxBuilder = object : SAXBuilder() {
-      override fun configureParser(parser: XMLReader, contentHandler: SAXHandler?) {
-        super.configureParser(parser, contentHandler)
-        try {
-          parser.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true)
-        }
-        catch (ignore: Exception) {
-        }
-      }
-    }
-    saxBuilder.ignoringBoundaryWhitespace = true
-    saxBuilder.ignoringElementContentWhitespace = true
-    saxBuilder.entityResolver = EntityResolver { _, _ -> InputSource(CharArrayReader(ArrayUtil.EMPTY_CHAR_ARRAY)) }
-    cachedSaxBuilder.set(SoftReference(saxBuilder))
-  }
-  return saxBuilder
-}
-
 @JvmOverloads
 @Throws(IOException::class)
 fun Parent.write(file: Path, lineSeparator: String = "\n") {
@@ -65,18 +41,16 @@ fun Parent.write(output: OutputStream, lineSeparator: String = "\n") {
 }
 
 @Throws(IOException::class, JDOMException::class)
-fun loadElement(chars: CharSequence): Element = loadElement(CharSequenceReader(chars))
+fun loadElement(chars: CharSequence): Element = JDOMUtil.load(chars)
 
 @Throws(IOException::class, JDOMException::class)
-fun loadElement(reader: Reader): Element = loadDocument(reader).detachRootElement()
+fun loadElement(reader: Reader): Element = JDOMUtil.load(reader)
 
 @Throws(IOException::class, JDOMException::class)
-fun loadElement(stream: InputStream): Element = loadDocument(stream.bufferedReader()).detachRootElement()
+fun loadElement(stream: InputStream): Element = JDOMUtil.loadDocument(stream.bufferedReader()).detachRootElement()
 
 @Throws(IOException::class, JDOMException::class)
 fun loadElement(path: Path): Element = loadElement(path.inputStream())
-
-fun loadDocument(reader: Reader): Document = reader.use { getSaxBuilder().build(it) }
 
 fun Element?.isEmpty(): Boolean = this == null || JDOMUtil.isEmpty(this)
 
@@ -129,3 +103,40 @@ fun Element.addOptionTag(name: String, value: String, elementName: String = Cons
 }
 
 fun Element.getAttributeBooleanValue(name: String): Boolean = java.lang.Boolean.parseBoolean(getAttributeValue(name))
+
+private val cachedSpecialSaxBuilder = ThreadLocal<SoftReference<SAXBuilder>>()
+
+private fun getSpecialSaxBuilder(): SAXBuilder {
+  val reference = cachedSpecialSaxBuilder.get()
+  var saxBuilder = SoftReference.dereference<SAXBuilder>(reference)
+  if (saxBuilder == null) {
+    saxBuilder = object : SAXBuilder() {
+      override fun configureParser(parser: XMLReader, contentHandler: SAXHandler?) {
+        super.configureParser(parser, contentHandler)
+        try {
+          parser.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true)
+        }
+        catch (ignore: Exception) {
+        }
+      }
+    }
+    saxBuilder.entityResolver = EntityResolver { _, _ -> InputSource(CharArrayReader(ArrayUtil.EMPTY_CHAR_ARRAY)) }
+    cachedSpecialSaxBuilder.set(SoftReference(saxBuilder))
+  }
+  return saxBuilder
+}
+
+@Throws(IOException::class, JDOMException::class)
+fun loadDocumentAndKeepBoundaryWhitespace(stream: InputStream): Document {
+  return stream.use { getSpecialSaxBuilder().build(it) }
+}
+
+@Throws(IOException::class, JDOMException::class)
+fun loadElementAndKeepBoundaryWhitespace(chars: CharSequence): Element {
+  return getSpecialSaxBuilder().build(CharSequenceReader(chars)).detachRootElement()
+}
+
+@Throws(IOException::class, JDOMException::class)
+fun loadElementAndKeepBoundaryWhitespace(stream: InputStream): Element {
+  return stream.use { getSpecialSaxBuilder().build(it) }.detachRootElement()
+}

@@ -480,7 +480,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
 
   private static void rebindExternalReferences(PsiElement element,
                                                Map<PsiClass, PsiElement> oldToNewMap,
-                                               Set<PsiElement> rebindExpressions) {
+                                               Set<? super PsiElement> rebindExpressions) {
      final LocalSearchScope searchScope = new LocalSearchScope(element);
      for (PsiClass aClass : oldToNewMap.keySet()) {
        final PsiElement newClass = oldToNewMap.get(aClass);
@@ -491,7 +491,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
    }
 
 
-  private static void decodeRefs(@NotNull PsiElement element, final Map<PsiClass, PsiElement> oldToNewMap, final Set<PsiElement> rebindExpressions) {
+  private static void decodeRefs(@NotNull PsiElement element, final Map<PsiClass, PsiElement> oldToNewMap, final Set<? super PsiElement> rebindExpressions) {
     final Map<PsiJavaCodeReferenceElement, PsiElement> rebindMap = new LinkedHashMap<>();
     element.accept(new JavaRecursiveElementVisitor(){
       @Override

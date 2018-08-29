@@ -46,7 +46,7 @@ public class TodoTreeHelper {
     myProject = project;
   }
 
-  public void addPackagesToChildren(ArrayList<AbstractTreeNode> children,
+  public void addPackagesToChildren(ArrayList<? super AbstractTreeNode> children,
                                     Module module,
                                     TodoTreeBuilder builder) {
     addDirsToChildren(collectContentRoots(module), children, builder);
@@ -62,8 +62,8 @@ public class TodoTreeHelper {
     return roots;
   }
 
-  protected void addDirsToChildren(List<VirtualFile> roots,
-                                   ArrayList<AbstractTreeNode> children,
+  protected void addDirsToChildren(List<? extends VirtualFile> roots,
+                                   ArrayList<? super AbstractTreeNode> children,
                                    TodoTreeBuilder builder) {
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     for (VirtualFile dir : roots) {

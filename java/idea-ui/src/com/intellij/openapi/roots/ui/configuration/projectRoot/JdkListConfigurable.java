@@ -189,7 +189,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
     }
 
     @Override
-    public boolean remove(@NotNull Collection<Sdk> sdks) {
+    public boolean remove(@NotNull Collection<? extends Sdk> sdks) {
       for (Sdk sdk : sdks) {
         myJdksTreeModel.removeSdk(sdk);
         myContext.getDaemonAnalyzer().removeElement(new SdkProjectStructureElement(myContext, sdk));

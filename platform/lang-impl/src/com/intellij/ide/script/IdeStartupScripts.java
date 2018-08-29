@@ -118,7 +118,7 @@ class IdeStartupScripts implements ApplicationInitializedListener {
     return null;
   }
 
-  private static void runAllScriptsImpl(@NotNull Project project, @NotNull Future<List<Pair<File, IdeScriptEngine>>> future) {
+  private static void runAllScriptsImpl(@NotNull Project project, @NotNull Future<? extends List<Pair<File, IdeScriptEngine>>> future) {
     try {
       for (Pair<File, IdeScriptEngine> pair : future.get()) {
         try {

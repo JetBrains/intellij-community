@@ -60,12 +60,12 @@ public interface Instruction {
     }
   }
   
-  default void replacePred(@NotNull Instruction oldInstruction, @NotNull Collection<Instruction> newInstructions) {
+  default void replacePred(@NotNull Instruction oldInstruction, @NotNull Collection<? extends Instruction> newInstructions) {
     newInstructions.forEach(el -> addPred(el));
     allPred().remove(oldInstruction);
   }
 
-  default void replaceSucc(@NotNull Instruction oldInstruction, @NotNull Collection<Instruction> newInstructions) {
+  default void replaceSucc(@NotNull Instruction oldInstruction, @NotNull Collection<? extends Instruction> newInstructions) {
     newInstructions.forEach(el -> addSucc(el));
     allSucc().remove(oldInstruction);
   }

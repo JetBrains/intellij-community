@@ -271,7 +271,7 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
       return pointer;
     }
 
-    public static void reformatStartTag(Project project, SmartPsiElementPointer<XmlTag> pointer) {
+    public static void reformatStartTag(Project project, SmartPsiElementPointer<? extends XmlTag> pointer) {
       PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
       PsiFile file = pointer.getContainingFile();
       assert file != null;

@@ -50,12 +50,12 @@ public class ConvertProjectDialog extends DialogWrapper {
   private JTextPane myTextPane;
   private boolean myConverted;
   private final ConversionContextImpl myContext;
-  private final List<ConversionRunner> myConversionRunners;
+  private final List<? extends ConversionRunner> myConversionRunners;
   private final File myBackupDir;
   private final Set<File> myAffectedFiles;
   private boolean myNonExistingFilesMessageShown;
 
-  public ConvertProjectDialog(ConversionContextImpl context, final List<ConversionRunner> conversionRunners) {
+  public ConvertProjectDialog(ConversionContextImpl context, final List<? extends ConversionRunner> conversionRunners) {
     super(true);
     setTitle(IdeBundle.message("dialog.title.convert.project"));
     setModal(true);
@@ -141,7 +141,7 @@ public class ConvertProjectDialog extends DialogWrapper {
     }
   }
 
-  private static String getFilesString(List<File> files) {
+  private static String getFilesString(List<? extends File> files) {
     StringBuilder buffer = new StringBuilder();
     for (File file : files) {
       buffer.append(file.getAbsolutePath()).append("<br>");
@@ -174,7 +174,7 @@ public class ConvertProjectDialog extends DialogWrapper {
     return ConversionRunner.getReadOnlyFiles(myAffectedFiles);
   }
 
-  private static void unlockFiles(final List<File> files) throws IOException {
+  private static void unlockFiles(final List<? extends File> files) throws IOException {
     for (File file : files) {
       FileUtil.setReadOnlyAttribute(file.getAbsolutePath(), false);
     }

@@ -773,6 +773,8 @@
       <action internal="true" id="ReloadProjectAction" class="com.intellij.internal.ReloadProjectAction"/>
       <action internal="true" id="ShowMainMenu" class="com.intellij.internal.ui.ShowMainMenuAction"/>
       <action id="DumbMode" internal="true" class="com.intellij.internal.ToggleDumbModeAction" text="Dumb Mode"/>
+      <action id="DisablePCE" internal="true" class="com.intellij.internal.DisablePCEAction" text="Disable ProcessCanceledException"
+              description="Disable ProcessCanceledException thrown in a background thread during read action, to simplify debugging"/>
       <group id="Internal.Performance" text="Performance" popup="true">
         <action id="LaggingMode" internal="true" class="com.intellij.internal.ToggleLaggingModeAction" text="Lagging mode"/>
         <action internal="true" id="TestTransferToEDT" text="Test TransferToEDTQueue performance" class="com.intellij.diagnostic.TransferToEDTQueueTestAction"/>

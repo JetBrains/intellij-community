@@ -56,9 +56,6 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         }
       }
     }
-    buildContext.ant.copy(todir: "$winDistPath/lib/libpty/win") {
-      fileset(dir: "$buildContext.paths.communityHome/lib/libpty/win")
-    }
 
     buildContext.ant.copy(file: ideaProperties.path, todir: "$winDistPath/bin")
     buildContext.ant.fixcrlf(file: "$winDistPath/bin/idea.properties", eol: "dos")

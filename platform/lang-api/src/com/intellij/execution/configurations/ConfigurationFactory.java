@@ -3,12 +3,12 @@ package com.intellij.execution.configurations;
 
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.RunManager;
+import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.IconUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -66,21 +66,23 @@ public abstract class ConfigurationFactory {
    * the method <code>getName</code> instead of <code>myType.getId()</code>.
    * New implementations need to call <code>myType.getId()</code> by default.
    */
-  @NonNls
+  @NotNull
   public String getId() {
     return getName();
   }
 
   /**
-   * Returns the name of the run configuration variant created by this factory.
-   *
-   * @return the name of the run configuration variant created by this factory
+   * The name of the run configuration variant created by this factory.
    */
-  @Nls
+  @NotNull
   public String getName() {
     return myType.getDisplayName();
   }
 
+  /**
+   * @deprecated Use {@link com.intellij.icons.AllIcons.General.Add}
+   */
+  @Deprecated
   public Icon getAddIcon() {
     return IconUtil.getAddIcon();
   }
@@ -104,11 +106,29 @@ public abstract class ConfigurationFactory {
   public void configureBeforeRunTaskDefaults(Key<? extends BeforeRunTask> providerID, BeforeRunTask task) {
   }
 
+  /**
+   * @deprecated Use {@link RunConfigurationSingletonPolicy}
+   */
+  @Deprecated
   public boolean isConfigurationSingletonByDefault() {
-    return false;
+    return getSingletonPolicy() != RunConfigurationSingletonPolicy.MULTIPLE_INSTANCE;
   }
 
+  /**
+   * @deprecated Use {@link RunConfigurationSingletonPolicy}
+   */
+  @Deprecated
   public boolean canConfigurationBeSingleton() {
-    return true; // Configuration may be marked as singleton by default
+    return getSingletonPolicy() != RunConfigurationSingletonPolicy.SINGLE_INSTANCE_ONLY;
+  }
+
+  @NotNull
+  public RunConfigurationSingletonPolicy getSingletonPolicy() {
+    return RunConfigurationSingletonPolicy.SINGLE_INSTANCE;
+  }
+
+  @Nullable
+  public Class<? extends BaseState> getOptionsClass() {
+    return null;
   }
 }

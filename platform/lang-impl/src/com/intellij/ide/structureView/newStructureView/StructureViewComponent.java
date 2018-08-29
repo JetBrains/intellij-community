@@ -247,7 +247,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     myStructureTreeModel.getInvoker().runOrInvokeLater(() -> {
       UIUtil.putClientProperty(myTree, STRUCTURE_VIEW_STATE_RESTORED_KEY, null);
       myTreeStructure.rebuildTree();
-      myStructureTreeModel.invalidate(null);
+      myStructureTreeModel.invalidate();
     });
   }
 

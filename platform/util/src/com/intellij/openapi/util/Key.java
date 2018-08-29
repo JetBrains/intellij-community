@@ -36,7 +36,7 @@ public class Key<T> {
   private static final AtomicInteger ourKeysCounter = new AtomicInteger();
   private final int myIndex = ourKeysCounter.getAndIncrement();
   private final String myName; // for debug purposes only
-  private static final IntObjectMap<Key> allKeys = ContainerUtil.createConcurrentIntObjectWeakValueMap();
+  private static final IntObjectMap<Key<?>> allKeys = ContainerUtil.createConcurrentIntObjectWeakValueMap();
 
   public Key(@NotNull @NonNls String name) {
     myName = name;
@@ -119,9 +119,8 @@ public class Key<T> {
   @Deprecated
   @Nullable
   public static Key<?> findKeyByName(String name) {
-    for (IntObjectMap.Entry<Key> key : allKeys.entries()) {
+    for (IntObjectMap.Entry<Key<?>> key : allKeys.entrySet()) {
       if (name.equals(key.getValue().myName)) {
-        //noinspection unchecked
         return key.getValue();
       }
     }

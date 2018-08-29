@@ -114,7 +114,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
     return false;
   }
 
-  protected boolean checkTargetClasses(List<PsiClass> classes, String methodName) {
+  protected boolean checkTargetClasses(List<? extends PsiClass> classes, String methodName) {
     return true;
   }
 

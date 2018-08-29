@@ -402,7 +402,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public void invokeAfterUpdate(@NotNull Runnable afterUpdate,
                                 @NotNull InvokeAfterUpdateMode mode,
                                 @Nullable String title,
-                                @Nullable Consumer<VcsDirtyScopeManager> dirtyScopeManagerFiller,
+                                @Nullable Consumer<? super VcsDirtyScopeManager> dirtyScopeManagerFiller,
                                 @Nullable ModalityState state) {
     if (dirtyScopeManagerFiller != null && !myProject.isDisposed()) {
       dirtyScopeManagerFiller.consume(VcsDirtyScopeManager.getInstance(myProject));
@@ -500,9 +500,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
-  private void filterOutIgnoredFiles(Iterator<FilePath> iterator,
+  private void filterOutIgnoredFiles(Iterator<? extends FilePath> iterator,
                                      IgnoredFilesCompositeHolder fileHolder,
-                                     Set<VirtualFile> refreshFiles) {
+                                     Set<? super VirtualFile> refreshFiles) {
     while (iterator.hasNext()) {
       VirtualFile file = iterator.next().getVirtualFile();
       if (file != null && isIgnoredFile(file)) {
@@ -639,7 +639,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   private void iterateScopes(DataHolder dataHolder,
-                             List<VcsDirtyScope> scopes,
+                             List<? extends VcsDirtyScope> scopes,
                              @NotNull ProgressIndicator indicator) {
     final ChangeListUpdater updater = dataHolder.getChangeListUpdater();
     // do actual requests about file statuses
@@ -1208,8 +1208,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @NotNull
   public List<VcsException> addUnversionedFiles(@NotNull final LocalChangeList list,
                                                 @NotNull final List<VirtualFile> files,
-                                                @NotNull final Condition<FileStatus> statusChecker,
-                                                @Nullable Consumer<List<Change>> changesConsumer) {
+                                                @NotNull final Condition<? super FileStatus> statusChecker,
+                                                @Nullable Consumer<? super List<Change>> changesConsumer) {
     final List<VcsException> exceptions = new ArrayList<>();
     final Set<VirtualFile> allProcessedFiles = new HashSet<>();
     ChangesUtil.processVirtualFilesByVcs(myProject, files, (vcs, items) -> {
@@ -1295,8 +1295,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @NotNull
-  private Set<VirtualFile> getUnversionedDescendantsRecursively(@NotNull List<VirtualFile> items,
-                                                                @NotNull final Condition<FileStatus> condition) {
+  private Set<VirtualFile> getUnversionedDescendantsRecursively(@NotNull List<? extends VirtualFile> items,
+                                                                @NotNull final Condition<? super FileStatus> condition) {
     final Set<VirtualFile> result = ContainerUtil.newHashSet();
     Processor<VirtualFile> addToResultProcessor = file -> {
       if (condition.value(getStatus(file))) {
@@ -1314,8 +1314,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @NotNull
   private Set<VirtualFile> getUnversionedParents(@NotNull AbstractVcs vcs,
-                                                 @NotNull Collection<VirtualFile> items,
-                                                 @NotNull Condition<FileStatus> condition) {
+                                                 @NotNull Collection<? extends VirtualFile> items,
+                                                 @NotNull Condition<? super FileStatus> condition) {
     if (!vcs.areDirectoriesVersionedItems()) return Collections.emptySet();
 
     HashSet<VirtualFile> result = ContainerUtil.newHashSet();
@@ -1498,7 +1498,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     exchangeWithIgnored(composite, vfModifiedHolder, modifiedFiles);
   }
 
-  private void exchangeWithIgnored(FileHolderComposite composite, VirtualFileHolder vfHolder, List<VirtualFile> unversionedFiles) {
+  private void exchangeWithIgnored(FileHolderComposite composite, VirtualFileHolder vfHolder, List<? extends VirtualFile> unversionedFiles) {
     for (VirtualFile file : unversionedFiles) {
       if (isIgnoredFile(file)) {
         vfHolder.removeFile(file);

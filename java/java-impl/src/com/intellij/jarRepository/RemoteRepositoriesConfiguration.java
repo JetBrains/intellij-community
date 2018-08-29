@@ -28,7 +28,7 @@ public class RemoteRepositoriesConfiguration implements PersistentStateComponent
     this(RemoteRepositoryDescription.DEFAULT_REPOSITORIES);
   }
 
-  public RemoteRepositoriesConfiguration(Collection<RemoteRepositoryDescription> repos) {
+  public RemoteRepositoriesConfiguration(Collection<? extends RemoteRepositoryDescription> repos) {
     myRepositories.addAll(repos);
   }
 
@@ -46,7 +46,7 @@ public class RemoteRepositoriesConfiguration implements PersistentStateComponent
     setRepositories(Collections.emptyList());
   }
 
-  public void setRepositories(@NotNull List<RemoteRepositoryDescription> repos) {
+  public void setRepositories(@NotNull List<? extends RemoteRepositoryDescription> repos) {
     myRepositories.clear();
     myRepositories.addAll(repos.isEmpty()? RemoteRepositoryDescription.DEFAULT_REPOSITORIES : repos);
   }
@@ -133,7 +133,7 @@ public class RemoteRepositoriesConfiguration implements PersistentStateComponent
        this(RemoteRepositoryDescription.DEFAULT_REPOSITORIES);
      }
 
-     public State(List<RemoteRepositoryDescription> repos) {
+     public State(List<? extends RemoteRepositoryDescription> repos) {
        for (RemoteRepositoryDescription repository : repos) {
          data.add(new Repo(repository.getId(), repository.getName(), repository.getUrl()));
        }

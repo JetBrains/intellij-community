@@ -1,10 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.treeView;
 
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SimpleTimer;
+import com.intellij.openapi.util.*;
 import com.intellij.testFramework.FlyIdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.treeStructure.Tree;
@@ -248,12 +245,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   }
 
   static AbstractTreeUpdater _createUpdater(AbstractTreeBuilder builder) {
-    final AbstractTreeUpdater updater = new AbstractTreeUpdater(builder) {
-      @Override
-      protected boolean isEdt() {
-        return SwingUtilities.isEventDispatchThread();
-      }
-    };
+    final AbstractTreeUpdater updater = new AbstractTreeUpdater(builder);
     updater.setModalityStateComponent(MergingUpdateQueue.ANY_COMPONENT);
     return updater;
   }

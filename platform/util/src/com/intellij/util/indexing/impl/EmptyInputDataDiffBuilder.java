@@ -31,14 +31,14 @@ public class EmptyInputDataDiffBuilder<Key, Value> extends InputDataDiffBuilder<
 
   @Override
   public boolean differentiate(@NotNull Map<Key, Value> newData,
-                            @NotNull final KeyValueUpdateProcessor<Key, Value> addProcessor,
-                            @NotNull KeyValueUpdateProcessor<Key, Value> updateProcessor,
-                            @NotNull RemovedKeyProcessor<Key> removeProcessor) throws StorageException {
+                            @NotNull final KeyValueUpdateProcessor<? super Key, ? super Value> addProcessor,
+                            @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> updateProcessor,
+                            @NotNull RemovedKeyProcessor<? super Key> removeProcessor) throws StorageException {
     return processKeys(newData, addProcessor, myInputId);
   }
 
   static <Key, Value > boolean processKeys(@NotNull Map<Key, Value> currentData,
-                                       @NotNull final KeyValueUpdateProcessor<Key, Value> processor,
+                                       @NotNull final KeyValueUpdateProcessor<? super Key, ? super Value> processor,
                                        final int inputId)
     throws StorageException {
     if (currentData instanceof THashMap) {

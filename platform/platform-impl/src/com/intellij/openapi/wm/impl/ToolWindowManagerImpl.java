@@ -154,7 +154,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       }
 
       @Override
-      public void projectClosed(Project project) {
+      public void projectClosed(@NotNull Project project) {
         if (project == myProject) {
           ToolWindowManagerImpl.this.projectClosed();
         }

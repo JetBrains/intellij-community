@@ -282,13 +282,18 @@ public class HelpTooltip implements Disposable {
 
     myAncestorChangeListener = evt -> {
       hidePopup(true);
-      Disposer.dispose(this);
+      uninstallMouseListeners();
       if (evt.getNewValue() != null) {
-        registerOn((JComponent)evt.getSource());
+        installMouseListeners();
       }
     };
 
-    registerOn(component);
+    owner = component;
+    owner.putClientProperty(TOOLTIP_PROPERTY, this);
+    owner.addPropertyChangeListener("ancestor", myAncestorChangeListener);
+    UIManager.getDefaults().addPropertyChangeListener(myFontChangeListener);
+
+    installMouseListeners();
   }
 
   private void initPopupBuilder() {
@@ -340,24 +345,27 @@ public class HelpTooltip implements Disposable {
     return tipPanel;
   }
 
-  private void registerOn(JComponent component) {
-    owner = component;
-    owner.putClientProperty(TOOLTIP_PROPERTY, this);
-    owner.addMouseListener(myMouseListener);
-    owner.addMouseMotionListener(myMouseListener);
-    owner.addPropertyChangeListener("ancestor", myAncestorChangeListener);
+  private void installMouseListeners() {
+    if (owner != null) {
+      owner.addMouseListener(myMouseListener);
+      owner.addMouseMotionListener(myMouseListener);
+    }
+  }
 
-    UIManager.getDefaults().addPropertyChangeListener(myFontChangeListener);
+  private void uninstallMouseListeners() {
+    if (owner != null) {
+      owner.removeMouseListener(myMouseListener);
+      owner.removeMouseMotionListener(myMouseListener);
+    }
   }
 
   @Override
   public void dispose() {
-    if (owner != null) {
-      owner.removeMouseListener(myMouseListener);
-      owner.removeMouseMotionListener(myMouseListener);
-      owner.removePropertyChangeListener("ancestor", myAncestorChangeListener);
+    uninstallMouseListeners();
 
+    if (owner != null) {
       owner.putClientProperty(TOOLTIP_PROPERTY, null);
+      owner.removePropertyChangeListener("ancestor", myAncestorChangeListener);
       owner = null;
       masterPopup = null;
     }
@@ -621,7 +629,7 @@ public class HelpTooltip implements Disposable {
       return rows;
     }
 
-    private void visit(@NotNull View v, Collection<View> result) {
+    private void visit(@NotNull View v, Collection<? super View> result) {
       String cname = v.getClass().getCanonicalName();
       if (cname != null && cname.contains("ParagraphView.Row")) {
         result.add(v);

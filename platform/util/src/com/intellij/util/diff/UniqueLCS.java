@@ -15,6 +15,8 @@
  */
 package com.intellij.util.diff;
 
+import com.intellij.util.IntIntFunction;
+import com.intellij.util.ObjectUtils;
 import gnu.trove.TIntIntHashMap;
 
 class UniqueLCS {
@@ -116,19 +118,15 @@ class UniqueLCS {
   // find max i: a[i] < val
   // return i + 1
   // assert a[i] != val
-  private static int binarySearch(int[] sequence, int val, int length) {
-    int left = -1;
-    int right = length;
+  private static int binarySearch(final int[] sequence, final int val, int length) {
+    int i = ObjectUtils.binarySearch(0, length, new IntIntFunction() {
+      @Override
+      public int fun(int middle) {
+        return sequence[middle] <= val ? -1 : 1;
+      }
+    });
+    int r = -i - 1;
+    return r;
 
-    while (right - left > 1) {
-      int middle = (left + right) / 2;
-      if (sequence[middle] > val) {
-        right = middle;
-      }
-      else {
-        left = middle;
-      }
-    }
-    return left + 1;
   }
 }

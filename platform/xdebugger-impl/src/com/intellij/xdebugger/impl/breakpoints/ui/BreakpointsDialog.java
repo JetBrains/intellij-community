@@ -43,8 +43,8 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class BreakpointsDialog extends DialogWrapper {
   @NotNull private final Project myProject;
@@ -475,7 +475,7 @@ public class BreakpointsDialog extends DialogWrapper {
     public void actionPerformed(@NotNull AnActionEvent e) {
       String groupName = myGroup;
       if (myNewGroup) {
-        groupName = Messages.showInputDialog("New group name", "New Group", AllIcons.Nodes.NewFolder);
+        groupName = Messages.showInputDialog("New group name", "New Group", AllIcons.Nodes.Folder);
         if (groupName == null) {
           return;
         }

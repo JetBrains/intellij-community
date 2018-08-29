@@ -26,12 +26,12 @@ public class SettingsEditorWrapper <Src, Dst> extends SettingsEditor<Src> {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.options.SettingsEditorWrapper");
 
-  private final Convertor<Src, Dst> mySrcToDstConvertor;
+  private final Convertor<? super Src, ? extends Dst> mySrcToDstConvertor;
   private final SettingsEditor<Dst> myWrapped;
 
   private final SettingsEditorListener<Dst> myListener;
 
-  public SettingsEditorWrapper(SettingsEditor<Dst> wrapped, Convertor<Src, Dst> convertor) {
+  public SettingsEditorWrapper(SettingsEditor<Dst> wrapped, Convertor<? super Src, ? extends Dst> convertor) {
     mySrcToDstConvertor = convertor;
     myWrapped = wrapped;
     myListener = new SettingsEditorListener<Dst>() {

@@ -192,7 +192,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
 
   protected JComponent createHistoryButton() {
-    JLabel label = new JLabel(AllIcons.Actions.Get);
+    JLabel label = new JLabel(AllIcons.Actions.Download);
     label.setToolTipText("Recent files");
     new ClickListener() {
       @Override
@@ -639,6 +639,13 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       if (!myFileSystemTree.getTree().isRootVisible() && roots.size() == 1) {
         text = VfsUtil.getReadableUrl(roots.get(0));
       }
+    }
+    if (myFileSystemTree.getTreeBuilder() == null) {
+      if (text.isEmpty()) return;
+      String old = myPathTextField.getTextFieldText();
+      if (old == null || old.equals(text)) return;
+      int index = old.length() - 1;
+      if (index == text.length() && File.separatorChar == old.charAt(index) && old.startsWith(text)) return;
     }
 
     myPathTextField.setText(text, now, () -> {

@@ -210,7 +210,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
 
   private class BrowseChangesAction extends AnAction implements DumbAware {
     public BrowseChangesAction() {
-      super(VcsBundle.message("browse.changes.action"), "", AllIcons.Actions.ShowChangesOnly);
+      super(VcsBundle.message("browse.changes.action"), "", AllIcons.Actions.Preview);
     }
 
     @Override

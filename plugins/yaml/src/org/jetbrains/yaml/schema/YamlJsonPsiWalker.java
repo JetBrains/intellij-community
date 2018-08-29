@@ -2,6 +2,7 @@
 package org.jetbrains.yaml.schema;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.CompletionUtilCore;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -156,6 +157,7 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
       } else if (current instanceof YAMLMapping && position instanceof YAMLKeyValue) {
         // if either value or not first in the chain - needed for completion variant
         final String propertyName = StringUtil.notNullize(((YAMLKeyValue)position).getName());
+        if (propertyName.contains(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED)) continue;
         steps.add(JsonSchemaVariantsTreeBuilder.Step.createPropertyStep(propertyName));
       } else if (breakCondition(current)) {
         break;
@@ -185,20 +187,20 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
   }
 
   @Override
-  public String getDefaultObjectValue(boolean includeWhitespaces) {
-    return includeWhitespaces ? "\n  " : "";
+  public String getDefaultObjectValue() {
+    return "";
   }
 
   @Override
-  @Nullable public String defaultObjectValueDescription() { return "start object"; }
+  @Nullable public String defaultObjectValueDescription() { return "{...}"; }
 
   @Override
-  public String getDefaultArrayValue(boolean includeWhitespaces) {
-    return includeWhitespaces ? "\n  - " : "- ";
+  public String getDefaultArrayValue() {
+    return "- ";
   }
 
   @Override
-  @Nullable public String defaultArrayValueDescription() { return "start array"; }
+  @Nullable public String defaultArrayValueDescription() { return "[...]"; }
 
   @Override
   public boolean invokeEnterBeforeObjectAndArray() {

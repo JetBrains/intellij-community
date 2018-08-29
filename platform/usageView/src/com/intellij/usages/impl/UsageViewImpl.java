@@ -322,7 +322,7 @@ public class UsageViewImpl implements UsageViewEx {
         }
       }
 
-      private void setExcludeNodes(@NotNull Set<Node> nodes, boolean excluded) {
+      private void setExcludeNodes(@NotNull Set<? extends Node> nodes, boolean excluded) {
         for (Node node : nodes) {
           node.setExcluded(excluded, edtNodeChangedQueue);
         }
@@ -1147,7 +1147,7 @@ public class UsageViewImpl implements UsageViewEx {
 
   @NotNull
   @Override
-  public CompletableFuture<?> appendUsagesInBulk(@NotNull Collection<Usage> usages) {
+  public CompletableFuture<?> appendUsagesInBulk(@NotNull Collection<? extends Usage> usages) {
     CompletableFuture<Object> result = new CompletableFuture<>();
     addUpdateRequest(ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.run(() -> {
       try {
@@ -1793,11 +1793,13 @@ public class UsageViewImpl implements UsageViewEx {
           return getNavigatableForNode(node, !myPresentation.isReplaceMode());
         }
 
+        @NotNull
         @Override
         public String getNextOccurenceActionName() {
           return UsageViewBundle.message("action.next.occurrence");
         }
 
+        @NotNull
         @Override
         public String getPreviousOccurenceActionName() {
           return UsageViewBundle.message("action.previous.occurrence");
@@ -1854,11 +1856,13 @@ public class UsageViewImpl implements UsageViewEx {
       return mySupport != null ? mySupport.goPreviousOccurence() : null;
     }
 
+    @NotNull
     @Override
     public String getNextOccurenceActionName() {
       return mySupport != null ? mySupport.getNextOccurenceActionName() : "";
     }
 
+    @NotNull
     @Override
     public String getPreviousOccurenceActionName() {
       return mySupport != null ? mySupport.getPreviousOccurenceActionName() : "";
@@ -2153,7 +2157,7 @@ public class UsageViewImpl implements UsageViewEx {
     return node == null ? null : node.getUserObject() instanceof Usage ? (Usage)node.getUserObject() : null;
   }
 
-  public Usage getNextToSelect(@NotNull Collection<Usage> toDelete) {
+  public Usage getNextToSelect(@NotNull Collection<? extends Usage> toDelete) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     Usage toSelect = null;
     for (Usage usage : toDelete) {

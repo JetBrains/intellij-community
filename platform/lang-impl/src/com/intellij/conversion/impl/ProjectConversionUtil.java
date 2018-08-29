@@ -40,13 +40,13 @@ public class ProjectConversionUtil {
     return backup; 
   }
 
-  public static File backupFiles(final Collection<File> files, final File parentDir) throws IOException {
+  public static File backupFiles(final Collection<? extends File> files, final File parentDir) throws IOException {
     File backupDir = getBackupDir(parentDir);
     backupFiles(files, parentDir, backupDir);
     return backupDir;
   }
 
-  public static void backupFiles(Collection<File> files, File parentDir, File backupDir) throws IOException {
+  public static void backupFiles(Collection<? extends File> files, File parentDir, File backupDir) throws IOException {
     backupDir.mkdirs();
     for (File file : files) {
       final File target;

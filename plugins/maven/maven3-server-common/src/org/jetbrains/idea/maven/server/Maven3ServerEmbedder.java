@@ -285,11 +285,11 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
   }
 
   static void readConfigFiles(File baseDir, Map<String, String> result) {
-    readConfigFile(baseDir, File.separator + ".mvn" + File.separator + "jvm.config", result);
-    readConfigFile(baseDir, File.separator + ".mvn" + File.separator + "maven.config", result);
+    readConfigFile(baseDir, File.separator + ".mvn" + File.separator + "jvm.config", result, "");
+    readConfigFile(baseDir, File.separator + ".mvn" + File.separator + "maven.config", result, "true");
   }
 
-  private static void readConfigFile(File baseDir, String relativePath, Map<String, String> result) {
+  private static void readConfigFile(File baseDir, String relativePath, Map<String, String> result, String valueIfMissing) {
     File configFile = new File(baseDir, relativePath);
 
     if (configFile.exists() && configFile.isFile()) {
@@ -298,10 +298,10 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
         Matcher matcher = PROPERTY_PATTERN.matcher(text);
         while (matcher.find()) {
           if (matcher.group(1) != null) {
-            result.put(matcher.group(1), StringUtilRt.notNullize(matcher.group(2), ""));
+            result.put(matcher.group(1), StringUtilRt.notNullize(matcher.group(2), valueIfMissing));
           }
           else {
-            result.put(matcher.group(3), StringUtilRt.notNullize(matcher.group(4), ""));
+            result.put(matcher.group(3), StringUtilRt.notNullize(matcher.group(4), valueIfMissing));
           }
         }
       }

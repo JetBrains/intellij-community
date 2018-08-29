@@ -30,7 +30,7 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware, AnAc
 
   public ShowDiffWithLocalAction() {
     this(false);
-    getTemplatePresentation().setIcon(AllIcons.Actions.DiffWithCurrent);
+    getTemplatePresentation().setIcon(AllIcons.Actions.Diff);
   }
 
   public ShowDiffWithLocalAction(boolean useBeforeVersion) {

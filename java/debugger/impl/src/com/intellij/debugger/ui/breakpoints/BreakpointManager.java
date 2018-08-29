@@ -552,7 +552,7 @@ public class BreakpointManager {
     }
   }
 
-  private static <T extends EventRequest> void applyFilter(@NotNull List<T> requests, Consumer<T> setter) {
+  private static <T extends EventRequest> void applyFilter(@NotNull List<T> requests, Consumer<? super T> setter) {
     for (T request : requests) {
       try {
         boolean wasEnabled = request.isEnabled();

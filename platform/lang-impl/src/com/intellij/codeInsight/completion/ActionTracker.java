@@ -62,7 +62,7 @@ class ActionTracker {
     Disposer.register(myProject, disposable);
     myProject.getMessageBus().connect(disposable).subscribe(CommandListener.TOPIC, new CommandListener() {
       @Override
-      public void commandFinished(CommandEvent event) {
+      public void commandFinished(@NotNull CommandEvent event) {
         Disposer.dispose(disposable);
         myIgnoreDocumentChanges = false;
       }
