@@ -48,9 +48,15 @@ abstract class ConfigurationTypeBase protected constructor(private val id: Strin
   override final fun getConfigurationTypeDescription(): String = description
 
   // open due to backward compatibility
+  /**
+   * DO NOT override
+   */
   override fun getIcon(): Icon? = icon?.value
 
   override final fun getId(): String = id
 
+  /**
+   * DO NOT override
+   */
   override fun getConfigurationFactories(): Array<ConfigurationFactory> = factories
 }

@@ -2,6 +2,8 @@
 package com.intellij.remoteServer.impl.configuration.deployment;
 
 import com.intellij.execution.configuration.ConfigurationFactoryEx;
+import com.intellij.execution.configuration.ConfigurationFactoryListener;
+import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationTypeBase;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
@@ -22,7 +24,7 @@ import java.util.Map;
 /**
  * @author nik
  */
-public class DeployToServerConfigurationType extends ConfigurationTypeBase {
+public final class DeployToServerConfigurationType extends ConfigurationTypeBase {
   private final ServerType<?> myServerType;
   private final MultiSourcesConfigurationFactory myMultiSourcesFactory;
   private final Map<SingletonDeploymentSourceType, SingletonTypeConfigurationFactory> myPerTypeFactories = new HashMap<>();
@@ -51,8 +53,8 @@ public class DeployToServerConfigurationType extends ConfigurationTypeBase {
    * @param sourceType hint for a type of deployment source or null if unknown
    */
   @NotNull
-  public ConfigurationFactoryEx getFactoryForType(@Nullable DeploymentSourceType<?> sourceType) {
-    ConfigurationFactoryEx result = null;
+  public ConfigurationFactory getFactoryForType(@Nullable DeploymentSourceType<?> sourceType) {
+    ConfigurationFactory result = null;
     if (sourceType instanceof SingletonDeploymentSourceType && myServerType.getSingletonDeploymentSourceTypes().contains(sourceType)) {
       result = myPerTypeFactories.get(sourceType);
     }
@@ -64,13 +66,13 @@ public class DeployToServerConfigurationType extends ConfigurationTypeBase {
   }
 
   /**
-   * Will be removed after 2017.3
+   * Will be removed after 2017.3 (still cannot because Google Cloud Tools uses it)
    *
    * @deprecated use {@link #getFactoryForType(DeploymentSourceType)}
    */
   @Deprecated
   public ConfigurationFactoryEx getFactory() {
-    return getFactoryForType(null);
+    return (ConfigurationFactoryEx)getFactoryForType(null);
   }
 
   @NotNull
@@ -78,7 +80,7 @@ public class DeployToServerConfigurationType extends ConfigurationTypeBase {
     return myServerType;
   }
 
-  public class DeployToServerConfigurationFactory extends ConfigurationFactoryEx {
+  public class DeployToServerConfigurationFactory extends ConfigurationFactoryEx<DeployToServerRunConfiguration<?, ?>> implements ConfigurationFactoryListener<DeployToServerRunConfiguration<?, ?>> {
     public DeployToServerConfigurationFactory() {
       super(DeployToServerConfigurationType.this);
     }
@@ -89,17 +91,16 @@ public class DeployToServerConfigurationType extends ConfigurationTypeBase {
     }
 
     @Override
-    public void onNewConfigurationCreated(@NotNull RunConfiguration configuration) {
-      DeployToServerRunConfiguration<?, ?> deployConfiguration = (DeployToServerRunConfiguration<?, ?>)configuration;
-      if (deployConfiguration.getServerName() == null) {
+    public void onNewConfigurationCreated(@NotNull DeployToServerRunConfiguration<?, ?> configuration) {
+      if (configuration.getServerName() == null) {
         RemoteServer<?> server = ContainerUtil.getFirstItem(RemoteServersManager.getInstance().getServers(myServerType));
         if (server != null) {
-          deployConfiguration.setServerName(server.getName());
+          configuration.setServerName(server.getName());
         }
       }
 
-      if (deployConfiguration.getDeploymentSource() == null) {
-        setupDeploymentSource(configuration, deployConfiguration);
+      if (configuration.getDeploymentSource() == null) {
+        setupDeploymentSource(configuration, configuration);
       }
     }
 

@@ -4,7 +4,7 @@ package com.intellij.execution.dashboard.actions;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configuration.ConfigurationFactoryEx;
+import com.intellij.execution.configuration.ConfigurationFactoryListener;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
@@ -52,8 +52,8 @@ public class CopyConfigurationAction extends RunConfigurationTreeAction {
     copiedSettings.setFolderName(settings.getFolderName());
 
     final ConfigurationFactory factory = settings.getFactory();
-    if (factory instanceof ConfigurationFactoryEx) {
-      ((ConfigurationFactoryEx)factory).onConfigurationCopied(settings.getConfiguration());
+    if (factory instanceof ConfigurationFactoryListener) {
+      ((ConfigurationFactoryListener)factory).onConfigurationCopied(settings.getConfiguration());
     }
 
     if (RunDialog.editConfiguration(node.getProject(), copiedSettings,
