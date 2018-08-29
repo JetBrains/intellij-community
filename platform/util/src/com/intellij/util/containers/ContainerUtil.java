@@ -212,6 +212,9 @@ public class ContainerUtil extends ContainerUtilRt {
     if (size == 0) {
       return emptyList();
     }
+    if (size == 1) {
+      return Collections.singletonList(original.iterator().next());
+    }
     else {
       return Collections.unmodifiableCollection(original);
     }
@@ -223,6 +226,9 @@ public class ContainerUtil extends ContainerUtilRt {
     int size = original.size();
     if (size == 0) {
       return emptyList();
+    }
+    if (size == 1) {
+      return Collections.singletonList(original.iterator().next());
     }
     else {
       return Collections.unmodifiableList(original);
@@ -236,6 +242,9 @@ public class ContainerUtil extends ContainerUtilRt {
     if (size == 0) {
       return Collections.emptySet();
     }
+    if (size == 1) {
+      return Collections.singleton(original.iterator().next());
+    }
     else {
       return Collections.unmodifiableSet(original);
     }
@@ -247,6 +256,10 @@ public class ContainerUtil extends ContainerUtilRt {
     int size = original.size();
     if (size == 0) {
       return Collections.emptyMap();
+    }
+    if (size == 1) {
+      Map.Entry<? extends K, ? extends V> entry = original.entrySet().iterator().next();
+      return Collections.singletonMap(entry.getKey(), entry.getValue());
     }
     else {
       return Collections.unmodifiableMap(original);
