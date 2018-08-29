@@ -881,7 +881,9 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
 
        //PsiEnumConstant holds comments inside, we need codegen to know about this comments to place \n correctly
       for (SortableEntry entry : sortableList.myEntries) {
-        List<PsiComment> comments = StreamEx.ofTree(entry.myElement, el -> StreamEx.of(el.getChildren())).select(PsiComment.class).toList();
+        List<PsiComment> comments = StreamEx.ofTree(entry.myElement, el -> StreamEx.of(el.getChildren()))
+          .select(PsiComment.class)
+          .filter(comment -> !(comment instanceof PsiDocComment)).toList();
         for (PsiComment comment : comments) {
           entry.myBeforeSeparator.add((PsiComment)comment.copy());
           comment.delete();
