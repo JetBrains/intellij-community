@@ -113,10 +113,10 @@ def trace_dispatch(py_db, frame, event, arg):
         else:
             return thread_tracer.trace_dispatch_and_unhandled_exceptions(frame, event, arg)
 
-    # IFDEF CYTHON
-    #     thread._tracer = thread_tracer # Hack for cython to keep it alive while the thread is alive (just the method in the SetTrace is not enough).
-    # ELSE
-    # ENDIF
+# IFDEF CYTHON
+#     thread._tracer = thread_tracer # Hack for cython to keep it alive while the thread is alive (just the method in the SetTrace is not enough).
+# ELSE
+# ENDIF
     SetTrace(thread_tracer.__call__)
     return thread_tracer.__call__(frame, event, arg)
 
@@ -139,6 +139,7 @@ class PyDbFrameTraceAndUnhandledExceptionsTrace(object):
         self._unhandled_trace = unhandled_trace
 
     def trace_dispatch(self, frame, event, arg):
+        # print('PyDbFrameTraceAndUnhandledExceptionsTrace', event, frame.f_code.co_name, frame.f_code.co_filename, frame.f_code.co_firstlineno)
         if event == 'exception' and arg is not None:
             # print('self._unhandled_trace', self._unhandled_trace)
             self._unhandled_trace(frame, event, arg)

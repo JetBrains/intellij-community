@@ -20,9 +20,9 @@ if not hasattr(sys, '_current_frames'):
         from java.lang import NoSuchFieldException
         from org.python.core import ThreadStateMapping
         try:
-            cachedThreadState = ThreadStateMapping.getDeclaredField('globalThreadStates') # Dev version
+            cachedThreadState = ThreadStateMapping.getDeclaredField('globalThreadStates')  # Dev version
         except NoSuchFieldException:
-            cachedThreadState = ThreadStateMapping.getDeclaredField('cachedThreadState') # Release Jython 2.7.0
+            cachedThreadState = ThreadStateMapping.getDeclaredField('cachedThreadState')  # Release Jython 2.7.0
         cachedThreadState.accessible = True
         thread_states = cachedThreadState.get(ThreadStateMapping)
 
@@ -56,6 +56,7 @@ if not hasattr(sys, '_current_frames'):
 else:
     _current_frames = sys._current_frames
 
+
 #=======================================================================================================================
 # PyDBAdditionalThreadInfo
 #=======================================================================================================================
@@ -80,6 +81,7 @@ cdef class PyDBAdditionalThreadInfo:
     cdef public int suspend_type;
     cdef public int pydev_next_line;
     cdef public str pydev_func_name;
+    cdef public bint suspended_at_unhandled;
     # ELSE
 #     __slots__ = [
 #         'pydev_state',
@@ -96,13 +98,14 @@ cdef class PyDBAdditionalThreadInfo:
 #         'suspend_type',
 #         'pydev_next_line',
 #         'pydev_func_name',
+#         'suspended_at_unhandled',
 #     ]
     # ENDIF
 
     def __init__(self):
         self.pydev_state = STATE_RUN
         self.pydev_step_stop = None
-        self.pydev_step_cmd = -1 # Something as CMD_STEP_INTO, CMD_STEP_OVER, etc.
+        self.pydev_step_cmd = -1  # Something as CMD_STEP_INTO, CMD_STEP_OVER, etc.
         self.pydev_notify_kill = False
         self.pydev_smart_step_stop = None
         self.pydev_django_resolve_frame = False
@@ -113,20 +116,42 @@ cdef class PyDBAdditionalThreadInfo:
         self.pydev_message = ''
         self.suspend_type = PYTHON_SUSPEND
         self.pydev_next_line = -1
-        self.pydev_func_name = '.invalid.' # Must match the type in cython
+        self.pydev_func_name = '.invalid.'  # Must match the type in cython
+        self.suspended_at_unhandled = False
 
-
-    def iter_frames(self, t):
-        #sys._current_frames(): dictionary with thread id -> topmost frame
+    def get_topmost_frame(self, thread):
+        '''
+        Gets the topmost frame for the given thread. Note that it may be None
+        and callers should remove the reference to the frame as soon as possible
+        to avoid disturbing user code.
+        '''
+        # sys._current_frames(): dictionary with thread id -> topmost frame
         current_frames = _current_frames()
-        v = current_frames.get(t.ident)
-        if v is not None:
-            return [v]
-        return []
+        return current_frames.get(thread.ident)
 
     def __str__(self):
         return 'State:%s Stop:%s Cmd: %s Kill:%s' % (
             self.pydev_state, self.pydev_step_stop, self.pydev_step_cmd, self.pydev_notify_kill)
+
+
+from _pydev_imps._pydev_saved_modules import threading
+_set_additional_thread_info_lock = threading.Lock()
+
+
+def set_additional_thread_info(thread):
+    try:
+        additional_info = thread.additional_info
+        if additional_info is None:
+            raise AttributeError()
+    except:
+        with _set_additional_thread_info_lock:
+            # If it's not there, set it within a lock to avoid any racing
+            # conditions.
+            additional_info = getattr(thread, 'additional_info', None)
+            if additional_info is None:
+                additional_info = thread.additional_info = PyDBAdditionalThreadInfo()
+
+    return additional_info
 import linecache
 import os.path
 import re
@@ -142,7 +167,7 @@ from _pydevd_bundle.pydevd_comm import CMD_STEP_CAUGHT_EXCEPTION, CMD_STEP_RETUR
 from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, get_thread_id, STATE_RUN, dict_iter_values, IS_PY3K, \
     dict_keys, RETURN_VALUES_DICT
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE, PYDEV_FILE
-from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, just_raised, remove_exception_from_frame
+from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, just_raised, remove_exception_from_frame, ignore_exception_trace
 from _pydevd_bundle.pydevd_utils import get_clsname_for_code
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame
 
@@ -169,6 +194,12 @@ get_file_type = DONT_TRACE.get
 def handle_breakpoint_condition(py_db, info, breakpoint, new_frame):
     condition = breakpoint.condition
     try:
+        if breakpoint.handle_hit_condition(new_frame):
+            return True
+
+        if condition is None:
+            return False
+
         return eval(condition, new_frame.f_globals, new_frame.f_locals)
 
     except:
@@ -260,12 +291,12 @@ cdef class PyDBFrame:
 #     def trace_exception(self, frame, event, arg):
     # ENDIF
         if event == 'exception':
-            flag, frame = self.should_stop_on_exception(frame, event, arg)
+            should_stop, frame = self.should_stop_on_exception(frame, event, arg)
 
-            if flag:
+            if should_stop:
                 self.handle_exception(frame, event, arg)
                 return self.trace_dispatch
-
+    
         return self.trace_exception
 
     def trace_return(self, frame, event, arg):
@@ -285,94 +316,98 @@ cdef class PyDBFrame:
         # main_debugger, _filename, info, _thread = self._args
         main_debugger = self._args[0]
         info = self._args[2]
-        flag = False
+        should_stop = False
 
         # STATE_SUSPEND = 2
         if info.pydev_state != 2:  #and breakpoint is not None:
             exception, value, trace = arg
 
-            if trace is not None: #on jython trace is None on the first event
+            if trace is not None and hasattr(trace, 'tb_next'): 
+                # on jython trace is None on the first event and it may not have a tb_next.
+
                 exception_breakpoint = get_exception_breakpoint(
                     exception, main_debugger.break_on_caught_exceptions)
 
                 if exception_breakpoint is not None:
-                    add_exception_to_frame(frame, (exception, value, trace))
                     if exception_breakpoint.condition is not None:
+                        # Always add exception to frame (must remove later after we proceed).
+                        add_exception_to_frame(frame, (exception, value, trace))
                         eval_result = handle_breakpoint_condition(main_debugger, info, exception_breakpoint, frame)
+                        remove_exception_from_frame(frame)
                         if not eval_result:
                             return False, frame
 
                     if exception_breakpoint.ignore_libraries:
-                        if exception_breakpoint.notify_on_first_raise_only:
-                            if main_debugger.first_appearance_in_scope(trace):
-                                add_exception_to_frame(frame, (exception, value, trace))
-                                try:
-                                    info.pydev_message = exception_breakpoint.qname
-                                except:
-                                    info.pydev_message = exception_breakpoint.qname.encode('utf-8')
-                                flag = True
-                            else:
-                                pydev_log.debug("Ignore exception %s in library %s" % (exception, frame.f_code.co_filename))
-                                flag = False
-                    else:
-                        if not exception_breakpoint.notify_on_first_raise_only or just_raised(trace):
-                            add_exception_to_frame(frame, (exception, value, trace))
-                            try:
-                                info.pydev_message = exception_breakpoint.qname
-                            except:
-                                info.pydev_message = exception_breakpoint.qname.encode('utf-8')
-                            flag = True
+                        frame = trace.tb_frame
+                        while frame is not None and not main_debugger.in_project_scope(frame.f_code.co_filename):
+                            frame = frame.f_back
+                    
+                    if ignore_exception_trace(trace):
+                        return False, frame
+                    
+                    was_just_raised = just_raised(trace)
+                    if was_just_raised:
+        
+                        if main_debugger.skip_on_exceptions_thrown_in_same_context:
+                            # Option: Don't break if an exception is caught in the same function from which it is thrown
+                            return False, frame
+
+                    if exception_breakpoint.notify_on_first_raise_only:
+                        if main_debugger.skip_on_exceptions_thrown_in_same_context:
+                            # In this case we never stop if it was just raised, so, to know if it was the first we
+                            # need to check if we're in the 2nd method.
+                            if not was_just_raised and not just_raised(trace.tb_next):
+                                return False, frame  # I.e.: we stop only when we're at the caller of a method that throws an exception
+                                
                         else:
-                            flag = False
+                            if not was_just_raised:
+                                return False, frame  # I.e.: we stop only when it was just raised
+                            
+                    # If it got here we should stop.
+                    should_stop = True                    
+                    try:
+                        info.pydev_message = exception_breakpoint.qname
+                    except:
+                        info.pydev_message = exception_breakpoint.qname.encode('utf-8')
+
+                    # Always add exception to frame (must remove later after we proceed).
+                    add_exception_to_frame(frame, (exception, value, trace))
+
                 else:
+                    # No regular exception breakpoint, let's see if some plugin handles it.
                     try:
                         if main_debugger.plugin is not None:
                             result = main_debugger.plugin.exception_break(main_debugger, self, frame, self._args, arg)
                             if result:
-                                flag, frame = result
+                                should_stop, frame = result
                     except:
-                        flag = False
+                        should_stop = False
 
-                if flag:
+                if should_stop:
                     if exception_breakpoint is not None and exception_breakpoint.expression is not None:
                         handle_breakpoint_expression(exception_breakpoint, info, frame)
-                else:
-                    remove_exception_from_frame(frame)
 
-        return flag, frame
+        return should_stop, frame
 
     def handle_exception(self, frame, event, arg):
         try:
-            # print 'handle_exception', frame.f_lineno, frame.f_code.co_name
-
             # We have 3 things in arg: exception type, description, traceback object
             trace_obj = arg[2]
             main_debugger = self._args[0]
 
-            if not hasattr(trace_obj, 'tb_next'):
-                return  #Not always there on Jython...
-
             initial_trace_obj = trace_obj
             if trace_obj.tb_next is None and trace_obj.tb_frame is frame:
                 #I.e.: tb_next should be only None in the context it was thrown (trace_obj.tb_frame is frame is just a double check).
-
-                if main_debugger.break_on_exceptions_thrown_in_same_context:
-                    #Option: Don't break if an exception is caught in the same function from which it is thrown
-                    return
+                pass
             else:
                 #Get the trace_obj from where the exception was raised...
                 while trace_obj.tb_next is not None:
                     trace_obj = trace_obj.tb_next
 
-
             if main_debugger.ignore_exceptions_thrown_in_lines_with_ignore_exception:
                 for check_trace_obj in (initial_trace_obj, trace_obj):
                     filename = get_abs_path_real_path_and_base_from_frame(check_trace_obj.tb_frame)[1]
-
-
                     filename_to_lines_where_exceptions_are_ignored = self.filename_to_lines_where_exceptions_are_ignored
-
-
                     lines_ignored = filename_to_lines_where_exceptions_are_ignored.get(filename)
                     if lines_ignored is None:
                         lines_ignored = filename_to_lines_where_exceptions_are_ignored[filename] = {}
@@ -426,9 +461,7 @@ cdef class PyDBFrame:
                         if merged.get(exc_lineno, 0):
                             return
 
-
             thread = self._args[3]
-
             try:
                 frame_id_to_frame = {}
                 frame_id_to_frame[id(frame)] = frame
@@ -453,7 +486,10 @@ cdef class PyDBFrame:
 
             main_debugger.set_trace_for_frame_and_parents(frame)
         finally:
+            # Make sure the user cannot see the '__exception__' we added after we leave the suspend state.
+            remove_exception_from_frame(frame)
             #Clear some local variables...
+            frame = None
             trace_obj = None
             initial_trace_obj = None
             check_trace_obj = None
@@ -523,6 +559,8 @@ cdef class PyDBFrame:
         cdef bint is_line;
         cdef bint is_call;
         cdef bint is_return;
+        cdef bint should_stop;
+        cdef dict breakpoints_for_file;
         cdef str curr_func_name;
         cdef bint exist_result;
         cdef bint stop;
@@ -532,12 +570,13 @@ cdef class PyDBFrame:
         cdef int breakpoints_in_line_cache;
         cdef int breakpoints_in_frame_cache;
         cdef bint has_breakpoint_in_frame;
+        cdef bint need_trace_return;
     # ELSE
 #     def trace_dispatch(self, frame, event, arg):
     # ENDIF
 
         main_debugger, filename, info, thread, frame_skips_cache, frame_cache_key = self._args
-        # print('frame trace_dispatch', frame.f_lineno, frame.f_code.co_name, event, info.pydev_step_cmd)
+        # print('frame trace_dispatch', frame.f_lineno, frame.f_code.co_name, frame.f_code.co_filename, event, info.pydev_step_cmd)
         try:
             info.is_tracing = True
             line = frame.f_lineno
@@ -553,8 +592,8 @@ cdef class PyDBFrame:
 
             if is_exception_event:
                 if has_exception_breakpoints:
-                    flag, frame = self.should_stop_on_exception(frame, event, arg)
-                    if flag:
+                    should_stop, frame = self.should_stop_on_exception(frame, event, arg)
+                    if should_stop:
                         self.handle_exception(frame, event, arg)
                         return self.trace_dispatch
                 is_line = False
@@ -569,10 +608,11 @@ cdef class PyDBFrame:
                     return None
 
             need_trace_return = False
-            if is_call and main_debugger.signature_factory:
-                need_trace_return = send_signature_call_trace(main_debugger, frame, filename)
-            if is_return and main_debugger.signature_factory:
-                send_signature_return_trace(main_debugger, frame, filename, arg)
+            if main_debugger.signature_factory is not None:
+                if is_call:
+                    need_trace_return = send_signature_call_trace(main_debugger, frame, filename)
+                elif is_return:
+                    send_signature_return_trace(main_debugger, frame, filename, arg)
 
             stop_frame = info.pydev_step_stop
             step_cmd = info.pydev_step_cmd
@@ -649,7 +689,7 @@ cdef class PyDBFrame:
                         curr_func_name = frame.f_code.co_name
 
                         #global context is set with an empty name
-                        if curr_func_name in ('?', '<module>'):
+                        if curr_func_name in ('?', '<module>', '<lambda>'):
                             curr_func_name = ''
 
                         for breakpoint in dict_iter_values(breakpoints_for_file): #jython does not support itervalues()
@@ -702,26 +742,28 @@ cdef class PyDBFrame:
                     #ok, hit breakpoint, now, we have to discover if it is a conditional breakpoint
                     # lets do the conditional stuff here
                     if stop or exist_result:
-                        condition = breakpoint.condition
-                        if condition is not None:
+                        if breakpoint.has_condition:
                             eval_result = handle_breakpoint_condition(main_debugger, info, breakpoint, new_frame)
                             if not eval_result:
                                 return self.trace_dispatch
 
                         if breakpoint.expression is not None:
                             handle_breakpoint_expression(breakpoint, info, new_frame)
+                            if breakpoint.is_logpoint and info.pydev_message is not None and len(info.pydev_message) > 0:
+                                cmd = main_debugger.cmd_factory.make_io_message(info.pydev_message + os.linesep, '1')
+                                main_debugger.writer.add_command(cmd)
+                                return self.trace_dispatch
+                            
+                    if is_call and frame.f_code.co_name in ('<module>', '<lambda>'):
+                        # If we find a call for a module, it means that the module is being imported/executed for the
+                        # first time. In this case we have to ignore this hit as it may later duplicated by a
+                        # line event at the same place (so, if there's a module with a print() in the first line
+                        # the user will hit that line twice, which is not what we want).
+                        #
+                        # As for lamdba, as it only has a single statement, it's not interesting to trace
+                        # its call and later its line event as they're usually in the same line.
+                        return self.trace_dispatch
 
-                        if not main_debugger.first_breakpoint_reached:
-                            if is_call:
-                                back = frame.f_back
-                                if back is not None:
-                                    # When we start debug session, we call execfile in pydevd run function. It produces an additional
-                                    # 'call' event for tracing and we stop on the first line of code twice.
-                                    _, back_filename, base = get_abs_path_real_path_and_base_from_frame(back)
-                                    if (base == DEBUG_START[0] and back.f_code.co_name == DEBUG_START[1]) or \
-                                            (base == DEBUG_START_PY3K[0] and back.f_code.co_name == DEBUG_START_PY3K[1]):
-                                        stop = False
-                                        main_debugger.first_breakpoint_reached = True
                 else:
                     # if the frame is traced after breakpoint stop,
                     # but the file should be ignored while stepping because of filters
@@ -729,7 +771,7 @@ cdef class PyDBFrame:
                         if main_debugger.is_filter_enabled and main_debugger.is_ignored_by_filters(filename):
                             # ignore files matching stepping filters
                             return self.trace_dispatch
-                        if main_debugger.is_filter_libraries and main_debugger.not_in_scope(filename):
+                        if main_debugger.is_filter_libraries and not main_debugger.in_project_scope(filename):
                             # ignore library files while stepping
                             return self.trace_dispatch
 
@@ -786,7 +828,7 @@ cdef class PyDBFrame:
                             stop, plugin_stop = result
 
                 elif step_cmd == CMD_STEP_INTO_MY_CODE:
-                    if not main_debugger.not_in_scope(frame.f_code.co_filename):
+                    if main_debugger.in_project_scope(frame.f_code.co_filename):
                         stop = is_line
 
                 elif step_cmd == CMD_STEP_OVER:
@@ -849,7 +891,7 @@ cdef class PyDBFrame:
                             #(note that it can still go on for other threads, but for this one, we just make it finish)
                             #So, just setting it to None should be OK
                             _, back_filename, base = get_abs_path_real_path_and_base_from_frame(back)
-                            if base == DEBUG_START[0] and back.f_code.co_name == DEBUG_START[1]:
+                            if (base, back.f_code.co_name) in (DEBUG_START, DEBUG_START_PY3K):
                                 back = None
 
                             elif base == TRACE_PROPERTY:
@@ -896,7 +938,6 @@ cdef class PyDBFrame:
             info.is_tracing = False
 
         #end trace_dispatch
-
 import traceback
 
 from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
@@ -907,14 +948,14 @@ from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER
 from _pydevd_bundle.pydevd_tracing import SetTrace
 # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
-# In Cython, PyDBAdditionalThreadInfo is bundled in the file.
+# In Cython, set_additional_thread_info is bundled in the file.
 from cpython.object cimport PyObject
 from cpython.ref cimport Py_INCREF, Py_XDECREF
 # ELSE
-# from _pydevd_bundle.pydevd_additional_thread_info import PyDBAdditionalThreadInfo
+# from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
 # from _pydevd_bundle.pydevd_frame import PyDBFrame
-# 
 # ENDIF
+from os.path import basename, splitext
 
 threadingCurrentThread = threading.currentThread
 get_file_type = DONT_TRACE.get
@@ -925,7 +966,6 @@ get_file_type = DONT_TRACE.get
 # ELSE
 # ENDIF
 
-
 # Cache where we should keep that we completely skipped entering some context.
 # It needs to be invalidated when:
 # - Breakpoints are changed
@@ -933,27 +973,123 @@ get_file_type = DONT_TRACE.get
 global_cache_skips = {}
 global_cache_frame_skips = {}
 
-
 def trace_dispatch(py_db, frame, event, arg):
-    t = threadingCurrentThread()
+    # Note: this is always the first entry-point in the tracing for any thread.
+    # After entering here we'll set a new tracing function for this thread
+    # where more information is cached (and will also setup the tracing for
+    # frames where we should deal with unhandled exceptions).
+    thread = None
+    # Cache the frame which should be traced to deal with unhandled exceptions.
+    # (i.e.: thread entry-points).
 
-    if getattr(t, 'pydev_do_not_trace', None):
+    f_unhandled = frame
+    only_trace_for_unhandled_exceptions = True
+    # print('called at', f_unhandled.f_code.co_name, f_unhandled.f_code.co_filename, f_unhandled.f_code.co_firstlineno)
+    while f_unhandled is not None:
+        filename = f_unhandled.f_code.co_filename
+        name = splitext(basename(filename))[0]
+        if name == 'threading':
+            if f_unhandled.f_code.co_name in ('__bootstrap', '_bootstrap'):
+                # We need __bootstrap_inner, not __bootstrap.
+                return None
+
+            elif f_unhandled.f_code.co_name in ('__bootstrap_inner', '_bootstrap_inner'):
+                # Note: be careful not to use threading.currentThread to avoid creating a dummy thread.
+                t = f_unhandled.f_locals.get('self')
+                if t is not None and isinstance(t, threading.Thread):
+                    thread = t
+                    only_trace_for_unhandled_exceptions = True
+                    break
+
+        elif name == 'pydevd':
+            if f_unhandled.f_code.co_name in ('run', 'main'):
+                # We need to get to _exec
+                return None
+
+            if f_unhandled.f_code.co_name == '_exec':
+                only_trace_for_unhandled_exceptions = True
+                break
+
+        elif f_unhandled.f_back is None:
+            only_trace_for_unhandled_exceptions = False
+            break
+
+        f_unhandled = f_unhandled.f_back
+
+    if thread is None:
+        # Important: don't call threadingCurrentThread if we're in the threading module
+        # to avoid creating dummy threads.
+        thread = threadingCurrentThread()
+
+    if getattr(thread, 'pydev_do_not_trace', None):
+        SetTrace(None, apply_to_pydevd_thread=True)
         return None
 
     try:
-        additional_info = t.additional_info
+        additional_info = thread.additional_info
         if additional_info is None:
             raise AttributeError()
     except:
-        additional_info = t.additional_info = PyDBAdditionalThreadInfo()
+        additional_info = set_additional_thread_info(thread)
 
-    thread_tracer = ThreadTracer((py_db, t, additional_info, global_cache_skips, global_cache_frame_skips))
+    # print('enter thread tracer', thread, get_thread_id(thread))
+    thread_tracer = ThreadTracer((py_db, thread, additional_info, global_cache_skips, global_cache_frame_skips))
+
+    if f_unhandled is not None:
+        # print(' --> found to trace unhandled', f_unhandled.f_code.co_name, f_unhandled.f_code.co_filename, f_unhandled.f_code.co_firstlineno)
+        if only_trace_for_unhandled_exceptions:
+            f_trace = thread_tracer.trace_unhandled_exceptions
+        else:
+            f_trace = thread_tracer.trace_dispatch_and_unhandled_exceptions
+        # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+        f_unhandled.f_trace = SafeCallWrapper(f_trace)
+        # ELSE
+#         f_unhandled.f_trace = f_trace
+        # ENDIF
+
+    if frame is f_unhandled:
+        if only_trace_for_unhandled_exceptions:
+            return thread_tracer.trace_unhandled_exceptions(frame, event, arg)
+        else:
+            return thread_tracer.trace_dispatch_and_unhandled_exceptions(frame, event, arg)
+
 # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
-    t._tracer = thread_tracer # Hack for cython to keep it alive while the thread is alive (just the method in the SetTrace is not enough).
+    thread._tracer = thread_tracer # Hack for cython to keep it alive while the thread is alive (just the method in the SetTrace is not enough).
 # ELSE
 # ENDIF
     SetTrace(thread_tracer.__call__)
     return thread_tracer.__call__(frame, event, arg)
+
+# IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+cdef class PyDbFrameTraceAndUnhandledExceptionsTrace(object):
+    cdef object _pydb_frame_trace;
+    cdef object _unhandled_trace;
+# ELSE
+# class PyDbFrameTraceAndUnhandledExceptionsTrace(object):
+#     '''
+#     A tracer which is meant to be put at entry points to trace PyDBFrames and unhandled
+#     exceptions (only really activated when the user started running without debugging
+#     and used a settrace later on -- and only in the frame which is the topmost frame as we
+#     don't trace threading.py nor inside of pydevd, which are the other frames where
+#     we deal with unhandled exceptions).
+#     '''
+    # ENDIF
+    def __init__(self, pydb_frame_trace, unhandled_trace):
+        self._pydb_frame_trace = pydb_frame_trace
+        self._unhandled_trace = unhandled_trace
+
+    def trace_dispatch(self, frame, event, arg):
+        # print('PyDbFrameTraceAndUnhandledExceptionsTrace', event, frame.f_code.co_name, frame.f_code.co_filename, frame.f_code.co_firstlineno)
+        if event == 'exception' and arg is not None:
+            # print('self._unhandled_trace', self._unhandled_trace)
+            self._unhandled_trace(frame, event, arg)
+        else:
+            self._pydb_frame_trace(frame, event, arg)
+        # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+        return SafeCallWrapper(self.trace_dispatch)
+        # ELSE
+#         return self.trace_dispatch
+        # ENDIF
 
 
 # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
@@ -977,8 +1113,48 @@ cdef class ThreadTracer:
 # class ThreadTracer:
 #     def __init__(self, args):
 #         self._args = args
-# 
     # ENDIF
+
+    def trace_unhandled_exceptions(self, frame, event, arg):
+        # Note that we ignore the frame as this tracing method should only be put in topmost frames already.
+        # print('trace_unhandled_exceptions', event, frame.f_code.co_name, frame.f_code.co_filename, frame.f_code.co_firstlineno)
+        if event == 'exception' and arg is not None:
+            from _pydevd_bundle.pydevd_breakpoints import stop_on_unhandled_exception
+            py_db, t, additional_info = self._args[0:3]
+            if arg is not None:
+                if not additional_info.suspended_at_unhandled:
+                    if frame.f_back is not None:
+                        additional_info.suspended_at_unhandled = True
+
+                    stop_on_unhandled_exception(py_db, t, additional_info, arg)
+        # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+        return SafeCallWrapper(self.trace_unhandled_exceptions)
+        # ELSE
+#         return self.trace_unhandled_exceptions
+        # ENDIF
+
+    def trace_dispatch_and_unhandled_exceptions(self, frame, event, arg):
+        # print('trace_dispatch_and_unhandled_exceptions', event, frame.f_code.co_name, frame.f_code.co_filename, frame.f_code.co_firstlineno)
+        if event == 'exception' and arg is not None:
+            self.trace_unhandled_exceptions(frame, event, arg)
+            ret = self.trace_dispatch_and_unhandled_exceptions
+        else:
+            pydb_frame_trace = self.__call__(frame, event, arg)
+            if pydb_frame_trace is None:
+                # If the PyDBFrame did not return a tracer, just go with the simpler
+                # tracer for unhandled exceptions.
+                ret = self.trace_unhandled_exceptions
+            else:
+                # Ok, this frame needs to be traced and needs to deal with unhandled exceptions. Create
+                # a class which does this for us.
+                py_db_frame_trace_and_unhandled_exceptions_trace = PyDbFrameTraceAndUnhandledExceptionsTrace(
+                    pydb_frame_trace, self.trace_dispatch_and_unhandled_exceptions)
+                ret = py_db_frame_trace_and_unhandled_exceptions_trace.trace_dispatch
+        # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+        return SafeCallWrapper(ret)
+        # ELSE
+#         return ret
+        # ENDIF
 
     def __call__(self, frame, event, arg):
         ''' This is the callback used when we enter some context in the debugger.
@@ -997,7 +1173,7 @@ cdef class ThreadTracer:
         cdef str filename;
         cdef str base;
         cdef int pydev_step_cmd;
-        cdef tuple cache_key;
+        cdef tuple frame_cache_key;
         cdef dict cache_skips;
         cdef bint is_stepping;
         cdef tuple abs_path_real_path_and_base;
@@ -1022,14 +1198,9 @@ cdef class ThreadTracer:
 
             # if thread is not alive, cancel trace_dispatch processing
             if not is_thread_alive(t):
-                py_db._process_thread_not_alive(get_thread_id(t))
+                py_db.notify_thread_not_alive(get_thread_id(t))
                 return None  # suspend tracing
 
-            try:
-                # Make fast path faster!
-                abs_path_real_path_and_base = NORM_PATHS_AND_BASE_CONTAINER[frame.f_code.co_filename]
-            except:
-                abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_frame(frame)
 
             if py_db.thread_analyser is not None:
                 py_db.thread_analyser.log_event(frame)
@@ -1037,33 +1208,38 @@ cdef class ThreadTracer:
             if py_db.asyncio_analyser is not None:
                 py_db.asyncio_analyser.log_event(frame)
 
-            filename = abs_path_real_path_and_base[1]
             # Note: it's important that the context name is also given because we may hit something once
             # in the global context and another in the local context.
-            cache_key = (frame.f_lineno, frame.f_code.co_name, filename)
-            if not is_stepping and cache_key in cache_skips:
-                # print('skipped: trace_dispatch (cache hit)', cache_key, frame.f_lineno, event, frame.f_code.co_name)
+            frame_cache_key = (frame.f_code.co_firstlineno, frame.f_code.co_name, frame.f_code.co_filename)
+            if not is_stepping and frame_cache_key in cache_skips:
+                # print('skipped: trace_dispatch (cache hit)', frame_cache_key, frame.f_lineno, event, frame.f_code.co_name)
                 return None
 
-            file_type = get_file_type(
-                abs_path_real_path_and_base[-1])  # we don't want to debug threading or anything related to pydevd
+            try:
+                # Make fast path faster!
+                abs_path_real_path_and_base = NORM_PATHS_AND_BASE_CONTAINER[frame.f_code.co_filename]
+            except:
+                abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_frame(frame)
+
+            filename = abs_path_real_path_and_base[1]
+            file_type = get_file_type(abs_path_real_path_and_base[-1]) #we don't want to debug threading or anything related to pydevd
 
             if file_type is not None:
-                if file_type == 1:  # inlining LIB_FILE = 1
-                    if py_db.not_in_scope(filename):
+                if file_type == 1: # inlining LIB_FILE = 1
+                    if not py_db.in_project_scope(filename):
                         # print('skipped: trace_dispatch (not in scope)', abs_path_real_path_and_base[-1], frame.f_lineno, event, frame.f_code.co_name, file_type)
-                        cache_skips[cache_key] = 1
+                        cache_skips[frame_cache_key] = 1
                         return None
                 else:
                     # print('skipped: trace_dispatch', abs_path_real_path_and_base[-1], frame.f_lineno, event, frame.f_code.co_name, file_type)
-                    cache_skips[cache_key] = 1
+                    cache_skips[frame_cache_key] = 1
                     return None
 
             if is_stepping:
                 if py_db.is_filter_enabled and py_db.is_ignored_by_filters(filename):
                     # ignore files matching stepping filters
                     return None
-                if py_db.is_filter_libraries and py_db.not_in_scope(filename):
+                if py_db.is_filter_libraries and not py_db.in_project_scope(filename):
                     # ignore library files while stepping
                     return None
 
@@ -1073,11 +1249,13 @@ cdef class ThreadTracer:
 
             # Just create PyDBFrame directly (removed support for Python versions < 2.5, which required keeping a weak
             # reference to the frame).
-            ret = PyDBFrame((py_db, filename, additional_info, t, frame_skips_cache,
-                             (frame.f_code.co_name, frame.f_code.co_firstlineno, filename))).trace_dispatch(frame,
-                                                                                                            event, arg)
+            ret = PyDBFrame(
+                (
+                    py_db, filename, additional_info, t, frame_skips_cache, frame_cache_key,
+                )
+            ).trace_dispatch(frame, event, arg)
             if ret is None:
-                cache_skips[cache_key] = 1
+                cache_skips[frame_cache_key] = 1
                 return None
 
             # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
@@ -1091,7 +1269,7 @@ cdef class ThreadTracer:
 
         except Exception:
             if py_db._finish_debugging_session:
-                return None  # Don't log errors when we're shutting down.
+                return None # Don't log errors when we're shutting down.
             # Log it
             try:
                 if traceback is not None:
@@ -1116,11 +1294,9 @@ if IS_IRONPYTHON:
 
     _original_call = ThreadTracer.__call__
 
-
     def __call__(self, frame, event, arg):
         _tid_to_last_frame[self._args[1].ident] = frame
         return _original_call(self, frame, event, arg)
-
 
     ThreadTracer.__call__ = __call__
 
