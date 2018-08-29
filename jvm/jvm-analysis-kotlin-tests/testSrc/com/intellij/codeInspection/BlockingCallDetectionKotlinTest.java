@@ -18,12 +18,12 @@ public class BlockingCallDetectionKotlinTest extends JavaCodeInsightFixtureTestC
     myFixture.enableInspections(myInspection);
   }
 
-  public void testKotlinCodeInspecting() {
+  public void testKotlinAnnotationDetection() {
     myFixture.addClass("package org.jetbrains.annotations;\n" +
                        "public @interface Blocking {}");
     myFixture.addClass("package org.jetbrains.annotations;\n" +
                        "public @interface NonBlocking {}");
-    myFixture.addFileToProject("/TestKotlinCodeInspection.kt",
+    myFixture.addFileToProject("/TestKotlinAnnotationDetection.kt",
                                "import org.jetbrains.annotations.Blocking\n" +
                                "import org.jetbrains.annotations.NonBlocking\n" +
                                "@NonBlocking\n" +
@@ -33,7 +33,18 @@ public class BlockingCallDetectionKotlinTest extends JavaCodeInsightFixtureTestC
                                "@Blocking\n" +
                                "fun blockingFunction() {}");
 
-    myFixture.testHighlighting(true, false, true, "TestKotlinCodeInspection.kt");
+    myFixture.testHighlighting(true, false, true, "TestKotlinAnnotationDetection.kt");
+  }
+
+  public void testKotlinThrowsTypeDetection() {
+    myFixture.addClass("package org.jetbrains.annotations;\n" +
+                       "public @interface NonBlocking {}");
+    myFixture.addFileToProject("/TestKotlinThrowsTypeDetection.kt",
+                               "import org.jetbrains.annotations.NonBlocking\n" +
+                               "@NonBlocking\n" +
+                               "fun nonBlockingFunction() {\n" +
+                               "  Thread.<warning descr=\"Inappropriate blocking method call\">sleep</warning>(111);}");
+    myFixture.testHighlighting(true, false, true, "TestKotlinThrowsTypeDetection.kt");
   }
 }
 
