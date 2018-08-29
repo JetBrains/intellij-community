@@ -64,71 +64,6 @@ class DeepComparator(private val project: Project,
     Disposer.register(parent, this)
   }
 
-  fun highlightInBackground(branchToCompare: String) {
-    if (comparedBranch != null) {
-      LOG.error("Already comparing with branch $comparedBranch")
-      return
-    }
-
-    val repositories = getRepositories(ui.dataPack.logProviders, branchToCompare)
-    if (repositories.isEmpty()) {
-      LOG.debug("Could not find suitable repositories for selected branch $comparedBranch")
-      return
-    }
-
-    comparedBranch = branchToCompare
-    repositoriesWithCurrentBranches = repositories
-    highlightInBackground()
-  }
-
-  private fun highlightInBackground() {
-    LOG.debug("Highlighting requested for $repositoriesWithCurrentBranches")
-    val task = MyTask(repositoriesWithCurrentBranches!!, comparedBranch!!)
-    progressIndicator = BackgroundableProcessIndicator(task)
-    ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, progressIndicator!!)
-  }
-
-  private fun getRepositories(providers: Map<VirtualFile, VcsLogProvider>,
-                              branchToCompare: String): Map<GitRepository, GitBranch> {
-    val repos = ContainerUtil.newHashMap<GitRepository, GitBranch>()
-    for (root in providers.keys) {
-      val repository = repositoryManager.getRepositoryForRoot(root)
-      if (repository == null || repository.currentBranch == null ||
-          repository.branches.findBranchByName(branchToCompare) == null) {
-        continue
-      }
-      repos[repository] = repository.currentBranch
-    }
-    return repos
-  }
-
-  fun stopAndUnhighlight() {
-    stopTask()
-    removeHighlighting()
-  }
-
-  private fun stopTask() {
-    if (progressIndicator != null) {
-      progressIndicator!!.cancel()
-      progressIndicator = null
-    }
-  }
-
-  private fun removeHighlighting() {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-    nonPickedCommits = null
-    comparedBranch = null
-    repositoriesWithCurrentBranches = null
-  }
-
-  override fun dispose() {
-    stopAndUnhighlight()
-  }
-
-  fun hasHighlightingOrInProgress(): Boolean {
-    return comparedBranch != null
-  }
-
   override fun getStyle(commitId: Int, commitDetails: VcsShortCommitDetails, isSelected: Boolean): VcsLogHighlighter.VcsCommitStyle {
     if (nonPickedCommits == null || nonPickedCommits!!.contains(commitId)) return VcsLogHighlighter.VcsCommitStyle.DEFAULT
     else return VcsCommitStyleFactory.foreground(MergeCommitsHighlighter.MERGE_COMMIT_FOREGROUND)
@@ -163,6 +98,67 @@ class DeepComparator(private val project: Project,
     }
   }
 
+  fun highlightInBackground(branchToCompare: String) {
+    if (comparedBranch != null) {
+      LOG.error("Already comparing with branch $comparedBranch")
+      return
+    }
+
+    val repositories = getRepositories(ui.dataPack.logProviders, branchToCompare)
+    if (repositories.isEmpty()) {
+      LOG.debug("Could not find suitable repositories for selected branch $comparedBranch")
+      return
+    }
+
+    comparedBranch = branchToCompare
+    repositoriesWithCurrentBranches = repositories
+    highlightInBackground()
+  }
+
+  fun stopAndUnhighlight() {
+    stopTask()
+    removeHighlighting()
+  }
+
+  fun hasHighlightingOrInProgress(): Boolean {
+    return comparedBranch != null
+  }
+
+  private fun highlightInBackground() {
+    LOG.debug("Highlighting requested for $repositoriesWithCurrentBranches")
+    val task = MyTask(repositoriesWithCurrentBranches!!, comparedBranch!!)
+    progressIndicator = BackgroundableProcessIndicator(task)
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, progressIndicator!!)
+  }
+
+  private fun stopTask() {
+    if (progressIndicator != null) {
+      progressIndicator!!.cancel()
+      progressIndicator = null
+    }
+  }
+
+  private fun removeHighlighting() {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    nonPickedCommits = null
+    comparedBranch = null
+    repositoriesWithCurrentBranches = null
+  }
+
+  private fun getRepositories(providers: Map<VirtualFile, VcsLogProvider>,
+                              branchToCompare: String): Map<GitRepository, GitBranch> {
+    val repos = ContainerUtil.newHashMap<GitRepository, GitBranch>()
+    for (root in providers.keys) {
+      val repository = repositoryManager.getRepositoryForRoot(root)
+      if (repository == null || repository.currentBranch == null ||
+          repository.branches.findBranchByName(branchToCompare) == null) {
+        continue
+      }
+      repos[repository] = repository.currentBranch
+    }
+    return repos
+  }
+
   private fun notifyHighlightingCancelled() {
     if (ui is AbstractVcsLogUi) {
       val balloon = JBPopupFactory.getInstance()
@@ -175,23 +171,8 @@ class DeepComparator(private val project: Project,
     }
   }
 
-  class Factory : VcsLogHighlighterFactory {
-
-    override fun createHighlighter(logDataManager: VcsLogData, logUi: VcsLogUi): VcsLogHighlighter {
-      return getInstance(logDataManager.project, logDataManager, logUi)
-    }
-
-    override fun getId(): String {
-      return "CHERRY_PICKED_COMMITS"
-    }
-
-    override fun getTitle(): String {
-      return "Cherry Picked Commits"
-    }
-
-    override fun showMenuItem(): Boolean {
-      return false
-    }
+  override fun dispose() {
+    stopAndUnhighlight()
   }
 
   private inner class MyTask(private val repositoriesWithCurrentBranches: Map<GitRepository, GitBranch>,
@@ -259,6 +240,25 @@ class DeepComparator(private val project: Project,
 
     override fun toString(): String {
       return "Task for '$comparedBranch' in $repositoriesWithCurrentBranches"
+    }
+  }
+
+  class Factory : VcsLogHighlighterFactory {
+
+    override fun createHighlighter(logDataManager: VcsLogData, logUi: VcsLogUi): VcsLogHighlighter {
+      return getInstance(logDataManager.project, logDataManager, logUi)
+    }
+
+    override fun getId(): String {
+      return "CHERRY_PICKED_COMMITS"
+    }
+
+    override fun getTitle(): String {
+      return "Cherry Picked Commits"
+    }
+
+    override fun showMenuItem(): Boolean {
+      return false
     }
   }
 
