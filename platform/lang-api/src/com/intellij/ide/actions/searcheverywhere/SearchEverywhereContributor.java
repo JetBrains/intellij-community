@@ -82,6 +82,10 @@ public interface SearchEverywhereContributor<F> {
     return false;
   }
 
+  default boolean isDumbModeSupported() {
+    return true;
+  }
+
   static List<SearchEverywhereContributorFactory<?>> getProviders() {
     return Arrays.asList(EP_NAME.getExtensions());
   }

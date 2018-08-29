@@ -13,6 +13,7 @@ import com.intellij.ide.util.gotoByName.QuickSearchComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -579,6 +580,16 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       Map<SearchEverywhereContributor<?>, Integer> contributorsMap = mySelectedTab.getContributor()
         .map(contributor -> Collections.singletonMap(((SearchEverywhereContributor<?>) contributor), SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT))
         .orElse(getUsedContributors().stream().collect(Collectors.toMap(c -> c, c -> MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT)));
+
+      Set<SearchEverywhereContributor<?>> contributors = contributorsMap.keySet();
+      boolean dumbModeSupported = contributors.stream().anyMatch(c -> c.isDumbModeSupported());
+      if (!dumbModeSupported && DumbService.getInstance(myProject).isDumb()) {
+        String tabName = mySelectedTab.getText();
+        String productName = ApplicationNamesInfo.getInstance().getProductName();
+        myResultsList.setEmptyText(IdeBundle.message("searcheverywhere.indexing.mode.not.supported", tabName, productName));
+        return;
+      }
+
       mySearchProgressIndicator = mySearcher.search(contributorsMap, pattern, isUseNonProjectItems(), c -> myContributorFilters.get(c.getSearchProviderId()));
     }, 200);
   }

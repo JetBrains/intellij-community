@@ -48,6 +48,11 @@ public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor
   }
 
   @Override
+  public boolean isDumbModeSupported() {
+    return false;
+  }
+
+  @Override
   protected FilteringGotoByModel<Language> createModel(Project project) {
     return new GotoSymbolModel2(project);
   }
