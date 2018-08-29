@@ -77,8 +77,8 @@ class DeepComparator(private val project: Project,
     val singleFilteredBranch = VcsLogUtil.getSingleFilteredBranch(dataPack.filters, dataPack.refs)
     if (comparedBranch != singleFilteredBranch) {
       LOG.debug("Branch filter changed. Compared branch: $comparedBranch, filtered branch: $singleFilteredBranch")
-      stopAndUnhighlight()
-      notifyHighlightingCancelled()
+      stopTaskAndUnhighlight()
+      notifyUnhighlight()
       return
     }
 
@@ -89,16 +89,16 @@ class DeepComparator(private val project: Project,
       val repositories = getRepositories(dataPack.logProviders, comparedBranch!!)
       if (repositories == repositoriesWithCurrentBranches) {
         // but not if current branch changed
-        highlightInBackground()
+        startTask()
       }
       else {
         LOG.debug("Repositories with current branches changed. Actual:\n$repositories\nExpected:\n$repositoriesWithCurrentBranches")
-        removeHighlighting()
+        unhighlight()
       }
     }
   }
 
-  fun highlightInBackground(branchToCompare: String) {
+  fun startTask(branchToCompare: String) {
     if (comparedBranch != null) {
       LOG.error("Already comparing with branch $comparedBranch")
       return
@@ -112,19 +112,19 @@ class DeepComparator(private val project: Project,
 
     comparedBranch = branchToCompare
     repositoriesWithCurrentBranches = repositories
-    highlightInBackground()
+    startTask()
   }
 
-  fun stopAndUnhighlight() {
+  fun stopTaskAndUnhighlight() {
     stopTask()
-    removeHighlighting()
+    unhighlight()
   }
 
   fun hasHighlightingOrInProgress(): Boolean {
     return comparedBranch != null
   }
 
-  private fun highlightInBackground() {
+  private fun startTask() {
     LOG.debug("Highlighting requested for $repositoriesWithCurrentBranches")
     val task = MyTask(repositoriesWithCurrentBranches!!, comparedBranch!!)
     progressIndicator = BackgroundableProcessIndicator(task)
@@ -138,7 +138,7 @@ class DeepComparator(private val project: Project,
     }
   }
 
-  private fun removeHighlighting() {
+  private fun unhighlight() {
     ApplicationManager.getApplication().assertIsDispatchThread()
     nonPickedCommits = null
     comparedBranch = null
@@ -159,7 +159,7 @@ class DeepComparator(private val project: Project,
     return repos
   }
 
-  private fun notifyHighlightingCancelled() {
+  private fun notifyUnhighlight() {
     if (ui is AbstractVcsLogUi) {
       val balloon = JBPopupFactory.getInstance()
         .createHtmlTextBalloonBuilder(HIGHLIGHTING_CANCELLED, null, MessageType.INFO.popupBackground, null)
@@ -172,7 +172,7 @@ class DeepComparator(private val project: Project,
   }
 
   override fun dispose() {
-    stopAndUnhighlight()
+    stopTaskAndUnhighlight()
   }
 
   private inner class MyTask(private val repositoriesWithCurrentBranches: Map<GitRepository, GitBranch>,
