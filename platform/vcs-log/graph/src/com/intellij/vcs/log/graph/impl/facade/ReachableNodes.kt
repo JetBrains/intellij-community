@@ -14,93 +14,79 @@
  * limitations under the License.
  */
 
-package com.intellij.vcs.log.graph.impl.facade;
+package com.intellij.vcs.log.graph.impl.facade
 
-import com.intellij.util.Consumer;
-import com.intellij.vcs.log.graph.api.LinearGraph;
-import com.intellij.vcs.log.graph.api.LiteLinearGraph;
-import com.intellij.vcs.log.graph.utils.DfsUtil;
-import com.intellij.vcs.log.graph.utils.Flags;
-import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
-import com.intellij.vcs.log.graph.utils.UnsignedBitSet;
-import com.intellij.vcs.log.graph.utils.impl.BitSetFlags;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.Consumer
+import com.intellij.vcs.log.graph.api.LinearGraph
+import com.intellij.vcs.log.graph.api.LiteLinearGraph
+import com.intellij.vcs.log.graph.utils.DfsUtil
+import com.intellij.vcs.log.graph.utils.Flags
+import com.intellij.vcs.log.graph.utils.LinearGraphUtils
+import com.intellij.vcs.log.graph.utils.UnsignedBitSet
+import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
+import java.util.*
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.function.IntPredicate;
+class ReachableNodes(private val graph: LiteLinearGraph) {
+  private val flags: Flags = BitSetFlags(graph.nodesCount())
 
-public class ReachableNodes {
-  @NotNull private final LiteLinearGraph myGraph;
-  @NotNull private final Flags myTempFlags;
+  fun getContainingBranches(nodeIndex: Int, branchNodeIndexes: Collection<Int>): Set<Int> {
+    val result = HashSet<Int>()
 
-  public ReachableNodes(@NotNull LiteLinearGraph graph) {
-    myGraph = graph;
-    myTempFlags = new BitSetFlags(graph.nodesCount());
+    walk(listOf(nodeIndex), false, Consumer { node -> if (branchNodeIndexes.contains(node)) result.add(node) })
+
+    return result
   }
 
-  @NotNull
-  public static UnsignedBitSet getReachableNodes(@NotNull LinearGraph permanentGraph, @Nullable Set<Integer> headNodeIndexes) {
-    if (headNodeIndexes == null) {
-      UnsignedBitSet nodesVisibility = new UnsignedBitSet();
-      nodesVisibility.set(0, permanentGraph.nodesCount() - 1, true);
-      return nodesVisibility;
+  fun walk(headIds: Collection<Int>, consumer: Consumer<Int>) {
+    walk(headIds, true, consumer)
+  }
+
+  private fun walk(startNodes: Collection<Int>, goDown: Boolean, consumer: Consumer<Int>) {
+    walk(startNodes, goDown) { node: Int ->
+      consumer.consume(node)
+      true
     }
-
-    UnsignedBitSet result = new UnsignedBitSet();
-    ReachableNodes getter = new ReachableNodes(LinearGraphUtils.asLiteLinearGraph(permanentGraph));
-    getter.walk(headNodeIndexes, node -> result.set(node, true));
-
-    return result;
   }
 
-  @NotNull
-  public Set<Integer> getContainingBranches(int nodeIndex, @NotNull Collection<Integer> branchNodeIndexes) {
-    Set<Integer> result = new HashSet<>();
+  fun walk(startNodes: Collection<Int>, goDown: Boolean, consumer: (Int) -> Boolean) {
+    synchronized(flags) {
 
-    walk(Collections.singletonList(nodeIndex), false, node -> {
-      if (branchNodeIndexes.contains(node)) result.add(node);
-    });
+      flags.setAll(false)
+      for (start in startNodes) {
+        if (start < 0) continue
+        if (flags.get(start)) continue
+        flags.set(start, true)
+        if (!consumer(start)) return
 
-    return result;
-  }
-
-  public void walk(@NotNull Collection<Integer> headIds, @NotNull Consumer<Integer> consumer) {
-    walk(headIds, true, consumer);
-  }
-
-  private void walk(@NotNull Collection<Integer> startNodes, boolean goDown, @NotNull Consumer<Integer> consumer) {
-    walk(startNodes, goDown, node -> {
-      consumer.consume(node);
-      return true;
-    });
-  }
-
-  public void walk(@NotNull Collection<Integer> startNodes, boolean goDown, @NotNull IntPredicate consumer) {
-    synchronized (myTempFlags) {
-
-      myTempFlags.setAll(false);
-      for (int start : startNodes) {
-        if (start < 0) continue;
-        if (myTempFlags.get(start)) continue;
-        myTempFlags.set(start, true);
-        if (!consumer.test(start)) return;
-
-        DfsUtil.walk(start,  currentNode-> {
-            for (int downNode : myGraph.getNodes(currentNode, goDown ? LiteLinearGraph.NodeFilter.DOWN : LiteLinearGraph.NodeFilter.UP)) {
-              if (!myTempFlags.get(downNode)) {
-                myTempFlags.set(downNode, true);
-                if (!consumer.test(downNode)) return DfsUtil.NextNode.EXIT;
-                return downNode;
-              }
+        DfsUtil.walk(start) nextNode@{ currentNode ->
+          for (downNode in graph.getNodes(currentNode, if (goDown) LiteLinearGraph.NodeFilter.DOWN else LiteLinearGraph.NodeFilter.UP)) {
+            if (!flags.get(downNode)) {
+              flags.set(downNode, true)
+              if (!consumer(downNode)) return@nextNode DfsUtil.NextNode.EXIT
+              return@nextNode downNode
             }
+          }
 
-          return DfsUtil.NextNode.NODE_NOT_FOUND;
-        });
+          DfsUtil.NextNode.NODE_NOT_FOUND
+        }
       }
+    }
+  }
+
+  companion object {
+    @JvmStatic
+    fun getReachableNodes(permanentGraph: LinearGraph, headNodeIndexes: Set<Int>?): UnsignedBitSet {
+      if (headNodeIndexes == null) {
+        val nodesVisibility = UnsignedBitSet()
+        nodesVisibility.set(0, permanentGraph.nodesCount() - 1, true)
+        return nodesVisibility
+      }
+
+      val result = UnsignedBitSet()
+      val getter = ReachableNodes(LinearGraphUtils.asLiteLinearGraph(permanentGraph))
+      getter.walk(headNodeIndexes, Consumer { node -> result.set(node!!, true) })
+
+      return result
     }
   }
 }
