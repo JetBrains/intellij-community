@@ -4,6 +4,7 @@ package com.intellij.internal.statistic.collectors.fus.ui;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
+import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.internal.statistic.service.fus.collectors.FUStatisticsDifferenceSender;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -25,5 +26,11 @@ public final class ToolbarClicksUsagesCollector extends ApplicationUsagesCollect
   @NotNull
   public String getGroupId() {
     return "statistics.ui.toolbar.clicks";
+  }
+
+  @NotNull
+  @Override
+  public FUSUsageContext getContext() {
+    return FUSUsageContext.OS_CONTEXT;
   }
 }

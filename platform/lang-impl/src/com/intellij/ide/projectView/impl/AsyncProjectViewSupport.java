@@ -27,6 +27,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -44,11 +45,11 @@ class AsyncProjectViewSupport {
   private final StructureTreeModel myStructureTreeModel;
   private final AsyncTreeModel myAsyncTreeModel;
 
-  public AsyncProjectViewSupport(Disposable parent,
-                                 Project project,
-                                 JTree tree,
-                                 AbstractTreeStructure structure,
-                                 Comparator<NodeDescriptor> comparator) {
+  AsyncProjectViewSupport(@NotNull Disposable parent,
+                          @NotNull Project project,
+                          @NotNull JTree tree,
+                          @NotNull AbstractTreeStructure structure,
+                          @NotNull Comparator<NodeDescriptor> comparator) {
     myStructureTreeModel = new StructureTreeModel(true);
     myStructureTreeModel.setStructure(structure);
     myStructureTreeModel.setComparator(comparator);
@@ -56,7 +57,7 @@ class AsyncProjectViewSupport {
     myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
     myNodeUpdater = new ProjectFileNodeUpdater(project, myStructureTreeModel.getInvoker()) {
       @Override
-      protected void updateStructure(boolean fromRoot, @NotNull Set<VirtualFile> updatedFiles) {
+      protected void updateStructure(boolean fromRoot, @NotNull Set<? extends VirtualFile> updatedFiles) {
         if (fromRoot) {
           updateAll(null);
         }
@@ -150,7 +151,7 @@ class AsyncProjectViewSupport {
     });
   }
 
-  public void setComparator(Comparator<NodeDescriptor> comparator) {
+  public void setComparator(Comparator<? super NodeDescriptor> comparator) {
     myStructureTreeModel.setComparator(comparator);
   }
 
@@ -196,7 +197,8 @@ class AsyncProjectViewSupport {
 
   public void updateAll(Runnable onDone) {
     LOG.debug(new RuntimeException("reload a whole tree"));
-    myStructureTreeModel.invalidate(onDone == null ? null : () -> myAsyncTreeModel.onValidThread(onDone));
+    Promise<?> promise = myStructureTreeModel.invalidate();
+    if (onDone != null) promise.onSuccess(res -> myAsyncTreeModel.onValidThread(onDone));
   }
 
   public void update(@NotNull TreePath path, boolean structure) {

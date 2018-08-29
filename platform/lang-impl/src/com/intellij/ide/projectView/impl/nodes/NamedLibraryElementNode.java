@@ -88,7 +88,7 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
   }
 
   @Override
-  public void update(PresentationData presentation) {
+  public void update(@NotNull PresentationData presentation) {
     NamedLibraryElement library = getValue();
     if (library == null) return;
 

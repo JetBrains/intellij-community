@@ -17,15 +17,14 @@ package com.siyeh.ipp.imports;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.ImportsUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
 
 public class ReplaceOnDemandImportIntention extends Intention {
 
@@ -38,9 +37,11 @@ public class ReplaceOnDemandImportIntention extends Intention {
   @Override
   protected void processIntention(@NotNull PsiElement element) {
     final PsiImportStatementBase importStatementBase = (PsiImportStatementBase)element;
+    final PsiJavaFile javaFile = (PsiJavaFile)importStatementBase.getContainingFile();
+    final PsiManager manager = importStatementBase.getManager();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     if (importStatementBase instanceof PsiImportStatement) {
       final PsiImportStatement importStatement = (PsiImportStatement)importStatementBase;
-      final PsiJavaFile javaFile = (PsiJavaFile)importStatement.getContainingFile();
       final PsiClass[] classes = javaFile.getClasses();
       final String qualifiedName = importStatement.getQualifiedName();
       final ClassCollector visitor = new ClassCollector(qualifiedName);
@@ -49,24 +50,43 @@ public class ReplaceOnDemandImportIntention extends Intention {
       }
       final PsiClass[] importedClasses = visitor.getImportedClasses();
       Arrays.sort(importedClasses, new PsiClassComparator());
-      final PsiManager manager = importStatement.getManager();
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-      final PsiElement importList = importStatement.getParent();
-      for (PsiClass importedClass : importedClasses) {
-        final PsiImportStatement newImportStatement = factory.createImportStatement(importedClass);
-        importList.add(newImportStatement);
-      }
-      new CommentTracker().deleteAndRestoreComments(importStatement);
+      createImportStatements(importStatement, importedClasses, factory::createImportStatement);
     }
     else if (importStatementBase instanceof PsiImportStaticStatement) {
-      // do something else
+      PsiClass targetClass = ((PsiImportStaticStatement)importStatementBase).resolveTargetClass();
+      if (targetClass != null) {
+        String[] members = ImportsUtil.collectReferencesThrough(javaFile,
+                                                                importStatementBase.getImportReference(),
+                                                                (PsiImportStaticStatement)importStatementBase)
+          .stream()
+          .map(PsiReference::resolve)
+          .filter(resolve -> resolve instanceof PsiMember)
+          .map(member -> ((PsiMember)member).getName())
+          .distinct()
+          .filter(Objects::nonNull)
+          .toArray(String[]::new);
+
+        createImportStatements(importStatementBase,
+                               members,
+                               member -> factory.createImportStaticStatement(targetClass, member));
+      }
     }
+  }
+
+  private static <T> void createImportStatements(PsiImportStatementBase importStatement,
+                                                 T[] importedMembers,
+                                                 Function<T, PsiImportStatementBase> function) {
+    final PsiElement importList = importStatement.getParent();
+    for (T importedMember : importedMembers) {
+      importList.add(function.apply(importedMember));
+    }
+    new CommentTracker().deleteAndRestoreComments(importStatement);
   }
 
   private static class ClassCollector extends JavaRecursiveElementWalkingVisitor {
 
     private final String importedPackageName;
-    private final Set<PsiClass> importedClasses = new HashSet();
+    private final Set<PsiClass> importedClasses = new HashSet<>();
 
     ClassCollector(String importedPackageName) {
       this.importedPackageName = importedPackageName;

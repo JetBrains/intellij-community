@@ -5,7 +5,6 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.actions.DebuggerAction;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.impl.attach.SAPidRemoteConnection;
 import com.intellij.debugger.engine.StackFrameContext;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -13,6 +12,7 @@ import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
+import com.intellij.debugger.impl.attach.PidRemoteConnection;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeExpression;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.render.BatchEvaluator;
@@ -262,8 +262,8 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   }
 
   public static String getConnectionDisplayName(RemoteConnection connection) {
-    if (connection instanceof SAPidRemoteConnection) {
-      return "pid " + ((SAPidRemoteConnection)connection).getPid();
+    if (connection instanceof PidRemoteConnection) {
+      return "pid " + ((PidRemoteConnection)connection).getPid();
     }
     String addressDisplayName = DebuggerBundle.getAddressDisplayName(connection);
     String transportName = DebuggerBundle.getTransportName(connection);

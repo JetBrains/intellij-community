@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.checkin;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.PeekableIteratorWrapper;
@@ -82,23 +83,6 @@ public class StepIntersection {
   }
 
   private static <T> int binarySearch(@NotNull List<T> elements, int value, @NotNull Function<T, Integer> convertor) {
-    int low = 0;
-    int high = elements.size() - 1;
-
-    while (low <= high) {
-      int mid = (low + high) / 2;
-
-      int midValue = convertor.fun(elements.get(mid));
-      if (midValue < value) {
-        low = mid + 1;
-      }
-      else if (midValue > value) {
-        high = mid - 1;
-      }
-      else {
-        return mid;
-      }
-    }
-    return -(low + 1);
+    return ObjectUtils.binarySearch(0, elements.size(), mid -> Integer.compare(convertor.fun(elements.get(mid)), value));
   }
 }

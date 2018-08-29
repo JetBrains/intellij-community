@@ -30,7 +30,7 @@ import java.io.File;
  * @author Eugene Zhuravlev
  */
 public class JavaScratchConfiguration extends ApplicationConfiguration {
-  protected JavaScratchConfiguration(String name, Project project, @NotNull ConfigurationFactory factory) {
+  protected JavaScratchConfiguration(String name, @NotNull Project project, @NotNull ConfigurationFactory factory) {
     super(name, project, factory);
   }
 

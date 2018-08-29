@@ -17,7 +17,7 @@ internal class RunConfigurationListReader(private val processor: (factory: Confi
   // rc grouped by type
   fun read(parentNode: MappingNode) {
     val keyToType = THashMap<String, ConfigurationType>()
-    processConfigurationTypes { configurationType, propertyName, _ ->
+    processConfigurationTypes { configurationType, propertyName ->
       keyToType.put(propertyName.toString(), configurationType)
     }
 

@@ -368,7 +368,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       if (getValue() != null) {
         final Object object = getValue().getObject();
         final String classString = object.getClass().toString();

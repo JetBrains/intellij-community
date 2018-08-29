@@ -414,6 +414,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
   }
 
   public void hideProgress(boolean success) {
+    assert myIndicator != null;
     myCenterPanel.remove(myIndicator.getComponent());
     myIndicator = null;
 

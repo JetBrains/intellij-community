@@ -29,6 +29,9 @@ import java.util.concurrent.TimeUnit;
  * delegates tasks to the {@link javax.swing.SwingUtilities#invokeLater(Runnable)} for execution.
  */
 public class EdtExecutorService extends AbstractExecutorService {
+  private EdtExecutorService() {
+  }
+
   @NotNull
   public static ExecutorService getInstance() {
     return INSTANCE;
@@ -66,7 +69,7 @@ public class EdtExecutorService extends AbstractExecutorService {
   }
 
   @Override
-  public boolean awaitTermination(long timeout, @NotNull TimeUnit unit) throws InterruptedException {
+  public boolean awaitTermination(long timeout, @NotNull TimeUnit unit) {
     AppScheduledExecutorService.error();
     return false;
   }

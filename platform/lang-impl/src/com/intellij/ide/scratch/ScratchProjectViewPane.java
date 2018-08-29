@@ -37,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultTreeModel;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -88,6 +87,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     return AllIcons.Scope.Scratches;
   }
 
+  @NotNull
   @Override
   protected ProjectAbstractTreeStructureBase createStructure() {
     return new MyTreeStructure(myProject);
@@ -96,11 +96,6 @@ public class ScratchProjectViewPane extends ProjectViewPane {
   @Override
   public int getWeight() {
     return 11;
-  }
-
-  @Override
-  protected BaseProjectTreeBuilder createBuilder(DefaultTreeModel treeModel) {
-    return null;
   }
 
   private static void registerUpdaters(@NotNull Project project, @NotNull Disposable disposable, @NotNull Runnable onUpdate) {
@@ -150,13 +145,13 @@ public class ScratchProjectViewPane extends ProjectViewPane {
   }
 
   @Nullable
-  static PsiDirectory getDirectory(@NotNull Project project, @NotNull RootType rootId) {
+  private static PsiDirectory getDirectory(@NotNull Project project, @NotNull RootType rootId) {
     VirtualFile virtualFile = getVirtualFile(rootId);
     return virtualFile == null ? null : PsiManager.getInstance(project).findDirectory(virtualFile);
   }
 
   @Nullable
-  static VirtualFile getVirtualFile(@NotNull RootType rootId) {
+  private static VirtualFile getVirtualFile(@NotNull RootType rootId) {
     String path = ScratchFileService.getInstance().getRootPath(rootId);
     return LocalFileSystem.getInstance().findFileByPath(path);
   }
@@ -244,7 +239,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       presentation.setPresentableText(getValue());
       presentation.setIcon(AllIcons.Scope.Scratches);
     }
@@ -300,7 +295,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       presentation.setIcon(AllIcons.Nodes.Folder);
       presentation.setPresentableText(getRootType().getDisplayName());
     }
@@ -348,7 +343,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
               }
 
               @Override
-              protected void updateImpl(PresentationData data) {
+              protected void updateImpl(@NotNull PresentationData data) {
                 super.updateImpl(data);
                 customizePresentation(this, data);
               }
@@ -365,7 +360,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
               }
 
               @Override
-              protected void updateImpl(PresentationData data) {
+              protected void updateImpl(@NotNull PresentationData data) {
                 super.updateImpl(data);
                 customizePresentation(this, data);
               }

@@ -16,8 +16,8 @@
 package com.siyeh.ipp.imports;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiImportStatement;
 import com.intellij.psi.PsiImportStatementBase;
+import com.intellij.psi.PsiImportStaticStatement;
 import com.intellij.psi.PsiJavaFile;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
@@ -27,12 +27,14 @@ class OnDemandImportPredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(@NotNull PsiElement element) {
-    // doesn't work for import static yet.
-    if (!(element instanceof PsiImportStatement)) {
+    if (!(element instanceof PsiImportStatementBase)) {
       return false;
     }
     PsiImportStatementBase importStatement = (PsiImportStatementBase)element;
     if (!importStatement.isOnDemand() || ErrorUtil.containsError(element)) {
+      return false;
+    }
+    if (importStatement instanceof PsiImportStaticStatement && ((PsiImportStaticStatement)importStatement).resolveTargetClass() == null) {
       return false;
     }
     return importStatement.getContainingFile() instanceof PsiJavaFile;

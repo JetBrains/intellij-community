@@ -109,7 +109,7 @@ public class StatisticsJobsScheduler implements BaseComponent {
       }
 
       @Override
-      public void projectClosed(Project project) {
+      public void projectClosed(@NotNull Project project) {
         Future future = myPersistStatisticsSessionsMap.remove(project);
         if (future != null) {
           future.cancel(true);

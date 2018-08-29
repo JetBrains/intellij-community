@@ -142,7 +142,7 @@ class SameNamesJoiner implements TreeStructureProvider {
     }
 
     @Override
-    public void update(PresentationData presentation) {
+    public void update(@NotNull PresentationData presentation) {
     }
   }
 }

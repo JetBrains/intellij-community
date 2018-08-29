@@ -607,7 +607,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     public void projectClosing(Project project) {
       String path = getProjectPath(project);
       if (path == null) return;
-      
+
       synchronized (myStateLock) {
         myState.names.put(path, getProjectDisplayName(project));
       }
@@ -615,7 +615,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     }
 
     @Override
-    public void projectClosed(final Project project) {
+    public void projectClosed(@NotNull final Project project) {
       Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
       if (openProjects.length > 0) {
         Project openProject = openProjects[openProjects.length - 1];

@@ -12,11 +12,10 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.QueueProcessor;
+import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -47,12 +46,18 @@ public class Alarm implements Disposable {
   // requests not yet scheduled to myExecutorService (because e.g. corresponding component isn't active yet)
   private final List<Request> myPendingRequests = new SmartList<>(); // guarded by LOCK
 
-  private final ScheduledExecutorService myExecutorService;
+  // have to restrict the number of running tasks because otherwise the (implicit) contract of
+  // "addRequests with the same delay are executed in order" will be broken
+  private final ScheduledExecutorService myExecutorService = AppExecutorUtil.createBoundedScheduledExecutorService("Alarm Pool", 1);
 
   private final Object LOCK = new Object();
-  final ThreadToUse myThreadToUse;
+  private final ThreadToUse myThreadToUse;
 
   private JComponent myActivationComponent;
+
+  // Common queue for all EDT Alarms. Afterall we've just one world^H^H^H EDT but we live in different ones.
+  // Requests ready to fire in EDT are queued here and executed as batchy as possible
+  private static final TransferToEDTQueue<Runnable> EDT_QUEUE = TransferToEDTQueue.createRunnableMerger("Alarm.EDT");
 
   @Override
   public void dispose() {
@@ -60,9 +65,7 @@ public class Alarm implements Disposable {
       myDisposed = true;
       cancelAllRequests();
 
-      if (myExecutorService != EdtExecutorService.getScheduledExecutorInstance()) {
-        myExecutorService.shutdownNow();
-      }
+      myExecutorService.shutdownNow();
     }
   }
 
@@ -114,15 +117,6 @@ public class Alarm implements Disposable {
 
   public Alarm(@NotNull ThreadToUse threadToUse, @Nullable Disposable parentDisposable) {
     myThreadToUse = threadToUse;
-
-    myExecutorService = threadToUse == ThreadToUse.SWING_THREAD ?
-                        // pass straight to EDT
-                        EdtExecutorService.getScheduledExecutorInstance() :
-
-                        // or pass to app pooled thread.
-                        // have to restrict the number of running tasks because otherwise the (implicit) contract of
-                        // "addRequests with the same delay are executed in order" will be broken
-                        AppExecutorUtil.createBoundedScheduledExecutorService("Alarm Pool", 1);
 
     if (parentDisposable == null) {
       if (threadToUse == ThreadToUse.POOLED_THREAD || threadToUse != ThreadToUse.SWING_THREAD) {
@@ -296,12 +290,17 @@ public class Alarm implements Disposable {
     }
 
     for (Request request : requests) {
-      Future<?> future;
+      Future<?> scheduledFuture;
+      CompletableFuture<?> executionFuture;
       synchronized (LOCK) {
-        future = request.myFuture;
+        scheduledFuture = request.myScheduledFuture;
+        executionFuture = request.myExecutionFuture;
       }
-      if (future != null) {
-        future.get(timeout, unit);
+      if (scheduledFuture != null) {
+        scheduledFuture.get(timeout, unit);
+      }
+      if (executionFuture != null) {
+        executionFuture.get(timeout, unit);
       }
     }
   }
@@ -318,11 +317,7 @@ public class Alarm implements Disposable {
     }
   }
 
-  protected boolean isEdt() {
-    return isEventDispatchThread();
-  }
-
-  public static boolean isEventDispatchThread() {
+  private static boolean isEventDispatchThread() {
     final Application app = ApplicationManager.getApplication();
     return app != null && app.isDispatchThread() || EventQueue.isDispatchThread();
   }
@@ -330,7 +325,8 @@ public class Alarm implements Disposable {
   private class Request implements Runnable {
     private Runnable myTask; // guarded by LOCK
     private final ModalityState myModalityState;
-    private Future<?> myFuture; // guarded by LOCK
+    private ScheduledFuture<?> myScheduledFuture; // future that sits in the delayed queue waiting for delay to expire; guarded by LOCK
+    private CompletableFuture<?> myExecutionFuture; // future that completes when the task.run() finishes. guarded by LOCK
     private final long myDelay;
 
     @Async.Schedule
@@ -355,20 +351,14 @@ public class Alarm implements Disposable {
           }
         }
 
-        final Runnable scheduledTask = new Runnable() {
+        Runnable scheduledTask = new Runnable() {
           @Override
           public void run() {
-            final Runnable task;
-            synchronized (LOCK) {
-              task = myTask;
-              myTask = null;
-            }
-            if (myThreadToUse == ThreadToUse.SWING_THREAD && !isEdt()) {
-              //noinspection SSBasedInspection
-              EdtInvocationManager.getInstance().invokeLater(() -> runSafely(task));
+            if (myThreadToUse == ThreadToUse.SWING_THREAD && !isEventDispatchThread()) {
+              EDT_QUEUE.offer(Request.this);
             }
             else {
-              runSafely(task);
+              runSafely();
             }
           }
 
@@ -378,18 +368,13 @@ public class Alarm implements Disposable {
           }
         };
 
-        if (myModalityState == null) {
+        final Application app;
+
+        if (myModalityState == null || (app = ApplicationManager.getApplication()) == null || isEventDispatchThread()) {
           scheduledTask.run();
         }
         else {
-          final Application app = ApplicationManager.getApplication();
-          if (app == null) {
-            //noinspection SSBasedInspection
-            SwingUtilities.invokeLater(scheduledTask);
-          }
-          else {
-            app.invokeLater(scheduledTask, myModalityState);
-          }
+          app.invokeLater(scheduledTask, myModalityState);
         }
       }
       catch (ProcessCanceledException ignored) { }
@@ -399,24 +384,33 @@ public class Alarm implements Disposable {
     }
 
     @Async.Execute
-    private void runSafely(@Nullable Runnable task) {
+    private void runSafely() {
+      @Nullable Runnable task;
+      synchronized (LOCK) {
+        task = myTask;
+      }
       try {
         if (!myDisposed && task != null) {
           QueueProcessor.runSafely(task);
         }
       }
       finally {
-        // remove from the list after execution to be able for waitForAllExecuted() to wait for completion
+        /** remove from the list after execution to be able for {@link #waitForAllExecuted(long, TimeUnit)} to wait for completion */
         synchronized (LOCK) {
+          myTask = null;
           myRequests.remove(this);
-          myFuture = null;
+          myScheduledFuture = null;
+          if (myExecutionFuture != null) {
+            myExecutionFuture.complete(null);
+          }
         }
       }
     }
 
     // must be called under LOCK
     private void schedule() {
-      myFuture = myExecutorService.schedule(this, myDelay, TimeUnit.MILLISECONDS);
+      myScheduledFuture = myExecutorService.schedule(this, myDelay, TimeUnit.MILLISECONDS);
+      myExecutionFuture = new CompletableFuture<>();
     }
 
     /**
@@ -425,11 +419,17 @@ public class Alarm implements Disposable {
     @Nullable
     private Runnable cancel() {
       synchronized (LOCK) {
-        Future<?> future = myFuture;
-        if (future != null) {
-          future.cancel(false);
-          myFuture = null;
+        Future<?> scheduledFuture = myScheduledFuture;
+        if (scheduledFuture != null) {
+          scheduledFuture.cancel(false);
+          myScheduledFuture = null;
         }
+        CompletableFuture<?> executionFuture = myExecutionFuture;
+        if (executionFuture != null) {
+          executionFuture.cancel(false);
+          myExecutionFuture = null;
+        }
+        EDT_QUEUE.remove(this);
         Runnable task = myTask;
         myTask = null;
         return task;

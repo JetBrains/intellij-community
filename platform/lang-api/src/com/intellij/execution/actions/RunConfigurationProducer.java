@@ -47,7 +47,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
     myConfigurationFactory = configurationFactory;
   }
 
-  protected RunConfigurationProducer(final ConfigurationType configurationType) {
+  protected RunConfigurationProducer(@NotNull ConfigurationType configurationType) {
     myConfigurationFactory = configurationType.getConfigurationFactories()[0];
   }
 

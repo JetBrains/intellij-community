@@ -309,7 +309,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   }
 
   @Override
-  protected void installComparator(AbstractTreeBuilder builder, Comparator<NodeDescriptor> comparator) {
+  protected void installComparator(AbstractTreeBuilder builder, @NotNull Comparator<? super NodeDescriptor> comparator) {
     myTreeModel.setComparator(comparator);
   }
 

@@ -2,7 +2,7 @@
 package com.intellij.execution.impl
 
 import com.intellij.execution.*
-import com.intellij.execution.configuration.ConfigurationFactoryEx
+import com.intellij.execution.configuration.ConfigurationFactoryListener
 import com.intellij.execution.configurations.*
 import com.intellij.execution.impl.RunConfigurable.Companion.collectNodesRecursively
 import com.intellij.execution.impl.RunConfigurableNodeKind.*
@@ -972,7 +972,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
     configuration.name = name
     (configuration as? LocatableConfigurationBase)?.setNameChangedByUser(false)
     @Suppress("UNCHECKED_CAST")
-    (factory as? ConfigurationFactoryEx<RunConfiguration>)?.onNewConfigurationCreated(configuration)
+    (factory as? ConfigurationFactoryListener<RunConfiguration>)?.onNewConfigurationCreated(configuration)
     return createNewConfiguration(settings, node, selectedNode)
   }
 
@@ -1181,7 +1181,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
         settings.name = copyName
         val factory = settings.factory
         @Suppress("UNCHECKED_CAST")
-        (factory as? ConfigurationFactoryEx<RunConfiguration>)?.onConfigurationCopied(settings.configuration)
+        (factory as? ConfigurationFactoryListener<RunConfiguration>)?.onConfigurationCopied(settings.configuration)
         val parentNode = selectedNode?.parent
         val node = (if ((parentNode as? DefaultMutableTreeNode)?.userObject is String) parentNode else typeNode) as DefaultMutableTreeNode
         val configurable = createNewConfiguration(settings, node, selectedNode)

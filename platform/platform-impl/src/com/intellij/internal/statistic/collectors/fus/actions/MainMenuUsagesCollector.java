@@ -29,6 +29,6 @@ public final class MainMenuUsagesCollector extends ApplicationUsagesCollector im
 
   @Override
   public FUSUsageContext getContext() {
-    return FUSUsageContext.DEFAULT;
+    return FUSUsageContext.OS_CONTEXT;
   }
 }

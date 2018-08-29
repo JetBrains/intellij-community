@@ -2,7 +2,6 @@
 package com.intellij.debugger.impl.attach;
 
 import com.intellij.debugger.engine.RemoteStateState;
-import com.intellij.debugger.impl.DebuggerManagerImpl;
 import com.intellij.debugger.impl.GenericDebuggerRunner;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
@@ -244,12 +243,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
 
     @Override
     RemoteConnection createConnection() {
-      return new RemoteConnection(myUseSocket, DebuggerManagerImpl.LOCALHOST_ADDRESS_FALLBACK, myAddress, false);
-    }
-
-    @Override
-    String getSessionName() {
-      return "localhost:" + myAddress;
+      return new PidRemoteConnection(myPid);
     }
 
     @Override

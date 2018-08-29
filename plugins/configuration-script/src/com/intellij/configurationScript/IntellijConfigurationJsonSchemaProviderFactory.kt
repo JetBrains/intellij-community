@@ -4,6 +4,8 @@ package com.intellij.configurationScript
 import com.intellij.json.JsonFileType
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
@@ -17,34 +19,57 @@ import java.nio.charset.StandardCharsets
 
 internal val LOG = logger<IntellijConfigurationJsonSchemaProviderFactory>()
 
-internal class IntellijConfigurationJsonSchemaProviderFactory : JsonSchemaProviderFactory, JsonSchemaFileProvider {
-  private val schemeFile: VirtualFile by lazy { generateConfigurationSchema() }
+private val PROVIDER_KEY = Key.create<List<JsonSchemaFileProvider>>("IntellijConfigurationJsonSchemaProvider")
 
-  override fun getProviders(project: Project) = listOf(this)
-
-  override fun isAvailable(file: VirtualFile): Boolean {
-    val nameSequence = file.nameSequence
-    return StringUtil.equals(nameSequence, IDE_FILE) || StringUtil.equals(nameSequence, IDE_FILE_VARIANT_2)
+internal class IntellijConfigurationJsonSchemaProviderFactory : JsonSchemaProviderFactory {
+  private val schemeContent by lazy {
+    generateConfigurationSchema()
   }
 
-  override fun getName() = "IntelliJ Configuration"
+  override fun getProviders(project: Project): List<JsonSchemaFileProvider> {
+    var result = PROVIDER_KEY.get(project)
+    if (result != null) {
+      return result
+    }
 
-  override fun getSchemaFile(): VirtualFile? {
-    if (SystemProperties.getBooleanProperty("configuration.schema.cache", true)) {
-      return schemeFile
-    }
-    else {
-      // simplify development - ability to apply changes on hotswap
-      return generateConfigurationSchema()
-    }
+    // LightVirtualFile is not cached as regular files by FileManagerImpl.findViewProvider, but instead HARD_REFERENCE_TO_PSI is set to user data and this value references project and so,
+    // LightVirtualFile cannot be cached per application, must be stored per project.
+    // Yes, it is hack, but for now decided to not fix this issue on platform level.
+    result = listOf(object : JsonSchemaFileProvider {
+      private val schemeFile = lazy {
+        LightVirtualFile("scheme.json", JsonFileType.INSTANCE, schemeContent, StandardCharsets.UTF_8, 0)
+      }
+
+      override fun getName() = "IntelliJ Configuration"
+
+      override fun getSchemaFile(): VirtualFile? {
+        if (!SystemProperties.getBooleanProperty("configuration.schema.cache", true) && schemeFile.isInitialized()) {
+          // simplify development - ability to apply changes on hotswap
+          val newData = generateConfigurationSchema()
+          val file = schemeFile.value
+          if (!StringUtil.equals(file.content, newData)) {
+            file.setContent(null, newData, true)
+          }
+        }
+        return schemeFile.value
+      }
+
+      override fun getSchemaType() = SchemaType.embeddedSchema
+
+      override fun getSchemaVersion() = JsonSchemaVersion.SCHEMA_7
+
+      override fun isUserVisible() = false
+
+      override fun isAvailable(file: VirtualFile): Boolean {
+        val nameSequence = file.nameSequence
+        return StringUtil.equals(nameSequence, IDE_FILE) || StringUtil.equals(nameSequence, IDE_FILE_VARIANT_2)
+      }
+    })
+    return (project as UserDataHolderBase).putUserDataIfAbsent(PROVIDER_KEY, result)
   }
-
-  override fun getSchemaType() = SchemaType.embeddedSchema
-
-  override fun getSchemaVersion() = JsonSchemaVersion.SCHEMA_7
 }
 
-private fun generateConfigurationSchema(): LightVirtualFile {
+internal fun generateConfigurationSchema(): CharSequence {
   // fake vars to avoid escaping
   @Suppress("JsonStandardCompliance")
   val schema = "\$schema"
@@ -53,26 +78,28 @@ private fun generateConfigurationSchema(): LightVirtualFile {
   @Suppress("JsonStandardCompliance")
   val ref = "\$ref"
 
-  val runConfigurationsProperties = StringBuilder()
-  val definitions = StringBuilder()
-  buildRunConfigurationTypeSchema(runConfigurationsProperties, definitions)
+  val defBuilder = StringBuilder()
+  val definitions = JsonObjectBuilder(defBuilder)
 
+  val rcProperties = JsonObjectBuilder(StringBuilder())
+  RunConfigurationJsonSchemaGenerator(definitions).generate(rcProperties)
+
+  definitions.map("RunConfigurations") {
+    rawBuilder("properties", rcProperties)
+    "additionalProperties" to false
+  }
+
+  @Suppress("UnnecessaryVariable")
   @Language("JSON")
   val data = """
   {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "https://jetbrains.com/intellij-configuration.schema.json",
     "title": "IntelliJ Configuration",
-    "description": "IntelliJ Configuration File to configure IDE behavior, run configurations and so on",
+    "description": "IntelliJ Configuration to configure IDE behavior, run configurations and so on",
     "type": "object",
     "definitions": {
-      $definitions
-      "RunConfigurations": {
-        "properties": {
-          $runConfigurationsProperties
-        },
-        "additionalProperties": false
-      }
+      $defBuilder
     },
     "properties": {
       "${Keys.runConfigurations}": {
@@ -84,10 +111,10 @@ private fun generateConfigurationSchema(): LightVirtualFile {
     "additionalProperties": false
   }
   """
-  return LightVirtualFile("scheme.json", JsonFileType.INSTANCE, data.trimIndent(), StandardCharsets.UTF_8, 0)
+  return data
 }
 
 @Suppress("JsonStandardCompliance")
-object Keys {
+internal object Keys {
   const val runConfigurations = "runConfigurations"
 }
