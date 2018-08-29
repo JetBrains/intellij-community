@@ -140,12 +140,16 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
     presentation.setIcon(newIcon);
 
     for (RangeMarker additionalMarker : getValue().getAdditionalRangeMarkers()) {
-      if (!additionalMarker.isValid()) continue;
+      if (!additionalMarker.isValid()) break;
       ArrayList<HighlightedRegion> highlights = new ArrayList<>();
       int lineNum = document.getLineNumber(additionalMarker.getStartOffset());
       int lineStart = document.getLineStartOffset(lineNum);
       int lineEnd = document.getLineEndOffset(lineNum);
       int lineStartNonWs = CharArrayUtil.shiftForward(chars, lineStart, " \t");
+      if (lineStartNonWs > additionalMarker.getStartOffset() || lineEnd < additionalMarker.getEndOffset()) {
+        // can happen for an invalid (obsolete) node, tree implementation can call this method for such a node
+        break;
+      }
       assert lineStartNonWs <= additionalMarker.getStartOffset();
       assert lineEnd >= additionalMarker.getEndOffset();
       collectHighlights(highlights, highlighter, lineStartNonWs, lineEnd, 0);
