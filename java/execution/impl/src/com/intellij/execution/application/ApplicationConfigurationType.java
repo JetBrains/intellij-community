@@ -7,6 +7,7 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -25,7 +26,12 @@ public class ApplicationConfigurationType implements ConfigurationType {
   private final ConfigurationFactory myFactory;
 
   public ApplicationConfigurationType() {
-    myFactory = new JvmMainMethodConfigurationFactoryBase(this) {
+    myFactory = new ConfigurationFactory(this) {
+      @Override
+      public Class<? extends BaseState> getOptionsClass() {
+        return ApplicationConfigurationOptions.class;
+      }
+
       @NotNull
       @Override
       public RunConfiguration createTemplateConfiguration(@NotNull Project project) {

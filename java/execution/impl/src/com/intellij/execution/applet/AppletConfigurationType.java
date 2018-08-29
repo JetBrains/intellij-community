@@ -2,20 +2,20 @@
 package com.intellij.execution.applet;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.configuration.ConfigurationFactoryEx;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.ConfigurationTypeBase;
+import com.intellij.execution.configurations.ConfigurationTypeUtil;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.LazyUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
-public class AppletConfigurationType implements ConfigurationType {
-  private final ConfigurationFactory myFactory;
-
+public final class AppletConfigurationType extends ConfigurationTypeBase {
   AppletConfigurationType() {
-    myFactory = new ConfigurationFactoryEx(this) {
+    super("Applet", ExecutionBundle.message("applet.configuration.name"), ExecutionBundle.message("applet.configuration.description"), LazyUtil.create(() -> AllIcons.RunConfigurations.Applet));
+    addFactory(new ConfigurationFactory(this) {
       @NotNull
       @Override
       public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
@@ -23,42 +23,10 @@ public class AppletConfigurationType implements ConfigurationType {
       }
 
       @Override
-      public void onNewConfigurationCreated(@NotNull RunConfiguration configuration) {
-        ((ModuleBasedConfiguration)configuration).onNewConfigurationCreated();
-      }
-
-      @Override
       public Class<? extends BaseState> getOptionsClass() {
         return AppletConfigurationOptions.class;
       }
-    };
-  }
-
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return ExecutionBundle.message("applet.configuration.name");
-  }
-
-  @Override
-  public String getConfigurationTypeDescription() {
-    return ExecutionBundle.message("applet.configuration.description");
-  }
-
-  @Override
-  public Icon getIcon() {
-    return AllIcons.RunConfigurations.Applet;
-  }
-
-  @Override
-  public ConfigurationFactory[] getConfigurationFactories() {
-    return new ConfigurationFactory[]{myFactory};
-  }
-
-  @Override
-  @NotNull
-  public String getId() {
-    return "Applet";
+    });
   }
 
   public static AppletConfigurationType getInstance() {

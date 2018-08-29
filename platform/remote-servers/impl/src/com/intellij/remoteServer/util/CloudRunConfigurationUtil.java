@@ -3,9 +3,8 @@ package com.intellij.remoteServer.util;
 
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configuration.ConfigurationFactoryListener;
 import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.impl.RunManagerImplKt;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModulePointer;
 import com.intellij.openapi.module.ModulePointerManager;
@@ -42,8 +41,7 @@ public class CloudRunConfigurationUtil {
     result.setServerName(account.getName());
     result.setDeploymentSource(deploymentSource);
     result.setDeploymentConfiguration(deploymentConfiguration);
-    //noinspection unchecked
-    ((ConfigurationFactoryListener<RunConfiguration>)configurationFactory).onNewConfigurationCreated(runSettings.getConfiguration());
+    RunManagerImplKt.callNewConfigurationCreated(configurationFactory, runSettings.getConfiguration());
 
     runManager.addConfiguration(runSettings);
     runManager.setSelectedConfiguration(runSettings);

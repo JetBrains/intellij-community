@@ -4,9 +4,7 @@ package com.intellij.remoteServer.impl.configuration.deployment;
 import com.intellij.execution.ProgramRunnerUtil;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configuration.ConfigurationFactoryListener;
 import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.openapi.project.Project;
@@ -53,9 +51,8 @@ public class DeploymentConfigurationManagerImpl extends DeploymentConfigurationM
     @SuppressWarnings("unchecked")
     ConfigurationFactory factory = configurationType.getFactoryForType(sourceType);
     RunnerAndConfigurationSettings settings = runManager.createRunConfiguration(configurationType.getDisplayName(), factory);
-    //noinspection unchecked
-    ((ConfigurationFactoryListener<RunConfiguration>)factory).onNewConfigurationCreated(settings.getConfiguration());
     DeployToServerRunConfiguration<?, ?> runConfiguration = (DeployToServerRunConfiguration<?, ?>)settings.getConfiguration();
+    runConfiguration.onNewConfigurationCreated();
     if (remoteServer != null) {
       runConfiguration.setServerName(remoteServer.getName());
     }

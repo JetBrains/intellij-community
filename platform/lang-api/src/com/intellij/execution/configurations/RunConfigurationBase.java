@@ -308,4 +308,14 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   protected boolean isNewSerializationUsed() {
     return false;
   }
+
+  /**
+   * Called when configuration created via UI (Add Configuration).
+   * Suitable to perform some initialization tasks (in most cases it is indicator that you do something wrong, so, please override this method with care and only if really need).
+   */
+  public void onNewConfigurationCreated() {
+  }
+
+  public void onConfigurationCopied() {
+  }
 }

@@ -181,6 +181,7 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     return false;
   }
 
+  @Override
   public void onNewConfigurationCreated() {
     final RunConfigurationModule configurationModule = getConfigurationModule();
     if (configurationModule.getModule() == null) {
