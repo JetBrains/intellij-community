@@ -654,7 +654,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     }
 
     @Override
-    public void projectClosed(final Project project) {
+    public void projectClosed(@NotNull final Project project) {
       if (myContent != null && project == myProject) {
         myContent.getManager().removeContent(myContent, true);
         Disposer.dispose(this); // Dispose content even if content manager refused to.

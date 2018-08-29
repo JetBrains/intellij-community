@@ -1690,7 +1690,7 @@ public class BuildManager implements Disposable {
     }
 
     @Override
-    public void projectClosed(Project project) {
+    public void projectClosed(@NotNull Project project) {
       myProjectDataMap.remove(getProjectPath(project));
       final MessageBusConnection conn = myConnections.remove(project);
       if (conn != null) {

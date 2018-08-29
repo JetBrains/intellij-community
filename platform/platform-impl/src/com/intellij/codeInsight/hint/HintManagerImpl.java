@@ -898,7 +898,7 @@ public class HintManagerImpl extends HintManager {
     }
 
     @Override
-    public void projectClosed(Project project) {
+    public void projectClosed(@NotNull Project project) {
       ApplicationManager.getApplication().assertIsDispatchThread();
 
       // avoid leak through com.intellij.codeInsight.hint.TooltipController.myCurrentTooltip
