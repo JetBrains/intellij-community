@@ -11,7 +11,6 @@ import javax.imageio.ImageWriteParam
 import javax.imageio.ImageWriter
 
 class ScreenshotTaker(private val robot: Robot = Robot()) {
-  private val cursorImg: BufferedImage = loadCursor()
 
   fun safeTakeScreenshotAndSave(file: File,
                                 captureArea: Rectangle = FULL_SCREEN,
@@ -51,15 +50,13 @@ class ScreenshotTaker(private val robot: Robot = Robot()) {
   }
 
   private fun drawCursor(image: BufferedImage, cursorLocation: Point): BufferedImage {
-    image.graphics.drawImage(cursorImg,
-                             cursorLocation.x - cursorImg.width / 2,
-                             cursorLocation.y - cursorImg.height / 2,
-                             null)
+    val graphics: Graphics = image.graphics
+    graphics.color = Color.RED
+    graphics.fillRect(cursorLocation.x - 10, cursorLocation.y, 20, 1)
+    graphics.fillRect(cursorLocation.x, cursorLocation.y - 10, 1, 20)
+    graphics.dispose()
     return image
   }
-
-  private fun loadCursor(): BufferedImage =
-    this::class.java.getResourceAsStream("/images/cursor.png").use { inputStream -> return ImageIO.read(inputStream) }
 
   enum class ImageFormat(val formatName: String) {
     PNG("png"),
