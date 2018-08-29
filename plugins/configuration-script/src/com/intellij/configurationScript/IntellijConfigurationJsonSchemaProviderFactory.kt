@@ -2,11 +2,10 @@
 package com.intellij.configurationScript
 
 import com.intellij.json.JsonFileType
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
@@ -20,52 +19,53 @@ import java.nio.charset.StandardCharsets
 
 internal val LOG = logger<IntellijConfigurationJsonSchemaProviderFactory>()
 
-private fun projectManagerListener(file: MyLightVirtualFile): ProjectManagerListener {
-  return object : ProjectManagerListener {
-    override fun projectClosed(project: Project) {
-      file.clearUserData()
+private val PROVIDER_KEY = Key.create<List<JsonSchemaFileProvider>>("IntellijConfigurationJsonSchemaProvider")
+
+internal class IntellijConfigurationJsonSchemaProviderFactory : JsonSchemaProviderFactory {
+  private val schemeContent by lazy {
+    generateConfigurationSchema()
+  }
+
+  override fun getProviders(project: Project): List<JsonSchemaFileProvider> {
+    var result = PROVIDER_KEY.get(project)
+    if (result != null) {
+      return result
     }
-  }
-}
 
-internal class IntellijConfigurationJsonSchemaProviderFactory : JsonSchemaProviderFactory, JsonSchemaFileProvider {
-  private val schemeFile: VirtualFile by lazy {
-    val file = generateConfigurationSchemaFile()
-    ApplicationManager.getApplication().messageBus.connect().subscribe(ProjectManager.TOPIC, projectManagerListener(file))
-    file
-  }
+    // LightVirtualFile is not cached as regular files by FileManagerImpl.findViewProvider, but instead HARD_REFERENCE_TO_PSI is set to user data and this value references project and so,
+    // LightVirtualFile cannot be cached per application, must be stored per project.
+    // Yes, it is hack, but for now decided to not fix this issue on platform level.
+    result = listOf(object : JsonSchemaFileProvider {
+      private val schemeFile = lazy {
+        LightVirtualFile("scheme.json", JsonFileType.INSTANCE, schemeContent, StandardCharsets.UTF_8, 0)
+      }
 
-  override fun getProviders(project: Project) = listOf(this)
+      override fun getName() = "IntelliJ Configuration"
 
-  override fun isAvailable(file: VirtualFile): Boolean {
-    val nameSequence = file.nameSequence
-    return StringUtil.equals(nameSequence, IDE_FILE) || StringUtil.equals(nameSequence, IDE_FILE_VARIANT_2)
-  }
+      override fun getSchemaFile(): VirtualFile? {
+        if (!SystemProperties.getBooleanProperty("configuration.schema.cache", true) && schemeFile.isInitialized()) {
+          // simplify development - ability to apply changes on hotswap
+          val newData = generateConfigurationSchema()
+          val file = schemeFile.value
+          if (!StringUtil.equals(file.content, newData)) {
+            file.setContent(null, newData, true)
+          }
+        }
+        return schemeFile.value
+      }
 
-  override fun getName() = "IntelliJ Configuration"
+      override fun getSchemaType() = SchemaType.embeddedSchema
 
-  override fun getSchemaFile(): VirtualFile? {
-    if (SystemProperties.getBooleanProperty("configuration.schema.cache", true)) {
-      return schemeFile
-    }
-    else {
-      // simplify development - ability to apply changes on hotswap
-      return generateConfigurationSchemaFile()
-    }
-  }
+      override fun getSchemaVersion() = JsonSchemaVersion.SCHEMA_7
 
-  override fun getSchemaType() = SchemaType.embeddedSchema
+      override fun isUserVisible() = false
 
-  override fun getSchemaVersion() = JsonSchemaVersion.SCHEMA_7
-}
-
-private fun generateConfigurationSchemaFile(): MyLightVirtualFile {
-  return MyLightVirtualFile(generateConfigurationSchema())
-}
-
-private class MyLightVirtualFile(data: CharSequence) : LightVirtualFile("scheme.json", JsonFileType.INSTANCE, data, StandardCharsets.UTF_8, 0) {
-  override public fun clearUserData() {
-    super.clearUserData()
+      override fun isAvailable(file: VirtualFile): Boolean {
+        val nameSequence = file.nameSequence
+        return StringUtil.equals(nameSequence, IDE_FILE) || StringUtil.equals(nameSequence, IDE_FILE_VARIANT_2)
+      }
+    })
+    return (project as UserDataHolderBase).putUserDataIfAbsent(PROVIDER_KEY, result)
   }
 }
 
@@ -115,6 +115,6 @@ internal fun generateConfigurationSchema(): CharSequence {
 }
 
 @Suppress("JsonStandardCompliance")
-object Keys {
+internal object Keys {
   const val runConfigurations = "runConfigurations"
 }
