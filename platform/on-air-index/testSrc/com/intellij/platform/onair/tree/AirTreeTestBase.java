@@ -38,7 +38,7 @@ public abstract class AirTreeTestBase {
 
   @NotNull
   protected BTree reopen(BTree tree) {
-    Address address = tree.store(novelty);
+    Address address = tree.store(novelty.access());
     novelty = new MockNovelty(); // cleanup
     tree = BTree.load(storage, 4, address);
     return tree;
@@ -46,7 +46,7 @@ public abstract class AirTreeTestBase {
 
   @NotNull
   public BTree createTree() {
-    return BTree.create(novelty, storage, 4);
+    return BTree.create(novelty.access(), storage, 4);
   }
 
   public static byte[] key(int key) {

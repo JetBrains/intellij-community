@@ -39,7 +39,7 @@ public class BTreeForwardIndexStorage<V> implements PersistentMap<Integer, V> {
 
   @Override
   public V get(Integer key) throws IOException {
-    @Nullable byte[] value = tree.get(novelty, serializeKey(key));
+    @Nullable byte[] value = tree.get(novelty.access(), serializeKey(key));
     if (value == null) {
       return null;
     }
@@ -53,18 +53,18 @@ public class BTreeForwardIndexStorage<V> implements PersistentMap<Integer, V> {
     final ByteArrayOutputStream stream = new ByteArrayOutputStream();
     final DataOutputStream output = new DataOutputStream(stream);
     valueExternalizer.save(output, value);
-    tree.put(novelty, serializeKey(key), stream.toByteArray(), true);
+    tree.put(novelty.access(), serializeKey(key), stream.toByteArray(), true);
   }
 
   @Override
   public void remove(Integer key) {
-    tree.delete(novelty, serializeKey(key));
+    tree.delete(novelty.access(), serializeKey(key));
   }
 
   @Override
   public boolean processKeys(Processor<Integer> processor) {
     // TODO: navigate to starting key first?
-    return tree.forEach(novelty, (key, value) -> {
+    return tree.forEach(novelty.access(), (key, value) -> {
       short currentId = (short)(ByteUtils.readUnsignedShort(key, 0) ^ 0x8000);
       if (id == currentId) {
         return processor.process((int)(ByteUtils.readUnsignedInt(key, 2) ^ 0x80000000));

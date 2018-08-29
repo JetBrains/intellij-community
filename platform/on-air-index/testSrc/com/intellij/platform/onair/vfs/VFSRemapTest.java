@@ -45,7 +45,8 @@ public class VFSRemapTest {
         for (int i = 1; i < maxId; i++) {
           if (fs.getName(i) != null) {
             Assert.assertEquals(i, mapping.localToRemote.get(i));
-          } else {
+          }
+          else {
             Assert.assertEquals(-1, mapping.localToRemote.get(i));
           }
         }

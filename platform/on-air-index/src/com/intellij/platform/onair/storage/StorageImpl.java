@@ -220,7 +220,7 @@ public class StorageImpl implements Storage {
         }
       }
     };
-    final Address result = tree.store(novelty, consumer);
+    final Address result = tree.store(novelty.access(), consumer);
     if (!data.isEmpty()) {
       packs.add(setAll(0, data));
     }

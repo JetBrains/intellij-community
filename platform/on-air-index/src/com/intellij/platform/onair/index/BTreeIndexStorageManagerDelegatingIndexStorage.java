@@ -126,7 +126,7 @@ public class BTreeIndexStorageManagerDelegatingIndexStorage<Key, Value> implemen
 
   @SuppressWarnings("unchecked")
   private BTreeIndexStorage<Key, Value> delegate() {
-    return myStorageManager.indexStorages.get(myID.getName());
+    return (BTreeIndexStorage<Key, Value>)myStorageManager.stateRef.get().indexStorages.get(myID.getName());
   }
 
   private class IntIteratorWrapper implements ValueContainer.IntIterator {

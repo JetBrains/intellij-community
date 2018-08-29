@@ -18,13 +18,13 @@ public class InternalPage extends BasePage {
 
   @Override
   @Nullable
-  protected byte[] get(@NotNull Novelty novelty, @NotNull byte[] key) {
+  protected byte[] get(@NotNull Novelty.Accessor novelty, @NotNull byte[] key) {
     final int index = binarySearch(key, 0);
     return index < 0 ? getChild(novelty, Math.max(-index - 2, 0)).get(novelty, key) : getChild(novelty, index).get(novelty, key);
   }
 
   @Override
-  protected boolean forEach(@NotNull Novelty novelty, @NotNull KeyValueConsumer consumer) {
+  protected boolean forEach(@NotNull Novelty.Accessor novelty, @NotNull KeyValueConsumer consumer) {
     for (int i = 0; i < size; i++) {
       Address childAddress = getChildAddress(i);
       BasePage child = tree.loadPage(novelty, childAddress);
@@ -36,7 +36,7 @@ public class InternalPage extends BasePage {
   }
 
   @Override
-  protected boolean forEach(@NotNull Novelty novelty, @NotNull byte[] fromKey, @NotNull KeyValueConsumer consumer) {
+  protected boolean forEach(@NotNull Novelty.Accessor novelty, @NotNull byte[] fromKey, @NotNull KeyValueConsumer consumer) {
     boolean first = true;
     for (int i = binarySearchGuess(fromKey); i < size; i++) {
       Address childAddress = getChildAddress(i);
@@ -57,7 +57,7 @@ public class InternalPage extends BasePage {
 
   @Override
   @Nullable
-  protected BasePage put(@NotNull Novelty novelty, @NotNull byte[] key, @NotNull byte[] value, boolean overwrite, boolean[] result) {
+  protected BasePage put(@NotNull Novelty.Accessor novelty, @NotNull byte[] key, @NotNull byte[] value, boolean overwrite, boolean[] result) {
     int pos = binarySearch(key, 0);
 
     if (pos >= 0 && !overwrite) {
@@ -94,7 +94,7 @@ public class InternalPage extends BasePage {
   }
 
   @Override
-  protected boolean delete(@NotNull Novelty novelty, @NotNull byte[] key, @Nullable byte[] value) {
+  protected boolean delete(@NotNull Novelty.Accessor novelty, @NotNull byte[] key, @Nullable byte[] value) {
     int pos = binarySearchGuess(key);
     final BasePage child = getChild(novelty, pos).getMutableCopy(novelty, tree);
     if (!child.delete(novelty, key, value)) {
@@ -133,14 +133,14 @@ public class InternalPage extends BasePage {
   }
 
   @Override
-  protected BasePage split(@NotNull Novelty novelty, int from, int length) {
+  protected BasePage split(@NotNull Novelty.Accessor novelty, int from, int length) {
     final InternalPage result = copyOf(novelty, this, from, length);
     decrementSize(length);
     return result;
   }
 
   @Override
-  protected InternalPage getMutableCopy(@NotNull Novelty novelty, BTree tree) {
+  protected InternalPage getMutableCopy(@NotNull Novelty.Accessor novelty, BTree tree) {
     if (address.isNovelty()) {
       return this;
     }
@@ -152,7 +152,7 @@ public class InternalPage extends BasePage {
   }
 
   @Override
-  protected Address save(@NotNull Novelty novelty, @NotNull Storage storage, @NotNull StorageConsumer consumer) {
+  protected Address save(@NotNull Novelty.Accessor novelty, @NotNull Storage storage, @NotNull StorageConsumer consumer) {
     final byte[] resultBytes = Arrays.copyOf(backingArray, backingArray.length);
     for (int i = 0; i < size; i++) {
       Address childAddress = getChildAddress(i);
@@ -169,12 +169,12 @@ public class InternalPage extends BasePage {
 
   @Override
   @NotNull
-  protected BasePage getChild(@NotNull Novelty novelty, final int index) {
+  protected BasePage getChild(@NotNull Novelty.Accessor novelty, final int index) {
     return tree.loadPage(novelty, getChildAddress(index));
   }
 
   @Override
-  protected BasePage mergeWithChildren(@NotNull Novelty novelty) {
+  protected BasePage mergeWithChildren(@NotNull Novelty.Accessor novelty) {
     BasePage result = this;
     while (!result.isBottom() && result.size == 1) {
       result = result.getChild(novelty, 0);
@@ -193,7 +193,7 @@ public class InternalPage extends BasePage {
   }
 
   @Override
-  protected void dump(@NotNull Novelty novelty, @NotNull PrintStream out, int level, BTree.ToString renderer) {
+  protected void dump(@NotNull Novelty.Accessor novelty, @NotNull PrintStream out, int level, BTree.ToString renderer) {
     indent(out, level);
     out.println(getClass().getSimpleName());
     for (int i = 0; i < size; i++) {
@@ -205,7 +205,7 @@ public class InternalPage extends BasePage {
     }
   }
 
-  private static InternalPage copyOf(@NotNull Novelty novelty, InternalPage page, int from, int length) {
+  private static InternalPage copyOf(@NotNull Novelty.Accessor novelty, InternalPage page, int from, int length) {
     byte[] bytes = new byte[page.backingArray.length];
 
     final int bytesPerEntry = page.tree.getKeySize() + BYTES_PER_ADDRESS;

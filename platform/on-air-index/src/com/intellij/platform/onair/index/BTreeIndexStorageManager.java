@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.onair.index;
 
-import clojure.lang.IPersistentMap;
 import clojure.lang.PersistentHashMap;
 import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
@@ -9,8 +8,8 @@ import com.google.gson.GsonBuilder;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.platform.onair.storage.StorageImpl;
-import com.intellij.platform.onair.storage.api.Novelty;
 import com.intellij.platform.onair.storage.api.NoveltyImpl;
+import com.intellij.platform.onair.storage.api.Novelty;
 import com.intellij.platform.onair.storage.api.Storage;
 import com.intellij.platform.onair.tree.BTree;
 import com.intellij.platform.onair.vfs.RemoteVFS;
@@ -44,8 +43,8 @@ public class BTreeIndexStorageManager implements IndexStorageManager {
   public static class IndexState {
     public final Storage storage;
 
-    public final IPersistentMap indexStorages;
-    public final IPersistentMap forwardIndices;
+    public final PersistentHashMap indexStorages;
+    public final PersistentHashMap forwardIndices;
     public final Novelty novelty;
     public final RevisionDescritor revisionDescritor;
     public final BTree forwardIndexTree;
@@ -56,8 +55,8 @@ public class BTreeIndexStorageManager implements IndexStorageManager {
                       RevisionDescritor revisionDescritor,
                       BTree forwardIndexTree,
                       RemoteVFS.Mapping vfsMapping,
-                      IPersistentMap indexStorages,
-                      IPersistentMap forwardIndices) {
+                      PersistentHashMap indexStorages,
+                      PersistentHashMap forwardIndices) {
       this.storage = storage;
       this.novelty = novelty;
       this.revisionDescritor = revisionDescritor;
@@ -68,11 +67,13 @@ public class BTreeIndexStorageManager implements IndexStorageManager {
     }
 
     public IndexState withNewForwardIndexStorage(String indexId, BTreeForwardIndexStorage forwardIndexStorage) {
-      return new IndexState(storage, novelty, revisionDescritor, forwardIndexTree, vfsMapping, indexStorages, forwardIndices.assoc(indexId, forwardIndexStorage));
+      return new IndexState(storage, novelty, revisionDescritor, forwardIndexTree, vfsMapping, indexStorages,
+                            (PersistentHashMap)forwardIndices.assoc(indexId, forwardIndexStorage));
     }
 
     public IndexState withNewInvertedIndexStorage(String indexId, BTreeIndexStorage indexStorage) {
-      return new IndexState(storage, novelty, revisionDescritor, forwardIndexTree, vfsMapping, indexStorages.assoc(indexId, indexStorage), forwardIndices);
+      return new IndexState(storage, novelty, revisionDescritor, forwardIndexTree, vfsMapping,
+                            (PersistentHashMap)indexStorages.assoc(indexId, indexStorage), forwardIndices);
     }
   }
 
@@ -151,10 +152,10 @@ public class BTreeIndexStorageManager implements IndexStorageManager {
     if (heads != null) {
       forwardTree = BTree.load(storage, FORWARD_STORAGE_KEY_SIZE, heads.forwardIndexHead);
     } else {
-      forwardTree = BTree.create(novelty, storage, FORWARD_STORAGE_KEY_SIZE);
+      forwardTree = BTree.create(novelty.access(), storage, FORWARD_STORAGE_KEY_SIZE);
     }
 
-    IPersistentMap newInvertedIndexStorages = PersistentHashMap.EMPTY;
+    PersistentHashMap newInvertedIndexStorages = PersistentHashMap.EMPTY;
     if (heads != null) {
       for (Map.Entry<String, BTreeIndexStorage.AddressDescriptor> entry : heads.invertedIndicesHeads.entrySet()) {
         String indexId = entry.getKey();
@@ -162,16 +163,16 @@ public class BTreeIndexStorageManager implements IndexStorageManager {
         BTreeIndexStorage old = (BTreeIndexStorage)oldInvertedIndexStorages.get(indexId);
         if (old != null) {
           newInvertedIndexStorages =
-            newInvertedIndexStorages.assoc(indexId, old.withNewHead(novelty, addr, revisionDescriptor.R, revisionDescriptor.baseR));
+            (PersistentHashMap)newInvertedIndexStorages.assoc(indexId, old.withNewHead(novelty, addr, revisionDescriptor.R, revisionDescriptor.baseR));
         }
       }
     }
 
-    IPersistentMap newForwardIndexStorages = PersistentHashMap.EMPTY;
+    PersistentHashMap newForwardIndexStorages = PersistentHashMap.EMPTY;
     for (Map.Entry kv : (Set<Map.Entry>)(oldForwardIndexStorages.entrySet())) {
       BTreeForwardIndexStorage indexStorage = (BTreeForwardIndexStorage)kv.getValue();
       Object indexId = kv.getKey();
-      newForwardIndexStorages = newForwardIndexStorages.assoc(indexId, indexStorage.withTree(novelty, forwardTree));
+      newForwardIndexStorages = (PersistentHashMap)newForwardIndexStorages.assoc(indexId, indexStorage.withTree(novelty, forwardTree));
     }
 
     return new IndexState(storage,

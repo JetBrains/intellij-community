@@ -4,8 +4,8 @@ package com.intellij.platform.onair.vfs;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
-import com.intellij.platform.onair.storage.api.Novelty;
 import com.intellij.platform.onair.storage.api.NoveltyImpl;
+import com.intellij.platform.onair.storage.api.Novelty;
 import com.intellij.platform.onair.storage.api.Storage;
 import com.intellij.platform.onair.tree.BTree;
 import com.intellij.platform.onair.tree.ByteUtils;
@@ -43,17 +43,19 @@ public class RemoteVFS {
       throw new RuntimeException(e);
     }
 
-    final BTree tree = BTree.create(novelty, storage, VFS_TREE_KEY_SIZE);
+    final Novelty.Accessor txn = novelty.access();
+    final BTree tree = BTree.create(txn, storage, VFS_TREE_KEY_SIZE);
     for (final FSRecords.NameId root : fs.listRootsWithLock()) {
-      addChild(tree, novelty, Integer.MIN_VALUE, root.id, root.name);
-      addChildren(fs, tree, novelty, root.id);
+      addChild(tree, txn, Integer.MIN_VALUE, root.id, root.name);
+      addChildren(fs, tree, txn, root.id);
     }
     return Pair.create(tree, novelty);
   }
 
   public static Mapping remap(final FSRecords fs, final BTree remoteTree, final Novelty novelty) {
     final LinkedList<NodeMapping> stack = new LinkedList<>();
-    processChildren(remoteTree, novelty, stack, Integer.MIN_VALUE, getRootMap(fs));
+    final Novelty.Accessor accessor = novelty.access();
+    processChildren(remoteTree, accessor, stack, Integer.MIN_VALUE, getRootMap(fs));
 
     final IntIntHashMap localToRemote = new IntIntHashMap();
     final IntIntHashMap remoteToLocal = new IntIntHashMap();
@@ -73,21 +75,21 @@ public class RemoteVFS {
           throw new RuntimeException("inconsistent children");
         }
       }
-      processChildren(remoteTree, novelty, stack, mapping.remoteId, children);
+      processChildren(remoteTree, accessor, stack, mapping.remoteId, children);
       mapping = stack.poll();
     }
     return new Mapping(localToRemote, remoteToLocal);
   }
 
   private static void processChildren(BTree remoteTree,
-                                      Novelty novelty,
+                                      Novelty.Accessor txn,
                                       LinkedList<NodeMapping> queue,
                                       int remoteParentId,
                                       Map<CharSequence, Integer> children) {
     final byte[] rangeKey = new byte[4 + 4];
     ByteUtils.writeUnsignedInt(remoteParentId ^ 0x80000000, rangeKey, 0);
     ByteUtils.writeUnsignedInt(0, rangeKey, 4);
-    remoteTree.forEach(novelty, rangeKey, (key, value) -> {
+    remoteTree.forEach(txn, rangeKey, (key, value) -> {
       final int parentId = (int)(ByteUtils.readUnsignedInt(key, 0) ^ 0x80000000);
       final boolean matchingId = parentId == remoteParentId;
       if (matchingId) {
@@ -102,19 +104,19 @@ public class RemoteVFS {
     });
   }
 
-  private static void addChildren(FSRecords fs, BTree tree, Novelty novelty, int rootId) {
+  private static void addChildren(FSRecords fs, BTree tree, Novelty.Accessor txn, int rootId) {
     for (final FSRecords.NameId child : fs.listAll(rootId)) {
-      addChild(tree, novelty, rootId, child.id, child.name.toString());
-      addChildren(fs, tree, novelty, child.id);
+      addChild(tree, txn, rootId, child.id, child.name.toString());
+      addChildren(fs, tree, txn, child.id);
     }
   }
 
-  private static void addChild(BTree tree, Novelty novelty, int rootId, int childId, CharSequence childName) {
+  private static void addChild(BTree tree, Novelty.Accessor txn, int rootId, int childId, CharSequence childName) {
     final byte[] key = new byte[8];
     ByteUtils.writeUnsignedInt(rootId ^ 0x80000000, key, 0);
     ByteUtils.writeUnsignedInt(childId ^ 0x80000000, key, 4);
     // TODO: better string binding?
-    if (!tree.put(novelty, key, childName.toString().getBytes(StandardCharsets.UTF_8))) {
+    if (!tree.put(txn, key, childName.toString().getBytes(StandardCharsets.UTF_8))) {
       throw new RuntimeException("inconsistent tree");
     }
   }
@@ -142,6 +144,6 @@ public class RemoteVFS {
   }
 
   public static void publishVFS(BTree vfs, Novelty novelty) {
-    vfs.store(novelty);
+    vfs.store(novelty.access());
   }
 }

@@ -2,22 +2,34 @@
 package com.intellij.platform.onair.storage.api;
 
 import java.io.Closeable;
-import java.io.IOException;
 
 public interface Novelty extends Closeable {
 
-  // result must be less than 0
-  long alloc(byte[] bytes);
+  Accessor access();
 
-  void free(long address);
+  interface Accessor {
+    // result must be less than 0
+    long alloc(byte[] bytes);
 
-  byte[] lookup(long address);
+    void free(long address);
 
-  void update(long address, byte[] bytes);
+    byte[] lookup(long address);
 
-  Novelty unsynchronizedCopy();
+    void update(long address, byte[] bytes);
+  }
 
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   Novelty VOID = new Novelty() {
+    @Override
+    public Accessor access() {
+      return VOID_TXN;
+    }
+
+    @Override
+    public void close() {}
+  };
+
+  Accessor VOID_TXN = new Accessor() {
     @Override
     public long alloc(byte[] bytes) {
       throw new UnsupportedOperationException();
@@ -37,13 +49,5 @@ public interface Novelty extends Closeable {
     public void update(long address, byte[] bytes) {
       throw new UnsupportedOperationException();
     }
-
-    @Override
-    public Novelty unsynchronizedCopy() {
-      return this;
-    }
-
-    @Override
-    public void close() throws IOException {}
   };
 }

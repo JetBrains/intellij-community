@@ -4,6 +4,7 @@ package com.intellij.platform.onair.index;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
+import com.intellij.platform.onair.storage.api.Novelty;
 import com.intellij.psi.stubs.StubIdList;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -12,7 +13,6 @@ import com.intellij.util.io.PersistentHashMap;
 import com.intellij.platform.onair.storage.StorageImpl;
 import com.intellij.platform.onair.storage.api.NoveltyImpl;
 import com.intellij.platform.onair.tree.BTree;
-import com.intellij.platform.onair.tree.MockNovelty;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;
@@ -80,9 +80,10 @@ public class CopyIndexTest {
       long start = System.currentTimeMillis();
       final NoveltyImpl novelty = new NoveltyImpl(new File(FOLDER + "/novelty/novelty.dat"));
       try {
+        final Novelty.Accessor accessor = novelty.access();
         for (int i = 0; i < ITERATIONS; i++) {
-          final BTree tree = BTree.create(novelty, storage, 16);
-          rawContent.forEach((key, value) -> Assert.assertTrue(tree.put(novelty, key, value)));
+          final BTree tree = BTree.create(accessor, storage, 16);
+          rawContent.forEach((key, value) -> Assert.assertTrue(tree.put(accessor, key, value)));
           trees.add(tree);
         }
         System.out.println("Time: " + (System.currentTimeMillis() - start) / 1000 + "s");
@@ -92,7 +93,7 @@ public class CopyIndexTest {
 
         System.out.println("Check novelty reads...");
         start = System.currentTimeMillis();
-        trees.forEach(tree -> rawContent.forEach((key, value) -> Assert.assertArrayEquals(value, tree.get(novelty, key))));
+        trees.forEach(tree -> rawContent.forEach((key, value) -> Assert.assertArrayEquals(value, tree.get(accessor, key))));
         System.out.println("Time: " + (System.currentTimeMillis() - start) / 1000 + "s");
 
         System.out.println("Check write...");
@@ -102,10 +103,9 @@ public class CopyIndexTest {
         System.out.println("Check storage reads...");
         start = System.currentTimeMillis();
         AtomicInteger step = new AtomicInteger();
-        MockNovelty mockNovelty = new MockNovelty();
         remoteTrees.forEach(tree -> rawContent.forEach((key, value) -> {
           step.incrementAndGet();
-          Assert.assertArrayEquals(value, tree.get(mockNovelty, key));
+          Assert.assertArrayEquals(value, tree.get(Novelty.VOID_TXN, key));
         }));
         System.out.println("Time: " + (System.currentTimeMillis() - start) / 1000 + "s");
       }
