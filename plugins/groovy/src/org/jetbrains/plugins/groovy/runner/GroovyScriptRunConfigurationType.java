@@ -16,7 +16,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import javax.swing.*;
 
-public class GroovyScriptRunConfigurationType implements ConfigurationType {
+public final class GroovyScriptRunConfigurationType implements ConfigurationType {
   private final GroovyFactory myConfigurationFactory;
 
   public GroovyScriptRunConfigurationType() {

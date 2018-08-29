@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class XsltRunConfigType implements ConfigurationType {
+public final class XsltRunConfigType implements ConfigurationType {
   private final ConfigurationFactory myFactory;
 
   public XsltRunConfigType() {
