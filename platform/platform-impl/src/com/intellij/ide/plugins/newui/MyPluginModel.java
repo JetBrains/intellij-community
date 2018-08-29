@@ -339,6 +339,14 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       addEnabledGroup(myDownloaded);
     }
     else {
+      String pluginId = descriptor.getPluginId().getIdString();
+      for (CellPluginComponent component : myDownloaded.ui.plugins) {
+        if (pluginId.equals(component.myPlugin.getPluginId().getIdString())) {
+          ((ListPluginComponent)component).changeUpdateToRestart();
+          return;
+        }
+      }
+
       myDownloadedPanel.addToGroup(myDownloaded, descriptor);
       myDownloaded.titleWithEnabled(this);
       myDownloadedPanel.setSelection(myDownloaded.ui.plugins.get(myDownloaded.descriptors.indexOf(descriptor)));
