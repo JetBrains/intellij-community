@@ -32,17 +32,16 @@ class ReachableNodes(private val graph: LiteLinearGraph) {
   fun getContainingBranches(nodeIndex: Int, branchNodeIndexes: Collection<Int>): Set<Int> {
     val result = HashSet<Int>()
 
-    walk(listOf(nodeIndex), false, Consumer { node -> if (branchNodeIndexes.contains(node)) result.add(node) })
+    walk(listOf(nodeIndex), false) { node: Int ->
+      if (branchNodeIndexes.contains(node)) result.add(node)
+      true
+    }
 
     return result
   }
 
   fun walkDown(headIds: Collection<Int>, consumer: Consumer<Int>) {
-    walk(headIds, true, consumer)
-  }
-
-  private fun walk(startNodes: Collection<Int>, goDown: Boolean, consumer: Consumer<Int>) {
-    walk(startNodes, goDown) { node: Int ->
+    walk(headIds, true) { node: Int ->
       consumer.consume(node)
       true
     }
@@ -83,9 +82,11 @@ class ReachableNodes(private val graph: LiteLinearGraph) {
       }
 
       val result = UnsignedBitSet()
-      val getter = ReachableNodes(LinearGraphUtils.asLiteLinearGraph(graph))
-      getter.walkDown(headNodeIndexes, Consumer { node -> result.set(node!!, true) })
-
+      val reachableNodes = ReachableNodes(LinearGraphUtils.asLiteLinearGraph(graph))
+      reachableNodes.walk(headNodeIndexes, true) { node: Int ->
+        result.set(node, true)
+        true
+      }
       return result
     }
   }
