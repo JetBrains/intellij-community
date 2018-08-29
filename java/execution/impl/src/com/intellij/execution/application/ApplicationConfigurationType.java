@@ -2,10 +2,11 @@
 package com.intellij.execution.application;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.configuration.ConfigurationFactoryEx;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.ConfigurationTypeUtil;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -16,25 +17,19 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+// cannot be final because of backward compatibility (~8 external usages)
+/**
+ * DO NOT extend this class directly.
+ */
 public class ApplicationConfigurationType implements ConfigurationType {
   private final ConfigurationFactory myFactory;
 
   public ApplicationConfigurationType() {
-    myFactory = new ConfigurationFactoryEx(this) {
+    myFactory = new JvmMainMethodConfigurationFactoryBase(this) {
       @NotNull
       @Override
       public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
         return new ApplicationConfiguration("", project, ApplicationConfigurationType.this);
-      }
-
-      @Override
-      public void onNewConfigurationCreated(@NotNull RunConfiguration configuration) {
-        ((ModuleBasedConfiguration)configuration).onNewConfigurationCreated();
-      }
-
-      @Override
-      public Class<? extends BaseState> getOptionsClass() {
-        return ApplicationConfigurationOptions.class;
       }
     };
   }

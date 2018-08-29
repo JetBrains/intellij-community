@@ -11,6 +11,10 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+// cannot be final because of backward compatibility (1 external usage)
+/**
+ * DO NOT extend this class directly.
+ */
 public class JUnitConfigurationType implements ConfigurationType {
   private final ConfigurationFactory myFactory;
 
