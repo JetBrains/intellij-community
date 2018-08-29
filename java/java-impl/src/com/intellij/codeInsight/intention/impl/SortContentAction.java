@@ -7,6 +7,7 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -199,6 +200,17 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       handleElementsBeforeSeparator(sb, isLastInList);
       if (!isLastInList) {
         sb.append(",");
+      } else {
+        // last position, when before separator EOL comments and after separator some element present, we should place \n between then
+        // to avoid accidental commenting
+        if (!myBeforeSeparator.isEmpty()) {
+          PsiComment maybeComment = myBeforeSeparator.get(myBeforeSeparator.size() - 1);
+          if (maybeComment.getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) {
+            if (!myAfterSeparator.isEmpty()) {
+              sb.append("\n");
+            }
+          }
+        }
       }
       boolean newLineSet = false;
       for (PsiComment comment : myAfterSeparator) {
