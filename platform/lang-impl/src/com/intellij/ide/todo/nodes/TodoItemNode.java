@@ -136,8 +136,6 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
         // can happen for an invalid (obsolete) node, tree implementation can call this method for such a node
         break;
       }
-      assert lineStartNonWs <= additionalMarker.getStartOffset();
-      assert lineEnd >= additionalMarker.getEndOffset();
       collectHighlights(highlights, highlighter, lineStartNonWs, lineEnd, 0);
       highlights.add(new HighlightedRegion(
         additionalMarker.getStartOffset() - lineStartNonWs,
