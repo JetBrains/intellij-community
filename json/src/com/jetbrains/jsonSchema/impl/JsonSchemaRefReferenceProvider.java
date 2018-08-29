@@ -15,6 +15,10 @@
  */
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.CompletionUtilCore;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.icons.AllIcons;
 import com.intellij.json.JsonFileType;
 import com.intellij.json.psi.*;
 import com.intellij.openapi.util.Pair;
@@ -24,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileInfoManager;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.util.ArrayUtil;
@@ -33,6 +38,7 @@ import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.List;
 
 /**
@@ -53,10 +59,15 @@ public class JsonSchemaRefReferenceProvider extends PsiReferenceProvider {
         final JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter splitter = new JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter(fragment.second);
         String id = splitter.getSchemaId();
         if (id != null) {
-          ContainerUtil.addAll(refs, new FileReferenceSet(id, element, 0, null, true,
+          ContainerUtil.addAll(refs, new FileReferenceSet(id, element, 1, null, true,
                                                           true, new JsonFileType[] {JsonFileType.INSTANCE}) {
             @Override
             public boolean isEmptyPathAllowed() {
+              return true;
+            }
+
+            @Override
+            protected boolean isSoft() {
               return true;
             }
 
@@ -67,7 +78,12 @@ public class JsonSchemaRefReferenceProvider extends PsiReferenceProvider {
                 range = new TextRange(range.getStartOffset(), hash);
                 text = text.substring(0, text.indexOf('#'));
               }
-              return super.createFileReference(range, index, text);
+              return new FileReference(this, range, index, text) {
+                @Override
+                protected Object createLookupItem(PsiElement candidate) {
+                  return FileInfoManager.getFileLookupItem(candidate);
+                }
+              };
             }
           }.getAllReferences());
         }
@@ -107,11 +123,14 @@ public class JsonSchemaRefReferenceProvider extends PsiReferenceProvider {
     @Nullable
     @Override
     public PsiElement resolveInner() {
-      final String text = getCanonicalText();
+      return resolveForPath(getCanonicalText(), false);
+    }
 
+    @Nullable
+    private PsiElement resolveForPath(String text, boolean alwaysRoot) {
       final JsonSchemaService service = JsonSchemaService.Impl.get(getElement().getProject());
       final JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter splitter = new JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter(text);
-      VirtualFile schemaFile = getElement().getContainingFile().getVirtualFile();
+      VirtualFile schemaFile = CompletionUtil.getOriginalOrSelf(getElement().getContainingFile()).getVirtualFile();
       if (splitter.isAbsolute()) {
         assert splitter.getSchemaId() != null;
         schemaFile = service.findSchemaFileByReference(splitter.getSchemaId(), schemaFile);
@@ -119,7 +138,7 @@ public class JsonSchemaRefReferenceProvider extends PsiReferenceProvider {
       }
 
       final String normalized = JsonSchemaService.normalizeId(splitter.getRelativePath());
-      if (StringUtil.isEmptyOrSpaces(normalized) || StringUtil.split(normalized.replace("\\", "/"), "/").size() == 0) {
+      if (!alwaysRoot && (StringUtil.isEmptyOrSpaces(normalized) || StringUtil.split(normalized.replace("\\", "/"), "/").size() == 0)) {
         return myElement.getManager().findFile(schemaFile);
       }
       final List<String> chain = StringUtil.split(normalized.replace("\\", "/"), "/");
@@ -155,7 +174,40 @@ public class JsonSchemaRefReferenceProvider extends PsiReferenceProvider {
     @NotNull
     @Override
     public Object[] getVariants() {
+      String text = getCanonicalText();
+      int index = text.indexOf(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED);
+      if (index >= 0) {
+        String part = text.substring(0, index);
+        text = part.endsWith("#/") ? part : StringUtil.trimEnd(part, '/');
+        PsiElement element = resolveForPath(text, true);
+        if (element instanceof JsonObject) {
+          return ((JsonObject)element).getPropertyList().stream()
+            .filter(p -> p.getValue() instanceof JsonContainer)
+            .map(p -> LookupElementBuilder.create(p)
+            .withIcon(getIcon(p.getValue()))).toArray();
+        }
+        else if (element instanceof JsonArray) {
+          List<JsonValue> list = ((JsonArray)element).getValueList();
+          int max = list.size();
+          Object[] values = new Object[max];
+          for (int i = 0; i < max; i++) {
+            values[i] = LookupElementBuilder.create(String.valueOf(i)).withIcon(getIcon(list.get(i)));
+          }
+          return values;
+        }
+      }
+
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    }
+
+    private static Icon getIcon(JsonValue value) {
+      if (value instanceof JsonObject) {
+        return AllIcons.Json.Object;
+      }
+      else if (value instanceof JsonArray) {
+        return AllIcons.Json.Array;
+      }
+      return AllIcons.Nodes.Property;
     }
   }
 }
