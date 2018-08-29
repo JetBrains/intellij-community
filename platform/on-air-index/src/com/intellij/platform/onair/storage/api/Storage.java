@@ -6,6 +6,28 @@ import org.jetbrains.annotations.NotNull;
 
 public interface Storage extends StorageConsumer {
 
+  Storage VOID = new Storage() {
+    @Override
+    public @NotNull byte[] lookup(@NotNull Address address) {
+      return new byte[0];
+    }
+
+    @Override
+    public @NotNull Address alloc(@NotNull byte[] what) {
+      return null;
+    }
+
+    @Override
+    public void prefetch(@NotNull Address address, @NotNull byte[] bytes, @NotNull BTree tree, int size, byte type, int mask) {
+
+    }
+
+    @Override
+    public void store(@NotNull Address address, @NotNull byte[] bytes) {
+
+    }
+  };
+
   @NotNull
   byte[] lookup(@NotNull Address address);
 

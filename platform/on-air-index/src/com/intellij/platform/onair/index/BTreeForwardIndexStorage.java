@@ -16,21 +16,25 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 
-public class BTreeIntPersistentMap<V> implements PersistentMap<Integer, V> {
+public class BTreeForwardIndexStorage<V> implements PersistentMap<Integer, V> {
 
   private final short id;
   private final DataExternalizer<V> valueExternalizer;
   private final Novelty novelty;
   public final BTree tree;
 
-  public BTreeIntPersistentMap(short id,
-                               DataExternalizer<V> valueExternalizer,
-                               @NotNull Novelty novelty,
-                               @NotNull BTree tree) {
+  public BTreeForwardIndexStorage(short id,
+                                  DataExternalizer<V> valueExternalizer,
+                                  @NotNull Novelty novelty,
+                                  @NotNull BTree tree) {
     this.id = id;
     this.valueExternalizer = valueExternalizer;
     this.novelty = novelty;
     this.tree = tree;
+  }
+
+  public BTreeForwardIndexStorage<V> withTree(Novelty novelty, BTree tree) {
+    return new BTreeForwardIndexStorage<>(id, valueExternalizer, novelty, tree);
   }
 
   @Override

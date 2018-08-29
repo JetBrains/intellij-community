@@ -2,6 +2,7 @@
 package com.intellij.platform.onair.storage.api;
 
 import java.io.Closeable;
+import java.io.IOException;
 
 public interface Novelty extends Closeable {
 
@@ -15,4 +16,34 @@ public interface Novelty extends Closeable {
   void update(long address, byte[] bytes);
 
   Novelty unsynchronizedCopy();
+
+  Novelty VOID = new Novelty() {
+    @Override
+    public long alloc(byte[] bytes) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void free(long address) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public byte[] lookup(long address) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void update(long address, byte[] bytes) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Novelty unsynchronizedCopy() {
+      return this;
+    }
+
+    @Override
+    public void close() throws IOException {}
+  };
 }

@@ -43,6 +43,8 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
   // public final BTree myHashToVirtualFile;
   public final BTree myKeysInternary;
   private final Object lockObject = new Object();
+  private final int myCacheSize;
+  private final Storage myStorage;
 
   public BTreeIndexStorage(@NotNull KeyDescriptor<Key> keyDescriptor,
                            @NotNull DataExternalizer<Value> valueExternalizer,
@@ -52,6 +54,8 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
                            int cacheSize,
                            int R,
                            int baseR) {
+    myCacheSize = cacheSize;
+    myStorage = storage;
     myNovelty = novelty.unsynchronizedCopy();
 
     myKeyDescriptor = keyDescriptor;
@@ -171,6 +175,12 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
           }, delta);
         }
       });
+  }
+
+  public BTreeIndexStorage<Key, Value> withNewHead(Novelty novelty,
+                                                   @Nullable BTreeIndexStorage.AddressDescriptor head,
+                                                   int R, int baseR) {
+    return new BTreeIndexStorage<>(myKeyDescriptor, myValueExternalizer, myStorage, novelty, head, myCacheSize, R, baseR);
   }
 
   @Override

@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.onair.storage.api;
 
+import com.intellij.openapi.util.io.FileUtil;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -15,6 +17,15 @@ public class NoveltyImpl implements Novelty {
   protected final MappedByteBuffer myByteBuffer;
   // private final List<Pair<Integer, Integer>> myFreeList;
   private final AtomicLong mySize;
+
+  public static NoveltyImpl createNovelty() {
+    try {
+      return new NoveltyImpl(FileUtil.createTempFile("novelty-", ".here"));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
 
   public NoveltyImpl(File backedFile) throws IOException {
     //myFreeList = new LinkedList<>();

@@ -76,7 +76,7 @@ public class BTreeIndexStorageManagerDelegatingPersistentMap<V> implements Persi
   }
 
   @SuppressWarnings("unchecked")
-  private BTreeIntPersistentMap<V> delegate() {
+  private BTreeForwardIndexStorage<V> delegate() {
     return myStorageManager.forwardIndices.get(myID.getName());
   }
 }
