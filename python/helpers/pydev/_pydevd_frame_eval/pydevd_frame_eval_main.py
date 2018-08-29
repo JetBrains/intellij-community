@@ -12,7 +12,7 @@ dummy_trace_dispatch = None
 show_frame_eval_warning = False
 
 # "NO" means we should not use frame evaluation, anything else means we should use it.
-USE_FRAME_EVAL = os.environ.get('PYDEVD_USE_FRAME_EVAL', None)
+USE_FRAME_EVAL = os.environ.get('PYDEVD_USE_FRAME_EVAL', 'NO')
 
 if USE_FRAME_EVAL == 'NO':
     frame_eval_func, stop_frame_eval = None, None
