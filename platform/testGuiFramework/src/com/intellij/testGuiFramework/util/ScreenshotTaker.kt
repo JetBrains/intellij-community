@@ -5,7 +5,6 @@ import org.apache.log4j.Logger
 import java.awt.*
 import java.awt.image.BufferedImage
 import java.io.File
-import java.io.IOException
 import javax.imageio.IIOImage
 import javax.imageio.ImageIO
 import javax.imageio.ImageWriteParam
@@ -20,7 +19,7 @@ class ScreenshotTaker(private val robot: Robot = Robot()) {
                                 compressionQuality: Float = 0.5f) =
     try {
       writeCompressed(takeScreenshot(captureArea), file, format, compressionQuality)
-    } catch (e: IOException) {
+    } catch (e: Exception) {
       LOG.error("screenshot failed", e)
     }
 
