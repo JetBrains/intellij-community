@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -186,7 +187,7 @@ public class ExternalSystemJdkUtil {
   // todo [Vlad, IDEA-187832]: extract to `external-system-java` module
   private static boolean isJavaSdkPresent() {
     try {
-      ClassLoader.getSystemClassLoader().loadClass("com.intellij.openapi.projectRoots.impl.JavaSdkImpl");
+      ExternalSystemUtil.class.getClassLoader().loadClass("com.intellij.openapi.projectRoots.impl.JavaSdkImpl");
       return true;
     }
     catch (Throwable ignore) {
