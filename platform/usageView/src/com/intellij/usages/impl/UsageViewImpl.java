@@ -1793,11 +1793,13 @@ public class UsageViewImpl implements UsageViewEx {
           return getNavigatableForNode(node, !myPresentation.isReplaceMode());
         }
 
+        @NotNull
         @Override
         public String getNextOccurenceActionName() {
           return UsageViewBundle.message("action.next.occurrence");
         }
 
+        @NotNull
         @Override
         public String getPreviousOccurenceActionName() {
           return UsageViewBundle.message("action.previous.occurrence");
@@ -1854,11 +1856,13 @@ public class UsageViewImpl implements UsageViewEx {
       return mySupport != null ? mySupport.goPreviousOccurence() : null;
     }
 
+    @NotNull
     @Override
     public String getNextOccurenceActionName() {
       return mySupport != null ? mySupport.getNextOccurenceActionName() : "";
     }
 
+    @NotNull
     @Override
     public String getPreviousOccurenceActionName() {
       return mySupport != null ? mySupport.getPreviousOccurenceActionName() : "";

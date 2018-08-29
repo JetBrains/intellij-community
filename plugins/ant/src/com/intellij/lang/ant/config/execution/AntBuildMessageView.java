@@ -545,7 +545,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     }
 
     @Override
-    public void contentRemoved(ContentManagerEvent event) {
+    public void contentRemoved(@NotNull ContentManagerEvent event) {
       if (event.getContent() == myContent) {
         myContentManager.removeContentManagerListener(this);
         AntBuildMessageView buildMessageView = myContent.getUserData(KEY);
@@ -561,7 +561,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     }
 
     @Override
-    public void contentRemoveQuery(ContentManagerEvent event) {
+    public void contentRemoveQuery(@NotNull ContentManagerEvent event) {
       if (event.getContent() == myContent) {
         boolean canClose = closeQuery();
         if (!canClose) {
@@ -942,11 +942,13 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     }
   }
 
+  @NotNull
   @Override
   public String getNextOccurenceActionName() {
     return myTreeView.getNextOccurenceActionName();
   }
 
+  @NotNull
   @Override
   public String getPreviousOccurenceActionName() {
     return myTreeView.getPreviousOccurenceActionName();

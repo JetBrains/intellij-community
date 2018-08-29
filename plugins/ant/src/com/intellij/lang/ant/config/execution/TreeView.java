@@ -146,14 +146,14 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
                                    .createNavigatable(myProject, messageNode.getFile(), messageNode.getOffset());
       }
 
+      @NotNull
       @Override
-      @Nullable
       public String getNextOccurenceActionName() {
         return AntBundle.message("ant.execution.next.error.warning.action.name");
       }
 
+      @NotNull
       @Override
-      @Nullable
       public String getPreviousOccurenceActionName() {
         return AntBundle.message("ant.execution.previous.error.warning.action.name");
       }
@@ -580,11 +580,13 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     return myAutoScrollToSourceHandler.createToggleAction();
   }
 
+  @NotNull
   @Override
   public String getNextOccurenceActionName() {
     return myOccurenceNavigatorSupport.getNextOccurenceActionName();
   }
 
+  @NotNull
   @Override
   public String getPreviousOccurenceActionName() {
     return myOccurenceNavigatorSupport.getPreviousOccurenceActionName();

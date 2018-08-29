@@ -401,6 +401,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     return myOccurenceNavigator.goPreviousOccurence();
   }
 
+  @NotNull
   @Override
   public String getNextOccurenceActionName() {
     return myOccurenceNavigator.getNextOccurenceActionName();
@@ -417,6 +418,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     return myOccurenceNavigator.hasNextOccurence();
   }
 
+  @NotNull
   @Override
   public String getPreviousOccurenceActionName() {
     return myOccurenceNavigator.getPreviousOccurenceActionName();
@@ -542,11 +544,13 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
       return goToPointer(getPreviousPointer());
     }
 
+    @NotNull
     @Override
     public String getNextOccurenceActionName() {
       return IdeBundle.message("action.next.todo");
     }
 
+    @NotNull
     @Override
     public String getPreviousOccurenceActionName() {
       return IdeBundle.message("action.previous.todo");

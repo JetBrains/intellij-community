@@ -280,11 +280,13 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
         return getSelectedNavigatable(descriptor);
       }
 
+      @NotNull
       @Override
       public String getNextOccurenceActionName() {
         return InspectionsBundle.message("inspection.action.go.next");
       }
 
+      @NotNull
       @Override
       public String getPreviousOccurenceActionName() {
         return InspectionsBundle.message("inspection.action.go.prev");
@@ -345,11 +347,13 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     return myOccurenceNavigator.goPreviousOccurence();
   }
 
+  @NotNull
   @Override
   public String getNextOccurenceActionName() {
     return myOccurenceNavigator.getNextOccurenceActionName();
   }
 
+  @NotNull
   @Override
   public String getPreviousOccurenceActionName() {
     return myOccurenceNavigator.getPreviousOccurenceActionName();

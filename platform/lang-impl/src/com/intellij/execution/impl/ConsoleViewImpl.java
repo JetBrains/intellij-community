@@ -1370,11 +1370,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return calcNextOccurrence(-1);
   }
 
+  @NotNull
   @Override
   public String getNextOccurenceActionName() {
     return ExecutionBundle.message("down.the.stack.trace");
   }
 
+  @NotNull
   @Override
   public String getPreviousOccurenceActionName() {
     return ExecutionBundle.message("up.the.stack.trace");
