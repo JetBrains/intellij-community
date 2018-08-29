@@ -50,7 +50,7 @@ import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import javax.swing.*;
 import java.util.Map;
 import java.util.Set;
 
@@ -180,8 +180,9 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
                                                                     null)
                                       .setFadeoutTime(5000)
                                       .createBalloon();
-      Component component = ((AbstractVcsLogUi)myUi).getTable();
-      balloon.show(new RelativePoint(component, new JBPoint(component.getWidth() / 2, 0)), Balloon.Position.below);
+      JComponent component = ((AbstractVcsLogUi)myUi).getTable();
+      balloon.show(new RelativePoint(component, new JBPoint(component.getWidth() / 2, component.getVisibleRect().y)),
+                   Balloon.Position.below);
       Disposer.register(this, balloon);
     }
   }
