@@ -9,19 +9,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.function.Function;
+import java.util.function.ToIntFunction;
 
 public class BTreeIndexStorageManagerDelegatingIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, Value> {
 
   private final BTreeIndexStorageManager myStorageManager;
   private final ID<?, ?> myID;
-  private final Function<Integer, Integer> localToRemoteId;
-  private final Function<Integer, Integer> remoteToLocalId;
+  private final ToIntFunction<Integer> localToRemoteId;
+  private final ToIntFunction<Integer> remoteToLocalId;
 
   public BTreeIndexStorageManagerDelegatingIndexStorage(BTreeIndexStorageManager storageManager,
                                                         ID<?, ?> id,
-                                                        Function<Integer, Integer> localToRemoteId,
-                                                        Function<Integer, Integer> remoteToLocalId) {
+                                                        ToIntFunction<Integer> localToRemoteId,
+                                                        ToIntFunction<Integer> remoteToLocalId) {
     myStorageManager = storageManager;
     myID = id;
     this.localToRemoteId = localToRemoteId;
@@ -34,19 +34,19 @@ public class BTreeIndexStorageManagerDelegatingIndexStorage<Key, Value> implemen
     return delegate().processKeys(processor, scope, idFilter == null ? null : new IdFilter() {
       @Override
       public boolean containsFileId(int id) {
-        return idFilter.containsFileId(remoteToLocalId.apply(id));
+        return idFilter.containsFileId(remoteToLocalId.applyAsInt(id));
       }
     });
   }
 
   @Override
   public void addValue(Key key, int inputId, Value value) throws StorageException {
-    delegate().addValue(key, localToRemoteId.apply(inputId), value);
+    delegate().addValue(key, localToRemoteId.applyAsInt(inputId), value);
   }
 
   @Override
   public void removeAllValues(@NotNull Key key, int inputId) throws StorageException {
-    delegate().removeAllValues(key, localToRemoteId.apply(inputId));
+    delegate().removeAllValues(key, localToRemoteId.applyAsInt(inputId));
   }
 
   @Override
@@ -80,7 +80,7 @@ public class BTreeIndexStorageManagerDelegatingIndexStorage<Key, Value> implemen
 
               @Override
               public boolean contains(int id) {
-                return sourcePredicate.contains(localToRemoteId.apply(id));
+                return sourcePredicate.contains(localToRemoteId.applyAsInt(id));
               }
             };
           }
@@ -144,7 +144,7 @@ public class BTreeIndexStorageManagerDelegatingIndexStorage<Key, Value> implemen
 
     @Override
     public int next() {
-      return remoteToLocalId.apply(sourceIdsIterator.next());
+      return remoteToLocalId.applyAsInt(sourceIdsIterator.next());
     }
 
     @Override

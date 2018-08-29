@@ -23,12 +23,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import java.util.function.ToIntFunction;
 
 public class BTreeIndexStorageManager implements IndexStorageManager {
   private static final int FORWARD_STORAGE_KEY_SIZE = 6;
 
-  private final Function<Integer, Integer> localToRemote;
-  private final Function<Integer, Integer> remoteToLocal;
+  private final ToIntFunction<Integer> localToRemote;
+  private final ToIntFunction<Integer> remoteToLocal;
 
   public final AtomicReference<IndexState> stateRef;
 
