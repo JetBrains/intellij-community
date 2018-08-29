@@ -63,8 +63,10 @@ public class BTreeForwardIndexStorage<V> implements PersistentMap<Integer, V> {
 
   @Override
   public boolean processKeys(Processor<Integer> processor) {
-    // TODO: navigate to starting key first?
-    return tree.forEach(novelty.access(), (key, value) -> {
+    final byte[] startingKey = new byte[6];
+    ByteUtils.writeUnsignedShort(id ^ 0x8000, startingKey, 0);
+    ByteUtils.writeUnsignedInt(0, startingKey, 2);
+    return tree.forEach(novelty.access(), startingKey, (key, value) -> {
       short currentId = (short)(ByteUtils.readUnsignedShort(key, 0) ^ 0x8000);
       if (id == currentId) {
         return processor.process((int)(ByteUtils.readUnsignedInt(key, 2) ^ 0x80000000));
