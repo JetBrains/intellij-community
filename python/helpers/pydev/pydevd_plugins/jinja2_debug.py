@@ -207,7 +207,7 @@ def _get_jinja2_template_line(frame):
 def _get_jinja2_template_filename(frame):
     if '__jinja_template__' in frame.f_globals:
         fname = frame.f_globals['__jinja_template__'].filename
-        abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_file(fname)
+        abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_file(str(fname))
         return abs_path_real_path_and_base[1]
     return None
 
