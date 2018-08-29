@@ -15,9 +15,11 @@
  */
 package com.jetbrains.python.psi;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -25,4 +27,12 @@ import org.jetbrains.annotations.NotNull;
 public interface PyReferenceOwner extends PyElement {
   @NotNull
   PsiPolyVariantReference getReference(@NotNull PyResolveContext context);
+
+  /**
+   * Returns the element representing the name (to the right of the qualifier).
+   *
+   * @return the name element.
+   */
+  @Nullable
+  ASTNode getNameElement();
 }

@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.psi;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.psi.util.QualifiedName;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
  * Represents a qualified expression, that is, of "a.b.c..." sort.
  * User: dcheryasov
  */
-public interface PyQualifiedExpression extends PyExpression {
+public interface PyQualifiedExpression extends PyExpression, PyReferenceOwner {
   @Nullable
   PyExpression getQualifier();
 
@@ -69,12 +68,4 @@ public interface PyQualifiedExpression extends PyExpression {
    */
   @Nullable
   String getReferencedName();
-
-  /**
-   * Returns the element representing the name (to the right of the qualifier).
-   *
-   * @return the name element.
-   */
-  @Nullable
-  ASTNode getNameElement();
 }

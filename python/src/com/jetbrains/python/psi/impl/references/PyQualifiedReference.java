@@ -19,6 +19,7 @@ import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -62,11 +63,17 @@ import java.util.*;
 /**
  * @author yole
  */
-public class PyQualifiedReference extends PyReferenceImpl {
+public class PyQualifiedReference extends PyReferenceBase {
   private static final Logger LOG = Logger.getInstance(PyQualifiedReference.class);
 
   public PyQualifiedReference(PyQualifiedExpression element, PyResolveContext context) {
     super(element, context);
+  }
+
+  @NotNull
+  @Override
+  protected ResolveResult[] multiResolveInner() {
+    return new ResolveResult[0];
   }
 
   @NotNull
@@ -120,6 +127,12 @@ public class PyQualifiedReference extends PyReferenceImpl {
       addDocReference(ret, qualifier, qualifierType);
     }
     return ret;
+  }
+
+  @Nullable
+  @Override
+  public HighlightSeverity getUnresolvedHighlightSeverity(TypeEvalContext context) {
+    return null;
   }
 
   private static boolean isOtherClassQualifying(@NotNull PyExpression qualifier, @NotNull PyClassType qualifierType) {
@@ -313,6 +326,11 @@ public class PyQualifiedReference extends PyReferenceImpl {
       }
       return variants.toArray();
     }
+  }
+
+  @Override
+  public boolean isSoft() {
+    return false;
   }
 
   private Object[] getVariantFromHasAttr(PyExpression qualifier) {

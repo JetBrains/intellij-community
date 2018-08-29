@@ -15,8 +15,10 @@
  */
 package com.jetbrains.python.psi.impl.references;
 
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.ResolveResult;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
@@ -36,9 +38,24 @@ import java.util.List;
 /**
  * @author vlan
  */
-public class PyOperatorReference extends PyReferenceImpl {
+public class PyOperatorReference extends PyReferenceBase {
+  private final PyQualifiedExpression myElement;
+
   public PyOperatorReference(PyQualifiedExpression element, @NotNull PyResolveContext context) {
-    super(element, context);
+    super(context);
+    myElement = element;
+  }
+
+  @NotNull
+  @Override
+  public PyQualifiedExpression getElement() {
+    return myElement;
+  }
+
+  @NotNull
+  @Override
+  protected ResolveResult[] multiResolveInner() {
+    return new ResolveResult[0];
   }
 
   @NotNull
@@ -71,6 +88,11 @@ public class PyOperatorReference extends PyReferenceImpl {
       return false;
     }
     return super.isReferenceTo(element);
+  }
+
+  @Override
+  public boolean isSoft() {
+    return false;
   }
 
   @Override
@@ -166,5 +188,11 @@ public class PyOperatorReference extends PyReferenceImpl {
     return name.equals(PyNames.GETITEM) && LanguageLevel.forElement(object).isAtLeast(LanguageLevel.PYTHON37)
            ? classLikeType.resolveMember(PyNames.CLASS_GETITEM, object, AccessDirection.of(myElement), myContext)
            : null;
+  }
+
+  @Nullable
+  @Override
+  public HighlightSeverity getUnresolvedHighlightSeverity(TypeEvalContext context) {
+    return null;
   }
 }

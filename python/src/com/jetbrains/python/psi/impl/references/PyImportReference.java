@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
@@ -36,7 +37,7 @@ import java.util.*;
  *
  * @author yole
  */
-public class PyImportReference extends PyReferenceImpl {
+public class PyImportReference extends PyReferenceBase {
   protected final PyReferenceExpressionImpl myElement;
 
   public PyImportReference(PyReferenceExpressionImpl element, PyResolveContext context) {
@@ -55,6 +56,12 @@ public class PyImportReference extends PyReferenceImpl {
     return new PyFromImportSourceReference(expression, context);
   }
 
+  @Nullable
+  @Override
+  public HighlightSeverity getUnresolvedHighlightSeverity(TypeEvalContext context) {
+    return null;
+  }
+
   @Override
   public String getUnresolvedDescription() {
     final PyImportStatement importStatement = PsiTreeUtil.getParentOfType(myElement, PyImportStatement.class);
@@ -66,10 +73,21 @@ public class PyImportReference extends PyReferenceImpl {
 
   @NotNull
   @Override
+  protected ResolveResult[] multiResolveInner() {
+    return new ResolveResult[0];
+  }
+
+  @NotNull
+  @Override
   protected List<RatedResolveResult> resolveInner() {
     final PyImportElement parent = PsiTreeUtil.getParentOfType(myElement, PyImportElement.class); //importRef.getParent();
     final QualifiedName qname = myElement.asQualifiedName();
     return qname == null ? Collections.emptyList() : ResolveImportUtil.resolveNameInImportStatement(parent, qname);
+  }
+
+  @Override
+  public boolean isReferenceTo(@NotNull PsiElement element) {
+    return false;
   }
 
   @NotNull
@@ -105,6 +123,11 @@ public class PyImportReference extends PyReferenceImpl {
       // complete to possible modules
       return new ImportVariantCollector(context).execute();
     }
+  }
+
+  @Override
+  public boolean isSoft() {
+    return false;
   }
 
   private static void replaceInsertHandler(Object[] variants, final InsertHandler<LookupElement> insertHandler) {
