@@ -27,6 +27,8 @@ public class ExternalSystemJdkUtil {
   public static final String USE_INTERNAL_JAVA = "#JAVA_INTERNAL";
   public static final String USE_PROJECT_JDK = "#USE_PROJECT_JDK";
   public static final String USE_JAVA_HOME = "#JAVA_HOME";
+  // todo [Vlad, IDEA-187832]: extract to `external-system-java` module
+  private static final boolean isJavaSdkPresent = isJavaSdkPresent();
 
   @Nullable
   public static Sdk getJdk(@Nullable Project project, @Nullable String jdkName) throws ExternalSystemJdkException {
@@ -154,26 +156,42 @@ public class ExternalSystemJdkUtil {
 
   @Nullable
   private static SdkType getJavaSdk() {
-    try{
-      return JavaSdk.getInstance();
-    } catch (Throwable ignore) {
+    if (isJavaSdkPresent) {
+      try {
+        return JavaSdk.getInstance();
+      }
+      catch (Throwable ignore) {
+      }
     }
     return null;
   }
 
   @NotNull
   private static Sdk getInternalJdk() {
-    ProjectJdkTable projectJdkTable = ProjectJdkTable.getInstance();
-    try {
-      if (projectJdkTable instanceof JavaAwareProjectJdkTableImpl) {
-        return ((JavaAwareProjectJdkTableImpl)projectJdkTable).getInternalJdk();
+    if (isJavaSdkPresent) {
+      ProjectJdkTable projectJdkTable = ProjectJdkTable.getInstance();
+      try {
+        if (projectJdkTable instanceof JavaAwareProjectJdkTableImpl) {
+          return ((JavaAwareProjectJdkTableImpl)projectJdkTable).getInternalJdk();
+        }
       }
-    }
-    catch (Throwable ignore) {
-      // todo [Vlad, IDEA-187832]: extract to `external-system-java` module
+      catch (Throwable ignore) {
+        // todo [Vlad, IDEA-187832]: extract to `external-system-java` module
+      }
     }
     final String jdkHome = SystemProperties.getJavaHome();
     SimpleJavaSdkType simpleJavaSdkType = SimpleJavaSdkType.getInstance();
     return simpleJavaSdkType.createJdk(simpleJavaSdkType.suggestSdkName(null, jdkHome), jdkHome);
+  }
+
+  // todo [Vlad, IDEA-187832]: extract to `external-system-java` module
+  private static boolean isJavaSdkPresent() {
+    try {
+      ClassLoader.getSystemClassLoader().loadClass("com.intellij.openapi.projectRoots.impl.JavaSdkImpl");
+      return true;
+    }
+    catch (Throwable ignore) {
+      return false;
+    }
   }
 }
