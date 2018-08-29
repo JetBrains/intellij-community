@@ -64,8 +64,9 @@ abstract class CurrentFileTodosPanel extends TodoPanel {
       if (selectableElement != null) {
         builder.buildNodeForElement(selectableElement);
         DefaultMutableTreeNode node = builder.getNodeForElement(selectableElement);
-        LOG.assertTrue(node != null);
-        myTodoTreeBuilder.getTree().getSelectionModel().setSelectionPath(new TreePath(node.getPath()));
+        if (node != null) {
+          myTodoTreeBuilder.getTree().getSelectionModel().setSelectionPath(new TreePath(node.getPath()));
+        }
       }
     }
   }
