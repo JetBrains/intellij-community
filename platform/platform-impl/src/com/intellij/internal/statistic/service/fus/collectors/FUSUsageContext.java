@@ -32,7 +32,7 @@ import java.util.Objects;
 //              "context": { "data_1": "Mac OS X", "data_2": "context.menu"}
 //            }
 public class FUSUsageContext {
-  public static final FUSUsageContext DEFAULT = create(SystemInfo.OS_NAME);
+  public static final FUSUsageContext OS_CONTEXT = create(getOSNameContextData());
 
   private static final byte MAX_DATA_SIZE = 5; // restricted by server
   private final Map<String, String> data;
@@ -53,6 +53,13 @@ public class FUSUsageContext {
   @NotNull
   public Map<String, String> getData() {
     return data;
+  }
+
+  public static String getOSNameContextData() {
+    if (SystemInfo.isWindows) return "Windows";
+    if (SystemInfo.isMac) return "Mac";
+    if (SystemInfo.isLinux) return "Linux";
+    return "Other";
   }
 
   public static FUSUsageContext create(@NotNull String... data) {

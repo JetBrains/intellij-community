@@ -107,6 +107,6 @@ public class UiInfoUsageCollector extends ApplicationUsagesCollector {
 
   @Override
   public FUSUsageContext getContext() {
-    return FUSUsageContext.DEFAULT;
+    return FUSUsageContext.OS_CONTEXT;
   }
 }

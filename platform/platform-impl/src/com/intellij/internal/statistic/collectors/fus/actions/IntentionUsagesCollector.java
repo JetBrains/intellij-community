@@ -31,6 +31,6 @@ public final class IntentionUsagesCollector extends ApplicationUsagesCollector i
 
   @Override
   public FUSUsageContext getContext() {
-    return FUSUsageContext.DEFAULT;
+    return FUSUsageContext.OS_CONTEXT;
   }
 }
