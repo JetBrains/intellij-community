@@ -16,12 +16,17 @@
 package com.intellij.diff.comparison
 
 import com.intellij.diff.DiffTestCase
+import com.intellij.diff.comparison.ComparisonUtilTestBase.Companion.convertLineFragments
+import com.intellij.diff.comparison.ComparisonUtilTestBase.Companion.del
+import com.intellij.diff.comparison.ComparisonUtilTestBase.Companion.ins
+import com.intellij.diff.comparison.ComparisonUtilTestBase.Companion.mod
 import com.intellij.diff.fragments.LineFragment
 import com.intellij.diff.tools.util.text.LineOffsetsUtil
 import com.intellij.diff.util.IntPair
 import com.intellij.diff.util.Range
 import com.intellij.openapi.util.Couple
 import com.intellij.openapi.util.TextRange
+import com.intellij.util.containers.ContainerUtil
 import java.util.*
 
 class IgnoreComparisonUtilTest : DiffTestCase() {
@@ -186,6 +191,7 @@ class IgnoreComparisonUtilTest : DiffTestCase() {
     Test("X_", "X_Y_",
          "  ", "++  ",
          "  ", "  --")
+      .changedLines(ins(1, 1, 1))
       .run()
 
     Test("X_Y_", "X_",
@@ -222,6 +228,7 @@ class IgnoreComparisonUtilTest : DiffTestCase() {
     Test("X_Y_Z", "A_Y_Z",
          "++   ", "     ",
          "     ", "-    ")
+      .changedLines(ins(1, 0, 1))
       .run()
 
     Test("X_Y_Z", "A_Y_Z",
@@ -257,6 +264,11 @@ class IgnoreComparisonUtilTest : DiffTestCase() {
     Test("X_Y_Z", "X_B_Z",
          "  +  ", "  +  ",
          "     ", "     ")
+      .run()
+
+    Test("X_Y_Z", "X_B_Z",
+         "  +  ", "     ",
+         "     ", "  -  ")
       .run()
 
     Test("X_Y_Z", "X_B_Z",
@@ -385,12 +397,39 @@ class IgnoreComparisonUtilTest : DiffTestCase() {
          "     +   + + +  ", "     +   + + +  ",
          "          -     ", "          -     ")
       .changedLinesNumber(2, 1)
+      .changedLines(mod(0, 0, 2, 1))
       .run()
 
     Test("int X = 0;", "intX = 0;",
          "   + + +  ", "    + +  ",
          "-----     ", "----     ")
       .changedLinesNumber(1, 1)
+      .run()
+
+    Test("import xx.x;_import xx.y;_import xx.z;", "import xx.x;_// import xx.y;_import xx.z;",
+         "++++++++++++++++++++++++++++++++++++++", "+++++++++++++               +++++++++++++",
+         "                                      ", "             ---                         ")
+      .changedLinesNumber(0, 1)
+      .run()
+
+    Test("import xx.x;_import xx.y;_import xx.z;_import xx.a;", "//import xx.x;_import xx.y;_import xx.z;_//import xx.a;",
+         "+++++++++++++++++++++++++++++++++++++++++++++++++++", "              +++++++++++++++++++++++++++              ",
+         "                                                   ", "--                                       --            ")
+      .changedLinesNumber(0, 2)
+      .run()
+
+    Test("foo();_bar 'text';", "foo();_// TODO: bar 'text'",
+         "          +       ", "      ++++++++++++++++++++",
+         "                 -", "                          ")
+      .changedLines(del(1, 2, 1))
+      .changedLinesNumber(1, 0)
+      .run()
+
+    Test("import x.A;_import x.B;_import x.C;__@C_class Test { }_", "import x.B;__@x.C_class Test {}_",
+         "+++++++++++++++++++++++++++++++++++++  +     +    + + +", "+++++++++++++    +     +    +  +",
+         "                                     ---               ", "             -                  ")
+      .changedLinesNumber(1, 1)
+      .changedLines(ins(3, 2, 1), del(4, 3, 1))
       .run()
   }
 
@@ -519,8 +558,9 @@ class IgnoreComparisonUtilTest : DiffTestCase() {
     val result2: String = result2.filterNot { it == '.' }
 
     private var inner = true
-    private var changedLines: IntPair? = null
+    private var changedLinesNumber: IntPair? = null
     private var range: Range? = null
+    private var changedLines: List<Couple<IntPair>>? = null
 
     fun noInnerChanges(): Test {
       inner = false
@@ -528,12 +568,17 @@ class IgnoreComparisonUtilTest : DiffTestCase() {
     }
 
     fun changedLinesNumber(lines1: Int, lines2: Int): Test {
-      changedLines = IntPair(lines1, lines2)
+      changedLinesNumber = IntPair(lines1, lines2)
       return this
     }
 
     fun ranged(range: Range): Test {
       this.range = range
+      return this
+    }
+
+    fun changedLines(vararg expected: Couple<IntPair>): Test {
+      changedLines = ContainerUtil.list(*expected)
       return this
     }
 
@@ -566,9 +611,14 @@ class IgnoreComparisonUtilTest : DiffTestCase() {
       val actual = parseActual(result)
       assertEquals(expected, actual)
 
-      if (changedLines != null) {
+      if (changedLinesNumber != null) {
         val actualLines = countChangedLines(result)
-        assertEquals(changedLines, actualLines)
+        assertEquals(changedLinesNumber, actualLines)
+      }
+
+      if (changedLines != null) {
+        val actualChangedLines = convertLineFragments(result)
+        assertOrderedEquals(changedLines!!, actualChangedLines)
       }
     }
   }
