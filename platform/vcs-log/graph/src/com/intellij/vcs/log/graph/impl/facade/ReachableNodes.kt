@@ -75,15 +75,15 @@ class ReachableNodes(private val graph: LiteLinearGraph) {
 
   companion object {
     @JvmStatic
-    fun getReachableNodes(permanentGraph: LinearGraph, headNodeIndexes: Set<Int>?): UnsignedBitSet {
+    fun getReachableNodes(graph: LinearGraph, headNodeIndexes: Set<Int>?): UnsignedBitSet {
       if (headNodeIndexes == null) {
         val nodesVisibility = UnsignedBitSet()
-        nodesVisibility.set(0, permanentGraph.nodesCount() - 1, true)
+        nodesVisibility.set(0, graph.nodesCount() - 1, true)
         return nodesVisibility
       }
 
       val result = UnsignedBitSet()
-      val getter = ReachableNodes(LinearGraphUtils.asLiteLinearGraph(permanentGraph))
+      val getter = ReachableNodes(LinearGraphUtils.asLiteLinearGraph(graph))
       getter.walk(headNodeIndexes, Consumer { node -> result.set(node!!, true) })
 
       return result
