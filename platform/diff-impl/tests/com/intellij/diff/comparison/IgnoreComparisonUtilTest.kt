@@ -190,8 +190,8 @@ class IgnoreComparisonUtilTest : DiffTestCase() {
 
     Test("X_", "X_Y_",
          "  ", "++  ",
-         "  ", "  --")
-      .changedLines(ins(1, 1, 1))
+         "- ", "  - ")
+      .changedLines(mod(0, 1, 1, 1))
       .run()
 
     Test("X_Y_", "X_",
@@ -227,7 +227,7 @@ class IgnoreComparisonUtilTest : DiffTestCase() {
 
     Test("X_Y_Z", "A_Y_Z",
          "++   ", "     ",
-         "     ", "-    ")
+         "     ", "--   ")
       .changedLines(ins(1, 0, 1))
       .run()
 
@@ -408,28 +408,28 @@ class IgnoreComparisonUtilTest : DiffTestCase() {
 
     Test("import xx.x;_import xx.y;_import xx.z;", "import xx.x;_// import xx.y;_import xx.z;",
          "++++++++++++++++++++++++++++++++++++++", "+++++++++++++               +++++++++++++",
-         "                                      ", "             ---                         ")
+         "                                      ", "             ----------------            ")
       .changedLinesNumber(0, 1)
       .run()
 
     Test("import xx.x;_import xx.y;_import xx.z;_import xx.a;", "//import xx.x;_import xx.y;_import xx.z;_//import xx.a;",
          "+++++++++++++++++++++++++++++++++++++++++++++++++++", "              +++++++++++++++++++++++++++              ",
-         "                                                   ", "--                                       --            ")
+         "                                                   ", "---------------                          --------------")
       .changedLinesNumber(0, 2)
       .run()
 
     Test("foo();_bar 'text';", "foo();_// TODO: bar 'text'",
          "          +       ", "      ++++++++++++++++++++",
-         "                 -", "                          ")
+         "       -----------", "                          ")
       .changedLines(del(1, 2, 1))
       .changedLinesNumber(1, 0)
       .run()
 
     Test("import x.A;_import x.B;_import x.C;__@C_class Test { }_", "import x.B;__@x.C_class Test {}_",
          "+++++++++++++++++++++++++++++++++++++  +     +    + + +", "+++++++++++++    +     +    +  +",
-         "                                     ---               ", "             -                  ")
+         "                                                       ", "              --                ")
       .changedLinesNumber(1, 1)
-      .changedLines(ins(3, 2, 1), del(4, 3, 1))
+      .changedLines(mod(4, 2, 1, 1))
       .run()
   }
 
