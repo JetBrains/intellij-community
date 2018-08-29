@@ -760,14 +760,20 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   @Override
   public void newEntryAdded() {
     UIUtil.invokeLaterIfNeeded(() -> {
-      updateMessages();
-      updateControls();
+      if (isShowing()) {
+        updateMessages();
+        updateControls();
+      }
     });
   }
 
   @Override
   public void poolCleared() {
-    UIUtil.invokeLaterIfNeeded(() -> doCancelAction());
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (isShowing()) {
+        doCancelAction();
+      }
+    });
   }
 
   @Override
