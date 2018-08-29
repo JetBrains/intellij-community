@@ -17,6 +17,8 @@ public class YAMLCodeStyleSettings extends CustomCodeStyleSettings {
   public boolean SEQUENCE_ON_NEW_LINE = false;
   public boolean BLOCK_MAPPING_ON_NEW_LINE = false;
 
+  public boolean AUTOINSERT_SEQUENCE_MARKER = true;
+
   public YAMLCodeStyleSettings(CodeStyleSettings container) {
     super(YAMLLanguage.INSTANCE.getID(), container);
   }

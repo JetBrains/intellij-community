@@ -76,6 +76,11 @@ public class YAMLLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                 "BLOCK_MAPPING_ON_NEW_LINE",
                                 YAMLBundle.message("YAMLLanguageCodeStyleSettingsProvider.block.mapping.on.new.line"),
                                 YAMLBundle.message("YAMLLanguageCodeStyleSettingsProvider.group.sequence.value"));
+
+      consumer.showCustomOption(YAMLCodeStyleSettings.class,
+                                "AUTOINSERT_SEQUENCE_MARKER",
+                                YAMLBundle.message("YAMLLanguageCodeStyleSettingsProvider.autoinsert.sequence.marker"),
+                                YAMLBundle.message("YAMLLanguageCodeStyleSettingsProvider.group.sequence.value"));
     }
   }
 
