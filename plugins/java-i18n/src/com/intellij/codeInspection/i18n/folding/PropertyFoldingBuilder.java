@@ -89,7 +89,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
     return JavaCodeFoldingSettings.getInstance().isCollapseI18nMessages();
   }
 
-  private static void checkLiteral(ULiteralExpression expression, List<FoldingDescriptor> result) {
+  private static void checkLiteral(ULiteralExpression expression, List<? super FoldingDescriptor> result) {
     PsiElement sourcePsi = expression.getSourcePsi();
     if (sourcePsi == null) return;
     if (!isI18nProperty(expression)) return;

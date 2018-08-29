@@ -518,7 +518,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     return height;
   }
 
-  private void calculateBoundsNowrapImpl(List<Rectangle> bounds) {
+  private void calculateBoundsNowrapImpl(List<? extends Rectangle> bounds) {
     final int componentCount = getComponentCount();
     LOG.assertTrue(componentCount <= bounds.size());
 
@@ -572,7 +572,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
   }
 
-  private void calculateBoundsAutoImp(Dimension sizeToFit, List<Rectangle> bounds) {
+  private void calculateBoundsAutoImp(Dimension sizeToFit, List<? extends Rectangle> bounds) {
     final int componentCount = getComponentCount();
     LOG.assertTrue(componentCount <= bounds.size());
 
@@ -684,7 +684,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   }
 
-  private void calculateBoundsWrapImpl(Dimension sizeToFit, List<Rectangle> bounds) {
+  private void calculateBoundsWrapImpl(Dimension sizeToFit, List<? extends Rectangle> bounds) {
     // We have to graceful handle case when toolbar was not laid out yet.
     // In this case we calculate bounds as it is a NOWRAP toolbar.
     if (getWidth() == 0 || getHeight() == 0) {

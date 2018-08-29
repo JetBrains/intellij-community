@@ -272,13 +272,13 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     return myMethod;
   }
   
-  private void getSelectedMethods(Set<M> methods) {
+  private void getSelectedMethods(Set<? super M> methods) {
     MemberNodeBase<M> node = myRoot;
     getSelectedMethodsInner(node, methods);
     methods.remove(node.getMember());
   }
 
-  private void getSelectedMethodsInner(final MemberNodeBase<M> node, final Set<M> allMethods) {
+  private void getSelectedMethodsInner(final MemberNodeBase<? extends M> node, final Set<? super M> allMethods) {
     if (node.isChecked()) {
       M method = node.getMember();
       final M[] superMethods = method == myMethod ? null : findDeepestSuperMethods(method);
@@ -302,7 +302,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     return nodes;
   }
   
-  private void collectSelectedNodes(final MemberNodeBase<M> node, final Set<MemberNodeBase<M>> nodes) {
+  private void collectSelectedNodes(final MemberNodeBase<M> node, final Set<? super MemberNodeBase<M>> nodes) {
     if (node.isChecked()) {
       nodes.add(node);
       final Enumeration children = node.children();

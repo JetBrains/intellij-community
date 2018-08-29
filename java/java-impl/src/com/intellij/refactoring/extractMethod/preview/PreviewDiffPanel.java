@@ -127,7 +127,7 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
 
   private void updateLaterImpl(@NotNull ProgressIndicator indicator, boolean onlyEnabled) {
     List<DuplicateNode> allNodes = myTree.getModel().getAllDuplicates();
-    List<DuplicateNode> selectedNodes = onlyEnabled ? myTree.getModel().getEnabledDuplicates() : allNodes;
+    List<? extends DuplicateNode> selectedNodes = onlyEnabled ? myTree.getModel().getEnabledDuplicates() : allNodes;
     IncrementalProgress progress = new IncrementalProgress(indicator, selectedNodes.size() + 4);
 
     PsiElement[] pattern = ReadAction.compute(() -> getPatternElements());
@@ -326,7 +326,7 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
   }
 
   private static void doExtractImpl(@NotNull JavaDuplicatesExtractMethodProcessor processor,
-                                    @NotNull List<DuplicateNode> selectedNodes) {
+                                    @NotNull List<? extends DuplicateNode> selectedNodes) {
     Map<DuplicateNode, Match> selectedDuplicates = findSelectedDuplicates(processor, selectedNodes);
     processor.doExtract();
     processor.initParametrizedDuplicates(false);
@@ -353,7 +353,7 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
 
   @NotNull
   private static Map<DuplicateNode, Match> findSelectedDuplicates(@NotNull ExtractMethodProcessor processor,
-                                                                  @NotNull List<DuplicateNode> selectedNodes) {
+                                                                  @NotNull List<? extends DuplicateNode> selectedNodes) {
     Set<TextRange> textRanges = ContainerUtil.map2SetNotNull(selectedNodes, FragmentNode::getTextRange);
     processor.previewRefactoring(textRanges);
     List<Match> duplicates = processor.getAnyDuplicates();
@@ -361,7 +361,7 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
   }
 
   @NotNull
-  private static Map<DuplicateNode, Match> filterSelectedDuplicates(@NotNull Collection<DuplicateNode> selectedNodes,
+  private static Map<DuplicateNode, Match> filterSelectedDuplicates(@NotNull Collection<? extends DuplicateNode> selectedNodes,
                                                                     @Nullable List<Match> allDuplicates) {
     if (ContainerUtil.isEmpty(allDuplicates)) {
       return Collections.emptyMap();
@@ -385,7 +385,7 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
   }
 
   @NotNull
-  private static DiffUserDataKeysEx.DiffComputer getDiffComputer(@NotNull Collection<Range> ranges) {
+  private static DiffUserDataKeysEx.DiffComputer getDiffComputer(@NotNull Collection<? extends Range> ranges) {
     return (text1, text2, policy, innerChanges, indicator) -> {
       LineOffsets offsets1 = LineOffsetsUtil.create(text1);
       LineOffsets offsets2 = LineOffsetsUtil.create(text2);

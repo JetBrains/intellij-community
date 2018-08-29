@@ -80,7 +80,7 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
   }
 
 
-  private static void visitor(final PsiElement element, final ArrayList<PsiMethod> methods) {
+  private static void visitor(final PsiElement element, final ArrayList<? super PsiMethod> methods) {
     final PsiElement[] children = element.getChildren();
     for (final PsiElement child : children) {
       visitor(child, methods);

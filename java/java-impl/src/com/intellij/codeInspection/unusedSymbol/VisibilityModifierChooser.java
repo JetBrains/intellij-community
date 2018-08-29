@@ -38,14 +38,14 @@ public class VisibilityModifierChooser extends JLabel implements UserActivityPro
 
   public VisibilityModifierChooser(@NotNull Supplier<Boolean> canBeEnabled,
                                    @NotNull String modifier,
-                                   @NotNull Consumer<String> modifierChangedConsumer) {
+                                   @NotNull Consumer<? super String> modifierChangedConsumer) {
     this(canBeEnabled, modifier, modifierChangedConsumer, MODIFIERS);
   }
 
 
   public VisibilityModifierChooser(@NotNull Supplier<Boolean> canBeEnabled,
                                    @NotNull String modifier,
-                                   @NotNull Consumer<String> modifierChangedConsumer,
+                                   @NotNull Consumer<? super String> modifierChangedConsumer,
                                    @NotNull String[] modifiers) {
     myCanBeEnabled = canBeEnabled;
     setIcon(AllIcons.General.Combo2);

@@ -101,7 +101,7 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
     return children;
   }
 
-  public static void addLibraryChildren(final LibraryOrderEntry entry, final List<AbstractTreeNode> children, Project project, ProjectViewNode node) {
+  public static void addLibraryChildren(final LibraryOrderEntry entry, final List<? super AbstractTreeNode> children, Project project, ProjectViewNode node) {
     final PsiManager psiManager = PsiManager.getInstance(project);
     final VirtualFile[] files = entry.getRootFiles(OrderRootType.CLASSES);
     for (final VirtualFile file : files) {

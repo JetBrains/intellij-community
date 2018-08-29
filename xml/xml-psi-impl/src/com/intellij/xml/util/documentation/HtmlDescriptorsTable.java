@@ -98,7 +98,7 @@ public class HtmlDescriptorsTable {
     }
   }
 
-  private static void loadHtmlElements(final String resourceName, Collection<String> htmlTagNames) throws JDOMException, IOException {
+  private static void loadHtmlElements(final String resourceName, Collection<? super String> htmlTagNames) throws JDOMException, IOException {
     final Document document = JDOMUtil.loadDocument(HtmlDescriptorsTable.class.getResourceAsStream(resourceName));
     final List elements = document.getRootElement().getChildren(TAG_ELEMENT_NAME);
     final String baseHtmlExtDocUrl = document.getRootElement().getAttribute(BASE_HELP_REF_ATTR).getValue();

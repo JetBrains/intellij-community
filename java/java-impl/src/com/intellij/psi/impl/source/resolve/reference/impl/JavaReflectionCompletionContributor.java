@@ -96,7 +96,7 @@ public class JavaReflectionCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static void addVariants(PsiElement position, BiConsumer<PsiClass, Boolean> variantAdder) {
+  private static void addVariants(PsiElement position, BiConsumer<? super PsiClass, ? super Boolean> variantAdder) {
     PsiMethodCallExpression methodCall = PsiTreeUtil.getParentOfType(position, PsiMethodCallExpression.class);
     if (methodCall != null) {
       ReflectiveClass ownerClass = getReflectiveClass(methodCall.getMethodExpression().getQualifierExpression());

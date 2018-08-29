@@ -35,7 +35,7 @@ public final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationAc
   private final MyMenu myMenu;
   private final ActionManagerImpl myManager;
 
-  private Getter<DataContext> myDataContextProvider;
+  private Getter<? extends DataContext> myDataContextProvider;
   private MessageBusConnection myConnection;
 
   private IdeFrame myFrame;
@@ -64,7 +64,7 @@ public final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationAc
     return myMenu.myGroup;
   }
 
-  public void setDataContextProvider(@Nullable Getter<DataContext> dataContextProvider) {
+  public void setDataContextProvider(@Nullable Getter<? extends DataContext> dataContextProvider) {
     myDataContextProvider = dataContextProvider;
   }
 

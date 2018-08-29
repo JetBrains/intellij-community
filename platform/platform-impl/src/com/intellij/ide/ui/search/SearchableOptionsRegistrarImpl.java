@@ -249,10 +249,10 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   @Override
   @NotNull
   public ConfigurableHit getConfigurables(ConfigurableGroup[] groups,
-                                            final DocumentEvent.EventType type,
-                                            Set<Configurable> configurables,
-                                            String option,
-                                            Project project) {
+                                          final DocumentEvent.EventType type,
+                                          Set<? extends Configurable> configurables,
+                                          String option,
+                                          Project project) {
 
     final ConfigurableHit hits = new ConfigurableHit();
     final Set<Configurable> contentHits = hits.getContentHits();

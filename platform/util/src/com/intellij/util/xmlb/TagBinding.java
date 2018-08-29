@@ -48,7 +48,7 @@ class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
 
   @Nullable
   @Override
-  public Object deserializeList(@NotNull Object context, @NotNull List<Element> elements) {
+  public Object deserializeList(@NotNull Object context, @NotNull List<? extends Element> elements) {
     List<Element> children;
     if (elements.size() == 1) {
       children = elements.get(0).getChildren();
@@ -84,7 +84,7 @@ class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
     return context;
   }
 
-  private void deserialize(@NotNull Object context, @NotNull List<Element> children) {
+  private void deserialize(@NotNull Object context, @NotNull List<? extends Element> children) {
     assert myBinding != null;
     if (myBinding instanceof BeanBinding && myAccessor.isFinal()) {
       ((BeanBinding)myBinding).deserializeInto(context, children.get(0));

@@ -298,8 +298,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   boolean finishCommit(@NotNull final Document document,
-                       @NotNull List<BooleanRunnable> finishProcessors,
-                       @NotNull List<BooleanRunnable> reparseInjectedProcessors,
+                       @NotNull List<? extends BooleanRunnable> finishProcessors,
+                       @NotNull List<? extends BooleanRunnable> reparseInjectedProcessors,
                        final boolean synchronously,
                        @NotNull final Object reason) {
     assert !myProject.isDisposed() : "Already disposed";
@@ -329,8 +329,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   protected boolean finishCommitInWriteAction(@NotNull final Document document,
-                                              @NotNull List<BooleanRunnable> finishProcessors,
-                                              @NotNull List<BooleanRunnable> reparseInjectedProcessors,
+                                              @NotNull List<? extends BooleanRunnable> finishProcessors,
+                                              @NotNull List<? extends BooleanRunnable> reparseInjectedProcessors,
                                               final boolean synchronously,
                                               boolean forceNoPsiCommit) {
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -375,8 +375,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   private boolean commitToExistingPsi(@NotNull Document document,
-                                      @NotNull List<BooleanRunnable> finishProcessors,
-                                      @NotNull List<BooleanRunnable> reparseInjectedProcessors,
+                                      @NotNull List<? extends BooleanRunnable> finishProcessors,
+                                      @NotNull List<? extends BooleanRunnable> reparseInjectedProcessors,
                                       boolean synchronously,
                                       @Nullable VirtualFile virtualFile,
                                       @NotNull FileViewProvider viewProvider) {

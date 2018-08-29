@@ -59,7 +59,7 @@ public class CompilerTester {
   private static final Logger LOG = Logger.getInstance(CompilerTester.class);
 
   private final Project myProject;
-  private List<Module> myModules;
+  private List<? extends Module> myModules;
   private TempDirTestFixture myMainOutput;
 
   public CompilerTester(@NotNull Module module) throws Exception {
@@ -70,7 +70,7 @@ public class CompilerTester {
     this(fixture.getProject(), modules, fixture.getTestRootDisposable());
   }
 
-  public CompilerTester(@NotNull Project project, @NotNull List<Module> modules, @Nullable Disposable disposable) throws Exception {
+  public CompilerTester(@NotNull Project project, @NotNull List<? extends Module> modules, @Nullable Disposable disposable) throws Exception {
     myProject = project;
     myModules = modules;
     myMainOutput = new TempDirTestFixtureImpl();
@@ -174,7 +174,7 @@ public class CompilerTester {
   }
 
   @NotNull
-  public List<CompilerMessage> runCompiler(@NotNull Consumer<CompileStatusNotification> runnable) {
+  public List<CompilerMessage> runCompiler(@NotNull Consumer<? super CompileStatusNotification> runnable) {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
 

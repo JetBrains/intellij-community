@@ -188,7 +188,7 @@ public class MacOSApplicationProvider {
     }
   }
 
-  public static boolean tryOpenFileList(Project project, List<File> list, String location) {
+  public static boolean tryOpenFileList(Project project, List<? extends File> list, String location) {
     for (File file : list) {
       if (ProjectUtil.openOrImport(file.getAbsolutePath(), project, true) != null) {
         LOG.debug(location + ": load project from ", file);

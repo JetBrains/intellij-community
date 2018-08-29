@@ -520,7 +520,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     scheme.setDescriptors(descriptions.toArray(new EditorSchemeAttributeDescriptor[0]));
   }
 
-  private static void initPluggedDescriptions(@NotNull List<EditorSchemeAttributeDescriptor> descriptions,
+  private static void initPluggedDescriptions(@NotNull List<? super EditorSchemeAttributeDescriptor> descriptions,
                                               @NotNull MyColorScheme scheme) {
     ColorSettingsPage[] pages = ColorSettingsPages.getInstance().getRegisteredPages();
     for (ColorSettingsPage page : pages) {
@@ -532,7 +532,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   }
 
   private static void initDescriptions(@NotNull ColorAndFontDescriptorsProvider provider,
-                                       @NotNull List<EditorSchemeAttributeDescriptor> descriptions,
+                                       @NotNull List<? super EditorSchemeAttributeDescriptor> descriptions,
                                        @NotNull MyColorScheme scheme) {
     String className = provider.getClass().getName();
     String group = provider.getDisplayName();
@@ -565,7 +565,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   }
 
 
-  private static void initScopesDescriptors(@NotNull List<EditorSchemeAttributeDescriptor> descriptions, @NotNull MyColorScheme scheme) {
+  private static void initScopesDescriptors(@NotNull List<? super EditorSchemeAttributeDescriptor> descriptions, @NotNull MyColorScheme scheme) {
     Set<Pair<NamedScope,NamedScopesHolder>> namedScopes = new THashSet<>(new TObjectHashingStrategy<Pair<NamedScope, NamedScopesHolder>>() {
       @Override
       public int computeHashCode(@NotNull final Pair<NamedScope, NamedScopesHolder> object) {
@@ -1354,11 +1354,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     return selectOrEdit(context, search, options -> options.findSubConfigurable(type));
   }
 
-  private static boolean selectOrEdit(DataContext context, String search, Function<ColorAndFontOptions, SearchableConfigurable> function) {
+  private static boolean selectOrEdit(DataContext context, String search, Function<? super ColorAndFontOptions, ? extends SearchableConfigurable> function) {
     return select(context, search, function) || edit(context, search, function);
   }
 
-  private static boolean select(DataContext context, String search, Function<ColorAndFontOptions, SearchableConfigurable> function) {
+  private static boolean select(DataContext context, String search, Function<? super ColorAndFontOptions, ? extends SearchableConfigurable> function) {
     Settings settings = Settings.KEY.getData(context);
     if (settings == null) return false;
 
@@ -1372,7 +1372,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     return true;
   }
 
-  private static boolean edit(DataContext context, String search, Function<ColorAndFontOptions, SearchableConfigurable> function) {
+  private static boolean edit(DataContext context, String search, Function<? super ColorAndFontOptions, ? extends SearchableConfigurable> function) {
     ColorAndFontOptions options = new ColorAndFontOptions();
     SearchableConfigurable page = function.apply(options);
 

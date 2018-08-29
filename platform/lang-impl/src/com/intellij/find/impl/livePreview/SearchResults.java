@@ -266,7 +266,7 @@ public class SearchResults implements DocumentListener {
     }
   }
 
-  private void findInRange(@NotNull TextRange range, @NotNull Editor editor, @NotNull FindModel findModel, @NotNull List<FindResult> results) {
+  private void findInRange(@NotNull TextRange range, @NotNull Editor editor, @NotNull FindModel findModel, @NotNull List<? super FindResult> results) {
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
 
     // Document can change even while we're holding read lock (example case - console), so we're taking an immutable snapshot of text here

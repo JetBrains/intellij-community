@@ -994,7 +994,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   public boolean runWriteActionWithNonCancellableProgressInDispatchThread(@NotNull String title,
                                                                           @Nullable Project project,
                                                                           @Nullable JComponent parentComponent,
-                                                                          @NotNull Consumer<ProgressIndicator> action) {
+                                                                          @NotNull Consumer<? super ProgressIndicator> action) {
     return runEdtProgressWriteAction(title, project, parentComponent, null, action);
   }
 
@@ -1002,7 +1002,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   public boolean runWriteActionWithCancellableProgressInDispatchThread(@NotNull String title,
                                                                        @Nullable Project project,
                                                                        @Nullable JComponent parentComponent,
-                                                                       @NotNull Consumer<ProgressIndicator> action) {
+                                                                       @NotNull Consumer<? super ProgressIndicator> action) {
     return runEdtProgressWriteAction(title, project, parentComponent, IdeBundle.message("action.stop"), action);
   }
 
@@ -1010,7 +1010,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
                                             @Nullable Project project,
                                             @Nullable JComponent parentComponent,
                                             @Nullable String cancelText,
-                                            @NotNull Consumer<ProgressIndicator> action) {
+                                            @NotNull Consumer<? super ProgressIndicator> action) {
     Class<?> clazz = action.getClass();
     startWrite(clazz);
     try {
@@ -1028,7 +1028,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
                                                               @Nullable Project project,
                                                               @Nullable JComponent parentComponent,
                                                               @Nullable String cancelText,
-                                                              @NotNull Consumer<ProgressIndicator> action) {
+                                                              @NotNull Consumer<? super ProgressIndicator> action) {
     Class<?> clazz = action.getClass();
     startWrite(clazz);
     try {

@@ -46,10 +46,10 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
   private static final AtomicBoolean myInitialized = new AtomicBoolean();
 
   @NotNull private final Project myProject;
-  @Nullable private static NullableFunction<List<VirtualFile>, UnlockOption> ourCustomUnlocker;
+  @Nullable private static NullableFunction<? super List<VirtualFile>, UnlockOption> ourCustomUnlocker;
 
   @TestOnly
-  public static void setCustomUnlocker(@Nullable NullableFunction<List<VirtualFile>, UnlockOption> unlocker) {
+  public static void setCustomUnlocker(@Nullable NullableFunction<? super List<VirtualFile>, UnlockOption> unlocker) {
     ourCustomUnlocker = unlocker;
   }
 
@@ -161,7 +161,7 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
     allowWriting(Arrays.asList(allowedFiles));
   }
 
-  public static void allowWriting(Iterable<VirtualFile> allowedFiles) {
+  public static void allowWriting(Iterable<? extends VirtualFile> allowedFiles) {
     for (VirtualFile eachAllowed : allowedFiles) {
       ACCESS_ALLOWED.getValue(eachAllowed).incrementAndGet();
     }

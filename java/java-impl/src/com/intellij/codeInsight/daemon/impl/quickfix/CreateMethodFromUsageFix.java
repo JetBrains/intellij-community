@@ -215,12 +215,12 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
   }
 
   public static void doCreate(PsiClass targetClass,
-                               PsiMethod method,
-                               boolean shouldBeAbstract,
-                               List<Pair<PsiExpression, PsiType>> arguments,
-                               PsiSubstitutor substitutor,
-                               ExpectedTypeInfo[] expectedTypes,
-                               @Nullable final PsiElement context) {
+                              PsiMethod method,
+                              boolean shouldBeAbstract,
+                              List<? extends Pair<PsiExpression, PsiType>> arguments,
+                              PsiSubstitutor substitutor,
+                              ExpectedTypeInfo[] expectedTypes,
+                              @Nullable final PsiElement context) {
 
     method = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(method);
 

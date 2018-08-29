@@ -15,10 +15,10 @@ import java.util.List;
 public final class ExecutorsQuery<Result, Parameter> extends AbstractQuery<Result> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ExecutorsQuery"); 
 
-  private final List<QueryExecutor<Result, Parameter>> myExecutors;
+  private final List<? extends QueryExecutor<Result, Parameter>> myExecutors;
   private final Parameter myParameters;
 
-  public ExecutorsQuery(@NotNull final Parameter params, @NotNull List<QueryExecutor<Result, Parameter>> executors) {
+  public ExecutorsQuery(@NotNull final Parameter params, @NotNull List<? extends QueryExecutor<Result, Parameter>> executors) {
     myParameters = params;
     myExecutors = executors;
   }

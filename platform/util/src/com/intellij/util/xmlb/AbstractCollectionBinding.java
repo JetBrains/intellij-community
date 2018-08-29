@@ -149,7 +149,7 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
 
   @Nullable
   @Override
-  public Object deserializeList(@Nullable Object context, @NotNull List<Element> elements) {
+  public Object deserializeList(@Nullable Object context, @NotNull List<? extends Element> elements) {
     if (!isSurroundWithTag()) {
       return doDeserializeList(context, elements);
     }
@@ -160,7 +160,7 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
   }
 
   @NotNull
-  protected abstract Object doDeserializeList(@Nullable Object context, @NotNull List<Element> elements);
+  protected abstract Object doDeserializeList(@Nullable Object context, @NotNull List<? extends Element> elements);
 
   @Nullable
   private Object serializeItem(@Nullable Object value, Object context, @Nullable SerializationFilter filter) {

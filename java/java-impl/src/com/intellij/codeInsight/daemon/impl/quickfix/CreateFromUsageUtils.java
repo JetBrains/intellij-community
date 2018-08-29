@@ -253,7 +253,7 @@ public class CreateFromUsageUtils {
   }
 
   static void setupMethodParameters(final PsiMethod method, final TemplateBuilder builder, final PsiElement contextElement,
-                                    final PsiSubstitutor substitutor, final List<Pair<PsiExpression, PsiType>> arguments)
+                                    final PsiSubstitutor substitutor, final List<? extends Pair<PsiExpression, PsiType>> arguments)
     throws IncorrectOperationException {
 
     final PsiManager psiManager = method.getManager();
@@ -592,8 +592,8 @@ public class CreateFromUsageUtils {
 
   private static void getExpectedInformation(final PsiExpression expression,
                                              List<ExpectedTypeInfo[]> types,
-                                             List<String> expectedMethodNames,
-                                             List<String> expectedFieldNames) {
+                                             List<? super String> expectedMethodNames,
+                                             List<? super String> expectedFieldNames) {
     Comparator<ExpectedTypeInfo> expectedTypesComparator = (o1, o2) -> compareExpectedTypes(o1, o2, expression);
     for (PsiExpression expr : collectExpressions(expression, PsiMember.class, PsiFile.class)) {
       PsiElement parent = expr.getParent();
@@ -901,7 +901,7 @@ public class CreateFromUsageUtils {
     addClassesWithMember(memberName, file, possibleClassNames, method, staticAccess, true);
   }
 
-  public static void addClassesWithMember(final String memberName, final PsiFile file, final Set<String> possibleClassNames, final boolean method,
+  public static void addClassesWithMember(final String memberName, final PsiFile file, final Set<? super String> possibleClassNames, final boolean method,
                                           final boolean staticAccess,
                                           final boolean addObjectInheritors) {
     final Project project = file.getProject();
@@ -941,7 +941,7 @@ public class CreateFromUsageUtils {
     }
   }
 
-  private static boolean handleObjectMethod(Set<String> possibleClassNames, final JavaPsiFacade facade, final GlobalSearchScope searchScope, final boolean method, final String memberName, final boolean staticAccess, boolean addInheritors) {
+  private static boolean handleObjectMethod(Set<? super String> possibleClassNames, final JavaPsiFacade facade, final GlobalSearchScope searchScope, final boolean method, final String memberName, final boolean staticAccess, boolean addInheritors) {
     final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(facade.getProject());
     final boolean[] allClasses = {false};
     ReadAction.run(() -> {

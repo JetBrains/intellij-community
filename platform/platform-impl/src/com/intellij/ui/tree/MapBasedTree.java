@@ -63,12 +63,12 @@ public final class MapBasedTree<K, N> {
   }
 
   public void onRemove(@NotNull Consumer<? super N> consumer) {
-    Consumer<N> old = (Consumer<N>)nodeRemoved;
+    Consumer old = (Consumer<N>)nodeRemoved;
     nodeRemoved = old == null ? consumer : old.andThen(consumer);
   }
 
   public void onInsert(@NotNull Consumer<? super N> consumer) {
-    Consumer<N> old = (Consumer<N>)nodeInserted;
+    Consumer old = (Consumer<N>)nodeInserted;
     nodeInserted = old == null ? consumer : old.andThen(consumer);
   }
 
@@ -99,7 +99,7 @@ public final class MapBasedTree<K, N> {
     return null;
   }
 
-  public boolean updateRoot(Pair<N, Boolean> pair) {
+  public boolean updateRoot(Pair<? extends N, Boolean> pair) {
     N node = Pair.getFirst(pair);
     if (root == null ? node == null : root.node == node) return false;
 
@@ -213,7 +213,7 @@ public final class MapBasedTree<K, N> {
     if (consumer != null) consumer.accept(entry.node);
   }
 
-  private static <T> List<T> guard(List<T> list) {
+  private static <T> List<T> guard(List<? extends T> list) {
     return list == null || list.isEmpty() ? emptyList() : unmodifiableList(list);
   }
 

@@ -182,7 +182,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
 
   private boolean processDirectories(@NotNull String qualifiedName,
                                      @NotNull final GlobalSearchScope scope,
-                                     @NotNull final Processor<VirtualFile> processor) {
+                                     @NotNull final Processor<? super VirtualFile> processor) {
     return ContainerUtil.process(getCache(scope).getDirectoriesByPackageName(qualifiedName),
                                  file -> !scope.contains(file) || processor.process(file));
   }

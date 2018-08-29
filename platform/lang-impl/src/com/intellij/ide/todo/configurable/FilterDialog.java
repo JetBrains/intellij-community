@@ -37,7 +37,7 @@ import java.util.List;
 class FilterDialog extends DialogWrapper {
   private final TodoFilter myFilter;
   private final int myFilterIndex;
-  private final List<TodoFilter> myFilters;
+  private final List<? extends TodoFilter> myFilters;
 
   private final JTextField myNameField;
   private final JScrollPane myPatternsScrollPane;
@@ -50,7 +50,7 @@ class FilterDialog extends DialogWrapper {
    * @param filters     all already configured filters. This parameter is used to
    * @param patterns    all patterns available in this filter.
    */
-  public FilterDialog(Component parent, TodoFilter filter, int filterIndex, List<TodoFilter> filters, List<TodoPattern> patterns) {
+  public FilterDialog(Component parent, TodoFilter filter, int filterIndex, List<? extends TodoFilter> filters, List<TodoPattern> patterns) {
     super(parent, true);
     setTitle(IdeBundle.message("title.add.todo.filter"));
     myFilter = filter;

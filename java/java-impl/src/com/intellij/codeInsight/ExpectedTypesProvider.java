@@ -154,7 +154,7 @@ public class ExpectedTypesProvider {
 
   @NotNull
   public static PsiType[] processExpectedTypes(@NotNull ExpectedTypeInfo[] infos,
-                                               @NotNull PsiTypeVisitor<PsiType> visitor, @NotNull Project project) {
+                                               @NotNull PsiTypeVisitor<? extends PsiType> visitor, @NotNull Project project) {
     LinkedHashSet<PsiType> set = new LinkedHashSet<>();
     for (ExpectedTypeInfo info : infos) {
       ExpectedTypeInfoImpl infoImpl = (ExpectedTypeInfoImpl)info;
@@ -188,13 +188,13 @@ public class ExpectedTypesProvider {
     return set.toArray(PsiType.createArray(set.size()));
   }
 
-  private static void processType(@NotNull PsiType type, @NotNull PsiTypeVisitor<PsiType> visitor, @NotNull Set<? super PsiType> typeSet) {
+  private static void processType(@NotNull PsiType type, @NotNull PsiTypeVisitor<? extends PsiType> visitor, @NotNull Set<? super PsiType> typeSet) {
     PsiType accepted = type.accept(visitor);
     if (accepted != null) typeSet.add(accepted);
   }
 
   private static void processPrimitiveTypeAndSubtypes(@NotNull PsiPrimitiveType type,
-                                                      @NotNull PsiTypeVisitor<PsiType> visitor,
+                                                      @NotNull PsiTypeVisitor<? extends PsiType> visitor,
                                                       @NotNull Set<? super PsiType> set) {
     if (type.equals(PsiType.BOOLEAN) || type.equals(PsiType.VOID) || type.equals(PsiType.NULL)) return;
 
@@ -205,7 +205,7 @@ public class ExpectedTypesProvider {
     }
   }
 
-  public static void processAllSuperTypes(@NotNull PsiType type, @NotNull PsiTypeVisitor<PsiType> visitor, @NotNull Project project, @NotNull Set<? super PsiType> set, @NotNull Set<? super PsiType> visited) {
+  public static void processAllSuperTypes(@NotNull PsiType type, @NotNull PsiTypeVisitor<? extends PsiType> visitor, @NotNull Project project, @NotNull Set<? super PsiType> set, @NotNull Set<? super PsiType> visited) {
     if (!visited.add(type)) return;
 
     if (type instanceof PsiPrimitiveType) {

@@ -49,7 +49,7 @@ public class PropertiesPlaceholdersInspectionProvider implements InconsistentRes
 
   @Override
   public void check(BidirectionalMap<PropertiesFile, PropertiesFile> parents,
-                    List<PropertiesFile> files,
+                    List<? extends PropertiesFile> files,
                     Map<PropertiesFile, Set<String>> keysUpToParent,
                     Map<PropertiesFile, Map<String, String>> propertiesFilesNamesMaps,
                     InspectionManager manager,

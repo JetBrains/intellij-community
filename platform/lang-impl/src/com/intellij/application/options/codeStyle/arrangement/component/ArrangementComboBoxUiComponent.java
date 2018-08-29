@@ -38,7 +38,7 @@ public class ArrangementComboBoxUiComponent extends AbstractArrangementUiCompone
   @NotNull private final JComboBox myComboBox;
 
   @SuppressWarnings("unchecked")
-  public ArrangementComboBoxUiComponent(@NotNull List<ArrangementSettingsToken> tokens) {
+  public ArrangementComboBoxUiComponent(@NotNull List<? extends ArrangementSettingsToken> tokens) {
     super(tokens);
     ArrangementSettingsToken[] tokensArray = tokens.toArray(new ArrangementSettingsToken[0]);
     Arrays.sort(tokensArray, (t1, t2) -> t1.getRepresentationValue().compareTo(t2.getRepresentationValue()));

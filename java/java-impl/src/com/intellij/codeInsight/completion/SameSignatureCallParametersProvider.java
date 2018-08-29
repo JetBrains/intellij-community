@@ -55,7 +55,7 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
     addSignatureItems(parameters, result);
   }
 
-  void addSignatureItems(@NotNull CompletionParameters parameters, @NotNull Consumer<LookupElement> result) {
+  void addSignatureItems(@NotNull CompletionParameters parameters, @NotNull Consumer<? super LookupElement> result) {
     final PsiCall methodCall = PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiCall.class);
     assert methodCall != null;
     Set<Pair<PsiMethod, PsiSubstitutor>> candidates = getCallCandidates(methodCall);

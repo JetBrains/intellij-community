@@ -104,7 +104,7 @@ public class VirtualFilePointerTracker {
     }
   }
 
-  private static void addAllPointersTo(@NotNull Collection<VirtualFilePointerImpl> pointers) {
+  private static void addAllPointersTo(@NotNull Collection<? super VirtualFilePointerImpl> pointers) {
     ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).addAllPointersTo(pointers);
   }
 }

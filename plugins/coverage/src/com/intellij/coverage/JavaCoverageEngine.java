@@ -512,7 +512,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     return elements;
   }
 
-  private static void collectTestsByName(List<PsiElement> elements, String testName, PsiClass psiClass, int lastIdx) {
+  private static void collectTestsByName(List<? super PsiElement> elements, String testName, PsiClass psiClass, int lastIdx) {
     final PsiMethod[] testsByName = psiClass.findMethodsByName(testName.substring(lastIdx + 1), true);
     if (testsByName.length == 1) {
       elements.add(testsByName[0]);

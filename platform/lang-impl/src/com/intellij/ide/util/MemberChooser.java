@@ -519,7 +519,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     restoreSelection(pair);
   }
 
-  private static void sortNode(ParentNode node, final Comparator<ElementNode> sortComparator) {
+  private static void sortNode(ParentNode node, final Comparator<? super ElementNode> sortComparator) {
     ArrayList<ElementNode> arrayList = new ArrayList<>();
     Enumeration<TreeNode> children = node.children();
     while (children.hasMoreElements()) {
@@ -620,7 +620,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   }
 
 
-  private void restoreSelection(Pair<ElementNode,List<ElementNode>> pair) {
+  private void restoreSelection(Pair<? extends ElementNode, ? extends List<ElementNode>> pair) {
     List<ElementNode> selectedNodes = pair.second;
 
     DefaultMutableTreeNode root = getRootNode();
@@ -901,9 +901,9 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   }
 
   private static class ElementNodeComparatorWrapper<T> implements Comparator<ElementNode> {
-    private final Comparator<T> myDelegate;
+    private final Comparator<? super T> myDelegate;
 
-    public ElementNodeComparatorWrapper(final Comparator<T> delegate) {
+    public ElementNodeComparatorWrapper(final Comparator<? super T> delegate) {
       myDelegate = delegate;
     }
 

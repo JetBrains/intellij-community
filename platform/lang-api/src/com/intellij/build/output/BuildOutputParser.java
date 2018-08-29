@@ -11,5 +11,5 @@ import java.util.function.Consumer;
  */
 @ApiStatus.Experimental
 public interface BuildOutputParser {
-  boolean parse(String line, BuildOutputInstantReader reader, Consumer<MessageEvent> messageConsumer);
+  boolean parse(String line, BuildOutputInstantReader reader, Consumer<? super MessageEvent> messageConsumer);
 }

@@ -137,7 +137,7 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
     retainFiles(VirtualFile::isValid);
   }
 
-  protected void retainFiles(@NotNull Condition<VirtualFile> c) {
+  protected void retainFiles(@NotNull Condition<? super VirtualFile> c) {
     for (Map.Entry<String, T> entry : myCachedFiles.entrySet()) {
       T t = entry.getValue();
       if (t == null || !c.value(t)) {

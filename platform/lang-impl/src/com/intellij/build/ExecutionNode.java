@@ -237,7 +237,7 @@ public class ExecutionNode extends CachingSimpleNode {
     return Collections.emptyList();
   }
 
-  public void setIconProvider(Supplier<Icon> iconProvider) {
+  public void setIconProvider(Supplier<? extends Icon> iconProvider) {
     myPreferredIconValue = new NullableLazyValue<Icon>() {
       @Nullable
       @Override

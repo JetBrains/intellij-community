@@ -390,7 +390,7 @@ public class InspectionApplication {
       }
 
       @Override
-      public void cannotWriteToFiles(final List<File> readonlyFiles) {
+      public void cannotWriteToFiles(final List<? extends File> readonlyFiles) {
         StringBuilder files = new StringBuilder();
         for (File file : readonlyFiles) {
           files.append(file.getAbsolutePath()).append("; ");

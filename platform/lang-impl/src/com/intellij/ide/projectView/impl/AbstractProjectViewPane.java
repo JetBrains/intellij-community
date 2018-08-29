@@ -848,7 +848,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   @Nullable
-  static TreeVisitor createVisitor(PsiElement element, VirtualFile file, Predicate<TreePath> predicate) {
+  static TreeVisitor createVisitor(PsiElement element, VirtualFile file, Predicate<? super TreePath> predicate) {
     if (element != null && element.isValid()) return new ProjectViewNodeVisitor(element, file, predicate);
     if (file != null) return new ProjectViewFileVisitor(file, predicate);
     LOG.warn(element != null ? "element invalidated: " + element : "cannot create visitor without element and/or file");

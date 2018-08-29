@@ -128,7 +128,7 @@ public class DebugReflectionUtil {
                                     @NotNull Map<Object, String> startRoots,
                                     @NotNull final Class<?> lookFor,
                                     @NotNull Condition<Object> shouldExamineValue,
-                                    @NotNull final PairProcessor<Object, BackLink> leakProcessor) {
+                                    @NotNull final PairProcessor<Object, ? super BackLink> leakProcessor) {
     TIntHashSet visited = new TIntHashSet((int)(10000000 * 0.8));
     Queue<BackLink> toVisit = new Queue<BackLink>(1000000);
 
@@ -157,7 +157,7 @@ public class DebugReflectionUtil {
     }
   }
 
-  private static void queueStronglyReferencedValues(@NotNull Queue<BackLink> queue,
+  private static void queueStronglyReferencedValues(@NotNull Queue<? super BackLink> queue,
                                                     @NotNull Object root,
                                                     @NotNull Condition<Object> shouldExamineValue,
                                                     @NotNull BackLink backLink) {
@@ -202,7 +202,7 @@ public class DebugReflectionUtil {
     }
   }
 
-  private static void queue(Object value, Field field, @NotNull BackLink backLink, @NotNull Queue<BackLink> queue,
+  private static void queue(Object value, Field field, @NotNull BackLink backLink, @NotNull Queue<? super BackLink> queue,
                             @NotNull Condition<Object> shouldExamineValue) {
     if (value == null || isTrivial(value.getClass())) return;
     if (shouldExamineValue.value(value)) {

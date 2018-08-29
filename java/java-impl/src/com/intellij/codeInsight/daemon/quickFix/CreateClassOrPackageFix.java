@@ -45,7 +45,7 @@ import java.util.*;
  */
 public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix");
-  private final List<PsiDirectory> myWritableDirectoryList;
+  private final List<? extends PsiDirectory> myWritableDirectoryList;
   private final String myPresentation;
 
   @Nullable private final ClassKind myClassKind;
@@ -87,7 +87,7 @@ public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPs
     return createFix(qualifiedName, context.getResolveScope(), context, null, kind, superClass, null);
   }
 
-  private CreateClassOrPackageFix(@NotNull List<PsiDirectory> writableDirectoryList,
+  private CreateClassOrPackageFix(@NotNull List<? extends PsiDirectory> writableDirectoryList,
                                   @NotNull PsiElement context,
                                   @NotNull String presentation,
                                   @NotNull String redPart,

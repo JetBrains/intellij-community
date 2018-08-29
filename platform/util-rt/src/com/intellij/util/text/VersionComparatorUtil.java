@@ -121,7 +121,7 @@ public class VersionComparatorUtil {
     return compare(ver1, ver2, DEFAULT_TOKEN_PRIORITY_PROVIDER);
   }
 
-  public static int compare(String ver1, String ver2, Function<String, Integer> tokenPriorityProvider) {
+  public static int compare(String ver1, String ver2, Function<? super String, Integer> tokenPriorityProvider) {
     // todo duplicates com.intellij.openapi.util.text.StringUtil.compareVersionNumbers()
     // todo please refactor next time you make changes here
     if (ver1 == null) {
@@ -161,7 +161,7 @@ public class VersionComparatorUtil {
     return 0;
   }
 
-  public static int comparePriorities(String ver1, String ver2, Function<String, Integer> tokenPriorityProvider) {
+  public static int comparePriorities(String ver1, String ver2, Function<? super String, Integer> tokenPriorityProvider) {
     int priority1 = tokenPriorityProvider.fun(ver1);
     int priority2 = tokenPriorityProvider.fun(ver2);
 

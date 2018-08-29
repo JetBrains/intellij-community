@@ -55,7 +55,7 @@ public final class CompletionServiceImpl extends CompletionService {
   }
 
   @Override
-  public void performCompletion(final CompletionParameters parameters, final Consumer<CompletionResult> consumer) {
+  public void performCompletion(final CompletionParameters parameters, final Consumer<? super CompletionResult> consumer) {
     myApiCompletionProcess = parameters.getProcess();
     try {
       final Set<LookupElement> lookupSet = ContainerUtil.newConcurrentSet();

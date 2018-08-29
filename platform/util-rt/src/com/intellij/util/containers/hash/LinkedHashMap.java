@@ -29,7 +29,7 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
   private int capacity;
   private int size;
   private final float loadFactor;
-  private final EqualityPolicy<K> hashingStrategy;
+  private final EqualityPolicy<? super K> hashingStrategy;
   private final boolean accessOrder;
 
   public LinkedHashMap() {
@@ -51,14 +51,14 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
     this(capacity, loadFactor, (EqualityPolicy)EqualityPolicy.CANONICAL, accessOrder);
   }
 
-  public LinkedHashMap(EqualityPolicy<K> hashingStrategy) {
+  public LinkedHashMap(EqualityPolicy<? super K> hashingStrategy) {
     this(0, HashUtil.DEFAULT_LOAD_FACTOR, hashingStrategy);
   }
 
-  public LinkedHashMap(int capacity, float loadFactor, EqualityPolicy<K> hashingStrategy) {
+  public LinkedHashMap(int capacity, float loadFactor, EqualityPolicy<? super K> hashingStrategy) {
     this(capacity, loadFactor, hashingStrategy, false);
   }
-  public LinkedHashMap(int capacity, float loadFactor, EqualityPolicy<K> hashingStrategy, boolean accessOrder) {
+  public LinkedHashMap(int capacity, float loadFactor, EqualityPolicy<? super K> hashingStrategy, boolean accessOrder) {
     this.loadFactor = loadFactor;
     this.hashingStrategy = hashingStrategy;
     clear(capacity);

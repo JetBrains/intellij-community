@@ -112,7 +112,7 @@ public class JavaDocCommentFixer implements DocCommentFixer {
   }
 
   @SuppressWarnings("unchecked")
-  private static void fixReferenceProblems(@NotNull List<ProblemDescriptor> problems, @NotNull Project project) {
+  private static void fixReferenceProblems(@NotNull List<? extends ProblemDescriptor> problems, @NotNull Project project) {
     for (ProblemDescriptor problem : problems) {
       QuickFix[] fixes = problem.getFixes();
       if (fixes != null) {
@@ -132,7 +132,7 @@ public class JavaDocCommentFixer implements DocCommentFixer {
    * @param project  current project
    */
   @SuppressWarnings("unchecked")
-  private static void fixCommonProblems(@NotNull List<ProblemDescriptor> problems,
+  private static void fixCommonProblems(@NotNull List<? extends ProblemDescriptor> problems,
                                         @NotNull PsiComment comment,
                                         @NotNull final Document document,
                                         @NotNull Project project)

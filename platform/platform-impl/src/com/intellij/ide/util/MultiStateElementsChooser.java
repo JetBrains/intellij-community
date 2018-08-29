@@ -329,7 +329,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
     myElementToPropertiesMap.put(element, properties);
   }
 
-  public void setElements(List<T> elements, S markState) {
+  public void setElements(List<? extends T> elements, S markState) {
     myTableModel.clear();
     myTableModel.addElements(elements, markState);
   }
@@ -379,7 +379,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
     return rows;
   }
 
-  public void markElements(Collection<T> elements, S markState) {
+  public void markElements(Collection<? extends T> elements, S markState) {
     myTableModel.setMarkState(getElementsRows(elements), markState);
   }
 
@@ -466,7 +466,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
       }
     }
 
-    public void sort(Comparator<T> comparator) {
+    public void sort(Comparator<? super T> comparator) {
       Collections.sort(myElements, comparator);
       fireTableDataChanged();
     }
@@ -487,7 +487,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
       fireTableRowsInserted(row, row);
     }
 
-    private void addElements(@Nullable List<T> elements, S markState) {
+    private void addElements(@Nullable List<? extends T> elements, S markState) {
       if (elements == null || elements.isEmpty()) {
         return;
       }

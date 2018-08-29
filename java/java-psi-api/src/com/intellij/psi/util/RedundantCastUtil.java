@@ -478,7 +478,7 @@ public class RedundantCastUtil {
                                                PsiType interfaceType,
                                                PsiTypeCastExpression returnExpression,
                                                int returnExprIdx,
-                                               Function<PsiExpression, PsiTypeCastExpression> computeCastExpression) {
+                                               Function<? super PsiExpression, ? extends PsiTypeCastExpression> computeCastExpression) {
       final PsiCall newCall = LambdaUtil.copyTopLevelCall(expression);
       if (newCall == null) return;
       final PsiExpressionList newArgsList = newCall.getArgumentList();

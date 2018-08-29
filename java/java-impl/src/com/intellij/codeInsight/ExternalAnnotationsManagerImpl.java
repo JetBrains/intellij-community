@@ -387,7 +387,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
 
   private boolean processExistingExternalAnnotations(@NotNull final PsiModifierListOwner listOwner,
                                                      @NotNull final String annotationFQN,
-                                                     @NotNull final Processor<XmlTag> annotationTagProcessor) {
+                                                     @NotNull final Processor<? super XmlTag> annotationTagProcessor) {
     try {
       final List<XmlFile> files = findExternalAnnotationsXmlFiles(listOwner);
       if (files == null) {

@@ -270,7 +270,7 @@ public class ExternalSystemApiUtil {
   @Nullable
   public static <T> DataNode<T> findParent(@NotNull DataNode<?> node,
                                            @NotNull Key<T> key,
-                                           @Nullable BooleanFunction<DataNode<T>> predicate) {
+                                           @Nullable BooleanFunction<? super DataNode<T>> predicate) {
     DataNode<?> parent = node.getParent();
     if (parent == null) return null;
     return key.equals(parent.getKey()) && (predicate == null || predicate.fun((DataNode<T>)parent))
@@ -283,7 +283,7 @@ public class ExternalSystemApiUtil {
     return getChildren(parent, key);
   }
 
-  public static void visit(@Nullable DataNode node, @NotNull Consumer<DataNode<?>> consumer) {
+  public static void visit(@Nullable DataNode node, @NotNull Consumer<? super DataNode<?>> consumer) {
     if (node == null) return;
 
     Stack<DataNode> toProcess = ContainerUtil.newStack(node);
@@ -307,20 +307,20 @@ public class ExternalSystemApiUtil {
   }
 
   @NotNull
-  public static Collection<DataNode<?>> findAllRecursively(@NotNull Collection<DataNode<?>> nodes) {
+  public static Collection<DataNode<?>> findAllRecursively(@NotNull Collection<? extends DataNode<?>> nodes) {
     return findAllRecursively(nodes, null);
   }
 
   @NotNull
   public static Collection<DataNode<?>> findAllRecursively(@Nullable DataNode<?> node,
-                                                           @Nullable BooleanFunction<DataNode<?>> predicate) {
+                                                           @Nullable BooleanFunction<? super DataNode<?>> predicate) {
     if (node == null) return Collections.emptyList();
     return findAllRecursively(node.getChildren(), predicate);
   }
 
   @NotNull
-  public static Collection<DataNode<?>> findAllRecursively(@NotNull Collection<DataNode<?>> nodes,
-                                                           @Nullable BooleanFunction<DataNode<?>> predicate) {
+  public static Collection<DataNode<?>> findAllRecursively(@NotNull Collection<? extends DataNode<?>> nodes,
+                                                           @Nullable BooleanFunction<? super DataNode<?>> predicate) {
     SmartList<DataNode<?>> result = new SmartList<>();
     for (DataNode<?> node : nodes) {
       if (predicate == null || predicate.fun(node)) {
@@ -335,23 +335,23 @@ public class ExternalSystemApiUtil {
 
   @Nullable
   public static DataNode<?> findFirstRecursively(@NotNull DataNode<?> parentNode,
-                                                 @NotNull BooleanFunction<DataNode<?>> predicate) {
+                                                 @NotNull BooleanFunction<? super DataNode<?>> predicate) {
     Queue<DataNode<?>> queue = new LinkedList<>();
     queue.add(parentNode);
     return findInQueue(queue, predicate);
   }
 
   @Nullable
-  public static DataNode<?> findFirstRecursively(@NotNull Collection<DataNode<?>> nodes,
-                                                 @NotNull BooleanFunction<DataNode<?>> predicate) {
+  public static DataNode<?> findFirstRecursively(@NotNull Collection<? extends DataNode<?>> nodes,
+                                                 @NotNull BooleanFunction<? super DataNode<?>> predicate) {
     return findInQueue(new LinkedList<>(nodes), predicate);
   }
 
   @Nullable
   private static DataNode<?> findInQueue(@NotNull Queue<DataNode<?>> queue,
-                                         @NotNull BooleanFunction<DataNode<?>> predicate) {
+                                         @NotNull BooleanFunction<? super DataNode<?>> predicate) {
     while (!queue.isEmpty()) {
-      DataNode node = queue.remove();
+      DataNode<?> node = queue.remove();
       if (predicate.fun(node)) {
         return node;
       }

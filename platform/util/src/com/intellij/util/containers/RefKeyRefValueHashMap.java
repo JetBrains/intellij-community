@@ -34,7 +34,7 @@ abstract class RefKeyRefValueHashMap<K,V> implements Map<K,V>{
 
     V get();
   }
-  protected V dereference(ValueReference<K, V> reference) {
+  protected V dereference(ValueReference<K, ? extends V> reference) {
     return reference == null ? null : reference.get();
   }
 

@@ -98,7 +98,7 @@ public class InjectedReferencesContributor extends PsiReferenceContributor {
             InjectedLanguageManager
               .getInstance(containingFile.getProject()).enumerateEx(element, containingFile, false, new InjectedReferenceVisitor() {
                       @Override
-                      public void visitInjectedReference(@NotNull ReferenceInjector injector, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
+                      public void visitInjectedReference(@NotNull ReferenceInjector injector, @NotNull List<? extends PsiLanguageInjectionHost.Shred> places) {
                           injected.set(Boolean.TRUE);
                           element.putUserData(LanguageInjectionSupport.INJECTOR_SUPPORT, registry.getLanguageInjectionSupport());
                           for (PsiLanguageInjectionHost.Shred place : places) {

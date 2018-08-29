@@ -21,7 +21,7 @@ import java.util.Collection;
 public class ListWithSelection<E> extends ArrayList<E> {
   private E mySelection;
 
-  public ListWithSelection(Collection<E> collection) {
+  public ListWithSelection(Collection<? extends E> collection) {
     super(collection);
   }
 

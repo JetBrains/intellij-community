@@ -47,7 +47,7 @@ import java.util.Collection;
 import java.util.Comparator;
 
 public class ProjectViewTestUtil {
-  public static VirtualFile[] getFiles(AbstractTreeNode kid, Function<AbstractTreeNode, VirtualFile[]> converterFunction) {
+  public static VirtualFile[] getFiles(AbstractTreeNode kid, Function<? super AbstractTreeNode, VirtualFile[]> converterFunction) {
     if (kid instanceof BasePsiNode) {
       Object value = kid.getValue();
       VirtualFile virtualFile = PsiUtilCore.getVirtualFile((PsiElement)value);
@@ -63,9 +63,9 @@ public class ProjectViewTestUtil {
   }
 
   public static void collect(AbstractTreeNode node,
-                              MultiValuesMap<VirtualFile, AbstractTreeNode> map,
-                              final AbstractTreeStructure structure,
-                              Function<AbstractTreeNode, VirtualFile[]> converterFunction) {
+                             MultiValuesMap<VirtualFile, AbstractTreeNode> map,
+                             final AbstractTreeStructure structure,
+                             Function<? super AbstractTreeNode, VirtualFile[]> converterFunction) {
     Object[] kids = structure.getChildElements(node);
     for (Object kid1 : kids) {
       ProjectViewNode kid = (ProjectViewNode)kid1;
@@ -85,7 +85,7 @@ public class ProjectViewTestUtil {
 
   public static void checkContainsMethod(final Object rootElement,
                                          final AbstractTreeStructure structure,
-                                         Function<AbstractTreeNode, VirtualFile[]> converterFunction) {
+                                         Function<? super AbstractTreeNode, VirtualFile[]> converterFunction) {
     MultiValuesMap<VirtualFile, AbstractTreeNode> map = new MultiValuesMap<>();
     collect((AbstractTreeNode)rootElement, map, structure, converterFunction);
 

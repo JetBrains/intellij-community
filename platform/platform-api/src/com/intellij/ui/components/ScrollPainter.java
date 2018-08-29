@@ -335,11 +335,11 @@ class ScrollPainter extends RegionPainter.Alpha {
     private final int myOffset;
     private final IntSupplier myAlphaBase;
     private final IntSupplier myAlphaDelta;
-    private final Function<Float, Color> myFillFunction;
+    private final Function<? super Float, ? extends Color> myFillFunction;
     private final Color myDrawColor;
     private Color myFillColor;
 
-    private EditorThumbPainter(int offset, IntSupplier base, IntSupplier delta, Function<Float, Color> fill, Color draw) {
+    private EditorThumbPainter(int offset, IntSupplier base, IntSupplier delta, Function<? super Float, ? extends Color> fill, Color draw) {
       myOffset = offset;
       myAlphaBase = base;
       myAlphaDelta = delta;

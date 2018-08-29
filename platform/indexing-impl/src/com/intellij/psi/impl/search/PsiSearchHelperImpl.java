@@ -98,7 +98,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   @Override
   public boolean processCommentsContainingIdentifier(@NotNull String identifier,
                                                      @NotNull SearchScope searchScope,
-                                                     @NotNull final Processor<PsiElement> processor) {
+                                                     @NotNull final Processor<? super PsiElement> processor) {
     TextOccurenceProcessor occurrenceProcessor = (element, offsetInElement) -> {
       if (CommentUtilCore.isCommentTextElement(element) && element.findReferenceAt(offsetInElement) == null) {
         return processor.process(element);

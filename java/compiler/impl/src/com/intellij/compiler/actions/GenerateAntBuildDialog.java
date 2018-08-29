@@ -249,7 +249,7 @@ public class GenerateAntBuildDialog extends DialogWrapper {
 
     private final List<Pair<String, ListWithSelection>> myItems = new ArrayList<>();
 
-    private MyTableModel(List<Chunk<Module>> chunks) {
+    private MyTableModel(List<? extends Chunk<Module>> chunks) {
       for (final Chunk<Module> chunk : chunks) {
         final ListWithSelection<String> item = new ListWithSelection<>();
         for (final Module module : chunk.getNodes()) {
@@ -260,7 +260,7 @@ public class GenerateAntBuildDialog extends DialogWrapper {
       }
     }
 
-    private static String createCycleName(Chunk<Module> chunk) {
+    private static String createCycleName(Chunk<? extends Module> chunk) {
       final StringBuilder buf = new StringBuilder();
       for (Module module : chunk.getNodes()) {
         if (buf.length() > 0) {

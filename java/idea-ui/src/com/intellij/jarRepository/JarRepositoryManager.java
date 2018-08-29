@@ -366,7 +366,7 @@ public class JarRepositoryManager {
   }
 
   @Nullable
-  private static <T> T submitModalJob(@Nullable final Project project, final String title, final Function<ProgressIndicator, T> job){
+  private static <T> T submitModalJob(@Nullable final Project project, final String title, final Function<? super ProgressIndicator, ? extends T> job){
     final Ref<T> result = Ref.create(null);
     new Task.Modal(project, title, true) {
       @Override
@@ -383,7 +383,7 @@ public class JarRepositoryManager {
     return result.get();
   }
 
-  private static <T> Promise<T> submitBackgroundJob(@Nullable final Project project, final String title, final Function<ProgressIndicator, T> job){
+  private static <T> Promise<T> submitBackgroundJob(@Nullable final Project project, final String title, final Function<? super ProgressIndicator, ? extends T> job){
     final ModalityState startModality = ModalityState.defaultModalityState();
     AsyncPromise<T> promise = new AsyncPromise<>();
     JobExecutor.INSTANCE.submit(() -> {
@@ -420,9 +420,9 @@ public class JarRepositoryManager {
 
   private static abstract class AetherJob<T> implements Function<ProgressIndicator, T> {
     @NotNull
-    private final Collection<RemoteRepositoryDescription> myRepositories;
+    private final Collection<? extends RemoteRepositoryDescription> myRepositories;
 
-    public AetherJob(@NotNull Collection<RemoteRepositoryDescription> repositories) {
+    public AetherJob(@NotNull Collection<? extends RemoteRepositoryDescription> repositories) {
       myRepositories = repositories;
     }
 
@@ -473,7 +473,7 @@ public class JarRepositoryManager {
       resolved -> resolved.isEmpty() ? Collections.<OrderRoot>emptyList() : WriteAction.computeAndWait(() -> createRoots(resolved, copyTo)));
   }
 
-  private static List<OrderRoot> createRoots(@NotNull Collection<Artifact> artifacts, @Nullable String copyTo) {
+  private static List<OrderRoot> createRoots(@NotNull Collection<? extends Artifact> artifacts, @Nullable String copyTo) {
     final List<OrderRoot> result = new ArrayList<>();
     final VirtualFileManager manager = VirtualFileManager.getInstance();
     for (Artifact each : artifacts) {

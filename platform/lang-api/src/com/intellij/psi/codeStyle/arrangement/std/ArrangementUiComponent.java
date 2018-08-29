@@ -126,7 +126,7 @@ public interface ArrangementUiComponent {
 
     @Nullable
     ArrangementUiComponent build(@NotNull StdArrangementTokenUiRole role,
-                                 @NotNull List<ArrangementSettingsToken> tokens,
+                                 @NotNull List<? extends ArrangementSettingsToken> tokens,
                                  @NotNull ArrangementColorsProvider colorsProvider,
                                  @NotNull ArrangementStandardSettingsManager settingsManager);
   }

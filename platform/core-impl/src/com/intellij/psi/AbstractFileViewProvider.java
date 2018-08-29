@@ -436,7 +436,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     }
   }
 
-  private void forKnownCopies(Consumer<AbstractFileViewProvider> action) {
+  private void forKnownCopies(Consumer<? super AbstractFileViewProvider> action) {
     Set<AbstractFileViewProvider> knownCopies = getUserData(KNOWN_COPIES);
     if (knownCopies != null) {
       for (AbstractFileViewProvider copy : knownCopies) {

@@ -375,11 +375,11 @@ public class BuildManager implements Disposable {
     return ApplicationManager.getApplication().getComponent(BuildManager.class);
   }
 
-  public void notifyFilesChanged(final Collection<File> paths) {
+  public void notifyFilesChanged(final Collection<? extends File> paths) {
     doNotify(paths, false);
   }
 
-  public void notifyFilesDeleted(Collection<File> paths) {
+  public void notifyFilesDeleted(Collection<? extends File> paths) {
     doNotify(paths, true);
   }
 
@@ -387,7 +387,7 @@ public class BuildManager implements Disposable {
     myRequestsProcessor.submit(command);
   }
 
-  private void doNotify(final Collection<File> paths, final boolean notifyDeletion) {
+  private void doNotify(final Collection<? extends File> paths, final boolean notifyDeletion) {
     // ensure events processed in the order they arrived
     runCommand(() -> {
       final List<String> filtered = new ArrayList<>(paths.size());
@@ -481,7 +481,7 @@ public class BuildManager implements Disposable {
     }
   }
 
-  private static List<String> convertToStringPaths(final Collection<InternedPath> interned) {
+  private static List<String> convertToStringPaths(final Collection<? extends InternedPath> interned) {
     final ArrayList<String> list = new ArrayList<>(interned.size());
     for (InternedPath path : interned) {
       list.add(path.getValue());

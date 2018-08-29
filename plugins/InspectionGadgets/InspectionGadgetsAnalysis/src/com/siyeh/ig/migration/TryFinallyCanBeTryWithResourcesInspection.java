@@ -369,7 +369,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
     return visitor.variableIsUsed();
   }
 
-  private static boolean findAutoClosableVariableWithoutTry(PsiStatement statement, Set<PsiVariable> variables) {
+  private static boolean findAutoClosableVariableWithoutTry(PsiStatement statement, Set<? super PsiVariable> variables) {
     if (statement instanceof PsiIfStatement) {
       final PsiIfStatement ifStatement = (PsiIfStatement)statement;
       if (ifStatement.getElseBranch() != null) return false;
@@ -447,7 +447,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
     }
   }
 
-  private static boolean findAutoCloseableVariables(PsiStatement statement, Set<PsiVariable> variables) {
+  private static boolean findAutoCloseableVariables(PsiStatement statement, Set<? super PsiVariable> variables) {
     if (findAutoClosableVariableWithoutTry(statement, variables)) return true;
     if (statement instanceof PsiTryStatement) {
       PsiTryStatement tryStatement = (PsiTryStatement)statement;

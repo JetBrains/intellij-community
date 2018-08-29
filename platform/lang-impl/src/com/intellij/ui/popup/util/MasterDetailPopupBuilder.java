@@ -39,7 +39,7 @@ public class MasterDetailPopupBuilder implements MasterController {
   private String myDimensionServiceKey = null;
   private boolean myAddDetailViewToEast = true;
   private ActionGroup myActions = null;
-  private Consumer<IPopupChooserBuilder> myPopupTuner = null;
+  private Consumer<? super IPopupChooserBuilder> myPopupTuner = null;
   private Runnable myDoneRunnable = null;
 
   public MasterDetailPopupBuilder(Project project) {
@@ -166,7 +166,7 @@ public class MasterDetailPopupBuilder implements MasterController {
   }
 
   @NotNull
-  public MasterDetailPopupBuilder setPopupTuner(@Nullable Consumer<IPopupChooserBuilder> tuner) {
+  public MasterDetailPopupBuilder setPopupTuner(@Nullable Consumer<? super IPopupChooserBuilder> tuner) {
     myPopupTuner = tuner;
     return this;
   }

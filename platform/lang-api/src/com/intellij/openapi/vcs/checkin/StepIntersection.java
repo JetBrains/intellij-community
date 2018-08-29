@@ -30,11 +30,11 @@ public class StepIntersection {
   /**
    * Iterate over intersected ranges in two lists, sorted by TextRange.
    */
-  public static <T, V> void processIntersections(@NotNull List<T> elements1,
-                                                 @NotNull List<V> elements2,
-                                                 @NotNull Convertor<T, TextRange> convertor1,
-                                                 @NotNull Convertor<V, TextRange> convertor2,
-                                                 @NotNull PairConsumer<T, V> intersectionConsumer) {
+  public static <T, V> void processIntersections(@NotNull List<? extends T> elements1,
+                                                 @NotNull List<? extends V> elements2,
+                                                 @NotNull Convertor<? super T, ? extends TextRange> convertor1,
+                                                 @NotNull Convertor<? super V, ? extends TextRange> convertor2,
+                                                 @NotNull PairConsumer<? super T, ? super V> intersectionConsumer) {
     PeekableIteratorWrapper<T> peekIterator1 = new PeekableIteratorWrapper<>(elements1.iterator());
 
     outerLoop:
@@ -62,10 +62,10 @@ public class StepIntersection {
   }
 
   public static <T, V> void processElementIntersections(@NotNull T element1,
-                                                        @NotNull List<V> elements2,
-                                                        @NotNull Convertor<T, TextRange> convertor1,
-                                                        @NotNull Convertor<V, TextRange> convertor2,
-                                                        @NotNull PairConsumer<T, V> intersectionConsumer) {
+                                                        @NotNull List<? extends V> elements2,
+                                                        @NotNull Convertor<? super T, ? extends TextRange> convertor1,
+                                                        @NotNull Convertor<? super V, ? extends TextRange> convertor2,
+                                                        @NotNull PairConsumer<? super T, ? super V> intersectionConsumer) {
     TextRange range1 = convertor1.convert(element1);
     int index = binarySearch(elements2, range1.getStartOffset(), value -> convertor2.convert(value).getEndOffset());
     if (index < 0) index = -index - 1;
@@ -82,7 +82,7 @@ public class StepIntersection {
     }
   }
 
-  private static <T> int binarySearch(@NotNull List<T> elements, int value, @NotNull Function<T, Integer> convertor) {
+  private static <T> int binarySearch(@NotNull List<? extends T> elements, int value, @NotNull Function<? super T, Integer> convertor) {
     return ObjectUtils.binarySearch(0, elements.size(), mid -> Integer.compare(convertor.fun(elements.get(mid)), value));
   }
 }

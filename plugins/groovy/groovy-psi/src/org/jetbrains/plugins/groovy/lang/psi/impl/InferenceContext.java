@@ -58,7 +58,7 @@ public interface InferenceContext {
   }
 
   @Nullable
-  <T extends GroovyPsiElement> PsiType getExpressionType(@NotNull T element, @NotNull Function<T, PsiType> calculator);
+  <T extends GroovyPsiElement> PsiType getExpressionType(@NotNull T element, @NotNull Function<? super T, ? extends PsiType> calculator);
 
   class TopInferenceContext implements InferenceContext {
     @Nullable
@@ -83,7 +83,7 @@ public interface InferenceContext {
 
     @Nullable
     @Override
-    public <T extends GroovyPsiElement> PsiType getExpressionType(@NotNull T element, @NotNull Function<T, PsiType> calculator) {
+    public <T extends GroovyPsiElement> PsiType getExpressionType(@NotNull T element, @NotNull Function<? super T, ? extends PsiType> calculator) {
       return GroovyPsiManager.getInstance(element.getProject()).getType(element, calculator);
     }
   }

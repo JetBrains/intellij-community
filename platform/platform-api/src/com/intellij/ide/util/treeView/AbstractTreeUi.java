@@ -1632,7 +1632,7 @@ public class AbstractTreeUi {
   }
 
   @NotNull
-  private ActionCallback updateNodesToInsert(@NotNull final List<TreeNode> nodesToInsert,
+  private ActionCallback updateNodesToInsert(@NotNull final List<? extends TreeNode> nodesToInsert,
                                              @NotNull TreeUpdatePass pass,
                                              boolean canSmartExpand,
                                              boolean forceUpdate) {

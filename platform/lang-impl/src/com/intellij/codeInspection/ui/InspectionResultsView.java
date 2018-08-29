@@ -699,11 +699,11 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     }
   }
 
-  public void addTools(Collection<Tools> tools) {
+  public void addTools(Collection<? extends Tools> tools) {
     myTreeUpdater.submit(() -> addToolsSynchronously(tools));
   }
 
-  private void addToolsSynchronously(Collection<Tools> tools) {
+  private void addToolsSynchronously(Collection<? extends Tools> tools) {
     if (isDisposed()) return;
     synchronized (myTreeStructureUpdateLock) {
       InspectionProfileImpl profile = myInspectionProfile;
@@ -922,7 +922,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     return hasProblems(myGlobalInspectionContext.getTools().values(), myGlobalInspectionContext, myProvider);
   }
 
-  public static boolean hasProblems(@NotNull Collection<Tools> tools,
+  public static boolean hasProblems(@NotNull Collection<? extends Tools> tools,
                                     @NotNull GlobalInspectionContextImpl context,
                                     @NotNull InspectionRVContentProvider contentProvider) {
     for (Tools currentTools : tools) {

@@ -161,7 +161,7 @@ public class GrStubIndexer extends StubHierarchyIndexer {
     return flags;
   }
 
-  private static void processImport(GrImportStatementStub imp, List<Import> imports, Set<String> namesCache) {
+  private static void processImport(GrImportStatementStub imp, List<? super Import> imports, Set<String> namesCache) {
     String referenceText = imp.getReferenceText();
     if (referenceText == null) return;
     String fullName = PsiNameHelper.getQualifiedClassName(referenceText, true);
@@ -170,7 +170,7 @@ public class GrStubIndexer extends StubHierarchyIndexer {
     }
   }
 
-  private static String id(String s, boolean cacheFirstId, Set<String> namesCache) {
+  private static String id(String s, boolean cacheFirstId, Set<? super String> namesCache) {
     String id = PsiNameHelper.getQualifiedClassName(s, true);
     if (cacheFirstId) {
       int index = id.indexOf('.');

@@ -237,7 +237,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
   private static void add(final GroupLayout.Group hGroup,
                           final GroupLayout.Group vGroup,
-                          @Nullable final Collection<Component> collection,
+                          @Nullable final Collection<? super Component> collection,
                           final Component... components) {
     for (Component component : components) {
       hGroup.addComponent(component);

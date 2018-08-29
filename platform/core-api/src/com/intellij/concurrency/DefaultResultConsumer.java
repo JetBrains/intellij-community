@@ -21,9 +21,9 @@ import org.jetbrains.annotations.NotNull;
  * Author: dmitrylomov
  */
 public class DefaultResultConsumer<V> implements ResultConsumer<V> {
-  private final AsyncFutureResult<V> myResult;
+  private final AsyncFutureResult<? super V> myResult;
 
-  public DefaultResultConsumer(@NotNull AsyncFutureResult<V> result) {
+  public DefaultResultConsumer(@NotNull AsyncFutureResult<? super V> result) {
     myResult = result;
   }
 

@@ -150,14 +150,14 @@ public class Conditions {
     };
   }
 
-  public static <T> Condition<T> cached(Condition<T> c) {
+  public static <T> Condition<T> cached(Condition<? super T> c) {
     return new SoftRefCache<T>(c);
   }
 
   private static class Not<T> implements Condition<T> {
-    final Condition<T> c;
+    final Condition<? super T> c;
 
-    Not(Condition<T> c) {
+    Not(Condition<? super T> c) {
       this.c = c;
     }
 
@@ -196,9 +196,9 @@ public class Conditions {
 
   private static class SoftRefCache<T> implements Condition<T> {
     private final HashMap<Integer, Pair<SoftReference<T>, Boolean>> myCache = new HashMap<Integer, Pair<SoftReference<T>, Boolean>>();
-    private final Condition<T> myCondition;
+    private final Condition<? super T> myCondition;
 
-    public SoftRefCache(Condition<T> condition) {
+    public SoftRefCache(Condition<? super T> condition) {
       myCondition = condition;
     }
 

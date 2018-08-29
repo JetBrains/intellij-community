@@ -40,7 +40,7 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  public static DumbAwareAction create(@Nullable String text, @NotNull Consumer<AnActionEvent> actionPerformed) {
+  public static DumbAwareAction create(@Nullable String text, @NotNull Consumer<? super AnActionEvent> actionPerformed) {
     return new DumbAwareAction(text) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {

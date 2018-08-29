@@ -16,7 +16,7 @@ public interface UpdaterUI {
   void showError(String message);
 
   void askUser(String message) throws OperationCancelledException;
-  Map<String, ValidationResult.Option> askUser(List<ValidationResult> validationResults) throws OperationCancelledException;
+  Map<String, ValidationResult.Option> askUser(List<? extends ValidationResult> validationResults) throws OperationCancelledException;
 
   default String bold(String text) { return text; }
 }

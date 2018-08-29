@@ -553,7 +553,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   }
 
   @Override
-  public void addItems(List<ClasspathTableItem<?>> toAdd) {
+  public void addItems(List<? extends ClasspathTableItem<?>> toAdd) {
     for (ClasspathTableItem<?> item : toAdd) {
       myModel.addRow(item);
     }
@@ -814,7 +814,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       new AnalyzeDependenciesOnSpecifiedTargetHandler(getProject(), new AnalysisScope(myState.getRootModel().getModule()),
                                                       targetScope) {
         @Override
-        protected boolean shouldShowDependenciesPanel(List<DependenciesBuilder> builders) {
+        protected boolean shouldShowDependenciesPanel(List<? extends DependenciesBuilder> builders) {
           for (DependenciesBuilder builder : builders) {
             for (Set<PsiFile> files : builder.getDependencies().values()) {
               if (!files.isEmpty()) {

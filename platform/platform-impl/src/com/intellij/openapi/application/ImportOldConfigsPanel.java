@@ -42,12 +42,12 @@ class ImportOldConfigsPanel extends JDialog {
   private JButton myOkButton;
 
   private final File myGuessedOldConfig;
-  private final Function<File, Pair<File, File>> myValidator;
+  private final Function<? super File, ? extends Pair<File, File>> myValidator;
   private final String myProductName;
   private VirtualFile myLastSelection = null;
   private Pair<File, File> myResult;
 
-  ImportOldConfigsPanel(@Nullable File guessedOldConfig, Function<File, Pair<File, File>> validator) {
+  ImportOldConfigsPanel(@Nullable File guessedOldConfig, Function<? super File, ? extends Pair<File, File>> validator) {
     super((Dialog)null, true);
     myGuessedOldConfig = guessedOldConfig;
     myValidator = validator;
