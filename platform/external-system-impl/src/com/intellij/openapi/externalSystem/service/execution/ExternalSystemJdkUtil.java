@@ -164,13 +164,16 @@ public class ExternalSystemJdkUtil {
   @NotNull
   private static Sdk getInternalJdk() {
     ProjectJdkTable projectJdkTable = ProjectJdkTable.getInstance();
-    if (projectJdkTable instanceof JavaAwareProjectJdkTableImpl) {
-      return ((JavaAwareProjectJdkTableImpl)projectJdkTable).getInternalJdk();
+    try {
+      if (projectJdkTable instanceof JavaAwareProjectJdkTableImpl) {
+        return ((JavaAwareProjectJdkTableImpl)projectJdkTable).getInternalJdk();
+      }
     }
-    else {
-      final String jdkHome = SystemProperties.getJavaHome();
-      SimpleJavaSdkType simpleJavaSdkType = SimpleJavaSdkType.getInstance();
-      return simpleJavaSdkType.createJdk(simpleJavaSdkType.suggestSdkName(null, jdkHome), jdkHome);
+    catch (Throwable ignore) {
+      // todo [Vlad, IDEA-187832]: extract to `external-system-java` module
     }
+    final String jdkHome = SystemProperties.getJavaHome();
+    SimpleJavaSdkType simpleJavaSdkType = SimpleJavaSdkType.getInstance();
+    return simpleJavaSdkType.createJdk(simpleJavaSdkType.suggestSdkName(null, jdkHome), jdkHome);
   }
 }
