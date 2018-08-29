@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin;
 
 import com.intellij.openapi.actionSystem.*;
@@ -18,7 +19,7 @@ public class StructuralReplaceAction extends AnAction {
    */
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    triggerAction(null, SearchContext.buildFromDataContext(event.getDataContext()));
+    triggerAction(null, new SearchContext(event.getDataContext()));
   }
 
   public static void triggerAction(Configuration config, SearchContext searchContext) {
@@ -44,14 +45,13 @@ public class StructuralReplaceAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
-    final DataContext context = event.getDataContext();
-    final Project project = CommonDataKeys.PROJECT.getData(context);
-    final StructuralSearchPlugin plugin = (project == null)? null:StructuralSearchPlugin.getInstance( project );
+    final Project project = event.getProject();
+    final StructuralSearchPlugin plugin = (project == null) ? null : StructuralSearchPlugin.getInstance(project);
 
-    if (plugin== null || plugin.isSearchInProgress() || plugin.isReplaceInProgress() || plugin.isDialogVisible()) {
-      presentation.setEnabled( false );
+    if (plugin == null || plugin.isSearchInProgress() || plugin.isReplaceInProgress() || plugin.isDialogVisible()) {
+      presentation.setEnabled(false);
     } else {
-      presentation.setEnabled( true );
+      presentation.setEnabled(true);
     }
 
     super.update(event);
