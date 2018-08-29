@@ -105,7 +105,7 @@ public abstract class BasePage {
   }
 
   protected int binarySearchGuess(byte[] key) {
-    int index = binarySearch(key, 0);
+    int index = binarySearch(key);
     if (index < 0) {
       index = Math.max(0, -index - 2);
     }
@@ -113,17 +113,18 @@ public abstract class BasePage {
   }
 
   protected int binarySearchRange(byte[] key) {
-    int index = binarySearch(key, 0);
+    int index = binarySearch(key);
     if (index < 0) {
       index = Math.max(0, -index - 1);
     }
     return index;
   }
 
-  protected int binarySearch(byte[] key, int low) {
+  protected int binarySearch(byte[] key) {
     final int bytesPerKey = tree.getKeySize();
     final int bytesPerEntry = bytesPerKey + BYTES_PER_ADDRESS;
 
+    int low = 0;
     int high = size - 1;
 
     while (low <= high) {

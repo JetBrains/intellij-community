@@ -21,7 +21,7 @@ public class BottomPage extends BasePage {
   @Nullable
   @Override
   protected byte[] get(@NotNull Novelty.Accessor novelty, @NotNull byte[] key) {
-    final int index = binarySearch(key, 0);
+    final int index = binarySearch(key);
     if (index >= 0) {
       return getValue(novelty, index);
     }
@@ -55,7 +55,7 @@ public class BottomPage extends BasePage {
   @Nullable
   @Override
   protected BasePage put(@NotNull Novelty.Accessor novelty, @NotNull byte[] key, @NotNull byte[] value, boolean overwrite, boolean[] result) {
-    int pos = binarySearch(key, 0);
+    int pos = binarySearch(key);
     if (pos >= 0) {
       if (overwrite) {
         final int bytesPerEntry = tree.getKeySize() + BYTES_PER_ADDRESS;
@@ -103,7 +103,7 @@ public class BottomPage extends BasePage {
 
   @Override
   protected boolean delete(@NotNull Novelty.Accessor novelty, @NotNull byte[] key, @Nullable byte[] value) {
-    final int pos = binarySearch(key, 0);
+    final int pos = binarySearch(key);
     if (pos < 0) return false;
 
     // tree.addExpiredLoggable(keysAddresses[pos]);

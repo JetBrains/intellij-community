@@ -19,7 +19,7 @@ public class InternalPage extends BasePage {
   @Override
   @Nullable
   protected byte[] get(@NotNull Novelty.Accessor novelty, @NotNull byte[] key) {
-    final int index = binarySearch(key, 0);
+    final int index = binarySearch(key);
     return index < 0 ? getChild(novelty, Math.max(-index - 2, 0)).get(novelty, key) : getChild(novelty, index).get(novelty, key);
   }
 
@@ -58,7 +58,7 @@ public class InternalPage extends BasePage {
   @Override
   @Nullable
   protected BasePage put(@NotNull Novelty.Accessor novelty, @NotNull byte[] key, @NotNull byte[] value, boolean overwrite, boolean[] result) {
-    int pos = binarySearch(key, 0);
+    int pos = binarySearch(key);
 
     if (pos >= 0 && !overwrite) {
       // key found and overwrite is not possible - error
