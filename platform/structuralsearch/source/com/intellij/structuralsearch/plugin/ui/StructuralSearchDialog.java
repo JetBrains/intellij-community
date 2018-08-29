@@ -140,10 +140,10 @@ public class StructuralSearchDialog extends DialogWrapper {
     initiateValidation();
   }
 
-  protected EditorTextField createEditor(final SearchContext searchContext, String text) {
+  protected EditorTextField createEditor(String text) {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
     assert profile != null;
-    final Document document = profile.createDocument(searchContext.getProject(), myFileType, myDialect, text);
+    final Document document = profile.createDocument(getProject(), myFileType, myDialect, text);
     document.addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(@NotNull final DocumentEvent event) {
@@ -151,7 +151,7 @@ public class StructuralSearchDialog extends DialogWrapper {
       }
     });
 
-    final EditorTextField textField = new EditorTextField(document, searchContext.getProject(), myFileType, false, false) {
+    final EditorTextField textField = new EditorTextField(document, getProject(), myFileType, false, false) {
       @Override
       protected EditorEx createEditor() {
         final EditorEx editor = super.createEditor();
@@ -159,7 +159,7 @@ public class StructuralSearchDialog extends DialogWrapper {
         SubstitutionShortInfoHandler.install(editor, variableName ->
           myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(variableName, myConfiguration)));
         editor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
-        final Project project = mySearchContext.getProject();
+        final Project project = getProject();
         final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(mySearchCriteriaEdit.getDocument());
         if (file != null) {
           DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(file, false);
@@ -239,7 +239,7 @@ public class StructuralSearchDialog extends DialogWrapper {
         mySavedEditorText = mySearchCriteriaEdit.getText();
         myEditorPanel.remove(mySearchCriteriaEdit);
       }
-      mySearchCriteriaEdit = createEditor(mySearchContext, mySavedEditorText != null ? mySavedEditorText : "");
+      mySearchCriteriaEdit = createEditor(mySavedEditorText != null ? mySavedEditorText : "");
       myEditorPanel.setFirstComponent(mySearchCriteriaEdit);
       myEditorPanel.revalidate();
       final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
@@ -296,7 +296,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     }
 
     final Document document = mySearchCriteriaEdit.getDocument();
-    CommandProcessor.getInstance().executeCommand(mySearchContext.getProject(), () -> {
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> {
       ApplicationManager.getApplication().runWriteAction(() -> {
         document.replaceString(0, document.getTextLength(), matchOptions.getSearchPattern());
       });
@@ -322,7 +322,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   protected final void setTextForEditor(final String selection, EditorTextField editor) {
     editor.setText(selection);
     editor.selectAll();
-    final Project project = mySearchContext.getProject();
+    final Project project = getProject();
     final Document document = editor.getDocument();
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     documentManager.commitDocument(document);
@@ -374,7 +374,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     };
     myEditorPanel.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
     myEditorPanel.getDivider().setOpaque(false);
-    mySearchCriteriaEdit = createEditor(mySearchContext, mySavedEditorText != null ? mySavedEditorText : "");
+    mySearchCriteriaEdit = createEditor(mySavedEditorText != null ? mySavedEditorText : "");
     myEditorPanel.add(BorderLayout.CENTER, mySearchCriteriaEdit);
 
     myScopePanel = new ScopePanel(getProject());
@@ -507,7 +507,7 @@ public class StructuralSearchDialog extends DialogWrapper {
       new AnAction(SSRBundle.message("copy.existing.template.button")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          final SelectTemplateDialog dialog = new SelectTemplateDialog(mySearchContext.getProject(), false, isReplaceDialog());
+          final SelectTemplateDialog dialog = new SelectTemplateDialog(getProject(), false, isReplaceDialog());
           if (!dialog.showAndGet()) {
             return;
           }
@@ -697,7 +697,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   protected boolean isValid() {
     final MatchOptions matchOptions = getConfiguration().getMatchOptions();
     try {
-      Matcher.validate(mySearchContext.getProject(), matchOptions);
+      Matcher.validate(getProject(), matchOptions);
     }
     catch (MalformedPatternException e) {
       final String message = StringUtil.isEmpty(matchOptions.getSearchPattern())
