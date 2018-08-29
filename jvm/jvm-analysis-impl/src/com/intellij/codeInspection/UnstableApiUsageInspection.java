@@ -5,8 +5,7 @@ import com.intellij.analysis.JvmAnalysisBundle;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -55,8 +54,7 @@ public class UnstableApiUsageInspection extends LocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    Module module = ModuleUtilCore.findModuleForFile(holder.getFile());
-    if (!isApplicable(module)) {
+    if (!isApplicable(holder.getFile(), holder.getProject())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
 
@@ -147,13 +145,13 @@ public class UnstableApiUsageInspection extends LocalInspectionTool {
     return null;
   }
 
-  private boolean isApplicable(@Nullable Module module) {
-    if (module == null) {
+  private boolean isApplicable(@Nullable PsiFile file, @Nullable Project project) {
+    if (file == null || project == null) {
       return false;
     }
 
-    JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(module.getProject());
-    GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, false);
+    JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
+    GlobalSearchScope scope = file.getResolveScope();
     for (String annotation : unstableApiAnnotations) {
       if (javaPsiFacade.findClass(annotation, scope) != null) {
         return true;
