@@ -22,6 +22,7 @@ import com.intellij.history.core.tree.DirectoryEntry;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.FileEntry;
 import com.intellij.history.core.tree.RootEntry;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -150,7 +151,8 @@ public class IdeaGateway {
   }
 
   public boolean areContentChangesVersioned(@NotNull VirtualFile f) {
-    return isVersioned(f) && !f.isDirectory() && !f.getFileType().isBinary();
+    return isVersioned(f) && !f.isDirectory() &&
+           (areContentChangesVersioned(f.getName()) || ScratchFileService.isInScratchRoot(f));
   }
 
   public boolean areContentChangesVersioned(@NotNull String fileName) {
