@@ -37,7 +37,7 @@ class ReachableNodes(private val graph: LiteLinearGraph) {
     return result
   }
 
-  fun walk(headIds: Collection<Int>, consumer: Consumer<Int>) {
+  fun walkDown(headIds: Collection<Int>, consumer: Consumer<Int>) {
     walk(headIds, true, consumer)
   }
 
@@ -84,7 +84,7 @@ class ReachableNodes(private val graph: LiteLinearGraph) {
 
       val result = UnsignedBitSet()
       val getter = ReachableNodes(LinearGraphUtils.asLiteLinearGraph(graph))
-      getter.walk(headNodeIndexes, Consumer { node -> result.set(node!!, true) })
+      getter.walkDown(headNodeIndexes, Consumer { node -> result.set(node!!, true) })
 
       return result
     }
