@@ -635,12 +635,12 @@ class _NewThreadStartupWithTrace:
                 global_debugger.notify_thread_created(thread_id, t)
                 _on_set_trace_for_new_thread(global_debugger)
             
-            if getattr(global_debugger, 'thread_analyser', None) is not None:
-                try:
-                    from pydevd_concurrency_analyser.pydevd_concurrency_logger import log_new_thread
-                    log_new_thread(global_debugger, t)
-                except:
-                    sys.stderr.write("Failed to detect new thread for visualization")
+                if getattr(global_debugger, 'thread_analyser', None) is not None:
+                    try:
+                        from pydevd_concurrency_analyser.pydevd_concurrency_logger import log_new_thread
+                        log_new_thread(global_debugger, t)
+                    except:
+                        sys.stderr.write("Failed to detect new thread for visualization")
         try:
             ret = self.original_func(*self.args, **self.kwargs)
         finally:
