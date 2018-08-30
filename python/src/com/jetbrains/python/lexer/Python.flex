@@ -2,10 +2,8 @@
 package com.jetbrains.python.lexer;
 
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.containers.ContainerUtil;import com.jetbrains.python.PyTokenTypes;
-import com.intellij.util.containers.Stack;
+import com.jetbrains.python.PyTokenTypes;
 import com.intellij.openapi.util.text.StringUtil;
-import com.jetbrains.python.psi.PyStringLiteralUtil;
 
 %%
 
@@ -104,6 +102,7 @@ return yylength()-s.length();
 
 <FSTRING> {
   {FSTRING_TEXT_NO_QUOTES} { return PyTokenTypes.FSTRING_TEXT; }
+  [\n] { return fStringHelper.handleLineBreakInLiteralText(); }
   {FSTRING_QUOTES} { return fStringHelper.handleFStringEnd(); }
   "{" { return fStringHelper.handleFragmentStart(); }
 }
@@ -124,6 +123,8 @@ return yylength()-s.length();
 
   {SINGLE_QUOTED_STRING} { return fStringHelper.handleStringLiteral(PyTokenTypes.SINGLE_QUOTED_STRING); }
   {TRIPLE_QUOTED_LITERAL} { return fStringHelper.handleStringLiteral(PyTokenTypes.TRIPLE_QUOTED_STRING); }
+      
+  [\n] { return fStringHelper.handleLineBreakInFragment(); }
 
   // Should be impossible inside expression fragments: any openingQuotes should be matched as a string literal there
   // {FSTRING_QUOTES} { return hasMatchingFStringStart(yytext().toString()) ? PyTokenTypes.FSTRING_END : PyTokenTypes.FSTRING_TEXT; }
@@ -131,10 +132,11 @@ return yylength()-s.length();
 
 <FSTRING_FRAGMENT_FORMAT> {
   {FSTRING_FORMAT_TEXT_NO_QUOTES} { return PyTokenTypes.FSTRING_TEXT; }
+  [\n] { return fStringHelper.handleLineBreakInLiteralText(); }
   "{" { return fStringHelper.handleFragmentStart(); }
   "}" { return fStringHelper.handleFragmentEnd(); }
 
-  // format part of a fragment can contain openingQuotes
+  // format part of a fragment can contain opening quotes
   {FSTRING_QUOTES} { return fStringHelper.handleFStringEnd(); }
 }
 

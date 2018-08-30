@@ -66,6 +66,22 @@ class PyLexerFStringHelper(private val myLexer: FlexLexerEx) {
     }
   }
 
+  fun handleLineBreakInFragment(): IElementType {
+    val text = myLexer.yytext().toString()
+    // We will return a line break anyway, but we need to transit from FSTRING state of the lexer
+    findFStringTerminator(text)
+    return PyTokenTypes.LINE_BREAK  
+  }
+
+  fun handleLineBreakInLiteralText(): IElementType {
+    val text = myLexer.yytext().toString()
+    val (_, offset) = findFStringTerminator(text)
+    if (offset == text.length) {
+      return PyTokenTypes.FSTRING_TEXT
+    }
+    return PyTokenTypes.LINE_BREAK
+  }
+  
   fun handleStringLiteral(stringLiteralType: IElementType): IElementType {
     val stringText = myLexer.yytext().toString()
     val prefixLength = PyStringLiteralUtil.getPrefixLength(stringText)
@@ -86,20 +102,36 @@ class PyLexerFStringHelper(private val myLexer: FlexLexerEx) {
         i += 2
         continue
       }
-      val nextThree = text.substring(i, Math.min(text.length, i + 3))
-      for (j in myFStringStates.size - 1 downTo 0) {
-        val state = myFStringStates[j]
-        if (nextThree.startsWith(state.openingQuotes)) {
+      if (c == '\n') {
+        val firstSingleQuotedIndex = myFStringStates.indexOfFirst { it.openingQuotes.length == 1 }
+        if (firstSingleQuotedIndex >= 0) {
           if (i == 0) {
-            myFStringStates.subList(i, myFStringStates.size).clear()
-            myLexer.yybegin(state.oldState)
-            val unmatched = text.length - state.openingQuotes.length
-            myLexer.yypushback(unmatched)
+            myLexer.yybegin(myFStringStates[firstSingleQuotedIndex].oldState)
+            myFStringStates.subList(firstSingleQuotedIndex, myFStringStates.size).clear()
+            myLexer.yypushback(text.length - 1)
           }
           else {
             myLexer.yypushback(text.length - i)
           }
-          return Pair(PyTokenTypes.FSTRING_END, i)
+          return Pair(PyTokenTypes.LINE_BREAK, i)
+        }
+      }
+      else {
+        val nextThree = text.substring(i, Math.min(text.length, i + 3))
+        for (j in myFStringStates.size - 1 downTo 0) {
+          val state = myFStringStates[j]
+          if (nextThree.startsWith(state.openingQuotes)) {
+            if (i == 0) {
+              myLexer.yybegin(state.oldState)
+              myFStringStates.subList(j, myFStringStates.size).clear()
+              val unmatched = text.length - state.openingQuotes.length
+              myLexer.yypushback(unmatched)
+            }
+            else {
+              myLexer.yypushback(text.length - i)
+            }
+            return Pair(PyTokenTypes.FSTRING_END, i)
+          }
         }
       }
       i++
