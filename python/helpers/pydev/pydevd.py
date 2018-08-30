@@ -813,8 +813,8 @@ class PyDB:
         try:
             all_threads = threadingEnumerate()
             for t in all_threads:
-                if getattr(t, 'is_pydev_daemon_thread', False) and hasattr(t, 'cancel_event') and t.thread_id == thread_id and \
-                        t.frame_id == frame_id:
+                if getattr(t, 'is_pydev_daemon_thread', False) and hasattr(t, 'cancel_event') and hasattr(t, 'thread_id') and \
+                        t.thread_id == thread_id and t.frame_id == frame_id:
                     t.cancel_event.set()
         except:
             import traceback;traceback.print_exc()
