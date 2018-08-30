@@ -27,7 +27,6 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.treeStructure.Tree;
@@ -222,9 +221,9 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   protected final JTree createTree(boolean dndAware) {
     final Tree tree;
 
+    DefaultTreeModel treeModel = new DefaultTreeModel(new DefaultMutableTreeNode(""));
     if (dndAware) {
-      //noinspection Duplicates
-      tree = new DnDAwareTree(new DefaultTreeModel(new DefaultMutableTreeNode(""))) {
+      tree = new DnDAwareTree(treeModel) {
         @Override
         public void addNotify() {
           super.addNotify();
@@ -291,8 +290,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       }
     }
     else {
-      //noinspection Duplicates
-      tree = new Tree(new DefaultTreeModel(new DefaultMutableTreeNode("")))  {
+      tree = new Tree(treeModel)  {
         @Override
         public void addNotify() {
           super.addNotify();
