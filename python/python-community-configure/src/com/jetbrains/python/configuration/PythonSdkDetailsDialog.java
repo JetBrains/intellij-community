@@ -148,7 +148,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   private void addListeners() {
     myListener = new SdkModel.Listener() {
       @Override
-      public void sdkChanged(Sdk sdk, String previousName) {
+      public void sdkChanged(@NotNull Sdk sdk, String previousName) {
         refreshSdkList();
       }
     };

@@ -1283,7 +1283,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
             ApplicationManager.getApplication().getMessageBus().connect(myPopup).subscribe(AnActionListener.TOPIC, new AnActionListener() {
               @Override
-              public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
+              public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
                 if (action instanceof TextComponentEditorAction) {
                   return;
                 }

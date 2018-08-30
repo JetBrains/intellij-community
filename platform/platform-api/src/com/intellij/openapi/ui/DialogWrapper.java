@@ -2387,7 +2387,7 @@ public abstract class DialogWrapper {
       };
 
       balloon.addListener(new JBPopupListener() {
-        @Override public void onClosed(LightweightWindowEvent event) {
+        @Override public void onClosed(@NotNull LightweightWindowEvent event) {
           JRootPane rootPane = getRootPane();
           if (rootPane != null) {
             rootPane.removeComponentListener(rl);

@@ -41,6 +41,7 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -130,7 +131,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
   }
 
   @Override
-  public void onEvent(BuildEvent event) {
+  public void onEvent(@NotNull BuildEvent event) {
     List<Runnable> runOnEdt = new SmartList<>();
     if (event instanceof StartBuildEvent) {
       StartBuildEvent startBuildEvent = (StartBuildEvent)event;

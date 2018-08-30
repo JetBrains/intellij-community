@@ -36,7 +36,7 @@ public class SettingsEditorWrapper <Src, Dst> extends SettingsEditor<Src> {
     myWrapped = wrapped;
     myListener = new SettingsEditorListener<Dst>() {
       @Override
-      public void stateChanged(SettingsEditor<Dst> settingsEditor) {
+      public void stateChanged(@NotNull SettingsEditor<Dst> settingsEditor) {
         fireEditorStateChanged();
       }
     };

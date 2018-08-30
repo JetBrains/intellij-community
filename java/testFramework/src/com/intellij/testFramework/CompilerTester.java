@@ -258,7 +258,7 @@ public class CompilerTester {
     }
 
     @Override
-    public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
+    public void finished(boolean aborted, int errors, int warnings, @NotNull final CompileContext compileContext) {
       try {
         for (CompilerMessageCategory category : CompilerMessageCategory.values()) {
           CompilerMessage[] messages = compileContext.getMessages(category);

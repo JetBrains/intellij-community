@@ -591,7 +591,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     @NotNull
     @Override
     public AnActionEvent createEvent(final InputEvent inputEvent, @NotNull final DataContext context, @NotNull final String place, @NotNull final Presentation presentation,
-                                     final ActionManager manager) {
+                                     @NotNull final ActionManager manager) {
       return new AnActionEvent(inputEvent, context, place, presentation, manager, 0);
     }
 

@@ -4,6 +4,7 @@ package com.intellij.openapi.diff.impl.incrementalMerge;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 import java.util.List;
@@ -23,12 +24,12 @@ public class ChangeCounter implements ChangeList.Listener {
   }
 
   @Override
-  public void onChangeApplied(ChangeList source) {
+  public void onChangeApplied(@NotNull ChangeList source) {
     updateCounters();
   }
 
   @Override
-  public void onChangeRemoved(ChangeList source) {
+  public void onChangeRemoved(@NotNull ChangeList source) {
     updateCounters();
   }
 
@@ -75,6 +76,6 @@ public class ChangeCounter implements ChangeList.Listener {
   }
 
   public interface Listener {
-    void onCountersChanged(ChangeCounter counter);
+    void onCountersChanged(@NotNull ChangeCounter counter);
   }
 }

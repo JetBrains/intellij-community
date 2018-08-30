@@ -23,7 +23,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public interface SuspendManager {
+  @NotNull
   SuspendContextImpl pushSuspendContext(EventSet eventSet);
+  @NotNull
   SuspendContextImpl pushSuspendContext(int suspendAll, int i);
 
   void resume(SuspendContextImpl suspendContext);

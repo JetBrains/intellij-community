@@ -220,7 +220,7 @@ public class DebuggerUIUtil {
 
     balloon.addListener(new JBPopupListener() {
       @Override
-      public void onClosed(LightweightWindowEvent event) {
+      public void onClosed(@NotNull LightweightWindowEvent event) {
         Disposer.dispose(disposable);
         propertiesPanel.saveProperties();
         propertiesPanel.dispose();

@@ -60,13 +60,13 @@ public class DockableEditorTabbedContainer implements DockContainer.Persistent {
     return editors;
   }
 
-  void fireContentClosed(VirtualFile file) {
+  void fireContentClosed(@NotNull VirtualFile file) {
     for (Listener each : myListeners) {
       each.contentRemoved(file);
     }
   }
 
-  void fireContentOpen(VirtualFile file) {
+  void fireContentOpen(@NotNull VirtualFile file) {
     for (Listener each : myListeners) {
       each.contentAdded(file);
     }

@@ -53,7 +53,7 @@ public abstract class ActionManager {
    * @return An instance of {@code ActionToolbar}
    */
   @NotNull
-  public abstract ActionToolbar createActionToolbar(@NonNls String place, @NotNull ActionGroup group, boolean horizontal);
+  public abstract ActionToolbar createActionToolbar(@NonNls @NotNull String place, @NotNull ActionGroup group, boolean horizontal);
 
   /**
    * Returns action associated with the specified actionId.
@@ -61,7 +61,7 @@ public abstract class ActionManager {
    * @param actionId Id of the registered action
    * @return Action associated with the specified actionId, {@code null} if
    * there is no actions associated with the specified actionId
-   * @throws java.lang.IllegalArgumentException if {@code actionId} is {@code null}
+   * @throws IllegalArgumentException if {@code actionId} is {@code null}
    * @see com.intellij.openapi.actionSystem.IdeActions
    */
   public abstract AnAction getAction(@NonNls @NotNull String actionId);
@@ -71,7 +71,7 @@ public abstract class ActionManager {
    *
    * @return id associated with the specified action, {@code null} if action
    * is not registered
-   * @throws java.lang.IllegalArgumentException if {@code action} is {@code null}
+   * @throws IllegalArgumentException if {@code action} is {@code null}
    */
   public abstract String getId(@NotNull AnAction action);
 
@@ -152,7 +152,7 @@ public abstract class ActionManager {
   public abstract void addAnActionListener(AnActionListener listener);
 
   /**
-   * Use {@link AnActionListener#TOPIC}
+   * @deprecated Use {@link AnActionListener#TOPIC}
    */
   @Deprecated
   public void addAnActionListener(AnActionListener listener, Disposable parentDisposable) {
@@ -165,6 +165,10 @@ public abstract class ActionManager {
   @Nullable
   public abstract KeyboardShortcut getKeyboardShortcut(@NonNls @NotNull String actionId);
 
+  /**
+   * @deprecated Don't use
+   */
+  @Deprecated
   @NotNull
   public String getComponentName() {
     return "ActionManager";

@@ -692,12 +692,12 @@ public class DebuggerSession implements AbstractDebuggerSession {
     }
 
     @Override
-    public void threadStarted(DebugProcess proc, ThreadReference thread) {
+    public void threadStarted(@NotNull DebugProcess proc, ThreadReference thread) {
       notifyThreadsRefresh();
     }
 
     @Override
-    public void threadStopped(DebugProcess proc, ThreadReference thread) {
+    public void threadStopped(@NotNull DebugProcess proc, ThreadReference thread) {
       notifyThreadsRefresh();
       ThreadReferenceProxyImpl steppingThread = mySteppingThroughThread.get();
       if (steppingThread != null && steppingThread.getThreadReference() == thread) {

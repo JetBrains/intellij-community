@@ -163,7 +163,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
     if (state != null && insideBraces != null) {
       state.addTemplateStateListener(new TemplateEditingAdapter() {
         @Override
-        public void templateFinished(Template template, boolean brokenOff) {
+        public void templateFinished(@NotNull Template template, boolean brokenOff) {
           if (!brokenOff) {
             context.getEditor().getCaretModel().moveToOffset(context.getOffset(insideBraces));
             TransactionGuard.getInstance().submitTransactionAndWait(createOverrideRunnable(context.getEditor(), context.getFile(), context.getProject()));
@@ -371,7 +371,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
       Template template = templateBuilder.buildInlineTemplate();
       TemplateManager.getInstance(project).startTemplate(editor, template, false, null, new TemplateEditingAdapter() {
         @Override
-        public void templateFinished(Template template, boolean brokenOff) {
+        public void templateFinished(@NotNull Template template, boolean brokenOff) {
           if (!brokenOff) {
             runnable.run();
           }

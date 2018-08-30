@@ -117,7 +117,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     LOG.assertTrue(myContent == null, "GlobalInspectionContext is busy under other view now");
     myContentManager.getValue().addContentManagerListener(new ContentManagerAdapter() {
       @Override
-      public void contentRemoved(ContentManagerEvent event) {
+      public void contentRemoved(@NotNull ContentManagerEvent event) {
         if (event.getContent() == myContent) {
           if (myView != null) {
             close(false);

@@ -42,7 +42,7 @@ public final class CompletionServiceImpl extends CompletionService {
   public CompletionServiceImpl() {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void projectClosing(Project project) {
+      public void projectClosing(@NotNull Project project) {
         CompletionProgressIndicator indicator = getCurrentCompletionProgressIndicator();
         if (indicator != null && indicator.getProject() == project) {
           indicator.closeAndFinish(true);

@@ -42,7 +42,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
   }
 
   @Override
-  public void buildStarted(UUID sessionId) {
+  public void buildStarted(@NotNull UUID sessionId) {
   }
 
   @Override

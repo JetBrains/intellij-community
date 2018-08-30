@@ -80,7 +80,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
     getEditor().addSettingsEditorListener(new SettingsEditorListener<RunnerAndConfigurationSettings>() {
       @Override
-      public void stateChanged(SettingsEditor<RunnerAndConfigurationSettings> settingsEditor) {
+      public void stateChanged(@NotNull SettingsEditor<RunnerAndConfigurationSettings> settingsEditor) {
         myValidationResultValid = false;
       }
     });

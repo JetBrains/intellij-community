@@ -95,17 +95,17 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
     }
 
     @Override
-    public void applicationActivated(IdeFrame ideFrame) {
+    public void applicationActivated(@NotNull IdeFrame ideFrame) {
       myApplicationState = ApplicationState.ACTIVE;
     }
 
     @Override
-    public void applicationDeactivated(IdeFrame ideFrame) {
+    public void applicationDeactivated(@NotNull IdeFrame ideFrame) {
       myApplicationState = ApplicationState.INACTIVE;
     }
 
     @Override
-    public void delayedApplicationDeactivated(IdeFrame ideFrame) {
+    public void delayedApplicationDeactivated(@NotNull IdeFrame ideFrame) {
       myApplicationState = ApplicationState.DELAYED;
     }
 

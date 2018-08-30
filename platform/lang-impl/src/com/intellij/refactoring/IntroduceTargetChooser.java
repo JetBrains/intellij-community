@@ -118,7 +118,7 @@ public class IntroduceTargetChooser {
       })
       .addListener(new JBPopupAdapter() {
         @Override
-        public void onClosed(LightweightWindowEvent event) {
+        public void onClosed(@NotNull LightweightWindowEvent event) {
           highlighter.getAndSet(null).dropHighlight();
         }
       })

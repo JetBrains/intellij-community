@@ -125,7 +125,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
     ProjectManager.getInstance().addProjectManagerListener(searchContext.getProject(), new ProjectManagerListener() {
       @Override
-      public void projectClosing(Project project) {
+      public void projectClosing(@NotNull Project project) {
         close(CANCEL_EXIT_CODE);
       }
     });

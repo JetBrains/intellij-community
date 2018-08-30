@@ -162,7 +162,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   private void addDownloadingUpdateListener(@NotNull RemoteFileInfo info) {
     info.addDownloadingListener(new FileDownloadingAdapter() {
       @Override
-      public void fileDownloaded(VirtualFile localFile) {
+      public void fileDownloaded(@NotNull VirtualFile localFile) {
         update();
       }
 

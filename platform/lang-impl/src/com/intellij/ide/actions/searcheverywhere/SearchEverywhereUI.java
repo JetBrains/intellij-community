@@ -206,7 +206,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
   private MultithreadSearcher createSearcher() {
     MultithreadSearcher.Listener listener = new MultithreadSearcher.Listener() {
       @Override
-      public void elementsAdded(List<MultithreadSearcher.ElementInfo> list) {
+      public void elementsAdded(@NotNull List<MultithreadSearcher.ElementInfo> list) {
         Map<SearchEverywhereContributor<?>, List<MultithreadSearcher.ElementInfo>> map =
           list.stream().collect(Collectors.groupingBy(info -> info.getContributor()));
 
@@ -214,12 +214,12 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       }
 
       @Override
-      public void elementsRemoved(List<MultithreadSearcher.ElementInfo> list) {
+      public void elementsRemoved(@NotNull List<MultithreadSearcher.ElementInfo> list) {
         list.forEach(info -> myListModel.removeElement(info.getElement(), info.getContributor()));
       }
 
       @Override
-      public void searchFinished(Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
+      public void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
         hasMoreContributors.forEach(myListModel::setHasMore);
         myResultsList.setEmptyText(getEmptyText());
         ScrollingUtil.ensureSelectionExists(myResultsList);
@@ -259,7 +259,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     return pnl;
   }
 
-  private void updateViewType(ViewType viewType) {
+  private void updateViewType(@NotNull ViewType viewType) {
     if (myViewType != viewType) {
       myViewType = viewType;
       myViewTypeListeners.forEach(listener -> listener.suggestionsShown(viewType));
@@ -1161,7 +1161,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       }
       JBPopupListener popupCloseListener = new JBPopupListener() {
         @Override
-        public void onClosed(LightweightWindowEvent event) {
+        public void onClosed(@NotNull LightweightWindowEvent event) {
           myFilterPopup = null;
         }
       };
@@ -1245,7 +1245,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
   public enum ViewType {FULL, SHORT}
 
   public interface ViewTypeListener {
-    void suggestionsShown(ViewType viewType);
+    void suggestionsShown(@NotNull ViewType viewType);
   }
 
   public void addViewTypeListener(ViewTypeListener listener) {

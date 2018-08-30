@@ -250,7 +250,7 @@ public class DaemonListeners implements Disposable {
 
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         stopDaemonAndRestartAllFiles("Project roots changed");
       }
     });
@@ -540,12 +540,12 @@ public class DaemonListeners implements Disposable {
     private final AnAction escapeAction = myActionManager.getAction(IdeActions.ACTION_EDITOR_ESCAPE);
 
     @Override
-    public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
+    public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
       myEscPressed = action == escapeAction;
     }
 
     @Override
-    public void beforeEditorTyping(char c, DataContext dataContext) {
+    public void beforeEditorTyping(char c, @NotNull DataContext dataContext) {
       Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
       //no need to stop daemon if something happened in the console
       if (editor != null && !worthBothering(editor.getDocument(), editor.getProject())) {
@@ -573,7 +573,7 @@ public class DaemonListeners implements Disposable {
 
   private class MyEditorMouseMotionListener implements EditorMouseMotionListener {
     @Override
-    public void mouseMoved(EditorMouseEvent e) {
+    public void mouseMoved(@NotNull EditorMouseEvent e) {
       if (Registry.is("ide.disable.editor.tooltips")) {
         return;
       }
@@ -612,7 +612,7 @@ public class DaemonListeners implements Disposable {
     }
 
     @Override
-    public void mouseDragged(EditorMouseEvent e) {
+    public void mouseDragged(@NotNull EditorMouseEvent e) {
       myTooltipController.cancelTooltips();
     }
   }

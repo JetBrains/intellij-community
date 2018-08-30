@@ -52,7 +52,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   private boolean myNoIconsInPopup = false;
   private Insets myInsets;
 
-  public ActionButton(AnAction action,
+  public ActionButton(@NotNull AnAction action,
                       Presentation presentation,
                       String place,
                       @NotNull Dimension minimumSize) {
@@ -151,7 +151,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
         ((ActionManagerImpl)manager).addActionPopup(curLast);
         curLast.addListener(new JBPopupAdapter() {
           @Override
-          public void onClosed(LightweightWindowEvent event) {
+          public void onClosed(@NotNull LightweightWindowEvent event) {
             ((ActionManagerImpl)manager).removeActionPopup(curLast);
           }
         });

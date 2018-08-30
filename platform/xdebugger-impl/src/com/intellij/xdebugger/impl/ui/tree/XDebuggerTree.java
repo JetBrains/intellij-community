@@ -407,7 +407,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   public void selectNodeOnLoad(Condition<TreeNode> nodeFilter, Condition<TreeNode> obsoleteChecker) {
     addTreeListener(new XDebuggerTreeListener() {
       @Override
-      public void nodeLoaded(@NotNull RestorableStateNode node, String name) {
+      public void nodeLoaded(@NotNull RestorableStateNode node, @NotNull String name) {
         if (obsoleteChecker.value(node)) {
           removeTreeListener(this);
         }
@@ -422,7 +422,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   public void expandNodesOnLoad(final Condition<TreeNode> nodeFilter) {
     addTreeListener(new XDebuggerTreeListener() {
       @Override
-      public void nodeLoaded(@NotNull RestorableStateNode node, String name) {
+      public void nodeLoaded(@NotNull RestorableStateNode node, @NotNull String name) {
         if (nodeFilter.value(node) && !node.isLeaf()) {
           // cause children computing
           node.getChildCount();

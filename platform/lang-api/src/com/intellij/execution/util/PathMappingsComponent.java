@@ -75,12 +75,12 @@ public final class PathMappingsComponent extends LabeledComponent<TextFieldWithB
   }
 
   @Override
-  public void addChangeListener(final ChangeListener changeListener) {
+  public void addChangeListener(@NotNull final ChangeListener changeListener) {
     myListeners.add(changeListener);
   }
 
   @Override
-  public void removeChangeListener(final ChangeListener changeListener) {
+  public void removeChangeListener(@NotNull final ChangeListener changeListener) {
     myListeners.remove(changeListener);
   }
 

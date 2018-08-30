@@ -57,7 +57,7 @@ public class JavaDebuggerLauncherImpl extends JavaDebuggerLauncher {
       DebuggerManager.getInstance(executionEnvironment.getProject())
         .addDebugProcessListener(processHandler, new DebugProcessListener() {
           @Override
-          public void processDetached(DebugProcess process, boolean closedByUser) {
+          public void processDetached(@NotNull DebugProcess process, boolean closedByUser) {
             try {
               serverModeHandler.detachRemote();
             }

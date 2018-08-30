@@ -241,7 +241,7 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
               Disposer.register(myFixture.getProject(), myTestProxy);
               myConsoleView.getResultsViewer().addEventsListener(new TestResultsViewer.SMEventsAdapter() {
                 @Override
-                public void onTestingFinished(TestResultsViewer sender) {
+                public void onTestingFinished(@NotNull TestResultsViewer sender) {
                   s.up();
                 }
               });

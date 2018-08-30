@@ -283,12 +283,12 @@ public class HighlightManagerImpl extends HighlightManager {
 
   private class MyAnActionListener implements AnActionListener {
     @Override
-    public void beforeActionPerformed(@NotNull AnAction action, final DataContext dataContext, AnActionEvent event) {
+    public void beforeActionPerformed(@NotNull AnAction action, @NotNull final DataContext dataContext, AnActionEvent event) {
       requestHideHighlights(dataContext);
     }
 
     @Override
-    public void beforeEditorTyping(char c, DataContext dataContext) {
+    public void beforeEditorTyping(char c, @NotNull DataContext dataContext) {
       requestHideHighlights(dataContext);
     }
 

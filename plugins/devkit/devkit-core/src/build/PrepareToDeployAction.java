@@ -76,7 +76,7 @@ public class PrepareToDeployAction extends AnAction {
                            public void finished(final boolean aborted,
                                                 final int errors,
                                                 final int warnings,
-                                                final CompileContext compileContext) {
+                                                @NotNull final CompileContext compileContext) {
                              if (aborted || errors != 0) return;
                              ApplicationManager.getApplication().invokeLater(() -> {
                                for (Module aModule : pluginModules) {

@@ -873,7 +873,7 @@ public abstract class InplaceRefactoring {
     protected abstract void restoreDaemonUpdateState();
 
     @Override
-    public void beforeTemplateFinished(final TemplateState templateState, Template template) {
+    public void beforeTemplateFinished(@NotNull final TemplateState templateState, Template template) {
       try {
         final TextResult value = templateState.getVariableValue(PRIMARY_VARIABLE_NAME);
         myInsertedName = value != null ? value.toString().trim() : null;
@@ -898,7 +898,7 @@ public abstract class InplaceRefactoring {
     }
 
     @Override
-    public void templateFinished(Template template, final boolean brokenOff) {
+    public void templateFinished(@NotNull Template template, final boolean brokenOff) {
       boolean bind = false;
       try {
         if (!brokenOff) {

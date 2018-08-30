@@ -68,7 +68,7 @@ class GithubPullRequestsToolWindowManager internal constructor(private val proje
              .apply {
                icon = GithubIcons.PullRequestsToolWindow
                contentManager.addContentManagerListener(object : ContentManagerAdapter() {
-                 override fun contentRemoved(event: ContentManagerEvent?) {
+                 override fun contentRemoved(event: ContentManagerEvent) {
                    if (contentManager.contentCount == 0) unregisterToolWindow()
                  }
                })

@@ -2253,11 +2253,11 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     final Set<LightweightHint> visibleHints = ContainerUtil.newIdentityTroveSet();
     getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(EditorHintListener.TOPIC, new EditorHintListener() {
       @Override
-      public void hintShown(final Project project, final LightweightHint hint, final int flags) {
+      public void hintShown(final Project project, @NotNull final LightweightHint hint, final int flags) {
         visibleHints.add(hint);
         hint.addHintListener(new HintListener() {
           @Override
-          public void hintHidden(EventObject event) {
+          public void hintHidden(@NotNull EventObject event) {
             visibleHints.remove(hint);
             hint.removeHintListener(this);
           }

@@ -254,7 +254,7 @@ public class ChangesViewContentManager implements ChangesViewContentI {
 
   private class MyContentManagerListener extends ContentManagerAdapter {
     @Override
-    public void selectionChanged(final ContentManagerEvent event) {
+    public void selectionChanged(@NotNull final ContentManagerEvent event) {
       Content content = event.getContent();
       if (content.getComponent() instanceof ContentStub) {
         ChangesViewContentEP ep = ((ContentStub) content.getComponent()).getEP();

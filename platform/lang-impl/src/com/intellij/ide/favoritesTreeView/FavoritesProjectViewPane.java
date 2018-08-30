@@ -53,12 +53,12 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
       }
 
       @Override
-      public void listAdded(String listName) {
+      public void listAdded(@NotNull String listName) {
         refreshMySubIdsAndSelect(listName);
       }
 
       @Override
-      public void listRemoved(String listName) {
+      public void listRemoved(@NotNull String listName) {
         String selectedSubId = getSubId();
         refreshMySubIdsAndSelect(selectedSubId);
       }
