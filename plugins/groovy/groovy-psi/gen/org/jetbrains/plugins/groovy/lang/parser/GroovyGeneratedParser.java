@@ -948,18 +948,17 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // IDENTIFIER | string_literal_tokens | '*' | 'null' | 'class' | primitive_type | 'default'
+  // IDENTIFIER | string_literal_tokens | primitive_type | modifier | keyword | '*'
   public static boolean argument_label(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "argument_label")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, ARGUMENT_LABEL, "<argument label>");
     r = consumeTokenFast(b, IDENTIFIER);
     if (!r) r = string_literal_tokens(b, l + 1);
-    if (!r) r = consumeTokenFast(b, T_STAR);
-    if (!r) r = consumeTokenFast(b, KW_NULL);
-    if (!r) r = consumeTokenFast(b, KW_CLASS);
     if (!r) r = parsePrimitiveType(b, l + 1);
-    if (!r) r = consumeTokenFast(b, KW_DEFAULT);
+    if (!r) r = modifier(b, l + 1);
+    if (!r) r = parseKeyword(b, l + 1);
+    if (!r) r = consumeTokenFast(b, T_STAR);
     exit_section_(b, l, m, r, false, null);
     return r;
   }

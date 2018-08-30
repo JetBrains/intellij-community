@@ -1155,10 +1155,7 @@ private named_argument_tail ::= ':' expression
   pin = 1
   consumeTokenMethod = 'consumeTokenFast'
 }
-argument_label ::= IDENTIFIER | string_literal_tokens | '*' | 'null' | 'class' | primitive_type | 'default'
-{
-  consumeTokenMethod = 'consumeTokenFast'
-}
+argument_label ::= IDENTIFIER | string_literal_tokens | primitive_type | modifier | keyword | '*' { consumeTokenMethod = 'fast' }
 // endregion
 
 
@@ -1287,6 +1284,7 @@ private meta separated_recovery ::= !(<<item_end>> | <<element_start>>)
 
 
 // region Generated parser utils
+private external keyword ::= parseKeyword
 private clear_variants_and_fail ::= clear_variants fail
 private external clear_variants ::= clearVariants
 private external clear_error ::= clearError
