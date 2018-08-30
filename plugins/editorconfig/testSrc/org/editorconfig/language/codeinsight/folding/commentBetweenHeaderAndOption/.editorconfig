@@ -1,0 +1,7 @@
+[foo]
+<fold text='# and...'># and
+# here
+# comes
+# the
+# comment</fold>
+<fold text='...'>charset=hello</fold>

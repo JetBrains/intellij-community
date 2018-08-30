@@ -1,0 +1,3 @@
+EditorConfigTokenType.IDENTIFIER ('encoding')
+EditorConfigTokenType.SEPARATOR ('=')
+EditorConfigTokenType.IDENTIFIER ('utf-8')
