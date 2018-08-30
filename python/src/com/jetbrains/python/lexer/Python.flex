@@ -1,7 +1,6 @@
 /* It's an automatically generated code. Do not modify it. */
 package com.jetbrains.python.lexer;
 
-import com.intellij.lexer.FlexLexer;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;import com.jetbrains.python.PyTokenTypes;
 import com.intellij.util.containers.Stack;
@@ -11,7 +10,7 @@ import com.jetbrains.python.psi.PyStringLiteralUtil;
 %%
 
 %class _PythonLexer
-%implements FlexLexer
+%implements FlexLexerEx
 %unicode
 %function advance
 %type IElementType
@@ -89,109 +88,7 @@ FSTRING_FRAGMENT_TYPE_CONVERSION = "!" [^=:'\"} \t\r\n]*
 %state FSTRING_FRAGMENT
 %state FSTRING_FRAGMENT_FORMAT
 %{
-static final class FragmentState {
-  private final int oldState;
-  private final int oldBraceBalance;
-  private final FStringState containingFString;
-
-  FragmentState(int state, int braceBalance, FStringState fStringState) {
-    oldState = state;
-    oldBraceBalance = braceBalance;
-    containingFString = fStringState;
-  }
-}
-
-void pushFStringFragment() {
-  fragmentStates.push(new FragmentState(yystate(), braceBalance, fStringStates.peek()));
-  braceBalance = 0;
-  yybegin(FSTRING_FRAGMENT);
-}
-
-void popFStringFragment() {
-  FragmentState state = fragmentStates.pop();
-  braceBalance = state.oldBraceBalance;
-  yybegin(state.oldState);
-}
-
-static final class FStringState {
-  private final int oldState;
-  private final String quotes;
-
-  FStringState(int state, String quotes) {
-    oldState = state;
-    this.quotes = quotes;
-  }
-}
-
-void pushFString() {
-  final String prefixAndQuotes = yytext().toString();
-  final int prefixLength = PyStringLiteralUtil.getPrefixLength(prefixAndQuotes);
-  fStringStates.push(new FStringState(yystate(), prefixAndQuotes.substring(prefixLength)));
-  yybegin(FSTRING);
-}
-
-boolean hasMatchingFStringStart(String endQuotes){
-  for(int i = fStringStates.size() - 1; i >= 0; i--){
-    final FStringState state = fStringStates.get(i);
-    if (endQuotes.startsWith(state.quotes)){
-      final int nestedNum = fStringStates.size() - i;
-      for(int j = 0; j < nestedNum; j++) {
-        popFString();
-      }
-      yybegin(state.oldState);
-      final int unmatchedQuotes = endQuotes.length() - state.quotes.length();
-      yypushback(unmatchedQuotes);
-      return true;
-    }
-  }
-  return false;
-}
-
-private void popFString() {
-  final FStringState removedFString = fStringStates.pop();
-  while (!fragmentStates.isEmpty() && fragmentStates.peek().containingFString == removedFString) {
-    fragmentStates.pop();
-  }
-}
-
-IElementType findFStringEndInStringLiteral(String stringLiteral, IElementType stringType){
-    int i = 0;
-    while(i < stringLiteral.length()) {
-      final char c = stringLiteral.charAt(i);
-      if (c == '\\') {
-        i += 2;
-        continue;
-      }
-      final int prefixLength = PyStringLiteralUtil.getPrefixLength(stringLiteral);
-      final String nextThree = stringLiteral.substring(i, Math.min(stringLiteral.length(), i + 3));
-      for(int j = fStringStates.size() - 1; j >= 0; j--) {
-        final FStringState state = fStringStates.get(j);
-        if (nextThree.startsWith(state.quotes)){
-          if (i == 0) {
-            final int nestedNum = fStringStates.size() - j;
-            for(int k = 0; k < nestedNum; k++) {
-              popFString();
-            }
-            yybegin(state.oldState);
-            final int unmatched = stringLiteral.length() - state.quotes.length();
-            yypushback(unmatched);
-            return PyTokenTypes.FSTRING_END;
-          }
-          else {
-            yypushback(stringLiteral.length() - i);
-            return i == prefixLength ? PyTokenTypes.IDENTIFIER : stringType;
-          }
-        }
-      }
-      i++;
-    }
-    return stringType;
-}
-
-private final Stack<FragmentState> fragmentStates = new Stack<>();
-private final Stack<FStringState> fStringStates = new Stack<>();
-
-private int braceBalance = 0;
+private final PyLexerFStringHelper fStringHelper = new PyLexerFStringHelper(this);
 
 private int getSpaceLength(CharSequence string) {
 String string1 = string.toString();
@@ -207,41 +104,38 @@ return yylength()-s.length();
 
 <FSTRING> {
   {FSTRING_TEXT_NO_QUOTES} { return PyTokenTypes.FSTRING_TEXT; }
-  {FSTRING_QUOTES} { return hasMatchingFStringStart(yytext().toString()) ? PyTokenTypes.FSTRING_END : PyTokenTypes.FSTRING_TEXT; }
-  "{" { pushFStringFragment(); return PyTokenTypes.FSTRING_FRAGMENT_START; }
+  {FSTRING_QUOTES} { return fStringHelper.handleFStringEnd(); }
+  "{" { return fStringHelper.handleFragmentStart(); }
 }
 
 <FSTRING_FRAGMENT> {
-  "(" { braceBalance++; return PyTokenTypes.LPAR; }
-  ")" { braceBalance--; return PyTokenTypes.RPAR; }
+  "(" { return fStringHelper.handleLeftBracketInFragment(PyTokenTypes.LPAR); }
+  ")" { return fStringHelper.handleRightBracketInFragment(PyTokenTypes.RPAR); }
   
-  "[" { braceBalance++; return PyTokenTypes.LBRACKET; }
-  "]" { braceBalance--; return PyTokenTypes.RBRACKET; }
+  "[" { return fStringHelper.handleLeftBracketInFragment(PyTokenTypes.LBRACKET); }
+  "]" { return fStringHelper.handleRightBracketInFragment(PyTokenTypes.RBRACKET); }
   
-  "{" { braceBalance++; return PyTokenTypes.LBRACE; }
-  "}" { if (braceBalance == 0) { popFStringFragment(); return PyTokenTypes.FSTRING_FRAGMENT_END; }
-        else { braceBalance--; return PyTokenTypes.RBRACE; } }
+  "{" { return fStringHelper.handleLeftBracketInFragment(PyTokenTypes.LBRACE); }
+  "}" { return fStringHelper.handleRightBracketInFragment(PyTokenTypes.RBRACE); }
         
   {FSTRING_FRAGMENT_TYPE_CONVERSION} { return PyTokenTypes.FSTRING_FRAGMENT_TYPE_CONVERSION; }
         
-  ":" { if (braceBalance == 0) { yybegin(FSTRING_FRAGMENT_FORMAT); return PyTokenTypes.FSTRING_FRAGMENT_FORMAT_START; }
-        else { return PyTokenTypes.COLON; } }
+  ":" { return fStringHelper.handleColonInFragment(); }
 
-  {SINGLE_QUOTED_STRING} { return findFStringEndInStringLiteral(yytext().toString(), PyTokenTypes.SINGLE_QUOTED_STRING); }
-  {TRIPLE_QUOTED_LITERAL} { return findFStringEndInStringLiteral(yytext().toString(), PyTokenTypes.TRIPLE_QUOTED_STRING); }
+  {SINGLE_QUOTED_STRING} { return fStringHelper.handleStringLiteral(PyTokenTypes.SINGLE_QUOTED_STRING); }
+  {TRIPLE_QUOTED_LITERAL} { return fStringHelper.handleStringLiteral(PyTokenTypes.TRIPLE_QUOTED_STRING); }
 
-  // Should be impossible inside expression fragments: any quotes should be matched as a string literal there
-  {FSTRING_QUOTES} { return hasMatchingFStringStart(yytext().toString()) ? PyTokenTypes.FSTRING_END : PyTokenTypes.FSTRING_TEXT; }
+  // Should be impossible inside expression fragments: any openingQuotes should be matched as a string literal there
+  // {FSTRING_QUOTES} { return hasMatchingFStringStart(yytext().toString()) ? PyTokenTypes.FSTRING_END : PyTokenTypes.FSTRING_TEXT; }
 }
 
 <FSTRING_FRAGMENT_FORMAT> {
   {FSTRING_FORMAT_TEXT_NO_QUOTES} { return PyTokenTypes.FSTRING_TEXT; }
-  "{" { pushFStringFragment(); return PyTokenTypes.FSTRING_FRAGMENT_START; }
-  "}" { if (braceBalance == 0) { popFStringFragment(); return PyTokenTypes.FSTRING_FRAGMENT_END; }
-        else { braceBalance--; return PyTokenTypes.RBRACE; } }
+  "{" { return fStringHelper.handleFragmentStart(); }
+  "}" { return fStringHelper.handleFragmentEnd(); }
 
-  // format part of a fragment can contain quotes
-  {FSTRING_QUOTES} { return hasMatchingFStringStart(yytext().toString())? PyTokenTypes.FSTRING_END : PyTokenTypes.FSTRING_TEXT; }
+  // format part of a fragment can contain openingQuotes
+  {FSTRING_QUOTES} { return fStringHelper.handleFStringEnd(); }
 }
 
 [\ ]                        { return PyTokenTypes.SPACE; }
@@ -365,12 +259,7 @@ return PyTokenTypes.DOCSTRING; }
 "="                   { return PyTokenTypes.EQ; }
 ";"                   { return PyTokenTypes.SEMICOLON; }
 
-{FSTRING_START}       { IElementType type = findFStringEndInStringLiteral(yytext().toString(), PyTokenTypes.FSTRING_START);
-                        if (type == PyTokenTypes.FSTRING_START) {
-                          pushFString();
-                        }
-                        return type;
-                      }
+{FSTRING_START}       { return fStringHelper.handleFStringStart(); }
 
 [^]                   { return PyTokenTypes.BAD_CHARACTER; }
 }
