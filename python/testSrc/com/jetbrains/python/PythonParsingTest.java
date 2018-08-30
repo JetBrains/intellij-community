@@ -680,7 +680,7 @@ public class PythonParsingTest extends ParsingTestCase {
   public void testFStringTerminatedByLineBreakInLiteralPart() {
     doTest(LanguageLevel.PYTHON36);
   }
-
+  
   public void testFStringTerminatedByLineBreakInNestedLiteralPart() {
     doTest(LanguageLevel.PYTHON36);
   }
@@ -688,7 +688,7 @@ public class PythonParsingTest extends ParsingTestCase {
   public void testFStringTerminatedByLineBreakInFormatPart() {
     doTest(LanguageLevel.PYTHON36);
   }
-
+  
   public void testFStringTerminatedByLineBreakInNestedFormatPart() {
     doTest(LanguageLevel.PYTHON36);
   }
@@ -713,7 +713,9 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  public void testFStringTerminatedByLineBreakInNestedStringLiteral() {
+  // not possible to come up with such case without escaping: triple-quoted string inside
+  // two nested f-strings with different types of quotes
+  public void testFStringTerminatedByEscapedLineBreakInNestedStringLiteral() {
     doTest(LanguageLevel.PYTHON36);
   }
 
