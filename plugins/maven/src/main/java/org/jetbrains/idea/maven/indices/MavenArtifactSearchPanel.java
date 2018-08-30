@@ -414,6 +414,6 @@ public class MavenArtifactSearchPanel extends JPanel {
   public interface Listener {
     void itemSelected();
 
-    void canSelectStateChanged(MavenArtifactSearchPanel from, boolean canSelect);
+    void canSelectStateChanged(@NotNull MavenArtifactSearchPanel from, boolean canSelect);
   }
 }

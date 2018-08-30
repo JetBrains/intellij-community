@@ -91,7 +91,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
   }
 
   @Override
-  public void searchResultsUpdated(SearchResults sr) {
+  public void searchResultsUpdated(@NotNull SearchResults sr) {
     final Project project = mySearchResults.getProject();
     if (project == null || project.isDisposed()) return;
     if (mySuppressedUpdate) {
@@ -229,7 +229,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
     }
   }
 
-  public LivePreview(SearchResults searchResults) {
+  public LivePreview(@NotNull SearchResults searchResults) {
     mySearchResults = searchResults;
     searchResultsUpdated(searchResults);
     searchResults.addListener(this);
@@ -504,7 +504,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
 
         VisibleAreaListener visibleAreaListener = new VisibleAreaListener() {
           @Override
-          public void visibleAreaChanged(VisibleAreaEvent e) {
+          public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
             if (SearchResults.insideVisibleArea(myEditor, cur)) {
               showReplacementPreview();
               final VisibleAreaListener visibleAreaListener = this;

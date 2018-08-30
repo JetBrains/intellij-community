@@ -46,7 +46,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
   private final boolean showLoadingNode;
   private final TreeModelListener listener = new TreeModelAdapter() {
     @Override
-    protected void process(TreeModelEvent event, EventType type) {
+    protected void process(@NotNull TreeModelEvent event, @NotNull EventType type) {
       TreePath path = event.getTreePath();
       if (path == null) {
         // request a new root from model according to the specification

@@ -124,7 +124,7 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
 
     startTemplate(newEditor, template, project, new TemplateEditingAdapter() {
       @Override
-      public void templateFinished(Template template, boolean brokenOff) {
+      public void templateFinished(@NotNull Template template, boolean brokenOff) {
         PsiDocumentManager.getInstance(project).commitDocument(newEditor.getDocument());
         final int offset = newEditor.getCaretModel().getOffset();
         final PsiField psiField = PsiTreeUtil.findElementOfClassAtOffset(targetFile, offset, PsiField.class, false);

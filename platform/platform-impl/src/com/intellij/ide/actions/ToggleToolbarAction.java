@@ -60,7 +60,7 @@ public class ToggleToolbarAction extends ToggleAction implements DumbAware {
   public static ToggleToolbarAction createToolWindowAction(@NotNull ToolWindow toolWindow, @NotNull PropertiesComponent properties) {
     toolWindow.getContentManager().addContentManagerListener(new ContentManagerAdapter() {
       @Override
-      public void contentAdded(ContentManagerEvent event) {
+      public void contentAdded(@NotNull ContentManagerEvent event) {
         JComponent component = event.getContent().getComponent();
         setToolbarVisible(JBIterable.of(component), isToolbarVisible(toolWindow, properties));
 

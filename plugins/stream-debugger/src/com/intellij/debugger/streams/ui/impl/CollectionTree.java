@@ -79,7 +79,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
 
     addTreeListener(new XDebuggerTreeListener() {
       @Override
-      public void nodeLoaded(@NotNull RestorableStateNode node, String name) {
+      public void nodeLoaded(@NotNull RestorableStateNode node, @NotNull String name) {
         final XDebuggerTreeListener listener = this;
         if (node instanceof XValueContainerNode) {
           final XValueContainer container = ((XValueContainerNode)node).getValueContainer();

@@ -129,7 +129,7 @@ public class XDependentBreakpointManager {
     }
   }
 
-  private void addDependency(final XBreakpointBase<?, ?, ?> master, final XBreakpointBase<?, ?, ?> slave, final boolean leaveEnabled) {
+  private void addDependency(@NotNull XBreakpointBase<?, ?, ?> master, final XBreakpointBase<?, ?, ?> slave, final boolean leaveEnabled) {
     XDependentBreakpointInfo info = new XDependentBreakpointInfo(master, slave, leaveEnabled);
     mySlave2Info.put(slave, info);
     myMaster2Info.put(master, info);

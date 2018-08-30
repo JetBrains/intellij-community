@@ -20,7 +20,9 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
 
-import static java.util.Collections.*;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.enumeration;
+import static java.util.Collections.unmodifiableList;
 
 /**
  * @author Sergey.Malenkov
@@ -38,13 +40,25 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
               : new Invoker.EDT(this);
   }
 
-  public final void setComparator(@NotNull Comparator<? super NodeDescriptor> comparator) {
+  /**
+   * @param comparator a comparator to sort tree nodes or {@code null} to disable sorting
+   */
+  public final void setComparator(@Nullable Comparator<? super NodeDescriptor> comparator) {
     if (disposed) return;
-    this.comparator = (node1, node2) -> comparator.compare(node1.getDescriptor(), node2.getDescriptor());
-    invalidate();
+    if (comparator != null) {
+      this.comparator = (node1, node2) -> comparator.compare(node1.getDescriptor(), node2.getDescriptor());
+      invalidate();
+    }
+    else if (this.comparator != null) {
+      this.comparator = null;
+      invalidate();
+    }
   }
 
-  public void setStructure(@NotNull AbstractTreeStructure structure) {
+  /**
+   * @param structure a structure to build tree model or {@code null} to clear its content
+   */
+  public void setStructure(@Nullable AbstractTreeStructure structure) {
     if (disposed) return;
     this.structure = structure;
     invalidate();

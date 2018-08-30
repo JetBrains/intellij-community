@@ -18,6 +18,7 @@ package com.intellij.conversion.impl;
 
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,6 +41,7 @@ public class ProjectConversionUtil {
     return backup; 
   }
 
+  @NotNull
   public static File backupFiles(final Collection<? extends File> files, final File parentDir) throws IOException {
     File backupDir = getBackupDir(parentDir);
     backupFiles(files, parentDir, backupDir);
@@ -62,6 +64,7 @@ public class ProjectConversionUtil {
     }
   }
 
+  @NotNull
   public static File getBackupDir(File parentDir) {
     final String dirName = FileUtil.createSequentFileName(parentDir, PROJECT_FILES_BACKUP, "");
     return new File(parentDir, dirName);

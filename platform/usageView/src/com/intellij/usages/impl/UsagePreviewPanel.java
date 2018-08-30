@@ -431,7 +431,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
 
         VisibleAreaListener visibleAreaListener = new VisibleAreaListener() {
           @Override
-          public void visibleAreaChanged(VisibleAreaEvent e) {
+          public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
             if (insideVisibleArea(myEditor, myRange)) {
               showBalloon(myProject, myEditor, myRange, myFindModel);
               final VisibleAreaListener visibleAreaListener = this;

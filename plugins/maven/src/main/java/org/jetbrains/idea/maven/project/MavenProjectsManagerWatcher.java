@@ -304,7 +304,7 @@ public class MavenProjectsManagerWatcher {
 
   private class MyRootChangesListener implements ModuleRootListener {
     @Override
-    public void rootsChanged(ModuleRootEvent event) {
+    public void rootsChanged(@NotNull ModuleRootEvent event) {
       // todo is this logic necessary?
       List<VirtualFile> existingFiles = myProjectsTree.getProjectsFiles();
       List<VirtualFile> newFiles = new ArrayList<>();

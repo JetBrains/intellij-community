@@ -31,6 +31,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.thoughtworks.xstream.io.xml.PrettyPrintWriter;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -378,19 +379,19 @@ public class InspectionApplication {
       }
 
       @Override
-      public void successfullyConverted(final File backupDir) {
+      public void successfullyConverted(@NotNull final File backupDir) {
         logMessageLn(1, InspectionsBundle.message(
           "inspection.application.project.was.succesfully.converted.old.project.files.were.saved.to.0",
                                                   backupDir.getAbsolutePath()));
       }
 
       @Override
-      public void error(final String message) {
+      public void error(@NotNull final String message) {
         logError(InspectionsBundle.message("inspection.application.cannot.convert.project.0", message));
       }
 
       @Override
-      public void cannotWriteToFiles(final List<? extends File> readonlyFiles) {
+      public void cannotWriteToFiles(@NotNull final List<? extends File> readonlyFiles) {
         StringBuilder files = new StringBuilder();
         for (File file : readonlyFiles) {
           files.append(file.getAbsolutePath()).append("; ");

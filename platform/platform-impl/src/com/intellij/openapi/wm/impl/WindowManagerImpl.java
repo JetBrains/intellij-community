@@ -525,7 +525,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   }
 
   @Override
-  public final void releaseFrame(final IdeFrameImpl frame) {
+  public final void releaseFrame(@NotNull final IdeFrameImpl frame) {
     myEventDispatcher.getMulticaster().beforeFrameReleased(frame);
 
     final Project project = frame.getProject();

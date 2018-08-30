@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.LazyUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class JarApplicationConfigurationType extends ConfigurationTypeBase implements ConfigurationType {
+public final class JarApplicationConfigurationType extends ConfigurationTypeBase implements ConfigurationType {
   @NotNull
   public static JarApplicationConfigurationType getInstance() {
     return ConfigurationTypeUtil.findConfigurationType(JarApplicationConfigurationType.class);

@@ -570,17 +570,17 @@ public class RecentProjectPanel extends JPanel {
     }
 
     @Override
-    public void applicationActivated(IdeFrame ideFrame) {
+    public void applicationActivated(@NotNull IdeFrame ideFrame) {
       onAppStateChanged();
     }
 
     @Override
-    public void delayedApplicationDeactivated(IdeFrame ideFrame) {
+    public void delayedApplicationDeactivated(@NotNull IdeFrame ideFrame) {
       onAppStateChanged();
     }
 
     @Override
-    public void applicationDeactivated(IdeFrame ideFrame) {
+    public void applicationDeactivated(@NotNull IdeFrame ideFrame) {
     }
 
     @Override

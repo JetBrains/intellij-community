@@ -23,7 +23,6 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
   public static class State {
     public String myPathToGit = null;
     public SshExecutable SSH_EXECUTABLE = null;
-    public boolean OVERRIDE_SSH_ASK_PASS = true;
 
     public boolean ANNOTATE_IGNORE_SPACES = true;
     public AnnotateDetectMovementsOption ANNOTATE_DETECT_INNER_MOVEMENTS = AnnotateDetectMovementsOption.NONE;
@@ -75,15 +74,6 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
   public boolean isUseIdeaSsh() {
     return getIdeaSsh() == SshExecutable.IDEA_SSH;
   }
-
-  public boolean isOverrideSshAskPass() {
-    return myState.OVERRIDE_SSH_ASK_PASS;
-  }
-
-  public void setOverrideSshAskPass(boolean value) {
-    myState.OVERRIDE_SSH_ASK_PASS = value;
-  }
-
 
   public boolean isIgnoreWhitespaces() {
     return myState.ANNOTATE_IGNORE_SPACES;

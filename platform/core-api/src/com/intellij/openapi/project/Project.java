@@ -35,7 +35,7 @@ public interface Project extends ComponentManager, AreaInstance {
    * Returns a project base directory - a parent directory of a {@code .ipr} file or {@code .idea} directory.<br/>
    * Returns {@code null} for default project.
    *
-   * @return project base directory, or {@code null} for default project
+   * @deprecated Use {@link #getBasePath()}
    */
   @Deprecated
   VirtualFile getBaseDir();

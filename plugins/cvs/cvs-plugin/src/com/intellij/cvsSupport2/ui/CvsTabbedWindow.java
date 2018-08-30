@@ -56,7 +56,7 @@ public class CvsTabbedWindow implements Disposable {
     final ContentManager contentManager = toolWindow.getContentManager();
     contentManager.addContentManagerListener(new ContentManagerAdapter() {
       @Override
-      public void contentRemoved(ContentManagerEvent event) {
+      public void contentRemoved(@NotNull ContentManagerEvent event) {
         final JComponent component = event.getContent().getComponent();
         final JComponent removedComponent = component instanceof CvsTabbedWindowComponent ?
                                             ((CvsTabbedWindowComponent)component).getComponent() : component;

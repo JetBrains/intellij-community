@@ -43,7 +43,7 @@ public class ShortcutPromoterManager implements AnActionListener, PersistentStat
   }
 
   @Override
-  public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
+  public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
     final InputEvent input = event.getInputEvent();
     if (input instanceof MouseEvent) {
       final String id = ActionManager.getInstance().getId(action);

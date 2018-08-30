@@ -33,7 +33,7 @@ public abstract class TreeModelAdapter implements TreeModelListener {
   public static TreeModelListener create(@NotNull final PairConsumer<? super TreeModelEvent, ? super EventType> consumer) {
     return new TreeModelAdapter() {
       @Override
-      protected void process(TreeModelEvent event, EventType type) {
+      protected void process(@NotNull TreeModelEvent event, @NotNull EventType type) {
         consumer.consume(event, type);
       }
     };
@@ -45,7 +45,7 @@ public abstract class TreeModelAdapter implements TreeModelListener {
    * @param event the event object specifying changed nodes
    * @param type  the event type specifying a kind of changes
    */
-  protected void process(TreeModelEvent event, EventType type) {
+  protected void process(@NotNull TreeModelEvent event, @NotNull EventType type) {
   }
 
   /**

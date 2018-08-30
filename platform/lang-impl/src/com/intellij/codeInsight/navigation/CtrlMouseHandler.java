@@ -150,7 +150,7 @@ public class CtrlMouseHandler {
 
   private final VisibleAreaListener myVisibleAreaListener = new VisibleAreaListener() {
     @Override
-    public void visibleAreaChanged(VisibleAreaEvent e) {
+    public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
       disposeHighlighter();
       cancelPreviousTooltip();
     }
@@ -166,7 +166,7 @@ public class CtrlMouseHandler {
 
   private final EditorMouseMotionListener myEditorMouseMotionListener = new EditorMouseMotionListener() {
     @Override
-    public void mouseMoved(final EditorMouseEvent e) {
+    public void mouseMoved(@NotNull final EditorMouseEvent e) {
       if (e.isConsumed() || !myProject.isInitialized() || myProject.isDisposed()) {
         return;
       }
@@ -810,7 +810,7 @@ public class CtrlMouseHandler {
       myHint = hint;
       hint.addHintListener(new HintListener() {
         @Override
-        public void hintHidden(EventObject event) {
+        public void hintHidden(@NotNull EventObject event) {
           myHint = null;
         }
       });
@@ -830,7 +830,7 @@ public class CtrlMouseHandler {
       Disposable hintDisposable = Disposer.newDisposable("CtrlMouseHandler.TooltipProvider.updateOnPsiChanges");
       hint.addHintListener(new HintListener() {
         @Override
-        public void hintHidden(EventObject event) {
+        public void hintHidden(@NotNull EventObject event) {
           Disposer.dispose(hintDisposable);
         }
       });

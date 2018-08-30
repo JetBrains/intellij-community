@@ -32,7 +32,6 @@ import com.intellij.util.xmlb.XmlSerializationException;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
-import org.jdom.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
@@ -673,9 +672,8 @@ public class PluginManagerCore {
       ZipFile zipFile = context.open(file);
       ZipEntry entry = zipFile.getEntry(entryName);
       if (entry != null) {
-        Document document = JDOMUtil.loadDocument(zipFile.getInputStream(entry));
         IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(notNull(pluginPath, file), bundled);
-        descriptor.readExternal(document, jarURL, pathResolver);
+        descriptor.readExternal(JDOMUtil.load(zipFile.getInputStream(entry)), jarURL, pathResolver);
         context.myLastZipFileContainingDescriptor = file;
         return descriptor;
       }

@@ -319,7 +319,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   }
 
   @Override
-  public void onEvent(BuildEvent event) {
+  public void onEvent(@NotNull BuildEvent event) {
     ExecutionNode parentNode = event.getParentId() == null ? null : nodesMap.get(event.getParentId());
     ExecutionNode currentNode = nodesMap.get(event.getId());
     if (event instanceof StartEvent || event instanceof MessageEvent) {

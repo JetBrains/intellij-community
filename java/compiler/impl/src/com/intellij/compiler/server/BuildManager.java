@@ -896,7 +896,7 @@ public class BuildManager implements Disposable {
     return true;
   }
 
-  private void notifySessionTerminationIfNeeded(UUID sessionId, @Nullable Throwable execFailure) {
+  private void notifySessionTerminationIfNeeded(@NotNull UUID sessionId, @Nullable Throwable execFailure) {
     if (myMessageDispatcher.getAssociatedChannel(sessionId) == null) {
       // either the connection has never been established (process not started or execution failed), or no messages were sent from the launched process.
       // in this case the session cannot be unregistered by the message dispatcher
@@ -910,7 +910,7 @@ public class BuildManager implements Disposable {
     }
   }
 
-  private void handleProcessExecutionFailure(UUID sessionId, Throwable e) {
+  private void handleProcessExecutionFailure(@NotNull UUID sessionId, Throwable e) {
     final BuilderMessageHandler unregistered = myMessageDispatcher.unregisterBuildMessageHandler(sessionId);
     if (unregistered != null) {
       unregistered.handleFailure(sessionId, CmdlineProtoUtil.createFailure(e.getMessage(), e));
@@ -1006,7 +1006,7 @@ public class BuildManager implements Disposable {
     });
   }
 
-  private OSProcessHandler launchBuildProcess(@NotNull Project project, final int port, final UUID sessionId, boolean requestProjectPreload) throws ExecutionException {
+  private OSProcessHandler launchBuildProcess(@NotNull Project project, final int port, @NotNull UUID sessionId, boolean requestProjectPreload) throws ExecutionException {
     String compilerPath;
     final String vmExecutablePath;
     JavaSdkVersion sdkVersion = null;
@@ -1486,7 +1486,7 @@ public class BuildManager implements Disposable {
     }
 
     @Override
-    public void buildStarted(UUID sessionId) {
+    public void buildStarted(@NotNull UUID sessionId) {
       super.buildStarted(sessionId);
       try {
         ApplicationManager
@@ -1498,7 +1498,7 @@ public class BuildManager implements Disposable {
     }
 
     @Override
-    public void sessionTerminated(UUID sessionId) {
+    public void sessionTerminated(@NotNull UUID sessionId) {
       try {
         super.sessionTerminated(sessionId);
       }
@@ -1547,13 +1547,13 @@ public class BuildManager implements Disposable {
     private final Map<Project, MessageBusConnection> myConnections = new HashMap<>();
 
     @Override
-    public void projectOpened(final Project project) {
+    public void projectOpened(@NotNull final Project project) {
       if (ApplicationManager.getApplication().isUnitTestMode()) return;
       final MessageBusConnection conn = project.getMessageBus().connect();
       myConnections.put(project, conn);
       conn.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
         @Override
-        public void rootsChanged(final ModuleRootEvent event) {
+        public void rootsChanged(@NotNull final ModuleRootEvent event) {
           final Object source = event.getSource();
           if (source instanceof Project) {
             clearState((Project)source);
@@ -1587,14 +1587,14 @@ public class BuildManager implements Disposable {
         private final Set<String> myRootsToRefresh = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
 
         @Override
-        public void automakeCompilationFinished(int errors, int warnings, CompileContext compileContext) {
+        public void automakeCompilationFinished(int errors, int warnings, @NotNull CompileContext compileContext) {
           if (!compileContext.getProgressIndicator().isCanceled()) {
             refreshSources(compileContext);
           }
         }
 
         @Override
-        public void compilationFinished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
+        public void compilationFinished(boolean aborted, int errors, int warnings, @NotNull CompileContext compileContext) {
           refreshSources(compileContext);
         }
 
@@ -1654,7 +1654,7 @@ public class BuildManager implements Disposable {
         }
 
         @Override
-        public void fileGenerated(String outputRoot, String relativePath) {
+        public void fileGenerated(@NotNull String outputRoot, @NotNull String relativePath) {
           synchronized (myRootsToRefresh) {
             myRootsToRefresh.add(outputRoot);
           }
@@ -1682,7 +1682,7 @@ public class BuildManager implements Disposable {
     }
 
     @Override
-    public void projectClosing(Project project) {
+    public void projectClosing(@NotNull Project project) {
       cancelPreloadedBuilds(getProjectPath(project));
       for (TaskFuture future : cancelAutoMakeTasks(project)) {
         future.waitFor(500, TimeUnit.MILLISECONDS);

@@ -72,7 +72,7 @@ public class EditorHyperlinkSupport {
 
     editor.addEditorMouseMotionListener(new EditorMouseMotionListener() {
       @Override
-      public void mouseMoved(EditorMouseEvent e) {
+      public void mouseMoved(@NotNull EditorMouseEvent e) {
         if (e.getArea() != EditorMouseEventArea.EDITING_AREA) return;
         final HyperlinkInfo info = getHyperlinkInfoByPoint(e.getMouseEvent().getPoint());
         Cursor handCursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);

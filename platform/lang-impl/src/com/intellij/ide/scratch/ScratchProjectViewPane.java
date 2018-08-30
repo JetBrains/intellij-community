@@ -71,6 +71,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     });
   }
 
+  @NotNull
   @Override
   public String getTitle() {
     return "Scratches";
@@ -82,6 +83,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     return ID;
   }
 
+  @NotNull
   @Override
   public Icon getIcon() {
     return AllIcons.Scope.Scratches;
@@ -114,6 +116,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     }
   }
 
+  @NotNull
   @Override
   public SelectInTarget createSelectInTarget() {
     return new ProjectViewSelectInTarget(myProject) {

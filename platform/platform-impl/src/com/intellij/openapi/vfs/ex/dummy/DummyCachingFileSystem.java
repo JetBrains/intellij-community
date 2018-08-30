@@ -38,7 +38,7 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
     final Application application = ApplicationManager.getApplication();
     application.getMessageBus().connect(application).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void projectOpened(final Project project) {
+      public void projectOpened(@NotNull final Project project) {
         onProjectOpened(project);
       }
 

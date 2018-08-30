@@ -158,7 +158,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
     DomManager.getDomManager(project).addDomEventListener(new DomEventListener() {
       @Override
-      public void eventOccured(DomEvent event) {
+      public void eventOccured(@NotNull DomEvent event) {
         myBuilder.queueUpdate();
       }
     }, this);

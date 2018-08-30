@@ -271,7 +271,7 @@ public class UsageViewImpl implements UsageViewEx {
           });
           myModel.addTreeModelListener(new TreeModelAdapter() {
             @Override
-            protected void process(TreeModelEvent event, EventType type) {
+            protected void process(@NotNull TreeModelEvent event, @NotNull EventType type) {
               myNeedUpdateButtons = true;
             }
           });

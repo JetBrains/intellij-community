@@ -167,7 +167,7 @@ public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware
     project.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
       @Override
-      public void rootsChanged(final ModuleRootEvent event) {
+      public void rootsChanged(@NotNull final ModuleRootEvent event) {
         if (!myAlarm.isDisposed() && event.getSource() instanceof Project) {
           myAlarm.cancelAllRequests();
           myAlarm.addRequest(syncTask, 300L);

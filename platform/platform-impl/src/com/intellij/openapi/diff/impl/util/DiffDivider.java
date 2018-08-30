@@ -24,7 +24,7 @@ public class DiffDivider extends JComponent {
 
   private final VisibleAreaListener myVisibleAreaListener = new VisibleAreaListener() {
     @Override
-    public void visibleAreaChanged(VisibleAreaEvent e) {
+    public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
       repaint();
     }
   };

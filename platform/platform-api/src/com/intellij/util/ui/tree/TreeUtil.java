@@ -580,7 +580,7 @@ public final class TreeUtil {
       }
 
       if (tree instanceof Tree && !((Tree)tree).isHorizontalAutoScrollingEnabled()) {
-        bounds.x = 0;
+        bounds.x = tree.getVisibleRect().x;
       }
 
     LOG.debug("tree scroll: ", path);

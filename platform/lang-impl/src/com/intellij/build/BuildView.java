@@ -82,7 +82,7 @@ public class BuildView extends CompositeView<ExecutionConsole> implements BuildP
   }
 
   @Override
-  public void onEvent(BuildEvent event) {
+  public void onEvent(@NotNull BuildEvent event) {
     if (event instanceof StartBuildEvent) {
       ApplicationManager.getApplication().invokeAndWait(() -> {
         onStartBuild((StartBuildEvent)event);

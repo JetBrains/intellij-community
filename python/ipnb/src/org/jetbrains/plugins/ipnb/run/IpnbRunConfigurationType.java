@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class IpnbRunConfigurationType implements ConfigurationType {
+public final class IpnbRunConfigurationType implements ConfigurationType {
   public final IpnbRunConfigurationFactory IPNB_FACTORY = new IpnbRunConfigurationFactory(this);
 
   public static IpnbRunConfigurationType getInstance() {

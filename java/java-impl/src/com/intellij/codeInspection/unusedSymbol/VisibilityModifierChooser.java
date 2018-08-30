@@ -113,12 +113,12 @@ public class VisibilityModifierChooser extends JLabel implements UserActivityPro
   }
 
   @Override
-  public void addChangeListener(ChangeListener changeListener) {
+  public void addChangeListener(@NotNull ChangeListener changeListener) {
     myListeners.add(changeListener);
   }
 
   @Override
-  public void removeChangeListener(ChangeListener changeListener) {
+  public void removeChangeListener(@NotNull ChangeListener changeListener) {
     myListeners.remove(changeListener);
   }
 }

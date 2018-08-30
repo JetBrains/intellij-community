@@ -37,7 +37,7 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
     if (myContentManager != null) {
       myContentManager.addContentManagerListener(new ContentManagerAdapter(){
         @Override
-        public void contentRemoved(ContentManagerEvent event) {
+        public void contentRemoved(@NotNull ContentManagerEvent event) {
           if (event.getContent().getComponent() == PanelWithActionsAndCloseButton.this) {
             Disposer.dispose(PanelWithActionsAndCloseButton.this);
             myContentManager.removeContentManagerListener(this);

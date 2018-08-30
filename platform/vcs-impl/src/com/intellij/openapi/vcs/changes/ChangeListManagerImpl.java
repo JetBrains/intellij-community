@@ -142,7 +142,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       ProjectManager.getInstance().addProjectManagerListener(project, new ProjectManagerListener() {
         @Override
-        public void projectClosing(Project project) {
+        public void projectClosing(@NotNull Project project) {
           //noinspection TestOnlyProblems
           waitEverythingDoneInTestMode();
         }
@@ -1667,6 +1667,16 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       VcsBalloonProblemNotifier.showOverChangesView(myProject, freezeReason, MessageType.WARNING);
     }
     return true;
+  }
+
+  public void replaceCommitMessage(@NotNull String oldMessage, @NotNull String newMessage) {
+    myConfig.replaceMessage(oldMessage, newMessage);
+
+    for (LocalChangeList changeList : getChangeLists()) {
+      if (oldMessage.equals(changeList.getComment())) {
+        editComment(changeList.getName(), newMessage);
+      }
+    }
   }
 
   static class Scheduler {

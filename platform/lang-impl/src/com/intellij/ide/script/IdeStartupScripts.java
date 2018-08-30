@@ -47,7 +47,7 @@ class IdeStartupScripts implements ApplicationInitializedListener {
     connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       Future<List<Pair<File, IdeScriptEngine>>> future;
       @Override
-      public void projectOpened(Project project) {
+      public void projectOpened(@NotNull Project project) {
         if (future == null) {
           future = PooledThreadExecutor.INSTANCE.submit(() -> prepareScriptsAndEngines());
         }

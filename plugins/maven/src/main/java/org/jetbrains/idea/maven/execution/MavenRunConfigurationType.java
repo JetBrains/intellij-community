@@ -32,7 +32,7 @@ import java.util.List;
 /**
  * @author Vladislav.Kaznacheev
  */
-public class MavenRunConfigurationType implements ConfigurationType {
+public final class MavenRunConfigurationType implements ConfigurationType {
   private final ConfigurationFactory myFactory;
   private static final int MAX_NAME_LENGTH = 40;
 

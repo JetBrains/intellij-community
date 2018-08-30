@@ -672,7 +672,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
       myRootSchemesPanel.addListener(new ColorAndFontSettingsListener.Abstract(){
         @Override
-        public void schemeChanged(final Object source) {
+        public void schemeChanged(@NotNull final Object source) {
           if (!myIsReset) {
             resetSchemesCombo(source);
           }
@@ -1212,7 +1212,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
         mySubPanel.reset(this);
         mySubPanel.addSchemesListener(new ColorAndFontSettingsListener.Abstract(){
           @Override
-          public void schemeChanged(final Object source) {
+          public void schemeChanged(@NotNull final Object source) {
             if (!myIsReset) {
               resetSchemesCombo(source);
             }

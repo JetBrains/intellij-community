@@ -71,12 +71,12 @@ class ArrayFilterInplaceEditor(node: XDebuggerTreeNode, val myTemp: Boolean, thi
 
   override fun doOKAction() {
     myTree.model.addTreeModelListener(object : TreeModelAdapter() {
-      override fun process(event: TreeModelEvent?, type: EventType?) {
-        if (event?.treePath?.lastPathComponent != myNode.parent) {
+      override fun process(event: TreeModelEvent, type: EventType) {
+        if (event.treePath?.lastPathComponent != myNode.parent) {
           myTree.model.removeTreeModelListener(this)
         }
         if (type == EventType.NodesInserted) {
-          event?.children?.filter { ArrayFilterAction.isArrayFilter(it as TreeNode) }?.forEach {
+          event.children?.filter { ArrayFilterAction.isArrayFilter(it as TreeNode) }?.forEach {
             myTree.selectionPath = TreeUtil.getPathFromRoot(it as TreeNode)
             myTree.model.removeTreeModelListener(this)
           }

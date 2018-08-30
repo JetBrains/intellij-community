@@ -8,7 +8,6 @@ import org.jetbrains.concurrency.Promise;
 import javax.swing.tree.TreePath;
 import java.util.ArrayDeque;
 import java.util.Collection;
-import java.util.Deque;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
@@ -17,7 +16,7 @@ public abstract class AbstractTreeWalker<N> {
 
   private final AtomicReference<State> state = new AtomicReference<>();
   private final AsyncPromise<TreePath> promise = new AsyncPromise<>();
-  private final Deque<ArrayDeque<N>> stack = new ArrayDeque<>();
+  private final ArrayDeque<ArrayDeque<N>> stack = new ArrayDeque<>();
   private final Function<? super N, Object> converter;
   private final TreeVisitor visitor;
   private volatile TreePath current;

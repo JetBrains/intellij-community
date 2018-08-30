@@ -140,7 +140,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   }
 
   @Override
-  public void quickListRenamed(final QuickList oldQuickList, final QuickList newQuickList) {
+  public void quickListRenamed(@NotNull final QuickList oldQuickList, @NotNull final QuickList newQuickList) {
     myManager.visitMutableKeymaps(keymap -> {
       String actionId = oldQuickList.getActionId();
       Shortcut[] shortcuts = keymap.getShortcuts(actionId);

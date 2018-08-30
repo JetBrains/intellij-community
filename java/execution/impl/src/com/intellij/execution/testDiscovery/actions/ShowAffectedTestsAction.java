@@ -71,7 +71,7 @@ import java.util.stream.Collectors;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.EDITOR;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PSI_FILE;
 
-public class ShowDiscoveredTestsAction extends AnAction {
+public class ShowAffectedTestsAction extends AnAction {
   private static final String RUN_ALL_ACTION_TEXT = "Run All Affected Tests";
 
   @Override
@@ -277,7 +277,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
         .setItemChoosenCallback(() -> PsiNavigateUtil.navigate(tree.getSelectedElement()))
         .registerKeyboardAction(findUsageKeyStroke, __ -> pinActionListener.run())
         .setMinSize(new JBDimension(500, 300))
-        .setDimensionServiceKey(ShowDiscoveredTestsAction.class.getSimpleName());
+        .setDimensionServiceKey(ShowAffectedTestsAction.class.getSimpleName());
 
     JBPopup popup = builder.createPopup();
     ref.set(popup);
@@ -289,7 +289,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
     model.addTreeModelListener(new TreeModelAdapter() {
       @Override
-      protected void process(TreeModelEvent event, EventType type) {
+      protected void process(@NotNull TreeModelEvent event, @NotNull EventType type) {
         int testsCount = tree.getTestCount();
         int classesCount = tree.getTestClassesCount();
         popup.setCaption("Found " + testsCount + " " +
@@ -374,7 +374,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
         presentation.setEnabled(false);
         tree.getModel().addTreeModelListener(new TreeModelAdapter() {
           @Override
-          protected void process(TreeModelEvent event, EventType type) {
+          protected void process(@NotNull TreeModelEvent event, @NotNull EventType type) {
             if (!presentation.isEnabled() && tree.getTestCount() != 0) {
               presentation.setEnabled(true);
             }

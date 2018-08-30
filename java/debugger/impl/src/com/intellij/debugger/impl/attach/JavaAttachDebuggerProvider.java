@@ -329,7 +329,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     }
   }
 
-  private static class ProcessAttachRunConfigurationType implements ConfigurationType {
+  private static final class ProcessAttachRunConfigurationType implements ConfigurationType {
     static final ProcessAttachRunConfigurationType INSTANCE = new ProcessAttachRunConfigurationType();
     static final ConfigurationFactory FACTORY = new ConfigurationFactory(INSTANCE) {
       @NotNull

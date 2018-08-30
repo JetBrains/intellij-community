@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class GriffonRunConfigurationType implements ConfigurationType {
+public final class GriffonRunConfigurationType implements ConfigurationType {
   private final ConfigurationFactory myConfigurationFactory;
   @NonNls private static final String GRIFFON_APPLICATION = "Griffon";
 

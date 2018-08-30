@@ -36,7 +36,7 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
   }
 
   public ModuleBasedConfiguration(@NotNull ConfigurationModule configurationModule, @NotNull ConfigurationFactory factory) {
-    super(configurationModule.getProject(), factory, "");
+    super(configurationModule.getProject(), factory);
 
     myModule = configurationModule;
     setInitialModuleName();

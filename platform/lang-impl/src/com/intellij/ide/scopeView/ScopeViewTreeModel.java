@@ -81,7 +81,7 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
     model = new ProjectFileTreeModel(project);
     model.addTreeModelListener(new TreeModelAdapter() {
       @Override
-      protected void process(TreeModelEvent event, EventType type) {
+      protected void process(@NotNull TreeModelEvent event, @NotNull EventType type) {
         if (type == EventType.StructureChanged) {
           TreePath path = event.getTreePath();
           if (path == null || null == path.getParentPath()) {

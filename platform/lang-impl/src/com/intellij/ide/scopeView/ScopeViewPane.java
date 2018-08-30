@@ -156,16 +156,19 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
     return 4;
   }
 
+  @NotNull
   @Override
   public String getTitle() {
     return IdeBundle.message("scope.view.title");
   }
 
+  @NotNull
   @Override
   public Icon getIcon() {
     return AllIcons.Ide.LocalScope;
   }
 
+  @NotNull
   @Override
   public JComponent createComponent() {
     onSubIdChange();
@@ -214,6 +217,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
     return ActionCallback.DONE;
   }
 
+  @NotNull
   @Override
   public SelectInTarget createSelectInTarget() {
     return new ScopePaneSelectInTarget(myProject);
@@ -294,6 +298,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
     return filter != null ? filter.getScope().getName() : getTitle();
   }
 
+  @NotNull
   @Override
   public Icon getPresentableSubIdIcon(@NotNull String subId) {
     NamedScopeFilter filter = getFilter(subId);
@@ -301,7 +306,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   }
 
   @Override
-  public void addToolbarActions(DefaultActionGroup actionGroup) {
+  public void addToolbarActions(@NotNull DefaultActionGroup actionGroup) {
     actionGroup.addAction(new ShowModulesAction(myProject, ID)).setAsSecondary(true);
     actionGroup.addAction(createFlattenModulesAction(() -> true)).setAsSecondary(true);
     AnAction editScopesAction = ActionManager.getInstance().getAction("ScopeView.EditScopes");

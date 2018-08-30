@@ -241,7 +241,7 @@ public final class PreviewFormAction extends AnAction{
 
         CompilerManager.getInstance(module.getProject()).make(scope, new CompileStatusNotification() {
           @Override
-          public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
+          public void finished(boolean aborted, int errors, int warnings, @NotNull final CompileContext compileContext) {
             if (!aborted && errors == 0) {
               runPreviewProcess(tempPath, sources, module, formFile, stringDescriptorLocale);
             }

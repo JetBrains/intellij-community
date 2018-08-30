@@ -268,7 +268,7 @@ public class MasterDetailPopupBuilder implements MasterController {
 
     myPopup.addListener(new JBPopupListener() {
       @Override
-      public void onClosed(LightweightWindowEvent event) {
+      public void onClosed(@NotNull LightweightWindowEvent event) {
         myDetailView.clearEditor();
       }
     });
