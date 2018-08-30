@@ -28,6 +28,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -81,6 +82,7 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
     myDiffPanel.putContextHints(DiffUserDataKeys.FORCE_READ_ONLY, true);
     myDiffPanel.putContextHints(DiffUserDataKeysEx.FORCE_DIFF_TOOL, UnifiedDiffTool.INSTANCE);
     addToCenter(myDiffPanel.getComponent());
+    Disposer.register(this, myDiffPanel);
   }
 
   @Override
