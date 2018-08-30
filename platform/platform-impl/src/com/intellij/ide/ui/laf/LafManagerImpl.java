@@ -123,9 +123,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         if (!"Metal".equalsIgnoreCase(name)
             && !"CDE/Motif".equalsIgnoreCase(name)
             && !"Nimbus".equalsIgnoreCase(name)
-            && !"Windows Classic".equalsIgnoreCase(name)
-            && !name.startsWith("JGoodies")
-            && !("Windows".equalsIgnoreCase(name) && SystemInfo.isWin8OrNewer)) {
+            && !name.startsWith("Windows")
+            && !name.startsWith("JGoodies")) {
           lafList.add(laf);
         }
       }
