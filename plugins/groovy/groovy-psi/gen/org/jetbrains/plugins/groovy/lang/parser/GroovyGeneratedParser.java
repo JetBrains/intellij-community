@@ -5416,17 +5416,8 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   // IDENTIFIER
   //                                                      | STR_SQ | STR_DQ
   //                                                      | regex_literal
-  //                                                      | 'true'
-  //                                                      | 'false'
-  //                                                      | 'null'
-  //                                                      | 'new'
-  //                                                      | 'class' | 'interface' | 'trait' | 'enum'
-  //                                                      | 'this' | 'super'
-  //                                                      | 'case'
-  //                                                      | 'as' | 'in'
-  //                                                      | 'else'
   //                                                      | modifier
-  //                                                      | statement_keywords
+  //                                                      | keyword
   //                                                      | primitive_type
   static boolean qualified_reference_expression_identifiers(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "qualified_reference_expression_identifiers")) return false;
@@ -5436,22 +5427,8 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, STR_SQ);
     if (!r) r = consumeToken(b, STR_DQ);
     if (!r) r = regex_literal(b, l + 1);
-    if (!r) r = consumeToken(b, KW_TRUE);
-    if (!r) r = consumeToken(b, KW_FALSE);
-    if (!r) r = consumeToken(b, KW_NULL);
-    if (!r) r = consumeToken(b, KW_NEW);
-    if (!r) r = consumeToken(b, KW_CLASS);
-    if (!r) r = consumeToken(b, KW_INTERFACE);
-    if (!r) r = consumeToken(b, KW_TRAIT);
-    if (!r) r = consumeToken(b, KW_ENUM);
-    if (!r) r = consumeToken(b, KW_THIS);
-    if (!r) r = consumeToken(b, KW_SUPER);
-    if (!r) r = consumeToken(b, KW_CASE);
-    if (!r) r = consumeToken(b, KW_AS);
-    if (!r) r = consumeToken(b, KW_IN);
-    if (!r) r = consumeToken(b, KW_ELSE);
     if (!r) r = modifier(b, l + 1);
-    if (!r) r = statement_keywords(b, l + 1);
+    if (!r) r = parseKeyword(b, l + 1);
     if (!r) r = parsePrimitiveType(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
