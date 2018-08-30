@@ -965,6 +965,8 @@ class PyDB:
                 add_exception_to_frame(frame, arg)
                 self.set_suspend(thread, CMD_ADD_EXCEPTION_BREAK)
                 self.do_wait_suspend(thread, frame, 'exception', arg, "trace")
+            except KeyboardInterrupt as e:
+                raise e
             except:
                 pydev_log.error("We've got an error while stopping in post-mortem: %s\n" % (arg[0],))
         finally:
