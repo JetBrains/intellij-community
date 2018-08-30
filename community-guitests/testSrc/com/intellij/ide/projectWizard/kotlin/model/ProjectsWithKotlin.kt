@@ -661,7 +661,8 @@ fun KotlinGuiTestCase.testCreateGradleAndConfigureKotlin(
   )
   waitAMoment(extraTimeOut)
   gradleReimport()
-  waitAMoment(extraTimeOut)
+  waitForGradleReimport(gradleOptions.artifact)
+  waitAMoment()
 
   projectStructureDialogScenarios.checkGradleExplicitModuleGroups(
     project = project,

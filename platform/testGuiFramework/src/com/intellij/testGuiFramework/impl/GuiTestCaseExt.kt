@@ -132,6 +132,20 @@ fun ExtendedJTreePathFixture.selectWithKeyboard(testCase: GuiTestCase, vararg pa
   }
 }
 
+fun GuiTestCase.waitForGradleReimport(rootPath: String){
+  GuiTestUtilKt.waitUntil("for gradle reimport finishing"){
+    var result = false
+    ideFrame {
+      toolwindow(id = "Gradle") {
+        content(tabName = "") {
+          result = jTree(rootPath, timeout = Timeouts.noTimeout).hasPath()
+        }
+      }
+    }
+    result
+  }
+
+}
 
 fun GuiTestCase.gradleReimport() {
   logTestStep("Reimport gradle project")

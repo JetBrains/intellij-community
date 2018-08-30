@@ -4,6 +4,7 @@ package com.intellij.ide.projectWizard.kotlin.createProject
 import com.intellij.ide.projectWizard.kotlin.model.*
 import com.intellij.testGuiFramework.impl.gradleReimport
 import com.intellij.testGuiFramework.impl.waitAMoment
+import com.intellij.testGuiFramework.impl.waitForGradleReimport
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel
 import com.intellij.testGuiFramework.util.scenarios.openProjectStructureAndCheck
 import com.intellij.testGuiFramework.util.scenarios.projectStructureDialogModel
@@ -42,7 +43,8 @@ class CreateKotlinMPProjectGuiTestDeprecated : KotlinGuiTestCase() {
       editBuildGradle(kotlinVersion, false, module_common, module_js)
     }
     gradleReimport()
-    waitAMoment(extraTimeOut)
+    waitForGradleReimport(projectName)
+    waitAMoment()
 
     val expectedJars = (kotlinLibs[KotlinKind.Common]!!.kotlinMPProject.jars.getJars(kotlinVersion) +
                         (if (setOfMPPModules.contains(
@@ -101,7 +103,8 @@ class CreateKotlinMPProjectGuiTestDeprecated : KotlinGuiTestCase() {
       editBuildGradle(kotlinVersion, false,  module_js)
     }
     gradleReimport()
-    waitAMoment(extraTimeOut)
+    waitForGradleReimport(projectName)
+    waitAMoment()
 
     val expectedJars = (kotlinLibs[KotlinKind.Common]!!.kotlinMPProject.jars.getJars(kotlinVersion) +
                         (if (setOfMPPModules.contains(
