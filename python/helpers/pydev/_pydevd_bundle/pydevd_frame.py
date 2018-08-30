@@ -327,6 +327,8 @@ class PyDBFrame:
 
                 finally:
                     pydevd_vars.remove_additional_frame_by_id(thread_id)
+            except KeyboardInterrupt as e:
+                raise e
             except:
                 traceback.print_exc()
 
