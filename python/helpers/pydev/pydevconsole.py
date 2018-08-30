@@ -17,6 +17,7 @@ import sys
 
 from _pydev_imps._pydev_saved_modules import threading
 from _pydevd_bundle.pydevd_constants import INTERACTIVE_MODE_AVAILABLE, dict_keys
+from _pydevd_bundle.pydevd_utils import save_main_module
 
 import traceback
 from _pydev_bundle import fix_getpass
@@ -94,8 +95,17 @@ class InterpreterInterface(BaseInterpreterInterface):
         self.client_port = client_port
         self.host = host
         self.namespace = {}
+        self.save_main()
         self.interpreter = InteractiveConsole(self.namespace)
         self._input_error_printed = False
+
+    def save_main(self):
+        m = save_main_module('<input>', 'pydevconsole')
+        self.namespace = m.__dict__
+        try:
+            self.namespace['__builtins__'] = __builtins__
+        except NameError:
+            pass  # Not there on Jython...
 
     def do_add_exec(self, codeFragment):
         command = Command(self.interpreter, codeFragment)
