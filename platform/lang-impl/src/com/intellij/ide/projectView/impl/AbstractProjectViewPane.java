@@ -79,7 +79,6 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   @NotNull
   protected final Project myProject;
-  private Runnable myTreeChangeListener;
   protected DnDAwareTree myTree;
   protected AbstractTreeStructure myTreeStructure;
   private AbstractTreeBuilder myTreeBuilder;
@@ -124,16 +123,8 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     Disposer.register(project, this);
   }
 
+  @Deprecated
   protected final void fireTreeChangeListener() {
-    if (myTreeChangeListener != null) myTreeChangeListener.run();
-  }
-
-  public final void setTreeChangeListener(@NotNull Runnable listener) {
-    myTreeChangeListener = listener;
-  }
-
-  final void removeTreeChangeListener() {
-    myTreeChangeListener = null;
   }
 
   public abstract String getTitle();
