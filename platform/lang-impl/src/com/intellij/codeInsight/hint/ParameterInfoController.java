@@ -210,7 +210,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
   }
 
   @Override
-  public void visibleAreaChanged(VisibleAreaEvent e) {
+  public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
     if (Registry.is("editor.keep.completion.hints.even.longer")) rescheduleUpdate();
   }
 

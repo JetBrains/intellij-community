@@ -350,7 +350,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
         myContextPopup.show(new RelativePoint(change, new Point(change.getWidth() , -content.getPreferredSize().height - 10)));
         myContextPopup.addListener(new JBPopupAdapter() {
           @Override
-          public void onClosed(LightweightWindowEvent event) {
+          public void onClosed(@NotNull LightweightWindowEvent event) {
             myLastSize = content.getSize();
           }
         });

@@ -132,9 +132,9 @@ class MultithreadSearcher {
    * Search process listener interface
    */
   public interface Listener {
-    void elementsAdded(List<ElementInfo> list);
-    void elementsRemoved(List<ElementInfo> list);
-    void searchFinished(Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors);
+    void elementsAdded(@NotNull List<ElementInfo> list);
+    void elementsRemoved(@NotNull List<ElementInfo> list);
+    void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors);
   }
 
   private static class ContributorSearchTask<F> implements Runnable {

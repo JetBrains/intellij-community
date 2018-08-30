@@ -65,7 +65,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
       FoldRegion myCurrentFold;
 
       @Override
-      public void mouseMoved(EditorMouseEvent e) {
+      public void mouseMoved(@NotNull EditorMouseEvent e) {
         if (myProject.isDisposed()) return;
         LightweightHint hint = null;
         try {

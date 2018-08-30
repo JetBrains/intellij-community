@@ -147,7 +147,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     popupWindow.addComponentListener(windowListener);
     addPopupListener(new JBPopupAdapter() {
       @Override
-      public void onClosed(LightweightWindowEvent event) {
+      public void onClosed(@NotNull LightweightWindowEvent event) {
         popupWindow.removeComponentListener(windowListener);
         if (dimensionKey != null && myUserSizeChanged) {
           WindowStateService.getInstance(myProject).putSizeFor(myProject, dimensionKey, myPrevSize);

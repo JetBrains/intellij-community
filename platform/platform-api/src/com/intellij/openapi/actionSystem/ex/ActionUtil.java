@@ -243,7 +243,7 @@ public class ActionUtil {
     return !visibilityMatters || e.getPresentation().isVisible();
   }
 
-  public static void performActionDumbAwareWithCallbacks(AnAction action, AnActionEvent e, DataContext context) {
+  public static void performActionDumbAwareWithCallbacks(@NotNull AnAction action, @NotNull AnActionEvent e, @NotNull DataContext context) {
     final ActionManagerEx manager = ActionManagerEx.getInstanceEx();
     manager.fireBeforeActionPerformed(action, context, e);
     performActionDumbAware(action, e);

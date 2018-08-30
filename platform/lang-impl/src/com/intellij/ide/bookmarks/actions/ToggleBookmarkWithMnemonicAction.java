@@ -73,7 +73,7 @@ public class ToggleBookmarkWithMnemonicAction extends ToggleBookmarkAction {
         createPopup();
       popup[0].addListener(new JBPopupListener() {
         @Override
-        public void onClosed(LightweightWindowEvent event) {
+        public void onClosed(@NotNull LightweightWindowEvent event) {
           myPopupShown = false;
         }
       });

@@ -963,7 +963,7 @@ public class JBTabsImpl extends JComponent
   }
 
 
-  void fireTabRemoved(TabInfo info) {
+  void fireTabRemoved(@NotNull TabInfo info) {
     for (TabsListener eachListener : myTabListeners) {
       if (eachListener != null) {
         eachListener.tabRemoved(info);

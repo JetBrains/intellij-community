@@ -195,7 +195,7 @@ public abstract class ChooseByNameFilter<T> {
         .setDimensionServiceKey(myProject, "GotoFile_FileTypePopup", false).createPopup();
     myPopup.addListener(new JBPopupListener() {
       @Override
-      public void onClosed(LightweightWindowEvent event) {
+      public void onClosed(@NotNull LightweightWindowEvent event) {
         myPopup = null;
       }
     });

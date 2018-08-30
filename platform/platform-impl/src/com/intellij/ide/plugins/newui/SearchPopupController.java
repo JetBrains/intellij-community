@@ -26,7 +26,7 @@ public abstract class SearchPopupController {
   protected SearchPopup myPopup;
   private final JBPopupListener mySearchPopupListener = new JBPopupAdapter() {
     @Override
-    public void onClosed(LightweightWindowEvent event) {
+    public void onClosed(@NotNull LightweightWindowEvent event) {
       myPopup = null;
     }
   };

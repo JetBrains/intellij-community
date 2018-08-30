@@ -637,7 +637,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     }
   }
 
-  private void fireOnTestNodeAdded(final SMTestProxy test) {
+  private void fireOnTestNodeAdded(@NotNull SMTestProxy test) {
     for (EventsListener eventListener : myEventListeners) {
       eventListener.onTestNodeAdded(this, test);
     }

@@ -51,7 +51,7 @@ public final class LoaderFactory {
     myConnection = myProject.getMessageBus().connect();
     myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(final ModuleRootEvent event) {
+      public void rootsChanged(@NotNull final ModuleRootEvent event) {
         clearClassLoaderCache();
       }
     });

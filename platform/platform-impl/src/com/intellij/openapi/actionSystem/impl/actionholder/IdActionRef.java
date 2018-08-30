@@ -2,6 +2,7 @@
 package com.intellij.openapi.actionSystem.impl.actionholder;
 
 import com.intellij.openapi.actionSystem.AnAction;
+import org.jetbrains.annotations.NotNull;
 
 class IdActionRef<T extends AnAction> extends ActionRef<T> {
   private final String myId;
@@ -10,6 +11,7 @@ class IdActionRef<T extends AnAction> extends ActionRef<T> {
     myId = id;
   }
 
+  @NotNull
   @Override
   public T getAction() {
     T action = (T)getManager().getAction(myId);

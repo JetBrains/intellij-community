@@ -206,7 +206,7 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
   }
 
   @Override
-  public void mouseDragged(EditorMouseEvent e) {
+  public void mouseDragged(@NotNull EditorMouseEvent e) {
     // nothing
   }
 

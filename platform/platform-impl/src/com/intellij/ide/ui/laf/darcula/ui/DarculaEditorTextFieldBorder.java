@@ -46,12 +46,12 @@ public class DarculaEditorTextFieldBorder extends DarculaTextBorder implements V
     if (editorTextField != null && editor != null) {
       editor.addFocusListener(new FocusChangeListener() {
         @Override
-        public void focusGained(Editor editor) {
+        public void focusGained(@NotNull Editor editor) {
           editorTextField.repaint();
         }
 
         @Override
-        public void focusLost(Editor editor) {
+        public void focusLost(@NotNull Editor editor) {
           editorTextField.repaint();
         }
       });

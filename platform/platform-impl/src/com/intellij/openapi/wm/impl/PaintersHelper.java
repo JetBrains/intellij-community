@@ -150,7 +150,7 @@ final class PaintersHelper implements Painter.Listener {
   }
 
   @Override
-  public void onNeedsRepaint(Painter painter, JComponent dirtyComponent) {
+  public void onNeedsRepaint(@NotNull Painter painter, JComponent dirtyComponent) {
     if (dirtyComponent != null && dirtyComponent.isShowing()) {
       Rectangle rec = SwingUtilities.convertRectangle(dirtyComponent, dirtyComponent.getBounds(), myRootComponent);
       myRootComponent.repaint(rec);

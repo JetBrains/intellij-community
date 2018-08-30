@@ -24,17 +24,17 @@ object GlobalActionRecorder {
     private set
 
   private val globalActionListener = object : AnActionListener {
-    override fun beforeActionPerformed(action: AnAction, dataContext: DataContext?, event: AnActionEvent?) {
+    override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent?) {
       if (event?.place == GuiScriptEditorPanel.GUI_SCRIPT_EDITOR_PLACE) return //avoid GUI Script Editor Actions
       EventDispatcher.processActionEvent(action, event)
       LOG.info("IDEA is going to perform action ${action.templatePresentation.text}")
     }
 
-    override fun beforeEditorTyping(c: Char, dataContext: DataContext?) {
+    override fun beforeEditorTyping(c: Char, dataContext: DataContext) {
       LOG.info("IDEA typing detected: ${c}")
     }
 
-    override fun afterActionPerformed(action: AnAction?, dataContext: DataContext?, event: AnActionEvent?) {
+    override fun afterActionPerformed(action: AnAction?, dataContext: DataContext, event: AnActionEvent?) {
       if (event?.place == GuiScriptEditorPanel.GUI_SCRIPT_EDITOR_PLACE) return //avoid GUI Script Editor Actions
       if (action == null) return
       LOG.info("IDEA action performed ${action.templatePresentation.text}")

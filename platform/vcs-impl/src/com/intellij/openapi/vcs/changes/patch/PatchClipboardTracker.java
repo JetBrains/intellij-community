@@ -19,14 +19,14 @@ public class PatchClipboardTracker implements ApplicationInitializedListener {
 
   private static class PatchClipboardListener extends ClipboardAnalyzeListener {
     @Override
-    public void applicationActivated(IdeFrame ideFrame) {
+    public void applicationActivated(@NotNull IdeFrame ideFrame) {
       // we can't get clipboard details especially content size, so we should avoid clipboard processing when it's possible;
       if (!VcsApplicationSettings.getInstance().DETECT_PATCH_ON_THE_FLY) return;
       super.applicationActivated(ideFrame);
     }
 
     @Override
-    public void applicationDeactivated(IdeFrame ideFrame) {
+    public void applicationDeactivated(@NotNull IdeFrame ideFrame) {
       if (!VcsApplicationSettings.getInstance().DETECT_PATCH_ON_THE_FLY) return;
       super.applicationDeactivated(ideFrame);
     }

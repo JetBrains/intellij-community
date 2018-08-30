@@ -450,10 +450,10 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     return 0;
   }
 
-  protected void afterFileClosed(VirtualFile file) {
+  protected void afterFileClosed(@NotNull VirtualFile file) {
   }
 
-  protected void afterFileOpen(VirtualFile file) {
+  protected void afterFileOpen(@NotNull VirtualFile file) {
   }
 
   @Nullable

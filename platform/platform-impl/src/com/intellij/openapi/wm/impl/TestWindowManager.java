@@ -114,7 +114,7 @@ public final class TestWindowManager extends WindowManagerEx {
   }
 
   @Override
-  public final void releaseFrame(final IdeFrameImpl frame) {
+  public final void releaseFrame(@NotNull final IdeFrameImpl frame) {
     frame.dispose();
   }
 

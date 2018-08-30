@@ -208,7 +208,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     myActionManager = manager;
     AnActionListener actionListener = new AnActionListener() {
       @Override
-      public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
+      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
         JBPopup hint = getDocInfoHint();
         if (hint != null) {
           if (action instanceof ShowQuickDocInfoAction) {
@@ -230,7 +230,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       }
 
       @Override
-      public void beforeEditorTyping(char c, DataContext dataContext) {
+      public void beforeEditorTyping(char c, @NotNull DataContext dataContext) {
         JBPopup hint = getDocInfoHint();
         if (hint != null && LookupManager.getActiveLookup(myEditor) == null) {
           hint.cancel();

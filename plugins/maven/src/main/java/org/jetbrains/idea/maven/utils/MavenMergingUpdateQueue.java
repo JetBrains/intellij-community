@@ -81,14 +81,14 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
         int beforeCalled;
 
         @Override
-        public void beforeRootsChange(ModuleRootEvent event) {
+        public void beforeRootsChange(@NotNull ModuleRootEvent event) {
           if (beforeCalled++ == 0) {
             suspend();
           }
         }
 
         @Override
-        public void rootsChanged(ModuleRootEvent event) {
+        public void rootsChanged(@NotNull ModuleRootEvent event) {
           if (beforeCalled == 0) {
             return; // This may occur if listener has been added between beforeRootsChange() and rootsChanged() calls.
           }

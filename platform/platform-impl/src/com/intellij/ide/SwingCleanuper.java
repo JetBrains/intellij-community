@@ -43,7 +43,7 @@ public final class SwingCleanuper {
     myAlarm = new Alarm(application);
     application.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
         @Override
-        public void projectOpened(final Project project) {
+        public void projectOpened(@NotNull final Project project) {
           myAlarm.cancelAllRequests();
         }
         // Swing keeps references to the last focused component inside DefaultKeyboardFocusManager.realOppositeComponent

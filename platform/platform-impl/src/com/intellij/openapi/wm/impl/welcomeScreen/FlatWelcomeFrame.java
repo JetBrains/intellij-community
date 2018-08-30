@@ -123,7 +123,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void projectOpened(Project project) {
+      public void projectOpened(@NotNull Project project) {
         Disposer.dispose(FlatWelcomeFrame.this);
       }
     });

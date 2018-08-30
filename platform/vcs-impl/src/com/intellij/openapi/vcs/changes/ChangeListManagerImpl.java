@@ -142,7 +142,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       ProjectManager.getInstance().addProjectManagerListener(project, new ProjectManagerListener() {
         @Override
-        public void projectClosing(Project project) {
+        public void projectClosing(@NotNull Project project) {
           //noinspection TestOnlyProblems
           waitEverythingDoneInTestMode();
         }

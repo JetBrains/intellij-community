@@ -47,7 +47,7 @@ public final class UnscrambleAction extends AnAction implements DumbAware {
 
     Registry.get(key).addListener(new RegistryValueListener.Adapter() {
       @Override
-      public void afterValueChanged(RegistryValue value) {
+      public void afterValueChanged(@NotNull RegistryValue value) {
         if (value.asBoolean()) {
           ourConnection = app.getMessageBus().connect();
           ourConnection.subscribe(ApplicationActivationListener.TOPIC, LISTENER);

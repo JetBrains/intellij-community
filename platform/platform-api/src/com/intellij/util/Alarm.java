@@ -140,7 +140,7 @@ public class Alarm implements Disposable {
       final MessageBusConnection connection = bus.connect(this);
       connection.subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
         @Override
-        public void applicationActivated(IdeFrame ideFrame) {
+        public void applicationActivated(@NotNull IdeFrame ideFrame) {
           connection.disconnect();
           addRequest(request, delay);
         }
@@ -322,6 +322,9 @@ public class Alarm implements Disposable {
     return app != null && app.isDispatchThread() || EventQueue.isDispatchThread();
   }
 
+  // optimization: singleton to avoid stack trace filling costs
+  private static final Exception CANCELED = new ProcessCanceledException();
+
   private class Request implements Runnable {
     private Runnable myTask; // guarded by LOCK
     private final ModalityState myModalityState;
@@ -426,10 +429,11 @@ public class Alarm implements Disposable {
         }
         CompletableFuture<?> executionFuture = myExecutionFuture;
         if (executionFuture != null) {
-          executionFuture.cancel(false);
+          // optimization: use completeExceptionally() instead of cancel() because the latter begins to fill stack trace till eternity
+          executionFuture.completeExceptionally(CANCELED);
           myExecutionFuture = null;
         }
-        EDT_QUEUE.remove(this);
+        // let this Request dangle in the EDT_QUEUE until its run() method discovers it's invalid (because remove from EDT_QUEUE is linear)
         Runnable task = myTask;
         myTask = null;
         return task;

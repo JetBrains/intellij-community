@@ -149,7 +149,7 @@ public class EncodingUtil {
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(disposable);
     connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
       @Override
-      public void beforeFileContentReload(VirtualFile file, @NotNull Document document) {
+      public void beforeFileContentReload(@NotNull VirtualFile file, @NotNull Document document) {
         if (!file.equals(virtualFile)) return;
         Disposer.dispose(disposable); // disconnect
 

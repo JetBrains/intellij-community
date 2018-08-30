@@ -743,7 +743,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     myConsoleListeners.add(consoleListener);
   }
 
-  private void fireConsoleInitializedEvent(LanguageConsoleView consoleView) {
+  private void fireConsoleInitializedEvent(@NotNull LanguageConsoleView consoleView) {
     for (ConsoleListener listener : myConsoleListeners) {
       listener.handleConsoleInitialized(consoleView);
     }

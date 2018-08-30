@@ -2,14 +2,16 @@
 package com.intellij.openapi.actionSystem.impl.actionholder;
 
 import com.intellij.openapi.actionSystem.AnAction;
+import org.jetbrains.annotations.NotNull;
 
 class SimpleActionRef<T extends AnAction> extends ActionRef<T> {
   private final T myAction;
 
-  public SimpleActionRef(T action) {
+  SimpleActionRef(@NotNull T action) {
     myAction = action;
   }
 
+  @NotNull
   @Override
   public T getAction() {
     return myAction;

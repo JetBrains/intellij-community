@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.incrementalMerge.ui.EditorPlace;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
+import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -36,12 +37,12 @@ public class FontSizeSynchronizer {
     for (EditorPlace editorPlace : editorPlaces) {
       editorPlace.addListener(new EditorPlace.EditorListener() {
         @Override
-        public void onEditorCreated(EditorPlace place) {
+        public void onEditorCreated(@NotNull EditorPlace place) {
           synchronizer.synchronize((EditorEx)place.getEditor());
         }
 
         @Override
-        public void onEditorReleased(Editor releasedEditor) {
+        public void onEditorReleased(@NotNull Editor releasedEditor) {
           synchronizer.stopSynchronize((EditorEx)releasedEditor);
         }
       });

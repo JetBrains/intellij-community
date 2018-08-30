@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -32,14 +33,14 @@ public class FacetDependentToolWindowManager implements ProjectComponent {
   public void projectOpened() {
     myFacetListenersRegistry.registerListener(new ProjectWideFacetAdapter<Facet>() {
       @Override
-      public void facetAdded(Facet facet) {
+      public void facetAdded(@NotNull Facet facet) {
         for (FacetDependentToolWindow extension : getDependentExtensions(facet)) {
           ensureToolWindowExists(extension);
         }
       }
 
       @Override
-      public void facetRemoved(Facet facet) {
+      public void facetRemoved(@NotNull Facet facet) {
         if (!myFacetManager.hasFacets(facet.getTypeId())) {
           for (FacetDependentToolWindow extension : getDependentExtensions(facet)) {
             ToolWindow toolWindow = myToolWindowManager.getToolWindow(extension.id);

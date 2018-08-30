@@ -99,7 +99,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
 
     contentManager.addContentManagerListener(new ContentManagerAdapter() {
       @Override
-      public void contentRemoved(ContentManagerEvent event) {
+      public void contentRemoved(@NotNull ContentManagerEvent event) {
         restorePopupBehavior();
       }
     });

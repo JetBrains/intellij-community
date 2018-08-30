@@ -5,6 +5,7 @@ import com.intellij.openapi.fileChooser.ex.FileTextFieldImpl;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SearchTextField;
@@ -26,6 +27,7 @@ public class SearchPopup implements CaretListener {
   private final JBPopupListener myListener;
   private final JBTextField myEditor;
   private JBPopup myPopup;
+  private LightweightWindowEvent myEvent;
 
   public CollectionListModel<Object> model;
   public JList<Object> list;
@@ -65,6 +67,7 @@ public class SearchPopup implements CaretListener {
       .setMovable(false).setResizable(false).setRequestFocus(false)
       .setItemChosenCallback(callback)
       .setRenderer(renderer).createPopup();
+    myEvent = new LightweightWindowEvent(myPopup);
 
     skipCaretEvent = true;
     myPopup.addListener(myListener);
@@ -98,7 +101,7 @@ public class SearchPopup implements CaretListener {
     }
     else {
       hide();
-      myListener.onClosed(null);
+      myListener.onClosed(myEvent);
     }
   }
 }

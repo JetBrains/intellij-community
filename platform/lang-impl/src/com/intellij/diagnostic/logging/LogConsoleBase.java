@@ -226,7 +226,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   }
 
   @Override
-  public void onFilterStateChange(final LogFilter filter) {
+  public void onFilterStateChange(@NotNull final LogFilter filter) {
     filterConsoleOutput();
   }
 

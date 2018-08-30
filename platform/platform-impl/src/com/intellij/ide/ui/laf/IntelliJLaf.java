@@ -50,7 +50,7 @@ public class IntelliJLaf extends DarculaLaf {
   protected BasicLookAndFeel createBaseLookAndFeel() {
     Registry.get("ide.intellij.laf.win10.ui").addListener(new RegistryValueListener.Adapter() {
       @Override
-      public void afterValueChanged(RegistryValue value) {
+      public void afterValueChanged(@NotNull RegistryValue value) {
         try { // Update UI
           UIManager.setLookAndFeel(UIManager.getLookAndFeel());
         } catch (UnsupportedLookAndFeelException ignored) {}

@@ -1017,7 +1017,7 @@ public class XDebugSessionImpl implements XDebugSession {
 
   private class MyDependentBreakpointListener implements XDependentBreakpointListener {
     @Override
-    public void dependencySet(final XBreakpoint<?> slave, final XBreakpoint<?> master) {
+    public void dependencySet(@NotNull final XBreakpoint<?> slave, @NotNull final XBreakpoint<?> master) {
       boolean added = myInactiveSlaveBreakpoints.add(slave);
       if (added) {
         processAllHandlers(slave, false);

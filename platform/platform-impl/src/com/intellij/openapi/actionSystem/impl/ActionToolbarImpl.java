@@ -1276,14 +1276,14 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
     builder.addListener(new JBPopupAdapter() {
       @Override
-      public void onClosed(LightweightWindowEvent event) {
+      public void onClosed(@NotNull LightweightWindowEvent event) {
         processClosed();
       }
     });
     myPopup = builder.createPopup();
     ApplicationManager.getApplication().getMessageBus().connect(myPopup).subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
-      public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+      public void afterActionPerformed(AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
         final JBPopup popup = myPopup;
         if (popup != null && !popup.isDisposed() && popup.isVisible()) {
           popup.cancel();
@@ -1382,11 +1382,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
 
     @Override
-    public void beforeActionPerformed(@NotNull final AnAction action, final DataContext dataContext, AnActionEvent event) {
+    public void beforeActionPerformed(@NotNull final AnAction action, @NotNull final DataContext dataContext, AnActionEvent event) {
     }
 
     @Override
-    public void afterActionPerformed(final AnAction action, final DataContext dataContext, AnActionEvent event) {
+    public void afterActionPerformed(final AnAction action, @NotNull final DataContext dataContext, AnActionEvent event) {
       if (!myVisibleActions.contains(action)) {
         onOtherActionPerformed();
       }

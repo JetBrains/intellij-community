@@ -400,7 +400,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
   }
 
   @Override
-  public void memberInfoChanged(MemberInfoChange memberInfoChange) {
+  public void memberInfoChanged(@NotNull MemberInfoChange memberInfoChange) {
     validateButtons();
     myMember2CauseMap.clear();
     if (extractAsEnum.isVisible()) {

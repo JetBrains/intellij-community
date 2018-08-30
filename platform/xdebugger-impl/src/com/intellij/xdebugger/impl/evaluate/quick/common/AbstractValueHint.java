@@ -239,7 +239,7 @@ public abstract class AbstractValueHint {
     };
     myCurrentHint.addHintListener(new HintListener() {
       @Override
-      public void hintHidden(EventObject event) {
+      public void hintHidden(@NotNull EventObject event) {
         if (myHideRunnable != null && !myInsideShow) {
           myHideRunnable.run();
         }

@@ -738,7 +738,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
 
   private class MyModuleRootListener implements ModuleRootListener {
     @Override
-    public void rootsChanged(ModuleRootEvent event) {
+    public void rootsChanged(@NotNull ModuleRootEvent event) {
       myUpdateQueue.cancelAllUpdates();
       myUpdateQueue.queue(new Update("RootsChanged") {
         @Override

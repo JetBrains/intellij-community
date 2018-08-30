@@ -136,7 +136,7 @@ public class SearchResults implements DocumentListener {
 
   public interface SearchResultsListener {
 
-    void searchResultsUpdated(SearchResults sr);
+    void searchResultsUpdated(@NotNull SearchResults sr);
     void cursorMoved();
 
     void updateFinished();

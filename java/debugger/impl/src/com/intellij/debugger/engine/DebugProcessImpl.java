@@ -143,7 +143,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     reloadRenderers();
     myDebugProcessDispatcher.addListener(new DebugProcessListener() {
       @Override
-      public void paused(SuspendContext suspendContext) {
+      public void paused(@NotNull SuspendContext suspendContext) {
         myThreadBlockedMonitor.stopWatching(
           suspendContext.getSuspendPolicy() != EventRequest.SUSPEND_ALL ? suspendContext.getThread() : null);
       }

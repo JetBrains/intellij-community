@@ -105,7 +105,7 @@ public class EnforcedPlainTextFileTypeManager implements ProjectManagerListener 
   }
 
   @Override
-  public void projectOpened(Project project) {
+  public void projectOpened(@NotNull Project project) {
     addProjectPlainTextFiles(project);
   }
 
