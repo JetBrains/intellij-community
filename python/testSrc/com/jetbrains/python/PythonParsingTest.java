@@ -677,6 +677,54 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
+  public void testFStringTerminatedByLineBreakInLiteralPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByLineBreakInNestedLiteralPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+  
+  public void testFStringTerminatedByLineBreakInFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByLineBreakInNestedFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByLineBreakInExpression() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByLineBreakInNestedExpression() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByLineBreakInExpressionInFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByLineBreakInNestedExpressionInFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByLineBreakInStringLiteral() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByLineBreakInNestedStringLiteral() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByLineBreakInStringLiteralInFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByLineBreakInNestedStringLiteralInFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
   // PY-19036
   public void testAwaitInNonAsyncNestedFunction() {
     doTest(LanguageLevel.PYTHON35);
