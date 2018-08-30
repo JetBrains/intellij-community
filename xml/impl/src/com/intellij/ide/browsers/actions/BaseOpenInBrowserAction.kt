@@ -29,25 +29,18 @@ import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 import java.awt.event.InputEvent
-import javax.swing.Icon
 import javax.swing.JList
 
 private val LOG = Logger.getInstance(BaseOpenInBrowserAction::class.java)
 
-abstract class BaseOpenInBrowserAction : DumbAwareAction {
-  @Suppress("unused")
-  protected constructor(browser: WebBrowser) : super(browser.name, null, browser.icon)
-
-  @Suppress("unused")
-  protected constructor(text: String?, description: String?, icon: Icon?) : super(text, description, icon)
-
+internal class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAwareAction(browser.name, null, browser.icon) {
   companion object {
     @JvmStatic
     fun doUpdate(event: AnActionEvent): OpenInBrowserRequest? {
       val request = createRequest(event.dataContext)
       val applicable = request != null && WebBrowserServiceImpl.getProvider(request) != null
       event.presentation.isEnabledAndVisible = applicable
-      return if (applicable) request else null
+      return if (applicable) request else  null
     }
 
     fun open(event: AnActionEvent, browser: WebBrowser?) {
@@ -78,10 +71,17 @@ abstract class BaseOpenInBrowserAction : DumbAwareAction {
     }
   }
 
-  protected abstract fun getBrowser(event: AnActionEvent): WebBrowser?
+  private fun getBrowser(): WebBrowser? {
+    if (WebBrowserManager.getInstance().isActive(browser) && browser.path != null) {
+      return browser
+    }
+    else {
+      return null
+    }
+  }
 
   override fun update(e: AnActionEvent) {
-    val browser = getBrowser(e)
+    val browser = getBrowser()
     if (browser == null) {
       e.presentation.isEnabledAndVisible = false
       return
@@ -109,7 +109,7 @@ abstract class BaseOpenInBrowserAction : DumbAwareAction {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    getBrowser(e)?.let {
+    getBrowser()?.let {
       open(e, it)
     }
   }
@@ -123,10 +123,10 @@ private fun createRequest(context: DataContext): OpenInBrowserRequest? {
       val psiFile = CommonDataKeys.PSI_FILE.getData(context) ?: PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
       if (psiFile != null && psiFile.virtualFile !is ContentRevisionVirtualFile) {
         return object : OpenInBrowserRequest(psiFile) {
-          private val _element by lazy { file.findElementAt(editor.caretModel.offset) }
+          private val lazyElement by lazy { file.findElementAt(editor.caretModel.offset) }
 
           override val element: PsiElement
-            get() = _element ?: file
+            get() = lazyElement ?: file
         }
       }
     }
