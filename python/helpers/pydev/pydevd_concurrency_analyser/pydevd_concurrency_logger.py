@@ -19,7 +19,8 @@ threadingCurrentThread = threading.currentThread
 DONT_TRACE_THREADING = ['threading.py', 'pydevd.py']
 INNER_METHODS = ['_stop']
 INNER_FILES = ['threading.py']
-THREAD_METHODS = ['start', '_stop', 'join']
+# Tread method `start` is removed, because it's being handled in `pydev_monkey` thread creation patching
+THREAD_METHODS = ['_stop', 'join']
 LOCK_METHODS = ['__init__', 'acquire', 'release', '__enter__', '__exit__']
 QUEUE_METHODS = ['put', 'get']
 
@@ -175,8 +176,6 @@ class ThreadingLogger:
                             name = t.getName()
                             self_obj._pydev_join_called = True
 
-                        if real_method == "start":
-                            parent = get_thread_id(t)
                         send_message("threading_event", event_time, name, thread_id, "thread",
                         real_method, back.f_code.co_filename, back.f_lineno, back, parent=parent)
                         # print(event_time, self_obj.getName(), thread_id, "thread",
