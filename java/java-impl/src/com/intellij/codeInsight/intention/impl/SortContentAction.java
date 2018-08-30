@@ -216,7 +216,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       return generateComments(sb, myAfterSeparator);
     }
 
-    private static boolean generateComments(StringBuilder sb, List<PsiComment> comments) {
+    private static boolean generateComments(StringBuilder sb, List<? extends PsiComment> comments) {
       boolean newLineNeed = false;
       for (PsiComment element : comments) {
         if (newLineNeed) {
@@ -622,8 +622,8 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
     @Override
     String generateReplacementText(@NotNull SortableList list, @NotNull PsiArrayInitializerExpression elementToSort) {
       StringBuilder sb = new StringBuilder();
-      boolean eolReuqired = list.generate(sb);
-      if (eolReuqired) {
+      boolean eolRequired = list.generate(sb);
+      if (eolRequired) {
         sb.append("\n");
       }
       sb.append("}");
