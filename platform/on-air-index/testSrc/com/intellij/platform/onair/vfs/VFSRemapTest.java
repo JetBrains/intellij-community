@@ -12,12 +12,14 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
+import static com.intellij.platform.onair.vfs.RemoteVFS.VFS_TREE_KEY_SIZE;
+
 public class VFSRemapTest {
   public static final String host = "localhost";
   public static final int port = 11211;
 
   @Test
-  public void testAll() throws IOException {
+  public void testAll() throws IOException, InterruptedException {
     final FSRecords fs = FSRecords.getInstance();
     fs.connect();
     try {
@@ -30,16 +32,20 @@ public class VFSRemapTest {
         long start = System.currentTimeMillis();
 
         final Pair<BTree, Novelty> pair = RemoteVFS.save(storage, fs);
-        BTree tree = pair.first;
+        System.out.println("Tree saved: " + (System.currentTimeMillis() - start) / 1000 + "s");
         novelty = pair.second;
 
-        System.out.println("Tree saved: " + (System.currentTimeMillis() - start) / 1000 + "s");
+        start = System.currentTimeMillis();
+        BTree tree = BTree.load(storage, VFS_TREE_KEY_SIZE, pair.first.store(novelty.access()));
+        System.out.println("Tree uploaded: " + (System.currentTimeMillis() - start) / 1000 + "s");
 
         start = System.currentTimeMillis();
-
-        RemoteVFS.Mapping mapping = RemoteVFS.remap(fs, tree, novelty);
-
-        System.out.println("Remap done: " + (System.currentTimeMillis() - start) / 1000 + "s");
+        final RemoteVFS.Mapping mapping;
+        try {
+          mapping = RemoteVFS.remap(fs, tree, Novelty.VOID);
+        } finally {
+          System.out.println("Remap done: " + (System.currentTimeMillis() - start) / 1000 + "s");
+        }
 
         final int maxId = fs.getMaxId();
         for (int i = 1; i < maxId; i++) {

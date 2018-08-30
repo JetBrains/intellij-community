@@ -98,7 +98,7 @@ public class CopyIndexTest {
 
         System.out.println("Check write...");
         start = System.currentTimeMillis();
-        trees.forEach(tree -> remoteTrees.add(BTree.load(storage, tree.getKeySize(), storage.bulkStore(tree, novelty))));
+        trees.forEach(tree -> remoteTrees.add(BTree.load(storage, tree.getKeySize(), tree.store(novelty.access()))));
         System.out.println("Time: " + (System.currentTimeMillis() - start) / 1000 + "s");
         System.out.println("Check storage reads...");
         start = System.currentTimeMillis();

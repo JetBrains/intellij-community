@@ -4,10 +4,7 @@ package com.intellij.platform.onair.storage;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import com.intellij.openapi.util.Pair;
-import com.intellij.platform.onair.storage.api.Address;
-import com.intellij.platform.onair.storage.api.Novelty;
-import com.intellij.platform.onair.storage.api.Storage;
-import com.intellij.platform.onair.storage.api.StorageConsumer;
+import com.intellij.platform.onair.storage.api.*;
 import com.intellij.platform.onair.storage.cache.ConcurrentObjectCache;
 import com.intellij.platform.onair.tree.BTree;
 import net.spy.memcached.BinaryConnectionFactory;
@@ -19,6 +16,7 @@ import net.spy.memcached.internal.BulkGetCompletionListener;
 import net.spy.memcached.internal.BulkGetFuture;
 import net.spy.memcached.transcoders.Transcoder;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -127,7 +125,7 @@ public class StorageImpl implements Storage {
     return new Address(highBytes, normalizeLowBytes(lowBytes));
   }
 
-  @Override
+  @TestOnly
   public void store(@NotNull Address address, @NotNull byte[] bytes) {
     myClient[0].set(address.toString(), 0, bytes, MY_TRANSCODER);
   }
@@ -198,8 +196,9 @@ public class StorageImpl implements Storage {
     addressValues.forEach(value -> myLocalCache.put(value, future));
   }
 
+  @Override
   @SuppressWarnings("WaitNotInLoop")
-  public Address bulkStore(@NotNull BTree tree, @NotNull Novelty novelty) {
+  public Address bulkStore(@NotNull Tree tree, @NotNull Novelty.Accessor novelty) {
     final int packSize = 10000;
     final List<Pair<Address, byte[]>> data = new ArrayList<>(packSize);
     final Set<Future> packs = Collections.newSetFromMap(new ConcurrentHashMap<>());
@@ -220,7 +219,7 @@ public class StorageImpl implements Storage {
         }
       }
     };
-    final Address result = tree.store(novelty.access(), consumer);
+    final Address result = tree.store(novelty, consumer);
     if (!data.isEmpty()) {
       packs.add(setAll(0, data));
     }

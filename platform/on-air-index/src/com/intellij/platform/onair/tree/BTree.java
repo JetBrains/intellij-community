@@ -99,7 +99,7 @@ public class BTree implements Tree {
 
   @Override
   public Address store(@NotNull Novelty.Accessor novelty) {
-    return store(novelty, storage);
+    return storage.bulkStore(this, novelty);
   }
 
   @Override

@@ -4,7 +4,7 @@ package com.intellij.platform.onair.storage.api;
 import com.intellij.platform.onair.tree.BTree;
 import org.jetbrains.annotations.NotNull;
 
-public interface Storage extends StorageConsumer {
+public interface Storage {
 
   Storage VOID = new Storage() {
     @Override
@@ -23,10 +23,12 @@ public interface Storage extends StorageConsumer {
     }
 
     @Override
-    public void store(@NotNull Address address, @NotNull byte[] bytes) {
-
+    public Address bulkStore(@NotNull Tree tree, @NotNull Novelty.Accessor novelty) {
+      throw new UnsupportedOperationException();
     }
   };
+
+  Address bulkStore(@NotNull Tree tree, @NotNull Novelty.Accessor novelty);
 
   @NotNull
   byte[] lookup(@NotNull Address address);
