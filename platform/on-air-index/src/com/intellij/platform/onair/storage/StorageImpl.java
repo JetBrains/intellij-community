@@ -1,11 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.onair.storage;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.CacheStats;
+import com.google.common.cache.LoadingCache;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.platform.onair.storage.api.*;
-import com.intellij.platform.onair.storage.cache.ConcurrentObjectCache;
 import com.intellij.platform.onair.tree.BTree;
 import net.spy.memcached.BinaryConnectionFactory;
 import net.spy.memcached.CachedData;
@@ -19,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,15 +38,14 @@ import static com.intellij.platform.onair.tree.ByteUtils.readUnsignedLong;
 public class StorageImpl implements Storage {
   private static final HashFunction HASH = Hashing.goodFastHash(128);
   private static final int MAX_VALUE_SIZE = Integer.MAX_VALUE;
-  private static final int LOCAL_CACHE_SIZE = Integer.getInteger("intellij.platform.onair.storage.cache", 250000);
+  private static final int LOCAL_CACHE_SIZE = Integer.getInteger("intellij.platform.onair.storage.cache", 4000000);
   private static final int CLIENT_COUNT = 5;
   private final MemcachedClient[] myClient;
-  private final ConcurrentObjectCache<Address, Object> myLocalCache;
+  private final LoadingCache<Address, Object> myLocalCache;
   private final AtomicInteger prefetchInProgress = new AtomicInteger(0);
   private final ConcurrentHashMap<Address, byte[]> preFetches = new ConcurrentHashMap<>();
 
   private final AtomicLong prefetchHits = new AtomicLong(0);
-  private final AtomicLong prefetchMisses = new AtomicLong(0);
 
   private static class ByteArrayTranscoder implements Transcoder<byte[]> {
     @Override
@@ -76,45 +79,54 @@ public class StorageImpl implements Storage {
     for (int i = 0; i < CLIENT_COUNT; i++) {
       myClient[i] = new MemcachedClient(new BinaryConnectionFactory(ClientMode.Static, 16384, 16384 * 8), address);
     }
-    myLocalCache = new ConcurrentObjectCache<>(LOCAL_CACHE_SIZE);
+    myLocalCache = CacheBuilder
+      .newBuilder()
+      .maximumSize(LOCAL_CACHE_SIZE).build(new CacheLoader<Address, Object>() {
+        @Override
+        public Object load(@NotNull Address key) {
+          final byte[] result = myClient[0].get(key.toString(), MY_TRANSCODER);
+          if (result == null) {
+            throw new NoSuchElementException("page not found");
+          }
+          return result;
+        }
+      });
   }
 
   @NotNull
   @SuppressWarnings("unchecked")
   @Override
-  public byte[] lookup(@NotNull Address address) {
-    Object result = myLocalCache.get(address);
-    if (result == null) {
-      prefetchMisses.incrementAndGet();
-      result = myClient[0].get(address.toString(), MY_TRANSCODER);
-      if (result != null) {
-        myLocalCache.put(address, result);
+  public byte[] lookup(@NotNull final Address address) {
+    try {
+      Object result = myLocalCache.get(address);
+      if (result instanceof byte[]) {
+        return (byte[])result;
       }
-    }
-    if (result instanceof byte[]) {
-      return (byte[])result;
-    }
-    if (result instanceof BulkFuture) {
-      prefetchHits.incrementAndGet();
-      final BulkFuture<Map<String, byte[]>> future = (BulkFuture<Map<String, byte[]>>)result;
-      try {
-        Map<String, byte[]> data = future.get();
-        if (!future.getStatus().isSuccess()) {
-          throw new IllegalStateException("prefetch failed");
+      if (result instanceof BulkFuture) {
+        prefetchHits.incrementAndGet();
+        final BulkFuture<Map<String, byte[]>> future = (BulkFuture<Map<String, byte[]>>)result;
+        try {
+          Map<String, byte[]> data = future.get();
+          if (!future.getStatus().isSuccess()) {
+            throw new IllegalStateException("prefetch failed");
+          }
+          final byte[] bytes = data.get(address.toString());
+          myLocalCache.put(address, bytes);
+          return bytes;
         }
-        final byte[] bytes = data.get(address.toString());
-        myLocalCache.put(address, bytes);
-        return bytes;
+        catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          throw new RuntimeException(e);
+        }
+        catch (ExecutionException e) {
+          throw toRuntime(e);
+        }
       }
-      catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        throw new RuntimeException(e);
-      }
-      catch (ExecutionException e) {
-        throw toRuntime(e);
-      }
+      throw new NoSuchElementException("page not found");
     }
-    throw new NoSuchElementException("page not found");
+    catch (ExecutionException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @NotNull
@@ -130,10 +142,13 @@ public class StorageImpl implements Storage {
     myClient[0].set(address.toString(), 0, bytes, MY_TRANSCODER);
   }
 
+  public void disablePrefetch() {
+    prefetchInProgress.set(Integer.MAX_VALUE);
+  }
+
   @Override
   public void prefetch(@NotNull Address prefetchAddress, @NotNull byte[] bytes, @NotNull BTree tree, int size, byte type, int mask) {
     if (prefetchInProgress.get() > 70) {
-      System.out.println("too many pre-fetches, cool down");
       return;
     }
 
@@ -157,7 +172,7 @@ public class StorageImpl implements Storage {
         final long lowBytes = readUnsignedLong(bytes, offset, 8);
         final long highBytes = readUnsignedLong(bytes, offset + 8, 8);
         Address address = new Address(highBytes, lowBytes);
-        if (myLocalCache.get(address) == null) { // don't prefetch already cached stuff
+        if (myLocalCache.getIfPresent(address) == null) { // don't prefetch already cached stuff
           addresses.add(address.toString());
           addressValues.add(address);
         }
@@ -171,8 +186,8 @@ public class StorageImpl implements Storage {
       index = 0;
     }
     q = index;
-    final BulkFuture<Map<String, byte[]>> future = myClient[index].asyncGetBulk(addresses, MY_TRANSCODER);
     prefetchInProgress.incrementAndGet();
+    final BulkFuture<Map<String, byte[]>> future = myClient[index].asyncGetBulk(addresses, MY_TRANSCODER);
     future.addListener(new BulkGetCompletionListener() {
       @Override
       public void onComplete(BulkGetFuture<?> future) throws Exception {
@@ -189,11 +204,11 @@ public class StorageImpl implements Storage {
         }
         else {
           System.out.println("async get failed");
-          addressValues.forEach(value -> myLocalCache.remove(value)); // cleanup futures
+          addressValues.forEach(address -> myLocalCache.invalidate(address)); // cleanup futures
         }
       }
     });
-    addressValues.forEach(value -> myLocalCache.put(value, future));
+    addressValues.forEach(address -> myLocalCache.put(address, future));
   }
 
   @Override
@@ -238,8 +253,15 @@ public class StorageImpl implements Storage {
     return result;
   }
 
+  public void dumpStats(@NotNull final PrintStream stream) {
+    final CacheStats stats = myLocalCache.stats();
+    stream.println("direct hits: " + stats.hitCount() + ", misses: " + stats.missCount() + ", evictions: " + stats.evictionCount());
+    stream.println("prefetches in progress: " + prefetchInProgress.get());
+    stream.println("prefetch hits: " + prefetchHits.get());
+  }
+
   public void close() {
-    System.out.println("prefetch hits: " + prefetchHits.get() + ", misses: " + prefetchMisses.get());
+    dumpStats(System.out);
     for (final MemcachedClient client : myClient) {
       client.shutdown();
     }

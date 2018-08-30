@@ -11,6 +11,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static com.intellij.platform.onair.vfs.RemoteVFS.VFS_TREE_KEY_SIZE;
 
@@ -40,12 +41,30 @@ public class VFSRemapTest {
         System.out.println("Tree uploaded: " + (System.currentTimeMillis() - start) / 1000 + "s");
 
         start = System.currentTimeMillis();
+
+        final AtomicLong size = new AtomicLong();
+        final AtomicLong values = new AtomicLong();
+        tree.forEach(novelty.access(), (key, value) -> {
+          size.addAndGet(VFS_TREE_KEY_SIZE + value.length);
+          values.incrementAndGet();
+          return true;
+        });
+
+        System.out.println("Tree warmed up: " + (System.currentTimeMillis() - start) / 1000 + "s, size: " + size.get() + ", values: " + values.get());
+        storage.dumpStats(System.out);
+
+        storage.disablePrefetch();
+
+        start = System.currentTimeMillis();
+
         final RemoteVFS.Mapping mapping;
         try {
           mapping = RemoteVFS.remap(fs, tree, Novelty.VOID);
-        } finally {
+        }
+        finally {
           System.out.println("Remap done: " + (System.currentTimeMillis() - start) / 1000 + "s");
         }
+        storage.dumpStats(System.out);
 
         final int maxId = fs.getMaxId();
         for (int i = 1; i < maxId; i++) {
