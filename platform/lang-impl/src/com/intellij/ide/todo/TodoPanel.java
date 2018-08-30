@@ -624,12 +624,12 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return mySettings.arePackagesShown;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       mySettings.arePackagesShown = state;
       myTodoTreeBuilder.setShowPackages(state);
     }
@@ -641,12 +641,12 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return mySettings.areModulesShown;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       mySettings.areModulesShown = state;
       myTodoTreeBuilder.setShowModules(state);
     }
@@ -665,12 +665,12 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return mySettings.areFlattenPackages;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       mySettings.areFlattenPackages = state;
       myTodoTreeBuilder.setFlattenPackages(state);
     }
@@ -693,12 +693,12 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return mySettings.showPreview;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       mySettings.showPreview = state;
       myUsagePreviewPanel.setVisible(state);
       if (state) {

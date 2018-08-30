@@ -409,12 +409,12 @@ public class LightToolWindow extends JPanel {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return !myManager.getToolWindow().isAutoHide();
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       ToolWindow window = myManager.getToolWindow();
       window.setAutoHide(!window.isAutoHide());
       myManager.setEditorMode(null);
@@ -427,7 +427,7 @@ public class LightToolWindow extends JPanel {
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       ToolWindow window = myManager.getToolWindow();
       ToolWindowType type = window.getType();
       if (type == ToolWindowType.DOCKED) {
@@ -461,12 +461,12 @@ public class LightToolWindow extends JPanel {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myManager.getToolWindow().getType() == myType;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       ToolWindow window = myManager.getToolWindow();
       ToolWindowType type = window.getType();
       if (type == myType) {
@@ -485,12 +485,12 @@ public class LightToolWindow extends JPanel {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myManager.getToolWindow().isSplitMode();
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myManager.getToolWindow().setSplitMode(state, null);
       myManager.setEditorMode(null);
     }

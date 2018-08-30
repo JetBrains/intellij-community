@@ -400,7 +400,7 @@ public class TextDiffViewerUtil {
 
     protected void applyDefaults() {
       if (isVisible()) { // apply default state
-        setSelected(null, isSelected(null));
+        setSelected(isSelected());
       }
     }
 
@@ -415,12 +415,20 @@ public class TextDiffViewerUtil {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
+      return isSelected();
+    }
+
+    boolean isSelected() {
       return mySettings.isReadOnlyLock();
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
+      setSelected(state);
+    }
+
+    void setSelected(boolean state) {
       mySettings.setReadOnlyLock(state);
       doApply(state);
     }

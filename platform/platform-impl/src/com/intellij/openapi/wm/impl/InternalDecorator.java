@@ -610,12 +610,12 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     }
 
     @Override
-    public final boolean isSelected(final AnActionEvent event) {
+    public final boolean isSelected(@NotNull final AnActionEvent event) {
       return !myInfo.isAutoHide();
     }
 
     @Override
-    public final void setSelected(final AnActionEvent event, final boolean flag) {
+    public final void setSelected(@NotNull final AnActionEvent event, final boolean flag) {
       fireAutoHideChanged(!myInfo.isAutoHide());
     }
 
@@ -632,12 +632,12 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     }
 
     @Override
-    public final boolean isSelected(final AnActionEvent event) {
+    public final boolean isSelected(@NotNull final AnActionEvent event) {
       return myInfo.isDocked();
     }
 
     @Override
-    public final void setSelected(final AnActionEvent event, final boolean flag) {
+    public final void setSelected(@NotNull final AnActionEvent event, final boolean flag) {
       if (myInfo.isDocked()) {
         fireTypeChanged(ToolWindowType.SLIDING);
       }
@@ -653,12 +653,12 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     }
 
     @Override
-    public final boolean isSelected(final AnActionEvent event) {
+    public final boolean isSelected(@NotNull final AnActionEvent event) {
       return myInfo.isFloating();
     }
 
     @Override
-    public final void setSelected(final AnActionEvent event, final boolean flag) {
+    public final void setSelected(@NotNull final AnActionEvent event, final boolean flag) {
       if (myInfo.isFloating()) {
         fireTypeChanged(myInfo.getInternalType());
       }
@@ -674,12 +674,12 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     }
 
     @Override
-    public final boolean isSelected(final AnActionEvent event) {
+    public final boolean isSelected(@NotNull final AnActionEvent event) {
       return myInfo.isWindowed();
     }
 
     @Override
-    public final void setSelected(final AnActionEvent event, final boolean flag) {
+    public final void setSelected(@NotNull final AnActionEvent event, final boolean flag) {
       if (myInfo.isWindowed()) {
         fireTypeChanged(myInfo.getInternalType());
       }
@@ -695,12 +695,12 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     }
 
     @Override
-    public final boolean isSelected(final AnActionEvent event) {
+    public final boolean isSelected(@NotNull final AnActionEvent event) {
       return myInfo.isSplit();
     }
 
     @Override
-    public final void setSelected(final AnActionEvent event, final boolean flag) {
+    public final void setSelected(@NotNull final AnActionEvent event, final boolean flag) {
       fireSideStatusChanged(flag);
     }
   }
@@ -759,12 +759,12 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myInfo.getContentUiType() == ToolWindowContentUiType.COMBO;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       fireContentUiTypeChanges(state ? ToolWindowContentUiType.COMBO : ToolWindowContentUiType.TABBED);
     }
   }

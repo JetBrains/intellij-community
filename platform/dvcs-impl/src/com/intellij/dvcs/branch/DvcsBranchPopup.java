@@ -162,12 +162,12 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myVcsSettings.getSyncSetting() == DvcsSyncSettings.Value.SYNC;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myVcsSettings.setSyncSetting(state ? DvcsSyncSettings.Value.SYNC : DvcsSyncSettings.Value.DONT_SYNC);
     }
   }

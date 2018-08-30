@@ -573,12 +573,12 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myGrouper.isEnabled();
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myGrouper.setEnabled(state);
       updateContent(true);
     }
@@ -592,12 +592,12 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
       for (final RunDashboardRunConfigurationStatus status : new RunDashboardRunConfigurationStatus[]{STARTED, FAILED, STOPPED, CONFIGURED}) {
         add(new ToggleAction(status.getName()) {
           @Override
-          public boolean isSelected(AnActionEvent e) {
+          public boolean isSelected(@NotNull AnActionEvent e) {
             return myStatusFilter.isVisible(status);
           }
 
           @Override
-          public void setSelected(AnActionEvent e, boolean state) {
+          public void setSelected(@NotNull AnActionEvent e, boolean state) {
             if (state) {
               myStatusFilter.show(status);
             }

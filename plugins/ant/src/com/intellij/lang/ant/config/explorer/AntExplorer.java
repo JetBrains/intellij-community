@@ -700,13 +700,13 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     }
 
     @Override
-    public boolean isSelected(AnActionEvent event) {
+    public boolean isSelected(@NotNull AnActionEvent event) {
       final Project project = myProject;
       return project != null && AntConfigurationBase.getInstance(project).isFilterTargets();
     }
 
     @Override
-    public void setSelected(AnActionEvent event, boolean flag) {
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       setTargetsFiltered(flag);
     }
   }
@@ -727,12 +727,12 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myTarget.equals(AntConfigurationBase.getInstance(myProject).getTargetForEvent(myExecutionEvent));
     }
 
     @Override
-    public void setSelected(AnActionEvent event, boolean state) {
+    public void setSelected(@NotNull AnActionEvent event, boolean state) {
       final AntConfigurationBase antConfiguration = AntConfigurationBase.getInstance(myProject);
       if (state) {
         final AntBuildFileBase buildFile =

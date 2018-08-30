@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowAnchor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Alexander Lobas
@@ -37,12 +38,12 @@ public abstract class ToggleEditorModeAction extends ToggleAction {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return myAnchor == myManager.getEditorMode();
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     if (state) {
       myManager.setEditorMode(myAnchor);
 

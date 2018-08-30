@@ -641,7 +641,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return isSelected;
     }
 
@@ -651,7 +651,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       isSelected = state;
       updateEditors();
       myConsoleSettings.setUseSoftWraps(isSelected);
@@ -823,7 +823,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return mySelected;
     }
 
@@ -839,7 +839,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       mySelected = state;
 
       if (mySelected) {

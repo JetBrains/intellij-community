@@ -54,7 +54,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       List<JavaValue> values = getSelectedValues(e);
       if (values.isEmpty()) {
         return false;
@@ -68,7 +68,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
     }
 
     @Override
-    public void setSelected(final AnActionEvent e, final boolean state) {
+    public void setSelected(@NotNull final AnActionEvent e, final boolean state) {
       if (!state) return;
 
       final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());

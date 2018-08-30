@@ -524,12 +524,12 @@ public class StructuralSearchDialog extends DialogWrapper {
     final AnAction filterAction = new ToggleAction(null, "View variable filters", AllIcons.General.Filter) {
 
       @Override
-      public boolean isSelected(AnActionEvent e) {
+      public boolean isSelected(@NotNull AnActionEvent e) {
         return myEditorPanel.getSecondComponent() != null;
       }
 
       @Override
-      public void setSelected(AnActionEvent e, boolean state) {
+      public void setSelected(@NotNull AnActionEvent e, boolean state) {
         myEditorPanel.setSecondComponent(state ? myFilterPanel.getComponent() : null);
       }
 

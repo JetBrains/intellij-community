@@ -625,7 +625,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
      * {@inheritDoc}
      */
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return mySettings.isSdkIncluded();
     }
 
@@ -633,7 +633,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
      * {@inheritDoc}
      */
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       mySettings.setIncludeSdk(state);
       updateTree();
     }
@@ -654,7 +654,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
      * {@inheritDoc}
      */
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return mySettings.isUrlMode();
     }
 
@@ -662,7 +662,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
      * {@inheritDoc}
      */
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       mySettings.setUrlMode(state);
       updateTree();
     }

@@ -29,10 +29,10 @@ import com.intellij.testGuiFramework.recorder.ui.Notifier
 
 class StartPauseRecAction : ToggleAction(null, "Start/Stop GUI Script Recording", AllIcons.Ide.Macro.Recording_1) {
 
-  override fun isSelected(actionEvent: AnActionEvent?): Boolean = GlobalActionRecorder.isActive
+  override fun isSelected(actionEvent: AnActionEvent): Boolean = GlobalActionRecorder.isActive
 
-  override fun setSelected(actionEvent: AnActionEvent?, toStart: Boolean) {
-    val presentation = actionEvent?.presentation ?: templatePresentation
+  override fun setSelected(actionEvent: AnActionEvent, toStart: Boolean) {
+    val presentation = actionEvent.presentation ?: templatePresentation
     if (toStart) {
       GuiRecorderListener.notifyBeforeRecordingStart()
       presentation.description = "Stop GUI Script Recording"

@@ -171,7 +171,7 @@ public class CompositeView<T extends ComponentContainer> extends JPanel implemen
     }
 
     @Override
-    public boolean isSelected(final AnActionEvent event) {
+    public boolean isSelected(@NotNull final AnActionEvent event) {
       String enabledViewName = myEnabledViewRef.get();
       if (enabledViewName == null) return true;
       Set<String> viewNames = myViewMap.keySet();
@@ -179,7 +179,7 @@ public class CompositeView<T extends ComponentContainer> extends JPanel implemen
     }
 
     @Override
-    public void setSelected(final AnActionEvent event, final boolean flag) {
+    public void setSelected(@NotNull final AnActionEvent event, final boolean flag) {
       if (myViewMap.size() > 1) {
         List<String> names = new ArrayList<>(myViewMap.keySet());
         String viewName = flag ? names.get(0) : names.get(1);

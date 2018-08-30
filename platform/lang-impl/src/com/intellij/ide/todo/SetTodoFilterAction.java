@@ -109,12 +109,12 @@ public class SetTodoFilterAction extends AnAction implements CustomComponentActi
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return Comparing.equal(myFilter != null ? myFilter.getName() : null, mySettings.todoFilterName);
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       if (state) {
         myTodoFilterConsumer.consume(myFilter);
         //setTodoFilter(myFilter);

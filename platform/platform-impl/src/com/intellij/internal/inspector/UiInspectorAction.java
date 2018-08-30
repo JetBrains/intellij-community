@@ -84,17 +84,21 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
   public UiInspectorAction() {
     if (Boolean.getBoolean("idea.ui.debug.mode")) {
-      ApplicationManager.getApplication().invokeLater(() -> setSelected(null, true));
+      ApplicationManager.getApplication().invokeLater(() -> setSelected(true));
     }
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return myInspector != null;
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
+    setSelected(state);
+  }
+
+  void setSelected(boolean state) {
     if (state) {
       if (myInspector == null) {
         myInspector = new UiInspector();

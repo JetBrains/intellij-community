@@ -181,12 +181,12 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return isSelected();
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       setSelected(state);
       for (Editor editor : myEditors) {
         apply(editor, state);
@@ -241,12 +241,12 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
       }
 
       @Override
-      public boolean isSelected(AnActionEvent e) {
+      public boolean isSelected(@NotNull AnActionEvent e) {
         return myTextSettings.getHighlightingLevel() == myLayer;
       }
 
       @Override
-      public void setSelected(AnActionEvent e, boolean state) {
+      public void setSelected(@NotNull AnActionEvent e, boolean state) {
         myTextSettings.setHighlightingLevel(myLayer);
         apply(myLayer);
       }

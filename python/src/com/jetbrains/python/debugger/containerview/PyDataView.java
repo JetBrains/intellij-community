@@ -256,7 +256,7 @@ public class PyDataView implements DumbAware {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       PyDataViewerPanel panel = getPanel();
       if (panel == null) {
         return true;
@@ -274,7 +274,7 @@ public class PyDataView implements DumbAware {
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       PyDataViewerPanel panel = getPanel();
       if (panel != null) {
         panel.setColored(state);

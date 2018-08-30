@@ -37,7 +37,7 @@ public class IntelliSortChooserToggleAction extends ToggleAction implements Dumb
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
     return properties != null &&
            properties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE) &&
@@ -45,7 +45,7 @@ public class IntelliSortChooserToggleAction extends ToggleAction implements Dumb
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
     if (properties != null && properties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE)) {
       PermanentGraph.SortType bekSortType = state ? PermanentGraph.SortType.Bek : PermanentGraph.SortType.Normal;

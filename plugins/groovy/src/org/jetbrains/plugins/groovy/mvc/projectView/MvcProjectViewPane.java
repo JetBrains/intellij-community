@@ -501,12 +501,12 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myViewState.hideEmptyMiddlePackages;
     }
 
     @Override
-    public void setSelected(AnActionEvent event, boolean flag) {
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       myViewState.hideEmptyMiddlePackages = flag;
       TreeUtil.collapseAll(myTree, 1);
     }

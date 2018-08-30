@@ -483,12 +483,12 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myState.myShowIgnored;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myState.myShowIgnored = state;
       refreshView();
     }
@@ -496,13 +496,13 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
   private class ToggleDetailsAction extends ShowDiffPreviewAction {
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       mySplitterComponent.setDetailsOn(state);
       myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = state;
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN;
     }
   }

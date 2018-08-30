@@ -44,7 +44,7 @@ public class ExtraFieldGutter extends AnnotationFieldGutter  {
   @Override
   public boolean isAvailable() {
     for (AnAction action : myActionGroup.getChildren(null)) {
-      if (action instanceof ShowHideAspectAction && ((ShowHideAspectAction)action).isSelected(null)) {
+      if (action instanceof ShowHideAspectAction && ((ShowHideAspectAction)action).isSelected()) {
         return false;
       }
     }

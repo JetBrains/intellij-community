@@ -175,12 +175,12 @@ public class ScopePanel extends JPanel {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myScopeType == ScopePanel.this.myScopeType;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       if (state) {
         ((CardLayout)myScopeDetailsPanel.getLayout()).show(myScopeDetailsPanel, myScopeType.toString());
         ScopePanel.this.myScopeType = myScopeType;

@@ -29,12 +29,12 @@ final class UseConsoleInputAction extends ToggleAction implements DumbAware {
   }
 
   @Override
-  public boolean isSelected(@Nullable AnActionEvent event) {
+  public boolean isSelected(@NotNull AnActionEvent event) {
     return !useProcessStdIn;
   }
 
   @Override
-  public void setSelected(AnActionEvent event, boolean state) {
+  public void setSelected(@NotNull AnActionEvent event, boolean state) {
     useProcessStdIn = !state;
 
     LanguageConsoleView consoleView = (LanguageConsoleView)event.getData(LangDataKeys.CONSOLE_VIEW);

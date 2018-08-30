@@ -130,12 +130,12 @@ public class ToggleToolbarAction extends ToggleAction implements DumbAware {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return isSelected();
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     setToolbarVisibleImpl(myProperty, myPropertiesComponent, myProducer.produce(), state);
   }
 
