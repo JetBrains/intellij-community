@@ -75,7 +75,7 @@ public class HTMLTextPainter {
     myProject = context.getProject();
     myPsiFile = context.getContainingFile();
     if (myPsiFile == null) {
-      throw new PsiInvalidElementAccessException(context, "Bad context: no container file");
+      throw new IllegalArgumentException("Bad context: no container file");
     }
 
     htmlStyleManager = new HtmlStyleManager(true);
@@ -389,7 +389,7 @@ public class HTMLTextPainter {
       new HTMLTextPainter(context, codeFragment).paint(null, writer, false);
       return writer.toString();
     }
-    catch (IOException | PsiInvalidElementAccessException e) {
+    catch (Throwable e) {
       LOG.error(e);
       return String.format("<pre>%s</pre>\n", codeFragment);
     }
