@@ -1555,7 +1555,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     expectedContent = StringUtil.replace(expectedContent, "\r", "");
     final String cleanContent = removeFoldingMarkers(expectedContent);
     if (destinationFileName == null) {
-      configureByText(FileTypeManager.getInstance().getFileTypeByFileName(verificationFileName), cleanContent);
+      final String fileName = PathUtil.getFileName(verificationFileName);
+      configureByText(FileTypeManager.getInstance().getFileTypeByFileName(fileName), cleanContent);
     }
     else {
       try {
