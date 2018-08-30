@@ -74,8 +74,12 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://ant.apache.org/license.html"),
     new LibraryLicense(name: "ANTLR 4 Runtime", libraryName: "antlr-runtime-4.1.jar", version: "4.1", license: "BSD",
                        url: "http://www.antlr.org", licenseUrl: "http://www.antlr.org/license.html"),
+
     new LibraryLicense(name: "Apache Axis", libraryName: "axis-1.4", version: "1.4", license: "Apache 2.0",
                        url: "http://ws.apache.org/axis/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.html"),
+    new LibraryLicense(name: "Apache Axis wstx-asl", libraryName: "wstx-asl", version: "1.4", license: "Apache 2.0",
+                           url: "http://ws.apache.org/axis/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.html"),
+
     new LibraryLicense(name: "Apache Commons BeanUtils", libraryName: "commons-beanutils.jar", version: "1.6", license: "Apache 2.0",
                        url: "http://commons.apache.org/beanutils/"),
     new LibraryLicense(name: "Apache Commons Codec", libraryName: "commons-codec", version: "1.8", license: "Apache 2.0",
