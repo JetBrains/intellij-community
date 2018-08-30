@@ -58,6 +58,13 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     super(name, new JavaRunConfigurationModule(project, true), factory);
   }
 
+  // backward compatibility (if 3rd-party plugin extends ApplicationConfigurationType but uses own factory without options class)
+  @Override
+  @NotNull
+  protected final Class<? extends ApplicationConfigurationOptions> getDefaultOptionsClass() {
+    return ApplicationConfigurationOptions.class;
+  }
+
   /**
    * Because we have to keep backward compatibility, never use `getOptions()` to get or set values - use only designated getters/setters.
    */
