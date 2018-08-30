@@ -37,12 +37,13 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
   }
 
   private void reloadFromXml() {
-    boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
     try {
       readFromXml("/ProductivityFeaturesRegistry.xml");
     }
     catch (FileNotFoundException e) {
-      if (!testMode) LOG.error(e);
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        LOG.error(e);
+      }
     }
     catch (Throwable e) {
       LOG.error(e);
