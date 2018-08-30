@@ -30,14 +30,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiCacheKey<T, H extends PsiElement> extends Key<SoftReference<Pair<Long, T>>> {
-  private final Function<H, T> myFunction;
+  private final Function<? super H, ? extends T> myFunction;
   /**
    * One of {@link com.intellij.psi.util.PsiModificationTracker} constants that marks when to flush cache
    */
   @NotNull
   private final Key<?> myModifyCause;
 
-  private PsiCacheKey(@NonNls @NotNull String name, @NotNull Function<H, T> function, @NotNull Key<?> modifyCause) {
+  private PsiCacheKey(@NonNls @NotNull String name, @NotNull Function<? super H, ? extends T> function, @NotNull Key<?> modifyCause) {
     super(name);
     myFunction = function;
     myModifyCause = modifyCause;
@@ -103,7 +103,7 @@ public class PsiCacheKey<T, H extends PsiElement> extends Key<SoftReference<Pair
    * @return instance
    */
   public static <T, H extends PsiElement> PsiCacheKey<T, H> create(@NonNls @NotNull String name,
-                                                                   @NotNull Function<H, T> function,
+                                                                   @NotNull Function<? super H, ? extends T> function,
                                                                    @NotNull Key<?> modifyCause) {
     return new PsiCacheKey<>(name, function, modifyCause);
   }

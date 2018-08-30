@@ -13,6 +13,7 @@ import com.intellij.ide.util.gotoByName.QuickSearchComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -205,7 +206,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
   private MultithreadSearcher createSearcher() {
     MultithreadSearcher.Listener listener = new MultithreadSearcher.Listener() {
       @Override
-      public void elementsAdded(List<MultithreadSearcher.ElementInfo> list) {
+      public void elementsAdded(@NotNull List<MultithreadSearcher.ElementInfo> list) {
         Map<SearchEverywhereContributor<?>, List<MultithreadSearcher.ElementInfo>> map =
           list.stream().collect(Collectors.groupingBy(info -> info.getContributor()));
 
@@ -213,12 +214,12 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       }
 
       @Override
-      public void elementsRemoved(List<MultithreadSearcher.ElementInfo> list) {
+      public void elementsRemoved(@NotNull List<MultithreadSearcher.ElementInfo> list) {
         list.forEach(info -> myListModel.removeElement(info.getElement(), info.getContributor()));
       }
 
       @Override
-      public void searchFinished(Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
+      public void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
         hasMoreContributors.forEach(myListModel::setHasMore);
         myResultsList.setEmptyText(getEmptyText());
         ScrollingUtil.ensureSelectionExists(myResultsList);
@@ -258,7 +259,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     return pnl;
   }
 
-  private void updateViewType(ViewType viewType) {
+  private void updateViewType(@NotNull ViewType viewType) {
     if (myViewType != viewType) {
       myViewType = viewType;
       myViewTypeListeners.forEach(listener -> listener.suggestionsShown(viewType));
@@ -579,6 +580,16 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       Map<SearchEverywhereContributor<?>, Integer> contributorsMap = mySelectedTab.getContributor()
         .map(contributor -> Collections.singletonMap(((SearchEverywhereContributor<?>) contributor), SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT))
         .orElse(getUsedContributors().stream().collect(Collectors.toMap(c -> c, c -> MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT)));
+
+      Set<SearchEverywhereContributor<?>> contributors = contributorsMap.keySet();
+      boolean dumbModeSupported = contributors.stream().anyMatch(c -> c.isDumbModeSupported());
+      if (!dumbModeSupported && DumbService.getInstance(myProject).isDumb()) {
+        String tabName = mySelectedTab.getText();
+        String productName = ApplicationNamesInfo.getInstance().getProductName();
+        myResultsList.setEmptyText(IdeBundle.message("searcheverywhere.indexing.mode.not.supported", tabName, productName));
+        return;
+      }
+
       mySearchProgressIndicator = mySearcher.search(contributorsMap, pattern, isUseNonProjectItems(), c -> myContributorFilters.get(c.getSearchProviderId()));
     }, 200);
   }
@@ -1150,7 +1161,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       }
       JBPopupListener popupCloseListener = new JBPopupListener() {
         @Override
-        public void onClosed(LightweightWindowEvent event) {
+        public void onClosed(@NotNull LightweightWindowEvent event) {
           myFilterPopup = null;
         }
       };
@@ -1234,7 +1245,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
   public enum ViewType {FULL, SHORT}
 
   public interface ViewTypeListener {
-    void suggestionsShown(ViewType viewType);
+    void suggestionsShown(@NotNull ViewType viewType);
   }
 
   public void addViewTypeListener(ViewTypeListener listener) {

@@ -82,7 +82,7 @@ public class BuildView extends CompositeView<ExecutionConsole> implements BuildP
   }
 
   @Override
-  public void onEvent(BuildEvent event) {
+  public void onEvent(@NotNull BuildEvent event) {
     if (event instanceof StartBuildEvent) {
       ApplicationManager.getApplication().invokeAndWait(() -> {
         onStartBuild((StartBuildEvent)event);
@@ -175,7 +175,7 @@ public class BuildView extends CompositeView<ExecutionConsole> implements BuildP
     delegateToConsoleView(view -> view.print(text, contentType));
   }
 
-  private void delegateToConsoleView(Consumer<ConsoleView> viewConsumer) {
+  private void delegateToConsoleView(Consumer<? super ConsoleView> viewConsumer) {
     ExecutionConsole console = getConsoleView();
     if (console instanceof ConsoleView) {
       viewConsumer.consume((ConsoleView)console);
@@ -183,7 +183,7 @@ public class BuildView extends CompositeView<ExecutionConsole> implements BuildP
   }
 
   @Nullable
-  private <R> R getConsoleViewValue(Function<ConsoleView, R> viewConsumer) {
+  private <R> R getConsoleViewValue(Function<? super ConsoleView, ? extends R> viewConsumer) {
     ExecutionConsole console = getConsoleView();
     if (console instanceof ConsoleView) {
       return viewConsumer.apply((ConsoleView)console);

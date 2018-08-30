@@ -180,7 +180,7 @@ public class TaskDefaultFavoriteListProvider extends AbstractFavoritesListProvid
 
   private void showNotePopup(Project project,
                              final DnDAwareTree tree,
-                             final Consumer<String> after, final String initText) {
+                             final Consumer<? super String> after, final String initText) {
     final JTextArea textArea = new JTextArea(3, 50);
     textArea.setFont(UIUtil.getTreeFont());
     textArea.setText(initText);

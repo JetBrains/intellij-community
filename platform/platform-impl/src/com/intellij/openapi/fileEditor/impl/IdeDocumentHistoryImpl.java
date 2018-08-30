@@ -127,7 +127,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
       }
 
       @Override
-      public void caretPositionChanged(CaretEvent e) {
+      public void caretPositionChanged(@NotNull CaretEvent e) {
         if (e.getOldPosition().line == e.getNewPosition().line) {
           return;
         }

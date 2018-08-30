@@ -179,6 +179,10 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testmapLiteral() throws Throwable { doTest() }
 
+  void testmapKeys() { doTest() }
+
+  void testnamedArgumentKeys() { doTest() }
+
   void testexpressionlabelWithoutExpression() { doTest() }
 
   void testnew$arr_decl() throws Throwable { doTest() }
@@ -318,8 +322,6 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testpath$path2() throws Throwable { doTest() }
 
-  void testpath$path3() throws Throwable { doTest() }
-
   void testpath$path4() throws Throwable { doTest() }
 
   void testpath$path5() throws Throwable { doTest() }
@@ -331,8 +333,6 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testpath$path8() throws Throwable { doTest() }
 
   void testpath$path9() throws Throwable { doTest() }
-
-  void testpath$path10() throws Throwable { doTest() }
 
   void testpath$regexp() { doTest() }
 

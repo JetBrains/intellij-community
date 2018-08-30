@@ -4,6 +4,7 @@ package com.intellij.execution.impl
 import com.intellij.ProjectTopics
 import com.intellij.configurationStore.*
 import com.intellij.execution.*
+import com.intellij.execution.configuration.ConfigurationFactoryEx
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
@@ -1044,4 +1045,10 @@ internal fun doGetBeforeRunTasks(configuration: RunConfiguration): List<BeforeRu
 
 internal fun RunConfiguration.cloneBeforeRunTasks() {
   beforeRunTasks = doGetBeforeRunTasks(this).mapSmart { it.clone() }
+}
+
+fun callNewConfigurationCreated(factory: ConfigurationFactory, configuration: RunConfiguration) {
+  @Suppress("UNCHECKED_CAST")
+  (factory as? ConfigurationFactoryEx<RunConfiguration>)?.onNewConfigurationCreated(configuration)
+  (configuration as? RunConfigurationBase)?.onNewConfigurationCreated()
 }

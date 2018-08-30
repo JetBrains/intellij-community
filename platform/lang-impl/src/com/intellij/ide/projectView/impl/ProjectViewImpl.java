@@ -337,7 +337,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     String idToRemove = pane.getId();
 
     if (!myId2Pane.containsKey(idToRemove)) return;
-    pane.removeTreeChangeListener();
     for (int i = getContentManager().getContentCount() - 1; i >= 0; i--) {
       Content content = getContentManager().getContent(i);
       String id = content != null ? content.getUserData(ID_KEY) : null;
@@ -507,7 +506,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     getContentManager().addContentManagerListener(new ContentManagerAdapter() {
       @Override
-      public void selectionChanged(ContentManagerEvent event) {
+      public void selectionChanged(@NotNull ContentManagerEvent event) {
         if (event.getOperation() == ContentManagerEvent.ContentOperation.add) {
           viewSelectionChanged();
         }
@@ -567,7 +566,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
           final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
           final SelectionInfo selectionInfo = SelectionInfo.create(viewPane);
           if (isGlobalOptions()) {
-            setFlattenPackages(flag, viewPane.getId());
+            setFlattenPackages(viewPane.getId(), flag);
           }
           super.setSelected(event, flag);
 
@@ -623,7 +622,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         @Override
         public void setSelected(AnActionEvent event, boolean flag) {
           if (isGlobalOptions()) {
-            setAbbreviatePackageNames(flag, myCurrentViewId);
+            setAbbreviatePackageNames(myCurrentViewId, flag);
           }
           setPaneOption(myOptionsMap, flag, myCurrentViewId, true);
         }
@@ -1541,7 +1540,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     return getPaneOptionValue(myFlattenPackages, paneId, ourFlattenPackagesDefaults);
   }
 
-  public void setFlattenPackages(boolean flattenPackages, String paneId) {
+  public void setFlattenPackages(String paneId, boolean flattenPackages) {
     if (isGlobalOptions()) {
       getGlobalOptions().setFlattenPackages(flattenPackages);
       for (String pane : myFlattenPackages.keySet()) {
@@ -1624,7 +1623,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         ProjectViewPane old = (ProjectViewPane)pane;
         showExcludedFiles = old.myShowExcludedFiles;
         if (showExcludedFiles != ourShowExcludedFilesDefaults) {
-          setShowExcludedFiles(showExcludedFiles, paneId, false);
+          setShowExcludedFiles(paneId, showExcludedFiles, false);
           setPaneOption(myShowExcludedFiles, showExcludedFiles, ProjectViewPane.ID, false);
           old.myShowExcludedFiles = ourShowExcludedFilesDefaults; // reset old state after copying it
         }
@@ -1633,7 +1632,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     return showExcludedFiles;
   }
 
-  void setShowExcludedFiles(boolean showExcludedFiles, @NotNull String paneId, boolean updatePane) {
+  void setShowExcludedFiles(@NotNull String paneId, boolean showExcludedFiles, boolean updatePane) {
     if (isGlobalOptions()) {
       getGlobalOptions().setShowExcludedFiles(showExcludedFiles);
       for (String id : getPaneIds()) {
@@ -1665,7 +1664,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   @NotNull
-  public ActionCallback setShowLibraryContentsCB(boolean showLibraryContents, String paneId) {
+  public ActionCallback setShowLibraryContentsCB(String paneId, boolean showLibraryContents) {
     return setPaneOption(myShowLibraryContents, showLibraryContents, paneId, true);
   }
 
@@ -1709,7 +1708,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   @Override
-  public void setHideEmptyPackages(boolean hideEmptyPackages, @NotNull String paneId) {
+  public void setHideEmptyPackages(@NotNull String paneId, boolean hideEmptyPackages) {
     if (isGlobalOptions()) {
       getGlobalOptions().setHideEmptyPackages(hideEmptyPackages);
       for (String pane : myHideEmptyPackages.keySet()) {
@@ -1738,7 +1737,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   @Override
-  public void setAbbreviatePackageNames(boolean abbreviatePackageNames, @NotNull String paneId) {
+  public void setAbbreviatePackageNames(@NotNull String paneId, boolean abbreviatePackageNames) {
     if (isGlobalOptions()) {
       getGlobalOptions().setAbbreviatePackages(abbreviatePackageNames);
     }
@@ -1807,6 +1806,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   private static class SelectionInfo {
+    @NotNull
     private final Object[] myElements;
 
     private SelectionInfo(@NotNull Object[] elements) {

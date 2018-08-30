@@ -173,10 +173,6 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
     return 50;
   }
 
-  protected boolean isDumbModeSupported() {
-    return false;
-  }
-
   @Nullable
   protected Navigatable createExtendedNavigatable(PsiElement psi, String searchText, int modifiers) {
     VirtualFile file = PsiUtilCore.getVirtualFile(psi);

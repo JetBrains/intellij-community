@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -298,7 +299,7 @@ public class ListPluginComponent extends CellPluginComponent {
   }
 
   @Override
-  public void createPopupMenu(@NotNull DefaultActionGroup group, @NotNull java.util.List<CellPluginComponent> selection) {
+  public void createPopupMenu(@NotNull DefaultActionGroup group, @NotNull List<CellPluginComponent> selection) {
     for (CellPluginComponent component : selection) {
       if (MyPluginModel.isInstallingOrUpdate(component.myPlugin)) {
         return;
@@ -337,7 +338,7 @@ public class ListPluginComponent extends CellPluginComponent {
     Pair<Boolean, IdeaPluginDescriptor[]> result = getSelectionNewState(selection);
     group.add(new MyAnAction(result.first ? "Enable" : "Disable", KeyEvent.VK_SPACE) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         myPluginModel.changeEnableDisable(result.second, result.first);
       }
     });
@@ -351,7 +352,7 @@ public class ListPluginComponent extends CellPluginComponent {
     group.addSeparator();
     group.add(new MyAnAction("Uninstall", KeyEvent.VK_BACK_SPACE) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         for (CellPluginComponent component : selection) {
           myPluginModel.doUninstall(component, component.myPlugin, null);
         }
@@ -360,7 +361,7 @@ public class ListPluginComponent extends CellPluginComponent {
   }
 
   @Override
-  public void handleKeyAction(int keyCode, @NotNull java.util.List<CellPluginComponent> selection) {
+  public void handleKeyAction(int keyCode, @NotNull List<CellPluginComponent> selection) {
     for (CellPluginComponent component : selection) {
       if (MyPluginModel.isInstallingOrUpdate(component.myPlugin)) {
         return;
@@ -446,7 +447,7 @@ public class ListPluginComponent extends CellPluginComponent {
     myPluginModel.removeComponent(this);
   }
 
-  private static class ButtonAnAction extends AnAction {
+  private static class ButtonAnAction extends DumbAwareAction {
     private final JButton[] myButtons;
 
     public ButtonAnAction(@NotNull JButton... buttons) {
@@ -456,14 +457,14 @@ public class ListPluginComponent extends CellPluginComponent {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       for (JButton button : myButtons) {
         button.doClick();
       }
     }
   }
 
-  private abstract static class MyAnAction extends AnAction {
+  private abstract static class MyAnAction extends DumbAwareAction {
     public MyAnAction(@Nullable String text, int keyCode) {
       super(text);
       setShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(keyCode, 0)));

@@ -113,7 +113,7 @@ public class LibraryScopeCache {
   }
 
   @NotNull
-  private GlobalSearchScope calcLibraryScope(@NotNull List<OrderEntry> orderEntries) {
+  private GlobalSearchScope calcLibraryScope(@NotNull List<? extends OrderEntry> orderEntries) {
     List<Module> modulesLibraryUsedIn = new ArrayList<>();
 
     LibraryOrderEntry lib = null;
@@ -168,7 +168,7 @@ public class LibraryScopeCache {
   }
 
   @NotNull
-  private GlobalSearchScope calcLibraryUseScope(@NotNull List<OrderEntry> entries) {
+  private GlobalSearchScope calcLibraryUseScope(@NotNull List<? extends OrderEntry> entries) {
     Set<Module> modulesWithLibrary = new THashSet<>(entries.size());
     Set<Module> modulesWithSdk = new THashSet<>(entries.size());
     for (OrderEntry entry : entries) {

@@ -3,8 +3,10 @@
 package com.intellij.execution.junit;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.configuration.ConfigurationFactoryEx;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.ConfigurationTypeUtil;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -20,16 +22,11 @@ public class JUnitConfigurationType implements ConfigurationType {
 
   /**reflection*/
   public JUnitConfigurationType() {
-    myFactory = new ConfigurationFactoryEx(this) {
+    myFactory = new ConfigurationFactory(this) {
       @Override
       @NotNull
       public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
         return new JUnitConfiguration("", project, this);
-      }
-
-      @Override
-      public void onNewConfigurationCreated(@NotNull RunConfiguration configuration) {
-        ((ModuleBasedConfiguration)configuration).onNewConfigurationCreated();
       }
     };
   }

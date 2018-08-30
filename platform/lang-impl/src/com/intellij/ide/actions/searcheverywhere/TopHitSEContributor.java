@@ -44,9 +44,9 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
 
   private final Project myProject;
   private final Component myContextComponent;
-  private final Consumer<String> mySearchStringSetter;
+  private final Consumer<? super String> mySearchStringSetter;
 
-  public TopHitSEContributor(Project project, Component component, Consumer<String> setter) {
+  public TopHitSEContributor(Project project, Component component, Consumer<? super String> setter) {
     myProject = project;
     myContextComponent = component;
     mySearchStringSetter = setter;

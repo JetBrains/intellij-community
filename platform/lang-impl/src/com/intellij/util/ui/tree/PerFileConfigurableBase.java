@@ -235,7 +235,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     FileChooser.chooseFiles(descriptor, myProject, myTable, toSelect, this::doAddFiles);
   }
 
-  private void doAddFiles(@NotNull List<VirtualFile> files) {
+  private void doAddFiles(@NotNull List<? extends VirtualFile> files) {
     Set<VirtualFile> chosen = ContainerUtil.newHashSet(files);
     if (chosen.isEmpty()) return;
     Set<Object> set = myModel.data.stream().map(o -> o.first).collect(Collectors.toSet());
@@ -685,7 +685,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
                                            @Nullable T value,
                                            @Nullable Runnable onDispose,
                                            @NotNull DataContext dataContext,
-                                           @NotNull Consumer<T> onChosen,
+                                           @NotNull Consumer<? super T> onChosen,
                                            @NotNull Runnable onCommit) {
     return createValueEditorActionListPopup(target, onDispose, dataContext, chosen -> {
       onChosen.consume(chosen);
@@ -697,7 +697,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   protected final JBPopup createValueEditorActionListPopup(@Nullable Object target,
                                                            @Nullable Runnable onDispose,
                                                            @NotNull DataContext dataContext,
-                                                           @NotNull Consumer<T> onChosen) {
+                                                           @NotNull Consumer<? super T> onChosen) {
     ActionGroup group = createActionListGroup(target, onChosen);
     return JBPopupFactory.getInstance().createActionGroupPopup(
       null, group, dataContext, false, false, false,
@@ -726,7 +726,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   }
 
   @NotNull
-  protected ActionGroup createActionListGroup(@Nullable Object target, @NotNull Consumer<T> onChosen) {
+  protected ActionGroup createActionListGroup(@Nullable Object target, @NotNull Consumer<? super T> onChosen) {
     DefaultActionGroup group = new DefaultActionGroup();
     String clearText = getClearValueText(target);
     Function<T, AnAction> choseAction = t -> {

@@ -177,7 +177,7 @@ public class DiffSideView {
 
     private final EditorMouseMotionListener myMouseMotionListener = new EditorMouseMotionListener() {
       @Override
-      public void mouseMoved(EditorMouseEvent e) {
+      public void mouseMoved(@NotNull EditorMouseEvent e) {
         Editor editor = e.getEditor();
         if (editor.getProject() != null && editor.getProject() != myProject && myProject != null/*???*/) return;
         if (!isInMyArea(e)) return;

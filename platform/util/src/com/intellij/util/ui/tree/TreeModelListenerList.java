@@ -20,14 +20,13 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import java.util.ArrayDeque;
-import java.util.Deque;
 
 /**
  * @author Sergey.Malenkov
  */
 public final class TreeModelListenerList implements TreeModelListener {
   private static final TreeModelListener[] EMPTY_ARRAY = new TreeModelListener[0];
-  private final Deque<TreeModelListener> myDeque = new ArrayDeque<TreeModelListener>();
+  private final ArrayDeque<TreeModelListener> myDeque = new ArrayDeque<TreeModelListener>();
   private volatile boolean myDequeEmpty = true;
 
   /**
@@ -50,9 +49,11 @@ public final class TreeModelListenerList implements TreeModelListener {
    * @param listener a listener to remove
    */
   public void remove(@NotNull TreeModelListener listener) {
-    synchronized (myDeque) {
-      myDeque.remove(listener);
-      myDequeEmpty = myDeque.isEmpty();
+    if (!myDequeEmpty) {
+      synchronized (myDeque) {
+        myDeque.remove(listener);
+        myDequeEmpty = myDeque.isEmpty();
+      }
     }
   }
 
@@ -61,9 +62,11 @@ public final class TreeModelListenerList implements TreeModelListener {
    * This method is safe for use by multiple concurrent threads.
    */
   public void clear() {
-    synchronized (myDeque) {
-      myDeque.clear();
-      myDequeEmpty = true;
+    if (!myDequeEmpty) {
+      synchronized (myDeque) {
+        myDeque.clear();
+        myDequeEmpty = true;
+      }
     }
   }
 

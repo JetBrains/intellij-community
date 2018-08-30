@@ -58,17 +58,17 @@ public class InplaceEditingLayer extends JComponent {
   };
   private final PropertyEditorListener myEditorListener = new PropertyEditorListener() {
     @Override
-    public void valueCommitted(PropertyEditor source, boolean continueEditing, boolean closeEditorOnError) {
+    public void valueCommitted(@NotNull PropertyEditor source, boolean continueEditing, boolean closeEditorOnError) {
       finishEditing(true);
     }
 
     @Override
-    public void editingCanceled(PropertyEditor source) {
+    public void editingCanceled(@NotNull PropertyEditor source) {
       finishEditing(false);
     }
 
     @Override
-    public void preferredSizeChanged(PropertyEditor source) {
+    public void preferredSizeChanged(@NotNull PropertyEditor source) {
       adjustInplaceComponentSize();
     }
   };

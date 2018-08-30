@@ -86,7 +86,7 @@ public class ProcessListUtil {
 
   @Nullable
   private static List<ProcessInfo> parseCommandOutput(@NotNull List<String> command,
-                                                      @NotNull NullableFunction<String, List<ProcessInfo>> parser) {
+                                                      @NotNull NullableFunction<? super String, ? extends List<ProcessInfo>> parser) {
     String output;
     try {
       ProcessOutput processOutput = ExecUtil.execAndGetOutput(new GeneralCommandLine(command));

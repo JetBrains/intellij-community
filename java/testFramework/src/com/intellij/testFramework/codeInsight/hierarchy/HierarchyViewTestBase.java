@@ -32,7 +32,7 @@ public abstract class HierarchyViewTestBase extends CodeInsightTestCase {
 
   protected abstract String getBasePath();
 
-  protected void doHierarchyTest(@NotNull Computable<HierarchyTreeStructure> treeStructureComputable,
+  protected void doHierarchyTest(@NotNull Computable<? extends HierarchyTreeStructure> treeStructureComputable,
                                  @NotNull String... fileNames) throws Exception {
     configure(fileNames);
     String expectedStructure = loadExpectedStructure();

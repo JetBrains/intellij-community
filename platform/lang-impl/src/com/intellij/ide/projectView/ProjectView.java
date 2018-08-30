@@ -76,7 +76,7 @@ public abstract class ProjectView {
 
   public abstract boolean isHideEmptyMiddlePackages(String paneId);
 
-  public abstract void setHideEmptyPackages(boolean hideEmptyPackages, @NotNull String paneId);
+  public abstract void setHideEmptyPackages(@NotNull String paneId, boolean hideEmptyPackages);
 
   public boolean isCompactDirectories(String paneId) {
     return false;
@@ -113,7 +113,7 @@ public abstract class ProjectView {
 
   public abstract boolean isAbbreviatePackageNames(String paneId);
 
-  public abstract void setAbbreviatePackageNames(boolean abbreviatePackageNames, @NotNull String paneId);
+  public abstract void setAbbreviatePackageNames(@NotNull String paneId, boolean abbreviatePackageNames);
 
   /**
    * e.g. {@link com.intellij.ide.projectView.impl.ProjectViewPane#ID}

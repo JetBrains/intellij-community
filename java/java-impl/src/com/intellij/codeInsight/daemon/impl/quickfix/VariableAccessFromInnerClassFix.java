@@ -278,13 +278,13 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     });
   }
 
-  private static void replaceReferences(List<PsiReferenceExpression> references, PsiElement newExpression) throws IncorrectOperationException {
+  private static void replaceReferences(List<? extends PsiReferenceExpression> references, PsiElement newExpression) throws IncorrectOperationException {
     for (PsiReferenceExpression reference : references) {
       reference.replace(newExpression);
     }
   }
 
-  private static void collectReferences(PsiElement context, final PsiVariable variable, final List<PsiReferenceExpression> references) {
+  private static void collectReferences(PsiElement context, final PsiVariable variable, final List<? super PsiReferenceExpression> references) {
     context.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         if (expression.resolve() == variable) references.add(expression);
@@ -321,7 +321,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     return type;
   }
 
-  private static boolean canBeFinal(@NotNull PsiVariable variable, @NotNull List<PsiReferenceExpression> references) {
+  private static boolean canBeFinal(@NotNull PsiVariable variable, @NotNull List<? extends PsiReferenceExpression> references) {
     // if there is at least one assignment to this variable, it cannot be final
     Map<PsiElement, Collection<PsiReferenceExpression>> uninitializedVarProblems = new THashMap<>();
     Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems = new THashMap<>();

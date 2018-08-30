@@ -167,7 +167,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
     return new NullableStuffInspection.NavigateToNullLiteralArguments(parameter);
   }
 
-  private static JCheckBox createCheckBoxWithHTML(String text, boolean selected, Consumer<JCheckBox> consumer) {
+  private static JCheckBox createCheckBoxWithHTML(String text, boolean selected, Consumer<? super JCheckBox> consumer) {
     JCheckBox box = new JCheckBox(wrapInHtml(text));
     box.setVerticalTextPosition(TOP);
     box.setSelected(selected);

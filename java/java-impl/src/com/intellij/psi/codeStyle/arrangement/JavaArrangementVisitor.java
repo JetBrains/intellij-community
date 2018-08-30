@@ -64,7 +64,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   @NotNull private final Map<PsiElement, JavaElementArrangementEntry> myEntries = new HashMap<>();
 
   @NotNull private final  JavaArrangementParseInfo      myInfo;
-  @NotNull private final  Collection<TextRange>         myRanges;
+  @NotNull private final Collection<? extends TextRange> myRanges;
   @NotNull private final  Set<ArrangementSettingsToken> myGroupingRules;
   @NotNull private final  MethodBodyProcessor           myMethodBodyProcessor;
   @NotNull private final  ArrangementSectionDetector mySectionDetector;
@@ -76,7 +76,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
 
   JavaArrangementVisitor(@NotNull JavaArrangementParseInfo infoHolder,
                          @Nullable Document document,
-                         @NotNull Collection<TextRange> ranges,
+                         @NotNull Collection<? extends TextRange> ranges,
                          @NotNull ArrangementSettings settings) {
     myInfo = infoHolder;
     myDocument = document;

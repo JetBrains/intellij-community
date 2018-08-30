@@ -408,7 +408,7 @@ public class XmlUtil {
 
   public static <T extends PsiElement> void doDuplicationCheckForElements(final T[] elements,
                                                                           final Map<String, T> presentNames,
-                                                                          DuplicationInfoProvider<T> provider,
+                                                                          DuplicationInfoProvider<? super T> provider,
                                                                           final Validator.ValidationHost host) {
     for (T t : elements) {
       final String name = provider.getName(t);
@@ -895,7 +895,7 @@ public class XmlUtil {
     return elementDescriptor;
   }
 
-  public static boolean collectEnumerationValues(final XmlTag element, final HashSet<String> variants) {
+  public static boolean collectEnumerationValues(final XmlTag element, final HashSet<? super String> variants) {
     return processEnumerationValues(element, xmlTag -> {
       variants.add(xmlTag.getAttributeValue(VALUE_ATTR_NAME));
       return true;
@@ -1151,7 +1151,7 @@ public class XmlUtil {
     return buffer.toString();
   }
 
-  public static String generateElementDTD(String name, List<String> tags, List<MyAttributeInfo> attributes) {
+  public static String generateElementDTD(String name, List<String> tags, List<? extends MyAttributeInfo> attributes) {
     if (name == null || "".equals(name)) return "";
     if (name.contains(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED)) return "";
 

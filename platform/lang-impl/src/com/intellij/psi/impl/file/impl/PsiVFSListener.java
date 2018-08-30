@@ -571,7 +571,7 @@ public class PsiVFSListener implements BulkFileListener {
     private VirtualFile[] myOldContentRoots;
     private int depthCounter; // accessed from within write action only
     @Override
-    public void beforeRootsChange(final ModuleRootEvent event) {
+    public void beforeRootsChange(@NotNull final ModuleRootEvent event) {
       if (event.isCausedByFileTypesChange()) return;
       ApplicationManager.getApplication().runWriteAction(
         (ExternalChangeAction)() -> {
@@ -590,7 +590,7 @@ public class PsiVFSListener implements BulkFileListener {
     }
 
     @Override
-    public void rootsChanged(final ModuleRootEvent event) {
+    public void rootsChanged(@NotNull final ModuleRootEvent event) {
       myFileManager.dispatchPendingEvents();
 
       if (event.isCausedByFileTypesChange()) return;

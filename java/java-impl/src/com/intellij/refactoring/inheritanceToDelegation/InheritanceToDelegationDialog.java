@@ -335,7 +335,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     }
 
     @Override
-    public void memberInfoChanged(MemberInfoChange<PsiMember, MemberInfo> event) {
+    public void memberInfoChanged(@NotNull MemberInfoChange<PsiMember, MemberInfo> event) {
       final Collection<MemberInfo> changedMembers = event.getChangedMembers();
 
       for (MemberInfo changedMember : changedMembers) {

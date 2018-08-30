@@ -180,14 +180,14 @@ public final class LanguageConsoleBuilder {
   }
 
   public static class MyHelper extends LanguageConsoleImpl.Helper {
-    private final PairFunction<VirtualFile, Project, PsiFile> psiFileFactory;
+    private final PairFunction<? super VirtualFile, ? super Project, ? extends PsiFile> psiFileFactory;
 
     GutteredLanguageConsole console;
 
     public MyHelper(@NotNull  Project project,
                     @NotNull String title,
                     @NotNull Language language,
-                    @Nullable PairFunction<VirtualFile, Project, PsiFile> psiFileFactory) {
+                    @Nullable PairFunction<? super VirtualFile, ? super Project, ? extends PsiFile> psiFileFactory) {
       super(project, new LightVirtualFile(title, language, ""));
       this.psiFileFactory = psiFileFactory;
     }

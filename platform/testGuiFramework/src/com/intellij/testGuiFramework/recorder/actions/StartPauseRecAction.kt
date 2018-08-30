@@ -19,6 +19,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.testGuiFramework.recorder.GlobalActionRecorder
+import com.intellij.testGuiFramework.recorder.GuiRecorderListener
 import com.intellij.testGuiFramework.recorder.GuiRecorderManager
 import com.intellij.testGuiFramework.recorder.ui.Notifier
 
@@ -33,15 +34,19 @@ class StartPauseRecAction : ToggleAction(null, "Start/Stop GUI Script Recording"
   override fun setSelected(actionEvent: AnActionEvent?, toStart: Boolean) {
     val presentation = actionEvent?.presentation ?: templatePresentation
     if (toStart) {
+      GuiRecorderListener.notifyBeforeRecordingStart()
       presentation.description = "Stop GUI Script Recording"
       Notifier.updateStatus("Recording started")
       GlobalActionRecorder.activate()
+      GuiRecorderListener.notifyRecordingStarted()
     }
     else {
+      GuiRecorderListener.notifyBeforeRecordingPause()
       presentation.description = "Start GUI Script Recording"
       Notifier.updateStatus("Recording paused")
       GlobalActionRecorder.deactivate()
       GuiRecorderManager.placeCaretToEnd()
+      GuiRecorderListener.notifyRecordingPaused()
     }
   }
 

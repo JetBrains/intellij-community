@@ -414,7 +414,7 @@ public class VfsUtilCore {
     return VirtualFileManager.constructUrl(URLUtil.FILE_PROTOCOL, path);
   }
 
-  public static List<File> virtualToIoFiles(@NotNull Collection<VirtualFile> scope) {
+  public static List<File> virtualToIoFiles(@NotNull Collection<? extends VirtualFile> scope) {
     return ContainerUtil.map2List(scope, file -> virtualToIoFile(file));
   }
 
@@ -691,7 +691,7 @@ public class VfsUtilCore {
     return components;
   }
 
-  public static boolean hasInvalidFiles(@NotNull Iterable<VirtualFile> files) {
+  public static boolean hasInvalidFiles(@NotNull Iterable<? extends VirtualFile> files) {
     for (VirtualFile file : files) {
       if (!file.isValid()) {
         return true;

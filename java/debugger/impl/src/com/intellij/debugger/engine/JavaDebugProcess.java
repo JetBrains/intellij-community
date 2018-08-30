@@ -331,7 +331,7 @@ public class JavaDebugProcess extends XDebugProcess {
         ui.addContent(threadsContent, 0, PlaceInGrid.left, true);
         ui.addListener(new ContentManagerAdapter() {
           @Override
-          public void selectionChanged(ContentManagerEvent event) {
+          public void selectionChanged(@NotNull ContentManagerEvent event) {
             if (event.getContent() == threadsContent) {
               if (threadsContent.isSelected()) {
                 panel.setUpdateEnabled(true);
@@ -377,7 +377,7 @@ public class JavaDebugProcess extends XDebugProcess {
         final DebuggerManagerThreadImpl managerThread = process.getManagerThread();
         ui.addListener(new ContentManagerAdapter() {
           @Override
-          public void selectionChanged(ContentManagerEvent event) {
+          public void selectionChanged(@NotNull ContentManagerEvent event) {
             if (event != null && event.getContent() == memoryViewContent) {
               classesFilteredView.setActive(memoryViewContent.isSelected(), managerThread);
             }

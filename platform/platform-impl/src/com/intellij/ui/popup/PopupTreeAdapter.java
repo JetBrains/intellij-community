@@ -32,7 +32,7 @@ class PopupTreeAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
   }
 
   @Override
-  public void setItemChosenCallback(Consumer<T> callback) {
+  public void setItemChosenCallback(Consumer<? super T> callback) {
     myBuilder.setItemChoosenCallback(() -> {
       TreePath path = myTree.getSelectionModel().getLeadSelectionPath();
       T component = (T)path.getLastPathComponent();
@@ -43,7 +43,7 @@ class PopupTreeAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
   }
 
   @Override
-  public void setItemsChosenCallback(Consumer<Set<T>> callback) {
+  public void setItemsChosenCallback(Consumer<? super Set<T>> callback) {
     myBuilder.setItemChoosenCallback(() -> {
       final Set<T> selection = new HashSet<>();
       for (TreePath path : myTree.getSelectionModel().getSelectionPaths()) {

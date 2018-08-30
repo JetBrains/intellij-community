@@ -226,7 +226,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
   }
 
-  private void processDependencies(final Set<PsiFile> searchIn, final Set<PsiFile> searchFor, Processor<List<PsiFile>> processor) {
+  private void processDependencies(final Set<? extends PsiFile> searchIn, final Set<? extends PsiFile> searchFor, Processor<? super List<PsiFile>> processor) {
     if (myTransitiveBorder == 0) return;
     Set<PsiFile> initialSearchFor = new HashSet<>(searchFor);
     for (DependenciesBuilder builder : myBuilders) {
@@ -246,7 +246,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
   }
 
-  private void exclude(final Set<PsiFile> excluded) {
+  private void exclude(final Set<? extends PsiFile> excluded) {
     for (PsiFile psiFile : excluded) {
       myDependencies.remove(psiFile);
       myIllegalDependencies.remove(psiFile);

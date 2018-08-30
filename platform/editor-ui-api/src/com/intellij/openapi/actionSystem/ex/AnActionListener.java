@@ -14,16 +14,16 @@ import org.jetbrains.annotations.NotNull;
 public interface AnActionListener {
   Topic<AnActionListener> TOPIC = new Topic<>("action changes", AnActionListener.class);
 
-  default void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
+  default void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
   }
 
   /**
    * Note that using {@code dataContext} in implementing methods is unsafe - it could have been invalidated by the performed action.
    */
-  default void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+  default void afterActionPerformed(AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
   }
 
-  default void beforeEditorTyping(char c, DataContext dataContext) {
+  default void beforeEditorTyping(char c, @NotNull DataContext dataContext) {
   }
 
   /**

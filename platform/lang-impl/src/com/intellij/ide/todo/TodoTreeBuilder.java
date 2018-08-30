@@ -362,7 +362,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     getTodoTreeStructure().validateCache();
   }
 
-  void collectFiles(Processor<VirtualFile> collector) {
+  void collectFiles(Processor<? super VirtualFile> collector) {
     TodoTreeStructure treeStructure=getTodoTreeStructure();
     PsiFile[] psiFiles= mySearchHelper.findFilesWithTodoItems();
     for (PsiFile psiFile : psiFiles) {
@@ -372,7 +372,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     }
   }
 
-  void rebuildCache(Set<VirtualFile> files){
+  void rebuildCache(Set<? extends VirtualFile> files){
     myFileTree.clear();
     myDirtyFileSet.clear();
     myFile2Highlighter.clear();

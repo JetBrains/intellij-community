@@ -73,7 +73,7 @@ class FilePointerPartNode {
                        boolean separator,
                        @NotNull CharSequence childName, int childStart, int childEnd,
                        @NotNull FilePointerPartNode[] outNode,
-                       @Nullable List<FilePointerPartNode> outDirs) {
+                       @Nullable List<? super FilePointerPartNode> outDirs) {
     int partStart;
     if (parent == null) {
       partStart = 0;
@@ -123,7 +123,7 @@ class FilePointerPartNode {
     return -1;
   }
 
-  private void addRecursiveDirectoryPtr(@Nullable List<FilePointerPartNode> dirs) {
+  private void addRecursiveDirectoryPtr(@Nullable List<? super FilePointerPartNode> dirs) {
     if(dirs != null && hasRecursiveDirectoryPointer() && (dirs.isEmpty() || dirs.get(dirs.size()-1) != this)) {
       dirs.add(this);
     }
@@ -133,7 +133,7 @@ class FilePointerPartNode {
   void addRelevantPointersFrom(@Nullable VirtualFile parent,
                                boolean separator,
                                @NotNull CharSequence childName,
-                               @NotNull List<FilePointerPartNode> out) {
+                               @NotNull List<? super FilePointerPartNode> out) {
     CharSequence parentName = parent == null ? null : parent.getNameSequence();
     FilePointerPartNode[] outNode = new FilePointerPartNode[1];
     int position = position(parent, parentName, separator, childName, 0, childName.length(), outNode, out);
@@ -155,7 +155,7 @@ class FilePointerPartNode {
     return false;
   }
 
-  private static void addAllPointersUnder(@NotNull FilePointerPartNode node, @NotNull List<FilePointerPartNode> out) {
+  private static void addAllPointersUnder(@NotNull FilePointerPartNode node, @NotNull List<? super FilePointerPartNode> out) {
     if (node.leaves != null) {
       out.add(node);
     }

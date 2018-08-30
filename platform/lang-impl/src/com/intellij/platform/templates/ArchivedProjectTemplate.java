@@ -98,7 +98,7 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
     return null;
   }
 
-  public void handleUnzippedDirectories(File dir, List<File> filesToRefresh) throws IOException {
+  public void handleUnzippedDirectories(File dir, List<? super File> filesToRefresh) throws IOException {
     filesToRefresh.add(dir);
   }
 

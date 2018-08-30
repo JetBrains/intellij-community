@@ -298,7 +298,7 @@ public class PyExecuteSelectionAction extends AnAction {
     final PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(project);
     runner.addConsoleListener(new PydevConsoleRunner.ConsoleListener() {
       @Override
-      public void handleConsoleInitialized(LanguageConsoleView consoleView) {
+      public void handleConsoleInitialized(@NotNull LanguageConsoleView consoleView) {
         if (consoleView instanceof PyCodeExecutor) {
           consumer.consume((PyCodeExecutor)consoleView);
           if (toolWindow != null) {

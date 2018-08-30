@@ -18,7 +18,7 @@ interface StateStorage {
   /**
    * Get changed component names
    */
-  fun analyzeExternalChangesAndUpdateIfNeed(componentNames: MutableSet<String>)
+  fun analyzeExternalChangesAndUpdateIfNeed(componentNames: MutableSet<in String>)
 
   fun getResolution(component: PersistentStateComponent<*>, operation: StateStorageOperation): StateStorageChooserEx.Resolution {
     return StateStorageChooserEx.Resolution.DO

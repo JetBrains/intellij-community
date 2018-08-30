@@ -219,10 +219,10 @@ object GuiTestUtilKt {
     }, timeout)
   }
 
-  inline fun <R> tryWithPause(exceptionClass: Class<out Exception>,
+  fun <R> tryWithPause(exceptionClass: Class<out Exception>,
                    condition: String = "try block will not throw ${exceptionClass.name} exception",
                    timeout: Timeout,
-                   crossinline tryBlock: () -> R): R {
+                   tryBlock: () -> R): R {
     val exceptionRef: Ref<Exception> = Ref.create()
     try {
       return withPauseWhenNull (condition, timeout) {

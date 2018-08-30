@@ -47,7 +47,7 @@ fun loadElement(chars: CharSequence): Element = JDOMUtil.load(chars)
 fun loadElement(reader: Reader): Element = JDOMUtil.load(reader)
 
 @Throws(IOException::class, JDOMException::class)
-fun loadElement(stream: InputStream): Element = JDOMUtil.loadDocument(stream.bufferedReader()).detachRootElement()
+fun loadElement(stream: InputStream): Element = JDOMUtil.load(stream.bufferedReader())
 
 @Throws(IOException::class, JDOMException::class)
 fun loadElement(path: Path): Element = loadElement(path.inputStream())

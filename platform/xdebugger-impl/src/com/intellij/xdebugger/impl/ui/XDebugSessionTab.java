@@ -114,7 +114,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
     myUi.addListener(new ContentManagerAdapter() {
       @Override
-      public void selectionChanged(ContentManagerEvent event) {
+      public void selectionChanged(@NotNull ContentManagerEvent event) {
         Content content = event.getContent();
         if (mySession != null && content.isSelected() && getWatchesContentId().equals(ViewImpl.ID.get(content))) {
           myRebuildWatchesRunnable.run();

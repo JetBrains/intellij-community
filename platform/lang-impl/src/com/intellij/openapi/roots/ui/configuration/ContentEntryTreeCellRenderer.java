@@ -40,9 +40,9 @@ import java.util.List;
 
 public class ContentEntryTreeCellRenderer extends NodeRenderer {
   protected final ContentEntryTreeEditor myTreeEditor;
-  private final List<ModuleSourceRootEditHandler<?>> myEditHandlers;
+  private final List<? extends ModuleSourceRootEditHandler<?>> myEditHandlers;
 
-  public ContentEntryTreeCellRenderer(@NotNull final ContentEntryTreeEditor treeEditor, List<ModuleSourceRootEditHandler<?>> editHandlers) {
+  public ContentEntryTreeCellRenderer(@NotNull final ContentEntryTreeEditor treeEditor, List<? extends ModuleSourceRootEditHandler<?>> editHandlers) {
     myTreeEditor = treeEditor;
     myEditHandlers = editHandlers;
   }

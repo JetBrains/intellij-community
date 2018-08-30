@@ -23,10 +23,14 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.tree.AsyncTreeModel;
+import com.intellij.ui.tree.StructureTreeModel;
+import com.intellij.ui.tree.TreePathUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBTreeTraverser;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +39,7 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Set;
@@ -45,8 +50,6 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
 
   @NotNull
   private final JPanel myBlockStructurePanel;
-  @Nullable
-  private BlockTreeBuilder myBlockTreeBuilder;
   @NotNull
   private final Tree myBlockTree;
   @NotNull
@@ -57,6 +60,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
   private int myIgnoreBlockTreeSelectionMarker = 0;
   @Nullable
   private volatile HashMap<PsiElement, BlockTreeNode> myPsiToBlockMap;
+  private AsyncTreeModel myTreeModel;
 
   public BlockViewerPsiBasedTree(@NotNull Project project, @NotNull PsiTreeUpdater updater) {
     myProject = project;
@@ -76,7 +80,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
 
   @Override
   public void selectNodeFromPsi(@Nullable PsiElement element) {
-    if (myBlockTreeBuilder != null && element != null) {
+    if (myTreeModel != null && element != null) {
       BlockTreeNode currentBlockNode = findBlockNode(element);
       if (currentBlockNode != null) {
         selectBlockNode(currentBlockNode);
@@ -107,9 +111,9 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
 
   private void resetBlockTree() {
     myBlockTree.removeAll();
-    if (myBlockTreeBuilder != null) {
-      Disposer.dispose(myBlockTreeBuilder);
-      myBlockTreeBuilder = null;
+    if (myTreeModel != null) {
+      Disposer.dispose(myTreeModel);
+      myTreeModel = null;
     }
     myPsiToBlockMap = null;
     ViewerPsiBasedTree.removeListenerOfClass(myBlockTree, BlockTreeSelectionListener.class);
@@ -119,7 +123,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
   private void buildBlockTree(@Nullable PsiElement rootElement) {
     Block rootBlock = rootElement == null ? null : buildBlocks(rootElement);
     if (rootBlock == null) {
-      myBlockTreeBuilder = null;
+      myTreeModel = null;
       myBlockTree.setRootVisible(false);
       myBlockTree.setVisible(false);
       return;
@@ -128,8 +132,8 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
     myBlockTree.setVisible(true);
     BlockTreeStructure blockTreeStructure = new BlockTreeStructure();
     BlockTreeNode rootNode = new BlockTreeNode(rootBlock, null);
-    blockTreeStructure.setRoot(rootNode);
-    myBlockTreeBuilder = new BlockTreeBuilder(myBlockTree, blockTreeStructure);
+    StructureTreeModel treeModel = new StructureTreeModel(true);
+    treeModel.setStructure(blockTreeStructure);
     initMap(rootNode, rootElement);
     assert myPsiToBlockMap != null;
 
@@ -145,10 +149,14 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
     }
 
     blockTreeStructure.setRoot(blockNode);
+    myTreeModel = new AsyncTreeModel(treeModel);
+    myBlockTree.setModel(myTreeModel);
+    
     myBlockTree.addTreeSelectionListener(new BlockTreeSelectionListener(rootElement));
     myBlockTree.setRootVisible(true);
     myBlockTree.expandRow(0);
-    myBlockTreeBuilder.queueUpdate();
+    
+    treeModel.invalidate();
   }
 
 
@@ -165,15 +173,17 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
   }
 
   private void selectBlockNode(@Nullable BlockTreeNode currentBlockNode) {
-    if (myBlockTreeBuilder == null) return;
+    if (myTreeModel == null) return;
 
     if (currentBlockNode != null) {
       myIgnoreBlockTreeSelectionMarker++;
-      myBlockTreeBuilder.select(currentBlockNode, () -> {
-        // hope this is always called!
-        assert myIgnoreBlockTreeSelectionMarker > 0;
-        myIgnoreBlockTreeSelectionMarker--;
-      });
+
+      DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(getRoot(), currentBlockNode);
+      if (node == null) return;
+
+      TreePath path = TreePathUtil.pathToTreeNode(node);
+      myBlockTree.setSelectionPath(path);
+      myIgnoreBlockTreeSelectionMarker--;
     }
     else {
       myIgnoreBlockTreeSelectionMarker++;
@@ -197,12 +207,13 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
 
     @Override
     public void valueChanged(@NotNull TreeSelectionEvent e) {
-      if (myIgnoreBlockTreeSelectionMarker > 0 || myBlockTreeBuilder == null) {
+      if (myIgnoreBlockTreeSelectionMarker > 0 || myTreeModel == null) {
         return;
       }
 
-      Set<?> blockElementsSet = myBlockTreeBuilder.getSelectedElements();
-      Object item = ContainerUtil.getFirstItem(blockElementsSet);
+      TreePath path = myBlockTree.getSelectionModel().getSelectionPath();
+      Object item = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
+      
       if (!(item instanceof BlockTreeNode)) return;
       BlockTreeNode descriptor = (BlockTreeNode)item;
 
@@ -217,8 +228,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
              currentPsiEl.getTextLength() != blockLength) {
         currentPsiEl = currentPsiEl.getParent();
       }
-      final BlockTreeStructure treeStructure = ObjectUtils.notNull((BlockTreeStructure)myBlockTreeBuilder.getTreeStructure());
-      BlockTreeNode rootBlockNode = treeStructure.getRootElement();
+      BlockTreeNode rootBlockNode = (BlockTreeNode)getRoot().getUserObject();
       int baseOffset = 0;
       if (rootBlockNode != null) {
         baseOffset = rootBlockNode.getBlock().getTextRange().getStartOffset();
@@ -232,14 +242,11 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
 
   @Nullable
   private BlockTreeNode findBlockNode(TextRange range) {
-    final BlockTreeBuilder builder = myBlockTreeBuilder;
-    if (builder == null || !myBlockStructurePanel.isVisible()) {
+    if (myTreeModel == null || !myBlockStructurePanel.isVisible()) {
       return null;
     }
 
-    AbstractTreeStructure treeStructure = builder.getTreeStructure();
-    if (treeStructure == null) return null;
-    BlockTreeNode node = (BlockTreeNode)treeStructure.getRootElement();
+    BlockTreeNode node = (BlockTreeNode)getRoot().getUserObject();
     main_loop:
     while (true) {
       if (node.getBlock().getTextRange().equals(range)) {
@@ -296,5 +303,9 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
         parentElem = parentElem.getParent();
       }
     }
+  }
+
+  private DefaultMutableTreeNode getRoot() {
+    return (DefaultMutableTreeNode)myBlockTree.getModel().getRoot();
   }
 }

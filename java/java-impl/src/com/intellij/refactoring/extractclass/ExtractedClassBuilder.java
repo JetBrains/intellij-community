@@ -53,7 +53,7 @@ class ExtractedClassBuilder {
   private JavaCodeStyleManager myJavaCodeStyleManager;
   private Set<PsiField> myFieldsNeedingSetters;
   private Set<PsiField> myFieldsNeedingGetter;
-  private List<PsiField> enumConstantFields;
+  private List<? extends PsiField> enumConstantFields;
   private PsiType myEnumParameterType;
 
   public void setClassName(String className) {
@@ -87,12 +87,12 @@ class ExtractedClassBuilder {
     }
   }
 
-  public void setTypeArguments(List<PsiTypeParameter> typeParams) {
+  public void setTypeArguments(List<? extends PsiTypeParameter> typeParams) {
     this.typeParams.clear();
     this.typeParams.addAll(typeParams);
   }
 
-  public void setInterfaces(List<PsiClass> interfaces) {
+  public void setInterfaces(List<? extends PsiClass> interfaces) {
     this.interfaces.clear();
     this.interfaces.addAll(interfaces);
   }
@@ -367,7 +367,7 @@ class ExtractedClassBuilder {
     return innerClasses.contains(containingClass);
   }
 
-  public void setExtractAsEnum(List<PsiField> extractAsEnum) {
+  public void setExtractAsEnum(List<? extends PsiField> extractAsEnum) {
     this.enumConstantFields = extractAsEnum;
     if (hasEnumConstants()) {
       myEnumParameterType = enumConstantFields.get(0).getType();

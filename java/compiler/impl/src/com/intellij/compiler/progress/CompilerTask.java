@@ -568,7 +568,7 @@ public class CompilerTask extends Task.Backgroundable {
     }
 
     @Override
-    public void contentRemoved(ContentManagerEvent event) {
+    public void contentRemoved(@NotNull ContentManagerEvent event) {
       if (event.getContent() == myContent) {
         synchronized (myMessageViewLock) {
           if (myErrorTreeView != null) {
@@ -589,7 +589,7 @@ public class CompilerTask extends Task.Backgroundable {
     }
 
     @Override
-    public void contentRemoveQuery(ContentManagerEvent event) {
+    public void contentRemoveQuery(@NotNull ContentManagerEvent event) {
       if (event.getContent() == myContent) {
         if (!myIndicator.isCanceled() && shouldAskUser()) {
           int result = Messages.showOkCancelDialog(
@@ -619,7 +619,7 @@ public class CompilerTask extends Task.Backgroundable {
     }
 
     @Override
-    public void projectClosing(Project project) {
+    public void projectClosing(@NotNull Project project) {
       if (project.equals(myProject)) {
         myIsApplicationExitingOrProjectClosing = true;
       }

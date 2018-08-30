@@ -181,7 +181,7 @@ class ExportToHTMLManager {
   }
 
   private static void addToPsiFileList(PsiDirectory psiDirectory,
-                                       List<PsiFile> filesList,
+                                       List<? super PsiFile> filesList,
                                        boolean isRecursive,
                                        final String outputDirectoryName) throws FileNotFoundException {
     if (!psiDirectory.isValid()) {

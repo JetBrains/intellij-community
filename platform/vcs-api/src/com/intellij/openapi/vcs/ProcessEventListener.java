@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.vcs;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.EventListener;
 
 public interface ProcessEventListener extends EventListener {
@@ -31,6 +33,6 @@ public interface ProcessEventListener extends EventListener {
    *
    * @param exception an exception
    */
-  default void startFailed(Throwable exception) {
+  default void startFailed(@NotNull Throwable exception) {
   }
 }

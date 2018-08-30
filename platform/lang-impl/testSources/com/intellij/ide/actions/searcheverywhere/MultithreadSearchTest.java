@@ -276,7 +276,7 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
     }
 
     @Override
-    public void elementsAdded(List<MultithreadSearcher.ElementInfo> added) {
+    public void elementsAdded(@NotNull List<MultithreadSearcher.ElementInfo> added) {
       added.forEach(info -> {
         List<String> list = myMap.computeIfAbsent(info.getContributor().getSearchProviderId(), s -> new ArrayList<>());
         list.add((String) info.getElement());
@@ -284,7 +284,7 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
     }
 
     @Override
-    public void elementsRemoved(List<MultithreadSearcher.ElementInfo> removed) {
+    public void elementsRemoved(@NotNull List<MultithreadSearcher.ElementInfo> removed) {
       removed.forEach(info -> {
         List<String> list = myMap.get(info.getContributor().getSearchProviderId());
         Assert.assertNotNull("Trying to remove object, that wasn't added", list);
@@ -293,7 +293,7 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
     }
 
     @Override
-    public void searchFinished(Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
+    public void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
       hasMoreContributors.forEach((contributor, aBoolean) -> {
         List<String> list = myMap.get(contributor.getSearchProviderId());
         Assert.assertNotNull("If section has MORE item it cannot be empty", list);

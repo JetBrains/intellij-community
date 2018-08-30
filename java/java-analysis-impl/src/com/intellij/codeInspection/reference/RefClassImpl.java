@@ -230,7 +230,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     return myRefModule;
   }
 
-  private static boolean isSelfInheritor(PsiClass psiClass, ArrayList<PsiClass> visited) {
+  private static boolean isSelfInheritor(PsiClass psiClass, ArrayList<? super PsiClass> visited) {
     if (visited.contains(psiClass)) return true;
 
     visited.add(psiClass);

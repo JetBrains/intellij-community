@@ -38,7 +38,7 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
     final Application application = ApplicationManager.getApplication();
     application.getMessageBus().connect(application).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void projectOpened(final Project project) {
+      public void projectOpened(@NotNull final Project project) {
         onProjectOpened(project);
       }
 
@@ -137,7 +137,7 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
     retainFiles(VirtualFile::isValid);
   }
 
-  protected void retainFiles(@NotNull Condition<VirtualFile> c) {
+  protected void retainFiles(@NotNull Condition<? super VirtualFile> c) {
     for (Map.Entry<String, T> entry : myCachedFiles.entrySet()) {
       T t = entry.getValue();
       if (t == null || !c.value(t)) {

@@ -11,7 +11,7 @@ import javax.swing.*;
 /**
  * @author Ilya.Kazakevich
  */
-public class PyToxConfigurationType implements ConfigurationType {
+public final class PyToxConfigurationType implements ConfigurationType {
 
   public static final String ID = "Tox";
   public static final ConfigurationType INSTANCE = new PyToxConfigurationType();

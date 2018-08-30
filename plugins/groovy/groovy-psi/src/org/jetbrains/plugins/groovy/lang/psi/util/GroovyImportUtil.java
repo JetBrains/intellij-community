@@ -25,12 +25,12 @@ import static org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyUnusedImpo
 
 public class GroovyImportUtil {
   public static void processFile(@Nullable final PsiFile file,
-                                 @Nullable final Set<String> importedClasses,
-                                 @Nullable final Set<String> staticallyImportedMembers,
-                                 @Nullable final Set<GrImportStatement> usedImports,
-                                 @Nullable final Set<GrImportStatement> unresolvedOnDemandImports,
-                                 @Nullable final Set<String> implicitlyImported,
-                                 @Nullable final Set<String> innerClasses,
+                                 @Nullable final Set<? super String> importedClasses,
+                                 @Nullable final Set<? super String> staticallyImportedMembers,
+                                 @Nullable final Set<? super GrImportStatement> usedImports,
+                                 @Nullable final Set<? super GrImportStatement> unresolvedOnDemandImports,
+                                 @Nullable final Set<? super String> implicitlyImported,
+                                 @Nullable final Set<? super String> innerClasses,
                                  @Nullable final Map<String, String> aliased,
                                  @Nullable final Map<String, String> annotations) {
     if (!(file instanceof GroovyFile)) return;

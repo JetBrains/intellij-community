@@ -52,7 +52,7 @@ public class SdkConfigurationUtil {
 
   public static void createSdk(@Nullable final Project project,
                                final Sdk[] existingSdks,
-                               final NullableConsumer<Sdk> onSdkCreatedCallBack,
+                               final NullableConsumer<? super Sdk> onSdkCreatedCallBack,
                                final boolean createIfExists,
                                final SdkType... sdkTypes) {
     createSdk(project, existingSdks, onSdkCreatedCallBack, createIfExists, true, sdkTypes);
@@ -60,7 +60,7 @@ public class SdkConfigurationUtil {
 
   public static void createSdk(@Nullable final Project project,
                                final Sdk[] existingSdks,
-                               final NullableConsumer<Sdk> onSdkCreatedCallBack,
+                               final NullableConsumer<? super Sdk> onSdkCreatedCallBack,
                                final boolean createIfExists,
                                final boolean followSymLinks,
                                final SdkType... sdkTypes) {
@@ -109,7 +109,7 @@ public class SdkConfigurationUtil {
 
   public static void createSdk(@Nullable final Project project,
                                final Sdk[] existingSdks,
-                               final NullableConsumer<Sdk> onSdkCreatedCallBack,
+                               final NullableConsumer<? super Sdk> onSdkCreatedCallBack,
                                final SdkType... sdkTypes) {
     createSdk(project, existingSdks, onSdkCreatedCallBack, true, sdkTypes);
   }

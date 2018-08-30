@@ -494,7 +494,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     EditorFactory.getInstance().addEditorFactoryListener(new CoverageEditorFactoryListener(), myProject);
     myProject.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void projectClosing(Project project) {
+      public void projectClosing(@NotNull Project project) {
         if (project != myProject) {
           return;
         }

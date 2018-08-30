@@ -22,6 +22,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -51,7 +52,7 @@ public class UIDesignerPaletteProvider implements PaletteItemProvider {
       if (myListener == null) {
         myListener = new Palette.Listener() {
           @Override
-          public void groupsChanged(Palette palette) {
+          public void groupsChanged(@NotNull Palette palette) {
             fireGroupsChanged();
           }
         };

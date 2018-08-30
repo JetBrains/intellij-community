@@ -27,12 +27,12 @@ public class BufferedListConsumer<T> implements Consumer<List<T>> {
   private final int mySize;
   private List<T> myBuffer;
   private final Object myFlushLock;
-  private final Consumer<List<T>> myConsumer;
+  private final Consumer<? super List<T>> myConsumer;
   private int myCnt;
   private Runnable myFlushListener;
   private volatile boolean myPendingFlush;
 
-  public BufferedListConsumer(int size, Consumer<List<T>> consumer, int interval) {
+  public BufferedListConsumer(int size, Consumer<? super List<T>> consumer, int interval) {
     mySize = size;
     myFlushLock = new Object();
     myBuffer = new ArrayList<>(size);

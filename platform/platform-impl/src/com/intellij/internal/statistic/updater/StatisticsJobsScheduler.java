@@ -101,7 +101,7 @@ public class StatisticsJobsScheduler implements BaseComponent {
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
     connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void projectOpened(Project project) {
+      public void projectOpened(@NotNull Project project) {
         ScheduledFuture<?> future =
           JobScheduler.getScheduler().scheduleWithFixedDelay(() -> persistProjectUsages(project), PERSIST_SESSIONS_INITIAL_DELAY_IN_MIN,
                                                              PERSIST_SESSIONS_DELAY_IN_MIN, TimeUnit.MINUTES);

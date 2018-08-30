@@ -43,7 +43,7 @@ public class ByTypeArrangementEntryMatcher implements ArrangementEntryMatcher {
     myTypes.add(interestedType);
   }
 
-  public ByTypeArrangementEntryMatcher(@NotNull Collection<ArrangementAtomMatchCondition> interestedTypes) {
+  public ByTypeArrangementEntryMatcher(@NotNull Collection<? extends ArrangementAtomMatchCondition> interestedTypes) {
     myTypes.addAll(interestedTypes);
   }
 

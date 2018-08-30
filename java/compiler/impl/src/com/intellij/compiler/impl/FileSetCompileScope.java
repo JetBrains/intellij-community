@@ -115,7 +115,7 @@ public class FileSetCompileScope extends ExportableUserDataHolderBase implements
     myUrls = null;
   }
 
-  private static void addRecursively(final Collection<VirtualFile> container, VirtualFile fromDirectory, final FileType fileType) {
+  private static void addRecursively(final Collection<? super VirtualFile> container, VirtualFile fromDirectory, final FileType fileType) {
     VfsUtilCore.visitChildrenRecursively(fromDirectory, new VirtualFileVisitor(VirtualFileVisitor.SKIP_ROOT) {
       @Override
       public boolean visitFile(@NotNull VirtualFile child) {

@@ -218,7 +218,7 @@ public class PropertyUtilBase {
   }
 
   @Nullable
-  public static PsiMethod findPropertyGetterWithType(String propertyName, boolean isStatic, PsiType type, Iterator<PsiMethod> methods) {
+  public static PsiMethod findPropertyGetterWithType(String propertyName, boolean isStatic, PsiType type, Iterator<? extends PsiMethod> methods) {
     while (methods.hasNext()) {
       PsiMethod method = methods.next();
       if (method.hasModifierProperty(PsiModifier.STATIC) != isStatic) continue;
@@ -236,7 +236,7 @@ public class PropertyUtilBase {
   }
 
   @Nullable
-  public static PsiMethod findPropertySetterWithType(String propertyName, boolean isStatic, PsiType type, Iterator<PsiMethod> methods) {
+  public static PsiMethod findPropertySetterWithType(String propertyName, boolean isStatic, PsiType type, Iterator<? extends PsiMethod> methods) {
     while (methods.hasNext()) {
       PsiMethod method = methods.next();
       if (method.hasModifierProperty(PsiModifier.STATIC) != isStatic) continue;

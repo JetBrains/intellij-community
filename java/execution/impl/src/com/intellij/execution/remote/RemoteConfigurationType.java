@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class RemoteConfigurationType implements ConfigurationType {
+public final class RemoteConfigurationType implements ConfigurationType {
   private final ConfigurationFactory myFactory;
 
   /**reflection*/

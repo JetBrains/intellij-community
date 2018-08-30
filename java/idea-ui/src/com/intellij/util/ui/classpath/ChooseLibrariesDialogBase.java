@@ -139,7 +139,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
     myBuilder.queueUpdate().doWhenDone(() -> myBuilder.select(library));
   }
 
-  private boolean processSelection(final Processor<Library> processor) {
+  private boolean processSelection(final Processor<? super Library> processor) {
     for (Object element : myBuilder.getSelectedElements()) {
       if (element instanceof Library) {
         if (!processor.process((Library)element)) return false;

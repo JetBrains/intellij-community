@@ -174,7 +174,7 @@ public class KeyedExtensionCollector<T, KeyT> {
     }
   }
 
-  private List<T> buildExtensionsFromExtensionPoint(@Nullable List<T> result, @NotNull Predicate<KeyedLazyInstance<T>> isMyBean) {
+  private List<T> buildExtensionsFromExtensionPoint(@Nullable List<T> result, @NotNull Predicate<? super KeyedLazyInstance<T>> isMyBean) {
     final ExtensionPoint<KeyedLazyInstance<T>> point = getPoint();
     if (point != null) {
       final KeyedLazyInstance<T>[] beans = point.getExtensions();

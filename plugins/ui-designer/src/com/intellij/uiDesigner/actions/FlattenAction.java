@@ -27,7 +27,7 @@ public class FlattenAction extends AbstractGuiEditorAction {
   }
 
   @Override
-  protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
+  protected void actionPerformed(final GuiEditor editor, final List<? extends RadComponent> selection, final AnActionEvent e) {
     for(RadComponent c: selection) {
       RadContainer container = (RadContainer) c;
       final RadContainer parent = container.getParent();
@@ -94,7 +94,7 @@ public class FlattenAction extends AbstractGuiEditorAction {
   }
 
   @Override
-  protected void update(@NotNull GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
+  protected void update(@NotNull GuiEditor editor, final ArrayList<? extends RadComponent> selection, final AnActionEvent e) {
     for(RadComponent c: selection) {
       if (!canFlatten(c)) {
         e.getPresentation().setVisible(false);

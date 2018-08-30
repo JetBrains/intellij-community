@@ -53,7 +53,7 @@ public class TodoJavaTreeHelper extends TodoTreeHelper {
   }
 
   @Override
-  public void addPackagesToChildren(final ArrayList<AbstractTreeNode> children, final Module module, final TodoTreeBuilder builder) {
+  public void addPackagesToChildren(final ArrayList<? super AbstractTreeNode> children, final Module module, final TodoTreeBuilder builder) {
     Project project = getProject();
     final PsiManager psiManager = PsiManager.getInstance(project);
     final List<VirtualFile> sourceRoots = new ArrayList<>();
@@ -164,7 +164,7 @@ public class TodoJavaTreeHelper extends TodoTreeHelper {
     return suggestedNonEmptyPackage;
   }
 
-  private static void traverseSubPackages(PsiPackage psiPackage, Module module, TodoTreeBuilder builder, Project project, Set<PsiPackage> packages){
+  private static void traverseSubPackages(PsiPackage psiPackage, Module module, TodoTreeBuilder builder, Project project, Set<? super PsiPackage> packages){
     if (!isPackageEmpty(new PackageElement(module, psiPackage,  false), builder, project)){
       packages.add(psiPackage);
     }

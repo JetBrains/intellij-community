@@ -671,7 +671,7 @@ public abstract class DialogWrapper {
   private final JBValue BASE_BUTTON_GAP = new JBValue.Float(UIUtil.isUnderWin10LookAndFeel() ? 8 : 12);
 
   @NotNull
-  protected JPanel createButtonsPanel(@NotNull List<JButton> buttons) {
+  protected JPanel createButtonsPanel(@NotNull List<? extends JButton> buttons) {
     JPanel buttonsPanel = new NonOpaquePanel();
     buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.X_AXIS));
 
@@ -2387,7 +2387,7 @@ public abstract class DialogWrapper {
       };
 
       balloon.addListener(new JBPopupListener() {
-        @Override public void onClosed(LightweightWindowEvent event) {
+        @Override public void onClosed(@NotNull LightweightWindowEvent event) {
           JRootPane rootPane = getRootPane();
           if (rootPane != null) {
             rootPane.removeComponentListener(rl);

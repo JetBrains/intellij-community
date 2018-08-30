@@ -16,14 +16,14 @@ public interface ProjectManagerListener extends EventListener {
    *
    * @param project opening project
    */
-  default void projectOpened(Project project) {
+  default void projectOpened(@NotNull Project project) {
   }
 
   /**
    * @deprecated Please use {@link VetoableProjectManagerListener}
    */
   @Deprecated
-  default boolean canCloseProject(Project project) {
+  default boolean canCloseProject(@NotNull Project project) {
     return true;
   }
 
@@ -38,7 +38,7 @@ public interface ProjectManagerListener extends EventListener {
   /**
    * Invoked on project close before any closing activities
    */
-  default void projectClosing(Project project) {
+  default void projectClosing(@NotNull Project project) {
   }
 
   default void projectClosingBeforeSave(@NotNull Project project) {

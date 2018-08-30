@@ -122,7 +122,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     });
     myToolWindow.getContentManager().addContentManagerListener(new ContentManagerAdapter() {
       @Override
-      public void selectionChanged(ContentManagerEvent event) {
+      public void selectionChanged(@NotNull ContentManagerEvent event) {
         if (myStructureView instanceof StructureViewComposite) {
           StructureViewComposite.StructureViewDescriptor[] views = ((StructureViewComposite)myStructureView).getStructureViews();
           for (StructureViewComposite.StructureViewDescriptor view : views) {

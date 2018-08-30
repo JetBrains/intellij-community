@@ -48,7 +48,7 @@ public class JavaProjectRootsUtil {
     return roots;
   }
 
-  public static void collectSuitableDestinationSourceRoots(@NotNull Module module, @NotNull List<VirtualFile> result) {
+  public static void collectSuitableDestinationSourceRoots(@NotNull Module module, @NotNull List<? super VirtualFile> result) {
     for (ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
       for (SourceFolder sourceFolder : entry.getSourceFolders(JavaModuleSourceRootTypes.SOURCES)) {
         if (!isForGeneratedSources(sourceFolder)) {

@@ -29,7 +29,7 @@ class CollectionBinding extends AbstractCollectionBinding  {
 
   @NotNull
   @Override
-  protected Object doDeserializeList(@Nullable Object context, @NotNull List<Element> elements) {
+  protected Object doDeserializeList(@Nullable Object context, @NotNull List<? extends Element> elements) {
     Collection result;
     boolean isContextMutable = isMutableCollection(context);
     if (isContextMutable) {

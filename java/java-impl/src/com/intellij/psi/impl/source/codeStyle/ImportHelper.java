@@ -142,7 +142,7 @@ public class ImportHelper{
     }
   }
 
-  public static void collectOnDemandImports(@NotNull List<Pair<String, Boolean>> resultList,
+  public static void collectOnDemandImports(@NotNull List<? extends Pair<String, Boolean>> resultList,
                                             @NotNull JavaCodeStyleSettings settings,
                                             @NotNull Map<String, Boolean> outClassesOrPackagesToImportOnDemand) {
     TObjectIntHashMap<String> packageToCountMap = new TObjectIntHashMap<>();
@@ -183,7 +183,7 @@ public class ImportHelper{
     packageToCountMap.forEachEntry(new MyVisitorProcedure(true));
   }
 
-  public static List<Pair<String, Boolean>> sortItemsAccordingToSettings(List<Pair<String, Boolean>> names, final JavaCodeStyleSettings settings) {
+  public static List<Pair<String, Boolean>> sortItemsAccordingToSettings(List<? extends Pair<String, Boolean>> names, final JavaCodeStyleSettings settings) {
     int[] entryForName = ArrayUtil.newIntArray(names.size());
     PackageEntry[] entries = settings.IMPORT_LAYOUT_TABLE.getEntries();
     for(int i = 0; i < names.size(); i++){
@@ -210,7 +210,7 @@ public class ImportHelper{
 
   @NotNull
   private static Set<String> findSingleImports(@NotNull final PsiJavaFile file,
-                                               @NotNull Collection<Pair<String,Boolean>> names,
+                                               @NotNull Collection<? extends Pair<String, Boolean>> names,
                                                @NotNull final Set<String> onDemandImports) {
     final GlobalSearchScope resolveScope = file.getResolveScope();
     final String thisPackageName = file.getPackageName();
@@ -361,7 +361,7 @@ public class ImportHelper{
   }
 
   @NotNull
-  private static StringBuilder buildImportListText(@NotNull List<Pair<String, Boolean>> names,
+  private static StringBuilder buildImportListText(@NotNull List<? extends Pair<String, Boolean>> names,
                                                    @NotNull final Set<String> packagesOrClassesToImportOnDemand,
                                                    @NotNull final Set<String> namesToUseSingle) {
     final Set<Pair<String, Boolean>> importedPackagesOrClasses = new THashSet<>();

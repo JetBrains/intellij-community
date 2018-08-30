@@ -9,6 +9,22 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 
 public interface GroovyTokenSets {
 
+  /**
+   * http://docs.groovy-lang.org/latest/html/documentation/core-syntax.html#_keywords
+   */
+  TokenSet KEYWORDS = create(
+    KW_AS, KW_ASSERT, KW_BREAK, KW_CASE,
+    KW_CATCH, KW_CLASS, /*const,*/ KW_CONTINUE,
+    KW_DEF, KW_DEFAULT, KW_DO, KW_ELSE,
+    KW_ENUM, KW_EXTENDS, KW_FALSE, KW_FINALLY,
+    KW_FOR, /*goto,*/ KW_IF, KW_IMPLEMENTS,
+    KW_IMPORT, KW_IN, KW_INSTANCEOF, KW_INTERFACE,
+    KW_NEW, KW_NULL, KW_PACKAGE, KW_RETURN,
+    KW_SUPER, KW_SWITCH, KW_THIS, KW_THROW,
+    KW_THROWS, KW_TRAIT, KW_TRUE, KW_TRY,
+    KW_WHILE
+  );
+
   TokenSet STRING_LITERALS = create(STRING_SQ, STRING_TSQ, STRING_DQ, STRING_TDQ);
 
   TokenSet LOGICAL_OPERATORS = create(T_LAND, T_LOR);

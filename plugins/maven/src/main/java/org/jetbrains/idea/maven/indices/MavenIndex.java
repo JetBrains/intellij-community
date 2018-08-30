@@ -749,7 +749,7 @@ public class MavenIndex {
   }
 
   public interface IndexListener {
-    void indexIsBroken(MavenIndex index);
+    void indexIsBroken(@NotNull MavenIndex index);
   }
 
   private class MyIndexRepositoryIdsProvider implements CachedValueProvider<String> {

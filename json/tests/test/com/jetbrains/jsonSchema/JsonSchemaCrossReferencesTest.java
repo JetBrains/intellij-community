@@ -12,6 +12,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -200,7 +201,10 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
         Assert.assertNotNull(referenceAt);
         final PsiElement resolve = referenceAt.resolve();
         Assert.assertNotNull(resolve);
-        Assert.assertEquals("\"baseEnum\"", resolve.getText());
+        Assert.assertEquals("{\n" +
+                            "      \"type\": \"string\",\n" +
+                            "      \"enum\": [\"one\", \"two\"]\n" +
+                            "    }", resolve.getText());
       }
 
       @Override
@@ -257,7 +261,11 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
         Assert.assertNotNull(referenceAt);
         final PsiElement resolve = referenceAt.resolve();
         Assert.assertNotNull(resolve);
-        Assert.assertEquals("\"enum\"", resolve.getText());
+        Assert.assertTrue(StringUtil.equalsIgnoreWhitespaces("{\n" +
+                            "            \"type\": \"array\",\n" +
+                            "            \"minItems\": 1,\n" +
+                            "            \"uniqueItems\": true\n" +
+                            "        }", resolve.getText()));
       }
     });
   }
@@ -328,7 +336,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
         final PsiElement resolve = referenceAt.resolve();
         Assert.assertNotNull(resolve);
         Assert.assertEquals("definitionsSchema.json", resolve.getContainingFile().getName());
-        Assert.assertEquals("\"findMe\"", resolve.getText());
+        Assert.assertEquals("{\"type\": \"object\"}", resolve.getText());
       }
     });
   }
@@ -553,7 +561,9 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
         Assert.assertNotNull(referenceAt);
         final PsiElement resolve = referenceAt.resolve();
         Assert.assertNotNull(resolve);
-        Assert.assertEquals("\"findDefinition\"", resolve.getText());
+        Assert.assertEquals("{\n" +
+                            "      \"enum\": [1,4,8]\n" +
+                            "    }", resolve.getText());
         final PsiElement parent = resolve.getParent();
         Assert.assertTrue(parent instanceof JsonProperty);
         final JsonValue value = ((JsonProperty)parent).getValue();
@@ -646,7 +656,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       final JsonStringLiteral literal = ObjectUtils.tryCast(ref.getValue(), JsonStringLiteral.class);
       Assert.assertNotNull(literal);
 
-      final PsiReference reference = psi.findReferenceAt(literal.getTextRange().getStartOffset() + 1);
+      final PsiReference reference = psi.findReferenceAt(literal.getTextRange().getEndOffset() - 1);
       Assert.assertNotNull(reference);
       String positiveOrNonNegative = ((JsonSchemaProjectSelfProviderFactory.MyJsonSchemaFileProvider)provider).isSchemaV4()
         ? "positiveInteger"
@@ -654,7 +664,10 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       Assert.assertEquals("#/definitions/" + positiveOrNonNegative, reference.getCanonicalText());
       final PsiElement resolve = reference.resolve();
       Assert.assertNotNull(resolve);
-      Assert.assertEquals("\"" + positiveOrNonNegative + "\"", resolve.getText());
+      Assert.assertTrue(StringUtil.equalsIgnoreWhitespaces("{\n" +
+                          "            \"type\": \"integer\",\n" +
+                          "            \"minimum\": 0\n" +
+                          "        }", resolve.getText()));
       Assert.assertTrue(resolve.getParent() instanceof JsonProperty);
       Assert.assertEquals(positiveOrNonNegative, ((JsonProperty)resolve.getParent()).getName());
     }
@@ -677,26 +690,34 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
 
       @Override
       public void doCheck() {
-        final String midia = "midia";
-        checkNavigationTo(midia, JsonSchemaObject.DEFINITIONS);
+        final String midia = "{\n" +
+                             "      \"properties\": {\n" +
+                             "        \"mittel\" : {\n" +
+                             "          \"type\": [\"integer\", \"boolean\"],\n" +
+                             "          \"description\": \"this is found!\",\n" +
+                             "          \"enum\": [1,2, false]\n" +
+                             "        }\n" +
+                             "      }\n" +
+                             "    }";
+        checkNavigationTo(midia, "midia", JsonSchemaObject.DEFINITIONS);
       }
     });
   }
 
-  private void checkNavigationTo(@NotNull String name, @NotNull String base) {
+  private void checkNavigationTo(@NotNull String resolvedText, @NotNull String name, @NotNull String base) {
     int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
     final PsiElement element = myFile.findElementAt(offset);
     Assert.assertNotNull(element);
 
-    checkNavigationTo(name, offset, base);
+    checkNavigationTo(resolvedText, name, offset, base);
   }
 
-  private void checkNavigationTo(@NotNull String name, int offset, @NotNull String base) {
+  private void checkNavigationTo(@NotNull String resolvedText, @NotNull String name, int offset, @NotNull String base) {
     final PsiReference referenceAt = myFile.findReferenceAt(offset);
     Assert.assertNotNull(referenceAt);
     final PsiElement resolve = referenceAt.resolve();
     Assert.assertNotNull(resolve);
-    Assert.assertEquals("\"" + name + "\"", resolve.getText());
+    Assert.assertEquals(resolvedText, resolve.getText());
     final PsiElement parent = resolve.getParent();
     Assert.assertTrue(parent instanceof JsonProperty);
     Assert.assertEquals(name, ((JsonProperty)parent).getName());
@@ -721,7 +742,9 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
 
       @Override
       public void doCheck() {
-        checkNavigationTo("all", JsonSchemaObject.DEFINITIONS);
+        checkNavigationTo("{\n" +
+                          "      \"$ref\": \"#/definitions/one\"\n" +
+                          "    }", "all", JsonSchemaObject.DEFINITIONS);
       }
     });
   }
@@ -743,7 +766,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
 
       @Override
       public void doCheck() {
-        checkNavigationTo("bbb", JsonSchemaObject.PROPERTIES);
+        checkNavigationTo("\"bbb\"", "bbb", JsonSchemaObject.PROPERTIES);
       }
     });
   }
@@ -770,7 +793,17 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
         final List<JsonStringLiteral> list = strings.stream()
           .filter(expression -> expression.getText().contains("#/definitions")).collect(Collectors.toList());
         Assert.assertEquals(3, list.size());
-        list.forEach(literal -> checkNavigationTo("cycle.schema", literal.getTextRange().getStartOffset() + 1, JsonSchemaObject.DEFINITIONS));
+        list.forEach(literal -> checkNavigationTo("{\n" +
+                                                  "      \"type\": \"object\",\n" +
+                                                  "      \"properties\": {\n" +
+                                                  "        \"id\": {\n" +
+                                                  "          \"type\": \"string\"\n" +
+                                                  "        },\n" +
+                                                  "        \"range\": {\n" +
+                                                  "          \"type\": \"string\"\n" +
+                                                  "        }\n" +
+                                                  "      }\n" +
+                                                  "    }", "cycle.schema", literal.getTextRange().getEndOffset() - 1, JsonSchemaObject.DEFINITIONS));
       }
     });
   }
@@ -794,7 +827,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
 
       @Override
       public void doCheck() {
-        checkNavigationTo("id", JsonSchemaObject.PROPERTIES);
+        checkNavigationTo("\"id\"", "id", JsonSchemaObject.PROPERTIES);
       }
     });
   }

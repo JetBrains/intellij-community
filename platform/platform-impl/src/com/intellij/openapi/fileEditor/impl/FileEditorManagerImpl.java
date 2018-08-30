@@ -160,7 +160,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     });
     connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void projectOpened(Project project) {
+      public void projectOpened(@NotNull Project project) {
         if (project == myProject) {
           FileEditorManagerImpl.this.projectOpened(connection);
         }
@@ -1818,7 +1818,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     private boolean myScheduled;
 
     @Override
-    public void rootsChanged(ModuleRootEvent event) {
+    public void rootsChanged(@NotNull ModuleRootEvent event) {
       if (myScheduled) return;
       myScheduled = true;
       DumbService.getInstance(myProject).runWhenSmart(() -> {

@@ -60,7 +60,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     super.setUp();
     myProject.getMessageBus().connect(getTestRootDisposable()).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         //todo[nik] projectOpened isn't called in tests so we need to add this listener manually
         forceFSRescan();
       }
@@ -225,14 +225,14 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     final List<String> generatedFilePaths = new ArrayList<>();
     myProject.getMessageBus().connect(getTestRootDisposable()).subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
       @Override
-      public void fileGenerated(String outputRoot, String relativePath) {
+      public void fileGenerated(@NotNull String outputRoot, @NotNull String relativePath) {
         generatedFilePaths.add(relativePath);
       }
     });
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       final CompileStatusNotification callback = new CompileStatusNotification() {
         @Override
-        public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
+        public void finished(boolean aborted, int errors, int warnings, @NotNull CompileContext compileContext) {
           try {
             if (aborted) {
               Assert.fail("compilation aborted");

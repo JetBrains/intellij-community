@@ -63,6 +63,6 @@ class EmptyModuleManager(private val project: Project, messageBus: MessageBus) :
 
   override fun getUnloadedModuleDescription(moduleName: String): Nothing? = null
 
-  override fun removeUnloadedModules(unloadedModules: MutableCollection<UnloadedModuleDescription>) {
+  override fun removeUnloadedModules(unloadedModules: MutableCollection<out UnloadedModuleDescription>) {
   }
 }

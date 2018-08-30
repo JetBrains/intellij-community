@@ -37,7 +37,7 @@ public class FunctionalExpressionCanBeFoldedInspection extends AbstractBaseJavaL
       }
 
       private void doCheckCall(PsiFunctionalExpression expression,
-                               Supplier<PsiElement> resolver,
+                               Supplier<? extends PsiElement> resolver,
                                PsiExpression qualifierExpression,
                                PsiElement referenceNameElement,
                                final String errorMessage) {

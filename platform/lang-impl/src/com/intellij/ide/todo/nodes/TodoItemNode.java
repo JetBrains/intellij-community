@@ -146,7 +146,7 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
     }
   }
 
-  private static void collectHighlights(@NotNull List<HighlightedRegion> highlights, @NotNull EditorHighlighter highlighter,
+  private static void collectHighlights(@NotNull List<? super HighlightedRegion> highlights, @NotNull EditorHighlighter highlighter,
                                         int startOffset, int endOffset, int highlightOffsetShift) {
     HighlighterIterator iterator = highlighter.createIterator(startOffset);
     while (!iterator.atEnd()) {

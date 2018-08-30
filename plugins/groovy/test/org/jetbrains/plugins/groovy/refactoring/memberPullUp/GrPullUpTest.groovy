@@ -24,6 +24,7 @@ import com.intellij.refactoring.util.DocCommentPolicy
 import com.intellij.refactoring.util.classMembers.MemberInfo
 import com.intellij.util.ui.UIUtil
 import junit.framework.Assert
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
@@ -185,7 +186,7 @@ class GrPullUpTest extends LightGroovyTestCase {
     final int[] countMoved = [0]
     final MoveMemberListener listener = new MoveMemberListener() {
       @Override
-      void memberMoved(PsiClass aClass, PsiMember member) {
+      void memberMoved(@NotNull PsiClass aClass, @NotNull PsiMember member) {
         assertEquals(sourceClass, aClass)
         countMoved[0]++
       }

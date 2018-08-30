@@ -2,23 +2,19 @@
 package com.intellij.remoteServer.impl.configuration.deployment;
 
 import com.intellij.execution.configuration.ConfigurationFactoryEx;
-import com.intellij.execution.configuration.ConfigurationFactoryListener;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationTypeBase;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.ServerType;
-import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
-import com.intellij.remoteServer.configuration.ServerConfiguration;
-import com.intellij.remoteServer.configuration.deployment.*;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurator;
+import com.intellij.remoteServer.configuration.deployment.DeploymentSourceType;
+import com.intellij.remoteServer.configuration.deployment.SingletonDeploymentSourceType;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -80,7 +76,8 @@ public final class DeployToServerConfigurationType extends ConfigurationTypeBase
     return myServerType;
   }
 
-  public class DeployToServerConfigurationFactory extends ConfigurationFactoryEx<DeployToServerRunConfiguration<?, ?>> implements ConfigurationFactoryListener<DeployToServerRunConfiguration<?, ?>> {
+  // todo do not extends ConfigurationFactoryEx once Google Cloud Tools plugin will get rid of getFactory() usage
+  public class DeployToServerConfigurationFactory extends ConfigurationFactoryEx<DeployToServerRunConfiguration<?, ?>> {
     public DeployToServerConfigurationFactory() {
       super(DeployToServerConfigurationType.this);
     }
@@ -88,35 +85,6 @@ public final class DeployToServerConfigurationType extends ConfigurationTypeBase
     @Override
     public boolean isApplicable(@NotNull Project project) {
       return myServerType.canAutoDetectConfiguration() || !RemoteServersManager.getInstance().getServers(myServerType).isEmpty();
-    }
-
-    @Override
-    public void onNewConfigurationCreated(@NotNull DeployToServerRunConfiguration<?, ?> configuration) {
-      if (configuration.getServerName() == null) {
-        RemoteServer<?> server = ContainerUtil.getFirstItem(RemoteServersManager.getInstance().getServers(myServerType));
-        if (server != null) {
-          configuration.setServerName(server.getName());
-        }
-      }
-
-      if (configuration.getDeploymentSource() == null) {
-        setupDeploymentSource(configuration, configuration);
-      }
-    }
-
-    private <S extends ServerConfiguration, D extends DeploymentConfiguration> void setupDeploymentSource(
-      @NotNull RunConfiguration configuration, @NotNull DeployToServerRunConfiguration<S, D> deployConfiguration) {
-
-      DeploymentConfigurator<D, S> deploymentConfigurator = deployConfiguration.getDeploymentConfigurator();
-      List<DeploymentSource> sources = deploymentConfigurator.getAvailableDeploymentSources();
-      DeploymentSource source = ContainerUtil.getFirstItem(sources);
-      if (source != null) {
-        deployConfiguration.setDeploymentSource(source);
-        deployConfiguration.setDeploymentConfiguration(deploymentConfigurator.createDefaultConfiguration(source));
-        DeploymentSourceType type = source.getType();
-        //noinspection unchecked
-        type.setBuildBeforeRunTask(configuration, source);
-      }
     }
 
     @Override
@@ -128,7 +96,7 @@ public final class DeployToServerConfigurationType extends ConfigurationTypeBase
     }
   }
 
-  public class MultiSourcesConfigurationFactory extends DeployToServerConfigurationFactory {
+  public final class MultiSourcesConfigurationFactory extends DeployToServerConfigurationFactory {
     @NotNull
     @Override
     public String getId() {
@@ -137,7 +105,7 @@ public final class DeployToServerConfigurationType extends ConfigurationTypeBase
     }
   }
 
-  public class SingletonTypeConfigurationFactory extends DeployToServerConfigurationFactory {
+  public final class SingletonTypeConfigurationFactory extends DeployToServerConfigurationFactory {
     private final SingletonDeploymentSourceType mySourceType;
 
     public SingletonTypeConfigurationFactory(@NotNull SingletonDeploymentSourceType sourceType) {

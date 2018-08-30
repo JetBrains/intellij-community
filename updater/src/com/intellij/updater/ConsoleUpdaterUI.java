@@ -45,7 +45,7 @@ public class ConsoleUpdaterUI implements UpdaterUI {
   }
 
   @Override
-  public Map<String, ValidationResult.Option> askUser(List<ValidationResult> validationResults) throws OperationCancelledException {
+  public Map<String, ValidationResult.Option> askUser(List<? extends ValidationResult> validationResults) throws OperationCancelledException {
     boolean hasErrors = false, hasConflicts = false;
 
     System.out.println("Validation info:");

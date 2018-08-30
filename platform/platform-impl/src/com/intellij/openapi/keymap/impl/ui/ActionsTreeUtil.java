@@ -88,7 +88,7 @@ public class ActionsTreeUtil {
     return result;
   }
 
-  private static Group createPluginsActionsGroup(Condition<AnAction> filtered) {
+  private static Group createPluginsActionsGroup(Condition<? super AnAction> filtered) {
     Group pluginsGroup = new Group(KeyMapBundle.message("plugins.group.title"), null, null);
     final KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
     ActionManagerEx managerEx = ActionManagerEx.getInstanceEx();
@@ -153,7 +153,7 @@ public class ActionsTreeUtil {
   }
 
   @Nullable
-  private static Condition<AnAction> wrapFilter(@Nullable final Condition<AnAction> filter, final Keymap keymap, final ActionManager actionManager) {
+  private static Condition<AnAction> wrapFilter(@Nullable final Condition<? super AnAction> filter, final Keymap keymap, final ActionManager actionManager) {
     final ActionShortcutRestrictions shortcutRestrictions = ActionShortcutRestrictions.getInstance();
     return action -> {
       if (action == null) return false;
@@ -272,7 +272,7 @@ public class ActionsTreeUtil {
     return group;
   }
 
-  private static Group createEditorActionsGroup(Condition<AnAction> filtered) {
+  private static Group createEditorActionsGroup(Condition<? super AnAction> filtered) {
     ActionManager actionManager = ActionManager.getInstance();
     DefaultActionGroup editorGroup = (DefaultActionGroup)actionManager.getActionOrStub(IdeActions.GROUP_EDITOR);
     ArrayList<String> ids = new ArrayList<>();
@@ -301,9 +301,9 @@ public class ActionsTreeUtil {
     return result;
   }
 
-  private static void addEditorActions(final Condition<AnAction> filtered,
+  private static void addEditorActions(final Condition<? super AnAction> filtered,
                                        final DefaultActionGroup editorGroup,
-                                       final ArrayList<String> ids) {
+                                       final ArrayList<? super String> ids) {
     AnAction[] editorActions = editorGroup.getChildActionsOrStubs();
     final ActionManager actionManager = ActionManager.getInstance();
     for (AnAction editorAction : editorActions) {
@@ -324,7 +324,7 @@ public class ActionsTreeUtil {
     return (Group) provider.createGroup(filtered, project);
   }
 
-  private static Group createMacrosGroup(Condition<AnAction> filtered) {
+  private static Group createMacrosGroup(Condition<? super AnAction> filtered) {
     final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     String[] ids = actionManager.getActionIds(ActionMacro.MACRO_ACTION_PREFIX);
     Arrays.sort(ids);
@@ -337,7 +337,7 @@ public class ActionsTreeUtil {
     return group;
   }
 
-  private static Group createQuickListsGroup(final Condition<AnAction> filtered, final String filter, final boolean forceFiltering, final QuickList[] quickLists) {
+  private static Group createQuickListsGroup(final Condition<? super AnAction> filtered, final String filter, final boolean forceFiltering, final QuickList[] quickLists) {
     Arrays.sort(quickLists, Comparator.comparing(QuickList::getActionId));
 
     Group group = new Group(KeyMapBundle.message("quick.lists.group.title"), null, null);

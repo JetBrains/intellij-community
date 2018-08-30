@@ -301,10 +301,10 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
 
   private static class MyContentIterator extends PsiRecursiveElementWalkingVisitor {
     private final PsiManager myPsiManager;
-    private final Set<Module> myModules;
-    private final Set<VirtualFile> mySourceFiles;
+    private final Set<? super Module> myModules;
+    private final Set<? super VirtualFile> mySourceFiles;
 
-    public MyContentIterator(Project project, Set<Module> modules, Set<VirtualFile> sources) {
+    public MyContentIterator(Project project, Set<? super Module> modules, Set<? super VirtualFile> sources) {
       myPsiManager = PsiManager.getInstance(project);
       myModules = modules;
       mySourceFiles = sources;

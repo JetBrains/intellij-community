@@ -40,7 +40,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
   }
 
   @Override
-  public void mouseMoved(EditorMouseEvent e) {
+  public void mouseMoved(@NotNull EditorMouseEvent e) {
     LogicalPosition position  = editor.xyToLogicalPosition( e.getMouseEvent().getPoint() );
 
     handleInputFocusMovement(position, false);
@@ -107,7 +107,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
   }
 
   @Override
-  public void mouseDragged(EditorMouseEvent e) {
+  public void mouseDragged(@NotNull EditorMouseEvent e) {
   }
 
   @Override

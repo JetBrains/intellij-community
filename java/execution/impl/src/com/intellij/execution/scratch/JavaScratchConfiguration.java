@@ -72,7 +72,7 @@ public class JavaScratchConfiguration extends ApplicationConfiguration {
           if (vFile != null) {
             DebuggerManager.getInstance(getProject()).addDebugProcessListener(handler, new DebugProcessListener() {
               @Override
-              public void processAttached(DebugProcess process) {
+              public void processAttached(@NotNull DebugProcess process) {
                 if (vFile.isValid()) {
                   process.appendPositionManager(new JavaScratchPositionManager((DebugProcessImpl)process, vFile));
                 }

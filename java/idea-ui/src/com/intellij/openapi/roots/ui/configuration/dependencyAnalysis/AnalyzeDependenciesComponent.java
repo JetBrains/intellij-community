@@ -83,7 +83,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
     myMessageBusConnection = myModule.getProject().getMessageBus().connect();
     myMessageBusConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         myClasspaths.clear();
         updateTree();
       }

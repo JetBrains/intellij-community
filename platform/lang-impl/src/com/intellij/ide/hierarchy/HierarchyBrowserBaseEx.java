@@ -27,7 +27,6 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.treeStructure.Tree;
@@ -82,11 +81,13 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       return null;
     }
 
+    @NotNull
     @Override
     public String getNextOccurenceActionName() {
       return "";
     }
 
+    @NotNull
     @Override
     public String getPreviousOccurenceActionName() {
       return "";
@@ -127,9 +128,10 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       myType2ScopeMap.put(type, state.SCOPE != null ? state.SCOPE : SCOPE_ALL);
     }
 
-    for (String key : myType2TreeMap.keySet()) {
-      JTree tree = myType2TreeMap.get(key);
-      myOccurrenceNavigators.put(key, new OccurenceNavigatorSupport(tree) {
+    for (Map.Entry<String, JTree> entry : myType2TreeMap.entrySet()) {
+      JTree tree = entry.getValue();
+      String type = entry.getKey();
+      myOccurrenceNavigators.put(type, new OccurenceNavigatorSupport(tree) {
         @Override
         @Nullable
         protected Navigatable createDescriptorForNode(@NotNull DefaultMutableTreeNode node) {
@@ -143,17 +145,19 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
           return null;
         }
 
+        @NotNull
         @Override
         public String getNextOccurenceActionName() {
           return getNextOccurenceActionNameImpl();
         }
 
+        @NotNull
         @Override
         public String getPreviousOccurenceActionName() {
           return getPrevOccurenceActionNameImpl();
         }
       });
-      myTreePanel.add(ScrollPaneFactory.createScrollPane(tree), key);
+      myTreePanel.add(ScrollPaneFactory.createScrollPane(tree), type);
     }
 
     final JPanel legendPanel = createLegendPanel();
@@ -205,7 +209,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   protected abstract String getBrowserDataKey();
 
   @Nullable
-  protected Color getFileColorForNode(Object node) {
+  private static Color getFileColorForNode(Object node) {
     if (node instanceof HierarchyNodeDescriptor) {
       PsiFile containingFile = ((HierarchyNodeDescriptor) node).getContainingFile();
       return ProjectViewTree.getColorForElement(containingFile);
@@ -213,17 +217,23 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     return null;
   }
 
+  @NotNull
   protected final JTree createTree(boolean dndAware) {
     final Tree tree;
 
+    DefaultTreeModel treeModel = new DefaultTreeModel(new DefaultMutableTreeNode(""));
     if (dndAware) {
-      //noinspection Duplicates
-      tree = new DnDAwareTree(new DefaultTreeModel(new DefaultMutableTreeNode(""))) {
+      tree = new DnDAwareTree(treeModel) {
+        @Override
+        public void addNotify() {
+          super.addNotify();
+          myRefreshAction.registerShortcutOn(this);
+        }
+
         @Override
         public void removeNotify() {
           super.removeNotify();
-          if (ScreenUtil.isStandardAddRemoveNotify(this))
-            myRefreshAction.unregisterCustomShortcutSet(this);
+          myRefreshAction.unregisterCustomShortcutSet(this);
         }
 
         @Override
@@ -280,13 +290,17 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       }
     }
     else {
-      //noinspection Duplicates
-      tree = new Tree(new DefaultTreeModel(new DefaultMutableTreeNode("")))  {
+      tree = new Tree(treeModel)  {
+        @Override
+        public void addNotify() {
+          super.addNotify();
+          myRefreshAction.registerShortcutOn(this);
+        }
+
         @Override
         public void removeNotify() {
           super.removeNotify();
-          if (ScreenUtil.isStandardAddRemoveNotify(this))
-            myRefreshAction.unregisterCustomShortcutSet(this);
+          myRefreshAction.unregisterCustomShortcutSet(this);
         }
 
         @Override
@@ -304,8 +318,6 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     configureTree(tree);
     EditSourceOnDoubleClickHandler.install(tree);
     EditSourceOnEnterKeyHandler.install(tree);
-    myRefreshAction.registerShortcutOn(tree);
-
     return tree;
   }
 
@@ -376,8 +388,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
   }
 
-  @SuppressWarnings("deprecation")
-  private void setCurrentViewType(String typeName) {
+  private void setCurrentViewType(@NotNull String typeName) {
     myCurrentViewType = typeName;
   }
 
@@ -390,13 +401,13 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   }
 
   @Override
-  protected void appendActions(@NotNull DefaultActionGroup actionGroup, String helpID) {
+  protected void appendActions(@NotNull DefaultActionGroup actionGroup, @Nullable String helpID) {
     prependActions(actionGroup);
     actionGroup.add(myRefreshAction);
     super.appendActions(actionGroup, helpID);
   }
 
-  protected void prependActions(final DefaultActionGroup actionGroup) {
+  protected void prependActions(@NotNull DefaultActionGroup actionGroup) {
   }
 
   @Override
@@ -404,6 +415,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     return getOccurrenceNavigator().hasNextOccurence();
   }
 
+  @NotNull
   private OccurenceNavigator getOccurrenceNavigator() {
     String currentViewType = getCurrentViewType();
     if (currentViewType != null) {
@@ -430,11 +442,13 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     return getOccurrenceNavigator().goPreviousOccurence();
   }
 
+  @NotNull
   @Override
   public String getNextOccurenceActionName() {
     return getOccurrenceNavigator().getNextOccurenceActionName();
   }
 
+  @NotNull
   @Override
   public String getPreviousOccurenceActionName() {
     return getOccurrenceNavigator().getPreviousOccurenceActionName();
@@ -445,10 +459,11 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     return getBuilderForType(getCurrentViewType());
   }
 
-  protected final HierarchyTreeBuilder getBuilderForType(String viewType) {
+  private HierarchyTreeBuilder getBuilderForType(String viewType) {
     return viewType == null ? null : myType2BuilderMap.get(viewType);
   }
 
+  @NotNull
   protected final Iterable<HierarchyTreeBuilder> getBuilders() {
     return Collections.unmodifiableCollection(myType2BuilderMap.values());
   }
@@ -470,7 +485,6 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     return currentViewType == null ? null : myType2TreeMap.get(currentViewType);
   }
 
-  @SuppressWarnings("deprecation")
   protected final String getCurrentViewType() {
     return myCurrentViewType;
   }
@@ -591,7 +605,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       }
     }
 
-    protected String correctViewType(HierarchyBrowserBaseEx browser, String viewType) {
+    protected String correctViewType(@NotNull HierarchyBrowserBaseEx browser, String viewType) {
       return viewType;
     }
 
@@ -650,7 +664,8 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
   }
 
-  protected Collection<String> getValidScopeNames() {
+  @NotNull
+  private Collection<String> getValidScopeNames() {
     List<String> result = new ArrayList<>();
     result.add(SCOPE_PROJECT);
     result.add(SCOPE_TEST);
@@ -695,7 +710,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       return group;
     }
 
-    private void selectScope(final String scopeType) {
+    private void selectScope(@NotNull String scopeType) {
       myType2ScopeMap.put(getCurrentViewType(), scopeType);
       HierarchyBrowserManager.getSettings(myProject).SCOPE = scopeType;
 
@@ -718,7 +733,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     private final class MenuAction extends AnAction {
       private final String myScopeType;
 
-      public MenuAction(final String scopeType) {
+      MenuAction(@NotNull String scopeType) {
         super(scopeType);
         myScopeType = scopeType;
       }

@@ -131,7 +131,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   private static void addAvailableFixesForGroups(@NotNull HighlightInfo info,
                                                  @NotNull Editor editor,
                                                  @NotNull PsiFile file,
-                                                 @NotNull List<HighlightInfo.IntentionActionDescriptor> outList,
+                                                 @NotNull List<? super HighlightInfo.IntentionActionDescriptor> outList,
                                                  int group,
                                                  int offset) {
     if (info.quickFixActionMarkers == null) return;
@@ -366,7 +366,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
   public static void fillIntentionsInfoForHighlightInfo(@NotNull HighlightInfo infoAtCursor, 
                                                         @NotNull IntentionsInfo intentions,
-                                                        @NotNull List<HighlightInfo.IntentionActionDescriptor> fixes) {
+                                                        @NotNull List<? extends HighlightInfo.IntentionActionDescriptor> fixes) {
     final boolean isError = infoAtCursor.getSeverity() == HighlightSeverity.ERROR;
     for (HighlightInfo.IntentionActionDescriptor fix : fixes) {
       if (fix.isError() && isError) {

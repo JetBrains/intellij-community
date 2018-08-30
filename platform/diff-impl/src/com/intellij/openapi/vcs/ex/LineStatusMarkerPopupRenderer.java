@@ -154,7 +154,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     LightweightHint hint = new LightweightHint(popupPanel);
     HintListener closeListener = new HintListener() {
       @Override
-      public void hintHidden(final EventObject event) {
+      public void hintHidden(@NotNull final EventObject event) {
         Disposer.dispose(disposable);
       }
     };
@@ -185,7 +185,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
       });
 
     if (!hint.isVisible()) {
-      closeListener.hintHidden(null);
+      closeListener.hintHidden(new EventObject(hint));
     }
   }
 

@@ -97,7 +97,7 @@ public class SyncScrollSupport implements Disposable {
     }
 
     @Override
-    public void visibleAreaChanged(VisibleAreaEvent e) {
+    public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
       if (!myEnabled || myDuringVerticalScroll) return;
       Rectangle newRectangle = e.getNewRectangle();
       Rectangle oldRectangle = e.getOldRectangle();

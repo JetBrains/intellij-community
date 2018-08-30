@@ -187,7 +187,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
     consoleRunner.addConsoleListener(new PydevConsoleRunnerImpl.ConsoleListener() {
       @Override
-      public void handleConsoleInitialized(LanguageConsoleView consoleView) {
+      public void handleConsoleInitialized(@NotNull LanguageConsoleView consoleView) {
         myConsoleInitSemaphore.release();
       }
     });

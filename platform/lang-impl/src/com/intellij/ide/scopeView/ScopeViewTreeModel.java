@@ -81,7 +81,7 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
     model = new ProjectFileTreeModel(project);
     model.addTreeModelListener(new TreeModelAdapter() {
       @Override
-      protected void process(TreeModelEvent event, EventType type) {
+      protected void process(@NotNull TreeModelEvent event, @NotNull EventType type) {
         if (type == EventType.StructureChanged) {
           TreePath path = event.getTreePath();
           if (path == null || null == path.getParentPath()) {
@@ -430,7 +430,7 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
     }
 
     @NotNull
-    abstract Collection<AbstractTreeNode> createChildren(@NotNull Collection<AbstractTreeNode> old);
+    abstract Collection<AbstractTreeNode> createChildren(@NotNull Collection<? extends AbstractTreeNode> old);
 
     @NotNull
     @Override
@@ -513,7 +513,7 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
 
     @NotNull
     @Override
-    Collection<AbstractTreeNode> createChildren(@NotNull Collection<AbstractTreeNode> old) {
+    Collection<AbstractTreeNode> createChildren(@NotNull Collection<? extends AbstractTreeNode> old) {
       HashMap<Object, RootNode> oldRoots = roots;
       HashMap<Object, RootNode> newRoots = new HashMap<>();
       Mapper<RootNode, ProjectFileNode> mapper = new Mapper<>(RootNode::new, oldRoots);
@@ -524,7 +524,7 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
     }
 
     @NotNull
-    Collection<AbstractTreeNode> createChildren(@NotNull Node parent, @NotNull Collection<AbstractTreeNode> old) {
+    Collection<AbstractTreeNode> createChildren(@NotNull Node parent, @NotNull Collection<? extends AbstractTreeNode> old) {
       boolean flattenPackages = getSettings().isFlattenPackages();
       boolean hideEmptyMiddlePackages = getSettings().isHideEmptyMiddlePackages();
       boolean compactDirectories = getSettings().isCompactDirectories();
@@ -673,7 +673,7 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
 
     @NotNull
     @Override
-    Collection<AbstractTreeNode> createChildren(@NotNull Collection<AbstractTreeNode> old) {
+    Collection<AbstractTreeNode> createChildren(@NotNull Collection<? extends AbstractTreeNode> old) {
       ProjectNode parent = findParent(ProjectNode.class);
       if (parent == null) return emptyList();
       return parent.createChildren(this, old);
@@ -878,7 +878,7 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
 
     @NotNull
     @Override
-    Collection<AbstractTreeNode> createChildren(@NotNull Collection<AbstractTreeNode> old) {
+    Collection<AbstractTreeNode> createChildren(@NotNull Collection<? extends AbstractTreeNode> old) {
       Group group = this.group;
       if (group == null) return emptyList();
       RootNode node = group.getSingleRoot();

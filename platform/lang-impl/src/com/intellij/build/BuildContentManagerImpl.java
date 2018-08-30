@@ -301,7 +301,7 @@ public class BuildContentManagerImpl implements BuildContentManager {
     }
 
     @Override
-    public void contentRemoved(final ContentManagerEvent event) {
+    public void contentRemoved(@NotNull final ContentManagerEvent event) {
       final Content content = event.getContent();
       if (content == myContent) {
         Disposer.dispose(this);
@@ -326,7 +326,7 @@ public class BuildContentManagerImpl implements BuildContentManager {
     }
 
     @Override
-    public void contentRemoveQuery(final ContentManagerEvent event) {
+    public void contentRemoveQuery(@NotNull final ContentManagerEvent event) {
       if (event.getContent() == myContent) {
         final boolean canClose = closeQuery(false);
         if (!canClose) {

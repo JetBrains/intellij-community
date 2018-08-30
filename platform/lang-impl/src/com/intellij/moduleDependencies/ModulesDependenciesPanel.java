@@ -117,7 +117,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
 
     project.getMessageBus().connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         updateModuleGraph();
         updateSplitterProportion();
         updateLeftTree();

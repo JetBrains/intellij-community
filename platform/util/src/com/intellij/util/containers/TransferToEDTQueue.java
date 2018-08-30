@@ -125,12 +125,7 @@ public class TransferToEDTQueue<T> {
 
   private T pullFirst() {
     synchronized (myQueue) {
-      while (!myQueue.isEmpty()) {
-        T t = myQueue.pullFirst();
-        // null means "remove()" was called on this element; ignore
-        if (t != null) return t;
-      }
-      return null;
+      return myQueue.isEmpty() ? null : myQueue.pullFirst();
     }
   }
 
@@ -140,19 +135,6 @@ public class TransferToEDTQueue<T> {
     }
     scheduleUpdate();
     return true;
-  }
-
-  public boolean remove(@NotNull T thing) {
-    synchronized (myQueue) {
-      for (int i = 0; i < myQueue.size(); i++) {
-        T t = myQueue.get(i);
-        if (thing.equals(t)) {
-          myQueue.set(i, null);
-          return true;
-        }
-      }
-      return false;
-    }
   }
 
   public boolean offerIfAbsent(@NotNull T thing) {

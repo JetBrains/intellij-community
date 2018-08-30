@@ -83,12 +83,12 @@ public class ListUtil {
     return removeIndices(list, indices, null);
   }
 
-  public static <T> List<T> removeSelectedItems(JList list, Condition<T> condition) {
+  public static <T> List<T> removeSelectedItems(JList list, Condition<? super T> condition) {
     int[] idxs = list.getSelectedIndices();
     return removeIndices(list, idxs, condition);
   }
 
-  private static <T> List<T> removeIndices(JList list, int[] idxs, Condition<T> condition) {
+  private static <T> List<T> removeIndices(JList list, int[] idxs, Condition<? super T> condition) {
     if (idxs.length == 0) {
       return new ArrayList<>(0);
     }

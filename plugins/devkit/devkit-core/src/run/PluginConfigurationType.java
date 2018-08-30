@@ -21,7 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 
-public class PluginConfigurationType implements ConfigurationType {
+public final class PluginConfigurationType implements ConfigurationType {
   private final ConfigurationFactory myFactory;
   private String myVmParameters = "-Xmx512m -Xms256m -ea";
 

@@ -1001,13 +1001,13 @@ public class JBUI {
      * @param <S> the context type
      */
     public static class Cache<D, S extends BaseScaleContext> {
-      private final Function<S, D> myDataProvider;
+      private final Function<? super S, ? extends D> myDataProvider;
       private final AtomicReference<Pair<Double, D>> myData = new AtomicReference<Pair<Double, D>>(null);
 
       /**
        * @param dataProvider provides a data object matching the passed scale context
        */
-      public Cache(@NotNull Function<S, D> dataProvider) {
+      public Cache(@NotNull Function<? super S, ? extends D> dataProvider) {
         this.myDataProvider = dataProvider;
       }
 
@@ -1254,7 +1254,7 @@ public class JBUI {
     }
 
     public static class Cache<D> extends BaseScaleContext.Cache<D, ScaleContext> {
-      public Cache(@NotNull Function<ScaleContext, D> dataProvider) {
+      public Cache(@NotNull Function<? super ScaleContext, ? extends D> dataProvider) {
         super(dataProvider);
       }
     }

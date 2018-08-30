@@ -283,6 +283,7 @@ public class PluginManagerConfigurableNew
     };
 
     mySearchListener = (_0, query) -> {
+      removeDetailsPanel();
       mySearchTextField.setTextIgnoreEvents(query);
       showSearchPanel(query);
     };
@@ -464,6 +465,7 @@ public class PluginManagerConfigurableNew
   public void disposeUIResources() {
     myPluginsModel.toBackground();
     Disposer.dispose(mySearchUpdateAlarm);
+    myTrendingSearchPanel.loading(false);
 
     if (myShutdownCallback != null) {
       myShutdownCallback.run();
@@ -848,7 +850,7 @@ public class PluginManagerConfigurableNew
 
       @NotNull
       private List<IdeaPluginDescriptor> loadSuggestPlugins(@NotNull String query) {
-        List<IdeaPluginDescriptor> result = new ArrayList<>();
+        Set<IdeaPluginDescriptor> result = new LinkedHashSet<>();
         try {
           ApplicationManager.getApplication().executeOnPooledThread(() -> {
             try {
@@ -884,7 +886,7 @@ public class PluginManagerConfigurableNew
         }
         catch (Exception ignore) {
         }
-        return result;
+        return ContainerUtil.newArrayList(result);
       }
     };
     myTrendingSearchPanel =

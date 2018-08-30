@@ -629,7 +629,7 @@ public class HelpTooltip implements Disposable {
       return rows;
     }
 
-    private void visit(@NotNull View v, Collection<View> result) {
+    private void visit(@NotNull View v, Collection<? super View> result) {
       String cname = v.getClass().getCanonicalName();
       if (cname != null && cname.contains("ParagraphView.Row")) {
         result.add(v);

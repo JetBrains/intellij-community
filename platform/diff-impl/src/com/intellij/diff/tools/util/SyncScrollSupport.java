@@ -328,7 +328,7 @@ public class SyncScrollSupport {
     }
 
     @Override
-    public void visibleAreaChanged(VisibleAreaEvent e) {
+    public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
       if (((FoldingModelImpl)getSlave().getFoldingModel()).isInBatchFoldingOperation()) return;
       if (getMaster().isDisposed() || getSlave().isDisposed()) return;
 

@@ -79,7 +79,7 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   IntentionAction findQuickFixes(@NotNull CommonProblemDescriptor descriptor, final String hint);
   @NotNull
   HTMLComposerImpl getComposer();
-  void exportResults(@NotNull final Element parentNode, @NotNull RefEntity refEntity, Predicate<CommonProblemDescriptor> isDescriptorExcluded);
+  void exportResults(@NotNull final Element parentNode, @NotNull RefEntity refEntity, Predicate<? super CommonProblemDescriptor> isDescriptorExcluded);
   @NotNull
   QuickFixAction[] getQuickFixes(@NotNull RefEntity... refElements);
   @NotNull
@@ -92,8 +92,8 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   GlobalInspectionContextImpl getContext();
 
   void exportResults(@NotNull Element parentNode,
-                     @NotNull Predicate<RefEntity> isEntityExcluded,
-                     @NotNull Predicate<CommonProblemDescriptor> isProblemExcluded);
+                     @NotNull Predicate<? super RefEntity> isEntityExcluded,
+                     @NotNull Predicate<? super CommonProblemDescriptor> isProblemExcluded);
 
   @Nullable
   default JComponent getCustomPreviewPanel(@NotNull RefEntity entity) {

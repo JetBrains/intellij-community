@@ -180,7 +180,7 @@ public class VcsUtil {
   }
 
   @Nullable
-  private static <T> T computeValue(@NotNull Project project, @NotNull Function<ProjectLevelVcsManager, T> provider) {
+  private static <T> T computeValue(@NotNull Project project, @NotNull Function<? super ProjectLevelVcsManager, ? extends T> provider) {
     return ReadAction.compute(() -> {
       //  IDEADEV-17916, when e.g. ContentRevision.getContent is called in
       //  a future task after the component has been disposed.

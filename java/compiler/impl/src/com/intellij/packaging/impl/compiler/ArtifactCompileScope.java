@@ -133,7 +133,7 @@ public class ArtifactCompileScope {
   }
 
   private static void collectIncludedArtifacts(Artifact artifact, final PackagingElementResolvingContext context,
-                                               final Set<Artifact> processed, final Set<Artifact> result, final boolean withOutputPathOnly) {
+                                               final Set<? super Artifact> processed, final Set<? super Artifact> result, final boolean withOutputPathOnly) {
     if (!processed.add(artifact)) {
       return;
     }

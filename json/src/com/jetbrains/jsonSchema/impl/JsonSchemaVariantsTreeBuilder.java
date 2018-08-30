@@ -425,6 +425,10 @@ public class JsonSchemaVariantsTreeBuilder {
       return myName;
     }
 
+    public int getIdx() {
+      return myIdx;
+    }
+
     @NotNull
     public Pair<ThreeState, JsonSchemaObject> step(@NotNull JsonSchemaObject parent, boolean acceptAdditionalPropertiesSchemas) {
       if (myName != null) {

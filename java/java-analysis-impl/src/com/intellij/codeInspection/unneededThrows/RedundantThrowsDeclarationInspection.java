@@ -252,7 +252,7 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
 
     private void removeException(RefMethod refMethod,
                                  PsiType exceptionType,
-                                 List<PsiElement> refsToDelete,
+                                 List<? super PsiElement> refsToDelete,
                                  PsiMethod psiMethod) {
       ContainerUtil.addAll(refsToDelete, MethodThrowsFix.Remove.extractRefsToRemove(psiMethod, exceptionType));
 

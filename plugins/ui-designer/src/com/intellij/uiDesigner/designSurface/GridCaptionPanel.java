@@ -236,7 +236,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
   }
 
   @Override
-  public void selectedComponentChanged(GuiEditor source) {
+  public void selectedComponentChanged(@NotNull GuiEditor source) {
     checkSelectionChanged();
     repaint();
   }

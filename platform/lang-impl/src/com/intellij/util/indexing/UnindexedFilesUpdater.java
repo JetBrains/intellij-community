@@ -55,7 +55,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     myPusher = PushedFilePropertiesUpdater.getInstance(myProject);
     project.getMessageBus().connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         DumbService.getInstance(project).cancelTask(UnindexedFilesUpdater.this);
       }
     });

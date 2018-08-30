@@ -20,6 +20,7 @@ import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
@@ -66,11 +67,13 @@ public class FailedTestsNavigator implements OccurenceNavigator {
                              result.getDefectsCount());
   }
 
+  @NotNull
   @Override
   public String getNextOccurenceActionName() {
     return NEXT_NAME;
   }
 
+  @NotNull
   @Override
   public String getPreviousOccurenceActionName() {
     return PREVIOUS_NAME;

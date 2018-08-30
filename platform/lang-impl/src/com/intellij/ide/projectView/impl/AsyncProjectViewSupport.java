@@ -205,7 +205,7 @@ class AsyncProjectViewSupport {
     myStructureTreeModel.invalidate(path, structure);
   }
 
-  public void update(@NotNull List<TreePath> list, boolean structure) {
+  public void update(@NotNull List<? extends TreePath> list, boolean structure) {
     for (TreePath path : list) update(path, structure);
   }
 
@@ -224,7 +224,7 @@ class AsyncProjectViewSupport {
     acceptAndUpdate(AbstractProjectViewPane.createVisitor(element, file, path -> !list.add(path)), list, structure);
   }
 
-  private void acceptAndUpdate(TreeVisitor visitor, List<TreePath> list, boolean structure) {
+  private void acceptAndUpdate(TreeVisitor visitor, List<? extends TreePath> list, boolean structure) {
     if (visitor != null) {
       myAsyncTreeModel.accept(visitor, false)
                       .onSuccess(path -> update(list, structure));

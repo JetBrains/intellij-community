@@ -65,12 +65,12 @@ class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
   }
 
   private class Submission {
-    private final AsyncPromise<T> promise;
+    private final AsyncPromise<? super T> promise;
     @NotNull private final Executor backendExecutor;
     private volatile ProgressIndicator currentIndicator;
     private final ModalityState creationModality = ModalityState.defaultModalityState();
 
-    Submission(AsyncPromise<T> promise, @NotNull Executor backgroundThreadExecutor) {
+    Submission(AsyncPromise<? super T> promise, @NotNull Executor backgroundThreadExecutor) {
       this.promise = promise;
       backendExecutor = backgroundThreadExecutor;
       promise.onError(__ -> {
@@ -137,7 +137,7 @@ class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
       return false;
     }
 
-    void safeTransferToEdt(T result, Pair<ModalityState, Consumer<T>> edtFinish, ProgressIndicator indicator) {
+    void safeTransferToEdt(T result, Pair<? extends ModalityState, ? extends Consumer<T>> edtFinish, ProgressIndicator indicator) {
       if (Promises.isRejected(promise)) return;
 
       Semaphore semaphore = new Semaphore(1);

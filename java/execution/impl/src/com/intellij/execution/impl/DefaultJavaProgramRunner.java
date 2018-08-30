@@ -223,8 +223,9 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
         @Override
         public void startNotified(@NotNull ProcessEvent event) {
           // 1 second delay to allow jvm to start correctly
-          JobScheduler.getScheduler().schedule(
-            () -> myEnabled.set(JavaDebuggerAttachUtil.canAttach(myProcessHandler.getProcess())), 1, TimeUnit.SECONDS);
+          JobScheduler.getScheduler()
+            .schedule(() -> myEnabled.set(JavaDebuggerAttachUtil.canAttach(OSProcessUtil.getProcessID(myProcessHandler.getProcess()))),
+                      1, TimeUnit.SECONDS);
         }
 
         @Override
@@ -275,7 +276,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      myAttached.set(JavaDebuggerAttachUtil.attach(myProcessHandler.getProcess(), e.getProject()));
+      myAttached.set(JavaDebuggerAttachUtil.attach(OSProcessUtil.getProcessID(myProcessHandler.getProcess()), e.getProject()));
     }
 
     public static void add(RunContentBuilder contentBuilder, ProcessHandler processHandler) {

@@ -278,8 +278,8 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
     }
 
     protected static class EntryWrapper<K, V> implements Entry<K, V> {
-      final Entry<K, V> myEntry;
-      private EntryWrapper(Entry<K, V> entry) {
+      final Entry<? extends K, V> myEntry;
+      private EntryWrapper(Entry<? extends K, V> entry) {
         myEntry = entry;
       }
 

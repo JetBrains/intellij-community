@@ -167,14 +167,14 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
     myManager.addContentManagerListener(new ContentManagerListener() {
       @Override
-      public void contentAdded(final ContentManagerEvent event) {
+      public void contentAdded(@NotNull final ContentManagerEvent event) {
         getCurrentLayout().contentAdded(event);
         event.getContent().addPropertyChangeListener(ToolWindowContentUi.this);
         rebuild();
       }
 
       @Override
-      public void contentRemoved(final ContentManagerEvent event) {
+      public void contentRemoved(@NotNull final ContentManagerEvent event) {
         event.getContent().removePropertyChangeListener(ToolWindowContentUi.this);
         getCurrentLayout().contentRemoved(event);
         ensureSelectedContentVisible();
@@ -182,11 +182,11 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       }
 
       @Override
-      public void contentRemoveQuery(final ContentManagerEvent event) {
+      public void contentRemoveQuery(@NotNull final ContentManagerEvent event) {
       }
 
       @Override
-      public void selectionChanged(final ContentManagerEvent event) {
+      public void selectionChanged(@NotNull final ContentManagerEvent event) {
         ensureSelectedContentVisible();
 
         update();

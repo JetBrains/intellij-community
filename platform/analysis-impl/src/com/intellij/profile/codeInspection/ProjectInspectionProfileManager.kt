@@ -85,7 +85,7 @@ class ProjectInspectionProfileManager(val project: Project,
   override val schemeManager: SchemeManager<InspectionProfileImpl> = schemeManagerFactory.create("inspectionProfiles", object : InspectionProfileProcessor() {
     override fun createScheme(dataHolder: SchemeDataHolder<InspectionProfileImpl>,
                               name: String,
-                              attributeProvider: Function<String, String?>,
+                              attributeProvider: Function<in String, String?>,
                               isBundled: Boolean): InspectionProfileImpl {
       val profile = InspectionProfileImpl(name, InspectionToolRegistrar.getInstance(), this@ProjectInspectionProfileManager, dataHolder)
       profile.isProjectLevel = true

@@ -589,7 +589,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
   private class MyProjectListener implements ProjectManagerListener {
     @Override
-    public void projectOpened(final Project project) {
+    public void projectOpened(@NotNull final Project project) {
       String path = getProjectPath(project);
       if (path != null) {
         markPathRecent(path, project);
@@ -604,7 +604,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     }
 
     @Override
-    public void projectClosing(Project project) {
+    public void projectClosing(@NotNull Project project) {
       String path = getProjectPath(project);
       if (path == null) return;
 

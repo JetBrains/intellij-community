@@ -194,7 +194,7 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
       final PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(project);
       runner.addConsoleListener(new PydevConsoleRunner.ConsoleListener() {
         @Override
-        public void handleConsoleInitialized(LanguageConsoleView consoleView) {
+        public void handleConsoleInitialized(@NotNull LanguageConsoleView consoleView) {
           if (consoleView instanceof PyCodeExecutor) {
             ((PyCodeExecutor)consoleView).executeCode(runFileText, null);
             if (toolWindow != null) {
