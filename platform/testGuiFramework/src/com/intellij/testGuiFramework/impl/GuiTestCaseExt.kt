@@ -176,7 +176,7 @@ fun GuiTestCase.gradleReimport() {
     toolwindow(id = "Gradle") {
       content(tabName = "") {
         waitAMoment()
-        actionButton("Refresh all external projects").click()
+        actionButton("Refresh all external projects", timeout = Timeouts.minutes05).click()
       }
     }
   }
