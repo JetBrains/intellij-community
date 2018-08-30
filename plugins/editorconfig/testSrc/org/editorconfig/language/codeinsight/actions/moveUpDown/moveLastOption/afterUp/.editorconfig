@@ -1,0 +1,4 @@
+[foo]
+hello=world
+bar=bas<caret>
+key=value

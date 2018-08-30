@@ -1,0 +1,10 @@
+[foo]
+<fold text='...'>charset=utf-8
+charset=utf-17
+<fold text='; this...'>; this
+; is
+; comment
+; to
+; be
+; folded</fold>
+charset=utf-32</fold>

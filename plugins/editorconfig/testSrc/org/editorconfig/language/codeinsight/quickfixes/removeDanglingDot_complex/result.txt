@@ -1,0 +1,2 @@
+[foo]
+hello.world = world
