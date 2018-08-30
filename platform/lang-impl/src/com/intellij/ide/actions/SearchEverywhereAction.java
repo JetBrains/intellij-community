@@ -115,6 +115,7 @@ import java.util.List;
 import java.util.Vector;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
@@ -1941,15 +1942,19 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     protected boolean isEnabled(final AnAction action) {
       AnActionEvent event = myActionEvent;
       if (myDisabledActions.contains(action) || event == null) return false;
-      final AnActionEvent e = new AnActionEvent(event.getInputEvent(),
-                                                event.getDataContext(),
-                                                event.getPlace(),
-                                                action.getTemplatePresentation().clone(),
-                                                event.getActionManager(),
-                                                event.getModifiers());
 
-      ApplicationManager.getApplication().invokeAndWait(() -> ActionUtil.performDumbAwareUpdate(action, e, false), ModalityState.NON_MODAL);
-      final Presentation presentation = e.getPresentation();
+      AtomicReference<Presentation> presentationReference= new AtomicReference<>();
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        AnActionEvent e = new AnActionEvent(event.getInputEvent(),
+                                            DataManager.getInstance().getDataContext(myContextComponent),
+                                            event.getPlace(),
+                                            action.getTemplatePresentation().clone(),
+                                            event.getActionManager(),
+                                            event.getModifiers());
+        ActionUtil.performDumbAwareUpdate(action, e, false);
+        presentationReference.set(e.getPresentation());
+      }, ModalityState.NON_MODAL);
+      final Presentation presentation = presentationReference.get();
       final boolean enabled = presentation.isEnabled() && presentation.isVisible() && !StringUtil.isEmpty(presentation.getText());
       if (!enabled) {
         myDisabledActions.add(action);
