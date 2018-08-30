@@ -700,7 +700,8 @@ fun KotlinGuiTestCase.createKotlinMPProject(
   projectPath: String,
   moduleName: String,
   mppProjectStructure: NewProjectDialogModel.MppProjectStructure,
-  setOfMPPModules: Set<KotlinKind>
+  setOfMPPModules: Set<KotlinKind>,
+  kotlinPluginVersion: String
 ) {
   assert(setOfMPPModules.contains(KotlinKind.Common)) { "At least common MPP module should be specified" }
   logTestStep("Create new MPP (deprecated) project with modules $setOfMPPModules")
@@ -711,6 +712,7 @@ fun KotlinGuiTestCase.createKotlinMPProject(
     moduleName = moduleName,
     mppProjectStructure = mppProjectStructure,
     isJvmIncluded = setOfMPPModules.contains(KotlinKind.JVM),
-    isJsIncluded = setOfMPPModules.contains(KotlinKind.JS)
+    isJsIncluded = setOfMPPModules.contains(KotlinKind.JS),
+    kotlinPluginVersion = kotlinPluginVersion
   )
 }

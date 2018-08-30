@@ -39,6 +39,7 @@ import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Consta
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.groupSpringInitializer
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.groupStaticWeb
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.itemKotlinMppDeprecated
+import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.itemKotlinMppExperimental
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.progressLoadingTemplates
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.progressSearchingForAppServerLibraries
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textApplicationServer
@@ -114,6 +115,8 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
     const val libJBossDrools = "JBoss Drools"
     const val libWebApplication = "Web Application"
     const val itemKotlinMppDeprecated = "Kotlin (Multiplatform - Deprecated)"
+    const val itemKotlinMppExperimental = "Kotlin (Multiplatform - Experimental)"
+    const val itemKotlinMppWeb = "Kotlin (Multiplatform - Web)"
   }
 
   enum class Groups(private val title: String) {
@@ -439,13 +442,17 @@ fun NewProjectDialogModel.createKotlinMPProject(
   moduleName: String,
   mppProjectStructure: NewProjectDialogModel.MppProjectStructure,
   isJvmIncluded: Boolean = true,
-  isJsIncluded: Boolean = true
+  isJsIncluded: Boolean = true,
+  kotlinPluginVersion: String
 ) {
   with(guiTestCase) {
     with(connectDialog()) {
       selectProjectGroup(NewProjectDialogModel.Groups.Kotlin)
       logUIStep("Select `$itemKotlinMppDeprecated` kind of project")
-      jList(itemKotlinMppDeprecated).clickItem(itemKotlinMppDeprecated)
+      if(kotlinPluginVersion >= "1.3")
+        jList(itemKotlinMppDeprecated).clickItem(itemKotlinMppDeprecated)
+      else
+        jList(itemKotlinMppExperimental).clickItem(itemKotlinMppExperimental)
       button(buttonNext).click()
       val cmb = combobox(comboProjectStructure)
       logUIStep("Select MP project hierarchy kind: `$mppProjectStructure`")

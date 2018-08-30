@@ -26,7 +26,8 @@ class CreateKotlinMPProjectGuiTestDeprecated : KotlinGuiTestCase() {
       projectPath = projectFolder,
       moduleName = projectName,
       mppProjectStructure = NewProjectDialogModel.MppProjectStructure.HierarchicalStructure,
-      setOfMPPModules = MPPModules.mppFullSet()
+      setOfMPPModules = MPPModules.mppFullSet(),
+      kotlinPluginVersion = versionFromPlugin.toString()
     )
     waitAMoment(extraTimeOut)
     editSettingsGradle()
@@ -86,7 +87,8 @@ class CreateKotlinMPProjectGuiTestDeprecated : KotlinGuiTestCase() {
       projectPath = projectFolder,
       moduleName = projectName,
       mppProjectStructure = NewProjectDialogModel.MppProjectStructure.FlatStructure,
-      setOfMPPModules = MPPModules.mppFullSet()
+      setOfMPPModules = MPPModules.mppFullSet(),
+      kotlinPluginVersion = versionFromPlugin.toString()
     )
     waitAMoment(extraTimeOut)
     editSettingsGradle()
