@@ -465,7 +465,7 @@ public class PluginManagerConfigurableNew
   public void disposeUIResources() {
     myPluginsModel.toBackground();
     Disposer.dispose(mySearchUpdateAlarm);
-    myTrendingSearchPanel.loading(false);
+    myTrendingSearchPanel.dispose();
 
     if (myShutdownCallback != null) {
       myShutdownCallback.run();
@@ -575,7 +575,7 @@ public class PluginManagerConfigurableNew
       new PluginsGroupComponentWithProgress(new PluginsGridLayout(), EventHandler.EMPTY, myNameListener, mySearchListener,
                                             descriptor -> new GridCellPluginComponent(myPluginsModel, descriptor, myTagBuilder));
     panel.getEmptyText().setText("Trending plugins are not loaded.")
-      .appendSecondaryText("Check the interner connection.", StatusText.DEFAULT_ATTRIBUTES, null);
+      .appendSecondaryText("Check the internet connection.", StatusText.DEFAULT_ATTRIBUTES, null);
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       List<PluginsGroup> groups = new ArrayList<>();
@@ -607,6 +607,7 @@ public class PluginManagerConfigurableNew
       finally {
         ApplicationManager.getApplication().invokeLater(() -> {
           panel.stopLoading();
+          panel.dispose();
 
           for (PluginsGroup group : groups) {
             panel.addGroup(group);
@@ -693,6 +694,7 @@ public class PluginManagerConfigurableNew
 
       ApplicationManager.getApplication().invokeLater(() -> {
         panel.stopLoading();
+        panel.dispose();
 
         if (ContainerUtil.isEmpty(updates)) {
           myUpdatesTabName.setCount(0);
@@ -940,6 +942,9 @@ public class PluginManagerConfigurableNew
           }
           catch (IOException e) {
             PluginManagerMain.LOG.info(e);
+
+            ApplicationManager.getApplication().invokeLater(() -> myPanel.getEmptyText().setText("Search result are not loaded.")
+              .appendSecondaryText("Check the internet connection.", StatusText.DEFAULT_ATTRIBUTES, null), ModalityState.any());
           }
         }
       };

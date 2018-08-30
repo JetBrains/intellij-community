@@ -33,7 +33,7 @@ public class PluginsGroupComponentWithProgress extends PluginsGroupComponent {
   @Override
   public void removeNotify() {
     super.removeNotify();
-    if (myIcon != null && ScreenUtil.isStandardAddRemoveNotify(this)) {
+    if (ScreenUtil.isStandardAddRemoveNotify(this)) {
       dispose();
     }
   }
@@ -68,17 +68,18 @@ public class PluginsGroupComponentWithProgress extends PluginsGroupComponent {
     if (myIcon != null) {
       myIcon.suspend();
       myIcon.setVisible(false);
-      dispose();
       doLayout();
       revalidate();
       repaint();
     }
   }
 
-  private void dispose() {
-    remove(myIcon);
-    Disposer.dispose(myIcon);
-    myIcon = null;
+  public void dispose() {
+    if (myIcon != null) {
+      remove(myIcon);
+      Disposer.dispose(myIcon);
+      myIcon = null;
+    }
   }
 
   private static class CenteredIcon extends AsyncProcessIcon.Big {
