@@ -162,11 +162,13 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     toolWindow.setTitleActions(new AnAction[]{new ScrollFromSourceAction(), collapseAction});
   }
 
+  @NotNull
   @Override
   public String getTitle() {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
   public Icon getIcon() {
     return myDescriptor.getFramework().getIcon();
@@ -188,6 +190,7 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
   public SelectInTarget createSelectInTarget() {
     throw new UnsupportedOperationException();

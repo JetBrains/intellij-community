@@ -1806,6 +1806,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   private static class SelectionInfo {
+    @NotNull
     private final Object[] myElements;
 
     private SelectionInfo(@NotNull Object[] elements) {

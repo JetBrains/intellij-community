@@ -49,10 +49,11 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   private AsyncProjectViewSupport myAsyncSupport;
   private JScrollPane myComponent;
 
-  protected AbstractProjectViewPSIPane(Project project) {
+  protected AbstractProjectViewPSIPane(@NotNull Project project) {
     super(project);
   }
 
+  @NotNull
   @Override
   public JComponent createComponent() {
     if (myComponent != null) {

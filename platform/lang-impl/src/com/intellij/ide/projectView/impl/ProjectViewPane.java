@@ -53,6 +53,7 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
     super(project);
   }
 
+  @NotNull
   @Override
   public String getTitle() {
     return IdeBundle.message("title.project");
@@ -64,12 +65,14 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
     return ID;
   }
 
+  @NotNull
   @Override
   public Icon getIcon() {
     return AllIcons.General.ProjectTab;
   }
 
 
+  @NotNull
   @Override
   public SelectInTarget createSelectInTarget() {
     return new ProjectPaneSelectInTarget(myProject);
@@ -130,7 +133,7 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
   }
 
   @Override
-  public void addToolbarActions(DefaultActionGroup actionGroup) {
+  public void addToolbarActions(@NotNull DefaultActionGroup actionGroup) {
     //if there is a single content root in the project containing all other content roots (it's a rather common case) there will be no
     // special module nodes so it's better to hide 'Flatten Modules' action to avoid confusion
     actionGroup.addAction(createFlattenModulesAction(this::hasSeveralTopLevelModuleNodes)).setAsSecondary(true);

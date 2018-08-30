@@ -86,11 +86,13 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
     myFavoritesManager.addFavoritesListener(favoritesListener, this);
   }
 
+  @NotNull
   @Override
   public String getTitle() {
     return "Favorites";
   }
 
+  @NotNull
   @Override
   public Icon getIcon() {
     return AllIcons.Toolwindows.ToolWindowFavorites;
@@ -102,6 +104,7 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
     return ID;
   }
 
+  @NotNull
   @Override
   public JComponent createComponent() {
     //if (myViewPanel != null) return myViewPanel;
@@ -172,6 +175,7 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
     return 4;
   }
 
+  @NotNull
   @Override
   public SelectInTarget createSelectInTarget() {
     return new FavoritesViewSelectInTarget(myProject);

@@ -53,11 +53,13 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
     super(project);
   }
 
+  @NotNull
   @Override
   public String getTitle() {
     return IdeBundle.message("title.packages");
   }
 
+  @NotNull
   @Override
   public Icon getIcon() {
     return AllIcons.Nodes.CopyOfFolder;
@@ -181,7 +183,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
   }
 
   @Override
-  public void addToolbarActions(DefaultActionGroup actionGroup) {
+  public void addToolbarActions(@NotNull DefaultActionGroup actionGroup) {
     actionGroup.addAction(new ShowModulesAction(myProject, ID)).setAsSecondary(true);
     actionGroup.addAction(createFlattenModulesAction(() -> true)).setAsSecondary(true);
     actionGroup.addAction(new ShowLibraryContentsAction()).setAsSecondary(true);
@@ -195,6 +197,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
     return new PackageViewTreeUpdater(treeBuilder);
   }
 
+  @NotNull
   @Override
   public SelectInTarget createSelectInTarget() {
     return new PackagesPaneSelectInTarget(myProject);
