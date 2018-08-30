@@ -40,6 +40,7 @@ import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Consta
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.groupStaticWeb
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.itemKotlinMppDeprecated
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.itemKotlinMppExperimental
+import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.itemKotlinMppWeb
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.progressLoadingTemplates
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.progressSearchingForAppServerLibraries
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textApplicationServer
@@ -481,6 +482,26 @@ fun NewProjectDialogModel.createKotlinMPProjectDeprecated(
       textfield(textProjectLocation).click()
       shortcut(Modifier.CONTROL + Key.A, Modifier.META + Key.A)
       typeText(projectPath)
+      button(buttonFinish).click()
+    }
+  }
+}
+
+fun NewProjectDialogModel.createKotlinMPProjectWeb(
+  projectPath: String
+) {
+  with(guiTestCase) {
+    with(connectDialog()) {
+      selectProjectGroup(NewProjectDialogModel.Groups.Kotlin)
+      logUIStep("Select `$itemKotlinMppWeb` kind of project")
+      jList(itemKotlinMppWeb).clickItem(itemKotlinMppWeb)
+      button(buttonNext).click()
+      button(buttonNext).click()
+      logUIStep("Fill Project location with `$projectPath`")
+      textfield(textProjectLocation).click()
+      shortcut(Modifier.CONTROL + Key.X, Modifier.META + Key.X)
+      typeText(projectPath)
+      logUIStep("Close New Project dialog with Finish")
       button(buttonFinish).click()
     }
   }

@@ -64,6 +64,7 @@ class KotlinCreateProjectGuiTestSuite : GuiTestSuite() {
     , CreateGradleKotlinDslProjectAndConfigureKotlinGuiTest::class
     , CreateGradleKotlinDslProjectWithKotlinGuiTest::class
     , CreateKotlinMPProjectGuiTestDeprecated::class
+    , CreateKotlinMPProjectWebGuiTest::class
     , CreateJavaProjectAndConfigureKotlinGuiTest::class
     , CreateJavaProjectWithKotlinGuiTest::class // attempt to find a workaround to failing java_with_jvm test when it runs first ever time
     , CreateMavenProjectWithKotlinGuiTest::class

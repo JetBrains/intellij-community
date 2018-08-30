@@ -717,3 +717,14 @@ fun KotlinGuiTestCase.createKotlinMPProjectDeprecated(
     kotlinPluginVersion = kotlinPluginVersion
   )
 }
+
+fun KotlinGuiTestCase.createKotlinMPProjectWeb(
+  projectPath: String
+) {
+  logTestStep("Create new MPP (web) project")
+  welcomePageDialogModel.createNewProject()
+  newProjectDialogModel.assertGroupPresent(NewProjectDialogModel.Groups.Kotlin)
+  newProjectDialogModel.createKotlinMPProjectWeb(
+    projectPath = projectPath
+  )
+}
