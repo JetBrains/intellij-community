@@ -1073,10 +1073,8 @@ elvis_expression ::= expression mb_nl ('?:' mb_nl) expression
 }
 
 private priority15 ::= assignment_expression | tuple_assignment_expression
-assignment_expression ::= expression (<<assignmentOperator>> mb_nl) expression application*
-{
-  rightAssociative = true
-}
+assignment_expression ::= expression assignment_expression_rvalue { rightAssociative = true }
+private assignment_expression_rvalue ::= (<<assignmentOperator>> mb_nl) expression_or_application { pin = 1 }
 
 tuple_assignment_expression ::= single_tuple_assignment | multi_tuple_assignment
 private single_tuple_assignment ::= single_tuple tuple_initializer // don't pin because "(foo)" may be a parenthesized expression
