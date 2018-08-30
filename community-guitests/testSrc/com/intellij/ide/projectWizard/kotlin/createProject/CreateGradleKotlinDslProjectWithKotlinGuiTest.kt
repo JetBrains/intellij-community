@@ -36,7 +36,6 @@ class CreateGradleKotlinDslProjectWithKotlinGuiTest : KotlinGuiTestCase() {
      project: ProjectProperties,
      expectedFacet: FacetStructure) {
     val groupName = "group_gradle"
-    val extraTimeOut = 4000L
     createGradleProject(
       projectPath = projectFolder,
       gradleOptions = NewProjectDialogModel.GradleProjectOptions(
@@ -46,13 +45,14 @@ class CreateGradleKotlinDslProjectWithKotlinGuiTest : KotlinGuiTestCase() {
         framework = project.frameworkName
       )
     )
-    waitAMoment(extraTimeOut)
-    waitAMoment(extraTimeOut)
+    waitAMoment()
+    waitForGradleReimport(projectName)
     editSettingsGradle()
     editBuildGradle(
       kotlinVersion = kotlinVersion,
       isKotlinDslUsed = true
     )
+     waitAMoment()
     gradleReimport()
      waitForGradleReimport(projectName)
      waitAMoment()
