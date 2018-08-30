@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations
 
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NotNullLazyValue
 import com.intellij.util.ArrayUtil
 import com.intellij.util.LazyUtil
@@ -42,20 +44,49 @@ abstract class ConfigurationTypeBase protected constructor(private val id: Strin
     factories = ArrayUtil.append(factories, factory)
   }
 
-  override fun getDisplayName(): String = displayName
+  override fun getDisplayName() = displayName
 
-  override final fun getConfigurationTypeDescription(): String = description
+  override final fun getConfigurationTypeDescription() = description
 
   // open due to backward compatibility
   /**
    * DO NOT override
    */
-  override fun getIcon(): Icon? = icon?.value
+  override fun getIcon() = icon?.value
 
-  override final fun getId(): String = id
+  override final fun getId() = id
 
   /**
    * DO NOT override
    */
-  override fun getConfigurationFactories(): Array<ConfigurationFactory> = factories
+  override fun getConfigurationFactories() = factories
+}
+
+abstract class SimpleConfigurationType protected constructor(private val id: String,
+                                                             private val name: String,
+                                                             description: String? = null,
+                                                             private val icon: NotNullLazyValue<Icon>) : ConfigurationType {
+  private var description = description.nullize() ?: name
+  @Suppress("LeakingThis")
+  val factory: ConfigurationFactory = object : ConfigurationFactory(this) {
+    override fun createTemplateConfiguration(project: Project): RunConfiguration {
+      return this@SimpleConfigurationType.createTemplateConfiguration(project)
+    }
+  }
+
+  private var factories = arrayOf(factory)
+
+  protected abstract fun createTemplateConfiguration(project: Project): RunConfiguration
+
+  protected open fun getOptionsClass(): Class<out BaseState>? = null
+
+  override final fun getId() = id
+
+  override final fun getDisplayName() = name
+
+  override final fun getConfigurationTypeDescription() = description
+
+  override final fun getIcon() = icon.value
+
+  override final fun getConfigurationFactories(): Array<ConfigurationFactory> = factories
 }
