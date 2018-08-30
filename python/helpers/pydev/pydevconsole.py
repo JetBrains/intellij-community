@@ -77,7 +77,7 @@ except:
     pass
 
 # Pull in runfile, the interface to UMD that wraps execfile
-from _pydev_bundle.pydev_umd import runfile
+from _pydev_bundle.pydev_umd import runfile, _set_globals_function
 
 if sys.version_info[0] >= 3:
     import builtins  # @UnresolvedImport
@@ -341,10 +341,8 @@ def start_client(host, port):
 
     # we do not need to start the server in a new thread because it does not need to accept a client connection, it already has it
 
-
-    # todo do we need the following:
     # # Tell UMD the proper default namespace
-    # _set_globals_function(interpreter.get_namespace)
+    _set_globals_function(interpreter.get_namespace)
 
     server_service = PythonConsoleBackendService
 
