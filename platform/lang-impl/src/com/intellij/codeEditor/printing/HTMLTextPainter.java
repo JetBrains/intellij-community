@@ -13,10 +13,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
@@ -77,8 +74,11 @@ public class HTMLTextPainter {
   private HTMLTextPainter(@NotNull PsiElement context, @NotNull String codeFragment) {
     myProject = context.getProject();
     myPsiFile = context.getContainingFile();
+    if (myPsiFile == null) {
+      throw new PsiInvalidElementAccessException(context, "Bad context: no container file");
+    }
 
-    this.htmlStyleManager = new HtmlStyleManager(true);
+    htmlStyleManager = new HtmlStyleManager(true);
     myPrintLineNumbers = false;
     myHighlighter = HighlighterFactory.createHighlighter(myProject, myPsiFile.getFileType());
 
@@ -384,13 +384,12 @@ public class HTMLTextPainter {
    */
   @NotNull
   public static String convertCodeFragmentToHTMLFragmentWithInlineStyles(@NotNull PsiElement context, @NotNull String codeFragment) {
-    HTMLTextPainter textPainter = new HTMLTextPainter(context, codeFragment);
     try {
       StringWriter writer = new StringWriter();
-      textPainter.paint(null, writer, false);
+      new HTMLTextPainter(context, codeFragment).paint(null, writer, false);
       return writer.toString();
     }
-    catch (IOException e) {
+    catch (IOException | PsiInvalidElementAccessException e) {
       LOG.error(e);
       return String.format("<pre>%s</pre>\n", codeFragment);
     }
