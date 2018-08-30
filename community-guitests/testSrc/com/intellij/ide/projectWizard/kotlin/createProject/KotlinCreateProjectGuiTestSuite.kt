@@ -57,13 +57,13 @@ class KotlinCreateProjectGuiTestSuite : GuiTestSuite() {
   @RunWith(Suite::class)
   @RunWithIde(CommunityIde::class)
   @Suite.SuiteClasses(
-     CreateKotlinProjectGuiTest::class
+    CreateKotlinProjectGuiTest::class
     , CreateGradleProjectAndConfigureKotlinGuiTest::class
     , CreateGradleProjectAndConfigureOldKotlinGuiTest::class
     , CreateGradleProjectWithKotlinGuiTest::class
     , CreateGradleKotlinDslProjectAndConfigureKotlinGuiTest::class
     , CreateGradleKotlinDslProjectWithKotlinGuiTest::class
-    , CreateKotlinMPProjectGuiTest::class
+    , CreateKotlinMPProjectGuiTestDeprecated::class
     , CreateJavaProjectAndConfigureKotlinGuiTest::class
     , CreateJavaProjectWithKotlinGuiTest::class // attempt to find a workaround to failing java_with_jvm test when it runs first ever time
     , CreateMavenProjectWithKotlinGuiTest::class

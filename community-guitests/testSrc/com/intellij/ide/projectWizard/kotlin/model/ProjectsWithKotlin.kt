@@ -702,7 +702,7 @@ fun KotlinGuiTestCase.createKotlinMPProject(
   setOfMPPModules: Set<KotlinKind>
 ) {
   assert(setOfMPPModules.contains(KotlinKind.Common)) { "At least common MPP module should be specified" }
-  logTestStep("Create new MPP project with modules $setOfMPPModules")
+  logTestStep("Create new MPP (deprecated) project with modules $setOfMPPModules")
   welcomePageDialogModel.createNewProject()
   newProjectDialogModel.assertGroupPresent(NewProjectDialogModel.Groups.Kotlin)
   newProjectDialogModel.createKotlinMPProject(

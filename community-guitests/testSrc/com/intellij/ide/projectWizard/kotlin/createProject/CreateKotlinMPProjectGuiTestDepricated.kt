@@ -10,7 +10,7 @@ import com.intellij.testGuiFramework.util.scenarios.projectStructureDialogModel
 import com.intellij.testGuiFramework.util.scenarios.projectStructureDialogScenarios
 import org.junit.Test
 
-class CreateKotlinMPProjectGuiTest : KotlinGuiTestCase() {
+class CreateKotlinMPProjectGuiTestDeprecated : KotlinGuiTestCase() {
   @Test
   @JvmName("kotlin_mpp_hierarchical")
   fun createKotlinMppProjectCommonRoot() {

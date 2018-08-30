@@ -38,7 +38,7 @@ import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Consta
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.groupSpring
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.groupSpringInitializer
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.groupStaticWeb
-import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.itemKotlinMpp
+import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.itemKotlinMppDeprecated
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.progressLoadingTemplates
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.progressSearchingForAppServerLibraries
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textApplicationServer
@@ -113,7 +113,7 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
     const val libArquillianTestNG = "Arquillian TestNG"
     const val libJBossDrools = "JBoss Drools"
     const val libWebApplication = "Web Application"
-    const val itemKotlinMpp = "Kotlin (Multiplatform - Experimental)"
+    const val itemKotlinMppDeprecated = "Kotlin (Multiplatform - Deprecated)"
   }
 
   enum class Groups(private val title: String) {
@@ -444,8 +444,8 @@ fun NewProjectDialogModel.createKotlinMPProject(
   with(guiTestCase) {
     with(connectDialog()) {
       selectProjectGroup(NewProjectDialogModel.Groups.Kotlin)
-      logUIStep("Select `$itemKotlinMpp` kind of project")
-      jList(itemKotlinMpp).clickItem(itemKotlinMpp)
+      logUIStep("Select `$itemKotlinMppDeprecated` kind of project")
+      jList(itemKotlinMppDeprecated).clickItem(itemKotlinMppDeprecated)
       button(buttonNext).click()
       val cmb = combobox(comboProjectStructure)
       logUIStep("Select MP project hierarchy kind: `$mppProjectStructure`")
