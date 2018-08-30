@@ -4,7 +4,6 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.DarculaTitleButtons;
-import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.HelpAction;
 import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.ResizableDarculaTitleButtons;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
@@ -36,7 +35,6 @@ public class DarculaTitlePane extends JPanel {
   private Action myIconifyAction;
   private Action myRestoreAction;
   private Action myMaximizeAction;
-  private HelpAction myHelpAction;
   private WindowListener myWindowListener;
   private Window myWindow;
   private final JRootPane myRootPane;
@@ -142,7 +140,7 @@ public class DarculaTitlePane extends JPanel {
       createActions();
       buttonPanes = ResizableDarculaTitleButtons.Companion.create(myCloseAction,
                                                                   myRestoreAction, myIconifyAction,
-                                                                  myMaximizeAction, myHelpAction);
+                                                                  myMaximizeAction);
       myMenuBar = createMenuBar();
       add(myMenuBar);
       if (myRootPane instanceof IdeRootPane) {
@@ -165,7 +163,7 @@ public class DarculaTitlePane extends JPanel {
       createActions();
       // titleLabel.setIcon(mySystemIcon);
       add(titleLabel, "growx");
-      buttonPanes = DarculaTitleButtons.Companion.create(myCloseAction, myHelpAction);
+      buttonPanes = DarculaTitleButtons.Companion.create(myCloseAction);
       add(buttonPanes.getView());
     }
   }
@@ -279,7 +277,6 @@ public class DarculaTitlePane extends JPanel {
 
   private void createActions() {
     myCloseAction = new CloseAction();
-    myHelpAction = new HelpAction(this);
 
     if (getWindowDecorationStyle() == JRootPane.FRAME) {
       myIconifyAction = new IconifyAction();
