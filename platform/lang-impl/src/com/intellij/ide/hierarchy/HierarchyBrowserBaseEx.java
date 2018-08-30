@@ -226,10 +226,15 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       //noinspection Duplicates
       tree = new DnDAwareTree(new DefaultTreeModel(new DefaultMutableTreeNode(""))) {
         @Override
+        public void addNotify() {
+          super.addNotify();
+          myRefreshAction.registerShortcutOn(this);
+        }
+
+        @Override
         public void removeNotify() {
           super.removeNotify();
-          if (ScreenUtil.isStandardAddRemoveNotify(this))
-            myRefreshAction.unregisterCustomShortcutSet(this);
+          myRefreshAction.unregisterCustomShortcutSet(this);
         }
 
         @Override
@@ -289,10 +294,15 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       //noinspection Duplicates
       tree = new Tree(new DefaultTreeModel(new DefaultMutableTreeNode("")))  {
         @Override
+        public void addNotify() {
+          super.addNotify();
+          myRefreshAction.registerShortcutOn(this);
+        }
+
+        @Override
         public void removeNotify() {
           super.removeNotify();
-          if (ScreenUtil.isStandardAddRemoveNotify(this))
-            myRefreshAction.unregisterCustomShortcutSet(this);
+          myRefreshAction.unregisterCustomShortcutSet(this);
         }
 
         @Override
@@ -310,8 +320,6 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     configureTree(tree);
     EditSourceOnDoubleClickHandler.install(tree);
     EditSourceOnEnterKeyHandler.install(tree);
-    myRefreshAction.registerShortcutOn(tree);
-
     return tree;
   }
 
