@@ -1576,16 +1576,6 @@ public class UIUtil {
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
-  public static boolean isUnderWindowsLookAndFeel() {
-    return SystemInfo.isWindows && UIManager.getLookAndFeel().getName().equals("Windows");
-  }
-
-  @SuppressWarnings("HardCodedStringLiteral")
-  public static boolean isUnderWindowsClassicLookAndFeel() {
-    return UIManager.getLookAndFeel().getName().equals("Windows Classic");
-  }
-
-  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderAquaLookAndFeel() {
     return SystemInfo.isMac && UIManager.getLookAndFeel().getName().contains("Mac OS X");
   }

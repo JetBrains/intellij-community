@@ -181,11 +181,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
 
   private void updateFont() {
     if (myTextArea != null) {
-      if (UIUtil.isUnderWindowsLookAndFeel()) {
-        myTextArea.setFont(UIManager.getFont("TextField.font"));
-      } else {
-        Utils.setSmallerFont(myTextArea);
-      }
+      Utils.setSmallerFont(myTextArea);
     }
   }
 

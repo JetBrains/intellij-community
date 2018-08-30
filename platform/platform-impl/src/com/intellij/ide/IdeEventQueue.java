@@ -61,8 +61,8 @@ import java.awt.event.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -738,22 +738,8 @@ public class IdeEventQueue extends EventQueue {
   }
 
   private static void fixStickyAlt(@NotNull AWTEvent e) {
-    if (Registry.is("actionSystem.win.suppressAlt.new")) {
-      if (UIUtil.isUnderWindowsLookAndFeel() &&
-          e instanceof InputEvent &&
-          (((InputEvent)e).getModifiers() & (InputEvent.ALT_MASK | InputEvent.ALT_DOWN_MASK)) != 0 &&
-          !(e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT)) {
-        try {
-          if (FieldHolder.ourStickyAltField != null) {
-            FieldHolder.ourStickyAltField.set(null, true);
-          }
-        }
-        catch (Exception exception) {
-          LOG.error(exception);
-        }
-      }
-    }
-    else if (SystemInfo.isWinXpOrNewer && !SystemInfo.isWinVistaOrNewer && e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT) {
+    if (!Registry.is("actionSystem.win.suppressAlt.new") &&
+      SystemInfo.isWinXpOrNewer && !SystemInfo.isWinVistaOrNewer && e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT) {
       ((KeyEvent)e).consume();  // IDEA-17359
     }
   }
