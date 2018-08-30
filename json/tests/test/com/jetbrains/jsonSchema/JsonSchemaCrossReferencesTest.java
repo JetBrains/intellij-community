@@ -12,6 +12,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -260,11 +261,11 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
         Assert.assertNotNull(referenceAt);
         final PsiElement resolve = referenceAt.resolve();
         Assert.assertNotNull(resolve);
-        Assert.assertEquals("{\n" +
+        Assert.assertTrue(StringUtil.equalsIgnoreWhitespaces("{\n" +
                             "            \"type\": \"array\",\n" +
                             "            \"minItems\": 1,\n" +
                             "            \"uniqueItems\": true\n" +
-                            "        }", resolve.getText());
+                            "        }", resolve.getText()));
       }
     });
   }
@@ -663,10 +664,10 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       Assert.assertEquals("#/definitions/" + positiveOrNonNegative, reference.getCanonicalText());
       final PsiElement resolve = reference.resolve();
       Assert.assertNotNull(resolve);
-      Assert.assertEquals("{\n" +
+      Assert.assertTrue(StringUtil.equalsIgnoreWhitespaces("{\n" +
                           "            \"type\": \"integer\",\n" +
                           "            \"minimum\": 0\n" +
-                          "        }", resolve.getText());
+                          "        }", resolve.getText()));
       Assert.assertTrue(resolve.getParent() instanceof JsonProperty);
       Assert.assertEquals(positiveOrNonNegative, ((JsonProperty)resolve.getParent()).getName());
     }
