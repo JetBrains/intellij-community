@@ -948,7 +948,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // IDENTIFIER | STR_SQ | STR_DQ | '*' | 'null' | 'class' | primitive_type | 'default'
+  // IDENTIFIER | STR_SQ | STR_DQ | primitive_type | modifier | keyword | '*'
   public static boolean argument_label(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "argument_label")) return false;
     boolean r;
@@ -956,11 +956,10 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     r = consumeTokenFast(b, IDENTIFIER);
     if (!r) r = consumeTokenFast(b, STR_SQ);
     if (!r) r = consumeTokenFast(b, STR_DQ);
-    if (!r) r = consumeTokenFast(b, T_STAR);
-    if (!r) r = consumeTokenFast(b, KW_NULL);
-    if (!r) r = consumeTokenFast(b, KW_CLASS);
     if (!r) r = parsePrimitiveType(b, l + 1);
-    if (!r) r = consumeTokenFast(b, KW_DEFAULT);
+    if (!r) r = modifier(b, l + 1);
+    if (!r) r = parseKeyword(b, l + 1);
+    if (!r) r = consumeTokenFast(b, T_STAR);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
