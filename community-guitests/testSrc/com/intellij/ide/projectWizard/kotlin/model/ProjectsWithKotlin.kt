@@ -652,14 +652,15 @@ fun KotlinGuiTestCase.testCreateGradleAndConfigureKotlin(
     KotlinKind.JS -> configureKotlinJsFromGradle(kotlinVersion)
     else -> throw IllegalStateException("Cannot configure to Kotlin/Common kind.")
   }
-  waitAMoment(extraTimeOut)
+  waitAMoment()
+  waitForGradleReimport(gradleOptions.artifact)
   saveAndCloseCurrentEditor()
   editSettingsGradle()
   editBuildGradle(
     kotlinVersion = kotlinVersion,
     isKotlinDslUsed = gradleOptions.useKotlinDsl
   )
-  waitAMoment(extraTimeOut)
+  waitAMoment()
   gradleReimport()
   waitForGradleReimport(gradleOptions.artifact)
   waitAMoment()
