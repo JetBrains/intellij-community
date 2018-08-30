@@ -252,12 +252,12 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
     }
   }
 
-  private void scheduleUpdate(String projectPath) {
+  private void scheduleUpdate(@Nullable String projectPath) {
     scheduleUpdate(projectPath, true);
   }
 
-  private void scheduleUpdate(String projectPath, boolean reportRefreshError) {
-    if (ExternalSystemUtil.isNoBackgroundMode()) {
+  private void scheduleUpdate(@Nullable String projectPath, boolean reportRefreshError) {
+    if (projectPath == null || ExternalSystemUtil.isNoBackgroundMode()) {
       return;
     }
     Pair<ExternalSystemManager, ExternalProjectSettings> linkedProject = findLinkedProjectSettings(projectPath);
