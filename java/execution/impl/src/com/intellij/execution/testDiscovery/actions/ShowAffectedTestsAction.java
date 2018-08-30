@@ -289,7 +289,7 @@ public class ShowAffectedTestsAction extends AnAction {
 
     model.addTreeModelListener(new TreeModelAdapter() {
       @Override
-      protected void process(TreeModelEvent event, EventType type) {
+      protected void process(@NotNull TreeModelEvent event, @NotNull EventType type) {
         int testsCount = tree.getTestCount();
         int classesCount = tree.getTestClassesCount();
         popup.setCaption("Found " + testsCount + " " +
@@ -374,7 +374,7 @@ public class ShowAffectedTestsAction extends AnAction {
         presentation.setEnabled(false);
         tree.getModel().addTreeModelListener(new TreeModelAdapter() {
           @Override
-          protected void process(TreeModelEvent event, EventType type) {
+          protected void process(@NotNull TreeModelEvent event, @NotNull EventType type) {
             if (!presentation.isEnabled() && tree.getTestCount() != 0) {
               presentation.setEnabled(true);
             }

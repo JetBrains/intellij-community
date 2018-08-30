@@ -88,7 +88,7 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
       //TODO
       boolean myAlreadyDone;
       @Override
-      protected void process(TreeModelEvent event, EventType type) {
+      protected void process(@NotNull TreeModelEvent event, @NotNull EventType type) {
         if (!myAlreadyDone && getTestCount() != 0) {
           myAlreadyDone = true;
           EdtInvocationManager.getInstance().invokeLater(() -> {
