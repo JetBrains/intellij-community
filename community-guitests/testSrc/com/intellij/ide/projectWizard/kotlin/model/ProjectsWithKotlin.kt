@@ -697,7 +697,7 @@ fun ProjectStructureDialogScenarios.checkGradleExplicitModuleGroups(
 }
 
 
-fun KotlinGuiTestCase.createKotlinMPProject(
+fun KotlinGuiTestCase.createKotlinMPProjectDeprecated(
   projectPath: String,
   moduleName: String,
   mppProjectStructure: NewProjectDialogModel.MppProjectStructure,
@@ -708,7 +708,7 @@ fun KotlinGuiTestCase.createKotlinMPProject(
   logTestStep("Create new MPP (deprecated) project with modules $setOfMPPModules")
   welcomePageDialogModel.createNewProject()
   newProjectDialogModel.assertGroupPresent(NewProjectDialogModel.Groups.Kotlin)
-  newProjectDialogModel.createKotlinMPProject(
+  newProjectDialogModel.createKotlinMPProjectDeprecated(
     projectPath = projectPath,
     moduleName = moduleName,
     mppProjectStructure = mppProjectStructure,

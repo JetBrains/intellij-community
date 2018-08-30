@@ -437,7 +437,7 @@ fun NewProjectDialogModel.createKotlinProject(projectPath: String, framework: St
   }
 }
 
-fun NewProjectDialogModel.createKotlinMPProject(
+fun NewProjectDialogModel.createKotlinMPProjectDeprecated(
   projectPath: String,
   moduleName: String,
   mppProjectStructure: NewProjectDialogModel.MppProjectStructure,
@@ -449,7 +449,7 @@ fun NewProjectDialogModel.createKotlinMPProject(
     with(connectDialog()) {
       selectProjectGroup(NewProjectDialogModel.Groups.Kotlin)
       logUIStep("Select `$itemKotlinMppDeprecated` kind of project")
-      if(kotlinPluginVersion >= "1.3")
+      if (kotlinPluginVersion >= "1.3")
         jList(itemKotlinMppDeprecated).clickItem(itemKotlinMppDeprecated)
       else
         jList(itemKotlinMppExperimental).clickItem(itemKotlinMppExperimental)

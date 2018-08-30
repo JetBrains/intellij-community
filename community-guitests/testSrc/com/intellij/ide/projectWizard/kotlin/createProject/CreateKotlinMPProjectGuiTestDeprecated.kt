@@ -22,7 +22,7 @@ class CreateKotlinMPProjectGuiTestDeprecated : KotlinGuiTestCase() {
     val module_common = "$projectName-common"
     val module_jvm = "$projectName-jvm"
     val module_js = "$projectName-js"
-    createKotlinMPProject(
+    createKotlinMPProjectDeprecated(
       projectPath = projectFolder,
       moduleName = projectName,
       mppProjectStructure = NewProjectDialogModel.MppProjectStructure.HierarchicalStructure,
@@ -83,7 +83,7 @@ class CreateKotlinMPProjectGuiTestDeprecated : KotlinGuiTestCase() {
     val module_common = "$projectName-common"
     val module_jvm = "$projectName-jvm"
     val module_js = "$projectName-js"
-    createKotlinMPProject(
+    createKotlinMPProjectDeprecated(
       projectPath = projectFolder,
       moduleName = projectName,
       mppProjectStructure = NewProjectDialogModel.MppProjectStructure.FlatStructure,
