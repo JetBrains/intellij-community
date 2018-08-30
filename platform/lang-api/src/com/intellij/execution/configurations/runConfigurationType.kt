@@ -72,6 +72,8 @@ abstract class SimpleConfigurationType protected constructor(private val id: Str
     override fun createTemplateConfiguration(project: Project): RunConfiguration {
       return this@SimpleConfigurationType.createTemplateConfiguration(project)
     }
+
+    override fun getOptionsClass() = this@SimpleConfigurationType.getOptionsClass()
   }
 
   private var factories = arrayOf(factory)
