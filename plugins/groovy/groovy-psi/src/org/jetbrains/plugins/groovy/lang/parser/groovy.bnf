@@ -989,17 +989,8 @@ private property_dot ::= reference_dot | method_reference_dot
 private qualified_reference_expression_identifiers ::= IDENTIFIER
                                                      | string_literal_tokens
                                                      | regex_literal
-                                                     | 'true'
-                                                     | 'false'
-                                                     | 'null'
-                                                     | 'new'
-                                                     | 'class' | 'interface' | 'trait' | 'enum'
-                                                     | 'this' | 'super'
-                                                     | 'case'
-                                                     | 'as' | 'in'
-                                                     | 'else'
                                                      | modifier
-                                                     | statement_keywords
+                                                     | keyword
                                                      | primitive_type
 {
   name = 'property selector'
