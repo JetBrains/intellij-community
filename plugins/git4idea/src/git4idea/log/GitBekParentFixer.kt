@@ -15,6 +15,7 @@
  */
 package git4idea.log
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
@@ -23,7 +24,10 @@ import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.TimedVcsCommit
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.VcsLogTextFilter
+import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.data.index.IndexDataGetter
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder
+import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.util.BekUtil
 
 internal class GitBekParentFixer private constructor(private val incorrectCommits: Set<Hash>) {
@@ -38,11 +42,13 @@ internal class GitBekParentFixer private constructor(private val incorrectCommit
   companion object {
     @JvmStatic
     @Throws(VcsException::class)
-    fun prepare(root: VirtualFile, provider: GitLogProvider): GitBekParentFixer {
+    fun prepare(project: Project,
+                root: VirtualFile,
+                provider: GitLogProvider): GitBekParentFixer {
       return if (!BekUtil.isBekEnabled() || !Registry.`is`("git.log.fix.merge.commits.parents.order")) {
         GitBekParentFixer(emptySet())
       }
-      else GitBekParentFixer(getIncorrectCommits(provider, root))
+      else GitBekParentFixer(getIncorrectCommits(project, provider, root))
     }
   }
 }
@@ -51,7 +57,25 @@ private const val MAGIC_TEXT = "Merge remote"
 private val MAGIC_FILTER = createVcsLogFilterCollection()
 
 @Throws(VcsException::class)
-private fun getIncorrectCommits(provider: GitLogProvider, root: VirtualFile): Set<Hash> {
+fun getIncorrectCommits(project: Project, provider: GitLogProvider, root: VirtualFile): Set<Hash> {
+  val dataManager = VcsProjectLog.getInstance(project).dataManager
+  val dataGetter = dataManager?.index?.dataGetter
+  if (dataGetter == null || !dataManager.index.isIndexed(root)) {
+    return getIncorrectCommitsFromProvider(provider, root)
+  }
+  return getIncorrectCommitsFromIndex(dataManager, dataGetter, root)
+}
+
+fun getIncorrectCommitsFromIndex(dataManager: VcsLogData,
+                                 dataGetter: IndexDataGetter,
+                                 root: VirtualFile): MutableSet<Hash> {
+  val commits = dataGetter.filter(MAGIC_FILTER.detailsFilters).asSequence()
+  return commits.map { dataManager.storage.getCommitId(it)!! }.filter { it.root == root }.mapTo(mutableSetOf()) { it.hash }
+}
+
+@Throws(VcsException::class)
+fun getIncorrectCommitsFromProvider(provider: GitLogProvider,
+                                    root: VirtualFile): MutableSet<Hash> {
   val commitsMatchingFilter = provider.getCommitsMatchingFilter(root, MAGIC_FILTER, -1)
   return ContainerUtil.map2Set(commitsMatchingFilter) { timedVcsCommit -> timedVcsCommit.id }
 }
