@@ -35,7 +35,7 @@ public class XsltConfigurationProducer extends RuntimeConfigurationProducer{
       storeSourceElement(file);
       final Project project = file.getProject();
       final RunnerAndConfigurationSettings settings =
-        RunManager.getInstance(project).createRunConfiguration(file.getName(), getConfigurationFactory());
+        RunManager.getInstance(project).createConfiguration(file.getName(), getConfigurationFactory());
       ((XsltRunConfiguration)settings.getConfiguration()).initFromFile(file);
       return settings;
     }

@@ -217,12 +217,12 @@ public abstract class ChooseByNameFilter<T> {
     }
 
     @Override
-    public boolean isSelected(final AnActionEvent e) {
+    public boolean isSelected(@NotNull final AnActionEvent e) {
       return myPopup != null;
     }
 
     @Override
-    public void setSelected(final AnActionEvent e, final boolean state) {
+    public void setSelected(@NotNull final AnActionEvent e, final boolean state) {
       if (state) {
         createPopup();
       }

@@ -30,7 +30,6 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultTreeModel;
 import java.util.*;
 
 /**
@@ -45,9 +44,9 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
   private PsiTodoSearchHelper myPsiTodoSearchHelper;
   private final ChangeListManager myChangeListManager;
 
-  public CustomChangelistTodosTreeBuilder(JTree tree, DefaultTreeModel treeModel, Project project, final String title,
+  public CustomChangelistTodosTreeBuilder(JTree tree, Project project, final String title,
                                           final Collection<TodoItem> todoItems) {
-    super(tree, treeModel, project);
+    super(tree, project);
     myProject = project;
     myTitle = title;
     myMap = new MultiMap<>();

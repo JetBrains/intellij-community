@@ -952,12 +952,12 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myIsSelected;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myIsSelected = state;
       SvnRepositoryTreeCellRenderer r = new SvnRepositoryTreeCellRenderer();
       r.setShowDetails(state);

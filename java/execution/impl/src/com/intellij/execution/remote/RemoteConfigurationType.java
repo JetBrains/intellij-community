@@ -66,7 +66,7 @@ public final class RemoteConfigurationType implements ConfigurationType {
 
   @NotNull
   @Override
-  public String getConfigurationPropertyName() {
+  public String getTag() {
     return "jvmRemote";
   }
 

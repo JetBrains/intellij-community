@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -52,12 +53,12 @@ class ToggleAssociationAction extends ToggleAction {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
         return true;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
         assert !state;
         myFileAssociationsManager.removeAssociation(myPsiFile, myAssoc);
         DaemonCodeAnalyzer.getInstance(AnAction.getEventProject(e)).restart();

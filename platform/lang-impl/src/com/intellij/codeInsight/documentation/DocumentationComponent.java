@@ -1646,12 +1646,12 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return Registry.get("documentation.show.toolbar").asBoolean();
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       Registry.get("documentation.show.toolbar").setValue(state);
       updateControlState();
       showHint();

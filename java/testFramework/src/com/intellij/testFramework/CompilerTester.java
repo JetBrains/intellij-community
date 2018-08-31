@@ -263,11 +263,8 @@ public class CompilerTester {
         for (CompilerMessageCategory category : CompilerMessageCategory.values()) {
           CompilerMessage[] messages = compileContext.getMessages(category);
           for (CompilerMessage message : messages) {
-            final String text = message.getMessage();
-            if (category != CompilerMessageCategory.INFORMATION ||
-                !(text.contains("Compilation completed successfully") ||
-                  text.contains("used to compile") ||
-                  text.startsWith("Using Groovy-Eclipse"))) {
+            String text = message.getMessage();
+            if (category != CompilerMessageCategory.INFORMATION || !isSpamMessage(text)) {
               myMessages.add(message);
             }
           }
@@ -280,6 +277,14 @@ public class CompilerTester {
       finally {
         mySemaphore.up();
       }
+    }
+
+    private static boolean isSpamMessage(String text) {
+      return text.contains("Compilation completed successfully") ||
+             text.contains("used to compile") ||
+             text.contains("illegal reflective") ||
+             text.contains("consider reporting this to the maintainers") ||
+             text.startsWith("Using Groovy-Eclipse");
     }
 
     void throwException() {

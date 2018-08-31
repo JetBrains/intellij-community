@@ -416,12 +416,12 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       }
 
       @Override
-      public boolean isSelected(AnActionEvent e) {
+      public boolean isSelected(@NotNull AnActionEvent e) {
         return UISettings.getInstance().getPinFindInPath();
       }
 
       @Override
-      public void setSelected(AnActionEvent e, boolean state) {
+      public void setSelected(@NotNull AnActionEvent e, boolean state) {
         myIsPinned.set(state);
         UISettings.getInstance().setPinFindInPath(state);
       }
@@ -437,12 +437,12 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       }
 
       @Override
-      public boolean isSelected(AnActionEvent e) {
+      public boolean isSelected(@NotNull AnActionEvent e) {
         return myHelper.isSkipResultsWithOneUsage();
       }
 
       @Override
-      public void setSelected(AnActionEvent e, boolean state) {
+      public void setSelected(@NotNull AnActionEvent e, boolean state) {
         myHelper.setSkipResultsWithOneUsage(state);
       }
 
@@ -459,12 +459,12 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       }
 
       @Override
-      public boolean isSelected(AnActionEvent e) {
+      public boolean isSelected(@NotNull AnActionEvent e) {
         return myHelper.isUseSeparateView();
       }
 
       @Override
-      public void setSelected(AnActionEvent e, boolean state) {
+      public void setSelected(@NotNull AnActionEvent e, boolean state) {
         myHelper.setUseSeparateView(state);
       }
 
@@ -1409,12 +1409,12 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return Comparing.equal(mySelectedContextName, getTemplatePresentation().getText());
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       if (state) {
         mySelectedContextName = getTemplatePresentation().getText();
         scheduleResultsUpdate();
@@ -1438,12 +1438,12 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return mySelectedScope == myScope;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       if (state) {
         mySelectedScope = myScope;
         myScopeSelectionToolbar.updateActionsImmediately();

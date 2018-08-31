@@ -1122,12 +1122,12 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     }
 
     @Override
-    public boolean isSelected(final AnActionEvent e) {
+    public boolean isSelected(@NotNull final AnActionEvent e) {
       return myFilterPopup != null && !myFilterPopup.isDisposed();
     }
 
     @Override
-    public void setSelected(final AnActionEvent e, final boolean state) {
+    public void setSelected(@NotNull final AnActionEvent e, final boolean state) {
       if (state) {
         showPopup(e.getInputEvent().getComponent());
       }

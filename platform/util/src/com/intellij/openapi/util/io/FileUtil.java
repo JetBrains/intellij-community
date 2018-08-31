@@ -105,7 +105,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static boolean isAbsolute(@NotNull String path) {
-    return new File(path).isAbsolute();
+    return !path.isEmpty() && new File(path).isAbsolute();
   }
 
   public static boolean exists(@Nullable String path) {

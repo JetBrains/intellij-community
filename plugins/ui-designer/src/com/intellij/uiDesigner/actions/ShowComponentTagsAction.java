@@ -20,13 +20,13 @@ public class ShowComponentTagsAction extends ToggleAction {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     GuiEditor editor = FormEditingUtil.getEditorFromContext(e.getDataContext());
     return editor != null && editor.isShowComponentTags();
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     GuiEditor editor = FormEditingUtil.getEditorFromContext(e.getDataContext());
     if (editor != null) {
       editor.setShowComponentTags(state);

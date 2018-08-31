@@ -820,12 +820,12 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myHideModuleGroups;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myHideModuleGroups = state;
       regroupModules();
     }

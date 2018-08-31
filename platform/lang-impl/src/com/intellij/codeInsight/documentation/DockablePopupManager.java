@@ -135,13 +135,13 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
     ToggleAction toggleAutoUpdateAction = new ToggleAction(getAutoUpdateTitle(), getAutoUpdateDescription(),
                                            AllIcons.General.AutoscrollFromSource) {
       @Override
-      public boolean isSelected(AnActionEvent e) {
+      public boolean isSelected(@NotNull AnActionEvent e) {
         return PropertiesComponent.getInstance().getBoolean(getAutoUpdateEnabledProperty(),
                                                             getAutoUpdateDefault());
       }
 
       @Override
-      public void setSelected(AnActionEvent e, boolean state) {
+      public void setSelected(@NotNull AnActionEvent e, boolean state) {
         PropertiesComponent.getInstance().setValue(getAutoUpdateEnabledProperty(), state, getAutoUpdateDefault());
         restartAutoUpdate(state);
       }

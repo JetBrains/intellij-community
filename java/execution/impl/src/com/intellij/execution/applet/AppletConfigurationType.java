@@ -2,7 +2,6 @@
 package com.intellij.execution.applet;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.SimpleConfigurationType;
 import com.intellij.icons.AllIcons;
@@ -24,12 +23,7 @@ public final class AppletConfigurationType extends SimpleConfigurationType {
 
   @NotNull
   @Override
-  protected RunConfiguration createTemplateConfiguration(@NotNull Project project) {
-    return new AppletConfiguration(project, getFactory());
-  }
-
-  @NotNull
-  public static AppletConfigurationType getInstance() {
-    return ConfigurationTypeUtil.findConfigurationType(AppletConfigurationType.class);
+  public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
+    return new AppletConfiguration(project, this);
   }
 }

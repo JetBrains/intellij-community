@@ -16,6 +16,7 @@
 
 package com.intellij.ide.todo.nodes;
 
+import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.todo.TodoFileDirAndModuleComparator;
 import com.intellij.ide.todo.TodoTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -169,6 +170,11 @@ public class TodoTreeHelper {
     }
     return null;
   }
+  
+  public boolean contains(ProjectViewNode node, Object element) {
+    return false;
+  }
+
 
   public Project getProject() {
     return myProject;

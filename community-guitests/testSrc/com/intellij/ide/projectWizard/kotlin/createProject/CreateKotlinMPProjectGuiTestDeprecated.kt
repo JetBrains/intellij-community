@@ -4,13 +4,14 @@ package com.intellij.ide.projectWizard.kotlin.createProject
 import com.intellij.ide.projectWizard.kotlin.model.*
 import com.intellij.testGuiFramework.impl.gradleReimport
 import com.intellij.testGuiFramework.impl.waitAMoment
+import com.intellij.testGuiFramework.impl.waitForGradleReimport
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel
 import com.intellij.testGuiFramework.util.scenarios.openProjectStructureAndCheck
 import com.intellij.testGuiFramework.util.scenarios.projectStructureDialogModel
 import com.intellij.testGuiFramework.util.scenarios.projectStructureDialogScenarios
 import org.junit.Test
 
-class CreateKotlinMPProjectGuiTest : KotlinGuiTestCase() {
+class CreateKotlinMPProjectGuiTestDeprecated : KotlinGuiTestCase() {
   @Test
   @JvmName("kotlin_mpp_hierarchical")
   fun createKotlinMppProjectCommonRoot() {
@@ -21,11 +22,12 @@ class CreateKotlinMPProjectGuiTest : KotlinGuiTestCase() {
     val module_common = "$projectName-common"
     val module_jvm = "$projectName-jvm"
     val module_js = "$projectName-js"
-    createKotlinMPProject(
+    createKotlinMPProjectDeprecated(
       projectPath = projectFolder,
       moduleName = projectName,
       mppProjectStructure = NewProjectDialogModel.MppProjectStructure.HierarchicalStructure,
-      setOfMPPModules = MPPModules.mppFullSet()
+      setOfMPPModules = MPPModules.mppFullSet(),
+      kotlinPluginVersion = versionFromPlugin.toString()
     )
     waitAMoment(extraTimeOut)
     editSettingsGradle()
@@ -42,7 +44,8 @@ class CreateKotlinMPProjectGuiTest : KotlinGuiTestCase() {
       editBuildGradle(kotlinVersion, false, module_common, module_js)
     }
     gradleReimport()
-    waitAMoment(extraTimeOut)
+    waitForGradleReimport(projectName)
+    waitAMoment()
 
     val expectedJars = (kotlinLibs[KotlinKind.Common]!!.kotlinMPProject.jars.getJars(kotlinVersion) +
                         (if (setOfMPPModules.contains(
@@ -80,11 +83,12 @@ class CreateKotlinMPProjectGuiTest : KotlinGuiTestCase() {
     val module_common = "$projectName-common"
     val module_jvm = "$projectName-jvm"
     val module_js = "$projectName-js"
-    createKotlinMPProject(
+    createKotlinMPProjectDeprecated(
       projectPath = projectFolder,
       moduleName = projectName,
       mppProjectStructure = NewProjectDialogModel.MppProjectStructure.FlatStructure,
-      setOfMPPModules = MPPModules.mppFullSet()
+      setOfMPPModules = MPPModules.mppFullSet(),
+      kotlinPluginVersion = versionFromPlugin.toString()
     )
     waitAMoment(extraTimeOut)
     editSettingsGradle()
@@ -101,7 +105,8 @@ class CreateKotlinMPProjectGuiTest : KotlinGuiTestCase() {
       editBuildGradle(kotlinVersion, false,  module_js)
     }
     gradleReimport()
-    waitAMoment(extraTimeOut)
+    waitForGradleReimport(projectName)
+    waitAMoment()
 
     val expectedJars = (kotlinLibs[KotlinKind.Common]!!.kotlinMPProject.jars.getJars(kotlinVersion) +
                         (if (setOfMPPModules.contains(

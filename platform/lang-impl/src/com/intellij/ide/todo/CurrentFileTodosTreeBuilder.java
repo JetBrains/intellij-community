@@ -21,14 +21,13 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultTreeModel;
 
 /**
  * @author Vladimir Kondratyev
  */
-public class CurrentFileTodosTreeBuilder extends TodoTreeBuilder{
-  public CurrentFileTodosTreeBuilder(JTree tree,DefaultTreeModel treeModel,Project project){
-    super(tree,treeModel,project);
+public class CurrentFileTodosTreeBuilder extends TodoTreeBuilder {
+  public CurrentFileTodosTreeBuilder(JTree tree, Project project){
+    super(tree, project);
   }
 
   @Override
@@ -43,7 +42,7 @@ public class CurrentFileTodosTreeBuilder extends TodoTreeBuilder{
     myDirtyFileSet.clear();
     myFile2Highlighter.clear();
 
-    CurrentFileTodosTreeStructure treeStructure=(CurrentFileTodosTreeStructure)getTreeStructure();
+    CurrentFileTodosTreeStructure treeStructure=(CurrentFileTodosTreeStructure)getTodoTreeStructure();
     PsiFile psiFile=treeStructure.getFile();
     if(treeStructure.accept(psiFile)){
       myFileTree.add(psiFile.getVirtualFile());
@@ -56,9 +55,9 @@ public class CurrentFileTodosTreeBuilder extends TodoTreeBuilder{
    * @see com.intellij.ide.todo.CurrentFileTodosTreeStructure#setFile
    */
   public void setFile(PsiFile file){
-    CurrentFileTodosTreeStructure treeStructure=(CurrentFileTodosTreeStructure)getTreeStructure();
+    CurrentFileTodosTreeStructure treeStructure=(CurrentFileTodosTreeStructure)getTodoTreeStructure();
     treeStructure.setFile(file);
     rebuildCache();
-    updateTree(false);
+    updateTree();
   }
 }

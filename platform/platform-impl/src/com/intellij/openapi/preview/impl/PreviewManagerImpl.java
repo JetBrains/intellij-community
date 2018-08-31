@@ -331,12 +331,12 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myActiveProviderIds.contains(myProvider.getId());
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       if (state) {
         myActiveProviderIds.add(myProvider.getId());
       }

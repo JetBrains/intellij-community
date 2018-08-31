@@ -562,7 +562,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
                                              IdeBundle.message("action.flatten.packages"), PlatformIcons.FLATTEN_PACKAGES_ICON,
                                              ourFlattenPackagesDefaults) {
         @Override
-        public void setSelected(AnActionEvent event, boolean flag) {
+        public void setSelected(@NotNull AnActionEvent event, boolean flag) {
           final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
           final SelectionInfo selectionInfo = SelectionInfo.create(viewPane);
           if (isGlobalOptions()) {
@@ -574,7 +574,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         }
 
         @Override
-        public boolean isSelected(AnActionEvent event) {
+        public boolean isSelected(@NotNull AnActionEvent event) {
           if (isGlobalOptions()) return getGlobalOptions().getFlattenPackages();
           return super.isSelected(event);
         }
@@ -591,7 +591,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
 
       @Override
-      public void setSelected(AnActionEvent event, boolean flag) {
+      public void setSelected(@NotNull AnActionEvent event, boolean flag) {
         if (isGlobalOptions()) {
           getGlobalOptions().setFlattenPackages(flag);
         }
@@ -615,12 +615,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
                                                             AllIcons.ObjectBrowser.AbbreviatePackageNames,
                                                             ourAbbreviatePackagesDefaults) {
         @Override
-        public boolean isSelected(AnActionEvent event) {
+        public boolean isSelected(@NotNull AnActionEvent event) {
           return isFlattenPackages(myCurrentViewId) && isAbbreviatePackageNames(myCurrentViewId);
         }
 
         @Override
-        public void setSelected(AnActionEvent event, boolean flag) {
+        public void setSelected(@NotNull AnActionEvent event, boolean flag) {
           if (isGlobalOptions()) {
             setAbbreviatePackageNames(myCurrentViewId, flag);
           }
@@ -649,14 +649,14 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
 
       @Override
-      public boolean isSelected(AnActionEvent event) {
+      public boolean isSelected(@NotNull AnActionEvent event) {
         return isGlobalOptions()
                ? getGlobalOptions().getCompactDirectories()
                : super.isSelected(event);
       }
 
       @Override
-      public void setSelected(AnActionEvent event, boolean compactDirectories) {
+      public void setSelected(@NotNull AnActionEvent event, boolean compactDirectories) {
         AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
         SelectionInfo selectionInfo = SelectionInfo.create(viewPane);
         if (isGlobalOptions()) getGlobalOptions().setCompactDirectories(compactDirectories);
@@ -671,13 +671,13 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
                                                    IdeBundle.message("action.show.hide.members"),
                                                    AllIcons.ObjectBrowser.ShowMembers, ourShowMembersDefaults) {
         @Override
-        public boolean isSelected(AnActionEvent event) {
+        public boolean isSelected(@NotNull AnActionEvent event) {
           if (isGlobalOptions()) return getGlobalOptions().getShowMembers();
           return super.isSelected(event);
         }
 
         @Override
-        public void setSelected(AnActionEvent event, boolean flag) {
+        public void setSelected(@NotNull AnActionEvent event, boolean flag) {
           if (isGlobalOptions()) {
             getGlobalOptions().setShowMembers(flag);
           }
@@ -864,12 +864,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
 
     @Override
-    public boolean isSelected(AnActionEvent event) {
+    public boolean isSelected(@NotNull AnActionEvent event) {
       return getPaneOptionValue(myOptionsMap, myCurrentViewId, myOptionDefaultValue);
     }
 
     @Override
-    public void setSelected(AnActionEvent event, boolean flag) {
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       setPaneOption(myOptionsMap, flag, myCurrentViewId, true);
     }
   }
@@ -1769,7 +1769,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
 
     @Override
-    public void setSelected(AnActionEvent event, boolean flag) {
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
       final SelectionInfo selectionInfo = SelectionInfo.create(viewPane);
 
@@ -1782,7 +1782,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
 
     @Override
-    public boolean isSelected(AnActionEvent event) {
+    public boolean isSelected(@NotNull AnActionEvent event) {
       if (isGlobalOptions()) return getGlobalOptions().getHideEmptyPackages();
       return super.isSelected(event);
     }
@@ -2028,12 +2028,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
 
     @Override
-    public boolean isSelected(AnActionEvent event) {
+    public boolean isSelected(@NotNull AnActionEvent event) {
       return isManualOrder(getCurrentViewId());
     }
 
     @Override
-    public void setSelected(AnActionEvent event, boolean flag) {
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       setManualOrder(getCurrentViewId(), flag);
     }
 
@@ -2058,12 +2058,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
 
     @Override
-    public boolean isSelected(AnActionEvent event) {
+    public boolean isSelected(@NotNull AnActionEvent event) {
       return isSortByType(getCurrentViewId());
     }
 
     @Override
-    public void setSelected(AnActionEvent event, boolean flag) {
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       setSortByType(getCurrentViewId(), flag);
     }
 
@@ -2082,12 +2082,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
 
     @Override
-    public boolean isSelected(AnActionEvent event) {
+    public boolean isSelected(@NotNull AnActionEvent event) {
       return isFoldersAlwaysOnTop(getCurrentViewId());
     }
 
     @Override
-    public void setSelected(AnActionEvent event, boolean flag) {
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       setFoldersAlwaysOnTop(flag);
     }
 

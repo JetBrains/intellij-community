@@ -416,7 +416,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     return new SpeedSearchComparator(false);
   }
 
-  protected void disableAlphabeticalSorting(final AnActionEvent event) {
+  protected void disableAlphabeticalSorting(@NotNull AnActionEvent event) {
     mySortAction.setSelected(event, false);
   }
 
@@ -590,7 +590,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     restoreSelection(selection);
   }
 
-  private void setShowClasses(boolean showClasses) {
+  protected void setShowClasses(boolean showClasses) {
     myShowClasses = showClasses;
     restoreTree();
   }
@@ -810,12 +810,12 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     }
 
     @Override
-    public boolean isSelected(AnActionEvent event) {
+    public boolean isSelected(@NotNull AnActionEvent event) {
       return isAlphabeticallySorted();
     }
 
     @Override
-    public void setSelected(AnActionEvent event, boolean flag) {
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       myAlphabeticallySorted = flag;
       setSortComparator(flag ? new AlphaComparator() : new OrderComparator());
       if (flag) {
@@ -834,12 +834,12 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     }
 
     @Override
-    public boolean isSelected(AnActionEvent event) {
+    public boolean isSelected(@NotNull AnActionEvent event) {
       return myShowClasses;
     }
 
     @Override
-    public void setSelected(AnActionEvent event, boolean flag) {
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       setShowClasses(flag);
     }
 

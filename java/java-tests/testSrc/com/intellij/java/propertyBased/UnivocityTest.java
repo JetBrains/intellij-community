@@ -42,7 +42,7 @@ public class UnivocityTest extends AbstractApplyAndRevertTestCase {
     MadTestingUtil.enableAllInspections(myProject, myProject);
   }
 
-  @Bombed(user = "ann", month = Calendar.AUGUST, day = 31)
+  @Bombed(user = "ann", month = Calendar.SEPTEMBER, day = 30)
   public void testCompilabilityAfterIntentions() {
     initCompiler();
     PsiModificationTracker tracker = PsiManager.getInstance(myProject).getModificationTracker();

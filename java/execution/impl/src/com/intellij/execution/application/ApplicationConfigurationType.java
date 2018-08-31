@@ -97,7 +97,7 @@ public class ApplicationConfigurationType implements ConfigurationType {
 
   @NotNull
   @Override
-  public String getConfigurationPropertyName() {
+  public String getTag() {
     String id = getId();
     return id.equals("Application") ? "jvmMainMethod" : id;
   }

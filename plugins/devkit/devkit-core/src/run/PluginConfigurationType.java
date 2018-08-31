@@ -86,7 +86,7 @@ public final class PluginConfigurationType implements ConfigurationType {
 
   @NotNull
   @Override
-  public String getConfigurationPropertyName() {
+  public String getTag() {
     return "plugin";
   }
 

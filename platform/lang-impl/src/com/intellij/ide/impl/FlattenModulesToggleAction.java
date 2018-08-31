@@ -62,12 +62,12 @@ public class FlattenModulesToggleAction extends ToggleAction implements DumbAwar
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return myIsSelected.getAsBoolean();
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     mySetSelected.accept(state);
   }
 }

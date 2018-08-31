@@ -16,6 +16,7 @@
 
 package com.intellij.ide.todo.nodes;
 
+import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.projectView.impl.nodes.PackageUtil;
 import com.intellij.ide.todo.TodoTreeBuilder;
@@ -50,6 +51,16 @@ public class TodoJavaTreeHelper extends TodoTreeHelper {
       return packageElement != null ? packageElement.getPackage() : null;
     }
     return super.getSelectedElement(userObject);
+  }
+
+  @Override
+  public boolean contains(ProjectViewNode node, Object element) {
+    if (element instanceof PackageElement) {
+      for (VirtualFile virtualFile : ((PackageElement)element).getRoots()) {
+        if (node.contains(virtualFile)) return true;
+      }
+    }
+    return super.contains(node, element);
   }
 
   @Override

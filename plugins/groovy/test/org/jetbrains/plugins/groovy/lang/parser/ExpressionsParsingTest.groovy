@@ -600,6 +600,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testbinary$elvisAssignWithoutRValue() { doTest() }
 
+  void testbinary$assignmentError() { doTest() }
+
   void testcommandExpr$closureArg() { doTest() }
 
   void testcommandExpr$simple() { doTest() }

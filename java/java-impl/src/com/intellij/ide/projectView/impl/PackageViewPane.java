@@ -163,12 +163,12 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent event) {
+    public boolean isSelected(@NotNull AnActionEvent event) {
       return ProjectView.getInstance(myProject).isShowLibraryContents(getId());
     }
 
     @Override
-    public void setSelected(AnActionEvent event, boolean flag) {
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       final ProjectViewImpl projectView = (ProjectViewImpl)ProjectView.getInstance(myProject);
       projectView.setShowLibraryContents(getId(), flag);
     }

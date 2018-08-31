@@ -40,7 +40,7 @@ import java.net.SocketException
 import java.util.concurrent.TimeUnit
 
 
-class GuiTestRunner internal constructor(val runner: GuiTestRunnerInterface) {
+open class GuiTestRunner internal constructor(open val runner: GuiTestRunnerInterface) {
 
   private val SERVER_LOG = org.apache.log4j.Logger.getLogger("#com.intellij.testGuiFramework.framework.GuiTestRunner")!!
   private val criticalError = Ref(false)
@@ -91,25 +91,7 @@ class GuiTestRunner internal constructor(val runner: GuiTestRunnerInterface) {
       try {
         val message = server.receive()
         if (message.content is JUnitInfo && message.content.testClassAndMethodName == JUnitInfo.getClassAndMethodName(description)) {
-          when (message.content.type) {
-            Type.STARTED -> eachNotifier.fireTestStarted()
-            Type.ASSUMPTION_FAILURE -> eachNotifier.addFailedAssumption(
-              (message.content.obj as Failure).exception as AssumptionViolatedException)
-            Type.IGNORED -> {
-              eachNotifier.fireTestIgnored(); testIsRunning = false
-            }
-            Type.FAILURE -> {
-              //reconstruct Throwable
-              val (className, messageFromException, stackTraceFromException) = message.content.obj as FailureException
-              val throwable = Throwable("thrown from $className: $messageFromException")
-              throwable.stackTrace = stackTraceFromException
-              eachNotifier.addFailure(throwable)
-            }
-            Type.FINISHED -> {
-              eachNotifier.fireTestFinished(); testIsRunning = false
-            }
-            else -> throw UnsupportedOperationException("Unable to recognize received from JUnitClient")
-          }
+          testIsRunning = processJUnitEvent(message.content, eachNotifier, testIsRunning)
         }
         if (message.type == MessageType.RESTART_IDE) {
           restartIde(server, getIdeFromMethod(method))
@@ -143,7 +125,40 @@ class GuiTestRunner internal constructor(val runner: GuiTestRunnerInterface) {
     }
   }
 
-  private fun getIdeFromMethod(method: FrameworkMethod): Ide {
+  protected fun processJUnitEvent(content: JUnitInfo,
+                                eachNotifier: EachTestNotifier,
+                                testIsRunning: Boolean): Boolean {
+    var testIsRunning1 = testIsRunning
+    when (content.type) {
+      Type.STARTED -> eachNotifier.fireTestStarted()
+      Type.ASSUMPTION_FAILURE -> eachNotifier.addFailedAssumption(
+        (content.obj as Failure).exception as AssumptionViolatedException)
+      Type.IGNORED -> {
+        eachNotifier.fireTestIgnored(); testIsRunning1 = false
+      }
+      Type.FAILURE -> {
+        //reconstruct Throwable
+        val (className, messageFromException, stackTraceFromException) = content.obj as FailureException
+        val throwable = Throwable("thrown from $className: $messageFromException")
+        throwable.stackTrace = stackTraceFromException
+        eachNotifier.addFailure(throwable)
+      }
+      Type.FINISHED -> {
+        testIsRunning1 = processTestFinished(eachNotifier, testIsRunning1)
+      }
+      else -> throw UnsupportedOperationException("Unable to recognize received from JUnitClient")
+    }
+    return testIsRunning1
+  }
+
+  protected open fun processTestFinished(eachNotifier: EachTestNotifier,
+                                         testIsRunning1: Boolean): Boolean {
+    var testIsRunning11 = testIsRunning1
+    eachNotifier.fireTestFinished(); testIsRunning11 = false
+    return testIsRunning11
+  }
+
+  protected fun getIdeFromMethod(method: FrameworkMethod): Ide {
     return runner.ide ?: getIdeFromAnnotation(method.declaringClass)
   }
 
@@ -151,22 +166,25 @@ class GuiTestRunner internal constructor(val runner: GuiTestRunnerInterface) {
    * @additionalJvmOptions - an array of key-value pairs written without -D, for example: {@code arrayOf(Pair("idea.debug.mode", "true"))
    * By default set as an empty array – no additional JVM options
    */
-  private fun restartIde(server: JUnitServer, ide: Ide, additionalJvmOptions: Array<Pair<String, String>> = emptyArray()) {
-    //close previous IDE
-    server.send(TransportMessage(MessageType.CLOSE_IDE))
-    //await to close previous process
-    IdeProcessControlManager.waitForCurrentProcess(2, TimeUnit.MINUTES)
-    IdeProcessControlManager.killIdeProcess()
+  protected fun restartIde(server: JUnitServer, ide: Ide, additionalJvmOptions: Array<Pair<String, String>> = emptyArray()) {
+    stopServerAndKillIde(server)
     //restart JUnitServer to let accept a new connection
-    server.stopServer()
     //start a new one IDE
     runIde(port = server.getPort(), ide = ide, additionalJvmOptions = additionalJvmOptions)
     server.start()
   }
 
-  private fun stopServerAndKillIde(server: JUnitServer) {
+  protected open fun stopServerAndKillIde(server: JUnitServer) {
+    closeIde(server)
     IdeProcessControlManager.killIdeProcess()
     server.stopServer()
+  }
+
+  protected fun closeIde(server: JUnitServer) {
+    //close previous IDE
+    server.send(TransportMessage(MessageType.CLOSE_IDE))
+    //await to close previous process
+    IdeProcessControlManager.waitForCurrentProcess(2, TimeUnit.MINUTES)
   }
 
   private fun sendRunTestCommand(method: FrameworkMethod,
@@ -232,7 +250,7 @@ class GuiTestRunner internal constructor(val runner: GuiTestRunnerInterface) {
    * @additionalJvmOptions - an array of key-value pairs written without -D, for example: {@code arrayOf(Pair("idea.debug.mode", "true"))
    * By default set as an empty array – no additional JVM options
    */
-  private fun runIde(port: Int, ide: Ide, additionalJvmOptions: Array<Pair<String, String>> = emptyArray()) {
+  protected open fun runIde(port: Int, ide: Ide, additionalJvmOptions: Array<Pair<String, String>> = emptyArray()) {
     val testClassNames = runner.getTestClassesNames()
     if (testClassNames.isEmpty()) throw Exception("Test classes are not declared.")
     runIdeLocally(port = port,

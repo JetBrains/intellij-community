@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.impl
 
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.testGuiFramework.fixtures.GutterFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
 import com.intellij.testGuiFramework.framework.Timeouts
@@ -132,14 +133,50 @@ fun ExtendedJTreePathFixture.selectWithKeyboard(testCase: GuiTestCase, vararg pa
   }
 }
 
+fun GuiTestCase.waitForGradleReimport(rootPath: String){
+  GuiTestUtilKt.waitUntil("for gradle reimport finishing", timeout = Timeouts.minutes05){
+    var result = false
+    try {
+      ideFrame {
+        toolwindow(id = "Gradle") {
+          content(tabName = "") {
+            val hasPath = try {
+              jTree(rootPath, timeout = Timeouts.noTimeout).hasPath()
+            }
+            catch (e: Exception) {
+              logInfo("$currentTimeInHumanString: waitForGradleReimport.jTree: ${e::class.simpleName} - ${e.message}")
+              false
+            }
+            val text = "Refresh all external projects"
+            val enabled = try {
+              robot().findComponent(this.target(), ActionButton::class.java) {
+                           if (!it.isShowing) false
+                           else text == it.action.templatePresentation.text
+                         }.isEnabled
+            }
+            catch (e: Exception) {
+              logInfo("$currentTimeInHumanString: waitForGradleReimport.actionButton: ${e::class.simpleName} - ${e.message}")
+              false
+            }
+            logInfo("$currentTimeInHumanString: waitForGradleReimport: jtree = $hasPath, button enabled = $enabled")
+            result = hasPath && enabled
+          }
+        }
+      }
+    }
+    catch (ignore: Exception) {}
+    result
+  }
+
+}
 
 fun GuiTestCase.gradleReimport() {
   logTestStep("Reimport gradle project")
   ideFrame {
     toolwindow(id = "Gradle") {
       content(tabName = "") {
-        //        waitAMoment()
-        actionButton("Refresh all external projects").click()
+        waitAMoment()
+        actionButton("Refresh all external projects", timeout = Timeouts.minutes05).click()
       }
     }
   }
