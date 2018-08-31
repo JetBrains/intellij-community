@@ -24,7 +24,7 @@ import java.util.*;
  * @author AKireyev
  */
 @SuppressWarnings("SynchronizeOnThis")
-public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
+public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.extensions.impl.ExtensionPointImpl");
 
   private final AreaInstance myArea;
@@ -190,7 +190,15 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   @Override
   @NotNull
   public T[] getExtensions() {
-    return ArrayUtil.toObjectArray(getExtensionList(), getExtensionClass());
+    List<T> list = getExtensionList();
+    if (list.isEmpty()) {
+      //noinspection unchecked
+      return (T[])Array.newInstance(getExtensionClass(), 0);
+    }
+    else {
+      //noinspection unchecked
+      return (T[])list.toArray();
+    }
   }
 
   @Override
