@@ -104,7 +104,7 @@ public class GroovyImportUtil {
 
               if (importedName == null) return;
 
-              final String importRef = getImportReferenceText(importStatement);
+              final String importRef = importStatement.getImportFqn();
 
               if (importStatement.isAliasedImport()) {
                 if (aliased != null) {
@@ -171,7 +171,7 @@ public class GroovyImportUtil {
               usedImports.add(anImport);
             }
 
-            final String symbolName = getImportReferenceText(anImport);
+            final String symbolName = anImport.getImportFqn();
 
             if (anImport.isAliasedImport()) {
               if (aliased != null) {
@@ -201,7 +201,7 @@ public class GroovyImportUtil {
         public void visitImportStatement(@NotNull GrImportStatement importStatement) {
           final String annotationText = importStatement.getAnnotationList().getText();
           if (!StringUtil.isEmptyOrSpaces(annotationText)) {
-            final String importRef = getImportReferenceText(importStatement);
+            final String importRef = importStatement.getImportFqn();
             annotations.put(importRef, annotationText);
           }
         }
@@ -228,10 +228,5 @@ public class GroovyImportUtil {
 
   public static boolean isAnnotatedImport(GrImportStatement anImport) {
     return !StringUtil.isEmptyOrSpaces(anImport.getAnnotationList().getText());
-  }
-
-  @Nullable
-  public static String getImportReferenceText(GrImportStatement statement) {
-    return statement.getImportFqn();
   }
 }

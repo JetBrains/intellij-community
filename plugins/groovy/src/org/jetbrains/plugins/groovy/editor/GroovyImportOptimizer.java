@@ -227,7 +227,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       for (GrImportStatement anImport : usedImports) {
         if (anImport.isAliasedImport() || GroovyImportUtil.isAnnotatedImport(anImport)) {
           if (GroovyImportUtil.isAnnotatedImport(anImport)) {
-            annotations.remove(GroovyImportUtil.getImportReferenceText(anImport));
+            annotations.remove(anImport.getImportFqn());
           }
 
           if (anImport.isStatic()) {
