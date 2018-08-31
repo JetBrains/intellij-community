@@ -10,6 +10,7 @@ import com.intellij.testGuiFramework.impl.testTreeItemExist
 import com.intellij.testGuiFramework.util.logUIStep
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.buttonCancel
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.itemLibrary
+import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.menuArtifacts
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.menuLibraries
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.menuModules
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.projectStructureTitle
@@ -30,6 +31,7 @@ class ProjectStructureDialogModel(val testCase: GuiTestCase) : TestUtilsClass(te
     const val menuFacets = "Facets"
     const val itemFacet = "Facet"
     const val menuArtifacts = "Artifacts"
+    const val itemArtifact = "Artifact"
     const val menuSDKs = "SDKs"
     const val menuGlobalLibraries = "Global Libraries"
     const val menuProblems = "Problems"
@@ -73,6 +75,15 @@ fun ProjectStructureDialogModel.checkModule(checks: JDialogFixture.()->Unit){
     logUIStep("Click $menuModules")
     val dialog = connectDialog()
     dialog.jList(menuModules).clickItem(menuModules)
+    dialog.checks()
+  }
+}
+
+fun ProjectStructureDialogModel.checkArtifact(checks: JDialogFixture.()->Unit){
+  with(guiTestCase){
+    logUIStep("Click $menuArtifacts")
+    val dialog = connectDialog()
+    dialog.jList(menuArtifacts).clickItem(menuArtifacts)
     dialog.checks()
   }
 }
