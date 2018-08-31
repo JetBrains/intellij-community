@@ -146,10 +146,13 @@ public class PluginManagerConfigurableNew
         if (keyCode == KeyEvent.VK_ENTER || event.getKeyChar() == '\n') {
           if (id == KeyEvent.KEY_PRESSED &&
               (myCurrentSearchPanel.controller == null || !myCurrentSearchPanel.controller.handleEnter(event))) {
-            if (myCurrentSearchPanel.controller != null) {
-              myCurrentSearchPanel.controller.hidePopup();
+            String text = mySearchTextField.getText();
+            if (!text.isEmpty()) {
+              if (myCurrentSearchPanel.controller != null) {
+                myCurrentSearchPanel.controller.hidePopup();
+              }
+              showSearchPanel(text);
             }
-            showSearchPanel(mySearchTextField.getText());
           }
           return true;
         }
