@@ -21,7 +21,7 @@ public interface NonBlockingContextChecker {
   /**
    * @return true if current extension can detect non-blocking contexts in the given {@code file}
    */
-  boolean isActive(@NotNull PsiFile file);
+  boolean isApplicable(@NotNull PsiFile file);
 
   /**
    * @param element PsiElement (e.g. method call or reference) to check if it is placed in code fragment where thread block is not allowed

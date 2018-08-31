@@ -24,15 +24,13 @@ import org.junit.Test
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-
 class PyRunTest : PyEnvTestCase() {
   @Test
   fun testInputRedirection() {
     val task = object : PyExecutionFixtureTestTask("/runConfig/inputRedirection") {
       override fun runTestOn(sdkHome: String, existingSdk: Sdk?) {
         val project = project
-        val factory = PythonConfigurationType.getInstance().configurationFactories[0]
-        val settings = RunManager.getInstance(project).createRunConfiguration("test", factory)
+        val settings = RunManager.getInstance(project).createConfiguration("test", PythonConfigurationType::class.java)
 
         val runConfiguration = settings.configuration as PythonRunConfiguration
         runConfiguration.apply {

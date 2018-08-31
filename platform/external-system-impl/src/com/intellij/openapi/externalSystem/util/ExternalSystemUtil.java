@@ -985,7 +985,7 @@ public class ExternalSystemUtil {
     }
 
     String name = AbstractExternalSystemTaskConfigurationType.generateName(project, taskSettings);
-    RunnerAndConfigurationSettings settings = RunManager.getInstance(project).createRunConfiguration(name, configurationType.getFactory());
+    RunnerAndConfigurationSettings settings = RunManager.getInstance(project).createConfiguration(name, configurationType.getFactory());
     ((ExternalSystemRunConfiguration)settings.getConfiguration()).getSettings().setFrom(taskSettings);
     return settings;
   }

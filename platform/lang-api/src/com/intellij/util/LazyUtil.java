@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Supplier;
 
-public class LazyUtil {
+public final class LazyUtil {
   public static <T> NotNullLazyValue<T> create(@NotNull Supplier<T> supplier) {
     return new NotNullLazyValue<T>() {
       @NotNull

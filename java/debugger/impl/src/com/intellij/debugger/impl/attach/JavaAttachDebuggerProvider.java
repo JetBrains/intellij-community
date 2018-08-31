@@ -372,7 +372,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
   static void attach(JavaAttachDebuggerProvider.LocalAttachInfo info, Project project) {
     RunnerAndConfigurationSettings runSettings =
       RunManager
-        .getInstance(project).createRunConfiguration(info.getSessionName(), JavaAttachDebuggerProvider.ProcessAttachRunConfigurationType.FACTORY);
+        .getInstance(project).createConfiguration(info.getSessionName(), JavaAttachDebuggerProvider.ProcessAttachRunConfigurationType.FACTORY);
     ((JavaAttachDebuggerProvider.ProcessAttachRunConfiguration)runSettings.getConfiguration()).myAttachInfo = info;
     ProgramRunnerUtil.executeConfiguration(runSettings, JavaAttachDebuggerProvider.ProcessAttachDebugExecutor.INSTANCE);
   }

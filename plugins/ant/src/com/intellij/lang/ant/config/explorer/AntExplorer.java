@@ -64,8 +64,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, Disposable {
   private Project myProject;
@@ -680,9 +680,8 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       }
 
       RunManager runManager = RunManager.getInstance(myProject);
-      RunnerAndConfigurationSettings settings =
-        runManager.createRunConfiguration(name, AntRunConfigurationType.getInstance().getFactory());
-      AntRunConfiguration configuration  = (AntRunConfiguration)settings.getConfiguration();
+      RunnerAndConfigurationSettings settings = runManager.createConfiguration(name, AntRunConfigurationType.class);
+      AntRunConfiguration configuration = (AntRunConfiguration)settings.getConfiguration();
       configuration.acceptSettings(target);
       if (RunDialog.editConfiguration(e.getProject(), settings, ExecutionBundle
         .message("create.run.configuration.for.item.dialog.title", configuration.getName()))) {
@@ -691,7 +690,6 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       }
     }
   }
-
 
   private final class ShowAllTargetsAction extends ToggleAction {
     public ShowAllTargetsAction() {
