@@ -25,6 +25,9 @@ import java.util.Collection;
  * @author oleg
  */
 public interface Instruction {
+  
+  Instruction[] EMPTY_ARRAY = new Instruction[0];
+  
   @Nullable
   PsiElement getElement();
 
