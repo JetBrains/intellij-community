@@ -226,28 +226,30 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
                                      @NotNull PsiElement place) {
     for (PsiScopeProcessor each : GroovyResolverProcessor.allProcessors(processor)) {
       if (!shouldProcessMembers(each)) continue;
-      if (!getAppropriateHolder(processor).processDeclarations(each, state, place)) return false;
+      if (!getAppropriateHolder(getAnnotationHint(processor)).processDeclarations(each, state, place)) return false;
     }
     return true;
   }
 
   @NotNull
-  private DeclarationHolder getAppropriateHolder(@NotNull PsiScopeProcessor processor) {
-    AnnotationHint hint = getAnnotationHint(processor);
+  private DeclarationHolder getAppropriateHolder(@Nullable AnnotationHint hint) {
+    boolean mayUseCache = useCache();
     if (hint == null) {
-      if (useCache()) {
+      if (mayUseCache || myAnnotationsCache.hasUpToDateValue() && myDeclarationsCache.hasUpToDateValue()) {
         return myAllCachedDeclarations;
-      }
-      else {
-        return this::processDeclarationsNoCache;
       }
     }
     else if (hint.isAnnotationResolve()) {
-      return myAnnotationsCache.getValue();
+      if (mayUseCache || myAnnotationsCache.hasUpToDateValue()) {
+        return myAnnotationsCache.getValue();
+      }
     }
     else {
-      return myDeclarationsCache.getValue();
+      if (mayUseCache || myDeclarationsCache.hasUpToDateValue()) {
+        return myDeclarationsCache.getValue();
+      }
     }
+    return this::processDeclarationsNoCache;
   }
 
   private boolean useCache() {
