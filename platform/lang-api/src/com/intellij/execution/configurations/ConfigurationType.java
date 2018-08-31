@@ -50,10 +50,10 @@ public interface ConfigurationType extends PossiblyDumbAware {
   String getId();
 
   /**
-   * The name of the configuration type in a configuration file. The same rules as for id. Useful in cases, where id cannot be changed.
+   * The name of the run configuration group in a configuration file. The same rules as for id. Useful when id cannot be changed.
    */
   @NotNull
-  default String getConfigurationPropertyName() {
+  default String getTag() {
     return getId();
   }
 

@@ -126,7 +126,7 @@ internal class RunConfigurationJsonSchemaGenerator(private val definitions: Json
 
 // returns null if id is not valid
 internal fun rcTypeIdToPropertyName(configurationType: ConfigurationType): CharSequence? {
-  return idToPropertyName(configurationType.configurationPropertyName, configurationType, null)
+  return idToPropertyName(configurationType.tag, configurationType, null)
 }
 
 // returns null if id is not valid
