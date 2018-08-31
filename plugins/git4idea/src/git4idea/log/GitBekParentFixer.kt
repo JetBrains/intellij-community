@@ -30,6 +30,7 @@ import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl.VcsLogFilterCollecti
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.util.BekUtil
 import com.intellij.vcs.log.util.StopWatch
+import java.util.regex.Pattern
 
 internal class GitBekParentFixer private constructor(private val incorrectCommits: Set<Hash>) {
 
@@ -54,7 +55,6 @@ internal class GitBekParentFixer private constructor(private val incorrectCommit
   }
 }
 
-private const val MAGIC_TEXT = "Merge remote"
 private val MAGIC_FILTER = createVcsLogFilterCollection()
 
 @Throws(VcsException::class)
@@ -89,6 +89,8 @@ fun getIncorrectCommitsFromProvider(provider: GitLogProvider,
 
 private fun createVcsLogFilterCollection(): VcsLogFilterCollection {
   val textFilter = object : VcsLogTextFilter {
+    val pattern = Pattern.compile("Merge remote(\\-tracking)? branch '.*/(.*)'( into \\2)?$", Pattern.MULTILINE)
+
     override fun matchesCase(): Boolean {
       return false
     }
@@ -98,11 +100,11 @@ private fun createVcsLogFilterCollection(): VcsLogFilterCollection {
     }
 
     override fun getText(): String {
-      return MAGIC_TEXT
+      return "Merge remote"
     }
 
     override fun matches(message: String): Boolean {
-      return message.contains(MAGIC_TEXT)
+      return pattern.matcher(message).find(0)
     }
   }
 
