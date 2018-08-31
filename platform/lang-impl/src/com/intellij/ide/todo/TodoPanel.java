@@ -109,9 +109,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
   private TodoTreeBuilder setupTreeStructure() {
     TodoTreeBuilder todoTreeBuilder = createTreeBuilder(myTree, myProject);
     TodoTreeStructure structure = todoTreeBuilder.getTodoTreeStructure();
-    StructureTreeModel structureTreeModel = new StructureTreeModel(true);
-    structureTreeModel.setStructure(structure);
-    structureTreeModel.setComparator(TodoTreeBuilder.MyComparator.ourInstance);
+    StructureTreeModel structureTreeModel = new StructureTreeModel(structure, TodoTreeBuilder.MyComparator.ourInstance);
     AsyncTreeModel asyncTreeModel = new AsyncTreeModel(structureTreeModel);
     myTree.setModel(asyncTreeModel);
     todoTreeBuilder.setModel(structureTreeModel);
