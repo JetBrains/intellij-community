@@ -72,7 +72,7 @@ public class GitBranchUtil {
 
   @Nullable
   public static GitBranchTrackInfo getTrackInfo(@NotNull GitRepository repository, @NotNull String localBranchName) {
-    return ContainerUtil.find(repository.getBranchTrackInfos(), it -> it.getLocalBranch().getName().equals(localBranchName));
+    return repository.getBranchTrackInfo(localBranchName);
   }
 
   @NotNull

@@ -19,7 +19,9 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.vcs.log.Hash;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
+import git4idea.GitReference;
 import git4idea.GitRemoteBranch;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +38,7 @@ public class GitRepoInfo {
   @NotNull private final Map<GitLocalBranch, Hash> myLocalBranches;
   @NotNull private final Map<GitRemoteBranch, Hash> myRemoteBranches;
   @NotNull private final Set<GitBranchTrackInfo> myBranchTrackInfos;
+  @NotNull private final Map<String, GitBranchTrackInfo> myBranchTrackInfosMap;
   @NotNull private final Collection<GitSubmoduleInfo> mySubmodules;
   @NotNull private final GitHooksInfo myHooksInfo;
   private final boolean myIsShallow;
@@ -60,6 +63,11 @@ public class GitRepoInfo {
     mySubmodules = submodules;
     myHooksInfo = hooksInfo;
     myIsShallow = isShallow;
+
+    myBranchTrackInfosMap = new THashMap<>(GitReference.BRANCH_NAME_HASHING_STRATEGY);
+    for (GitBranchTrackInfo info : branchTrackInfos) {
+      myBranchTrackInfosMap.put(info.getLocalBranch().getName(), info);
+    }
   }
 
   @Nullable
@@ -91,6 +99,11 @@ public class GitRepoInfo {
   @NotNull
   public Collection<GitBranchTrackInfo> getBranchTrackInfos() {
     return myBranchTrackInfos;
+  }
+
+  @NotNull
+  public Map<String, GitBranchTrackInfo> getBranchTrackInfosMap() {
+    return myBranchTrackInfosMap;
   }
 
   @Nullable
