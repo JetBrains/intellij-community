@@ -106,37 +106,41 @@ class PyLexerFStringHelper(private val myLexer: FlexLexerEx) {
         val firstSingleQuotedIndex = myFStringStates.indexOfFirst { it.openingQuotes.length == 1 }
         if (firstSingleQuotedIndex >= 0) {
           if (i == 0) {
-            myLexer.yybegin(myFStringStates[firstSingleQuotedIndex].oldState)
-            myFStringStates.subList(firstSingleQuotedIndex, myFStringStates.size).clear()
-            myLexer.yypushback(text.length - 1)
+            dropFStringStateWithAllNested(firstSingleQuotedIndex)
           }
-          else {
-            myLexer.yypushback(text.length - i)
-          }
+          pushBackToOrConsumeMatch(i, 1)
           return Pair(PyTokenTypes.LINE_BREAK, i)
         }
       }
       else {
         val nextThree = text.substring(i, Math.min(text.length, i + 3))
-        for (j in myFStringStates.size - 1 downTo 0) {
-          val state = myFStringStates[j]
-          if (nextThree.startsWith(state.openingQuotes)) {
-            if (i == 0) {
-              myLexer.yybegin(state.oldState)
-              myFStringStates.subList(j, myFStringStates.size).clear()
-              val unmatched = text.length - state.openingQuotes.length
-              myLexer.yypushback(unmatched)
-            }
-            else {
-              myLexer.yypushback(text.length - i)
-            }
-            return Pair(PyTokenTypes.FSTRING_END, i)
+        val lastWithMatchingQuotesIndex = myFStringStates.indexOfLast { nextThree.startsWith(it.openingQuotes) }
+        if (lastWithMatchingQuotesIndex >= 0) {
+          val state = myFStringStates[lastWithMatchingQuotesIndex]
+          if (i == 0) {
+            dropFStringStateWithAllNested(lastWithMatchingQuotesIndex)
           }
+          pushBackToOrConsumeMatch(i, state.openingQuotes.length)
+          return Pair(PyTokenTypes.FSTRING_END, i)
         }
       }
       i++
     }
     return Pair(null, text.length)
+  }
+
+  private fun dropFStringStateWithAllNested(fStringIndex: Int) {
+    myLexer.yybegin(myFStringStates[fStringIndex].oldState)
+    myFStringStates.subList(fStringIndex, myFStringStates.size).clear()
+  }
+
+  private fun pushBackToOrConsumeMatch(matchOffset: Int, matchSize: Int) {
+    if (matchOffset == 0) {
+      myLexer.yypushback(myLexer.yylength() - matchSize)
+    }
+    else {
+      myLexer.yypushback(myLexer.yylength() - matchOffset)
+    }
   }
 
 
