@@ -64,12 +64,7 @@ public class GitBranchUtil {
    */
   @Nullable
   public static GitBranchTrackInfo getTrackInfoForBranch(@NotNull GitRepository repository, @NotNull GitLocalBranch branch) {
-    for (GitBranchTrackInfo trackInfo : repository.getBranchTrackInfos()) {
-      if (trackInfo.getLocalBranch().equals(branch)) {
-        return trackInfo;
-      }
-    }
-    return null;
+    return getTrackInfo(repository, branch.getName());
   }
 
   @Nullable
