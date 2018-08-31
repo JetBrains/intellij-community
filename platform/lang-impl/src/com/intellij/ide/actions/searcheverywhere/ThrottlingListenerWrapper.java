@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -39,19 +40,19 @@ class ThrottlingListenerWrapper implements MultithreadSearcher.Listener {
   }
 
   @Override
-  public void elementsAdded(List<SESearcher.ElementInfo> list) {
+  public void elementsAdded(@NotNull List<SESearcher.ElementInfo> list) {
     myBuffer.addEvent(new Event(Event.ADD, list));
     flushBufferIfNeeded();
   }
 
   @Override
-  public void elementsRemoved(List<SESearcher.ElementInfo> list) {
+  public void elementsRemoved(@NotNull List<SESearcher.ElementInfo> list) {
     myBuffer.addEvent(new Event(Event.REMOVE, list));
     flushBufferIfNeeded();
   }
 
   @Override
-  public void searchFinished(Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
+  public void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
     myBuffer.flush(myFlushConsumer);
     myDelegateExecutor.execute(() -> myDelegateListener.searchFinished(hasMoreContributors));
   }

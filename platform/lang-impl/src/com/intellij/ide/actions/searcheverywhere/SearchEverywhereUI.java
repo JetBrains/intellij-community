@@ -206,7 +206,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
   private SESearcher createSearcher() {
     SESearcher.Listener listener = new SESearcher.Listener() {
       @Override
-      public void elementsAdded(List<SESearcher.ElementInfo> list) {
+      public void elementsAdded(@NotNull List<SESearcher.ElementInfo> list) {
         Map<SearchEverywhereContributor<?>, List<SESearcher.ElementInfo>> map =
           list.stream().collect(Collectors.groupingBy(info -> info.getContributor()));
 
@@ -214,12 +214,12 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       }
 
       @Override
-      public void elementsRemoved(List<SESearcher.ElementInfo> list) {
+      public void elementsRemoved(@NotNull List<SESearcher.ElementInfo> list) {
         list.forEach(info -> myListModel.removeElement(info.getElement(), info.getContributor()));
       }
 
       @Override
-      public void searchFinished(Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
+      public void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
         hasMoreContributors.forEach(myListModel::setHasMore);
         myResultsList.setEmptyText(getEmptyText());
         ScrollingUtil.ensureSelectionExists(myResultsList);

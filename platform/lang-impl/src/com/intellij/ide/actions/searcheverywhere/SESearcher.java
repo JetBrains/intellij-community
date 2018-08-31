@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.openapi.progress.ProgressIndicator;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
@@ -21,9 +22,9 @@ interface SESearcher {
    * Search process listener interface
    */
   interface Listener {
-    void elementsAdded(List<ElementInfo> list);
-    void elementsRemoved(List<ElementInfo> list);
-    void searchFinished(Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors);
+    void elementsAdded(@NotNull List<ElementInfo> list);
+    void elementsRemoved(@NotNull List<ElementInfo> list);
+    void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors);
   }
 
   /**
