@@ -50,9 +50,7 @@ class AsyncProjectViewSupport {
                           @NotNull JTree tree,
                           @NotNull AbstractTreeStructure structure,
                           @NotNull Comparator<NodeDescriptor> comparator) {
-    myStructureTreeModel = new StructureTreeModel(true);
-    myStructureTreeModel.setStructure(structure);
-    myStructureTreeModel.setComparator(comparator);
+    myStructureTreeModel = new StructureTreeModel(structure, comparator);
     myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, true, parent);
     myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
     myNodeUpdater = new ProjectFileNodeUpdater(project, myStructureTreeModel.getInvoker()) {
@@ -151,7 +149,7 @@ class AsyncProjectViewSupport {
     });
   }
 
-  public void setComparator(Comparator<? super NodeDescriptor> comparator) {
+  public void setComparator(@NotNull Comparator<? super NodeDescriptor> comparator) {
     myStructureTreeModel.setComparator(comparator);
   }
 

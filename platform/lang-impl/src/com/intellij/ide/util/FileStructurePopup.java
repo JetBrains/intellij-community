@@ -176,8 +176,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     FileStructurePopupFilter filter = new FileStructurePopupFilter();
     myFilteringStructure = new FilteringTreeStructure(filter, myTreeStructure, false);
 
-    myStructureTreeModel = new StructureTreeModel(true);
-    myStructureTreeModel.setStructure(myFilteringStructure);
+    myStructureTreeModel = new StructureTreeModel(myFilteringStructure, null);
     myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, false, this);
     myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
     myTree = new MyTree(myAsyncTreeModel);
@@ -627,12 +626,12 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
         group.add(new ToggleAction(IdeBundle.message("checkbox.narrow.down.on.typing")) {
           @Override
-          public boolean isSelected(AnActionEvent e) {
+          public boolean isSelected(@NotNull AnActionEvent e) {
             return isShouldNarrowDown();
           }
 
           @Override
-          public void setSelected(AnActionEvent e, boolean state) {
+          public void setSelected(@NotNull AnActionEvent e, boolean state) {
             PropertiesComponent.getInstance().setValue(NARROW_DOWN_PROPERTY_KEY, Boolean.toString(state));
             if (mySpeedSearch.isPopupActive() && !StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix())) {
               rebuild(true);
@@ -706,7 +705,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       boolean actionState = TreeModelWrapper.shouldRevert(myAction) != state;
       myTreeActionsOwner.setActionIncluded(myAction, actionState);
       saveState(myAction, state);
