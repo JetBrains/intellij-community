@@ -54,7 +54,7 @@ class WebBrowserServiceImpl : WebBrowserService() {
     val isHtmlOrXml = WebBrowserService.isHtmlOrXmlFile(request.file)
     if (!preferLocalUrl || !isHtmlOrXml) {
       val dumbService = DumbService.getInstance(request.project)
-      for (urlProvider in URL_PROVIDER_EP.extensions) {
+      for (urlProvider in URL_PROVIDER_EP.extensionList) {
         if ((!dumbService.isDumb || DumbService.isDumbAware(urlProvider)) && urlProvider.canHandleElement(request)) {
           val urls = getUrls(urlProvider, request)
           if (!urls.isEmpty()) {
@@ -63,7 +63,7 @@ class WebBrowserServiceImpl : WebBrowserService() {
         }
       }
 
-      if (!isHtmlOrXml) {
+      if (!isHtmlOrXml && !request.isForceFileUrlIfNoUrlProvider) {
         return emptyList()
       }
     }
