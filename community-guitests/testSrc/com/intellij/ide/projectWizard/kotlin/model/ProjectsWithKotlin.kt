@@ -653,7 +653,7 @@ fun KotlinGuiTestCase.testCreateGradleAndConfigureKotlin(
     else -> throw IllegalStateException("Cannot configure to Kotlin/Common kind.")
   }
   waitAMoment()
-  waitForGradleReimport(gradleOptions.artifact)
+  waitForGradleReimport(gradleOptions.artifact, waitForProject = false)
   saveAndCloseCurrentEditor()
   editSettingsGradle()
   editBuildGradle(
@@ -662,7 +662,7 @@ fun KotlinGuiTestCase.testCreateGradleAndConfigureKotlin(
   )
   waitAMoment()
   gradleReimport()
-  waitForGradleReimport(gradleOptions.artifact)
+  waitForGradleReimport(gradleOptions.artifact, waitForProject = true)
   waitAMoment()
 
   projectStructureDialogScenarios.checkGradleExplicitModuleGroups(

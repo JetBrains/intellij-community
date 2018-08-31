@@ -133,33 +133,50 @@ fun ExtendedJTreePathFixture.selectWithKeyboard(testCase: GuiTestCase, vararg pa
   }
 }
 
-fun GuiTestCase.waitForGradleReimport(rootPath: String){
+/**
+ *  Wait for Gradle reimport finishing
+ *  I detect end of reimport by following signs:
+ *  - action button "Refresh all external projects" becomes enable. But sometimes it becomes
+ *  enable only for a couple of moments and becomes disable again.
+ *  - the gradle tool window contains the project tree. But if reimporting fails the tree is empty.
+ *
+ *  @param waitForProject true if we expect reimporting successful
+ *  @param waitForProject false if we expect reimporting failing and the tree window is expected empty
+ *  @param rootPath root name expected to be shown in the tree. Checked only if [waitForProject] is true
+ * */
+fun GuiTestCase.waitForGradleReimport(rootPath: String, waitForProject: Boolean){
   GuiTestUtilKt.waitUntil("for gradle reimport finishing", timeout = Timeouts.minutes05){
     var result = false
     try {
       ideFrame {
         toolwindow(id = "Gradle") {
           content(tabName = "") {
-            val hasPath = try {
-              jTree(rootPath, timeout = Timeouts.noTimeout).hasPath()
-            }
-            catch (e: Exception) {
-              logInfo("$currentTimeInHumanString: waitForGradleReimport.jTree: ${e::class.simpleName} - ${e.message}")
-              false
-            }
+            // first, check whether the action button "Refresh all external projects" is enabled
             val text = "Refresh all external projects"
-            val enabled = try {
+            val isReimportButtonEnabled = try {
               robot().findComponent(this.target(), ActionButton::class.java) {
-                           if (!it.isShowing) false
-                           else text == it.action.templatePresentation.text
-                         }.isEnabled
+                if (!it.isShowing) false
+                else text == it.action.templatePresentation.text
+              }.isEnabled
             }
             catch (e: Exception) {
               logInfo("$currentTimeInHumanString: waitForGradleReimport.actionButton: ${e::class.simpleName} - ${e.message}")
               false
             }
-            logInfo("$currentTimeInHumanString: waitForGradleReimport: jtree = $hasPath, button enabled = $enabled")
-            result = hasPath && enabled
+            // second, check that Gradle tool window contains a tree with the specified [rootPath]
+            val gradleWindowHasPath = if(waitForProject){
+              try {
+                jTree(rootPath, timeout = Timeouts.noTimeout).hasPath()
+              }
+              catch (e: Exception) {
+                logInfo("$currentTimeInHumanString: waitForGradleReimport.jTree: ${e::class.simpleName} - ${e.message}")
+                false
+              }
+            }
+            else true
+            // third, calculate result whether to continue waiting
+            logInfo("$currentTimeInHumanString: waitForGradleReimport: jtree = $gradleWindowHasPath, button enabled = $isReimportButtonEnabled")
+            result = gradleWindowHasPath && isReimportButtonEnabled
           }
         }
       }

@@ -15,7 +15,6 @@ class CreateKotlinMPProjectGuiTestDeprecated : KotlinGuiTestCase() {
   @Test
   @JvmName("kotlin_mpp_hierarchical")
   fun createKotlinMppProjectCommonRoot() {
-    val extraTimeOut = 4000L
     val projectName = testMethod.methodName
     val kotlinVersion = KotlinTestProperties.kotlin_artifact_version
     val setOfMPPModules = MPPModules.mppFullSet()
@@ -29,7 +28,8 @@ class CreateKotlinMPProjectGuiTestDeprecated : KotlinGuiTestCase() {
       setOfMPPModules = MPPModules.mppFullSet(),
       kotlinPluginVersion = versionFromPlugin.toString()
     )
-    waitAMoment(extraTimeOut)
+    waitAMoment()
+    waitForGradleReimport(projectName, waitForProject = false)
     editSettingsGradle()
     editBuildGradle(
       kotlinVersion = kotlinVersion,
@@ -44,7 +44,7 @@ class CreateKotlinMPProjectGuiTestDeprecated : KotlinGuiTestCase() {
       editBuildGradle(kotlinVersion, false, module_common, module_js)
     }
     gradleReimport()
-    waitForGradleReimport(projectName)
+    waitForGradleReimport(projectName, waitForProject = true)
     waitAMoment()
 
     val expectedJars = (kotlinLibs[KotlinKind.Common]!!.kotlinMPProject.jars.getJars(kotlinVersion) +
@@ -90,7 +90,8 @@ class CreateKotlinMPProjectGuiTestDeprecated : KotlinGuiTestCase() {
       setOfMPPModules = MPPModules.mppFullSet(),
       kotlinPluginVersion = versionFromPlugin.toString()
     )
-    waitAMoment(extraTimeOut)
+    waitAMoment()
+    waitForGradleReimport(projectName, waitForProject = false)
     editSettingsGradle()
     editBuildGradle(
       kotlinVersion = kotlinVersion,
@@ -105,7 +106,7 @@ class CreateKotlinMPProjectGuiTestDeprecated : KotlinGuiTestCase() {
       editBuildGradle(kotlinVersion, false,  module_js)
     }
     gradleReimport()
-    waitForGradleReimport(projectName)
+    waitForGradleReimport(projectName, waitForProject = true)
     waitAMoment()
 
     val expectedJars = (kotlinLibs[KotlinKind.Common]!!.kotlinMPProject.jars.getJars(kotlinVersion) +
