@@ -196,7 +196,7 @@ public final class MavenRunConfigurationType implements ConfigurationType {
                                                                                     Project project) {
     MavenRunConfigurationType type = ConfigurationTypeUtil.findConfigurationType(MavenRunConfigurationType.class);
 
-    RunnerAndConfigurationSettings settings = RunManager.getInstance(project).createRunConfiguration(generateName(project, params), type.myFactory);
+    RunnerAndConfigurationSettings settings = RunManager.getInstance(project).createConfiguration(generateName(project, params), type.myFactory);
     MavenRunConfiguration runConfiguration = (MavenRunConfiguration)settings.getConfiguration();
     runConfiguration.setRunnerParameters(params);
     runConfiguration.setGeneralSettings(generalSettings);

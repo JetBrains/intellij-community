@@ -194,7 +194,7 @@ class ForkedDebuggerThread extends Thread {
   private static void attachVM(@NotNull Project project, String runConfigName, @NotNull String debugPort, ProgramRunner.Callback callback) {
     RemoteConfigurationType remoteConfigurationType = RemoteConfigurationType.getInstance();
     ConfigurationFactory factory = remoteConfigurationType.getFactory();
-    RunnerAndConfigurationSettings runSettings = RunManager.getInstance(project).createRunConfiguration(runConfigName, factory);
+    RunnerAndConfigurationSettings runSettings = RunManager.getInstance(project).createConfiguration(runConfigName, factory);
     runSettings.setActivateToolWindowBeforeRun(false);
 
     RemoteConfiguration configuration = (RemoteConfiguration)runSettings.getConfiguration();

@@ -87,6 +87,10 @@ abstract class RunManager {
    */
   abstract fun getConfigurationSettingsList(type: ConfigurationType): List<RunnerAndConfigurationSettings>
 
+  fun getConfigurationSettingsList(type: Class<out  ConfigurationType>): List<RunnerAndConfigurationSettings> {
+    return getConfigurationSettingsList(ConfigurationTypeUtil.findConfigurationType(type))
+  }
+
   /**
    * Returns the list of all run configurations.
    */
@@ -133,6 +137,7 @@ abstract class RunManager {
     return createConfiguration(name, ConfigurationTypeUtil.findConfigurationType(typeClass).configurationFactories.first())
   }
 
+  @Deprecated("", ReplaceWith("createConfiguration(name, factory)"))
   fun createRunConfiguration(name: String, factory: ConfigurationFactory) = createConfiguration(name, factory)
 
   /**

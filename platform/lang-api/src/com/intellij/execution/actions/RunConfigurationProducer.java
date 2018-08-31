@@ -224,7 +224,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
     if (original != null) {
       return RunManager.getInstance(context.getProject()).createConfiguration(original.clone(), configurationFactory);
     }
-    return RunManager.getInstance(context.getProject()).createRunConfiguration("", configurationFactory);
+    return RunManager.getInstance(context.getProject()).createConfiguration("", configurationFactory);
   }
 
   @NotNull
