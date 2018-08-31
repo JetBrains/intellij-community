@@ -638,4 +638,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testBooleanMergeInLoop() { doTest(); }
   public void testVoidIsAlwaysNull() { doTest(); }
   public void testStringEquality() { doTest(); }
+  public void testAssignmentFieldAliasing() { doTest(); }
 }

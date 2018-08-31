@@ -170,9 +170,22 @@ public final class DfaVariableValue extends DfaValue {
     return myDependents;
   }
 
+  public int getDepth() {
+    int depth = 0;
+    DfaVariableValue qualifier = getQualifier();
+    while (qualifier != null) {
+      depth++;
+      qualifier = qualifier.getQualifier();
+    }
+    return depth;
+  }
+
   @NotNull
+  @Contract(pure = true)
   public DfaVariableValue withQualifier(DfaVariableValue newQualifier) {
-    return myFactory.getVarFactory().createVariableValue(mySource, myVarType, myIsNegated, newQualifier);
+    return newQualifier == myQualifier
+           ? this
+           : myFactory.getVarFactory().createVariableValue(mySource, myVarType, myIsNegated, newQualifier);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
