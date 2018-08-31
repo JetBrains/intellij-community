@@ -237,7 +237,7 @@ public class GroovyImportUtil {
   public static String getImportReferenceText(GrImportStatement statement) {
     GrCodeReferenceElement importReference = statement.getImportReference();
     if (importReference != null) {
-      return importReference.getClassNameText();
+      return importReference.getQualifiedReferenceName();
     }
     return null;
   }
