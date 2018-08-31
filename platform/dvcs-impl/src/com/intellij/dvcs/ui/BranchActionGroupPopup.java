@@ -501,13 +501,13 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   }
 
   public static void wrapWithMoreActionIfNeeded(@NotNull Project project,
-                                                @NotNull DefaultActionGroup parentGroup, @NotNull List<? extends ActionGroup> actionList,
+                                                @NotNull LightActionGroup parentGroup, @NotNull List<? extends ActionGroup> actionList,
                                                 int maxIndex, @Nullable String settingName) {
     wrapWithMoreActionIfNeeded(project, parentGroup, actionList, maxIndex, settingName, false);
   }
 
   public static void wrapWithMoreActionIfNeeded(@NotNull Project project,
-                                                @NotNull DefaultActionGroup parentGroup, @NotNull List<? extends ActionGroup> actionList,
+                                                @NotNull LightActionGroup parentGroup, @NotNull List<? extends ActionGroup> actionList,
                                                 int maxIndex, @Nullable String settingName, boolean defaultExpandValue) {
     if (actionList.size() > maxIndex) {
       boolean hasFavorites =

@@ -17,6 +17,7 @@ package git4idea.ui.branch;
 
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.ui.BranchActionGroup;
+import com.intellij.dvcs.ui.LightActionGroup;
 import com.intellij.dvcs.ui.NewBranchAction;
 import com.intellij.dvcs.ui.PopupElementWithAdditionalInfo;
 import com.intellij.icons.AllIcons;
@@ -74,8 +75,8 @@ class GitBranchPopupActions {
     return createActions(null, "", false);
   }
 
-  ActionGroup createActions(@Nullable DefaultActionGroup toInsert, @NotNull String repoInfo, boolean firstLevelGroup) {
-    DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
+  ActionGroup createActions(@Nullable LightActionGroup toInsert, @NotNull String repoInfo, boolean firstLevelGroup) {
+    LightActionGroup popupGroup = new LightActionGroup(false);
     List<GitRepository> repositoryList = Collections.singletonList(myRepository);
 
     if (myRepository.isRebaseInProgress()) {
