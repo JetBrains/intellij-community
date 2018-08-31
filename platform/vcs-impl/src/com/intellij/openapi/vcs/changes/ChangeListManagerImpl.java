@@ -1550,7 +1550,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     myScheduler.submit(() -> semaphore.up());
-    semaphore.waitFor();
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      while (!semaphore.waitFor(100)) {
+        UIUtil.dispatchAllInvocationEvents();
+      }
+    } else {
+      semaphore.waitFor();
+    }
   }
 
   @TestOnly
