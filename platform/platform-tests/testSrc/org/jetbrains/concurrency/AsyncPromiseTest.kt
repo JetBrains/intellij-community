@@ -11,7 +11,6 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.test.assertEquals
 import kotlin.test.fail
 
 class AsyncPromiseTest {
@@ -156,7 +155,7 @@ class AsyncPromiseTest {
     val list = Arrays.asList(promise0, promise1)
     val results = list.collectResults()
     val l = results.blockingGet(1, TimeUnit.MINUTES)
-    assertEquals(listOf("0", "1"), l)
+    assertThat(l).containsExactly("0", "1")
     f0.get();
     f1.get();
   }
