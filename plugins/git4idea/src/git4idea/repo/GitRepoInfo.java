@@ -54,8 +54,8 @@ public class GitRepoInfo {
     myCurrentRevision = currentRevision;
     myState = state;
     myRemotes = new LinkedHashSet<>(remotes);
-    myLocalBranches = new LinkedHashMap<>(localBranches);
-    myRemoteBranches = new LinkedHashMap<>(remoteBranches);
+    myLocalBranches = new HashMap<>(localBranches);
+    myRemoteBranches = new HashMap<>(remoteBranches);
     myBranchTrackInfos = new LinkedHashSet<>(branchTrackInfos);
     mySubmodules = submodules;
     myHooksInfo = hooksInfo;
