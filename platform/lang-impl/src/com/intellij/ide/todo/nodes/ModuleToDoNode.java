@@ -28,11 +28,14 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.TodoItem;
 import com.intellij.ui.HighlightedRegion;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
@@ -74,6 +77,20 @@ public class ModuleToDoNode extends BaseToDoNode<Module> implements HighlightedR
     }
     return children;
 
+  }
+
+  @Override
+  public boolean contains(Object element) {
+    if (element instanceof TodoItem) {
+      Module module = ModuleUtilCore.findModuleForFile(((TodoItem)element).getFile());
+      return super.canRepresent(module);
+    }
+
+    if (element instanceof PsiElement) {
+      Module module = ModuleUtilCore.findModuleForPsiElement((PsiElement)element);
+      return super.canRepresent(module);
+    }
+    return super.canRepresent(element);
   }
 
   private TodoTreeStructure getStructure() {
