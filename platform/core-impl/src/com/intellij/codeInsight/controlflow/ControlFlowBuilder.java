@@ -85,7 +85,7 @@ public class ControlFlowBuilder {
   public final ControlFlow getCompleteControlFlow() {
     if (transparentInstructionCount == 0) return getControlFlow();
     
-    ArrayList<Instruction> result = ContainerUtil.newArrayListWithCapacity(instructions.size());
+    ArrayList<Instruction> result = ContainerUtil.newArrayListWithCapacity(instructionCount);
     int processedTransparentInstructions = 0;
     for (Instruction instruction : instructions) {
       if (instruction instanceof TransparentInstruction) {
@@ -111,6 +111,10 @@ public class ControlFlowBuilder {
       LOG.error("Control flow graph is inconsistent. Instructions: (" + result.size() + ", " + instructionCount + ")\n" +
                 "Transparent instructions: (" + processedTransparentInstructions + ", " + transparentInstructionCount + ")");
     }
+    
+    if (!pending.isEmpty()) {
+      LOG.error("Control flow is used incorrectly. All pending node must be connected to fake exit point. Pending: " + pending);
+    }
 
     return new ControlFlowImpl(result.toArray(Instruction.EMPTY_ARRAY));
   }
@@ -134,7 +138,7 @@ public class ControlFlowBuilder {
    *
    * @param instruction new instruction
    */
-  public void addNode(@NotNull final Instruction instruction) {
+  public final void addNode(@NotNull final Instruction instruction) {
     instructions.add(instruction);
     if (prevInstruction != null) {
       addEdge(prevInstruction, instruction);
@@ -147,16 +151,18 @@ public class ControlFlowBuilder {
    *
    * @param instruction new instruction
    */
-  public void addNodeAndCheckPending(final Instruction instruction) {
+  public final void addNodeAndCheckPending(final Instruction instruction) {
     addNode(instruction);
     checkPending(instruction);
   }
 
   /**
    * Stops control flow, used for break, next, redo, continue
+   *
+   * @apiNote please make sure that the prev instruction will be connected to exit point if it doesn't have any successors
    */
   @SuppressWarnings("SpellCheckingInspection")
-  public void flowAbrupted() {
+  public final void flowAbrupted() {
     prevInstruction = null;
   }
 
@@ -239,7 +245,7 @@ public class ControlFlowBuilder {
   }
 
   /**
-   * Creates transparent instruction for given element, and adds it to the instructions stack
+   * Creates transparent instruction for given element, and adds it to the instructions list
    * Transparent instruction will be replaced in the result control flow by direct connection between predecessors and successors 
    *
    * @param element Element to create instruction for
@@ -247,7 +253,7 @@ public class ControlFlowBuilder {
    * @return new transparent instruction
    */
   @NotNull
-  public TransparentInstruction startTransparentNode(@Nullable final PsiElement element, String markerName) {
+  public final TransparentInstruction startTransparentNode(@Nullable final PsiElement element, String markerName) {
     final TransparentInstruction instruction = new TransparentInstructionImpl(this, element, markerName);
     addNodeAndCheckPending(instruction);
     return instruction;
@@ -278,7 +284,8 @@ public class ControlFlowBuilder {
     element.acceptChildren(visitor);
 
     // create end pseudo node and close all pending edges
-    checkPending(startNode(null));
+    Instruction exitInstruction = startNode(null);
+    checkPending(exitInstruction);
   }
 
   protected void addEntryPointNode(final PsiElement startElement) {
@@ -286,7 +293,7 @@ public class ControlFlowBuilder {
     startNode(null);
   }
 
-  public void updatePendingElementScope(@NotNull PsiElement parentForScope,
+  public final void updatePendingElementScope(@NotNull PsiElement parentForScope,
                                         @Nullable PsiElement newParentScope) {
     processPending((pendingScope, instruction) -> {
       if (pendingScope != null && PsiTreeUtil.isAncestor(parentForScope, pendingScope, false)) {
