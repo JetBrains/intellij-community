@@ -69,34 +69,7 @@ public class SSBasedInspectionOptions {
         .setAddAction(new AnActionButtonRunnable() {
           @Override
           public void run(AnActionButton button) {
-            final AnAction[] children = new AnAction[]{
-              new AnAction(SSRBundle.message("SSRInspection.add.search.template.button")) {
-                @Override
-                public void actionPerformed(@NotNull AnActionEvent e) {
-                  final SearchContext context = new SearchContext(e.getDataContext());
-                  final Configuration configuration;
-                  if (Registry.is("ssr.use.new.search.dialog")) {
-                    final StructuralSearchDialog dialog = new StructuralSearchDialog(context, false, false);
-                    if (!dialog.showAndGet()) return;
-                    configuration = dialog.getConfiguration();
-                  }
-                  else {
-                    final SearchDialog dialog = new SearchDialog(context, false, false);
-                    if (!dialog.showAndGet()) return;
-                    configuration = dialog.getConfiguration();
-                  }
-                  addTemplate(configuration, e.getProject());
-                }
-              },
-              new AnAction(SSRBundle.message("SSRInspection.add.replace.template.button")) {
-                @Override
-                public void actionPerformed(@NotNull AnActionEvent e) {
-                  final ReplaceDialog dialog = new ReplaceDialog(new SearchContext(e.getDataContext()), false, false);
-                  if (!dialog.showAndGet()) return;
-                  addTemplate(dialog.getConfiguration(), e.getProject());
-                }
-              }
-            };
+            final AnAction[] children = new AnAction[]{new AddTemplateAction(false), new AddTemplateAction(true)};
             JBPopupFactory.getInstance().createActionGroupPopup(null, new DefaultActionGroup(children),
                                                                 DataManager.getInstance().getDataContext(button.getContextComponent()),
                                                                 JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true)
@@ -181,9 +154,9 @@ public class SSBasedInspectionOptions {
     }
     final SearchContext searchContext = new SearchContext(project);
     final Configuration newConfiguration;
-    if (Registry.is("ssr.use.new.search.dialog") && configuration instanceof SearchConfiguration) {
-      final StructuralSearchDialog dialog = new StructuralSearchDialog(searchContext, false, false);
-      dialog.setValuesFromConfig(configuration);
+    if (Registry.is("ssr.use.new.search.dialog")) {
+      final StructuralSearchDialog dialog = new StructuralSearchDialog(searchContext, !(configuration instanceof SearchConfiguration), true);
+      dialog.loadConfiguration(configuration);
       dialog.setUseLastConfiguration(true);
       if (!dialog.showAndGet()) return;
       newConfiguration = dialog.getConfiguration();
@@ -216,6 +189,33 @@ public class SSBasedInspectionOptions {
 
     public void fireContentsChanged() {
       fireContentsChanged(myTemplatesList, -1, -1);
+    }
+  }
+
+  private class AddTemplateAction extends AnAction {
+
+    private final boolean myReplace;
+
+    public AddTemplateAction(boolean replace) {
+      super(replace
+            ? SSRBundle.message("SSRInspection.add.replace.template.button")
+            : SSRBundle.message("SSRInspection.add.search.template.button"));
+      myReplace = replace;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      final SearchContext context = new SearchContext(e.getDataContext());
+      if (Registry.is("ssr.use.new.search.dialog")) {
+        final StructuralSearchDialog dialog = new StructuralSearchDialog(context, myReplace, true);
+        if (!dialog.showAndGet()) return;
+        addTemplate(dialog.getConfiguration(), e.getProject());
+      }
+      else {
+        final SearchDialog dialog = myReplace ? new ReplaceDialog(context, false, false) : new SearchDialog(context, false, false);
+        if (!dialog.showAndGet()) return;
+        addTemplate(dialog.getConfiguration(), e.getProject());
+      }
     }
   }
 }

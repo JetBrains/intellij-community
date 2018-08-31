@@ -3,10 +3,12 @@ package com.intellij.structuralsearch.plugin;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceDialog;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchContext;
+import com.intellij.structuralsearch.plugin.ui.StructuralSearchDialog;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,14 +31,24 @@ public class StructuralReplaceAction extends AnAction {
     }
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    ReplaceDialog replaceDialog = new ReplaceDialog(searchContext);
+    if (Registry.is("ssr.use.new.search.dialog")) {
+      final StructuralSearchDialog replaceDialog = new StructuralSearchDialog(searchContext, true);
+      if (config != null) {
+        replaceDialog.setUseLastConfiguration(true);
+        replaceDialog.loadConfiguration(config);
+      }
 
-    if (config!=null) {
-      replaceDialog.setUseLastConfiguration(true);
-      replaceDialog.setValuesFromConfig(config);
+      replaceDialog.show();
     }
+    else {
+      final ReplaceDialog replaceDialog = new ReplaceDialog(searchContext);
+      if (config != null) {
+        replaceDialog.setUseLastConfiguration(true);
+        replaceDialog.setValuesFromConfig(config);
+      }
 
-    replaceDialog.show();
+      replaceDialog.show();
+    }
   }
 
   /** Updates the state of the action

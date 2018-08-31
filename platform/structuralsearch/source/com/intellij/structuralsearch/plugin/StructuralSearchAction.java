@@ -29,10 +29,10 @@ public class StructuralSearchAction extends AnAction {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     if (Registry.is("ssr.use.new.search.dialog")) {
-      final StructuralSearchDialog searchDialog = new StructuralSearchDialog(searchContext);
+      final StructuralSearchDialog searchDialog = new StructuralSearchDialog(searchContext, false);
       if (config != null) {
         searchDialog.setUseLastConfiguration(true);
-        searchDialog.setValuesFromConfig(config);
+        searchDialog.loadConfiguration(config);
       }
       searchDialog.show();
     }
@@ -65,4 +65,3 @@ public class StructuralSearchAction extends AnAction {
   }
 
 }
-

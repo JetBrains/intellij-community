@@ -5,6 +5,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.NamedScriptableDefinition;
+import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
@@ -38,7 +39,7 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
   protected Configuration(Configuration configuration) {
     name = configuration.name;
     category = configuration.category;
-    created = configuration.created;
+    created = -1L; // receives timestamp when added to history
     predefined = false; // copy is never predefined
   }
 
@@ -100,6 +101,10 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
   }
 
   public abstract MatchOptions getMatchOptions();
+
+  public ReplaceOptions getReplaceOptions() {
+    return null;
+  }
 
   public abstract NamedScriptableDefinition findVariable(String name);
 
