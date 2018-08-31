@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -86,7 +87,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   public static final String USER_DEFINED = SSRBundle.message("new.template.defaultname");
 
   private final SearchContext mySearchContext;
-  final boolean myReplace;
+  boolean myReplace;
   Configuration myConfiguration;
   @NonNls FileType myFileType = StructuralSearchUtil.getDefaultFileType();
   Language myDialect = null;
@@ -100,21 +101,23 @@ public class StructuralSearchDialog extends DialogWrapper {
   boolean myFilterButtonEnabled = false;
 
   // components
-  private JCheckBox myRecursive;
+  JCheckBox myRecursive;
   private JCheckBox myMatchCase;
   private JCheckBox myShortenFQN; // replace
   private JCheckBox myReformat; // replace
   private JCheckBox myUseStaticImport; // replace
   FileTypeSelector myFileTypesComboBox;
-  private EditorTextField mySearchCriteriaEdit;
-  private EditorTextField myReplaceCriteriaEdit;
-  private OnePixelSplitter mySearchEditorPanel;
+  EditorTextField mySearchCriteriaEdit;
+  EditorTextField myReplaceCriteriaEdit;
+  OnePixelSplitter mySearchEditorPanel;
   private OnePixelSplitter myReplaceEditorPanel;
 
   FilterPanel myFilterPanel;
   private LinkComboBox myTargetComboBox;
   private ScopePanel myScopePanel;
   private JCheckBox myOpenInNewTab;
+
+  JComponent myReplacePanel;
 
   public StructuralSearchDialog(SearchContext searchContext, boolean replace) {
     this(searchContext, replace, false);
@@ -130,11 +133,12 @@ public class StructuralSearchDialog extends DialogWrapper {
     myReplace = replace;
     myEditConfigOnly = editConfigOnly;
     mySearchContext = searchContext;
+    myConfiguration = createConfiguration(null);
     setTitle(getDefaultTitle());
 
-    myConfiguration = createConfiguration(null);
-
     init();
+    registerSwitchActions(ActionManager.getInstance().getAction("StructuralSearchPlugin.StructuralSearchAction"), false);
+    registerSwitchActions(ActionManager.getInstance().getAction("StructuralSearchPlugin.StructuralReplaceAction"), true);
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
     ProjectManager.getInstance().addProjectManagerListener(searchContext.getProject(), new ProjectManagerListener() {
       @Override
@@ -142,6 +146,32 @@ public class StructuralSearchDialog extends DialogWrapper {
         close(CANCEL_EXIT_CODE);
       }
     });
+  }
+
+  private void registerSwitchActions(AnAction action, boolean replace) {
+    new AnAction() {
+      @Override
+      public boolean isDumbAware() {
+        return action.isDumbAware();
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        if (myReplace == replace) return;
+        myReplace = replace;
+        setTitle(getDefaultTitle());
+        myReplacePanel.setVisible(replace);
+        myRecursive.setVisible(!replace);
+        loadConfiguration(myConfiguration);
+        final Dimension size = DimensionService.getInstance().getSize(getDimensionServiceKey());
+        if (size != null) {
+          setSize(size.width, size.height);
+        }
+        else {
+          pack();
+        }
+      }
+    }.registerCustomShortcutSet(action.getShortcutSet(), getRootPane());
   }
 
   public void setUseLastConfiguration(boolean useLastConfiguration) {
@@ -287,8 +317,8 @@ public class StructuralSearchDialog extends DialogWrapper {
     }
   }
 
-  private void setTextForEditor(final String selection, EditorTextField editor) {
-    editor.setText(selection);
+  private void setTextForEditor(String text, EditorTextField editor) {
+    editor.setText(text);
     editor.selectAll();
     final Project project = getProject();
     final Document document = editor.getDocument();
@@ -297,9 +327,8 @@ public class StructuralSearchDialog extends DialogWrapper {
     final PsiFile file = documentManager.getPsiFile(document);
     if (file == null) return;
 
-    WriteCommandAction.writeCommandAction(project, file).run(() -> {
-      CodeStyleManager.getInstance(project).adjustLineIndent(file, new TextRange(0, document.getTextLength()));
-    });
+    WriteCommandAction.writeCommandAction(project, file).run(
+      () -> CodeStyleManager.getInstance(project).adjustLineIndent(file, new TextRange(0, document.getTextLength())));
   }
 
   private void startSearching() {
@@ -311,7 +340,8 @@ public class StructuralSearchDialog extends DialogWrapper {
     }
   }
 
-  private String getDefaultTitle() {
+  @NotNull
+  String getDefaultTitle() {
     return myReplace ? SSRBundle.message("structural.replace.title") : SSRBundle.message("structural.search.title");
   }
 
@@ -325,8 +355,8 @@ public class StructuralSearchDialog extends DialogWrapper {
     mySearchEditorPanel.setFirstComponent(mySearchCriteriaEdit);
     mySearchEditorPanel.add(BorderLayout.CENTER, mySearchCriteriaEdit);
 
-    final JComponent replacePanel = createReplacePanel();
-    replacePanel.setVisible(myReplace);
+    myReplacePanel = createReplacePanel();
+    myReplacePanel.setVisible(myReplace);
 
     myScopePanel = new ScopePanel(getProject());
     if (!myEditConfigOnly) {
@@ -357,7 +387,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     layout.setHorizontalGroup(
       layout.createParallelGroup()
         .addComponent(mySearchEditorPanel)
-        .addComponent(replacePanel)
+        .addComponent(myReplacePanel)
         .addComponent(myScopePanel)
         .addGroup(layout.createSequentialGroup()
                     .addComponent(searchTargetLabel)
@@ -369,7 +399,7 @@ public class StructuralSearchDialog extends DialogWrapper {
       layout.createSequentialGroup()
         .addComponent(mySearchEditorPanel)
         .addGap(2)
-        .addComponent(replacePanel)
+        .addComponent(myReplacePanel)
         .addComponent(myScopePanel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
         .addGap(2)
         .addGroup(layout.createParallelGroup()
@@ -854,6 +884,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     }
   }
 
+  @NotNull
   @Override
   protected String getDimensionServiceKey() {
     return myReplace
