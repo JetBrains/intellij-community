@@ -30,7 +30,9 @@ internal class GitBekParentFixer private constructor(private val incorrectCommit
 
   fun fixCommit(commit: TimedVcsCommit): TimedVcsCommit {
     return if (!incorrectCommits.contains(commit.id)) commit
-    else reverseParents(commit)
+    else object : TimedVcsCommit by commit {
+      override fun getParents(): List<Hash> = ContainerUtil.reverse(commit.parents)
+    }
   }
 
   companion object {
@@ -52,22 +54,6 @@ private val MAGIC_FILTER = createVcsLogFilterCollection()
 private fun getIncorrectCommits(provider: GitLogProvider, root: VirtualFile): Set<Hash> {
   val commitsMatchingFilter = provider.getCommitsMatchingFilter(root, MAGIC_FILTER, -1)
   return ContainerUtil.map2Set(commitsMatchingFilter) { timedVcsCommit -> timedVcsCommit.id }
-}
-
-private fun reverseParents(commit: TimedVcsCommit): TimedVcsCommit {
-  return object : TimedVcsCommit {
-    override fun getTimestamp(): Long {
-      return commit.timestamp
-    }
-
-    override fun getId(): Hash {
-      return commit.id
-    }
-
-    override fun getParents(): List<Hash> {
-      return ContainerUtil.reverse(commit.parents)
-    }
-  }
 }
 
 private fun createVcsLogFilterCollection(): VcsLogFilterCollection {
