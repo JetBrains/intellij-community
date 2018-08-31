@@ -329,8 +329,11 @@ class PipEnvPipFileWatcherComponent(val project: Project) : ProjectComponent {
         if (!isPipFileEditor(event.editor)) return
         val listener = object : DocumentListener {
           override fun documentChanged(event: DocumentEvent?) {
-            val module = event?.document?.virtualFile?.getModule(project) ?: return
-            notifyPipFileChanged(module)
+            val document = event?.document ?: return
+            val module = document.virtualFile?.getModule(project) ?: return
+            if (FileDocumentManager.getInstance().isDocumentUnsaved(document)) {
+              notifyPipFileChanged(module)
+            }
           }
         }
         with(event.editor.document) {
