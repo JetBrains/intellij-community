@@ -133,7 +133,7 @@ public class ExternalSystemJdkUtil {
   }
 
   public static boolean isValidJdk(@Nullable String homePath) {
-    return !StringUtil.isEmptyOrSpaces(homePath) && (JdkUtil.checkForJdk(homePath) || JdkUtil.checkForJre(homePath));
+    return !StringUtil.isEmptyOrSpaces(homePath) && JdkUtil.checkForJdk(homePath) && JdkUtil.checkForJre(homePath);
   }
 
   @NotNull
