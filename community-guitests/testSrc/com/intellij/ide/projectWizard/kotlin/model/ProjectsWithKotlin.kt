@@ -652,16 +652,18 @@ fun KotlinGuiTestCase.testCreateGradleAndConfigureKotlin(
     KotlinKind.JS -> configureKotlinJsFromGradle(kotlinVersion)
     else -> throw IllegalStateException("Cannot configure to Kotlin/Common kind.")
   }
-  waitAMoment(extraTimeOut)
+  waitAMoment()
+  waitForGradleReimport(gradleOptions.artifact)
   saveAndCloseCurrentEditor()
   editSettingsGradle()
   editBuildGradle(
     kotlinVersion = kotlinVersion,
     isKotlinDslUsed = gradleOptions.useKotlinDsl
   )
-  waitAMoment(extraTimeOut)
+  waitAMoment()
   gradleReimport()
-  waitAMoment(extraTimeOut)
+  waitForGradleReimport(gradleOptions.artifact)
+  waitAMoment()
 
   projectStructureDialogScenarios.checkGradleExplicitModuleGroups(
     project = project,
@@ -695,21 +697,34 @@ fun ProjectStructureDialogScenarios.checkGradleExplicitModuleGroups(
 }
 
 
-fun KotlinGuiTestCase.createKotlinMPProject(
+fun KotlinGuiTestCase.createKotlinMPProjectDeprecated(
   projectPath: String,
   moduleName: String,
   mppProjectStructure: NewProjectDialogModel.MppProjectStructure,
-  setOfMPPModules: Set<KotlinKind>
+  setOfMPPModules: Set<KotlinKind>,
+  kotlinPluginVersion: String
 ) {
   assert(setOfMPPModules.contains(KotlinKind.Common)) { "At least common MPP module should be specified" }
-  logTestStep("Create new MPP project with modules $setOfMPPModules")
+  logTestStep("Create new MPP (deprecated) project with modules $setOfMPPModules")
   welcomePageDialogModel.createNewProject()
   newProjectDialogModel.assertGroupPresent(NewProjectDialogModel.Groups.Kotlin)
-  newProjectDialogModel.createKotlinMPProject(
+  newProjectDialogModel.createKotlinMPProjectDeprecated(
     projectPath = projectPath,
     moduleName = moduleName,
     mppProjectStructure = mppProjectStructure,
     isJvmIncluded = setOfMPPModules.contains(KotlinKind.JVM),
-    isJsIncluded = setOfMPPModules.contains(KotlinKind.JS)
+    isJsIncluded = setOfMPPModules.contains(KotlinKind.JS),
+    kotlinPluginVersion = kotlinPluginVersion
+  )
+}
+
+fun KotlinGuiTestCase.createKotlinMPProjectWeb(
+  projectPath: String
+) {
+  logTestStep("Create new MPP (web) project")
+  welcomePageDialogModel.createNewProject()
+  newProjectDialogModel.assertGroupPresent(NewProjectDialogModel.Groups.Kotlin)
+  newProjectDialogModel.createKotlinMPProjectWeb(
+    projectPath = projectPath
   )
 }

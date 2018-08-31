@@ -479,7 +479,6 @@
     <codeStyle.ReferenceAdjuster language="JAVA" implementationClass="com.intellij.psi.impl.source.codeStyle.JavaReferenceAdjuster"/>
     <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.JavaEnterAfterUnmatchedBraceHandler" order="before afterUnmatchedBrace"/>
     <lang.smartEnterProcessor language="JAVA" implementationClass="com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor"/>
-    <lang.ast.factory language="JAVA" implementationClass="com.intellij.psi.impl.source.tree.JavaASTFactory"/>
     <breadcrumbsInfoProvider implementation="com.intellij.lang.java.JavaBreadcrumbsInfoProvider"/>
     <editorFileSwapper implementation="com.intellij.codeEditor.JavaEditorFileSwapper"/>
     <flipCommaIntention.flipper language="JAVA" implementationClass="com.intellij.codeInsight.intention.impl.JavaFlipper"/>
@@ -536,35 +535,36 @@
     <multiHostInjector implementation="com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager$Concatenation2InjectorAdapter" order="first"/>
     <changeSignatureDetector language="JAVA" implementationClass="com.intellij.refactoring.changeSignature.JavaChangeSignatureDetector"/>
     <lookup.charFilter implementation="com.intellij.codeInsight.completion.JavaCharFilter" id="java"/>
-    <completion.contributor language="JAVA" implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.JavaMethodHandleCompletionContributor" id="javaMethodHandle"
-                            order="last, before javaLegacy"/>
-    <completion.contributor language="JAVA" implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionCompletionContributor" id="javaReflection"
-                            order="last, before javaLegacy"/>
-    <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaSmartCompletionContributor" id="javaSmart"
-                            order="last, before default"/>
-    <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.NullSmartCompletionContributor" id="smartNull"
-                            order="last, before javaSmart"/>
-    <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaDocCompletionContributor" id="javadoc"
-                            order="last, before javaLegacy, before wordCompletion"/>
-    <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.JavaClassNameCompletionContributor" id="javaClassName"
-                            order="last, before default"/>
-    <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaMemberNameCompletionContributor" id="javaMemberName"
-                            order="before javaOverride"/>
-    <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.JavaMethodMergingContributor" id="methodMerger"
-                            order="before javaLegacy, before default"/>
-    <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.JavaClassReferenceCompletionContributor"
-                            id="javaClassReference" order="before legacy"/>
-    <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaCompletionContributor" id="javaLegacy"
-                            order="last, before legacy, before default, before javaClassName"/>
-    <completion.contributor language="XML" implementationClass="com.intellij.codeInsight.completion.XmlBasicToClassNameDelegator" id="basic2ClassName"
-                            order="after xml"/>
-    <completion.contributor language="JAVA" implementationClass="com.intellij.codeInspection.magicConstant.MagicCompletionContributor" id="magicCompletion"
-                            order="after javaBasic2ClassName"/>
-    <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaNoVariantsDelegator" id="javaBasic2ClassName"
-                            order="before javaMemberName, before javaLegacy, after liveTemplates"/>
-    <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.RefactoringCompletionContributor" id="javaRefactoring"
-                            order="first"/>
-    <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JShellCompletionContributor" order="before javaLegacy"/>
+    <completion.contributor language="JAVA" id="javaMethodHandle" order="last, before javaLegacy"
+                            implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.JavaMethodHandleCompletionContributor"/>
+    <completion.contributor language="JAVA" id="javaReflection" order="last, before javaLegacy"
+                            implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionCompletionContributor"/>
+    <completion.contributor language="JAVA" id="javaSmart" order="last, before default"
+                            implementationClass="com.intellij.codeInsight.completion.JavaSmartCompletionContributor"/>
+    <completion.contributor language="JAVA" id="smartNull" order="last, before javaSmart"
+                            implementationClass="com.intellij.codeInsight.completion.NullSmartCompletionContributor"/>
+    <completion.contributor language="JAVA" id="javadoc" order="last, before javaLegacy, before wordCompletion"
+                            implementationClass="com.intellij.codeInsight.completion.JavaDocCompletionContributor"/>
+    <completion.contributor language="any" id="javaClassName" order="last, before default"
+                            implementationClass="com.intellij.codeInsight.completion.JavaClassNameCompletionContributor"/>
+    <completion.contributor language="JAVA" id="javaMemberName" order="before javaOverride"
+                            implementationClass="com.intellij.codeInsight.completion.JavaMemberNameCompletionContributor"/>
+    <completion.contributor language="any" id="methodMerger" order="before javaLegacy, before default"
+                            implementationClass="com.intellij.codeInsight.completion.JavaMethodMergingContributor"/>
+    <completion.contributor language="any" id="javaClassReference" order="before legacy"
+                            implementationClass="com.intellij.codeInsight.completion.JavaClassReferenceCompletionContributor"/>
+    <completion.contributor language="JAVA" id="javaLegacy" order="last, before legacy, before default, before javaClassName"
+                            implementationClass="com.intellij.codeInsight.completion.JavaCompletionContributor"/>
+    <completion.contributor language="XML" id="basic2ClassName" order="after xml"
+                            implementationClass="com.intellij.codeInsight.completion.XmlBasicToClassNameDelegator"/>
+    <completion.contributor language="JAVA" id="magicCompletion" order="after javaBasic2ClassName"
+                            implementationClass="com.intellij.codeInspection.magicConstant.MagicCompletionContributor"/>
+    <completion.contributor language="JAVA" id="javaBasic2ClassName" order="before javaMemberName, before javaLegacy, after liveTemplates"
+                            implementationClass="com.intellij.codeInsight.completion.JavaNoVariantsDelegator"/>
+    <completion.contributor language="JAVA" id="javaRefactoring" order="first"
+                            implementationClass="com.intellij.codeInsight.completion.RefactoringCompletionContributor"/>
+    <completion.contributor language="JAVA" id="JShell" order="before javaLegacy"
+                            implementationClass="com.intellij.codeInsight.completion.JShellCompletionContributor"/>
     <completion.confidence language="JAVA" implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionCompletionConfidence" id="javaReflection" />
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavadocCompletionConfidence" id="javadoc" order="before javaComments"/>
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInComments" id="javaComments"/>
