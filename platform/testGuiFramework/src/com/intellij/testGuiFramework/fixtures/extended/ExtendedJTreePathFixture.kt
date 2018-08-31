@@ -175,6 +175,6 @@ import javax.swing.tree.TreePath
    * */
   fun TreePath.getPathStrings(jTree: JTree): List<String> {
     val cellReader = ExtendedJTreeCellReader()
-    val pathStrings = this.path.map { cellReader.valueAt(jTree, it) ?: throw Exception("Unable to read value (value is null) for a tree")}
-    return if (pathStrings.first().isEmpty() || !jTree.isRootVisible) pathStrings.drop(1) else pathStrings
+    val pathStrings = if (path.first().toString().isEmpty() || !jTree.isRootVisible) path.drop(1) else path.asList()
+    return pathStrings.map { cellReader.valueAt(jTree, it) ?: throw Exception("Unable to read value (value is null) for a tree") }
   }
