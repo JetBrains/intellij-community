@@ -16,6 +16,7 @@
 package com.intellij.diff.tools.util.text;
 
 import com.intellij.diff.comparison.ComparisonManagerImpl;
+import com.intellij.diff.comparison.InnerFragmentsPolicy;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.lang.DiffIgnoredRangeProvider;
@@ -44,7 +45,7 @@ import static com.intellij.diff.tools.util.base.IgnorePolicy.*;
 
 public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implements TwosideTextDiffProvider {
   private static final IgnorePolicy[] IGNORE_POLICIES = {DEFAULT, TRIM_WHITESPACES, IGNORE_WHITESPACES, IGNORE_WHITESPACES_CHUNKS, FORMATTING};
-  private static final HighlightPolicy[] HIGHLIGHT_POLICIES = {BY_LINE, BY_WORD, BY_WORD_SPLIT, DO_NOT_HIGHLIGHT};
+  private static final HighlightPolicy[] HIGHLIGHT_POLICIES = {BY_LINE, BY_WORD, BY_WORD_SPLIT, BY_CHAR, DO_NOT_HIGHLIGHT};
 
   @Nullable private final Project myProject;
   @NotNull private final DiffContent myContent1;
@@ -137,7 +138,7 @@ public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implement
                                                            @Nullable List<Range> linesRanges,
                                                            @NotNull HighlightPolicy highlightPolicy,
                                                            @NotNull ProgressIndicator indicator) {
-    boolean innerFragments = highlightPolicy.isFineFragments();
+    InnerFragmentsPolicy fragmentsPolicy = highlightPolicy.getFragmentsPolicy();
 
     List<TextRange> ignoredRanges1 = myProvider.getIgnoredRanges(myProject, text1, myContent1);
     List<TextRange> ignoredRanges2 = myProvider.getIgnoredRanges(myProject, text2, myContent2);
@@ -148,14 +149,14 @@ public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implement
     ComparisonManagerImpl comparisonManager = ComparisonManagerImpl.getInstanceImpl();
     if (linesRanges == null) {
       List<LineFragment> fragments = comparisonManager.compareLinesWithIgnoredRanges(text1, text2, lineOffsets1, lineOffsets2,
-                                                                                     ignored1, ignored2, innerFragments, indicator);
+                                                                                     ignored1, ignored2, fragmentsPolicy, indicator);
       return Collections.singletonList(fragments);
     }
     else {
       List<List<LineFragment>> result = new ArrayList<>();
       for (Range range : linesRanges) {
         result.add(comparisonManager.compareLinesWithIgnoredRanges(range, text1, text2, lineOffsets1, lineOffsets2,
-                                                                   ignored1, ignored2, innerFragments, indicator));
+                                                                   ignored1, ignored2, fragmentsPolicy, indicator));
       }
       return result;
     }
