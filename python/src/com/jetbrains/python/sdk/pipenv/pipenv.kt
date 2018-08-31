@@ -388,6 +388,9 @@ class PipEnvPipFileWatcherComponent(val project: Project) : ProjectComponent {
                 Messages.showErrorDialog(project, e.toString(), "Error Running Pipenv")
               }
             }
+            finally {
+              sdk.associatedModule?.baseDir?.refresh(true, false)
+            }
           }
         }
         ProgressManager.getInstance().run(task)
