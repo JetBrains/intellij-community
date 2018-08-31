@@ -55,7 +55,7 @@ public class InvokeIntention extends ActionOnFile {
   private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.propertyBased.InvokeIntention");
   private final IntentionPolicy myPolicy;
 
-  public InvokeIntention(PsiFile file, IntentionPolicy policy) {
+  public InvokeIntention(@NotNull PsiFile file, @NotNull IntentionPolicy policy) {
     super(file);
     myPolicy = policy;
   }
