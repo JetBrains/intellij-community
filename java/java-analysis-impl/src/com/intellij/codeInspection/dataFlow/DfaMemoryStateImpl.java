@@ -561,6 +561,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
       return true;
     });
+    myDistinctClasses.forEach(DistinctPairSet.DistinctPair::check);
   }
 
   @Override
