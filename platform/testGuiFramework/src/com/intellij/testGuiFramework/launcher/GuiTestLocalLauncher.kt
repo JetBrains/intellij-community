@@ -82,13 +82,55 @@ object GuiTestLocalLauncher {
                     testClassNames: List<String> = emptyList(),
                     additionalJvmOptions: Array<Pair<String, String>> = emptyArray()) {
     val args = createArgs(ide = ide, port = port, testClassNames = testClassNames, additionalJvmOptions = additionalJvmOptions)
-    return startIde(ide = ide, args = args)
+    return startIde(ide = ide, ideaStartTest = ProcessBuilder().inheritIO().command(args))
+  }
+
+  fun runIdeWithDTraceLocally(ide: Ide = Ide(CommunityIde(), 0, 0),
+                              port: Int = 0,
+                              testClassName: String = "",
+                              additionalJvmOptions: Array<Pair<String, String>> = emptyArray()) {
+
+    val args = createArgs(ide = ide, port = port, testClassNames = listOf(testClassName), additionalJvmOptions = additionalJvmOptions)
+
+    val margs = arrayOfNulls<String>(args.size)
+    for (i in 0 until margs.size) {
+      margs[i] = args[i]
+    }
+
+    for (i in 0 until margs.size) {
+      if (margs[i]!!.contains("-classpath")) {
+        margs[i + 1] = margs[i + 1]!!.replace(" ", "\\ ")
+        println(margs[i + 1])
+        break
+      }
+    }
+
+    val klass = Class.forName(testClassName)
+    val testInstance = klass.newInstance()
+
+    val testSrcPathMethod = klass.getMethod("getTestSrcPath")
+    val testSrcPath = testSrcPathMethod.invoke(testInstance) as String
+
+    val testDTScriptNameMethod = klass.getMethod("getDTScriptName")
+    val testDTScriptName = testDTScriptNameMethod.invoke(testInstance) as String
+
+    LOG.info("dtrace script: ${testSrcPath}${File.separatorChar}${testDTScriptName}")
+
+    val modArgs = listOf<String>()
+      .plus("dtrace")
+      .plus("-Z")
+      //      .plus("-q")
+      .plus("-s")
+      .plus("${testSrcPath}${File.separatorChar}${testDTScriptName}")
+      .plus("-c")
+      .plus(margs.joinToString(" "))
+    return startIde(ide = ide, ideaStartTest = ProcessBuilder().command(modArgs))
   }
 
   fun runIdeByPath(path: String, ide: Ide = Ide(CommunityIde(), 0, 0), port: Int = 0) {
     //todo: check that we are going to run test locally
     val args = createArgsByPath(path, port)
-    return startIde(ide = ide, args = args)
+    return startIde(ide = ide, ideaStartTest = ProcessBuilder().inheritIO().command(args))
   }
 
   fun firstStartIdeLocally(ide: Ide = Ide(CommunityIde(), 0, 0), firstStartClassName: String = "undefined") {
@@ -100,13 +142,12 @@ object GuiTestLocalLauncher {
                        needToWait: Boolean = false,
                        timeOut: Long = 0,
                        timeOutUnit: TimeUnit = TimeUnit.SECONDS,
-                       args: List<String>) {
-    LOG.info("Running $ide locally \n with args: ${args.joinToString(" ")}")
+                       ideaStartTest: ProcessBuilder) {
+    LOG.info("Running $ide locally \n with args: ${ideaStartTest.command().joinToString(" ")}")
     //do not limit IDE starting if we are using debug mode to not miss the debug listening period
     val conditionalTimeout = if (GuiTestOptions.isDebug) 0 else timeOut
     val startLatch = CountDownLatch(1)
     thread(start = true, name = "IdeaThread") {
-      val ideaStartTest = ProcessBuilder().inheritIO().command(args)
       IdeProcessControlManager.submitIdeProcess(ideaStartTest.start())
       startLatch.countDown()
     }
@@ -139,7 +180,8 @@ object GuiTestLocalLauncher {
 
   }
 
-  private fun startIdeAndWait(ide: Ide, args: List<String>) = startIde(ide = ide, needToWait = true, timeOut = 180, args = args)
+  private fun startIdeAndWait(ide: Ide, args: List<String>) = startIde(ide = ide, needToWait = true, timeOut = 180,
+                                                                       ideaStartTest = ProcessBuilder().inheritIO().command(args))
 
 
   /**

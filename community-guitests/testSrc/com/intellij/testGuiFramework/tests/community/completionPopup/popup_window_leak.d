@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.testGuiFramework.framework
 
-import com.intellij.testGuiFramework.remote.IdeProcessControlManager
-import org.junit.AfterClass
-import org.junit.BeforeClass
+int c;
+int a[long long];
 
+BEGIN {
+    c=0;
+}
 
-open class GuiTestSuite {
+objc$target:AWTWindow_Panel:-initWithDelegate*:entry {
+    c++;
+    a[arg0] = 1;
+}
 
-  companion object {
-    @BeforeClass
-    @JvmStatic
-    fun setUp() {
-    }
+objc$target:AWTWindow_Panel:-dealloc:entry {
+    c -= a[arg0];
+    a[arg0] = 0;
+}
 
-    @AfterClass
-    @JvmStatic
-    fun tearDown() {
-      // todo: GUI-142 GuiTestRunner needs refactoring
-      IdeProcessControlManager.killIdeProcess()
-    }
-  }
+END /c > 0/ {
+    printf("AWTWindow_Panel leaks: %d", c);
+    exit(9);
+}
+
+END /c == 0/ {
+    printf("AWTWindow_Panel leaks: %d", c);
+    exit(0);
 }

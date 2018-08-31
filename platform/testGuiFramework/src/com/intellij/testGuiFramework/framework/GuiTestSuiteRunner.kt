@@ -14,14 +14,16 @@ import org.junit.runner.notification.RunNotifier
 import org.junit.runners.Suite
 import org.junit.runners.model.RunnerBuilder
 
-class GuiTestSuiteRunner(private val suiteClass: Class<*>, builder: RunnerBuilder) : Suite(suiteClass, builder) {
+open class GuiTestSuiteRunner(private val suiteClass: Class<*>, builder: RunnerBuilder) : Suite(suiteClass, builder) {
 
   //IDE type to run suite tests with
   var isFirstStart: Boolean = true
 
-  private val myIde: Ide = getIdeFromAnnotation(suiteClass)
-  private val UNDEFINED_FIRST_CLASS = "undefined"
-  private val myFirstStartClassName: String by lazy {
+  private var guiTestLocalRunner: GuiTestLocalRunner? = null
+
+  protected val myIde: Ide = getIdeFromAnnotation(suiteClass)
+  protected val UNDEFINED_FIRST_CLASS = "undefined"
+  protected val myFirstStartClassName: String by lazy {
     val annotation = suiteClass.getAnnotation(FirstStartWith::class.java)
     val value = annotation?.value
     if (value != null) value.java.canonicalName else UNDEFINED_FIRST_CLASS
@@ -56,13 +58,23 @@ class GuiTestSuiteRunner(private val suiteClass: Class<*>, builder: RunnerBuilde
     }
   }
 
+  protected open fun createGuiTestLocalRunner(testClass:Class<*>, suiteClass:Class<*>, myIde: Ide): GuiTestLocalRunner {
+    return GuiTestLocalRunner(testClass, suiteClass, myIde)
+  }
+
+  private fun getGuiTestLocalRunner(testClass:Class<*>, suiteClass:Class<*>, myIde: Ide): GuiTestLocalRunner {
+    if (guiTestLocalRunner == null)
+      guiTestLocalRunner = createGuiTestLocalRunner(testClass, suiteClass, myIde)
+
+    return guiTestLocalRunner!!
+  }
 
   override fun runChild(runner: Runner, notifier: RunNotifier?) {
     try {
       //let's start IDE to complete installation, import configs and etc before running tests
       if (isFirstStart) firstStart()
       val testClass = runner.description.testClass
-      val guiTestLocalRunner = GuiTestLocalRunner(testClass, suiteClass, myIde)
+      val guiTestLocalRunner = getGuiTestLocalRunner(testClass, suiteClass, myIde)
       super.runChild(guiTestLocalRunner, notifier)
     }
     catch (e: Exception) {
@@ -71,7 +83,7 @@ class GuiTestSuiteRunner(private val suiteClass: Class<*>, builder: RunnerBuilde
     }
   }
 
-  private fun firstStart() {
+  protected open fun firstStart() {
     if (myFirstStartClassName == UNDEFINED_FIRST_CLASS) return
     LOG.info("IDE is configuring for the first time...")
     GuiTestLocalLauncher.firstStartIdeLocally(myIde, myFirstStartClassName)
