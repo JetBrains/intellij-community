@@ -919,7 +919,13 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   @Override
   public void visitDocTag(@NotNull GrDocTag docTag) {
     if (myType1 == GroovyDocTokenTypes.mGDOC_INLINE_TAG_START || myType2 == GroovyDocTokenTypes.mGDOC_INLINE_TAG_END) {
-      createSpaceInCode(false);
+      createSpaceProperty(false, false, 0);
+    }
+    else if (myType1 == GroovyDocTokenTypes.mGDOC_TAG_VALUE_TOKEN && myType2 != GroovyDocTokenTypes.mGDOC_COMMENT_DATA) {
+      createSpaceProperty(false, false, 0);
+    }
+    else if (myType1 != GroovyDocTokenTypes.mGDOC_TAG_NAME && myType2 == GroovyDocTokenTypes.mGDOC_TAG_VALUE_TOKEN) {
+      createSpaceProperty(false, false, 0);
     }
   }
 
