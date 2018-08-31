@@ -1,10 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution
 
-import com.intellij.execution.configurations.ConfigurationFactory
-import com.intellij.execution.configurations.ConfigurationType
-import com.intellij.execution.configurations.RunConfiguration
-import com.intellij.execution.configurations.RunProfile
+import com.intellij.execution.configurations.*
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -132,7 +129,11 @@ abstract class RunManager {
    */
   abstract fun createConfiguration(name: String, factory: ConfigurationFactory): RunnerAndConfigurationSettings
 
-  fun createRunConfiguration(name: String, factory: ConfigurationFactory): RunnerAndConfigurationSettings = createConfiguration(name, factory)
+  fun createConfiguration(name: String, typeClass: Class<out ConfigurationType>): RunnerAndConfigurationSettings {
+    return createConfiguration(name, ConfigurationTypeUtil.findConfigurationType(typeClass).configurationFactories.first())
+  }
+
+  fun createRunConfiguration(name: String, factory: ConfigurationFactory) = createConfiguration(name, factory)
 
   /**
    * Creates a configuration settings object based on a specified [RunConfiguration]. Note that you need to call

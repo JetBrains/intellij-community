@@ -19,8 +19,12 @@ import javax.swing.*;
 public abstract class ConfigurationFactory {
   private final ConfigurationType myType;
 
-  protected ConfigurationFactory(@NotNull final ConfigurationType type) {
+  protected ConfigurationFactory(@NotNull ConfigurationType type) {
     myType = type;
+  }
+
+  ConfigurationFactory() {
+    myType = null;
   }
 
   /**
@@ -76,6 +80,8 @@ public abstract class ConfigurationFactory {
    */
   @NotNull
   public String getName() {
+    // null only if SimpleConfigurationType (but method overriden)
+    //noinspection ConstantConditions
     return myType.getDisplayName();
   }
 
@@ -92,11 +98,15 @@ public abstract class ConfigurationFactory {
   }
 
   public Icon getIcon() {
+    // null only if SimpleConfigurationType (but method overriden)
+    //noinspection ConstantConditions
     return myType.getIcon();
   }
 
   @NotNull
   public ConfigurationType getType() {
+    // null only if SimpleConfigurationType (but method overriden)
+    //noinspection ConstantConditions
     return myType;
   }
 
