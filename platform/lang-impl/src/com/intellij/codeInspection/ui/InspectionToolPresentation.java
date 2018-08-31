@@ -14,6 +14,7 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.util.SynchronizedBidiMultiMap;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.Disposable;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import org.jdom.Element;
@@ -97,6 +98,16 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
 
   @Nullable
   default JComponent getCustomPreviewPanel(@NotNull RefEntity entity) {
+    return null;
+  }
+
+  @Nullable
+  default JComponent getCustomPreviewPanel(@NotNull CommonProblemDescriptor descriptor, @NotNull Disposable parent) {
+    return null;
+  }
+
+  @Nullable
+  default JComponent getCustomToolsPanel(@NotNull CommonProblemDescriptor descriptor, @NotNull Disposable parent) {
     return null;
   }
 
