@@ -10,6 +10,7 @@ import com.intellij.platform.onair.storage.api.Tree;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -28,6 +29,11 @@ public class MockStorage implements Storage {
       throw new NoSuchElementException("data missing");
     }
     return result;
+  }
+
+  @Override
+  public void bulkLookup(@NotNull List<Address> addresses, @NotNull DataConsumer consumer) {
+    addresses.forEach(address -> consumer.consume(address, lookup(address)));
   }
 
   @NotNull

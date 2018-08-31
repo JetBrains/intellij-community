@@ -22,6 +22,8 @@ public interface Tree {
 
   boolean forEach(@NotNull Novelty.Accessor novelty, @NotNull KeyValueConsumer consumer);
 
+  void forEachBulk(int concurrencyFactor, @NotNull KeyValueConsumer consumer);
+
   boolean forEach(@NotNull Novelty.Accessor novelty, @NotNull byte[] fromKey, @NotNull KeyValueConsumer consumer);
 
   Address store(@NotNull Novelty.Accessor novelty);

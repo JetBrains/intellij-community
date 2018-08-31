@@ -3,6 +3,7 @@ package com.intellij.platform.onair.vfs;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.platform.onair.storage.HashMapCache;
 import com.intellij.platform.onair.storage.StorageImpl;
 import com.intellij.platform.onair.storage.api.Novelty;
 import com.intellij.platform.onair.tree.BTree;
@@ -20,7 +21,9 @@ public class VFSRemapTest {
   public static final int port = 11211;
 
   @Test
-  public void testAll() throws IOException, InterruptedException {
+  public void testAll() throws IOException {
+    System.out.println("Pid: " + Util.getPid());
+
     final FSRecords fs = FSRecords.getInstance();
     fs.connect();
     try {
@@ -35,25 +38,49 @@ public class VFSRemapTest {
         final Pair<BTree, Novelty> pair = RemoteVFS.save(storage, fs);
         System.out.println("Tree saved: " + (System.currentTimeMillis() - start) / 1000 + "s");
         novelty = pair.second;
-
-        start = System.currentTimeMillis();
-        BTree tree = BTree.load(storage, VFS_TREE_KEY_SIZE, pair.first.store(novelty.access()));
-        System.out.println("Tree uploaded: " + (System.currentTimeMillis() - start) / 1000 + "s");
-
-        start = System.currentTimeMillis();
-
         final AtomicLong size = new AtomicLong();
         final AtomicLong values = new AtomicLong();
-        tree.forEach(novelty.access(), (key, value) -> {
-          size.addAndGet(VFS_TREE_KEY_SIZE + value.length);
+        pair.first.forEach(novelty.access(), (key, value) -> {
+          size.addAndGet(key.length + value.length);
           values.incrementAndGet();
           return true;
         });
 
-        System.out.println("Tree warmed up: " + (System.currentTimeMillis() - start) / 1000 + "s, size: " + size.get() + ", values: " + values.get());
+        start = System.currentTimeMillis();
+        storage = storage.withCache(new HashMapCache<>());
+        BTree tree = BTree.load(storage, VFS_TREE_KEY_SIZE, pair.first.store(novelty.access()));
+        System.out.println(
+          "Tree uploaded: " + (System.currentTimeMillis() - start) / 1000 + "s, size: " + size.get() + ", values: " + values.get());
+
+        start = System.currentTimeMillis();
+
+        size.set(0);
+        values.set(0);
+        tree.forEachBulk(1000000, (key, value) -> {
+          size.addAndGet(key.length + value.length);
+          values.incrementAndGet();
+          return true;
+        });
+
+        System.out.println(
+          "Tree warmed up: " + (System.currentTimeMillis() - start) / 1000 + "s, size: " + size.get() + ", values: " + values.get());
         storage.dumpStats(System.out);
 
         storage.disablePrefetch();
+
+        start = System.currentTimeMillis();
+
+        size.set(0);
+        values.set(0);
+        tree.forEach(Novelty.VOID_TXN, (key, value) -> {
+          size.addAndGet(key.length + value.length);
+          values.incrementAndGet();
+          return true;
+        });
+
+        System.out.println(
+          "Tree warmed up again: " + (System.currentTimeMillis() - start) / 1000 + "s, size: " + size.get() + ", values: " + values.get());
+        storage.dumpStats(System.out);
 
         start = System.currentTimeMillis();
 

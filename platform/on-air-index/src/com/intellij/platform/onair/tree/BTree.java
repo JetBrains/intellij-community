@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.PrintStream;
+import java.util.*;
 
 public class BTree implements Tree {
   public static final byte DEFAULT_BASE = 32;
@@ -20,12 +21,12 @@ public class BTree implements Tree {
   // private final int base = 32;
   private final int keySize;
 
-  private Address address;
+  private Address rootAddress;
 
-  private BTree(Storage storage, int keySize, Address address) {
+  private BTree(Storage storage, int keySize, Address rootAddress) {
     this.storage = storage;
     this.keySize = keySize;
-    this.address = address;
+    this.rootAddress = rootAddress;
   }
 
   @Override
@@ -47,17 +48,114 @@ public class BTree implements Tree {
   @Override
   @Nullable
   public byte[] get(@NotNull Novelty.Accessor novelty, @NotNull byte[] key) {
-    return loadPage(novelty, address).get(novelty, key);
+    return loadPage(novelty, rootAddress).get(novelty, key);
   }
 
   @Override
   public boolean forEach(@NotNull Novelty.Accessor novelty, @NotNull KeyValueConsumer consumer) {
-    return loadPage(novelty, address).forEach(novelty, consumer);
+    return loadPage(novelty, rootAddress).forEach(novelty, consumer);
+  }
+
+  @Override
+  public void forEachBulk(int maxBulkSize, @NotNull KeyValueConsumer consumer) {
+    storage.bulkLookup(Collections.singletonList(rootAddress), (address, value) ->
+      forEachBulk(Collections.singletonList(loadPage(address, value, false)), maxBulkSize, consumer));
+  }
+
+  private void forEachBulk(List<BasePage> parentPages, int maxBulkSize, @NotNull KeyValueConsumer consumer) {
+    if (parentPages.isEmpty()) {
+      return;
+    }
+
+    final List<Address> window = new ArrayList<>();
+    if (parentPages.get(0).isBottom()) {
+      assert parentPages.stream().allMatch(page -> page.isBottom());
+      Map<Address, Object> children = null;
+      for (final BasePage bottomPage : parentPages) {
+        final BottomPage page = (BottomPage)bottomPage;
+        for (int i = 0; i < page.size; i++) {
+          if ((page.mask & (1L << i)) != 0) {
+            consumer.consume(page.getKey(i), page.getInlineValue(i));
+          }
+          else {
+            final Address childAddress = page.getChildAddress(i);
+            if (children == null) {
+              children = new HashMap<>();
+            }
+            final byte[] currentKey = page.getKey(i);
+            Object x = children.get(childAddress);
+            if (x != null) {
+              if (x instanceof List) {
+                //noinspection unchecked
+                ((List)x).add(currentKey);
+              } else {
+                ArrayList<Object> list = new ArrayList<>(2);
+                list.add(x);
+                list.add(currentKey);
+                children.put(childAddress, list);
+              }
+            }
+            else {
+              children.put(childAddress, currentKey);
+              window.add(childAddress);
+            }
+            if (window.size() >= maxBulkSize) {
+              processChildren(consumer, window, children);
+              window.clear();
+              children = null;
+            }
+          }
+        }
+      }
+      if (!window.isEmpty()) {
+        if (children == null) {
+          throw new IllegalStateException();
+        }
+        processChildren(consumer, window, children);
+      }
+    }
+    else {
+      assert parentPages.stream().noneMatch(page -> page.isBottom());
+      parentPages.forEach(page -> {
+        for (int i = 0; i < page.size; i++) {
+          final Address childAddress = page.getChildAddress(i);
+          window.add(childAddress);
+          if (window.size() >= maxBulkSize) {
+            List<BasePage> children = new ArrayList<>();
+            storage.bulkLookup(window, (address, value) -> children.add(loadPage(address, value, false)));
+            window.clear();
+            forEachBulk(children, maxBulkSize, consumer);
+          }
+        }
+      });
+      if (!window.isEmpty()) {
+        List<BasePage> children = new ArrayList<>();
+        storage.bulkLookup(window, (address, value) -> children.add(loadPage(address, value, false)));
+        window.clear();
+        forEachBulk(children, maxBulkSize, consumer);
+      }
+    }
+  }
+
+  private void processChildren(@NotNull KeyValueConsumer consumer,
+                               List<Address> window,
+                               Map<Address, Object> recentChildren) {
+    storage.bulkLookup(window, (address, value) -> {
+      Object x = recentChildren.get(address);
+      if (x instanceof List) {
+        //noinspection unchecked
+        for (final byte[] key : (List<byte[]>)x) {
+          consumer.consume(key, value);
+        }
+      } else {
+        consumer.consume((byte[])x, value);
+      }
+    });
   }
 
   @Override
   public boolean forEach(@NotNull Novelty.Accessor novelty, @NotNull byte[] fromKey, @NotNull KeyValueConsumer consumer) {
-    return loadPage(novelty, address).forEach(novelty, fromKey, consumer);
+    return loadPage(novelty, rootAddress).forEach(novelty, fromKey, consumer);
   }
 
   @Override
@@ -68,7 +166,7 @@ public class BTree implements Tree {
   @Override
   public boolean put(@NotNull Novelty.Accessor novelty, @NotNull byte[] key, @NotNull byte[] value, boolean overwrite) {
     final boolean[] result = new boolean[1];
-    final BasePage root = loadPage(novelty, address).getMutableCopy(novelty, this);
+    final BasePage root = loadPage(novelty, rootAddress).getMutableCopy(novelty, this);
     final BasePage newSibling = root.put(novelty, key, value, overwrite, result);
     if (newSibling != null) {
       final int metadataOffset = (keySize + BYTES_PER_ADDRESS) * DEFAULT_BASE;
@@ -77,10 +175,10 @@ public class BTree implements Tree {
       bytes[metadataOffset + 1] = 2;
       BasePage.set(0, root.getMinKey(), getKeySize(), bytes, root.address.getLowBytes());
       BasePage.set(1, newSibling.getMinKey(), getKeySize(), bytes, newSibling.address.getLowBytes());
-      this.address = new Address(novelty.alloc(bytes));
+      this.rootAddress = new Address(novelty.alloc(bytes));
     }
     else {
-      this.address = root.address;
+      this.rootAddress = root.address;
     }
     return result[0];
   }
@@ -93,7 +191,7 @@ public class BTree implements Tree {
   @Override
   public boolean delete(@NotNull Novelty.Accessor novelty, @NotNull byte[] key, @Nullable byte[] value) {
     final boolean[] res = new boolean[1];
-    address = delete(novelty, loadPage(novelty, address).getMutableCopy(novelty, this), key, value, res).address;
+    rootAddress = delete(novelty, loadPage(novelty, rootAddress).getMutableCopy(novelty, this), key, value, res).address;
     return res[0];
   }
 
@@ -104,12 +202,11 @@ public class BTree implements Tree {
 
   @Override
   public Address store(@NotNull Novelty.Accessor novelty, @NotNull StorageConsumer consumer) {
-    // System.out.println("tree stored at " + result);
-    return loadPage(novelty, address).save(novelty, storage, consumer);
+    return loadPage(novelty, rootAddress).save(novelty, storage, consumer);
   }
 
   public void dump(@NotNull Novelty.Accessor novelty, @NotNull PrintStream out, BTree.ToString renderer) {
-    loadPage(novelty, address).dump(novelty, out, 0, renderer);
+    loadPage(novelty, rootAddress).dump(novelty, out, 0, renderer);
   }
 
   /* package */ BasePage loadPage(@NotNull Novelty.Accessor novelty, Address address) {
@@ -118,20 +215,24 @@ public class BTree implements Tree {
     if (bytes == null) {
       throw new IllegalStateException("page not found at " + address);
     }
-    int metadataOffset = (keySize + BYTES_PER_ADDRESS) * getBase();
+    return loadPage(address, bytes, true);
+  }
+
+  @NotNull /* package */ BasePage loadPage(Address address, byte[] bytes, boolean prefetch) {
+    final int metadataOffset = (keySize + BYTES_PER_ADDRESS) * getBase();
     byte type = bytes[metadataOffset];
     int size = bytes[metadataOffset + 1] & 0xff; // 0..255
     final BasePage result;
     switch (type) {
       case BOTTOM:
         final int mask = (int)(ByteUtils.readUnsignedInt(bytes, metadataOffset + 2) ^ 0x80000000);
-        if (!isNovelty) {
+        if (prefetch && !address.isNovelty()) {
           storage.prefetch(address, bytes, this, size, type, mask);
         }
         result = new BottomPage(bytes, this, address, size, mask);
         break;
       case INTERNAL:
-        if (!isNovelty) {
+        if (prefetch && !address.isNovelty()) {
           storage.prefetch(address, bytes, this, size, type, 0);
         }
         result = new InternalPage(bytes, this, address, size);

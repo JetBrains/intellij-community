@@ -1,10 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.onair.storage;
 
+import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
 import com.google.common.cache.CacheStats;
-import com.google.common.cache.LoadingCache;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import com.intellij.openapi.util.Pair;
@@ -17,6 +16,7 @@ import net.spy.memcached.MemcachedClient;
 import net.spy.memcached.internal.BulkFuture;
 import net.spy.memcached.internal.BulkGetCompletionListener;
 import net.spy.memcached.internal.BulkGetFuture;
+import net.spy.memcached.internal.SingleElementInfiniteIterator;
 import net.spy.memcached.transcoders.Transcoder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -41,9 +41,13 @@ public class StorageImpl implements Storage {
   private static final int LOCAL_CACHE_SIZE = Integer.getInteger("intellij.platform.onair.storage.cache", 4000000);
   private static final int CLIENT_COUNT = 5;
   private final MemcachedClient[] myClient;
-  private final LoadingCache<Address, Object> myLocalCache;
+  private final Cache<Address, Object> myLocalCache;
   private final AtomicInteger prefetchInProgress = new AtomicInteger(0);
   private final ConcurrentHashMap<Address, byte[]> preFetches = new ConcurrentHashMap<>();
+
+  private static final Transcoder<byte[]> MY_TRANSCODER = new ByteArrayTranscoder();
+  private static final SingleElementInfiniteIterator<Transcoder<byte[]>> MY_TC_ITERATOR =
+    new SingleElementInfiniteIterator<>(MY_TRANSCODER);
 
   private final AtomicLong prefetchHits = new AtomicLong(0);
 
@@ -69,28 +73,23 @@ public class StorageImpl implements Storage {
     }
   }
 
-  private static final Transcoder<byte[]> MY_TRANSCODER = new ByteArrayTranscoder();
-
   int q = 0;
 
   public StorageImpl(InetSocketAddress socketAddress) throws IOException {
-    myClient = new MemcachedClient[CLIENT_COUNT];
-    final List<InetSocketAddress> address = Collections.singletonList(socketAddress);
-    for (int i = 0; i < CLIENT_COUNT; i++) {
-      myClient[i] = new MemcachedClient(new BinaryConnectionFactory(ClientMode.Static, 16384, 16384 * 8), address);
-    }
+    myClient = createClients(socketAddress);
     myLocalCache = CacheBuilder
       .newBuilder()
-      .maximumSize(LOCAL_CACHE_SIZE).build(new CacheLoader<Address, Object>() {
-        @Override
-        public Object load(@NotNull Address key) {
-          final byte[] result = myClient[0].get(key.toString(), MY_TRANSCODER);
-          if (result == null) {
-            throw new NoSuchElementException("page not found");
-          }
-          return result;
-        }
-      });
+      .recordStats()
+      .maximumSize(LOCAL_CACHE_SIZE).build();
+  }
+
+  private StorageImpl(MemcachedClient[] client, Cache<Address, Object> localCache) {
+    myClient = client;
+    myLocalCache = localCache;
+  }
+
+  public StorageImpl withCache(Cache<Address, Object> cache) {
+    return new StorageImpl(myClient, cache);
   }
 
   @NotNull
@@ -98,7 +97,13 @@ public class StorageImpl implements Storage {
   @Override
   public byte[] lookup(@NotNull final Address address) {
     try {
-      Object result = myLocalCache.get(address);
+      Object result = myLocalCache.get(address, () -> {
+        final byte[] remoteResult = myClient[0].get(address.toString(), MY_TRANSCODER);
+        if (remoteResult == null) {
+          throw new NoSuchElementException("page not found");
+        }
+        return remoteResult;
+      });
       if (result instanceof byte[]) {
         return (byte[])result;
       }
@@ -187,7 +192,7 @@ public class StorageImpl implements Storage {
     }
     q = index;
     prefetchInProgress.incrementAndGet();
-    final BulkFuture<Map<String, byte[]>> future = myClient[index].asyncGetBulk(addresses, MY_TRANSCODER);
+    final BulkFuture<Map<String, byte[]>> future = myClient[index].asyncGetBulk(addresses, MY_TC_ITERATOR);
     future.addListener(new BulkGetCompletionListener() {
       @Override
       public void onComplete(BulkGetFuture<?> future) throws Exception {
@@ -197,18 +202,69 @@ public class StorageImpl implements Storage {
         if (future.getStatus().isSuccess()) {
           data.forEach((key, value) -> {
             final int index = addresses.indexOf(key);
-            if (index > 0) {
+            if (index >= 0) {
               myLocalCache.put(addressValues.get(index), value);
             }
           });
         }
         else {
-          System.out.println("async get failed");
           addressValues.forEach(address -> myLocalCache.invalidate(address)); // cleanup futures
         }
       }
     });
     addressValues.forEach(address -> myLocalCache.put(address, future));
+  }
+
+  @Override
+  public void bulkLookup(@NotNull List<Address> addresses, @NotNull DataConsumer consumer) {
+    final int size = addresses.size();
+    final Map<String, Address> serializedAddresses = new HashMap<>(size);
+    final List<String> loadAddresses = new ArrayList<>(size);
+
+    addresses.forEach(address -> {
+      String loadAddress = address.toString();
+      if (serializedAddresses.put(loadAddress, address) != null) {
+        throw new IllegalStateException("address in not unique: " + address);
+      }
+      loadAddresses.add(loadAddress);
+    });
+
+    int clientIndex = this.q + 1;
+    if (clientIndex >= CLIENT_COUNT) {
+      clientIndex = 0;
+    }
+    q = clientIndex;
+
+    final BulkFuture<Map<String, byte[]>> future = myClient[clientIndex].asyncGetBulk(loadAddresses, MY_TRANSCODER);
+    final Map<String, byte[]> data;
+    try {
+      data = future.get();
+    }
+    catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new RuntimeException(e);
+    }
+    catch (ExecutionException e) {
+      throw new RuntimeException(e);
+    }
+    if (future.getStatus().isSuccess()) {
+      data.forEach((key, value) -> {
+        final Address address = serializedAddresses.remove(key);
+        if (address != null) {
+          myLocalCache.put(address, value);
+          consumer.consume(address, value);
+        }
+        else {
+          throw new IllegalStateException("weird address");
+        }
+      });
+      if (!serializedAddresses.isEmpty()) {
+        throw new IllegalStateException("not all addresses returned");
+      }
+    }
+    else {
+      throw new RuntimeException("future failed");
+    }
   }
 
   @Override
@@ -255,9 +311,11 @@ public class StorageImpl implements Storage {
 
   public void dumpStats(@NotNull final PrintStream stream) {
     final CacheStats stats = myLocalCache.stats();
-    stream.println("direct hits: " + stats.hitCount() + ", misses: " + stats.missCount() + ", evictions: " + stats.evictionCount());
-    stream.println("prefetches in progress: " + prefetchInProgress.get());
-    stream.println("prefetch hits: " + prefetchHits.get());
+    if (stats != null) {
+      stream.println("direct hits: " + stats.hitCount() + ", misses: " + stats.missCount() + ", evictions: " + stats.evictionCount());
+      stream.println("prefetches in progress: " + prefetchInProgress.get());
+      stream.println("prefetch hits: " + prefetchHits.get());
+    }
   }
 
   public void close() {
@@ -276,5 +334,15 @@ public class StorageImpl implements Storage {
   private static RuntimeException toRuntime(ExecutionException e) {
     Throwable cause = e.getCause();
     return cause instanceof RuntimeException ? (RuntimeException)cause : new RuntimeException(cause);
+  }
+
+  @NotNull
+  private static MemcachedClient[] createClients(InetSocketAddress socketAddress) throws IOException {
+    MemcachedClient[] client = new MemcachedClient[CLIENT_COUNT];
+    final List<InetSocketAddress> address = Collections.singletonList(socketAddress);
+    for (int i = 0; i < CLIENT_COUNT; i++) {
+      client[i] = new MemcachedClient(new BinaryConnectionFactory(ClientMode.Static, 16384, 16384 * 8), address);
+    }
+    return client;
   }
 }
