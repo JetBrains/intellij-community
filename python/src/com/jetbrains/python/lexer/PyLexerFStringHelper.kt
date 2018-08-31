@@ -103,10 +103,11 @@ class PyLexerFStringHelper(private val myLexer: FlexLexerEx) {
         continue
       }
       if (c == '\n') {
-        val firstSingleQuotedIndex = myFStringStates.indexOfFirst { it.openingQuotes.length == 1 }
-        if (firstSingleQuotedIndex >= 0) {
+        val insideSingleQuoted = myFStringStates.any { it.openingQuotes.length == 1 }
+        if (insideSingleQuoted) {
           if (i == 0) {
-            dropFStringStateWithAllNested(firstSingleQuotedIndex)
+            // Terminate all f-strings and insert STATEMENT_BREAK at this point
+            dropFStringStateWithAllNested(0)
           }
           pushBackToOrConsumeMatch(i, 1)
           return Pair(PyTokenTypes.LINE_BREAK, i)

@@ -727,6 +727,26 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
+  public void testMultilineFStringContainingMultilineExpression() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testNestedMultilineFStringsWithMultilineExpressions() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testSingleQuotedFStringInsideMultilineFStringTerminatedByLineBreakInText() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testSingleQuotedFStringInsideMultilineFStringTerminatedByLineBreakInExpression() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testSingleQuotedFStringInsideMultilineFStringTerminatedByLineBreakInExpressionInParentheses() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
   // PY-19036
   public void testAwaitInNonAsyncNestedFunction() {
     doTest(LanguageLevel.PYTHON35);
