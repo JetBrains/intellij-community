@@ -318,17 +318,6 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
       g.dispose();
     }
     super.paint(graphics);
-
-    if (UIUtil.isUnderGTKLookAndFeel()) {
-      graphics.setColor(myTextArea.getBackground());
-      Rectangle bounds = myScrollPane.getViewport().getBounds();
-      if (myScrollPane.getVerticalScrollBar().isVisible()) {
-        bounds.width -= myScrollPane.getVerticalScrollBar().getWidth();
-      }
-      bounds = SwingUtilities.convertRectangle(myScrollPane.getViewport()/*myTextArea*/, bounds, this);
-      JBInsets.addTo(bounds, new JBInsets(2, 2, -1, -1));
-      ((Graphics2D)graphics).draw(bounds);
-    }
   }
 
   private class ShowHistoryAction extends DumbAwareAction {

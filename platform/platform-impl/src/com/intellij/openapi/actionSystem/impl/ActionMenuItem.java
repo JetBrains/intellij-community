@@ -19,7 +19,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.JBCheckBoxMenuItem;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
-import com.intellij.ui.plaf.gtk.GtkMenuItemUI;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.LafIconLookup;
 import com.intellij.util.ui.UIUtil;
@@ -27,8 +26,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.plaf.MenuItemUI;
-import javax.swing.plaf.synth.SynthMenuItemUI;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -158,10 +155,8 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
       setAcceleratorFromShortcuts(getActiveKeymapShortcuts(id).getShortcuts());
     }
     else {
-      final ShortcutSet shortcutSet = action.getShortcutSet();
-      if (shortcutSet != null) {
-        setAcceleratorFromShortcuts(shortcutSet.getShortcuts());
-      }
+      ShortcutSet shortcutSet = action.getShortcutSet();
+      setAcceleratorFromShortcuts(shortcutSet.getShortcuts());
     }
   }
 
@@ -180,18 +175,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
 
   @Override
   public void updateUI() {
-    if (UIUtil.isStandardMenuLAF()) {
-      super.updateUI();
-    }
-    else {
-      setUI(BegMenuItemUI.createUI(this));
-    }
-  }
-
-  @Override
-  public void setUI(MenuItemUI ui) {
-    MenuItemUI newUi = UIUtil.isUnderGTKLookAndFeel() && ui instanceof SynthMenuItemUI ? new GtkMenuItemUI((SynthMenuItemUI)ui) : ui;
-    super.setUI(newUi);
+    setUI(BegMenuItemUI.createUI(this));
   }
 
   /**
@@ -219,7 +203,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
       if (ActionPlaces.MAIN_MENU.equals(myPlace) && SystemInfo.isMacSystemMenu) {
         setState(myToggled);
       }
-      else if (!(getUI() instanceof GtkMenuItemUI)) {
+      else {
         if (myToggled) {
           setIcon(LafIconLookup.getIcon("checkmark"));
           setSelectedIcon(LafIconLookup.getSelectedIcon("checkmark"));

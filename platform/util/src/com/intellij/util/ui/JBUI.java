@@ -653,7 +653,7 @@ public class JBUI {
 
     @NotNull
     public static JBFont toolbarSmallComboBoxFont() {
-      return UIUtil.isUnderGTKLookAndFeel() ? label() : label(11);
+      return label(11);
     }
   }
 

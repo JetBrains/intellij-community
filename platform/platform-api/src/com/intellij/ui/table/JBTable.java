@@ -235,7 +235,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   @Override
   public void setRowHeight(int rowHeight) {
-    if (!myUiUpdating || !UIUtil.isUnderGTKLookAndFeel()) {
+    if (!myUiUpdating) {
       myRowHeight = rowHeight;
       myRowHeightIsExplicitlySet = true;
     }
@@ -544,11 +544,6 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   @Override
   public Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
     Component result = super.prepareRenderer(renderer, row, column);
-
-    // Fix GTK background
-    if (UIUtil.isUnderGTKLookAndFeel()) {
-      UIUtil.changeBackGround(this, UIUtil.getTreeTextBackground());
-    }
 
     if (isTableDecorationSupported() && isStriped() && result instanceof JComponent) {
       final Color bg = row % 2 == 1 ? getBackground() : UIUtil.getDecoratedRowColor();

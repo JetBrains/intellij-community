@@ -1099,7 +1099,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     private MyTextField() {
       super(40);
       // Set UI and border for Darcula and all except Win10, Mac and GTK
-      if (!UIUtil.isUnderGTKLookAndFeel() && !UIUtil.isUnderDefaultMacTheme() && !UIUtil.isUnderWin10LookAndFeel()) {
+      if (!UIUtil.isUnderDefaultMacTheme() && !UIUtil.isUnderWin10LookAndFeel()) {
         if (!(getUI() instanceof DarculaTextFieldUI)) {
           setUI(DarculaTextFieldUI.createUI(this));
         }

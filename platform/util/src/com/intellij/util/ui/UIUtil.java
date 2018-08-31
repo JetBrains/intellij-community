@@ -1275,8 +1275,7 @@ public class UIUtil {
   }
 
   public static Color getTableBackground() {
-    // Under GTK+ L&F "Table.background" often has main panel color, which looks ugly
-    return isUnderGTKLookAndFeel() ? getTreeTextBackground() : UIManager.getColor("Table.background");
+    return UIManager.getColor("Table.background");
   }
 
   public static Color getTableBackground(final boolean isSelected) {
@@ -1300,8 +1299,7 @@ public class UIUtil {
   }
 
   public static Color getListBackground() {
-    // Under GTK+ L&F "Table.background" often has main panel color, which looks ugly
-    return isUnderGTKLookAndFeel() ? getTreeTextBackground() : UIManager.getColor("List.background");
+    return UIManager.getColor("List.background");
   }
 
   public static Color getListBackground(boolean isSelected) {
@@ -1362,7 +1360,7 @@ public class UIUtil {
   }
 
   public static Color getTextFieldBackground() {
-    return UIManager.getColor(isUnderGTKLookAndFeel() ? "EditorPane.background" : "TextField.background");
+    return UIManager.getColor("TextField.background");
   }
 
   public static Font getButtonFont() {
@@ -1418,7 +1416,7 @@ public class UIUtil {
   }
 
   public static Color getSeparatorColor() {
-    return isUnderGTKLookAndFeel() ? Gray._215 : getSeparatorForeground();
+    return getSeparatorForeground();
   }
 
   public static Border getTableFocusCellHighlightBorder() {
@@ -1517,7 +1515,6 @@ public class UIUtil {
 
   public static Icon getTreeSelectedCollapsedIcon() {
     if (isUnderAquaBasedLookAndFeel() ||
-        isUnderGTKLookAndFeel() ||
         isUnderDarcula() ||
         isUnderIntelliJLaF() &&
         !isUnderWin10LookAndFeel()) {
@@ -1528,7 +1525,6 @@ public class UIUtil {
 
   public static Icon getTreeSelectedExpandedIcon() {
     if (isUnderAquaBasedLookAndFeel() ||
-        isUnderGTKLookAndFeel() ||
         isUnderDarcula() ||
         isUnderIntelliJLaF() &&
         !isUnderWin10LookAndFeel()) {
@@ -1642,40 +1638,9 @@ public class UIUtil {
     }
   }
 
-  public static final Color GTK_AMBIANCE_TEXT_COLOR = new Color(223, 219, 210);
-  public static final Color GTK_AMBIANCE_BACKGROUND_COLOR = new Color(67, 66, 63);
-
-  @SuppressWarnings("HardCodedStringLiteral")
-  @Nullable
-  public static String getGtkThemeName() {
-    final LookAndFeel laf = UIManager.getLookAndFeel();
-    if (laf != null && "GTKLookAndFeel".equals(laf.getClass().getSimpleName())) {
-      try {
-        final Method method = laf.getClass().getDeclaredMethod("getGtkThemeName");
-        method.setAccessible(true);
-        final Object theme = method.invoke(laf);
-        if (theme != null) {
-          return theme.toString();
-        }
-      }
-      catch (Exception ignored) {
-      }
-    }
-    return null;
-  }
-
   @NotNull
   public static Font getToolbarFont() {
     return SystemInfo.isMac ? getLabelFont(UIUtil.FontSize.SMALL) : getLabelFont();
-  }
-
-  @SuppressWarnings("HardCodedStringLiteral")
-  public static boolean isMurrineBasedTheme() {
-    final String gtkTheme = getGtkThemeName();
-    return "Ambiance".equalsIgnoreCase(gtkTheme) ||
-           "Radiance".equalsIgnoreCase(gtkTheme) ||
-           "Dust".equalsIgnoreCase(gtkTheme) ||
-           "Dust Sand".equalsIgnoreCase(gtkTheme);
   }
 
   public static Color shade(final Color c, final double factor, final double alphaFactor) {
@@ -1701,7 +1666,7 @@ public class UIUtil {
   }
 
   public static boolean isFullRowSelectionLAF() {
-    return isUnderGTKLookAndFeel();
+    return false;
   }
 
   public static boolean isUnderNativeMacLookAndFeel() {
@@ -2647,15 +2612,6 @@ public class UIUtil {
     return builder.append("</style>").toString();
   }
 
-  public static boolean isWinLafOnVista() {
-    return SystemInfo.isWinVistaOrNewer && "Windows".equals(UIManager.getLookAndFeel().getName());
-  }
-
-  public static boolean isStandardMenuLAF() {
-    return isWinLafOnVista() ||
-           isUnderGTKLookAndFeel();
-  }
-
   public static Color getFocusedFillColor() {
     return toAlpha(getListSelectionBackground(), 100);
   }
@@ -3235,24 +3191,7 @@ public class UIUtil {
     if (systemLaFClassName != null) {
       return systemLaFClassName;
     }
-    if (SystemInfo.isLinux) {
-      // Normally, GTK LaF is considered "system" when:
-      // 1) Gnome session is run
-      // 2) gtk lib is available
-      // Here we weaken the requirements to only 2) and force GTK LaF
-      // installation in order to let it properly scale default font
-      // based on Xft.dpi value.
-      try {
-        String name = "com.sun.java.swing.plaf.gtk.GTKLookAndFeel";
-        Class cls = Class.forName(name);
-        LookAndFeel laf = (LookAndFeel)cls.newInstance();
-        if (laf.isSupportedLookAndFeel()) { // if gtk lib is available
-          return systemLaFClassName = name;
-        }
-      }
-      catch (Exception ignore) {
-      }
-    }
+
     return systemLaFClassName = UIManager.getSystemLookAndFeelClassName();
   }
 
