@@ -22,7 +22,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 public class GroovyShellLanguageConsoleView extends LanguageConsoleImpl {
 
@@ -94,9 +93,7 @@ public class GroovyShellLanguageConsoleView extends LanguageConsoleImpl {
 
   @Nullable
   private static String importToString(@NotNull GrImportStatement anImport) {
-    GrCodeReferenceElement reference = anImport.getImportReference();
-    if (reference == null) return null;
-    String qname = reference.getQualifiedReferenceName();
+    String qname = anImport.getImportFqn();
     if (qname == null) return null;
 
     StringBuilder buffer = new StringBuilder(qname);

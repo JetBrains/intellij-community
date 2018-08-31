@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,7 +21,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
 import java.io.IOException;
@@ -65,12 +63,11 @@ public class GrStubUtils {
     return CachedValuesManager.getCachedValue(file, () -> {
       Map<String, String> mapping = ContainerUtil.newHashMap();
       for (GrImportStatement importStatement : ((GroovyFile)file).getImportStatements()) {
-        GrCodeReferenceElement reference = importStatement.getImportReference();
-        if (reference != null && !importStatement.isStatic() && importStatement.isAliasedImport()) {
-          String importName = reference.getQualifiedReferenceName();
+        String fqn = importStatement.getImportFqn();
+        if (fqn != null && !importStatement.isStatic() && importStatement.isAliasedImport()) {
           String importedName = importStatement.getImportedName();
           if (importedName != null) {
-            mapping.put(importedName, importName);
+            mapping.put(importedName, fqn);
           }
         }
       }

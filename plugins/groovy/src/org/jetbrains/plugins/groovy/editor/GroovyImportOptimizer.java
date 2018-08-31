@@ -16,7 +16,6 @@ import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyImportUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -34,10 +33,8 @@ public class GroovyImportOptimizer implements ImportOptimizer {
         if (statement2.isStatic() && !statement1.isStatic()) return -1;
       }
 
-      final GrCodeReferenceElement ref1 = statement1.getImportReference();
-      final GrCodeReferenceElement ref2 = statement2.getImportReference();
-      String name1 = ref1 != null ? ref1.getQualifiedReferenceName() : null;
-      String name2 = ref2 != null ? ref2.getQualifiedReferenceName() : null;
+      String name1 = statement1.getImportFqn();
+      String name2 = statement2.getImportFqn();
       if (name1 == null) return name2 == null ? 0 : -1;
       if (name2 == null) return 1;
       return name1.compareTo(name2);

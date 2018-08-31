@@ -99,10 +99,7 @@ public class GroovyImportUtil {
                 }
               }
               else {
-                final GrCodeReferenceElement importReference = importStatement.getImportReference();
-                if (importReference != null) {
-                  importedName = importReference.getQualifiedReferenceName();
-                }
+                importedName = importStatement.getImportFqn();
               }
 
               if (importedName == null) return;
@@ -235,10 +232,6 @@ public class GroovyImportUtil {
 
   @Nullable
   public static String getImportReferenceText(GrImportStatement statement) {
-    GrCodeReferenceElement importReference = statement.getImportReference();
-    if (importReference != null) {
-      return importReference.getQualifiedReferenceName();
-    }
-    return null;
+    return statement.getImportFqn();
   }
 }
