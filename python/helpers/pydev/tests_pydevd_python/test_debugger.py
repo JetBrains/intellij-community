@@ -1446,7 +1446,7 @@ def test_case_settrace(case_setup):
         writer.finished_ok = True
 
 
-@pytest.mark.skipif(IS_PY26 or IS_JYTHON, reason='scapy only supports 2.7 onwards, not available for jython.')
+@pytest.mark.skip
 def test_case_scapy(case_setup):
     with case_setup.test_file('_debugger_case_scapy.py') as writer:
         writer.FORCE_KILL_PROCESS_WHEN_FINISHED_OK = True

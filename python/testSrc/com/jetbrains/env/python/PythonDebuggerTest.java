@@ -16,6 +16,7 @@ import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.Staging;
 import com.jetbrains.env.StagingOn;
 import com.jetbrains.env.python.debug.PyDebuggerTask;
+import com.jetbrains.env.ut.PyTestTestProcessRunner;
 import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
@@ -81,7 +82,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   @Test
   @Staging
   public void testPydevTests_Debugger() {
-    unittests("tests_pydevd_python/test_debugger.py", ImmutableSet.of("-iron"), true);
+    pytests("tests_pydevd_python/test_debugger.py", Sets.newHashSet("pytest", "-iron", "untangle"));
   }
 
   @Test
@@ -91,13 +92,47 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   public void testBytecodeModification() {
-    unittests("tests_pydevd_python/test_bytecode_modification.py", Sets.newHashSet("python36"));
+    unittests("tests_pydevd_python/test_bytecode_modification.py", Sets.newHashSet("python36", "pytest"));
   }
 
   @Test
   @Staging
   public void testFrameEvalAndTracing() {
     unittests("tests_pydevd_python/test_frame_eval_and_tracing.py", Sets.newHashSet("python36"), true);
+  }
+
+  private void pytests(final String script, @Nullable Set<String> tags) {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/helpers/pydev/", SdkCreationType.SDK_PACKAGES_ONLY) {
+      @NotNull
+      @Override
+      protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+        return new PyTestTestProcessRunner(script, 0);
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull PyTestTestProcessRunner runner,
+                                      @NotNull String stdout,
+                                      @NotNull String stderr,
+                                      @NotNull String all) {
+        runner.assertNoFailures();
+      }
+
+      @NotNull
+      @Override
+      public String getTestDataPath() {
+        return PythonHelpersLocator.getPythonCommunityPath();
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        if (tags == null) {
+          return super.getTags();
+        }
+        return tags;
+      }
+    }
+    );
   }
 
   private void unittests(final String script, @Nullable Set<String> tags) {
