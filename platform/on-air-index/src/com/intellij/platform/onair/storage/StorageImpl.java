@@ -9,15 +9,16 @@ import com.google.common.hash.Hashing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.platform.onair.storage.api.*;
 import com.intellij.platform.onair.tree.BTree;
-import net.spy.memcached.BinaryConnectionFactory;
-import net.spy.memcached.CachedData;
-import net.spy.memcached.ClientMode;
-import net.spy.memcached.MemcachedClient;
+import net.spy.memcached.*;
 import net.spy.memcached.internal.BulkFuture;
 import net.spy.memcached.internal.BulkGetCompletionListener;
 import net.spy.memcached.internal.BulkGetFuture;
-import net.spy.memcached.internal.SingleElementInfiniteIterator;
+import net.spy.memcached.ops.GetOperation;
+import net.spy.memcached.ops.Operation;
+import net.spy.memcached.ops.OperationStatus;
+import net.spy.memcached.ops.StatusCode;
 import net.spy.memcached.transcoders.Transcoder;
+import net.spy.memcached.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -26,6 +27,7 @@ import java.io.PrintStream;
 import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -40,38 +42,15 @@ public class StorageImpl implements Storage {
   private static final int MAX_VALUE_SIZE = Integer.MAX_VALUE;
   private static final int LOCAL_CACHE_SIZE = Integer.getInteger("intellij.platform.onair.storage.cache", 4000000);
   private static final int CLIENT_COUNT = 5;
-  private final MemcachedClient[] myClient;
+  private final HackMemcachedClient[] myClient;
   private final Cache<Address, Object> myLocalCache;
   private final AtomicInteger prefetchInProgress = new AtomicInteger(0);
   private final ConcurrentHashMap<Address, byte[]> preFetches = new ConcurrentHashMap<>();
 
   private static final Transcoder<byte[]> MY_TRANSCODER = new ByteArrayTranscoder();
-  private static final SingleElementInfiniteIterator<Transcoder<byte[]>> MY_TC_ITERATOR =
-    new SingleElementInfiniteIterator<>(MY_TRANSCODER);
+  // private static final SingleElementInfiniteIterator<Transcoder<byte[]>> MY_TC_ITERATOR = new SingleElementInfiniteIterator<>(MY_TRANSCODER);
 
   private final AtomicLong prefetchHits = new AtomicLong(0);
-
-  private static class ByteArrayTranscoder implements Transcoder<byte[]> {
-    @Override
-    public boolean asyncDecode(CachedData data) {
-      return false;
-    }
-
-    @Override
-    public CachedData encode(byte[] bytes) {
-      return new CachedData(0, bytes, MAX_VALUE_SIZE);
-    }
-
-    @Override
-    public byte[] decode(CachedData data) {
-      return data.getData();
-    }
-
-    @Override
-    public int getMaxSize() {
-      return MAX_VALUE_SIZE;
-    }
-  }
 
   int q = 0;
 
@@ -83,7 +62,7 @@ public class StorageImpl implements Storage {
       .maximumSize(LOCAL_CACHE_SIZE).build();
   }
 
-  private StorageImpl(MemcachedClient[] client, Cache<Address, Object> localCache) {
+  private StorageImpl(HackMemcachedClient[] client, Cache<Address, Object> localCache) {
     myClient = client;
     myLocalCache = localCache;
   }
@@ -192,7 +171,7 @@ public class StorageImpl implements Storage {
     }
     q = index;
     prefetchInProgress.incrementAndGet();
-    final BulkFuture<Map<String, byte[]>> future = myClient[index].asyncGetBulk(addresses, MY_TC_ITERATOR);
+    final BulkFuture<Map<String, byte[]>> future = myClient[index].asyncGetBulkBytes(addresses.iterator());
     future.addListener(new BulkGetCompletionListener() {
       @Override
       public void onComplete(BulkGetFuture<?> future) throws Exception {
@@ -235,7 +214,7 @@ public class StorageImpl implements Storage {
     }
     q = clientIndex;
 
-    final BulkFuture<Map<String, byte[]>> future = myClient[clientIndex].asyncGetBulk(loadAddresses, MY_TRANSCODER);
+    final BulkFuture<Map<String, byte[]>> future = myClient[clientIndex].asyncGetBulkBytes(loadAddresses.iterator());
     final Map<String, byte[]> data;
     try {
       data = future.get();
@@ -337,12 +316,120 @@ public class StorageImpl implements Storage {
   }
 
   @NotNull
-  private static MemcachedClient[] createClients(InetSocketAddress socketAddress) throws IOException {
-    MemcachedClient[] client = new MemcachedClient[CLIENT_COUNT];
+  private static HackMemcachedClient[] createClients(InetSocketAddress socketAddress) throws IOException {
+    HackMemcachedClient[] client = new HackMemcachedClient[CLIENT_COUNT];
     final List<InetSocketAddress> address = Collections.singletonList(socketAddress);
     for (int i = 0; i < CLIENT_COUNT; i++) {
-      client[i] = new MemcachedClient(new BinaryConnectionFactory(ClientMode.Static, 16384, 16384 * 8), address);
+      client[i] = new HackMemcachedClient(new BinaryConnectionFactory(ClientMode.Static, 16384, 16384 * 8), address);
     }
     return client;
+  }
+
+  private static final class HackMemcachedClient extends MemcachedClient {
+
+    public HackMemcachedClient(ConnectionFactory cf, List<InetSocketAddress> addrs) throws IOException {
+      super(cf, addrs);
+    }
+
+    public BulkFuture<Map<String, byte[]>> asyncGetBulkBytes(Iterator<String> keyIter) {
+      final Map<String, Future<byte[]>> m = new ConcurrentHashMap<>();
+
+      // Break the gets down into groups by key
+      final Map<MemcachedNode, List<String>> chunks = new HashMap<>();
+      final NodeLocator locator = mconn.getLocator();
+
+      while (keyIter.hasNext()) {
+        String key = keyIter.next();
+        StringUtils.validateKey(key, true);
+        final MemcachedNode primaryNode = locator.getPrimary(key);
+        MemcachedNode node = null;
+        if (primaryNode.isActive()) {
+          node = primaryNode;
+        }
+        else {
+          for (Iterator<MemcachedNode> i = locator.getSequence(key); node == null && i.hasNext(); ) {
+            MemcachedNode n = i.next();
+            if (n.isActive()) {
+              node = n;
+            }
+          }
+          if (node == null) {
+            node = primaryNode;
+          }
+        }
+        List<String> ks = chunks.get(node);
+        if (ks == null) {
+          ks = new ArrayList<>();
+          chunks.put(node, ks);
+        }
+        ks.add(key);
+      }
+
+      final AtomicInteger pendingChunks = new AtomicInteger(chunks.size());
+      int initialLatchCount = chunks.isEmpty() ? 0 : 1;
+      final CountDownLatch latch = new CountDownLatch(initialLatchCount);
+      final Collection<Operation> ops = new ArrayList<>(chunks.size());
+      final BulkGetFuture<byte[]> rv = new BulkGetFuture<>(m, ops, latch, executorService);
+
+      GetOperation.Callback cb = new GetOperation.Callback() {
+        @Override
+        @SuppressWarnings("synthetic-access")
+        public void receivedStatus(OperationStatus status) {
+          if (status.getStatusCode() == StatusCode.ERR_NOT_MY_VBUCKET) {
+            pendingChunks.addAndGet(Integer.parseInt(status.getMessage()));
+          }
+          rv.setStatus(status);
+        }
+
+        @Override
+        public void gotData(String k, int flags, byte[] data) {
+          m.put(k, tcService.decode(MY_TRANSCODER, new CachedData(flags, data, MY_TRANSCODER.getMaxSize())));
+        }
+
+        @Override
+        public void complete() {
+          if (pendingChunks.decrementAndGet() <= 0) {
+            latch.countDown();
+            rv.signalComplete();
+          }
+        }
+      };
+
+      // Now that we know how many servers it breaks down into, and the latch
+      // is all set up, convert all of these strings collections to operations
+      final Map<MemcachedNode, Operation> mops = new HashMap<>();
+
+      for (Map.Entry<MemcachedNode, List<String>> me : chunks.entrySet()) {
+        Operation op = new MultiGetOperationFastImpl(me.getValue(), cb);
+        mops.put(me.getKey(), op);
+        ops.add(op);
+      }
+      assert mops.size() == chunks.size();
+      // mconn.checkState();
+      mconn.addOperations(mops);
+      return rv;
+    }
+  }
+
+  private static class ByteArrayTranscoder implements Transcoder<byte[]> {
+    @Override
+    public boolean asyncDecode(CachedData data) {
+      return false;
+    }
+
+    @Override
+    public CachedData encode(byte[] bytes) {
+      return new CachedData(0, bytes, MAX_VALUE_SIZE);
+    }
+
+    @Override
+    public byte[] decode(CachedData data) {
+      return data.getData();
+    }
+
+    @Override
+    public int getMaxSize() {
+      return MAX_VALUE_SIZE;
+    }
   }
 }
