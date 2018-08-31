@@ -13,102 +13,81 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.log;
+package git4idea.log
 
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.TimedVcsCommit;
-import com.intellij.vcs.log.VcsLogFilterCollection;
-import com.intellij.vcs.log.VcsLogTextFilter;
-import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder;
-import com.intellij.vcs.log.util.BekUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.TimedVcsCommit
+import com.intellij.vcs.log.VcsLogFilterCollection
+import com.intellij.vcs.log.VcsLogTextFilter
+import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder
+import com.intellij.vcs.log.util.BekUtil
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+internal class GitBekParentFixer private constructor(private val incorrectCommits: Set<Hash>) {
 
-class GitBekParentFixer {
-  @NotNull private static final String MAGIC_TEXT = "Merge remote";
-  @NotNull private static final VcsLogFilterCollection MAGIC_FILTER = createVcsLogFilterCollection();
-
-  @NotNull private final Set<Hash> myIncorrectCommits;
-
-  private GitBekParentFixer(@NotNull Set<Hash> incorrectCommits) {
-    myIncorrectCommits = incorrectCommits;
+  fun fixCommit(commit: TimedVcsCommit): TimedVcsCommit {
+    return if (!incorrectCommits.contains(commit.id)) commit
+    else reverseParents(commit)
   }
 
-  @NotNull
-  static GitBekParentFixer prepare(@NotNull VirtualFile root, @NotNull GitLogProvider provider) throws VcsException {
-    if (!BekUtil.isBekEnabled() || !Registry.is("git.log.fix.merge.commits.parents.order")) {
-      return new GitBekParentFixer(Collections.emptySet());
+  companion object {
+    @JvmStatic
+    @Throws(VcsException::class)
+    fun prepare(root: VirtualFile, provider: GitLogProvider): GitBekParentFixer {
+      return if (!BekUtil.isBekEnabled() || !Registry.`is`("git.log.fix.merge.commits.parents.order")) {
+        GitBekParentFixer(emptySet())
+      }
+      else GitBekParentFixer(getIncorrectCommits(provider, root))
     }
-    return new GitBekParentFixer(getIncorrectCommits(provider, root));
   }
+}
 
-  @NotNull
-  TimedVcsCommit fixCommit(@NotNull TimedVcsCommit commit) {
-    if (!myIncorrectCommits.contains(commit.getId())) {
-      return commit;
+private const val MAGIC_TEXT = "Merge remote"
+private val MAGIC_FILTER = createVcsLogFilterCollection()
+
+@Throws(VcsException::class)
+private fun getIncorrectCommits(provider: GitLogProvider, root: VirtualFile): Set<Hash> {
+  val commitsMatchingFilter = provider.getCommitsMatchingFilter(root, MAGIC_FILTER, -1)
+  return ContainerUtil.map2Set(commitsMatchingFilter) { timedVcsCommit -> timedVcsCommit.id }
+}
+
+private fun reverseParents(commit: TimedVcsCommit): TimedVcsCommit {
+  return object : TimedVcsCommit {
+    override fun getTimestamp(): Long {
+      return commit.timestamp
     }
-    return reverseParents(commit);
+
+    override fun getId(): Hash {
+      return commit.id
+    }
+
+    override fun getParents(): List<Hash> {
+      return ContainerUtil.reverse(commit.parents)
+    }
+  }
+}
+
+private fun createVcsLogFilterCollection(): VcsLogFilterCollection {
+  val textFilter = object : VcsLogTextFilter {
+    override fun matchesCase(): Boolean {
+      return false
+    }
+
+    override fun isRegex(): Boolean {
+      return false
+    }
+
+    override fun getText(): String {
+      return MAGIC_TEXT
+    }
+
+    override fun matches(message: String): Boolean {
+      return message.contains(MAGIC_TEXT)
+    }
   }
 
-  @NotNull
-  private static Set<Hash> getIncorrectCommits(@NotNull GitLogProvider provider, @NotNull VirtualFile root) throws VcsException {
-    List<TimedVcsCommit> commitsMatchingFilter = provider.getCommitsMatchingFilter(root, MAGIC_FILTER, -1);
-    return ContainerUtil.map2Set(commitsMatchingFilter, timedVcsCommit -> timedVcsCommit.getId());
-  }
-
-  @NotNull
-  private static TimedVcsCommit reverseParents(@NotNull TimedVcsCommit commit) {
-    return new TimedVcsCommit() {
-      @Override
-      public long getTimestamp() {
-        return commit.getTimestamp();
-      }
-
-      @NotNull
-      @Override
-      public Hash getId() {
-        return commit.getId();
-      }
-
-      @NotNull
-      @Override
-      public List<Hash> getParents() {
-        return ContainerUtil.reverse(commit.getParents());
-      }
-    };
-  }
-
-  private static VcsLogFilterCollection createVcsLogFilterCollection() {
-    VcsLogTextFilter textFilter = new VcsLogTextFilter() {
-      @Override
-      public boolean matchesCase() {
-        return false;
-      }
-
-      @Override
-      public boolean isRegex() {
-        return false;
-      }
-
-      @NotNull
-      @Override
-      public String getText() {
-        return MAGIC_TEXT;
-      }
-
-      @Override
-      public boolean matches(@NotNull String message) {
-        return message.contains(MAGIC_TEXT);
-      }
-    };
-
-    return new VcsLogFilterCollectionBuilder().with(textFilter).build();
-  }
+  return VcsLogFilterCollectionBuilder().with(textFilter).build()
 }
