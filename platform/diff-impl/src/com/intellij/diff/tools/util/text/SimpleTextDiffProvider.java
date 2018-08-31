@@ -76,9 +76,9 @@ public class SimpleTextDiffProvider extends TwosideTextDiffProviderBase implemen
                                                @NotNull LineOffsets lineOffsets2,
                                                @Nullable List<Range> linesRanges,
                                                @NotNull IgnorePolicy ignorePolicy,
-                                               boolean innerFragments,
+                                               @NotNull HighlightPolicy highlightPolicy,
                                                @NotNull ProgressIndicator indicator) {
-    return compareRange(myDiffComputer, text1, text2, lineOffsets1, lineOffsets2, linesRanges, ignorePolicy, innerFragments, indicator);
+    return compareRange(myDiffComputer, text1, text2, lineOffsets1, lineOffsets2, linesRanges, ignorePolicy, highlightPolicy, indicator);
   }
 
   @NotNull
@@ -89,9 +89,10 @@ public class SimpleTextDiffProvider extends TwosideTextDiffProviderBase implemen
                                                       @NotNull LineOffsets lineOffsets2,
                                                       @Nullable List<? extends Range> linesRanges,
                                                       @NotNull IgnorePolicy ignorePolicy,
-                                                      boolean innerFragments,
+                                                      @NotNull HighlightPolicy highlightPolicy,
                                                       @NotNull ProgressIndicator indicator) {
     ComparisonPolicy policy = ignorePolicy.getComparisonPolicy();
+    boolean innerFragments = highlightPolicy.isFineFragments();
 
     if (diffComputer != null && linesRanges != null) {
       LOG.error(new Throwable("Unsupported operation: ranged diff with custom DiffComputer - " + diffComputer));

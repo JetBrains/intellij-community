@@ -118,14 +118,14 @@ public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implement
                                                @NotNull LineOffsets lineOffsets2,
                                                @Nullable List<Range> linesRanges,
                                                @NotNull IgnorePolicy ignorePolicy,
-                                               boolean innerFragments,
+                                               @NotNull HighlightPolicy highlightPolicy,
                                                @NotNull ProgressIndicator indicator) {
     if (ignorePolicy == FORMATTING) {
-      return compareIgnoreFormatting(text1, text2, lineOffsets1, lineOffsets2, linesRanges, innerFragments, indicator);
+      return compareIgnoreFormatting(text1, text2, lineOffsets1, lineOffsets2, linesRanges, highlightPolicy, indicator);
     }
     else {
       return SimpleTextDiffProvider.compareRange(null, text1, text2, lineOffsets1, lineOffsets2, linesRanges,
-                                                 ignorePolicy, innerFragments, indicator);
+                                                 ignorePolicy, highlightPolicy, indicator);
     }
   }
 
@@ -135,8 +135,10 @@ public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implement
                                                            @NotNull LineOffsets lineOffsets1,
                                                            @NotNull LineOffsets lineOffsets2,
                                                            @Nullable List<Range> linesRanges,
-                                                           boolean innerFragments,
+                                                           @NotNull HighlightPolicy highlightPolicy,
                                                            @NotNull ProgressIndicator indicator) {
+    boolean innerFragments = highlightPolicy.isFineFragments();
+
     List<TextRange> ignoredRanges1 = myProvider.getIgnoredRanges(myProject, text1, myContent1);
     List<TextRange> ignoredRanges2 = myProvider.getIgnoredRanges(myProject, text2, myContent2);
 
