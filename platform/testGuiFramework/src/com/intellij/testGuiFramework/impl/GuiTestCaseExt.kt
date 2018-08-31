@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.impl
 
-import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.testGuiFramework.fixtures.ActionButtonFixture
 import com.intellij.testGuiFramework.fixtures.GutterFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
 import com.intellij.testGuiFramework.framework.Timeouts
@@ -154,10 +154,7 @@ fun GuiTestCase.waitForGradleReimport(rootPath: String, waitForProject: Boolean)
             // first, check whether the action button "Refresh all external projects" is enabled
             val text = "Refresh all external projects"
             val isReimportButtonEnabled = try {
-              robot().findComponent(this.target(), ActionButton::class.java) {
-                if (!it.isShowing) false
-                else text == it.action.templatePresentation.text
-              }.isEnabled
+              ActionButtonFixture.fixtureByTextAnyState(this.target(), robot(), text).isEnabled
             }
             catch (e: Exception) {
               logInfo("$currentTimeInHumanString: waitForGradleReimport.actionButton: ${e::class.simpleName} - ${e.message}")
