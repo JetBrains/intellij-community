@@ -90,10 +90,9 @@ envs {
 
   createPython("py2_django11_full",
                "2.7.15",
-               ["django==1.11", "tox>=3.8.3", "nose", "pytest", "Twisted", "behave", "lettuce>=0.2.22", "unittest2", "teamcity-messages", "django-nose"]
-                + ( Os.isFamily(Os.FAMILY_WINDOWS) ? ['pypiwin32'] : []  ) //win32api is required for pypiwin32
-               ,
-               "python2.7\ndjango\nnose\npytest\nbehave\nlettuce\npackaging\ntox\nunittest2\ntwisted\ndjango-nose",
+               ["django==1.11", "tox>=3.8.3", "nose", "pytest", "Twisted", "behave", "lettuce>=0.2.22", "unittest2", "teamcity-messages", "django-nose", "untangle"]
+                + ( Os.isFamily(Os.FAMILY_WINDOWS) ? ['pypiwin32'] : []  ), //win32api is required for pypiwin32
+               "python2.7\ndjango\nnose\npytest\nbehave\nlettuce\npackaging\ntox\nunittest2\ntwisted\ndjango-nose\nuntangle",
                true)
 
   createPython("py35_django22_full",
@@ -104,9 +103,9 @@ envs {
 
   createPython("py36_django2_1",
                "3.6.8",
-               ["django==2.1", "jinja2", "pandas"],
-               "python3.6\npython3\ndjango\njinja2\npython34\npython36\npandas",
-               true)
+               ["django==2.1", "jinja2", "pandas", "pytest", "untangle"],
+               "python3.6\npython3\ndjango\njinja2\npython34\npython36\npandas\npytest\nuntangle",
+
 
   // For tox
   createPython("py36",
@@ -124,7 +123,6 @@ envs {
   if (Os.isFamily(Os.FAMILY_UNIX)) {
     createPython("qt_env", "3.7.2", ["pyqt5==5.12", "PySide2==5.12.1"], "qt", true)
   }
-
 
   if (Os.isFamily(Os.FAMILY_WINDOWS)) { // Only windows needs ironPython
 
