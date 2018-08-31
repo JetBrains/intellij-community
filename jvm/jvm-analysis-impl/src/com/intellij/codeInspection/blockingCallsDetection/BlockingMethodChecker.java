@@ -21,7 +21,7 @@ public interface BlockingMethodChecker {
   /**
    * @return true if current extension can detect blocking method in the given {@code file}
    */
-  boolean isActive(@NotNull PsiFile file);
+  boolean isApplicable(@NotNull PsiFile file);
 
   boolean isMethodBlocking(@NotNull PsiMethod method);
 }

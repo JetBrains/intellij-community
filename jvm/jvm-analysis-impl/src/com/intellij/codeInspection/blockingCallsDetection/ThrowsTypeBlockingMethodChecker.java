@@ -15,7 +15,7 @@ public class ThrowsTypeBlockingMethodChecker implements BlockingMethodChecker {
     "java.io.IOException");
 
   @Override
-  public boolean isActive(@NotNull PsiFile file) {
+  public boolean isApplicable(@NotNull PsiFile file) {
     return true;
   }
 
