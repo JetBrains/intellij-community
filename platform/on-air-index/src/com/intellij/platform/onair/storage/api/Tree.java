@@ -10,19 +10,21 @@ public interface Tree {
   int getBase();
 
   @Nullable
-  byte[] get(@NotNull Novelty novelty, @NotNull byte[] key);
+  byte[] get(@NotNull Novelty.Accessor novelty, @NotNull byte[] key);
 
-  boolean put(@NotNull Novelty novelty, @NotNull byte[] key, @NotNull byte[] value);
+  boolean put(@NotNull Novelty.Accessor novelty, @NotNull byte[] key, @NotNull byte[] value);
 
-  boolean put(@NotNull Novelty novelty, @NotNull byte[] key, @NotNull byte[] value, boolean overwrite);
+  boolean put(@NotNull Novelty.Accessor novelty, @NotNull byte[] key, @NotNull byte[] value, boolean overwrite);
 
-  boolean delete(@NotNull Novelty novelty, @NotNull byte[] key);
+  boolean delete(@NotNull Novelty.Accessor novelty, @NotNull byte[] key);
 
-  boolean delete(@NotNull Novelty novelty, @NotNull byte[] key, @Nullable byte[] value);
+  boolean delete(@NotNull Novelty.Accessor novelty, @NotNull byte[] key, @Nullable byte[] value);
 
-  boolean forEach(@NotNull Novelty novelty, @NotNull KeyValueConsumer consumer);
+  boolean forEach(@NotNull Novelty.Accessor novelty, @NotNull KeyValueConsumer consumer);
 
-  Address store(@NotNull Novelty novelty);
+  boolean forEach(@NotNull Novelty.Accessor novelty, @NotNull byte[] fromKey, @NotNull KeyValueConsumer consumer);
 
-  Address store(@NotNull Novelty novelty, @NotNull StorageConsumer consumer);
+  Address store(@NotNull Novelty.Accessor novelty);
+
+  Address store(@NotNull Novelty.Accessor novelty, @NotNull StorageConsumer consumer);
 }

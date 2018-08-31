@@ -1,138 +1,89 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.onair.index;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.CharStreams;
-import com.google.gson.GsonBuilder;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.io.FileUtil;
+import clojure.lang.PersistentHashMap;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.platform.onair.storage.StorageImpl;
-import com.intellij.platform.onair.storage.api.Address;
 import com.intellij.platform.onair.storage.api.Novelty;
 import com.intellij.platform.onair.storage.api.NoveltyImpl;
 import com.intellij.platform.onair.storage.api.Storage;
 import com.intellij.platform.onair.tree.BTree;
+import com.intellij.platform.onair.vfs.RemoteVFS;
 import com.intellij.util.indexing.ID;
-import com.intellij.util.indexing.IndexInfrastructure;
 import com.intellij.util.indexing.IndexStorageManager;
 import com.intellij.util.indexing.VfsAwareIndexStorage;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentMap;
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.URL;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
-import java.util.List;
+import java.util.ConcurrentModificationException;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
+import java.util.function.ToIntFunction;
 
 public class BTreeIndexStorageManager implements IndexStorageManager {
   private static final int FORWARD_STORAGE_KEY_SIZE = 6;
 
-  public final Storage storage;
-  public final ConcurrentHashMap<String, BTreeIndexStorage> indexStorages = new ConcurrentHashMap<>();
-  public final Novelty indexNovelty;
-  public final Map indexHeads;
-  public final BTree forwardStorage;
+  private final ToIntFunction<Integer> localToRemote;
+  private final ToIntFunction<Integer> remoteToLocal;
+
+  public final AtomicReference<IndexState> stateRef;
 
   public BTreeIndexStorageManager() {
+    this(
+      System.getProperty("onair.index.revision"),
+      System.getProperty("onair.index.cache.host"),
+      System.getProperty("onair.index.cache.port", "11211")
+    );
+  }
+
+  public BTreeIndexStorageManager(String revision, String cacheHost, String cachePort) {
+    Storage storage;
     try {
-      String revision = System.getProperty("onair.index.revision");
-      String cacheHost = System.getProperty("onair.index.cache.host");
-      String cachePort = System.getProperty("onair.index.cache.port", "11211");
       if (cacheHost != null) {
         storage = new StorageImpl(new InetSocketAddress(cacheHost, Integer.parseInt(cachePort)));
       }
       else {
-        storage = new Storage() {
-          @Override
-          public @NotNull byte[] lookup(@NotNull Address address) {
-            return new byte[0];
-          }
-
-          @Override
-          public @NotNull Address alloc(@NotNull byte[] what) {
-            return null;
-          }
-
-          @Override
-          public void prefetch(@NotNull Address address, @NotNull byte[] bytes, @NotNull BTree tree, int size, byte type, int mask) {
-
-          }
-
-          @Override
-          public void store(@NotNull Address address, @NotNull byte[] bytes) {
-
-          }
-        };
+        storage = Storage.VOID;
       }
-
-      final NoveltyImpl novelty = new NoveltyImpl(FileUtil.createTempFile("novelty-", ".here"));
-      if (revision != null && !revision.trim().isEmpty()) {
-        indexHeads = downloadIndexData(revision);
-
-        @SuppressWarnings("unchecked") List<String> addr = (List<String>)(indexHeads.get("forward-indices"));
-        // one table to rule them all
-        forwardStorage = BTree.load(storage, FORWARD_STORAGE_KEY_SIZE, Address.fromStrings(addr));
-      }
-      else {
-        indexHeads = null;
-        forwardStorage = BTree.create(novelty, storage, FORWARD_STORAGE_KEY_SIZE);
-      }
-      indexNovelty = novelty;
     }
     catch (IOException e) {
       throw new RuntimeException();
     }
-  }
-
-  public static Map downloadIndexData(String revision) {
-    String bucket = "onair-index-data";
-    String region = "eu-central-1";
-    try {
-      InputStream stream =
-        new URL("https://s3." + region + ".amazonaws.com/" + bucket + "?prefix=" + revision + "/index_meta").openStream();
-      Element element = JDOMUtil.load(stream);
-
-      List<String> files = element.getChildren().stream()
-                                  .filter(e -> e.getName().equals("Contents"))
-                                  .flatMap(e -> e.getChildren().stream())
-                                  .filter(o -> o.getName().equals("Key"))
-                                  .map(e -> e.getText())
-                                  .map(s -> s.split("/")[2])
-                                  .collect(Collectors.toList());
-
-      for (String file : files) {
-        String s3url = "https://s3." + region + ".amazonaws.com/" + bucket + "/" + revision + "/index_meta/" + file;
-        ReadableByteChannel source = Channels.newChannel(new URL(s3url).openStream());
-        File base = IndexInfrastructure.getIndexMeta();
-        base.mkdirs();
-        try (FileOutputStream fos = new FileOutputStream(new File(base, file))) {
-          fos.getChannel().transferFrom(source, 0, Long.MAX_VALUE);
-        }
+    stateRef = new AtomicReference<>(checkoutRevision(PersistentHashMap.EMPTY, PersistentHashMap.EMPTY, storage, revision));
+    localToRemote = localId -> {
+      RemoteVFS.Mapping mapping = stateRef.get().vfsMapping;
+      if (mapping != null) {
+        return mapping.localToRemote.get(localId);
       }
-
-      InputStream is = new URL(
-        "https://s3." + region + ".amazonaws.com/" + bucket + "/" + revision + "/meta").openStream();
-
-      String str = CharStreams.toString(new InputStreamReader(is, Charsets.UTF_8));
-
-      return new GsonBuilder().create().fromJson(str, Map.class);
-    }
-    catch (Exception e) {
-      throw new RuntimeException("exception downloading index data for revision " + revision, e);
-    }
+      else {
+        return localId;
+      }
+    };
+    remoteToLocal = remoteId -> {
+      RemoteVFS.Mapping mapping = stateRef.get().vfsMapping;
+      if (mapping != null) {
+        return mapping.remoteToLocal.get(remoteId);
+      }
+      else {
+        return remoteId;
+      }
+    };
   }
 
   @Override
   public <V> PersistentMap<Integer, V> createForwardIndexStorage(ID<?, ?> indexId, DataExternalizer<V> valueExternalizer) {
-    return new BTreeIntPersistentMap<>(indexId.getUniqueId(), valueExternalizer, indexNovelty, forwardStorage);
+    swap(stateRef, state -> state.withNewForwardIndexStorage(
+      indexId.getName(),
+      new BTreeForwardIndexStorage<V>(indexId.getUniqueId(),
+                                      valueExternalizer,
+                                      state.novelty,
+                                      state.forwardIndexTree)));
+    return new BTreeIndexStorageManagerDelegatingPersistentMap<>(this, indexId, localToRemote, remoteToLocal);
   }
 
   @SuppressWarnings("unchecked")
@@ -143,34 +94,125 @@ public class BTreeIndexStorageManager implements IndexStorageManager {
                                                               int cacheSize,
                                                               boolean keyIsUniqueForIndexedFile,
                                                               boolean buildKeyHashToVirtualFileMapping) {
-    final BTreeIndexStorage.AddressDescriptor address;
-    final int newRevision = 17;
-    int baseRevision = -1;
-    if (indexHeads != null) {
-      Map m = (Map)(((Map)indexHeads.get("inverted-indices")).get(indexId.getName()));
-      final List<String> invertedAddress = (List<String>)m.get("inverted");
-      final List<String> internaryAddress = (List<String>)m.get("internary");
-      // final List<String> hashToVirtualFile = (List<String>)m.get("hash-to-file");
-      Address internary = internaryAddress != null ? Address.fromStrings(internaryAddress) : null;
-      address = new BTreeIndexStorage.AddressDescriptor(
-        internary,
-        Address.fromStrings(invertedAddress)/*, Address.fromStrings(hashToVirtualFile)*/
-      );
-      baseRevision = Integer.parseInt((String)indexHeads.get("revision-int"));
+    swap(stateRef, state ->
+      state.withNewInvertedIndexStorage(
+        indexId.getName(),
+        new BTreeIndexStorage<>(keyDescriptor,
+                                valueExternalizer,
+                                state.storage,
+                                state.novelty,
+                                state.revisionDescriptor.heads != null
+                                ? state.revisionDescriptor.heads.invertedIndicesHeads.get(indexId.getName())
+                                : null,
+                                cacheSize,
+                                state.revisionDescriptor.R,
+                                state.revisionDescriptor.baseR)));
+
+    return new BTreeIndexStorageManagerDelegatingIndexStorage<>(this, indexId, localToRemote, remoteToLocal);
+  }
+
+  public void close() throws IOException {
+    stateRef.get().novelty.close();
+  }
+
+  @SuppressWarnings("unchecked")
+  public static IndexState checkoutRevision(PersistentHashMap oldInvertedIndexStorages,
+                                            PersistentHashMap oldForwardIndexStorages,
+                                            Storage storage,
+                                            String revision) {
+    final RevisionDescriptor revisionDescriptor = RevisionDescriptor.fromRevision(revision);
+    final NoveltyImpl novelty = NoveltyImpl.createNovelty();
+
+    RevisionDescriptor.Heads heads = revisionDescriptor.heads;
+    RemoteVFS.Mapping mapping = null;
+    if (heads != null) {
+      BTree remoteVFS = BTree.load(storage, RemoteVFS.VFS_TREE_KEY_SIZE, heads.vfsHead);
+      mapping = RemoteVFS.remap(FSRecords.getInstance(), remoteVFS, Novelty.VOID);
+    }
+
+    BTree forwardTree;
+    if (heads != null) {
+      forwardTree = BTree.load(storage, FORWARD_STORAGE_KEY_SIZE, heads.forwardIndexHead);
     }
     else {
-      address = null;
+      forwardTree = BTree.create(novelty.access(), storage, FORWARD_STORAGE_KEY_SIZE);
     }
-    BTreeIndexStorage<K, V> indexStorage =
-      new BTreeIndexStorage<>(keyDescriptor,
-                              valueExternalizer,
-                              storage,
-                              indexNovelty,
-                              address,
-                              cacheSize,
-                              newRevision,
-                              baseRevision);
-    indexStorages.put(indexId.getName(), indexStorage);
-    return indexStorage;
+
+    PersistentHashMap newInvertedIndexStorages = PersistentHashMap.EMPTY;
+    if (heads != null) {
+      for (Map.Entry<String, BTreeIndexStorage.AddressDescriptor> entry : heads.invertedIndicesHeads.entrySet()) {
+        String indexId = entry.getKey();
+        BTreeIndexStorage.AddressDescriptor addr = entry.getValue();
+        BTreeIndexStorage old = (BTreeIndexStorage)oldInvertedIndexStorages.get(indexId);
+        if (old != null) {
+          newInvertedIndexStorages =
+            (PersistentHashMap)newInvertedIndexStorages
+              .assoc(indexId, old.withNewHead(novelty, addr, revisionDescriptor.R, revisionDescriptor.baseR));
+        }
+      }
+    }
+
+    PersistentHashMap newForwardIndexStorages = PersistentHashMap.EMPTY;
+    for (Map.Entry kv : (Set<Map.Entry>)(oldForwardIndexStorages.entrySet())) {
+      BTreeForwardIndexStorage indexStorage = (BTreeForwardIndexStorage)kv.getValue();
+      Object indexId = kv.getKey();
+      newForwardIndexStorages = (PersistentHashMap)newForwardIndexStorages.assoc(indexId, indexStorage.withTree(novelty, forwardTree));
+    }
+
+    return new IndexState(storage,
+                          novelty,
+                          revisionDescriptor,
+                          forwardTree,
+                          mapping,
+                          newInvertedIndexStorages,
+                          newForwardIndexStorages);
+  }
+
+  public static <T> T swap(AtomicReference<T> atom, Function<T, T> update) {
+    synchronized (atom) {
+      T t = atom.get();
+      T newT = update.apply(t);
+      if (!atom.compareAndSet(t, newT)) {
+        throw new ConcurrentModificationException();
+      }
+      return newT;
+    }
+  }
+
+  public static class IndexState {
+    public final Storage storage;
+
+    public final PersistentHashMap indexStorages;
+    public final PersistentHashMap forwardIndices;
+    public final Novelty novelty;
+    public final RevisionDescriptor revisionDescriptor;
+    public final BTree forwardIndexTree;
+    public final RemoteVFS.Mapping vfsMapping;
+
+    public IndexState(Storage storage,
+                      Novelty novelty,
+                      RevisionDescriptor revisionDescriptor,
+                      BTree forwardIndexTree,
+                      RemoteVFS.Mapping vfsMapping,
+                      PersistentHashMap indexStorages,
+                      PersistentHashMap forwardIndices) {
+      this.storage = storage;
+      this.novelty = novelty;
+      this.revisionDescriptor = revisionDescriptor;
+      this.forwardIndexTree = forwardIndexTree;
+      this.vfsMapping = vfsMapping;
+      this.indexStorages = indexStorages;
+      this.forwardIndices = forwardIndices;
+    }
+
+    public IndexState withNewForwardIndexStorage(String indexId, BTreeForwardIndexStorage forwardIndexStorage) {
+      return new IndexState(storage, novelty, revisionDescriptor, forwardIndexTree, vfsMapping, indexStorages,
+                            (PersistentHashMap)forwardIndices.assoc(indexId, forwardIndexStorage));
+    }
+
+    public IndexState withNewInvertedIndexStorage(String indexId, BTreeIndexStorage indexStorage) {
+      return new IndexState(storage, novelty, revisionDescriptor, forwardIndexTree, vfsMapping,
+                            (PersistentHashMap)indexStorages.assoc(indexId, indexStorage), forwardIndices);
+    }
   }
 }

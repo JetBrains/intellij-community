@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.onair.tree;
 
+import com.intellij.platform.onair.storage.api.Novelty;
 import com.intellij.platform.onair.storage.api.Tree;
 import org.junit.Assert;
 import org.junit.Test;
@@ -14,73 +15,75 @@ public class AirTreeTest extends AirTreeTestBase {
     int total = 1000;
     BTree tree = createTree();
 
+    Novelty.Accessor accessor = novelty.access();
     for (int i = 0; i < total - 10; i++) {
       if (i == 42) {
-        tree.dump(novelty, System.out, ValueDumper.INSTANCE);
+        tree.dump(accessor, System.out, ValueDumper.INSTANCE);
 
         AtomicLong size = new AtomicLong();
-        Assert.assertFalse(tree.forEach(novelty, (key, value) -> size.incrementAndGet() < 10));
+        Assert.assertFalse(tree.forEach(accessor, (key, value) -> size.incrementAndGet() < 10));
         Assert.assertEquals(10, size.get());
         size.set(0);
-        Assert.assertTrue(tree.forEach(novelty, (key, value) -> size.incrementAndGet() < 50));
+        Assert.assertTrue(tree.forEach(accessor, (key, value) -> size.incrementAndGet() < 50));
         Assert.assertEquals(42, size.get());
       }
 
-      Assert.assertTrue(tree.put(novelty, key(i), v(i)));
+      Assert.assertTrue(tree.put(accessor, key(i), v(i)));
     }
 
     // insert in non-linear order
     for (int i = 0; i < 10; i++) {
-      Assert.assertTrue(tree.put(novelty, key(total - i - 1), v(total - i - 1)));
+      Assert.assertTrue(tree.put(accessor, key(total - i - 1), v(total - i - 1)));
     }
 
     // tree.dump(novelty, System.out, ValueDumper.INSTANCE);
-    checkTree(tree, total);
+    checkTree(accessor, tree, total);
 
     tree = reopen(tree);
+    accessor = novelty.access();
 
-    checkTree(tree, total);
+    checkTree(accessor, tree, total);
 
     for (int i = 0; i < total; i++) {
-      Assert.assertTrue(tree.put(novelty, key(i), v(2 * i)));
+      Assert.assertTrue(tree.put(accessor, key(i), v(2 * i)));
     }
 
     long size = novelty.getSize();
 
-    checkTree(tree, total, 2);
+    checkTree(accessor, tree, total, 2);
 
     // overwrite some novelty leafs, check for memory leaks
 
     for (int i = 0; i < total; i++) {
-      Assert.assertTrue(tree.put(novelty, key(i), v(3 * i)));
+      Assert.assertTrue(tree.put(accessor, key(i), v(3 * i)));
     }
 
-    checkTree(tree, total, 3);
+    checkTree(accessor, tree, total, 3);
 
     Assert.assertEquals(size, novelty.getSize());
   }
 
-  private void checkTree(Tree tree, final int total) {
+  private static void checkTree(Novelty.Accessor txn, Tree tree, final int total, final int multiplier) {
     for (int i = 0; i < total; i++) {
-      Assert.assertArrayEquals(v(i), tree.get(novelty, key(i)));
+      Assert.assertArrayEquals(v(multiplier * i), tree.get(txn, key(i)));
+    }
+  }
+
+  private static void checkTree(Novelty.Accessor txn, Tree tree, final int total) {
+    for (int i = 0; i < total; i++) {
+      Assert.assertArrayEquals(v(i), tree.get(txn, key(i)));
       if (i != 0) {
-        Assert.assertNull(tree.get(novelty, key(-i)));
+        Assert.assertNull(tree.get(txn, key(-i)));
       }
     }
 
     final AtomicInteger size = new AtomicInteger();
-    tree.forEach(novelty, (key, value) -> {
+    tree.forEach(txn, (key, value) -> {
       int i = size.getAndIncrement();
       Assert.assertArrayEquals(key(i), key);
       Assert.assertArrayEquals(v(i), value);
       return true;
     });
     Assert.assertEquals(size.get(), total);
-  }
-
-  private void checkTree(Tree tree, final int total, final int multiplier) {
-    for (int i = 0; i < total; i++) {
-      Assert.assertArrayEquals(v(multiplier * i), tree.get(novelty, key(i)));
-    }
   }
 }

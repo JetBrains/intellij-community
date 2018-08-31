@@ -16,26 +16,30 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 
-public class BTreeIntPersistentMap<V> implements PersistentMap<Integer, V> {
+public class BTreeForwardIndexStorage<V> implements PersistentMap<Integer, V> {
 
   private final short id;
   private final DataExternalizer<V> valueExternalizer;
   private final Novelty novelty;
   public final BTree tree;
 
-  public BTreeIntPersistentMap(short id,
-                               DataExternalizer<V> valueExternalizer,
-                               @NotNull Novelty novelty,
-                               @NotNull BTree tree) {
+  public BTreeForwardIndexStorage(short id,
+                                  DataExternalizer<V> valueExternalizer,
+                                  @NotNull Novelty novelty,
+                                  @NotNull BTree tree) {
     this.id = id;
     this.valueExternalizer = valueExternalizer;
     this.novelty = novelty;
     this.tree = tree;
   }
 
+  public BTreeForwardIndexStorage<V> withTree(Novelty novelty, BTree tree) {
+    return new BTreeForwardIndexStorage<>(id, valueExternalizer, novelty, tree);
+  }
+
   @Override
   public V get(Integer key) throws IOException {
-    @Nullable byte[] value = tree.get(novelty, serializeKey(key));
+    @Nullable byte[] value = tree.get(novelty.access(), serializeKey(key));
     if (value == null) {
       return null;
     }
@@ -49,18 +53,20 @@ public class BTreeIntPersistentMap<V> implements PersistentMap<Integer, V> {
     final ByteArrayOutputStream stream = new ByteArrayOutputStream();
     final DataOutputStream output = new DataOutputStream(stream);
     valueExternalizer.save(output, value);
-    tree.put(novelty, serializeKey(key), stream.toByteArray(), true);
+    tree.put(novelty.access(), serializeKey(key), stream.toByteArray(), true);
   }
 
   @Override
   public void remove(Integer key) {
-    tree.delete(novelty, serializeKey(key));
+    tree.delete(novelty.access(), serializeKey(key));
   }
 
   @Override
   public boolean processKeys(Processor<Integer> processor) {
-    // TODO: navigate to starting key first?
-    return tree.forEach(novelty, (key, value) -> {
+    final byte[] startingKey = new byte[6];
+    ByteUtils.writeUnsignedShort(id ^ 0x8000, startingKey, 0);
+    ByteUtils.writeUnsignedInt(0, startingKey, 2);
+    return tree.forEach(novelty.access(), startingKey, (key, value) -> {
       short currentId = (short)(ByteUtils.readUnsignedShort(key, 0) ^ 0x8000);
       if (id == currentId) {
         return processor.process((int)(ByteUtils.readUnsignedInt(key, 2) ^ 0x80000000));

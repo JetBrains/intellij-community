@@ -339,7 +339,7 @@ public class IconUtil {
   }
 
   public static class IconSizeWrapper implements Icon {
-    private final Icon myIcon;
+    public final Icon myIcon;
     private final int myWidth;
     private final int myHeight;
 

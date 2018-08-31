@@ -44,8 +44,8 @@ public class FileLoadingTracker {
     return ApplicationManager.getApplication().getComponent(FileLoadingTracker.class);
   }
 
-  public FileLoadingTracker(final FSRecords fsRecords) {
-    myFSRecords = fsRecords;
+  public FileLoadingTracker() {
+    myFSRecords = FSRecords.getInstance();
     myLeafNameIds = new TIntHashSet(ourPaths.stream().mapToInt(
       path -> myFSRecords.getFileNameCache().storeName(StringUtil.getShortName(path, '/'))
     ).toArray());

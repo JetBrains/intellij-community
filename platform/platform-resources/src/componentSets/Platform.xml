@@ -26,11 +26,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.openapi.vfs.newvfs.persistent.FSRecords</interface-class>
-      <implementation-class>com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl</implementation-class>
-    </component>
-
-    <component>
       <implementation-class>com.intellij.openapi.vfs.newvfs.impl.FileLoadingTracker</implementation-class>
     </component>
 

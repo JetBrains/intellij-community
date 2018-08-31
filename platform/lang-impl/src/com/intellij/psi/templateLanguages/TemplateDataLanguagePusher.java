@@ -45,12 +45,12 @@ public class TemplateDataLanguagePusher implements FilePropertyPusher<Language> 
 
   private final VfsDependentEnum<String> myLanguagesEnumerator;
 
-  public TemplateDataLanguagePusher(final FSRecords fsRecords) {
+  public TemplateDataLanguagePusher() {
     this.myLanguagesEnumerator = new VfsDependentEnum<>(
       "languages",
       EnumeratorStringDescriptor.INSTANCE,
       1,
-      fsRecords.basePath()
+      FSRecords.getInstance().basePath()
     );
   }
 

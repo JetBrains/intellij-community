@@ -70,11 +70,11 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   private final BulkFileListener myPublisher;
   protected final FSRecordsImpl myFSRecords;
 
-  public PersistentFSImpl(@NotNull MessageBus bus, @NotNull FSRecordsImpl fsRecords) {
+  public PersistentFSImpl(@NotNull MessageBus bus) {
     ShutDownTracker.getInstance().registerShutdownTask(this::performShutdown);
     LowMemoryWatcher.register(this::clearIdCache, this);
     myPublisher = bus.syncPublisher(VirtualFileManager.VFS_CHANGES);
-    myFSRecords = fsRecords;
+    myFSRecords = (FSRecordsImpl)FSRecords.getInstance();
   }
 
   @Override
@@ -1330,9 +1330,9 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @TestOnly
   public void cleanPersistedContents() {
-    int[] roots = myFSRecords.listRoots();
-    for (int root : roots) {
-      markForContentReloadRecursively(root);
+    final FSRecords.NameId[] roots = myFSRecords.listRoots();
+    for (FSRecords.NameId root : roots) {
+      markForContentReloadRecursively(root.id);
     }
   }
 

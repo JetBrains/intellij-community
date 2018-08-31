@@ -4,7 +4,9 @@ package com.intellij.platform.onair.tree;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import com.intellij.platform.onair.storage.api.Address;
+import com.intellij.platform.onair.storage.api.Novelty;
 import com.intellij.platform.onair.storage.api.Storage;
+import com.intellij.platform.onair.storage.api.Tree;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -38,14 +40,16 @@ public class MockStorage implements Storage {
   }
 
   @Override
-  public void store(@NotNull Address address, @NotNull byte[] bytes) {
-    final Address result = alloc(bytes);
-    final byte[] existing = data.putIfAbsent(result, bytes);
-    if (existing != null) {
-      if (!Arrays.equals(bytes, existing)) {
-        throw new IllegalStateException("hash collision");
+  public Address bulkStore(@NotNull Tree tree, Novelty.@NotNull Accessor novelty) {
+    return tree.store(novelty, (address, bytes) -> {
+      final Address result = alloc(bytes);
+      final byte[] existing = data.putIfAbsent(result, bytes);
+      if (existing != null) {
+        if (!Arrays.equals(bytes, existing)) {
+          throw new IllegalStateException("hash collision");
+        }
       }
-    }
+    });
   }
 
   @Override

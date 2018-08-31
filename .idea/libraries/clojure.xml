@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="clojure" type="repository">
+    <properties maven-id="org.clojure:clojure:1.9.0" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/clojure/clojure/1.9.0/clojure-1.9.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/clojure/spec.alpha/0.1.143/spec.alpha-0.1.143.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/clojure/core.specs.alpha/0.1.24/core.specs.alpha-0.1.24.jar!/"/>
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

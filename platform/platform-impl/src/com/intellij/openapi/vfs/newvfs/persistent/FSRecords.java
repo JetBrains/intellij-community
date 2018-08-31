@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.util.SystemProperties;
@@ -17,8 +16,12 @@ public abstract class FSRecords {
   public static final boolean weHaveContentHashes = SystemProperties.getBooleanProperty("idea.share.contents", true);
   static final String VFS_FILES_EXTENSION = System.getProperty("idea.vfs.files.extension", ".dat");
 
+  private static class FSRecordsHolder {
+    private static final FSRecords ourInstance = new FSRecordsImpl();
+  }
+
   public static FSRecords getInstance() {
-    return ApplicationManager.getApplication().getComponent(FSRecords.class);
+    return FSRecordsHolder.ourInstance;
   }
 
   @NotNull
@@ -48,11 +51,15 @@ public abstract class FSRecords {
 
   public abstract String getNameByNameId(int nameId);
 
+  public abstract NameId[] listRootsWithLock();
+
   @Nullable
   public abstract DataInputStream readAttributeWithLock(int fileId, FileAttribute att);
 
   @NotNull
   public abstract DataOutputStream writeAttribute(int fileId, @NotNull FileAttribute att);
+
+  public abstract void dispose();
 
   public abstract void invalidateCaches();
 

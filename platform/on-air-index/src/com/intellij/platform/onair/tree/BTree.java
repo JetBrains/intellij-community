@@ -46,22 +46,27 @@ public class BTree implements Tree {
 
   @Override
   @Nullable
-  public byte[] get(@NotNull Novelty novelty, @NotNull byte[] key) {
+  public byte[] get(@NotNull Novelty.Accessor novelty, @NotNull byte[] key) {
     return loadPage(novelty, address).get(novelty, key);
   }
 
   @Override
-  public boolean forEach(@NotNull Novelty novelty, @NotNull KeyValueConsumer consumer) {
+  public boolean forEach(@NotNull Novelty.Accessor novelty, @NotNull KeyValueConsumer consumer) {
     return loadPage(novelty, address).forEach(novelty, consumer);
   }
 
   @Override
-  public boolean put(@NotNull Novelty novelty, @NotNull byte[] key, @NotNull byte[] value) {
+  public boolean forEach(@NotNull Novelty.Accessor novelty, @NotNull byte[] fromKey, @NotNull KeyValueConsumer consumer) {
+    return loadPage(novelty, address).forEach(novelty, fromKey, consumer);
+  }
+
+  @Override
+  public boolean put(@NotNull Novelty.Accessor novelty, @NotNull byte[] key, @NotNull byte[] value) {
     return put(novelty, key, value, true);
   }
 
   @Override
-  public boolean put(@NotNull Novelty novelty, @NotNull byte[] key, @NotNull byte[] value, boolean overwrite) {
+  public boolean put(@NotNull Novelty.Accessor novelty, @NotNull byte[] key, @NotNull byte[] value, boolean overwrite) {
     final boolean[] result = new boolean[1];
     final BasePage root = loadPage(novelty, address).getMutableCopy(novelty, this);
     final BasePage newSibling = root.put(novelty, key, value, overwrite, result);
@@ -81,34 +86,33 @@ public class BTree implements Tree {
   }
 
   @Override
-  public boolean delete(@NotNull Novelty novelty, @NotNull byte[] key) {
+  public boolean delete(@NotNull Novelty.Accessor novelty, @NotNull byte[] key) {
     return delete(novelty, key, null);
   }
 
   @Override
-  public boolean delete(@NotNull Novelty novelty, @NotNull byte[] key, @Nullable byte[] value) {
+  public boolean delete(@NotNull Novelty.Accessor novelty, @NotNull byte[] key, @Nullable byte[] value) {
     final boolean[] res = new boolean[1];
     address = delete(novelty, loadPage(novelty, address).getMutableCopy(novelty, this), key, value, res).address;
     return res[0];
   }
 
   @Override
-  public Address store(@NotNull Novelty novelty) {
-    return store(novelty, storage);
+  public Address store(@NotNull Novelty.Accessor novelty) {
+    return storage.bulkStore(this, novelty);
   }
 
   @Override
-  public Address store(@NotNull Novelty novelty, @NotNull StorageConsumer consumer) {
-    Address result = loadPage(novelty, address).save(novelty, storage, consumer);
-    System.out.println("tree stored at " + result);
-    return result;
+  public Address store(@NotNull Novelty.Accessor novelty, @NotNull StorageConsumer consumer) {
+    // System.out.println("tree stored at " + result);
+    return loadPage(novelty, address).save(novelty, storage, consumer);
   }
 
-  public void dump(@NotNull Novelty novelty, @NotNull PrintStream out, BTree.ToString renderer) {
+  public void dump(@NotNull Novelty.Accessor novelty, @NotNull PrintStream out, BTree.ToString renderer) {
     loadPage(novelty, address).dump(novelty, out, 0, renderer);
   }
 
-  /* package */ BasePage loadPage(@NotNull Novelty novelty, Address address) {
+  /* package */ BasePage loadPage(@NotNull Novelty.Accessor novelty, Address address) {
     final boolean isNovelty = address.isNovelty();
     final byte[] bytes = isNovelty ? novelty.lookup(address.getLowBytes()) : storage.lookup(address);
     if (bytes == null) {
@@ -138,7 +142,7 @@ public class BTree implements Tree {
     return result;
   }
 
-  /* package */ byte[] loadLeaf(@NotNull Novelty novelty, Address childAddress) {
+  /* package */ byte[] loadLeaf(@NotNull Novelty.Accessor novelty, Address childAddress) {
     return childAddress.isNovelty() ? novelty.lookup(childAddress.getLowBytes()) : storage.lookup(childAddress);
   }
 
@@ -146,7 +150,7 @@ public class BTree implements Tree {
     return new BTree(storage, keySize, address);
   }
 
-  public static BTree create(@NotNull Novelty novelty, @NotNull Storage storage, int keySize) {
+  public static BTree create(@NotNull Novelty.Accessor novelty, @NotNull Storage storage, int keySize) {
     final int metadataOffset = (keySize + BYTES_PER_ADDRESS) * DEFAULT_BASE;
     final byte[] bytes = new byte[metadataOffset + 6]; // byte type, byte size, int inline value mask
     bytes[metadataOffset] = BOTTOM;
@@ -155,7 +159,7 @@ public class BTree implements Tree {
     return new BTree(storage, keySize, new Address(novelty.alloc(bytes)));
   }
 
-  private static BasePage delete(@NotNull Novelty novelty,
+  private static BasePage delete(@NotNull Novelty.Accessor novelty,
                                  @NotNull BasePage root,
                                  @NotNull byte[] key,
                                  @Nullable byte[] value,

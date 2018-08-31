@@ -29,32 +29,34 @@ public abstract class BasePage {
   }
 
   @Nullable
-  protected abstract byte[] get(@NotNull Novelty novelty, @NotNull final byte[] key);
+  protected abstract byte[] get(@NotNull Novelty.Accessor novelty, @NotNull final byte[] key);
 
-  protected abstract BasePage getChild(@NotNull Novelty novelty, int index);
+  protected abstract BasePage getChild(@NotNull Novelty.Accessor novelty, int index);
 
   @Nullable
-  protected abstract BasePage put(@NotNull Novelty novelty,
+  protected abstract BasePage put(@NotNull Novelty.Accessor novelty,
                                   @NotNull byte[] key,
                                   @NotNull byte[] value,
                                   boolean overwrite,
                                   boolean[] result);
 
-  protected abstract boolean delete(@NotNull Novelty novelty,
+  protected abstract boolean delete(@NotNull Novelty.Accessor novelty,
                                     @NotNull byte[] key,
                                     @Nullable byte[] value);
 
-  protected abstract BasePage getMutableCopy(@NotNull Novelty novelty, BTree tree);
+  protected abstract BasePage getMutableCopy(@NotNull Novelty.Accessor novelty, BTree tree);
 
-  protected abstract BasePage split(@NotNull Novelty novelty, int from, int length);
+  protected abstract BasePage split(@NotNull Novelty.Accessor novelty, int from, int length);
 
-  protected abstract Address save(@NotNull final Novelty novelty, @NotNull final Storage storage, @NotNull StorageConsumer consumer);
+  protected abstract Address save(@NotNull final Novelty.Accessor novelty, @NotNull final Storage storage, @NotNull StorageConsumer consumer);
 
-  protected abstract void dump(@NotNull Novelty novelty, @NotNull PrintStream out, int level, BTree.ToString renderer);
+  protected abstract void dump(@NotNull Novelty.Accessor novelty, @NotNull PrintStream out, int level, BTree.ToString renderer);
 
-  protected abstract boolean forEach(@NotNull Novelty novelty, @NotNull KeyValueConsumer consumer);
+  protected abstract boolean forEach(@NotNull Novelty.Accessor novelty, @NotNull KeyValueConsumer consumer);
 
-  protected abstract BasePage mergeWithChildren(@NotNull Novelty novelty);
+  protected abstract boolean forEach(@NotNull Novelty.Accessor novelty, @NotNull byte[] fromKey, @NotNull KeyValueConsumer consumer);
+
+  protected abstract BasePage mergeWithChildren(@NotNull Novelty.Accessor novelty);
 
   protected abstract boolean isBottom();
 
@@ -75,7 +77,7 @@ public abstract class BasePage {
     return new Address(highBytes, lowBytes);
   }
 
-  protected byte[] getValue(@NotNull Novelty novelty, int index) {
+  protected byte[] getValue(@NotNull Novelty.Accessor novelty, int index) {
     return tree.loadLeaf(novelty, getChildAddress(index));
   }
 
@@ -103,17 +105,26 @@ public abstract class BasePage {
   }
 
   protected int binarySearchGuess(byte[] key) {
-    int index = binarySearch(key, 0);
+    int index = binarySearch(key);
     if (index < 0) {
       index = Math.max(0, -index - 2);
     }
     return index;
   }
 
-  protected int binarySearch(byte[] key, int low) {
+  protected int binarySearchRange(byte[] key) {
+    int index = binarySearch(key);
+    if (index < 0) {
+      index = Math.max(0, -index - 1);
+    }
+    return index;
+  }
+
+  protected int binarySearch(byte[] key) {
     final int bytesPerKey = tree.getKeySize();
     final int bytesPerEntry = bytesPerKey + BYTES_PER_ADDRESS;
 
+    int low = 0;
     int high = size - 1;
 
     while (low <= high) {
@@ -136,7 +147,7 @@ public abstract class BasePage {
     return -(low + 1);
   }
 
-  protected void flush(@NotNull Novelty novelty) {
+  protected void flush(@NotNull Novelty.Accessor novelty) {
     novelty.update(address.getLowBytes(), backingArray);
   }
 
@@ -150,7 +161,7 @@ public abstract class BasePage {
     set(pos, key, bytesPerKey, backingArray, lowAddressBytes);
   }
 
-  protected BasePage insertAt(@NotNull Novelty novelty, int pos, byte[] key, long childAddress) {
+  protected BasePage insertAt(@NotNull Novelty.Accessor novelty, int pos, byte[] key, long childAddress) {
     if (!needSplit(this)) {
       insertDirectly(novelty, pos, key, childAddress);
       return null;
@@ -172,7 +183,7 @@ public abstract class BasePage {
     }
   }
 
-  protected void insertDirectly(@NotNull Novelty novelty, final int pos, @NotNull byte[] key, long childAddress) {
+  protected void insertDirectly(@NotNull Novelty.Accessor novelty, final int pos, @NotNull byte[] key, long childAddress) {
     if (pos < size) {
       copyChildren(pos, pos + 1);
     }

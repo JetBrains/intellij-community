@@ -37,12 +37,14 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
   private final boolean myInlineKeys;
 
   private final DataExternalizer<Value> myValueExternalizer;
-  private final Novelty myNovelty;
+  private final Novelty.Accessor myNoveltyAccessor;
   public final LoadingCache<Key, CompositeValueContainer<Value>> myCache;
   public final BTree myTree;
   // public final BTree myHashToVirtualFile;
   public final BTree myKeysInternary;
   private final Object lockObject = new Object();
+  private final int myCacheSize;
+  private final Storage myStorage;
 
   public BTreeIndexStorage(@NotNull KeyDescriptor<Key> keyDescriptor,
                            @NotNull DataExternalizer<Value> valueExternalizer,
@@ -52,7 +54,9 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
                            int cacheSize,
                            int R,
                            int baseR) {
-    myNovelty = novelty.unsynchronizedCopy();
+    myCacheSize = cacheSize;
+    myStorage = storage;
+    myNoveltyAccessor = novelty.access();
 
     myKeyDescriptor = keyDescriptor;
     myValueExternalizer = valueExternalizer;
@@ -64,7 +68,7 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
         // myHashToVirtualFile = BTree.load(storage, 4, head.hashToVirtualFile);
       }
       else {
-        myTree = BTree.create(myNovelty, storage, 8);
+        myTree = BTree.create(myNoveltyAccessor, storage, 8);
         // myHashToVirtualFile = BTree.create(novelty, storage, 4);
       }
       if (!myInlineKeys) {
@@ -72,7 +76,7 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
           myKeysInternary = BTree.load(storage, 4, head.internary);
         }
         else {
-          myKeysInternary = BTree.create(myNovelty, storage, 4);
+          myKeysInternary = BTree.create(myNoveltyAccessor, storage, 4);
         }
       }
       else {
@@ -102,7 +106,7 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
               byte[] serializedKey = new byte[4 + 4];
               ByteUtils.writeUnsignedInt(keyInt ^ 0x80000000, serializedKey, 4);
               setR(serializedKey, R);
-              myTree.put(myNovelty, serializedKey, valueBytes.toByteArray(), true);
+              myTree.put(myNoveltyAccessor, serializedKey, valueBytes.toByteArray(), true);
             }
             else {
               BufferExposingByteArrayOutputStream stream = new BufferExposingByteArrayOutputStream();
@@ -119,12 +123,12 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
               ByteUtils.writeUnsignedInt(keyInt ^ 0x80000000, serializedKey, 4);
               setR(serializedKey, R);
 
-              myTree.put(myNovelty, serializedKey, valueBytes.toByteArray(), true);
+              myTree.put(myNoveltyAccessor, serializedKey, valueBytes.toByteArray(), true);
 
               final byte[] hashKey = Arrays.copyOfRange(serializedKey, 4, 8);
               // intern based on 128 bit hash happens on BTree value level
               // TODO: consider incorporating it into the novelty (to save space on indexing)
-              myKeysInternary.put(myNovelty, hashKey, keyBytes, false);
+              myKeysInternary.put(myNoveltyAccessor, hashKey, keyBytes, false);
             }
           }
         }
@@ -142,7 +146,7 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
           DeltaValueContainer<Value> delta = new DeltaValueContainer<>();
           synchronized (lockObject) {
             setR(keyBytes, R);
-            final byte[] valueBytes = myTree.get(myNovelty, keyBytes);
+            final byte[] valueBytes = myTree.get(myNoveltyAccessor, keyBytes);
             if (valueBytes != null) {
               try {
                 delta.readFrom(new DataInputStream(new ByteArrayInputStream(valueBytes)), myValueExternalizer);
@@ -157,7 +161,7 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
             ValueContainerImpl<Value> container = new ValueContainerImpl<>();
             synchronized (lockObject) {
               setR(keyBytes, baseR);
-              final byte[] baseValueBytes = myTree.get(myNovelty, keyBytes);
+              final byte[] baseValueBytes = myTree.get(myNoveltyAccessor, keyBytes);
               if (baseValueBytes != null) {
                 try {
                   container.readFrom(new DataInputStream(new ByteArrayInputStream(baseValueBytes)), myValueExternalizer);
@@ -173,17 +177,23 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
       });
   }
 
+  public BTreeIndexStorage<Key, Value> withNewHead(Novelty novelty,
+                                                   @Nullable BTreeIndexStorage.AddressDescriptor head,
+                                                   int R, int baseR) {
+    return new BTreeIndexStorage<>(myKeyDescriptor, myValueExternalizer, myStorage, novelty, head, myCacheSize, R, baseR);
+  }
+
   @Override
   public boolean processKeys(@NotNull Processor<Key> processor, GlobalSearchScope scope, @Nullable IdFilter idFilter) {
     synchronized (lockObject) {
       myCache.invalidateAll(); // force all data from cache to the BTree like in VfsAwareMapIndexStorage
       // TODO: pass by StorageException instead of assert
       if (myInlineKeys) {
-        return myTree.forEach(myNovelty, (key, value) -> processor.process(extractIntKey(key)));
+        return myTree.forEach(myNoveltyAccessor, (key, value) -> processor.process(extractIntKey(key)));
       }
       else {
         // TODO: merge this in a more efficient way
-        return myTree.forEach(myNovelty, (key, value) -> processor.process(extractKey(key)));
+        return myTree.forEach(myNoveltyAccessor, (key, value) -> processor.process(extractKey(key)));
       }
     }
   }
@@ -191,7 +201,7 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
   @Override
   public void addValue(Key key, int inputId, Value value) {
     /* synchronized (lockObject) {
-      myHashToVirtualFile.put(myNovelty, myKeyDescriptor.getHashCode(key), inputId);
+      myHashToVirtualFile.put(myNoveltyAccessor, myKeyDescriptor.getHashCode(key), inputId);
     }*/
     CompositeValueContainer<Value> container;
     try {
@@ -251,7 +261,7 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
   }
 
   private Key extractKey(byte[] keyHash) {
-    byte[] keyBytes = myKeysInternary.get(myNovelty, Arrays.copyOfRange(keyHash, 4, 8));
+    byte[] keyBytes = myKeysInternary.get(myNoveltyAccessor, Arrays.copyOfRange(keyHash, 4, 8));
     try {
       assert keyBytes != null;
       return myKeyDescriptor.read(new DataInputStream(new ByteArrayInputStream(keyBytes)));

@@ -2,7 +2,9 @@
 package com.intellij.platform.onair.storage;
 
 import com.intellij.platform.onair.storage.api.Address;
+import com.intellij.platform.onair.storage.api.Novelty;
 import com.intellij.platform.onair.storage.api.Storage;
+import com.intellij.platform.onair.storage.api.Tree;
 import com.intellij.platform.onair.tree.BTree;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,7 +26,7 @@ public class DummyStorageImpl implements Storage {
   }
 
   @Override
-  public void store(@NotNull Address address, @NotNull byte[] bytes) {
+  public Address bulkStore(@NotNull Tree tree, Novelty.@NotNull Accessor novelty) {
     throw new UnsupportedOperationException();
   }
 
