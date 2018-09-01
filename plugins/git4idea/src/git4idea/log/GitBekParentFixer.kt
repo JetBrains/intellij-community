@@ -20,10 +20,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.vcs.log.Hash
-import com.intellij.vcs.log.TimedVcsCommit
-import com.intellij.vcs.log.VcsLogFilterCollection
-import com.intellij.vcs.log.VcsLogTextFilter
+import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.index.IndexDataGetter
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder
@@ -47,13 +44,26 @@ internal class GitBekParentFixer private constructor(private val incorrectCommit
     fun prepare(project: Project,
                 root: VirtualFile,
                 provider: GitLogProvider): GitBekParentFixer {
-      return if (!BekUtil.isBekEnabled() || !Registry.`is`("git.log.fix.merge.commits.parents.order")) {
-        GitBekParentFixer(emptySet())
+      return if (isEnabled()) GitBekParentFixer(getIncorrectCommits(project, provider, root))
+      else GitBekParentFixer(emptySet())
+    }
+
+    @JvmStatic
+    fun fixCommits(commits: List<VcsCommitMetadata>): List<VcsCommitMetadata> {
+      if (!isEnabled()) return commits
+
+      return commits.map map@{ commit ->
+        if (commit.parents.size <= 1) return@map commit
+        if (!MAGIC_FILTER.textFilter!!.matches(commit.fullMessage)) return@map commit
+        return@map object : VcsCommitMetadata by commit {
+          override fun getParents(): List<Hash> = ContainerUtil.reverse(commit.parents)
+        }
       }
-      else GitBekParentFixer(getIncorrectCommits(project, provider, root))
     }
   }
 }
+
+private fun isEnabled() = BekUtil.isBekEnabled() && Registry.`is`("git.log.fix.merge.commits.parents.order")
 
 private val MAGIC_FILTER = createVcsLogFilterCollection()
 

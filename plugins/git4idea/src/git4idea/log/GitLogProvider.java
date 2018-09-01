@@ -136,7 +136,7 @@ public class GitLogProvider implements VcsLogProvider {
       validateDataAndReportError(root, allRefs, sortedCommits, data, branches, currentTagNames, commitsFromTags);
     }
 
-    return new LogDataImpl(allRefs, sortedCommits);
+    return new LogDataImpl(allRefs, GitBekParentFixer.fixCommits(sortedCommits));
   }
 
   private static void validateDataAndReportError(@NotNull final VirtualFile root,
