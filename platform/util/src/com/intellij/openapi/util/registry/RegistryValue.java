@@ -132,7 +132,7 @@ public class RegistryValue {
     return !newValue.equals(Registry.getInstance().getBundleValue(myKey, false));
   }
 
-  private String get(@NotNull String key, String defaultValue, boolean isValue) throws MissingResourceException {
+  protected String get(@NotNull String key, String defaultValue, boolean isValue) throws MissingResourceException {
     if (isValue) {
       String stringCachedValue = myStringCachedValue;
       if (stringCachedValue == null) {
