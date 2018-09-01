@@ -580,6 +580,39 @@ public final class TreeUtilVisitTest {
     }));
   }
 
+  @Test
+  public void testSelectFirstEmpty() {
+    testSelectFirst(() -> null, true, "");
+  }
+
+  @Test
+  public void testSelectFirstWithRoot() {
+    testSelectFirst(TreeUtilVisitTest::rootDeep, true, "+[Root]\n");
+  }
+
+  @Test
+  public void testSelectFirstWithoutRoot() {
+    testSelectFirst(TreeUtilVisitTest::rootDeep, false, " +[1]\n" + " +2\n" + " +3\n");
+  }
+
+  private static void testSelectFirst(@NotNull Supplier<TreeNode> root, boolean visible, @NotNull String expected) {
+    TreeTest.test(root, test -> {
+      test.getTree().setRootVisible(visible);
+      TreeUtil.promiseSelectFirst(test.getTree()).onProcessed(path -> {
+        test.invokeSafely(() -> {
+          if (expected.isEmpty()) {
+            Assert.assertNull(path);
+          }
+          else {
+            Assert.assertNotNull(path);
+            Assert.assertTrue(test.getTree().isVisible(path));
+          }
+          test.assertTree(expected, true, test::done);
+        });
+      });
+    });
+  }
+
   private static TreeVisitor convertArrayToVisitor(@NotNull String... array) {
     return new TreeVisitor.ByTreePath<>(true, convertArrayToTreePath(array), Object::toString);
   }

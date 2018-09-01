@@ -1228,6 +1228,18 @@ public final class TreeUtil {
   }
 
   /**
+   * Promises to select the first node in the specified tree.
+   *
+   * @param tree a tree, which node should be selected
+   */
+  @NotNull
+  public static Promise<TreePath> promiseSelectFirst(@NotNull JTree tree) {
+    return promiseSelect(tree, path -> !tree.isRootVisible() && path.getParentPath() == null
+                                       ? TreeVisitor.Action.CONTINUE
+                                       : TreeVisitor.Action.INTERRUPT);
+  }
+
+  /**
    * Processes nodes in the specified tree.
    *
    * @param tree     a tree, which nodes should be processed

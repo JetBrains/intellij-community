@@ -42,7 +42,6 @@ import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.util.Processor;
@@ -56,8 +55,6 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
-
-import static com.intellij.ide.util.treeView.TreeState.expand;
 
 /**
  * @author Vladimir Kondratyev
@@ -492,24 +489,10 @@ public abstract class TodoTreeBuilder implements Disposable {
                                     o instanceof PsiElement ? PsiUtilCore.getVirtualFile((PsiElement)o) : null);
     }
 
-    expand(myTree, promise -> 
-      ((AsyncTreeModel)myTree.getModel())
-        .accept(visitor)
-        .onProcessed(path -> {
-          if (!selectPath(myTree, path) && root != null) {
-            //select root if path disappeared from the tree
-            selectPath(myTree, new TreePath(new Object[] {root, ((DefaultMutableTreeNode)root).getChildAt(0)}));
-          }
-          promise.setResult(null);
-        })
-    );
-  }
-
-  private static boolean selectPath(@NotNull JTree tree, TreePath path) {
-    if (path == null) return false;
-    tree.expandPath(path); // request to expand found path
-    TreeUtil.selectPath(tree, path); // select and scroll to center
-    return true;
+    TreeUtil.promiseSelect(myTree, visitor).onError(error -> {
+      //select root if path disappeared from the tree
+      TreeUtil.promiseSelectFirst(myTree);
+    });
   }
 
   static PsiFile getFileForNode(DefaultMutableTreeNode node) {
