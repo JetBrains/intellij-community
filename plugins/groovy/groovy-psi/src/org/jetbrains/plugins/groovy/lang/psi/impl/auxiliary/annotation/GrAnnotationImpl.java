@@ -5,9 +5,11 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation;
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.light.LightClassReference;
+import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NonNls;
@@ -30,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrAnnotationStub;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrImportUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 /**
@@ -130,7 +133,7 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
   public String getShortName() {
     final GrAnnotationStub stub = getStub();
     if (stub != null) {
-      return stub.getPsiElement().getShortName();
+      return PsiAnnotationImpl.getAnnotationShortName(stub.getText());
     }
 
     final String referenceName = getClassReference().getReferenceName();
@@ -143,6 +146,17 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
   public PsiAnnotationOwner getOwner() {
     PsiElement parent = getParent();
     return parent instanceof PsiAnnotationOwner ? (PsiAnnotationOwner)parent : null;
+  }
+
+  @Override
+  public boolean hasQualifiedName(@NotNull String qualifiedName) {
+    String shortName = getShortName();
+    if (!shortName.equals(StringUtil.getShortName(qualifiedName)) &&
+        !qualifiedName.equals(GrImportUtil.findAliasedImport(this, shortName))) {
+      return false;
+    }
+
+    return qualifiedName.equals(getQualifiedName());
   }
 
   @NotNull
