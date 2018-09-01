@@ -17,22 +17,17 @@ package git4idea.update
 
 import com.intellij.dvcs.DvcsUtil.getPushSupport
 import com.intellij.dvcs.DvcsUtil.getShortRepositoryName
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtil.getRelativePath
 import com.intellij.openapi.vcs.Executor.cd
-import com.intellij.openapi.vcs.update.UpdatedFiles
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile
-import git4idea.config.GitVersion
-import git4idea.config.UpdateMethod
 import git4idea.push.GitPushOperation
 import git4idea.push.GitPushSupport
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.repo.GitSubmoduleInfo
 import git4idea.test.*
-import org.junit.Assume.assumeTrue
 import java.io.File
 import java.util.*
 
@@ -73,24 +68,6 @@ class GitComplexSubmoduleTest : GitSubmoduleTestBase() {
     assertNoSubmodules(youngerRepo)
     assertSubmodules(elderRepo, listOf(grandchildRepo))
     assertSubmodules(mainRepo, listOf(elderRepo, youngerRepo))
-  }
-
-  fun `test submodules are updated before superprojects`() {
-    assumeTrue("Not testing: no --recurse-submodules flag in ${vcs.version}", vcs.version.isLaterOrEqual(GitVersion(1, 7, 4, 0)))
-
-    val bro = prepareSecondClone()
-    commitAndPushFromSecondClone(bro) // remote commit to overcome "nothing to do"
-
-    // hook the merge to watch the order
-    val reposInActualOrder = mutableListOf<GitRepository>()
-    git.mergeListener = {
-      reposInActualOrder.add(it)
-    }
-
-    val updateProcess = GitUpdateProcess(project, EmptyProgressIndicator(), allRepositories(), UpdatedFiles.create(), false, true)
-    val result = updateProcess.update(UpdateMethod.MERGE)
-    assertEquals("Incorrect update result", GitUpdateResult.SUCCESS, result)
-    assertOrder(reposInActualOrder)
   }
 
   fun `test dependency comparator`() {
@@ -149,13 +126,6 @@ class GitComplexSubmoduleTest : GitSubmoduleTestBase() {
     cd(grandchildRepo)
     setupDefaultUsername()
     grandchildRepo.git("checkout master") // git submodule is initialized in detached HEAD state by default
-  }
-
-  private fun addSubmodule(superProject: File, submoduleUrl: File, relativePath: String? = null) {
-    cd(superProject)
-    git("submodule add ${FileUtil.toSystemIndependentName(submoduleUrl.path)} ${relativePath ?: ""}")
-    git("commit -m 'Added submodule lib'")
-    git("push origin master")
   }
 
   /**

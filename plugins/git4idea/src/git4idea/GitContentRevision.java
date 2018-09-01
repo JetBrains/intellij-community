@@ -16,6 +16,8 @@ import com.intellij.vcsUtil.VcsUtil;
 import git4idea.diff.GitSubmoduleContentRevision;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import git4idea.repo.GitSubmodule;
+import git4idea.repo.GitSubmoduleKt;
 import git4idea.util.GitFileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -119,33 +121,23 @@ public class GitContentRevision implements ByteBackedContentRevision {
   private static ContentRevision createRevision(@NotNull FilePath filePath,
                                                 @Nullable VcsRevisionNumber revisionNumber,
                                                 @NotNull Project project) {
-    SubmoduleAndParent submoduleAndParent = getRepositoryIfSubmodule(project, filePath);
+    GitSubmodule submodule = getRepositoryIfSubmodule(project, filePath);
     if (revisionNumber != null && revisionNumber != VcsRevisionNumber.NULL) {
-      if (submoduleAndParent != null) {
-        return GitSubmoduleContentRevision.createRevision(submoduleAndParent.parent, submoduleAndParent.submodule, revisionNumber);
+      if (submodule != null) {
+        return GitSubmoduleContentRevision.createRevision(submodule.getParent(), submodule.getRepository(), revisionNumber);
       }
       return createRevisionImpl(filePath, (GitRevisionNumber)revisionNumber, project, null);
     }
-    else if (submoduleAndParent != null) {
-      return GitSubmoduleContentRevision.createCurrentRevision(submoduleAndParent.submodule);
+    else if (submodule != null) {
+      return GitSubmoduleContentRevision.createCurrentRevision(submodule.getRepository());
     }
     else {
       return CurrentContentRevision.create(filePath);
     }
   }
 
-  private static class SubmoduleAndParent {
-    @NotNull private final GitRepository submodule;
-    @NotNull private final GitRepository parent;
-
-    SubmoduleAndParent(@NotNull GitRepository submodule, @NotNull GitRepository parent) {
-      this.submodule = submodule;
-      this.parent = parent;
-    }
-  }
-
   @Nullable
-  private static SubmoduleAndParent getRepositoryIfSubmodule(@NotNull Project project, @NotNull FilePath path) {
+  private static GitSubmodule getRepositoryIfSubmodule(@NotNull Project project, @NotNull FilePath path) {
     if (!path.isDirectory()) {
       return null;
     }
@@ -160,13 +152,7 @@ public class GitContentRevision implements ByteBackedContentRevision {
     if (candidate == null) { // not a root
       return null;
     }
-
-    for (GitRepository repo : repositoryManager.getRepositories()) {
-      if (repositoryManager.getDirectSubmodules(repo).contains(candidate)) {
-        return new SubmoduleAndParent(candidate, repo);
-      }
-    }
-    return null;
+    return GitSubmoduleKt.asSubmodule(candidate);
   }
 
   @NotNull
