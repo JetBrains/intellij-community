@@ -94,9 +94,6 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-import static java.util.stream.Collectors.toList;
-import static org.jetbrains.concurrency.Promises.collectResults;
-
 @State(name = "ProjectView", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class ProjectViewImpl extends ProjectView implements PersistentStateComponent<Element>, Disposable, QuickActionProvider, BusyObject  {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.ProjectViewImpl");
@@ -1839,16 +1836,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       else {
         List<TreeVisitor> visitors = AbstractProjectViewPane.createVisitors(myElements);
         if (1 == visitors.size()) {
-          TreeUtil.visit(tree, visitors.get(0), path -> {
-            if (path != null) TreeUtil.selectPath(tree, path);
-          });
+          TreeUtil.promiseSelect(tree, visitors.get(0));
         }
         else if (!visitors.isEmpty()) {
-          List<Promise<TreePath>> promises = visitors.stream().map(visitor -> TreeUtil.promiseVisit(tree, visitor)).collect(toList());
-          collectResults(promises, true)
-            .onSuccess(list -> {
-              if (list != null && !list.isEmpty()) TreeUtil.selectPaths(tree, list);
-            });
+          TreeUtil.promiseSelect(tree, visitors.stream());
         }
       }
     }

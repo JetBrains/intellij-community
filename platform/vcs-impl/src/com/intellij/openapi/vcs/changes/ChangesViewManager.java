@@ -381,9 +381,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
       ContainerUtil.addIfNotNull(paths, myView.findNodePathInTree(change));
     }
 
-    if (!paths.isEmpty()) {
-      TreeUtil.selectPaths(myView, paths);
-    }
+    TreeUtil.selectPaths(myView, paths);
   }
 
 
