@@ -92,21 +92,22 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
   public final Object[] getChildElements(final Object element) {
     if (element instanceof HierarchyNodeDescriptor) {
       final HierarchyNodeDescriptor descriptor = (HierarchyNodeDescriptor)element;
-      final Object[] cachedChildren = descriptor.getCachedChildren();
+      Object[] cachedChildren = descriptor.getCachedChildren();
       if (cachedChildren == null) {
         if (descriptor.isValid()) {
           try {
-            descriptor.setCachedChildren(AbstractTreeUi.calculateYieldingToWriteAction(() ->buildChildren(descriptor)));
+            cachedChildren = AbstractTreeUi.calculateYieldingToWriteAction(() -> buildChildren(descriptor));
           }
           catch (IndexNotReadyException e) {
             return ArrayUtil.EMPTY_OBJECT_ARRAY;
           }
         }
         else {
-          descriptor.setCachedChildren(ArrayUtil.EMPTY_OBJECT_ARRAY);
+          cachedChildren = ArrayUtil.EMPTY_OBJECT_ARRAY;
         }
+        descriptor.setCachedChildren(cachedChildren);
       }
-      return descriptor.getCachedChildren();
+      return cachedChildren;
     }
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
@@ -197,7 +198,7 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
   }
 
   private static final class TextInfoNodeDescriptor extends NodeDescriptor {
-    public TextInfoNodeDescriptor(final NodeDescriptor parentDescriptor, final String text, final Project project) {
+    TextInfoNodeDescriptor(final NodeDescriptor parentDescriptor, final String text, final Project project) {
       super(project, parentDescriptor);
       myName = text;
       myColor = JBColor.RED;
