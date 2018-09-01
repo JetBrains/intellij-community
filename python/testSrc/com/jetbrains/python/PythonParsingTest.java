@@ -503,7 +503,6 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON35);
   }
 
-  // PY-18972
   public void testFStrings() {
     doTest(LanguageLevel.PYTHON36);
   }
@@ -512,47 +511,38 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  // PY-31442
   public void testFStringWithSimpleFragment() {
     doTest(LanguageLevel.PYTHON36);
   }
   
-  // PY-31442
   public void testFStringGluedWithLiteralStringNodes() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  // PY-31442
   public void testFStringEscapedBraces() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  // PY-31442
   public void testFStringExpressionContainBraces() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  // PY-31442
   public void testFStringFragmentWithLiteralFormatPart() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  // PY-31422
   public void testFStringFragmentWithInterpolatedFormatPart() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  // PY-31442
   public void testFStringFragmentWithNotParenthesizedLambda() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  // PY-31442
   public void testFStringFragmentWithParenthesizedLambda() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  // PY-31442
   public void testFStringFragmentWithDictLiteral() {
     doTest(LanguageLevel.PYTHON36);
   }
