@@ -4,6 +4,7 @@ import traceback
 
 from _pydev_bundle import _pydev_imports_tipper
 from _pydev_bundle._pydev_calltip_util import get_description
+from _pydev_bundle.pydev_console_types import CodeFragment
 from _pydev_bundle.pydev_imports import _queue, Exec
 from _pydev_bundle.pydev_stdin import StdIn, DebugConsoleStdIn
 from _pydev_imps._pydev_saved_modules import thread
@@ -82,17 +83,6 @@ class Null:
 
     def __nonzero__(self):
         return 0
-
-
-class CodeFragment:
-    def __init__(self, text, is_single_line=True):
-        self.text = text
-        self.is_single_line = is_single_line
-
-    def append(self, code_fragment):
-        self.text = self.text + "\n" + code_fragment.text
-        if not code_fragment.is_single_line:
-            self.is_single_line = False
 
 
 # =======================================================================================================================
