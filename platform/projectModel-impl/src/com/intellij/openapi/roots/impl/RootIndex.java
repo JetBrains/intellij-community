@@ -604,7 +604,14 @@ public class RootIndex {
       if (allRoots.contains(dir)) {
         hierarchy.add(dir);
       }
-      dir = dir.getParent();
+      VirtualFile parent = dir.getParent();
+      if (parent == null) {
+        VirtualFile file = VfsUtilCore.getVirtualFileForJar(dir);
+        if (file != null) {
+          parent = file.getParent();
+        }
+      }
+      dir = parent;
     }
     return hierarchy;
   }
