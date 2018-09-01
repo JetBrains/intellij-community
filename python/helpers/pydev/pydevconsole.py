@@ -37,7 +37,7 @@ except:
 
 from _pydev_bundle.pydev_stdin import BaseStdIn
 from _pydev_bundle.pydev_console_utils import BaseInterpreterInterface
-from _pydev_bundle.pydev_console_utils import CodeFragment
+from _pydev_bundle.pydev_console_types import CodeFragment
 
 IS_PYTHON_3_ONWARDS = sys.version_info[0] >= 3
 IS_PY24 = sys.version_info[0] == 2 and sys.version_info[1] == 4
