@@ -176,7 +176,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     FileStructurePopupFilter filter = new FileStructurePopupFilter();
     myFilteringStructure = new FilteringTreeStructure(filter, myTreeStructure, false);
 
-    myStructureTreeModel = new StructureTreeModel(myFilteringStructure, null);
+    myStructureTreeModel = new StructureTreeModel(myFilteringStructure);
     myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, false, this);
     myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
     myTree = new MyTree(myAsyncTreeModel);
