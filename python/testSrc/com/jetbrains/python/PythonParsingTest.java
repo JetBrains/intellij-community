@@ -508,6 +508,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
+  public void testEmptyFStrings() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
   // PY-31442
   public void testFStringWithSimpleFragment() {
     doTest(LanguageLevel.PYTHON36);
