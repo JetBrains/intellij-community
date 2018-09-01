@@ -22,7 +22,7 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
 
   public static class State {
     public String myPathToGit = null;
-    public SshExecutable SSH_EXECUTABLE = null;
+    public SshExecutable SSH_EXECUTABLE = SshExecutable.NATIVE_SSH;
 
     public boolean ANNOTATE_IGNORE_SPACES = true;
     public AnnotateDetectMovementsOption ANNOTATE_DETECT_INNER_MOVEMENTS = AnnotateDetectMovementsOption.NONE;
