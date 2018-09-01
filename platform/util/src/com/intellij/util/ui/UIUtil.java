@@ -388,11 +388,11 @@ public class UIUtil {
   };
 
   private static final Color UNFOCUSED_SELECTION_COLOR = Gray._212;
-  private static final Color ACTIVE_HEADER_COLOR = new Color(160, 186, 213);
-  private static final Color INACTIVE_HEADER_COLOR = Gray._128;
-  private static final Color BORDER_COLOR = Color.LIGHT_GRAY;
+  private static final Color ACTIVE_HEADER_COLOR = JBColor.namedColor("HeaderColor.active", new Color(0xa0bad5));
+  private static final Color INACTIVE_HEADER_COLOR = JBColor.namedColor("HeaderColor.inactive", Gray._128);
+  private static final Color BORDER_COLOR = JBColor.namedColor("Borders.color", new JBColor(Gray._192, Gray._50));
 
-  public static final Color CONTRAST_BORDER_COLOR = new JBColor(new NotNullProducer<Color>() {
+  public static final Color CONTRAST_BORDER_COLOR = JBColor.namedColor("Borders.ContrastBorderColor", new JBColor(new NotNullProducer<Color>() {
     final Color color = new JBColor(0x9b9b9b, 0x4b4b4b);
     @NotNull
     @Override
@@ -402,7 +402,7 @@ public class UIUtil {
       }
       return color;
     }
-  });
+  }));
 
   public static final Color SIDE_PANEL_BACKGROUND = JBColor.namedColor("SidePanel.background", new JBColor(0xE6EBF0, 0x3E434C));
 
@@ -2774,7 +2774,7 @@ public class UIUtil {
    */
   @Deprecated
   public static Color getBorderColor() {
-    return isUnderDarcula() ? Gray._50 : BORDER_COLOR;
+    return BORDER_COLOR;
   }
 
   public static Font getTitledBorderFont() {
