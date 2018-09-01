@@ -5,7 +5,7 @@ import unittest
 
 import pytest
 
-from _pydev_bundle.pydev_console_utils import StdIn
+from _pydev_bundle.pydev_stdin import StdIn
 from _pydev_bundle.pydev_localhost import get_localhost
 from _pydev_comm.rpc import make_rpc_client
 from _pydevd_bundle import pydevd_io

@@ -1478,7 +1478,7 @@ def apply_debugger_options(setup_options):
 
 
 def patch_stdin(debugger):
-    from _pydev_bundle.pydev_console_utils import DebugConsoleStdIn
+    from _pydev_bundle.pydev_stdin import DebugConsoleStdIn
     orig_stdin = sys.stdin
     sys.stdin = DebugConsoleStdIn(debugger, orig_stdin)
 

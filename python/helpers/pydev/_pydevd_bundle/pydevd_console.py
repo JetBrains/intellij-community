@@ -5,9 +5,10 @@ import traceback
 from code import InteractiveConsole
 
 from _pydev_bundle import _pydev_completer
-from _pydev_bundle.pydev_console_utils import BaseInterpreterInterface, BaseStdIn
+from _pydev_bundle.pydev_console_utils import BaseInterpreterInterface
 from _pydev_bundle.pydev_imports import Exec
 from _pydev_bundle.pydev_override import overrides
+from _pydev_bundle.pydev_stdin import BaseStdIn
 from _pydevd_bundle import pydevd_save_locals
 from _pydevd_bundle.pydevd_io import IOBuf
 from _pydevd_bundle.pydevd_tracing import get_exception_traceback_str
