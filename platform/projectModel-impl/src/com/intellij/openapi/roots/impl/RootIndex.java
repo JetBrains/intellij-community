@@ -682,6 +682,20 @@ public class RootIndex {
           }
         }
       }
+      if (hierarchy.isEmpty()) {
+        return null;
+      }
+      VirtualFile file = VfsUtilCore.getVirtualFileForJar(hierarchy.get(0));
+      if (file == null) {
+        return null;
+      }
+      VirtualFile newRoot = contentRootOf.keySet().stream()
+        .filter(e -> VfsUtilCore.isAncestor(e, file, false))
+        .findFirst()
+        .orElse(null);
+      if (newRoot != null) {
+        return findNearestContentRoot(Collections.singletonList(newRoot));
+      }
       return null;
     }
 
