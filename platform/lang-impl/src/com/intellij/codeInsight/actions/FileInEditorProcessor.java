@@ -84,7 +84,7 @@ public class FileInEditorProcessor {
   }
 
   public void processCode() {
-    if (CodeStyle.isFormattingDisabled(myFile)) {
+    if (!CodeStyle.isFormattingEnabled(myFile)) {
       if (!isInHeadlessMode() && !myEditor.isDisposed() && myEditor.getComponent().isShowing()) {
         showHint(myEditor, new DisabledFormattingMessageBuilder());
       }
