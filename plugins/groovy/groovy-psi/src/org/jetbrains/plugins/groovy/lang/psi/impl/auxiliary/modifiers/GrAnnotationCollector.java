@@ -1,7 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.AnnotatedElementsSearch;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,14 +19,17 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrImportUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.transformations.immutable.GrImmutableUtils;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_ANNOTATION_COLLECTOR;
 
 public class GrAnnotationCollector {
 
@@ -130,7 +140,7 @@ public class GrAnnotationCollector {
     for (PsiAnnotation annotation : rawAnnotations) {
       final String qname = annotation.getQualifiedName();
 
-      if (qname == null || qname.equals(GroovyCommonClassNames.GROOVY_TRANSFORM_ANNOTATION_COLLECTOR)) continue;
+      if (qname == null || qname.equals(GROOVY_TRANSFORM_ANNOTATION_COLLECTOR)) continue;
 
       final PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
       for (PsiNameValuePair pair : attributes) {
@@ -172,7 +182,7 @@ public class GrAnnotationCollector {
       if (modifierList != null) {
         PsiAnnotation[] annotations = modifierList instanceof GrModifierList ? ((GrModifierList)modifierList).getRawAnnotations() : modifierList.getAnnotations();
         for (PsiAnnotation annotation : annotations) {
-          if (GroovyCommonClassNames.GROOVY_TRANSFORM_ANNOTATION_COLLECTOR.equals(annotation.getQualifiedName())) {
+          if (GROOVY_TRANSFORM_ANNOTATION_COLLECTOR.equals(annotation.getQualifiedName())) {
             return annotation;
           }
         }
@@ -182,17 +192,36 @@ public class GrAnnotationCollector {
     return null;
   }
 
+  private static String[] getPossibleShortNames(GrAnnotation annotation) {
+    String shortName = annotation.getShortName();
+    String aliasedImport = GrImportUtil.findAliasedImport(annotation, shortName);
+    return aliasedImport == null ? new String[]{shortName}
+                                 : new String[]{shortName, StringUtil.getShortName(aliasedImport)};
+  }
 
   @Nullable
   public static PsiAnnotation findAnnotationCollector(@NotNull GrAnnotation annotation) {
-    final GrCodeReferenceElement ref = annotation.getClassReference();
-
-    final PsiElement resolved = ref.resolve();
-    if (resolved instanceof PsiClass) {
-      return findAnnotationCollector((PsiClass)resolved);
-    }
-    else {
+    Set<String> allNames = allCollectorNames(annotation.getProject());
+    if (!ContainerUtil.exists(getPossibleShortNames(annotation), allNames::contains)) {
       return null;
     }
+
+    PsiElement resolved = annotation.getClassReference().resolve();
+    return resolved instanceof PsiClass ? findAnnotationCollector((PsiClass)resolved) : null;
   }
+
+  private static Set<String> allCollectorNames(@NotNull Project project) {
+    return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
+      Set<String> result = new HashSet<>();
+      GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+      for (PsiClass collector : JavaPsiFacade.getInstance(project).findClasses(GROOVY_TRANSFORM_ANNOTATION_COLLECTOR, scope)) {
+        AnnotatedElementsSearch.searchPsiClasses(collector, scope).forEach(aClass -> {
+          ContainerUtil.addIfNotNull(result, aClass.getName());
+          return true;
+        });
+      }
+      return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
+    });
+  }
+
 }
