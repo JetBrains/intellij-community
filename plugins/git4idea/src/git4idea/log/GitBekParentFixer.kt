@@ -29,6 +29,7 @@ import com.intellij.vcs.log.data.index.IndexDataGetter
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.util.BekUtil
+import com.intellij.vcs.log.util.StopWatch
 
 internal class GitBekParentFixer private constructor(private val incorrectCommits: Set<Hash>) {
 
@@ -69,15 +70,21 @@ fun getIncorrectCommits(project: Project, provider: GitLogProvider, root: Virtua
 fun getIncorrectCommitsFromIndex(dataManager: VcsLogData,
                                  dataGetter: IndexDataGetter,
                                  root: VirtualFile): MutableSet<Hash> {
+  val stopWatch = StopWatch.start("getting incorrect merges from index for ${root.name}")
   val commits = dataGetter.filter(MAGIC_FILTER.detailsFilters).asSequence()
-  return commits.map { dataManager.storage.getCommitId(it)!! }.filter { it.root == root }.mapTo(mutableSetOf()) { it.hash }
+  val result = commits.map { dataManager.storage.getCommitId(it)!! }.filter { it.root == root }.mapTo(mutableSetOf()) { it.hash }
+  stopWatch.report()
+  return result
 }
 
 @Throws(VcsException::class)
 fun getIncorrectCommitsFromProvider(provider: GitLogProvider,
                                     root: VirtualFile): MutableSet<Hash> {
+  val stopWatch = StopWatch.start("getting incorrect merges from git for ${root.name}")
   val commitsMatchingFilter = provider.getCommitsMatchingFilter(root, MAGIC_FILTER, -1)
-  return ContainerUtil.map2Set(commitsMatchingFilter) { timedVcsCommit -> timedVcsCommit.id }
+  val result = ContainerUtil.map2Set(commitsMatchingFilter) { timedVcsCommit -> timedVcsCommit.id }
+  stopWatch.report()
+  return result
 }
 
 private fun createVcsLogFilterCollection(): VcsLogFilterCollection {
