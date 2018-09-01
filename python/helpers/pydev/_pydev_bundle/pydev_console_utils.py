@@ -474,7 +474,7 @@ class BaseInterpreterInterface:
                 var_object = pydevd_vars.eval_in_context(name, frame_variables, frame_variables)
                 var_objects.append((var_object, name))
 
-        from _pydevd_bundle.pydevd_comm import ThriftGetValueAsyncThreadConsole
+        from _pydev_bundle.pydev_console_commands import ThriftGetValueAsyncThreadConsole
         t = ThriftGetValueAsyncThreadConsole(self.get_server(), seq, var_objects)
         t.start()
 
