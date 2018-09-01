@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.impl
 
+import com.intellij.testGuiFramework.cellReader.ExtendedJTreeCellReader
+import com.intellij.testGuiFramework.driver.ExtendedJTreePathFinder
 import com.intellij.testGuiFramework.fixtures.ActionButtonFixture
 import com.intellij.testGuiFramework.fixtures.GutterFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
@@ -10,6 +12,7 @@ import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
 import org.hamcrest.Matcher
 import org.junit.After
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.rules.ErrorCollector
@@ -154,7 +157,9 @@ fun GuiTestCase.waitForGradleReimport(rootPath: String, waitForProject: Boolean)
             // first, check whether the action button "Refresh all external projects" is enabled
             val text = "Refresh all external projects"
             val isReimportButtonEnabled = try {
-              ActionButtonFixture.fixtureByTextAnyState(this.target(), robot(), text).isEnabled
+              val fixtureByTextAnyState = ActionButtonFixture.fixtureByTextAnyState(this.target(), robot(), text)
+              assertTrue("Gradle refresh button should be visible and showing", this.target().isShowing && this.target().isVisible)
+              fixtureByTextAnyState.isEnabled
             }
             catch (e: Exception) {
               logInfo("$currentTimeInHumanString: waitForGradleReimport.actionButton: ${e::class.simpleName} - ${e.message}")
@@ -171,11 +176,26 @@ fun GuiTestCase.waitForGradleReimport(rootPath: String, waitForProject: Boolean)
               }
             }
             else true
-            // third, calculate result whether to continue waiting
+            // calculate result whether to continue waiting
             logInfo("$currentTimeInHumanString: waitForGradleReimport: jtree = $gradleWindowHasPath, button enabled = $isReimportButtonEnabled")
             result = gradleWindowHasPath && isReimportButtonEnabled
           }
         }
+        // check status in the Build tool window
+        var syncState = !waitForProject
+        if(waitForProject) {
+          toolwindow(id = "Build") {
+            content(tabName = "Sync") {
+              val tree = treeTable().target.tree
+              val treePath = ExtendedJTreePathFinder(tree).findMatchingPath(listOf(this@ideFrame.project.name + ":"))
+              val state = ExtendedJTreeCellReader().valueAtExtended(tree, treePath) ?: ""
+              logInfo("$currentTimeInHumanString: state of Build toolwindow: $state")
+              syncState = state.contains("sync finished")
+            }
+          }
+        }
+        // final calculating of result
+        result = result && syncState
       }
     }
     catch (ignore: Exception) {}

@@ -172,9 +172,10 @@ import javax.swing.tree.TreePath
    * Returns list of visible strings not including the first invisible item
    *
    * Note: code `this.path.joinToString()` always includes the first invisible item
+   * @param extendedValue if true return full text for each path item
    * */
-  fun TreePath.getPathStrings(jTree: JTree): List<String> {
+  fun TreePath.getPathStrings(jTree: JTree, extendedValue: Boolean = false): List<String> {
     val cellReader = ExtendedJTreeCellReader()
-    val pathStrings = if (path.first().toString().isEmpty() || !jTree.isRootVisible) path.drop(1) else path.asList()
-    return pathStrings.map { cellReader.valueAt(jTree, it) ?: throw Exception("Unable to read value (value is null) for a tree") }
+    val pathStrings = this.path.map { cellReader.valueAtExtended(jTree, it, extendedValue) ?: throw Exception("Unable to read value (value is null) for a tree")}
+    return if (pathStrings.first().isEmpty() || !jTree.isRootVisible) pathStrings.drop(1) else pathStrings
   }
