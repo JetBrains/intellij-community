@@ -35,7 +35,8 @@ try:
 except:
     import builtins as __builtin__  # @UnresolvedImport
 
-from _pydev_bundle.pydev_console_utils import BaseInterpreterInterface, BaseStdIn
+from _pydev_bundle.pydev_stdin import BaseStdIn
+from _pydev_bundle.pydev_console_utils import BaseInterpreterInterface
 from _pydev_bundle.pydev_console_utils import CodeFragment
 
 IS_PYTHON_3_ONWARDS = sys.version_info[0] >= 3
