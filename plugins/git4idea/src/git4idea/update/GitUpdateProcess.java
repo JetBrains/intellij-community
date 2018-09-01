@@ -232,8 +232,8 @@ public class GitUpdateProcess {
     return ContainerUtil.mapNotNull(updaters.keySet(), repo -> {
       GitUpdater updater = updaters.get(repo);
       if (updater instanceof GitRebaseUpdater) {
-        String currentRef = updater.getSourceAndTarget().getBranch().getFullName();
-        String baseRef = ObjectUtils.assertNotNull(updater.getSourceAndTarget().getDest()).getFullName();
+        String currentRef = ((GitRebaseUpdater)updater).getSourceAndTarget().getBranch().getFullName();
+        String baseRef = ObjectUtils.assertNotNull(((GitRebaseUpdater)updater).getSourceAndTarget().getDest()).getFullName();
         return GitRebaseOverMergeProblem.hasProblem(myProject, repo.getRoot(), baseRef, currentRef) ? repo : null;
       }
       return null;
@@ -272,7 +272,7 @@ public class GitUpdateProcess {
       if (branchAndTracked == null) continue;
       GitUpdater updater = GitUpdater.getUpdater(myProject, myGit, branchAndTracked, repository, myProgressIndicator, myUpdatedFiles,
                                                  updateMethod);
-      if (updater.isUpdateNeeded()) {
+      if (updater.isUpdateNeeded(branchAndTracked)) {
         updaters.put(repository, updater);
       }
       LOG.info("update| root=" + repository.getRoot() + " ,updater=" + updater);

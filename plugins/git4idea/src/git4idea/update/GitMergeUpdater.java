@@ -43,14 +43,16 @@ public class GitMergeUpdater extends GitUpdater {
   private static final Logger LOG = Logger.getInstance(GitMergeUpdater.class);
 
   @NotNull private final ChangeListManager myChangeListManager;
+  @NotNull private final GitBranchPair myBranchPair;
 
   public GitMergeUpdater(@NotNull Project project,
                          @NotNull Git git,
                          @NotNull GitRepository repository,
-                         @NotNull GitBranchPair branchAndTracked,
+                         @NotNull GitBranchPair branchPair,
                          @NotNull ProgressIndicator progressIndicator,
                          @NotNull UpdatedFiles updatedFiles) {
-    super(project, git, repository, branchAndTracked, progressIndicator, updatedFiles);
+    super(project, git, repository, progressIndicator, updatedFiles);
+    myBranchPair = branchPair;
     myChangeListManager = ChangeListManager.getInstance(myProject);
   }
 
