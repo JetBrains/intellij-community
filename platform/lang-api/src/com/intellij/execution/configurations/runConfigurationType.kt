@@ -71,9 +71,6 @@ abstract class SimpleConfigurationType protected constructor(private val id: Str
   @Suppress("LeakingThis")
   private val factories: Array<ConfigurationFactory> = arrayOf(this)
 
-  @Suppress("LeakingThis")
-  val factory: ConfigurationFactory = this
-
   override final fun getId() = id
 
   override final fun getDisplayName() = name
