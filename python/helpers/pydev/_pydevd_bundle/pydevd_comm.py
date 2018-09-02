@@ -77,7 +77,7 @@ if IS_IRONPYTHON:
     def unquote(s):
         return s
 
-import pydevconsole
+from _pydevd_bundle import pydevd_console_integration
 from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle import pydevd_xml
 from _pydevd_bundle import pydevd_tracing
@@ -1125,7 +1125,7 @@ class InternalGetFrame(InternalThreadCommand):
         try:
             frame = pydevd_vars.find_frame(self.thread_id, self.frame_id)
             if frame is not None:
-                hidden_ns = pydevconsole.get_ipython_hidden_vars()
+                hidden_ns = pydevd_console_integration.get_ipython_hidden_vars()
                 xml = "<xml>"
                 xml += pydevd_xml.frame_vars_to_xml(frame.f_locals, hidden_ns)
                 del frame
@@ -1443,7 +1443,7 @@ class InternalConsoleExec(InternalThreadCommand):
                 #don't trace new threads created by console command
                 disable_trace_thread_modules()
 
-                result = pydevconsole.console_exec(self.thread_id, self.frame_id, self.expression, dbg)
+                result = pydevd_console_integration.console_exec(self.thread_id, self.frame_id, self.expression, dbg)
                 xml = "<xml>"
                 xml += pydevd_xml.var_to_xml(result, "")
                 xml += "</xml>"
