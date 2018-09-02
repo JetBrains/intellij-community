@@ -32,11 +32,33 @@ public final class PythonTestConfigurationType implements ConfigurationType {
   public final PythonConfigurationFactoryBase LEGACY_NOSETEST_FACTORY = new PythonLegacyNoseTestConfigurationFactory(this);
   public final PythonConfigurationFactoryBase LEGACY_PYTEST_FACTORY = new PythonLegacyPyTestConfigurationFactory(this);
 
+  // due to PyTestLegacyInterop must be lazy
+  private final NotNullLazyValue<ConfigurationFactory[]> myFactories = LazyUtil.create(() -> {
+    // use new or legacy factories depending to new config
+    if (PyTestLegacyInteropKt.isNewTestsModeEnabled()) {
+      for (PythonConfigurationFactoryBase factory : PyTestsSharedKt.getFactories()) {
+        addFactory(factory);
+      }
+    }
+    else {
+      addFactory(LEGACY_UNITTEST_FACTORY);
+      addFactory(LEGACY_NOSETEST_FACTORY);
+      addFactory(LEGACY_PYTEST_FACTORY);
+    }
+    return super.getConfigurationFactories();
+  });
+
   public static PythonTestConfigurationType getInstance() {
     return ConfigurationTypeUtil.findConfigurationType(PythonTestConfigurationType.class);
   }
 
   public PythonTestConfigurationType() {
+  }
+
+  @NotNull
+  @Override
+  public ConfigurationFactory[] getConfigurationFactories() {
+    return myFactories.getValue();
   }
 
   @NotNull
