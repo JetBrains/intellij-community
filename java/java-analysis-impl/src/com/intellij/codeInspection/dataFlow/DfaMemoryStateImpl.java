@@ -517,13 +517,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       DfaValue dfaValue = unwrap(myFactory.getValue(c));
       if (dfaValue instanceof DfaConstValue) nConst++;
       if (dfaValue instanceof DfaVariableValue) {
-        DfaVariableValue variableValue = (DfaVariableValue)dfaValue;
-        if (variableValue.isNegated()) {
-          negatedVars.add(variableValue.createNegated());
-        }
-        else {
-          vars.add(variableValue);
-        }
+        vars.add((DfaVariableValue)dfaValue);
       }
       if (nConst > 1) return false;
     }
@@ -811,19 +805,13 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (dfaCond instanceof DfaUnknownValue) return true;
     if (dfaCond instanceof DfaUnboxedValue) {
       DfaVariableValue dfaVar = ((DfaUnboxedValue)dfaCond).getVariable();
-      boolean isNegated = dfaVar.isNegated();
-      DfaVariableValue dfaNormalVar = isNegated ? dfaVar.createNegated() : dfaVar;
       final DfaValue boxedTrue = myFactory.getBoxedFactory().createBoxed(myFactory.getConstFactory().getTrue());
-      return applyRelationCondition(
-        myFactory.getRelationFactory().createRelation(dfaNormalVar, RelationType.equivalence(!isNegated), boxedTrue));
+      return applyRelationCondition(myFactory.getRelationFactory().createRelation(dfaVar, RelationType.EQ, boxedTrue));
     }
     if (dfaCond instanceof DfaVariableValue) {
       DfaVariableValue dfaVar = (DfaVariableValue)dfaCond;
-      boolean isNegated = dfaVar.isNegated();
-      DfaVariableValue dfaNormalVar = isNegated ? dfaVar.createNegated() : dfaVar;
       DfaConstValue dfaTrue = myFactory.getConstFactory().getTrue();
-      return applyRelationCondition(
-        myFactory.getRelationFactory().createRelation(dfaNormalVar, RelationType.equivalence(!isNegated), dfaTrue));
+      return applyRelationCondition(myFactory.getRelationFactory().createRelation(dfaVar, RelationType.EQ, dfaTrue));
     }
 
     if (dfaCond instanceof DfaConstValue) {
@@ -1039,9 +1027,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (dfaRight instanceof DfaConstValue) {
       Object constVal = ((DfaConstValue)dfaRight).getValue();
       if (constVal instanceof Boolean) {
-        DfaConstValue negVal = myFactory.getBoolean(!(Boolean)constVal);
-        return applyRelation(dfaLeft, negVal, !negated) &&
-               applyRelation(dfaLeft.createNegated(), negVal, negated);
+        boolean boolValue = (Boolean)constVal;
+        return applyRelation(dfaLeft, myFactory.getBoolean(!boolValue), !negated) &&
+               applyRelation(dfaLeft, myFactory.getBoolean(boolValue), negated);
       }
     }
     return true;
@@ -1321,7 +1309,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
     }
     for (DfaVariableValue value : vars) {
-      if (value.isNegated() || !value.isFlushableByCalls()) continue;
+      if (!value.isFlushableByCalls()) continue;
       DfaVariableValue qualifier = value.getQualifier();
       if (qualifier != null) {
         if (getValueFact(qualifier, DfaFactType.MUTABILITY) == Mutability.UNMODIFIABLE ||
@@ -1368,38 +1356,28 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (psiVariable instanceof PsiField && qualifier != null) {
       // Flush method results on field write
       List<DfaVariableValue> toFlush =
-        qualifier.getDependentVariables().stream().filter(DfaVariableValue::containsCalls)
-          .filter(var -> !var.isNegated()).collect(Collectors.toList());
+        qualifier.getDependentVariables().stream().filter(DfaVariableValue::containsCalls).collect(Collectors.toList());
       toFlush.forEach(val -> doFlush(val, shouldMarkFlushed(val)));
     }
   }
 
-  void doFlush(@NotNull DfaVariableValue varPlain, boolean markFlushed) {
-    if(isNull(varPlain)) {
-      myStack.replaceAll(val -> val == varPlain ? myFactory.getConstFactory().getNull() : val);
+  void doFlush(@NotNull DfaVariableValue var, boolean markFlushed) {
+    if(isNull(var)) {
+      myStack.replaceAll(val -> val == var ? myFactory.getConstFactory().getNull() : val);
     }
-    DfaVariableValue varNegated = varPlain.getNegatedValue();
 
-    removeEquivalenceRelations(varPlain);
-    myVariableStates.remove(varPlain);
-    if (varNegated != null) {
-      myVariableStates.remove(varNegated);
-    }
+    removeEquivalenceRelations(var);
+    myVariableStates.remove(var);
     if (markFlushed) {
-      setVariableState(varPlain, getVariableState(varPlain).withFact(DfaFactType.NULLABILITY, DfaNullability.FLUSHED));
+      setVariableState(var, getVariableState(var).withFact(DfaFactType.NULLABILITY, DfaNullability.FLUSHED));
     }
     myCachedHash = null;
   }
 
   void removeEquivalenceRelations(@NotNull DfaVariableValue varPlain) {
-    DfaVariableValue varNegated = varPlain.getNegatedValue();
     final int idPlain = varPlain.getID();
-    final int idNegated = varNegated == null ? -1 : varNegated.getID();
 
-    int[] classes = myIdToEqClassesIndices.get(idPlain);
-    int[] negatedClasses = myIdToEqClassesIndices.get(idNegated);
-    int[] result = ArrayUtil
-      .mergeArrays(ObjectUtils.notNull(classes, ArrayUtil.EMPTY_INT_ARRAY), ObjectUtils.notNull(negatedClasses, ArrayUtil.EMPTY_INT_ARRAY));
+    int[] result = ObjectUtils.notNull(myIdToEqClassesIndices.get(idPlain), ArrayUtil.EMPTY_INT_ARRAY);
 
     int interruptCount = 0;
 
@@ -1413,10 +1391,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       DfaVariableValue previousCanonical = varClass.getCanonicalVariable();
       myEqClasses.set(varClassIndex, varClass);
       for (int id : varClass.toNativeArray()) {
-        int idUnwrapped;
-        if (id == idPlain || id == idNegated ||
-            (idUnwrapped = unwrap(myFactory.getValue(id)).getID()) == idPlain ||
-            idUnwrapped == idNegated) {
+        if (id == idPlain || unwrap(myFactory.getValue(id)).getID() == idPlain) {
           varClass.removeValue(id);
         }
       }
@@ -1452,7 +1427,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
 
     removeAllFromMap(idPlain);
-    removeAllFromMap(idNegated);
     checkInvariants();
     myCachedNonTrivialEqClasses = null;
     myCachedHash = null;

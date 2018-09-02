@@ -34,13 +34,8 @@ public class DfaUnboxedValue extends DfaValue {
     return myVariable;
   }
 
-
-  public boolean isNegated() {
-    return myVariable.isNegated();
-  }
-
   @Override
   public DfaValue createNegated() {
-    return myFactory.getBoxedFactory().createUnboxed(myVariable.createNegated());
+    return myFactory.createCondition(this, DfaRelationValue.RelationType.EQ, myFactory.getBoolean(false));
   }
 }
