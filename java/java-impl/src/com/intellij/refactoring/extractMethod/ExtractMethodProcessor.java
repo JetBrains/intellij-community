@@ -676,7 +676,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
 
       @Override
-      protected boolean isPreviewSupported() {
+      protected boolean hasPreviewButton() {
         return myIsPreviewSupported;
       }
     };

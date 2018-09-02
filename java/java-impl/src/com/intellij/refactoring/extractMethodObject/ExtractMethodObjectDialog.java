@@ -4,7 +4,6 @@ package com.intellij.refactoring.extractMethodObject;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,7 +22,6 @@ import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -32,8 +30,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Enumeration;
 
-
 public class ExtractMethodObjectDialog extends DialogWrapper implements AbstractExtractDialog {
+  private static final String INDENT = "    ";
+
   private final Project myProject;
   private final PsiType myReturnType;
   private final PsiTypeParameterList myTypeParameterList;
@@ -42,11 +41,9 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
   private final boolean myCanBeStatic;
   private final PsiElement[] myElementsToExtract;
   private final boolean myMultipleExitPoints;
-
   private final InputVariables myVariableData;
   private final PsiClass myTargetClass;
   private final boolean myWasStatic;
-
 
   private JRadioButton myCreateInnerClassRb;
   private JRadioButton myCreateAnonymousClassWrapperRb;
@@ -70,7 +67,6 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
   private JCheckBox myFoldCb;
   private ButtonGroup myVisibilityGroup;
   private VariableData[] myInputVariables;
-
 
   public ExtractMethodObjectDialog(Project project, PsiClass targetClass, final InputVariables inputVariables, PsiType returnType,
                                    PsiTypeParameterList typeParameterList, PsiType[] exceptions, boolean isStatic, boolean canBeStatic,
@@ -98,14 +94,11 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
     setTitle(ExtractMethodObjectProcessor.REFACTORING_NAME);
 
     // Create UI components
-
-
     myCbMakeVarargs.setVisible(canBeVarargs);
     myCbMakeVarargsAnonymous.setVisible(canBeVarargs);
 
     // Initialize UI
-     init();
-
+    init();
   }
 
   @Override
@@ -126,12 +119,6 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
   }
 
   @Override
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
-  }
-
-  @Override
   public String getChosenMethodName() {
     return myCreateInnerClassRb.isSelected() ? myInnerClassName.getText() : myMethodName.getText();
   }
@@ -147,8 +134,8 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
   }
 
   @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HelpID.EXTRACT_METHOD_OBJECT);
+  protected String getHelpId() {
+    return HelpID.EXTRACT_METHOD_OBJECT;
   }
 
   @Override
@@ -329,13 +316,12 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
 
   protected void updateSignature() {
     if (mySignatureArea == null) return;
-    @NonNls StringBuffer buffer = getSignature();
+    StringBuffer buffer = getSignature();
     mySignatureArea.setText(buffer.toString());
   }
 
   protected StringBuffer getSignature() {
-    final String INDENT = "    ";
-    @NonNls StringBuffer buffer = new StringBuffer();
+    StringBuffer buffer = new StringBuffer();
     final String visibilityString = VisibilityUtil.getVisibilityString(getVisibility());
     if (myCreateInnerClassRb.isSelected()) {
       buffer.append(visibilityString);
@@ -355,16 +341,17 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
       buffer.append(INDENT);
       buffer.append("public ");
       buffer.append(myInnerClassName.getText());
-      methodSignature(INDENT, buffer);
+      methodSignature(buffer);
       buffer.append("\n}");
-    } else {
+    }
+    else {
       buffer.append("new Object(){\n");
       buffer.append(INDENT);
       buffer.append("private ");
       buffer.append(PsiFormatUtil.formatType(myReturnType, 0, PsiSubstitutor.EMPTY));
       buffer.append(" ");
       buffer.append(myMethodName.getText());
-      methodSignature(INDENT, buffer);
+      methodSignature(buffer);
       buffer.append("\n}.");
       buffer.append(myMethodName.getText());
       buffer.append("(");
@@ -375,7 +362,7 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
     return buffer;
   }
 
-  private void methodSignature(final String INDENT, final StringBuffer buffer) {
+  private void methodSignature(StringBuffer buffer) {
     buffer.append("(");
     int count = 0;
     final String indent = "    ";
