@@ -48,6 +48,7 @@ import git4idea.commands.GitLineHandler
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import gnu.trove.TIntHashSet
+import org.jetbrains.annotations.CalledInAwt
 
 class DeepComparator(private val project: Project,
                      private val repositoryManager: GitRepositoryManager,
@@ -97,7 +98,9 @@ class DeepComparator(private val project: Project,
     }
   }
 
+  @CalledInAwt
   fun startTask(branchToCompare: String) {
+    ApplicationManager.getApplication().assertIsDispatchThread()
     if (comparedBranch != null) {
       LOG.error("Already comparing with branch $comparedBranch")
       return
@@ -114,12 +117,16 @@ class DeepComparator(private val project: Project,
     startTask()
   }
 
+  @CalledInAwt
   fun stopTaskAndUnhighlight() {
+    ApplicationManager.getApplication().assertIsDispatchThread()
     stopTask()
     unhighlight()
   }
 
+  @CalledInAwt
   fun hasHighlightingOrInProgress(): Boolean {
+    ApplicationManager.getApplication().assertIsDispatchThread()
     return comparedBranch != null
   }
 
@@ -138,7 +145,6 @@ class DeepComparator(private val project: Project,
   }
 
   private fun unhighlight() {
-    ApplicationManager.getApplication().assertIsDispatchThread()
     nonPickedCommits = null
     comparedBranch = null
     repositoriesWithCurrentBranches = null
