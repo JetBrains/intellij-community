@@ -530,11 +530,5 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     public LoadingOrder getOrder() {
       return myLoadingOrder;
     }
-
-    @Override
-    @Nullable
-    public String getOrderId() {
-      return null;
-    }
   }
 }

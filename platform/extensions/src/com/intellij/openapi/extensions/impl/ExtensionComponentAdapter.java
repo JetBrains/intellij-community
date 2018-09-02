@@ -11,34 +11,39 @@ import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.picocontainer.*;
 
 /**
  * @author Alexander Kireyev
- * todo: optimize memory print
  */
 public class ExtensionComponentAdapter implements LoadingOrder.Orderable, AssignableToComponentAdapter {
   public static final ExtensionComponentAdapter[] EMPTY_ARRAY = new ExtensionComponentAdapter[0];
 
   private Object myComponentInstance;
+  @Nullable
   private final Element myExtensionElement;
   private final PicoContainer myContainer;
   private final PluginDescriptor myPluginDescriptor;
-  private final boolean myDeserializeInstance;
   @NotNull
   private Object myImplementationClassOrName; // Class or String
   private boolean myNotificationSent;
 
+  private final String myOrderId;
+  private final LoadingOrder myOrder;
+
   public ExtensionComponentAdapter(@NotNull String implementationClassName,
-                                   Element extensionElement,
+                                   @Nullable Element extensionElement,
                                    PicoContainer container,
                                    PluginDescriptor pluginDescriptor,
                                    boolean deserializeInstance) {
     myImplementationClassOrName = implementationClassName;
-    myExtensionElement = extensionElement;
     myContainer = container;
     myPluginDescriptor = pluginDescriptor;
-    myDeserializeInstance = deserializeInstance;
+    myExtensionElement = deserializeInstance ? extensionElement : null;
+
+    myOrderId = extensionElement == null ? null : extensionElement.getAttributeValue("id");
+    myOrder = extensionElement == null ? null : LoadingOrder.readOrder(extensionElement.getAttributeValue("order"));
   }
 
   @Override
@@ -55,24 +60,19 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
   public Object getComponentInstance(final PicoContainer container) throws PicoException, ProcessCanceledException {
     if (myComponentInstance == null) {
       try {
-        if (Element.class.equals(getComponentImplementation())) {
-          myComponentInstance = myExtensionElement;
-        }
-        else {
-          Class impl = loadImplementationClass();
-          Object componentInstance = new CachingConstructorInjectionComponentAdapter(getComponentKey(), impl, null, true).getComponentInstance(container);
+        Class impl = loadImplementationClass();
+        Object componentInstance = new CachingConstructorInjectionComponentAdapter(getComponentKey(), impl, null, true).getComponentInstance(container);
 
-          if (myDeserializeInstance) {
-            try {
-              XmlSerializer.deserializeInto(componentInstance, myExtensionElement);
-            }
-            catch (Exception e) {
-              throw new PicoInitializationException(e);
-            }
+        if (myExtensionElement != null) {
+          try {
+            XmlSerializer.deserializeInto(componentInstance, myExtensionElement);
           }
-
-          myComponentInstance = componentInstance;
+          catch (Exception e) {
+            throw new PicoInitializationException(e);
+          }
         }
+
+        myComponentInstance = componentInstance;
       }
       catch (ProcessCanceledException e) {
         throw e;
@@ -107,12 +107,12 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
 
   @Override
   public LoadingOrder getOrder() {
-    return LoadingOrder.readOrder(myExtensionElement.getAttributeValue("order"));
+    return myOrder;
   }
 
   @Override
-  public String getOrderId() {
-    return myExtensionElement.getAttributeValue("id");
+  public final String getOrderId() {
+    return myOrderId;
   }
 
   public PluginId getPluginName() {
