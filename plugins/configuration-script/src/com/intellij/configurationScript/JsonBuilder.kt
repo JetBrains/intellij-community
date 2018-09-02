@@ -2,6 +2,9 @@ package com.intellij.configurationScript
 
 import org.jetbrains.io.JsonUtil
 
+@DslMarker
+annotation class JsonBuilderDsl
+
 internal inline fun StringBuilder.json(build: JsonObjectBuilder.() -> Unit): StringBuilder {
   val builder = JsonObjectBuilder(this)
   appendCommaIfNeed()
@@ -11,6 +14,7 @@ internal inline fun StringBuilder.json(build: JsonObjectBuilder.() -> Unit): Str
   return this
 }
 
+@JsonBuilderDsl
 internal class JsonObjectBuilder(private val builder: StringBuilder) {
   infix fun String.to(value: String) {
     builder
@@ -47,16 +51,6 @@ internal class JsonObjectBuilder(private val builder: StringBuilder) {
       .append(':')
       // append as is
       .append(value)
-  }
-
-  fun rawScalar(key: CharSequence, build: StringBuilder.() -> Unit) {
-    builder
-      .appendCommaIfNeed()
-      .jsonEscapedString(key)
-      .append(':')
-      .append('"')
-      .build()
-    builder.append('"')
   }
 
   infix fun String.toRaw(value: String) {
@@ -104,6 +98,17 @@ internal class JsonObjectBuilder(private val builder: StringBuilder) {
       .append(child.builder)
       .append('\n')
       .append('}')
+  }
+
+  fun definitionReference(prefix: String, pointer: CharSequence) {
+    builder
+      .appendCommaIfNeed()
+      .jsonEscapedString("\$ref")
+      .append(':')
+      .append('"')
+      .append(prefix)
+      .append(pointer)
+      .append('"')
   }
 }
 
