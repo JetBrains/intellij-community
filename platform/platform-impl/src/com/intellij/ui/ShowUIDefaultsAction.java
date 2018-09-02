@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.TextCopyProvider;
 import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -18,6 +19,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.speedSearch.FilteringTableModel;
@@ -37,10 +39,15 @@ import javax.swing.plaf.ColorUIResource;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.intellij.util.ui.JBUI.Panels.simplePanel;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -75,6 +82,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
 
       public JBTable myTable;
       public JBTextField mySearchField;
+      public JBCheckBox myColorsOnly;
 
       @Nullable
       @Override
@@ -225,30 +233,43 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
         });
 
         ScrollingUtil.installActions(myTable, true, mySearchField);
-        BorderLayoutPanel panel = JBUI.Panels.simplePanel(pane).addToTop(top);
-        DataProvider provider = new DataProvider() {
-          @Nullable
+
+        myColorsOnly = new JBCheckBox("Colors only", PropertiesComponent.getInstance().getBoolean("LaFDialog.ColorsOnly", false)) {
           @Override
-          public Object getData(@NotNull String dataId) {
-            if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-              if ((mySearchField.hasFocus() && StringUtil.isEmpty(mySearchField.getSelectedText())) || myTable.hasFocus()) {
-                int row = myTable.getSelectedRow();
-                if (row != -1) {
-                  Pair pair = (Pair)data[row][0];
-                  if (pair.second instanceof Color) {
-                    return new TextCopyProvider() {
-                      @Override
-                      public Collection<String> getTextLinesToCopy() {
-                        return Collections
-                          .singletonList("\"" + pair.first.toString() + "\": \"" + ColorUtil.toHtmlColor((Color)pair.second) + "\"");
-                      }
-                    };
-                  }
+          public void addNotify() {
+            super.addNotify();
+            updateFilter();
+          }
+        };
+        myColorsOnly.addActionListener(new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            PropertiesComponent.getInstance().setValue("LaFDialog.ColorsOnly", myColorsOnly.isSelected(), false);
+            updateFilter();
+          }
+        });
+        BorderLayoutPanel panel = simplePanel(simplePanel(pane).withBorder(JBUI.Borders.empty(5, 0)))
+          .addToTop(top)
+          .addToBottom(myColorsOnly);
+        DataProvider provider = dataId -> {
+          if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+            if ((mySearchField.hasFocus() && StringUtil.isEmpty(mySearchField.getSelectedText())) || myTable.hasFocus()) {
+              int row = myTable.getSelectedRow();
+              if (row != -1) {
+                Pair pair = (Pair)data[row][0];
+                if (pair.second instanceof Color) {
+                  return new TextCopyProvider() {
+                    @Override
+                    public Collection<String> getTextLinesToCopy() {
+                      return Collections
+                        .singletonList("\"" + pair.first.toString() + "\": \"" + ColorUtil.toHtmlColor((Color)pair.second) + "\"");
+                    }
+                  };
                 }
               }
             }
-            return null;
           }
+          return null;
         };
         DataManager.registerDataProvider(myTable, provider);
         DataManager.registerDataProvider(mySearchField, provider);
@@ -257,7 +278,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
 
       private void updateFilter() {
         FilteringTableModel<?> model = (FilteringTableModel<?>)myTable.getModel();
-        if (StringUtil.isEmpty(mySearchField.getText())) {
+        if (StringUtil.isEmpty(mySearchField.getText()) && !myColorsOnly.isSelected()) {
           model.setFilter(null);
           return;
         }
@@ -275,7 +296,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
           }
 
           value = ((Pair)pair).first.toString() + " " + value;
-          return matcher.matches(value);
+          return (!myColorsOnly.isSelected() || obj instanceof Color) && matcher.matches(value);
         });
 
       }
