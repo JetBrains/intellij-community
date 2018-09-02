@@ -1,8 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.ide.DataManager;
+import com.intellij.ide.TextCopyProvider;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -20,6 +24,7 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,10 +36,8 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.EventObject;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 /**
  * @author Konstantin Bulenkov
@@ -207,7 +210,34 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
         });
 
         ScrollingUtil.installActions(myTable, true, mySearchField);
-        return JBUI.Panels.simplePanel(pane).addToTop(top);
+        BorderLayoutPanel panel = JBUI.Panels.simplePanel(pane).addToTop(top);
+        DataProvider provider = new DataProvider() {
+          @Nullable
+          @Override
+          public Object getData(@NotNull String dataId) {
+            if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+              if ((mySearchField.hasFocus() && StringUtil.isEmpty(mySearchField.getSelectedText())) || myTable.hasFocus()) {
+                int row = myTable.getSelectedRow();
+                if (row != -1) {
+                  Pair pair = (Pair)data[row][0];
+                  if (pair.second instanceof Color) {
+                    return new TextCopyProvider() {
+                      @Override
+                      public Collection<String> getTextLinesToCopy() {
+                        return Collections
+                          .singletonList("\"" + pair.first.toString() + "\": \"" + ColorUtil.toHtmlColor((Color)pair.second) + "\"");
+                      }
+                    };
+                  }
+                }
+              }
+            }
+            return null;
+          }
+        };
+        DataManager.registerDataProvider(myTable, provider);
+        DataManager.registerDataProvider(mySearchField, provider);
+        return panel;
       }
 
       private void updateFilter() {
