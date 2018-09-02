@@ -11,8 +11,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.StringInterner;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -537,12 +535,6 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     @Nullable
     public String getOrderId() {
       return null;
-    }
-
-    @Override
-    @NonNls
-    public Element getDescribingElement() {
-      return new Element("RuntimeExtension: " + myExtension);
     }
   }
 }
