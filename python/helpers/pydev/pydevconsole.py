@@ -37,35 +37,10 @@ except:
 
 from _pydev_bundle.pydev_stdin import BaseStdIn
 from _pydev_bundle.pydev_console_utils import BaseInterpreterInterface
-from _pydev_bundle.pydev_console_types import CodeFragment
+from _pydev_bundle.pydev_console_types import CodeFragment, Command
 
 IS_PYTHON_3_ONWARDS = sys.version_info[0] >= 3
 IS_PY24 = sys.version_info[0] == 2 and sys.version_info[1] == 4
-
-class Command:
-    def __init__(self, interpreter, code_fragment):
-        """
-        :type code_fragment: CodeFragment
-        :type interpreter: InteractiveConsole
-        """
-        self.interpreter = interpreter
-        self.code_fragment = code_fragment
-        self.more = None
-
-
-    def symbol_for_fragment(code_fragment):
-        if code_fragment.is_single_line:
-            symbol = 'single'
-        else:
-            symbol = 'exec' # Jython doesn't support this
-        return symbol
-    symbol_for_fragment = staticmethod(symbol_for_fragment)
-
-    def run(self):
-        text = self.code_fragment.text
-        symbol = self.symbol_for_fragment(self.code_fragment)
-
-        self.more = self.interpreter.runsource(text, '<input>', symbol)
 
 try:
     try:
