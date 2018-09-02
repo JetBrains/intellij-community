@@ -3,10 +3,12 @@ package com.intellij.ui;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.TextCopyProvider;
+import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -93,12 +95,13 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
         DefaultTableModel model = new DefaultTableModel(data, new Object[]{"Name", "Value"}) {
           @Override
           public boolean isCellEditable(int row, int column) {
-            Object value = getValueAt(row, column);
-            return column == 1 && (value instanceof Color ||
-                                   value instanceof Integer ||
-                                   value instanceof Border ||
-                                   value instanceof UIUtil.GrayFilter ||
-                                   value instanceof Font);
+            if (column != 1) return false;
+            Object value = ((Pair)getValueAt(row, column)).second;
+            return (value instanceof Color ||
+                    value instanceof Integer ||
+                    value instanceof Border ||
+                    value instanceof UIUtil.GrayFilter ||
+                    value instanceof Font);
           }
         };
         FilteringTableModel<Object> filteringTableModel = new FilteringTableModel<>(model, Object.class);
@@ -107,8 +110,10 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
           @Override
           public boolean editCellAt(int row, int column, EventObject e) {
             if (isCellEditable(row, column) && e instanceof MouseEvent) {
-              Object key = ((Pair)getValueAt(row, 0)).first;
-              Object value = ((Pair)getValueAt(row, column)).second;
+              Pair pair = (Pair)getValueAt(row, 0);
+              Object key = pair.first;
+              Object value = pair.second;
+              boolean changed = false;
 
               if (value instanceof Color) {
                 Color newColor = ColorPicker.showDialog(this, "Choose Color", (Color)value, true, null, true);
@@ -117,34 +122,30 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
 
                   // MultiUIDefaults overrides remove but does not override put.
                   // So to avoid duplications we should first remove the value and then put it again.
-                  UIManager.getDefaults().remove(key);
-                  UIManager.getDefaults().put(key, colorUIResource);
-                  setValueAt(colorUIResource, row, column);
+                  updateValue(pair, colorUIResource, row, column);
+                  changed = true;
                 }
               } else if (value instanceof Integer) {
                 Integer newValue = editNumber(key.toString(), value.toString());
                 if (newValue != null) {
-                  UIManager.getDefaults().remove(key);
-                  UIManager.getDefaults().put(key, newValue);
-                  setValueAt(newValue, row, column);
+                  updateValue(pair, newValue, row, column);
+                  changed = true;
                 }
               } else if (value instanceof Border) {
                 Insets i = ((Border)value).getBorderInsets(null);
                 String oldBorder = String.format("%d,%d,%d,%d", i.top, i.left, i.bottom, i.right);
                 Border newValue = editBorder(key.toString(), oldBorder);
                 if (newValue != null) {
-                  UIManager.getDefaults().remove(key);
-                  UIManager.getDefaults().put(key, newValue);
-                  setValueAt(newValue, row, column);
+                  updateValue(pair, newValue, row, column);
+                  changed = true;
                 }
               } else if (value instanceof UIUtil.GrayFilter) {
                 UIUtil.GrayFilter f = (UIUtil.GrayFilter)value;
                 String oldFilter = String.format("%d,%d,%d", f.getBrightness(), f.getContrast(), f.getAlpha());
                 UIUtil.GrayFilter newValue = editGrayFilter(key.toString(), oldFilter);
                 if (newValue != null) {
-                  UIManager.getDefaults().remove(key);
-                  UIManager.getDefaults().put(key, newValue);
-                  setValueAt(newValue, row, column);
+                  updateValue(pair, newValue, row, column);
+                  changed = true;
                 }
               } else if (value instanceof Font) {
                 Font newValue = editFontSize(key.toString(), (Font)value);
@@ -152,10 +153,24 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                   UIManager.getDefaults().remove(key);
                   UIManager.getDefaults().put(key, newValue);
                   setValueAt(newValue, row, column);
+                  changed = true;
                 }
+              }
+
+              if (changed) {
+                ApplicationManager.getApplication().invokeLater(() -> {
+                  LafManager.getInstance().updateUI();
+                  LafManager.getInstance().repaintUI();
+                });
               }
             }
             return false;
+          }
+
+          void updateValue(Pair value, Object newValue, int row, int col) {
+            UIManager.getDefaults().remove(value.first);
+            UIManager.getDefaults().put(value.first, newValue);
+            setValueAt(Pair.create(value.first, newValue), row, col);
           }
         };
         table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
