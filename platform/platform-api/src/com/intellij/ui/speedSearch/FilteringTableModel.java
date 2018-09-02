@@ -29,6 +29,7 @@ public class FilteringTableModel<T> extends AbstractTableModel {
   private final List<List<T>> myData = new ArrayList<>();
   private final Class<T> myClz;
   private Condition<T> myCondition = null;
+  private ArrayList<Integer> myIndex = new ArrayList<>();
 
   private final TableModelListener myListDataListener = e -> refilter();
 
@@ -53,6 +54,7 @@ public class FilteringTableModel<T> extends AbstractTableModel {
       myData.clear();
       fireTableRowsDeleted(0, index1);
     }
+    myIndex.clear();
   }
 
   public void refilter() {
@@ -77,6 +79,7 @@ public class FilteringTableModel<T> extends AbstractTableModel {
           elements.add((T)myOriginalModel.getValueAt(i, col));
         }
         addToFiltered(elements);
+        myIndex.add(i);
         count++;
       }
     }
@@ -84,6 +87,16 @@ public class FilteringTableModel<T> extends AbstractTableModel {
     if (count > 0) {
       fireTableRowsInserted(0, count - 1);
     }
+  }
+
+  @Override
+  public boolean isCellEditable(int rowIndex, int columnIndex) {
+    return myOriginalModel.isCellEditable(myIndex.get(rowIndex), columnIndex);
+  }
+
+  @Override
+  public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+    myOriginalModel.setValueAt(aValue, myIndex.get(rowIndex), columnIndex);
   }
 
   @Override
