@@ -32,7 +32,6 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBPoint
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.VcsLogData
@@ -147,16 +146,10 @@ class DeepComparator(private val project: Project,
 
   private fun getRepositories(providers: Map<VirtualFile, VcsLogProvider>,
                               branchToCompare: String): Map<GitRepository, GitBranch> {
-    val repos = ContainerUtil.newHashMap<GitRepository, GitBranch>()
-    for (root in providers.keys) {
-      val repository = repositoryManager.getRepositoryForRoot(root)
-      if (repository == null || repository.currentBranch == null ||
-          repository.branches.findBranchByName(branchToCompare) == null) {
-        continue
-      }
-      repos[repository] = repository.currentBranch
-    }
-    return repos
+    return providers.keys.mapNotNull { repositoryManager.getRepositoryForRoot(it) }.filter { repository ->
+      repository.currentBranch != null &&
+      repository.branches.findBranchByName(branchToCompare) != null
+    }.associate { Pair(it, it.currentBranch!!) }
   }
 
   private fun notifyUnhighlight() {
