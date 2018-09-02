@@ -250,8 +250,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   public void run(boolean requestEditorFocus) {
     TransactionGuard.submitTransaction(myProject, () -> FileDocumentManager.getInstance().saveAllDocuments());
 
-    UIUtil
-      .invokeLaterIfNeeded(() -> ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Connecting to Console", false) {
+    ApplicationManager.getApplication().executeOnPooledThread(
+      () -> ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Connecting to Console", false) {
         @Override
         public void run(@NotNull final ProgressIndicator indicator) {
           indicator.setText("Connecting to console...");
@@ -267,7 +267,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
             UIUtil.invokeAndWaitIfNeeded((Runnable)() -> showErrorsInConsole(e));
           }
         }
-      }));
+      })
+    );
   }
 
   private void showErrorsInConsole(Exception e) {
