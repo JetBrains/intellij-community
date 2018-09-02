@@ -7,11 +7,26 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ReflectionUtil
 
-internal inline fun processConfigurationTypes(processor: (configurationType: ConfigurationType, propertyName: CharSequence) -> Unit) {
+internal inline fun processConfigurationTypes(processor: (configurationType: ConfigurationType, propertyName: CharSequence, factories: Array<ConfigurationFactory>) -> Unit) {
   val configurationTypes = ConfigurationType.CONFIGURATION_TYPE_EP.extensionList
-  for (configurationType in configurationTypes) {
-    val propertyName = rcTypeIdToPropertyName(configurationType) ?: continue
-    processor(configurationType, propertyName)
+  for (type in configurationTypes) {
+    val propertyName = rcTypeIdToPropertyName(type) ?: continue
+    val factories = type.configurationFactories
+    if (factories.isEmpty()) {
+      LOG.error("Configuration type \"${type.displayName}\" is not valid: factory list is empty")
+    }
+
+    processor(type, propertyName, factories)
+  }
+}
+
+private inline fun processFactories(factories: Array<ConfigurationFactory>,
+                                    typeDefinitionId: CharSequence,
+                                    processor: (factoryPropertyName: CharSequence, factoryDefinitionId: CharSequence, factory: ConfigurationFactory) -> Unit) {
+  for (factory in factories) {
+    val factoryPropertyName = rcFactoryIdToPropertyName(factory) ?: continue
+    val factoryDefinitionId = "${typeDefinitionId}-${factoryPropertyName}"
+    processor(factoryPropertyName, factoryDefinitionId, factory)
   }
 }
 
@@ -26,13 +41,9 @@ internal class RunConfigurationJsonSchemaGenerator {
     val properties = JsonObjectBuilder(StringBuilder())
     addTemplatesNode(properties)
 
-    processConfigurationTypes { type, typePropertyName ->
+    processConfigurationTypes { type, typePropertyName, factories ->
       @Suppress("UnnecessaryVariable")
       val typeDefinitionId = typePropertyName
-      val factories = type.configurationFactories
-      if (factories.isEmpty()) {
-        LOG.error("Configuration type \"${type.displayName}\" is not valid: factory list is empty")
-      }
 
       val isMultiFactory = factories.size > 1
       addPropertyForConfigurationType(properties, typePropertyName, isMultiFactory, typeDefinitionId)
@@ -46,13 +57,15 @@ internal class RunConfigurationJsonSchemaGenerator {
           }
 
           map("properties") {
-            for (factory in factories) {
-              val factoryPropertyName = rcFactoryIdToPropertyName(factory) ?: continue
-              val factoryDefinitionId = "factory-${factoryPropertyName}"
-              addPropertyForFactory(factoryPropertyName, factoryDefinitionId)
-              describeFactory(factory, factoryDefinitionId, if (StringUtil.equals(factoryPropertyName, factory.name)) null else factory.name)
+            processFactories(factories, typeDefinitionId) { factoryPropertyName, factoryDefinitionId, _ ->
+              addPropertyForFactory(factoryPropertyName, factoryDefinitionId, isSingleChildOnly = false)
+              // describeFactory cannot be here because JsonBuilder instance here equals to definitions - recursive building is not supported (to reuse StringBuilder instance)
             }
           }
+        }
+
+        processFactories(factories, typeDefinitionId) { factoryPropertyName, factoryDefinitionId, factory ->
+          describeFactory(factory, factoryDefinitionId, if (StringUtil.equals(factoryPropertyName, factory.name)) null else factory.name)
         }
       }
       else {
@@ -81,14 +94,26 @@ internal class RunConfigurationJsonSchemaGenerator {
       "type" to "object"
       "description" toUnescaped description
       map("properties") {
-        processConfigurationTypes { type, typePropertyName ->
-          val definitionId = "${typePropertyName}RC"
-          val factories = type.configurationFactories
-          if (factories.isEmpty()) {
-            LOG.error("Configuration type \"${type.displayName}\" is not valid: factory list is empty")
+        processConfigurationTypes { type, typePropertyName, factories ->
+          if (factories.size == 1) {
+            addPropertyForConfigurationType(this, typePropertyName, true, typePropertyName)
           }
+          else {
+            // for multi-factory RC type we cannot simply reference to definition because the only child is expected (RC type cannot have more than one template)
+            map(typePropertyName) {
+              "type" to "object"
 
-          addPropertyForConfigurationType(this, typePropertyName, true, definitionId)
+              if (!StringUtil.equals(typePropertyName, type.configurationTypeDescription)) {
+                "description" toUnescaped type.configurationTypeDescription
+              }
+
+              map("properties") {
+                processFactories(factories, typePropertyName) { factoryPropertyName, factoryDefinitionId, _ ->
+                  addPropertyForFactory(factoryPropertyName, factoryDefinitionId, isSingleChildOnly = true)
+                }
+              }
+            }
+          }
         }
       }
     }
@@ -113,12 +138,17 @@ internal class RunConfigurationJsonSchemaGenerator {
     }
   }
 
-  private fun JsonObjectBuilder.addPropertyForFactory(factoryPropertyName: CharSequence, factoryDefinitionId: String) {
+  private fun JsonObjectBuilder.addPropertyForFactory(factoryPropertyName: CharSequence, factoryDefinitionId: CharSequence, isSingleChildOnly: Boolean) {
     map(factoryPropertyName) {
-      "type" toRaw """["array", "object"]"""
+      if (isSingleChildOnly) {
+        "type" to "object"
+      }
+      else {
+        "type" toRaw """["array", "object"]"""
 
-      map("items") {
-        definitionReference(definitionPointerPrefix, factoryDefinitionId)
+        map("items") {
+          definitionReference(definitionPointerPrefix, factoryDefinitionId)
+        }
       }
       definitionReference(definitionPointerPrefix, factoryDefinitionId)
     }
@@ -130,6 +160,7 @@ internal class RunConfigurationJsonSchemaGenerator {
       LOG.debug { "Configuration factory \"${factory.name}\" is not described because options class not defined" }
 
       definitions.map(definitionId) {
+        "type" to "object"
         if (description != null) {
           "description" toUnescaped description
         }
@@ -140,6 +171,7 @@ internal class RunConfigurationJsonSchemaGenerator {
 
     val state = ReflectionUtil.newInstance(optionsClass)
     definitions.map(definitionId) {
+      "type" to "object"
       if (description != null) {
         "description" toUnescaped description
       }
