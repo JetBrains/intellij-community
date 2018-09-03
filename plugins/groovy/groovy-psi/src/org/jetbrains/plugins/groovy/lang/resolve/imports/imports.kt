@@ -24,7 +24,7 @@ internal val defaultStarImportsSet = THashSet(defaultStarImports, StarImportHash
 val importKey: Key<GroovyImport> = Key.create<GroovyImport>("groovy.imported.via")
 val importedNameKey: Key<String> = Key.create<String>("groovy.imported.via.name")
 
-fun GroovyFile.getImports(): GroovyFileImports {
+fun GroovyFile.getFileImports(): GroovyFileImports {
   return CachedValuesManager.getCachedValue(this) {
     Result.create(doGetImports(), this)
   }
