@@ -90,22 +90,30 @@ public class Disposer {
   private static final Map<String, Disposable> ourKeyDisposables = ContainerUtil.createConcurrentWeakMap();
 
   public static void register(@NotNull Disposable parent, @NotNull Disposable child) {
-    register(parent, child, null);
+    ourTree.register(parent, child);
   }
 
-  public static void register(@NotNull Disposable parent, @NotNull Disposable child, @NonNls @Nullable final String key) {
-    ourTree.register(parent, child);
+  public static void register(@NotNull Disposable parent, @NotNull Disposable child, @NonNls @NotNull final String key) {
+    register(parent, child);
+    Disposable v = get(key);
+    if (v != null) throw new IllegalArgumentException("Key " + key + " already registered: " + v);
+    ourKeyDisposables.put(key, child);
+    register(child, new KeyDisposable(key));
+  }
 
-    if (key != null) {
-      Disposable v = get(key);
-      if (v != null) throw new IllegalArgumentException("Key "+key+" already registered: "+v);
-      ourKeyDisposables.put(key, child);
-      register(child, new Disposable() {
-        @Override
-        public void dispose() {
-          ourKeyDisposables.remove(key);
-        }
-      });
+  private static class KeyDisposable implements Disposable {
+    @NotNull private final String myKey;
+
+    public KeyDisposable(@NotNull String key) {myKey = key;}
+
+    @Override
+    public void dispose() {
+      ourKeyDisposables.remove(myKey);
+    }
+
+    @Override
+    public String toString() {
+      return "KeyDisposable (" + myKey + ")";
     }
   }
 
