@@ -74,9 +74,6 @@ class InterpreterInterface(BaseInterpreterInterface):
 
 
 def get_ipython_hidden_vars(ipython_shell):
-    """
-        Copy-paste from pydev_console_util.get_ipython_hidden_vars_dict() to avoid problems when merging with thrift
-    """
     try:
         if hasattr(ipython_shell, 'user_ns_hidden'):
             user_ns_hidden = ipython_shell.user_ns_hidden
