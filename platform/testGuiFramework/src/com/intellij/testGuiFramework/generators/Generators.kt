@@ -177,7 +177,7 @@ class JBListGenerator : ComponentCodeGenerator<JBList<*>> {
   private fun JBList<*>.isFrameworksTree() = this.javaClass.name.toLowerCase().contains("AddSupportForFrameworksPanel".toLowerCase())
   override fun generate(cmp: JBList<*>, me: MouseEvent, cp: Point): String {
     val cellText = getCellText(cmp, cp).orEmpty()
-    if (cmp.isPopupList()) return """popupClick("$cellText")"""
+    if (cmp.isPopupList()) return """popupMenu("$cellText").clickSearchedItem()"""
     if (me.button == MouseEvent.BUTTON2) return """jList("$cellText").item("$cellText").rightClick()"""
     if (me.clickCount == 2) return """jList("$cellText").doubleClickItem("$cellText")"""
     return """jList("$cellText").clickItem("$cellText")"""
@@ -306,7 +306,7 @@ class ProjectViewTreeGenerator : ComponentCodeGenerator<ProjectViewTree> {
   override fun accept(cmp: Component): Boolean = cmp is ProjectViewTree
   private fun JTree.getPath(cp: Point) = this.getClosestPathForLocation(cp.x, cp.y)
   override fun generate(cmp: ProjectViewTree, me: MouseEvent, cp: Point): String {
-    val path = getJTreePathItemsString(cmp, cmp.getPath(cp))
+    val path = if(cmp.getPath(cp) != null) getJTreePathItemsString(cmp, cmp.getPath(cp)) else ""
     if (me.isRightButton()) return "path($path).rightClick()"
     if (me.clickCount == 2) return "path($path).doubleClick()"
     return "path($path).click()"
