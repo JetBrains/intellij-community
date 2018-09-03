@@ -33,7 +33,7 @@ public abstract class Invoker implements Disposable {
   private volatile boolean disposed;
 
   private Invoker(@NotNull String prefix, @NotNull Disposable parent) {
-    description = UID.getAndIncrement() + ".Invoker." + prefix + ":" + parent.getClass().getName();
+    description = UID.getAndIncrement() + ".Invoker." + prefix + ": " + parent;
     register(parent, this);
   }
 

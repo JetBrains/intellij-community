@@ -41,8 +41,8 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
   }
 
   public StructureTreeModel(@NotNull AbstractTreeStructure structure) {
-    this(true);
     this.structure = structure;
+    invoker = new Invoker.BackgroundThread(this);
   }
 
   public StructureTreeModel(@NotNull AbstractTreeStructure structure, @NotNull Comparator<? super NodeDescriptor> comparator) {
@@ -292,9 +292,9 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
     }
 
     private boolean canReuse(@NotNull Node node, Object element) {
-      if (super.allowsChildren != node.allowsChildren) return false;
+      if (allowsChildren != node.allowsChildren) return false;
       if (element != null && !element.equals(getElement())) return false;
-      super.userObject = node.userObject; // replace old descriptor
+      userObject = node.userObject; // replace old descriptor
       return true;
     }
 
@@ -394,5 +394,10 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
       root.set(getValidRoot());
     }
     return root.get();
+  }
+
+  @Override
+  public String toString() {
+    return String.valueOf(structure);
   }
 }

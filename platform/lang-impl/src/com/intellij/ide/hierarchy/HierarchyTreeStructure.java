@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.ElementDescriptionUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -37,6 +38,8 @@ import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.usageView.UsageViewLongNameLocation;
+import com.intellij.usageView.UsageViewTypeLocation;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -217,5 +220,15 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
 
   public boolean isAlwaysShowPlus() {
     return false;
+  }
+
+  @NotNull
+  protected String formatBaseElementText() {
+    HierarchyNodeDescriptor descriptor = getBaseDescriptor();
+    if (descriptor == null) return toString();
+    PsiElement element = descriptor.getPsiElement();
+    if (element == null) return descriptor.toString();
+    return ElementDescriptionUtil.getElementDescription(element, UsageViewTypeLocation.INSTANCE) + " " +
+           ElementDescriptionUtil.getElementDescription(element, UsageViewLongNameLocation.INSTANCE);
   }
 }
