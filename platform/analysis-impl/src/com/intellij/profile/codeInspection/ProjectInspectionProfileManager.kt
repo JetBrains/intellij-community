@@ -40,8 +40,6 @@ import java.util.*
 import java.util.function.Function
 
 private const val VERSION = "1.0"
-private const val SCOPE = "scope"
-private const val NAME = "name"
 private const val PROJECT_DEFAULT_PROFILE_NAME = "Project Default"
 
 private val defaultSchemeDigest = loadElement("""<component name="InspectionProjectProfileManager">
