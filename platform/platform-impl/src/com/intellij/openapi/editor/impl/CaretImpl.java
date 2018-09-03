@@ -3,12 +3,12 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.diagnostic.Dumpable;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -1291,8 +1291,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       }
 
       try {
-        EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET);
-        handler.execute(myEditor, this, myEditor.getDataContext());
+        EditorAction action = (EditorAction)ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET);
+        action.actionPerformed(myEditor, myEditor.getDataContext());
       }
       finally {
         if (needOverrideSetting) {
