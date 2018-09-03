@@ -20,7 +20,6 @@ class _PythonLexer implements FlexLexerEx {
 
   /** initial size of the lookahead buffer */
   private static final int ZZ_BUFFERSIZE = 16384;
-  private static final String ZZ_NL = System.getProperty("line.separator");
 
   /** lexical states */
   public static final int YYINITIAL = 0;
@@ -805,23 +804,6 @@ return yylength()-s.length();
     return map;
   }
 
-  private static String zzToPrintable(CharSequence str) {
-    StringBuilder builder = new StringBuilder();
-    for (int n = 0 ; n < str.length() ; ) {
-      int ch = Character.codePointAt(str, n);
-      int charCount = Character.charCount(ch);
-      n += charCount;
-      if (ch > 31 && ch < 127) {
-        builder.append((char)ch);
-      } else if (charCount == 1) {
-        builder.append(String.format("\\u%04X", ch));
-      } else {
-        builder.append(String.format("\\U%06X", ch));
-      }
-    }
-    return builder.toString();
-  }
-
   public final int getTokenStart() {
     return zzStartRead;
   }
@@ -1035,835 +1017,599 @@ return yylength()-s.length();
       else {
         switch (zzAction < 0 ? zzAction : ZZ_ACTION[zzAction]) {
           case 1: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [266] { return PyTokenTypes.BAD_CHARACTER; }");
             { return PyTokenTypes.BAD_CHARACTER;
             } 
             // fall through
           case 119: break;
           case 2: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [178] { return PyTokenTypes.INTEGER_LITERAL; }");
             { return PyTokenTypes.INTEGER_LITERAL;
             } 
             // fall through
           case 120: break;
           case 3: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [213] { return PyTokenTypes.IDENTIFIER; }");
             { return PyTokenTypes.IDENTIFIER;
             } 
             // fall through
           case 121: break;
           case 4: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [150] { if (zzCurrentPos == 0) yybegin(PENDING_DOCSTRING); return PyTokenTypes.END_OF_LINE_COMMENT; }");
             { if (zzCurrentPos == 0) yybegin(PENDING_DOCSTRING); return PyTokenTypes.END_OF_LINE_COMMENT;
             } 
             // fall through
           case 122: break;
           case 5: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [259] { return PyTokenTypes.DOT; }");
             { return PyTokenTypes.DOT;
             } 
             // fall through
           case 123: break;
           case 6: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [239] { return PyTokenTypes.MINUS; }");
             { return PyTokenTypes.MINUS;
             } 
             // fall through
           case 124: break;
           case 7: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [152] { if (zzInput == YYEOF && zzStartRead == 0) return PyTokenTypes.DOCSTRING;"+ZZ_NL+"                                 else return PyTokenTypes.SINGLE_QUOTED_STRING; }");
             { if (zzInput == YYEOF && zzStartRead == 0) return PyTokenTypes.DOCSTRING;
                                  else return PyTokenTypes.SINGLE_QUOTED_STRING;
             } 
             // fall through
           case 125: break;
           case 8: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [146] { return PyTokenTypes.BACKSLASH; }");
             { return PyTokenTypes.BACKSLASH;
             } 
             // fall through
           case 126: break;
           case 9: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [253] { return PyTokenTypes.LBRACE; }");
             { return PyTokenTypes.LBRACE;
             } 
             // fall through
           case 127: break;
           case 10: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [254] { return PyTokenTypes.RBRACE; }");
             { return PyTokenTypes.RBRACE;
             } 
             // fall through
           case 128: break;
           case 11: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [261] { return PyTokenTypes.EQ; }");
             { return PyTokenTypes.EQ;
             } 
             // fall through
           case 129: break;
           case 12: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [149] { if (zzCurrentPos == 0) yybegin(PENDING_DOCSTRING); return PyTokenTypes.LINE_BREAK; }");
             { if (zzCurrentPos == 0) yybegin(PENDING_DOCSTRING); return PyTokenTypes.LINE_BREAK;
             } 
             // fall through
           case 130: break;
           case 13: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [249] { return PyTokenTypes.LPAR; }");
             { return PyTokenTypes.LPAR;
             } 
             // fall through
           case 131: break;
           case 14: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [250] { return PyTokenTypes.RPAR; }");
             { return PyTokenTypes.RPAR;
             } 
             // fall through
           case 132: break;
           case 15: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [251] { return PyTokenTypes.LBRACKET; }");
             { return PyTokenTypes.LBRACKET;
             } 
             // fall through
           case 133: break;
           case 16: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [252] { return PyTokenTypes.RBRACKET; }");
             { return PyTokenTypes.RBRACKET;
             } 
             // fall through
           case 134: break;
           case 17: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [257] { return PyTokenTypes.COLON; }");
             { return PyTokenTypes.COLON;
             } 
             // fall through
           case 135: break;
           case 18: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [143] { return PyTokenTypes.SPACE; }");
             { return PyTokenTypes.SPACE;
             } 
             // fall through
           case 136: break;
           case 19: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [144] { return PyTokenTypes.TAB; }");
             { return PyTokenTypes.TAB;
             } 
             // fall through
           case 137: break;
           case 20: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [145] { return PyTokenTypes.FORMFEED; }");
             { return PyTokenTypes.FORMFEED;
             } 
             // fall through
           case 138: break;
           case 21: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [262] { return PyTokenTypes.SEMICOLON; }");
             { return PyTokenTypes.SEMICOLON;
             } 
             // fall through
           case 139: break;
           case 22: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [238] { return PyTokenTypes.PLUS; }");
             { return PyTokenTypes.PLUS;
             } 
             // fall through
           case 140: break;
           case 23: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [240] { return PyTokenTypes.MULT; }");
             { return PyTokenTypes.MULT;
             } 
             // fall through
           case 141: break;
           case 24: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [255] { return PyTokenTypes.AT; }");
             { return PyTokenTypes.AT;
             } 
             // fall through
           case 142: break;
           case 25: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [241] { return PyTokenTypes.DIV; }");
             { return PyTokenTypes.DIV;
             } 
             // fall through
           case 143: break;
           case 26: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [242] { return PyTokenTypes.PERC; }");
             { return PyTokenTypes.PERC;
             } 
             // fall through
           case 144: break;
           case 27: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [243] { return PyTokenTypes.AND; }");
             { return PyTokenTypes.AND;
             } 
             // fall through
           case 145: break;
           case 28: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [244] { return PyTokenTypes.OR; }");
             { return PyTokenTypes.OR;
             } 
             // fall through
           case 146: break;
           case 29: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [245] { return PyTokenTypes.XOR; }");
             { return PyTokenTypes.XOR;
             } 
             // fall through
           case 147: break;
           case 30: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [248] { return PyTokenTypes.GT; }");
             { return PyTokenTypes.GT;
             } 
             // fall through
           case 148: break;
           case 31: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [247] { return PyTokenTypes.LT; }");
             { return PyTokenTypes.LT;
             } 
             // fall through
           case 149: break;
           case 32: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [246] { return PyTokenTypes.TILDE; }");
             { return PyTokenTypes.TILDE;
             } 
             // fall through
           case 150: break;
           case 33: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [256] { return PyTokenTypes.COMMA; }");
             { return PyTokenTypes.COMMA;
             } 
             // fall through
           case 151: break;
           case 34: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [260] { return PyTokenTypes.TICK; }");
             { return PyTokenTypes.TICK;
             } 
             // fall through
           case 152: break;
           case 35: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [280] { yypushback(1); yybegin(YYINITIAL); }");
             { yypushback(1); yybegin(YYINITIAL);
             } 
             // fall through
           case 153: break;
           case 36: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [174] { return PyTokenTypes.END_OF_LINE_COMMENT; }");
             { return PyTokenTypes.END_OF_LINE_COMMENT;
             } 
             // fall through
           case 154: break;
           case 37: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [274] { if (zzInput == YYEOF) return PyTokenTypes.DOCSTRING;"+ZZ_NL+"                                 else yybegin(YYINITIAL); return PyTokenTypes.SINGLE_QUOTED_STRING; }");
             { if (zzInput == YYEOF) return PyTokenTypes.DOCSTRING;
                                  else yybegin(YYINITIAL); return PyTokenTypes.SINGLE_QUOTED_STRING;
             } 
             // fall through
           case 155: break;
           case 38: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [173] { return PyTokenTypes.LINE_BREAK; }");
             { return PyTokenTypes.LINE_BREAK;
             } 
             // fall through
           case 156: break;
           case 39: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [182] { return PyTokenTypes.SINGLE_QUOTED_STRING; }");
             { return PyTokenTypes.SINGLE_QUOTED_STRING;
             } 
             // fall through
           case 157: break;
           case 40: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [104] { return PyTokenTypes.FSTRING_TEXT; }");
             { return PyTokenTypes.FSTRING_TEXT;
             } 
             // fall through
           case 158: break;
           case 41: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [106] { return fStringHelper.handleFStringEnd(); }");
             { return fStringHelper.handleFStringEnd();
             } 
             // fall through
           case 159: break;
           case 42: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [107] { return fStringHelper.handleFragmentStart(); }");
             { return fStringHelper.handleFragmentStart();
             } 
             // fall through
           case 160: break;
           case 43: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [105] { return fStringHelper.handleLineBreakInLiteralText(); }");
             { return fStringHelper.handleLineBreakInLiteralText();
             } 
             // fall through
           case 161: break;
           case 44: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [124] { return fStringHelper.handleStringLiteral(PyTokenTypes.SINGLE_QUOTED_STRING); }");
             { return fStringHelper.handleStringLiteral(PyTokenTypes.SINGLE_QUOTED_STRING);
             } 
             // fall through
           case 162: break;
           case 45: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [117] { return fStringHelper.handleLeftBracketInFragment(PyTokenTypes.LBRACE); }");
             { return fStringHelper.handleLeftBracketInFragment(PyTokenTypes.LBRACE);
             } 
             // fall through
           case 163: break;
           case 46: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [118] { return fStringHelper.handleRightBracketInFragment(PyTokenTypes.RBRACE); }");
             { return fStringHelper.handleRightBracketInFragment(PyTokenTypes.RBRACE);
             } 
             // fall through
           case 164: break;
           case 47: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [120] { return PyTokenTypes.FSTRING_FRAGMENT_TYPE_CONVERSION; }");
             { return PyTokenTypes.FSTRING_FRAGMENT_TYPE_CONVERSION;
             } 
             // fall through
           case 165: break;
           case 48: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [127] { return fStringHelper.handleLineBreakInFragment(); }");
             { return fStringHelper.handleLineBreakInFragment();
             } 
             // fall through
           case 166: break;
           case 49: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [111] { return fStringHelper.handleLeftBracketInFragment(PyTokenTypes.LPAR); }");
             { return fStringHelper.handleLeftBracketInFragment(PyTokenTypes.LPAR);
             } 
             // fall through
           case 167: break;
           case 50: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [112] { return fStringHelper.handleRightBracketInFragment(PyTokenTypes.RPAR); }");
             { return fStringHelper.handleRightBracketInFragment(PyTokenTypes.RPAR);
             } 
             // fall through
           case 168: break;
           case 51: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [114] { return fStringHelper.handleLeftBracketInFragment(PyTokenTypes.LBRACKET); }");
             { return fStringHelper.handleLeftBracketInFragment(PyTokenTypes.LBRACKET);
             } 
             // fall through
           case 169: break;
           case 52: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [115] { return fStringHelper.handleRightBracketInFragment(PyTokenTypes.RBRACKET); }");
             { return fStringHelper.handleRightBracketInFragment(PyTokenTypes.RBRACKET);
             } 
             // fall through
           case 170: break;
           case 53: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [122] { return fStringHelper.handleColonInFragment(); }");
             { return fStringHelper.handleColonInFragment();
             } 
             // fall through
           case 171: break;
           case 54: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [137] { return fStringHelper.handleFragmentEnd(); }");
             { return fStringHelper.handleFragmentEnd();
             } 
             // fall through
           case 172: break;
           case 55: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [179] { return PyTokenTypes.FLOAT_LITERAL; }");
             { return PyTokenTypes.FLOAT_LITERAL;
             } 
             // fall through
           case 173: break;
           case 56: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [180] { return PyTokenTypes.IMAGINARY_LITERAL; }");
             { return PyTokenTypes.IMAGINARY_LITERAL;
             } 
             // fall through
           case 174: break;
           case 57: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [216] { return PyTokenTypes.MINUSEQ; }");
             { return PyTokenTypes.MINUSEQ;
             } 
             // fall through
           case 175: break;
           case 58: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [237] { return PyTokenTypes.RARROW; }");
             { return PyTokenTypes.RARROW;
             } 
             // fall through
           case 176: break;
           case 59: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [157] { yypushback(getSpaceLength(yytext())); if (zzCurrentPos != 0) return PyTokenTypes.SINGLE_QUOTED_STRING;"+ZZ_NL+"return PyTokenTypes.DOCSTRING; }");
             { yypushback(getSpaceLength(yytext())); if (zzCurrentPos != 0) return PyTokenTypes.SINGLE_QUOTED_STRING;
 return PyTokenTypes.DOCSTRING;
             } 
             // fall through
           case 177: break;
           case 60: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [264] { return fStringHelper.handleFStringStart(); }");
             { return fStringHelper.handleFStringStart();
             } 
             // fall through
           case 178: break;
           case 61: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [235] { return PyTokenTypes.NE; }");
             { return PyTokenTypes.NE;
             } 
             // fall through
           case 179: break;
           case 62: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [234] { return PyTokenTypes.EQEQ; }");
             { return PyTokenTypes.EQEQ;
             } 
             // fall through
           case 180: break;
           case 63: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [205] { return PyTokenTypes.OR_KEYWORD; }");
             { return PyTokenTypes.OR_KEYWORD;
             } 
             // fall through
           case 181: break;
           case 64: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [201] { return PyTokenTypes.IN_KEYWORD; }");
             { return PyTokenTypes.IN_KEYWORD;
             } 
             // fall through
           case 182: break;
           case 65: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [202] { return PyTokenTypes.IS_KEYWORD; }");
             { return PyTokenTypes.IS_KEYWORD;
             } 
             // fall through
           case 183: break;
           case 66: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [199] { return PyTokenTypes.IF_KEYWORD; }");
             { return PyTokenTypes.IF_KEYWORD;
             } 
             // fall through
           case 184: break;
           case 67: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [215] { return PyTokenTypes.PLUSEQ; }");
             { return PyTokenTypes.PLUSEQ;
             } 
             // fall through
           case 185: break;
           case 68: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [218] { return PyTokenTypes.MULTEQ; }");
             { return PyTokenTypes.MULTEQ;
             } 
             // fall through
           case 186: break;
           case 69: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [230] { return PyTokenTypes.EXP; }");
             { return PyTokenTypes.EXP;
             } 
             // fall through
           case 187: break;
           case 70: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [219] { return PyTokenTypes.ATEQ; }");
             { return PyTokenTypes.ATEQ;
             } 
             // fall through
           case 188: break;
           case 71: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [221] { return PyTokenTypes.DIVEQ; }");
             { return PyTokenTypes.DIVEQ;
             } 
             // fall through
           case 189: break;
           case 72: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [231] { return PyTokenTypes.FLOORDIV; }");
             { return PyTokenTypes.FLOORDIV;
             } 
             // fall through
           case 190: break;
           case 73: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [222] { return PyTokenTypes.PERCEQ; }");
             { return PyTokenTypes.PERCEQ;
             } 
             // fall through
           case 191: break;
           case 74: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [223] { return PyTokenTypes.ANDEQ; }");
             { return PyTokenTypes.ANDEQ;
             } 
             // fall through
           case 192: break;
           case 75: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [224] { return PyTokenTypes.OREQ; }");
             { return PyTokenTypes.OREQ;
             } 
             // fall through
           case 193: break;
           case 76: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [225] { return PyTokenTypes.XOREQ; }");
             { return PyTokenTypes.XOREQ;
             } 
             // fall through
           case 194: break;
           case 77: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [233] { return PyTokenTypes.GE; }");
             { return PyTokenTypes.GE;
             } 
             // fall through
           case 195: break;
           case 78: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [229] { return PyTokenTypes.GTGT; }");
             { return PyTokenTypes.GTGT;
             } 
             // fall through
           case 196: break;
           case 79: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [232] { return PyTokenTypes.LE; }");
             { return PyTokenTypes.LE;
             } 
             // fall through
           case 197: break;
           case 80: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [236] { return PyTokenTypes.NE_OLD; }");
             { return PyTokenTypes.NE_OLD;
             } 
             // fall through
           case 198: break;
           case 81: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [228] { return PyTokenTypes.LTLT; }");
             { return PyTokenTypes.LTLT;
             } 
             // fall through
           case 199: break;
           case 82: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [278] { yypushback(getSpaceLength(yytext())); yybegin(YYINITIAL); return PyTokenTypes.DOCSTRING; }");
             { yypushback(getSpaceLength(yytext())); yybegin(YYINITIAL); return PyTokenTypes.DOCSTRING;
             } 
             // fall through
           case 200: break;
           case 83: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [270] { yypushback(yylength()-1); yybegin(PENDING_DOCSTRING); return PyTokenTypes.COLON; }");
             { yypushback(yylength()-1); yybegin(PENDING_DOCSTRING); return PyTokenTypes.COLON;
             } 
             // fall through
           case 201: break;
           case 84: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [154] { if (zzInput == YYEOF && zzStartRead == 0) return PyTokenTypes.DOCSTRING;"+ZZ_NL+"                                 else return PyTokenTypes.TRIPLE_QUOTED_STRING; }");
             { if (zzInput == YYEOF && zzStartRead == 0) return PyTokenTypes.DOCSTRING;
                                  else return PyTokenTypes.TRIPLE_QUOTED_STRING;
             } 
             // fall through
           case 202: break;
           case 85: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [163] { yypushback(getSpaceLength(yytext())); if (zzCurrentPos != 0) return PyTokenTypes.SINGLE_QUOTED_STRING;"+ZZ_NL+" yybegin(PENDING_DOCSTRING); return PyTokenTypes.DOCSTRING; }");
             { yypushback(getSpaceLength(yytext())); if (zzCurrentPos != 0) return PyTokenTypes.SINGLE_QUOTED_STRING;
  yybegin(PENDING_DOCSTRING); return PyTokenTypes.DOCSTRING;
             } 
             // fall through
           case 203: break;
           case 86: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [185] { return PyTokenTypes.AND_KEYWORD; }");
             { return PyTokenTypes.AND_KEYWORD;
             } 
             // fall through
           case 204: break;
           case 87: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [204] { return PyTokenTypes.NOT_KEYWORD; }");
             { return PyTokenTypes.NOT_KEYWORD;
             } 
             // fall through
           case 205: break;
           case 88: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [191] { return PyTokenTypes.DEL_KEYWORD; }");
             { return PyTokenTypes.DEL_KEYWORD;
             } 
             // fall through
           case 206: break;
           case 89: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [190] { yybegin(IN_DOCSTRING_OWNER); return PyTokenTypes.DEF_KEYWORD; }");
             { yybegin(IN_DOCSTRING_OWNER); return PyTokenTypes.DEF_KEYWORD;
             } 
             // fall through
           case 207: break;
           case 90: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [209] { return PyTokenTypes.TRY_KEYWORD; }");
             { return PyTokenTypes.TRY_KEYWORD;
             } 
             // fall through
           case 208: break;
           case 91: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [196] { return PyTokenTypes.FOR_KEYWORD; }");
             { return PyTokenTypes.FOR_KEYWORD;
             } 
             // fall through
           case 209: break;
           case 92: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [217] { return PyTokenTypes.EXPEQ; }");
             { return PyTokenTypes.EXPEQ;
             } 
             // fall through
           case 210: break;
           case 93: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [220] { return PyTokenTypes.FLOORDIVEQ; }");
             { return PyTokenTypes.FLOORDIVEQ;
             } 
             // fall through
           case 211: break;
           case 94: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [226] { return PyTokenTypes.GTGTEQ; }");
             { return PyTokenTypes.GTGTEQ;
             } 
             // fall through
           case 212: break;
           case 95: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [227] { return PyTokenTypes.LTLTEQ; }");
             { return PyTokenTypes.LTLTEQ;
             } 
             // fall through
           case 213: break;
           case 96: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [276] { if (zzInput == YYEOF) return PyTokenTypes.DOCSTRING;"+ZZ_NL+"                                 else yybegin(YYINITIAL); return PyTokenTypes.TRIPLE_QUOTED_STRING; }");
             { if (zzInput == YYEOF) return PyTokenTypes.DOCSTRING;
                                  else yybegin(YYINITIAL); return PyTokenTypes.TRIPLE_QUOTED_STRING;
             } 
             // fall through
           case 214: break;
           case 97: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [279] { yypushback(getSpaceLength(yytext())); return PyTokenTypes.DOCSTRING; }");
             { yypushback(getSpaceLength(yytext())); return PyTokenTypes.DOCSTRING;
             } 
             // fall through
           case 215: break;
           case 98: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [183] { return PyTokenTypes.TRIPLE_QUOTED_STRING; }");
             { return PyTokenTypes.TRIPLE_QUOTED_STRING;
             } 
             // fall through
           case 216: break;
           case 99: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [125] { return fStringHelper.handleStringLiteral(PyTokenTypes.TRIPLE_QUOTED_STRING); }");
             { return fStringHelper.handleStringLiteral(PyTokenTypes.TRIPLE_QUOTED_STRING);
             } 
             // fall through
           case 217: break;
           case 100: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [167] { yypushback(getSpaceLength(yytext())); if (zzCurrentPos != 0) return PyTokenTypes.TRIPLE_QUOTED_STRING;"+ZZ_NL+" yybegin(PENDING_DOCSTRING); return PyTokenTypes.DOCSTRING; }");
             { yypushback(getSpaceLength(yytext())); if (zzCurrentPos != 0) return PyTokenTypes.TRIPLE_QUOTED_STRING;
  yybegin(PENDING_DOCSTRING); return PyTokenTypes.DOCSTRING;
             } 
             // fall through
           case 218: break;
           case 101: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [193] { return PyTokenTypes.ELSE_KEYWORD; }");
             { return PyTokenTypes.ELSE_KEYWORD;
             } 
             // fall through
           case 219: break;
           case 102: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [192] { return PyTokenTypes.ELIF_KEYWORD; }");
             { return PyTokenTypes.ELIF_KEYWORD;
             } 
             // fall through
           case 220: break;
           case 103: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [197] { return PyTokenTypes.FROM_KEYWORD; }");
             { return PyTokenTypes.FROM_KEYWORD;
             } 
             // fall through
           case 221: break;
           case 104: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [206] { return PyTokenTypes.PASS_KEYWORD; }");
             { return PyTokenTypes.PASS_KEYWORD;
             } 
             // fall through
           case 222: break;
           case 105: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [207] { return PyTokenTypes.RAISE_KEYWORD; }");
             { return PyTokenTypes.RAISE_KEYWORD;
             } 
             // fall through
           case 223: break;
           case 106: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [187] { return PyTokenTypes.BREAK_KEYWORD; }");
             { return PyTokenTypes.BREAK_KEYWORD;
             } 
             // fall through
           case 224: break;
           case 107: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [188] { yybegin(IN_DOCSTRING_OWNER); return PyTokenTypes.CLASS_KEYWORD; }");
             { yybegin(IN_DOCSTRING_OWNER); return PyTokenTypes.CLASS_KEYWORD;
             } 
             // fall through
           case 225: break;
           case 108: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [211] { return PyTokenTypes.YIELD_KEYWORD; }");
             { return PyTokenTypes.YIELD_KEYWORD;
             } 
             // fall through
           case 226: break;
           case 109: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [210] { return PyTokenTypes.WHILE_KEYWORD; }");
             { return PyTokenTypes.WHILE_KEYWORD;
             } 
             // fall through
           case 227: break;
           case 110: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [186] { return PyTokenTypes.ASSERT_KEYWORD; }");
             { return PyTokenTypes.ASSERT_KEYWORD;
             } 
             // fall through
           case 228: break;
           case 111: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [194] { return PyTokenTypes.EXCEPT_KEYWORD; }");
             { return PyTokenTypes.EXCEPT_KEYWORD;
             } 
             // fall through
           case 229: break;
           case 112: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [208] { return PyTokenTypes.RETURN_KEYWORD; }");
             { return PyTokenTypes.RETURN_KEYWORD;
             } 
             // fall through
           case 230: break;
           case 113: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [203] { return PyTokenTypes.LAMBDA_KEYWORD; }");
             { return PyTokenTypes.LAMBDA_KEYWORD;
             } 
             // fall through
           case 231: break;
           case 114: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [200] { return PyTokenTypes.IMPORT_KEYWORD; }");
             { return PyTokenTypes.IMPORT_KEYWORD;
             } 
             // fall through
           case 232: break;
           case 115: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [198] { return PyTokenTypes.GLOBAL_KEYWORD; }");
             { return PyTokenTypes.GLOBAL_KEYWORD;
             } 
             // fall through
           case 233: break;
           case 116: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [160] { yypushback(getSpaceLength(yytext())); if (zzCurrentPos != 0) return PyTokenTypes.TRIPLE_QUOTED_STRING;"+ZZ_NL+"return PyTokenTypes.DOCSTRING; }");
             { yypushback(getSpaceLength(yytext())); if (zzCurrentPos != 0) return PyTokenTypes.TRIPLE_QUOTED_STRING;
 return PyTokenTypes.DOCSTRING;
             } 
             // fall through
           case 234: break;
           case 117: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [195] { return PyTokenTypes.FINALLY_KEYWORD; }");
             { return PyTokenTypes.FINALLY_KEYWORD;
             } 
             // fall through
           case 235: break;
           case 118: 
-            System.out.println("match: --"+zzToPrintable(yytext())+"--");
-            System.out.println("action [189] { return PyTokenTypes.CONTINUE_KEYWORD; }");
             { return PyTokenTypes.CONTINUE_KEYWORD;
             } 
             // fall through
@@ -1871,59 +1617,6 @@ return PyTokenTypes.DOCSTRING;
           default:
             zzScanError(ZZ_NO_MATCH);
           }
-      }
-    }
-  }
-
-  /**
-   * Runs the scanner on input files.
-   *
-   * This main method is the debugging routine for the scanner.
-   * It prints debugging information about each returned token to
-   * System.out until the end of file is reached, or an error occured.
-   *
-   * @param argv   the command line, contains the filenames to run
-   *               the scanner on.
-   */
-  public static void main(String argv[]) {
-    if (argv.length == 0) {
-      System.out.println("Usage : java _PythonLexer [ --encoding <name> ] <inputfile(s)>");
-    }
-    else {
-      int firstFilePos = 0;
-      String encodingName = "UTF-8";
-      if (argv[0].equals("--encoding")) {
-        firstFilePos = 2;
-        encodingName = argv[1];
-        try {
-          java.nio.charset.Charset.forName(encodingName); // Side-effect: is encodingName valid? 
-        } catch (Exception e) {
-          System.out.println("Invalid encoding '" + encodingName + "'");
-          return;
-        }
-      }
-      for (int i = firstFilePos; i < argv.length; i++) {
-        _PythonLexer scanner = null;
-        try {
-          java.io.FileInputStream stream = new java.io.FileInputStream(argv[i]);
-          java.io.Reader reader = new java.io.InputStreamReader(stream, encodingName);
-          scanner = new _PythonLexer(reader);
-          do {
-            System.out.println(scanner.advance());
-          } while (!scanner.zzAtEOF);
-
-        }
-        catch (java.io.FileNotFoundException e) {
-          System.out.println("File not found : \""+argv[i]+"\"");
-        }
-        catch (java.io.IOException e) {
-          System.out.println("IO error scanning file \""+argv[i]+"\"");
-          System.out.println(e);
-        }
-        catch (Exception e) {
-          System.out.println("Unexpected exception:");
-          e.printStackTrace();
-        }
       }
     }
   }
