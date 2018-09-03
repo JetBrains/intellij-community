@@ -311,7 +311,7 @@ class GitBranchPopupActions {
              myIncomingOutgoingManager.hasOutgoingFor(chooseRepo(), myBranchName);
     }
 
-    static class CheckoutAction extends DumbAwareAction {
+    private static class CheckoutAction extends DumbAwareAction {
       private final Project myProject;
       private final List<GitRepository> myRepositories;
       private final String myBranchName;
@@ -471,7 +471,7 @@ class GitBranchPopupActions {
       };
     }
 
-    static class CheckoutRemoteBranchAction extends DumbAwareAction {
+    private static class CheckoutRemoteBranchAction extends DumbAwareAction {
       private final Project myProject;
       private final List<GitRepository> myRepositories;
       private final String myRemoteBranchName;
