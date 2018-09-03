@@ -49,6 +49,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 
 import static com.intellij.testFramework.utils.EncodingManagerUtilKt.doEncodingTest;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -900,5 +901,19 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
 
     assertNull(file.getBOM());
     assertEquals(CharsetToolkit.UTF8_CHARSET, file.getCharset());
+  }
+
+  public void testEncodingRedetectionRequestsOnDocumentChangeAreBatchedToImprovePerformance() throws IOException {
+    VirtualFile file = createTempFile("txt", null, "xxx", US_ASCII);
+    Document document = ObjectUtils.notNull(getDocument(file));
+    WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, " "));
+    EncodingManagerImpl encodingManager = (EncodingManagerImpl)EncodingManager.getInstance();
+    PlatformTestUtil.startPerformanceTest("encoding re-detect requests", 5000, ()->{
+      for (int i=0; i<100_000_000;i++) {
+        encodingManager.queueUpdateEncodingFromContent(document);
+      }
+      encodingManager.waitAllTasksExecuted(500, TimeUnit.MILLISECONDS);
+      UIUtil.dispatchAllInvocationEvents();
+    }).assertTiming();
   }
 }
