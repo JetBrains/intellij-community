@@ -126,7 +126,6 @@ def exception_break(plugin, pydb, pydb_frame, frame, args, arg):
 
 
 class IpnbFrame(object):
-
     def __init__(self, frame, py_db):
         file_name = py_db.ipnb_cell_to_file[frame.f_code.co_filename]
         self.f_code = FCode('<ipython cell>', file_name)
