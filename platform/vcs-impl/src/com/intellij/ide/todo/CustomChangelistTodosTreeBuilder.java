@@ -177,20 +177,16 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
 
   @Override
   void rebuildCache() {
-    myMap.clear();
-    myFileTree.clear();
-    myDirtyFileSet.clear();
-    myFile2Highlighter.clear();
-
+    Set<VirtualFile> files = new HashSet<>();
     TodoTreeStructure treeStructure=getTodoTreeStructure();
     PsiFile[] psiFiles= myPsiTodoSearchHelper.findFilesWithTodoItems();
     for(int i=0;i<psiFiles.length;i++){
       PsiFile psiFile=psiFiles[i];
       if(myPsiTodoSearchHelper.getTodoItemsCount(psiFile) > 0 && treeStructure.accept(psiFile)){
-        myFileTree.add(psiFile.getVirtualFile());
+        files.add(psiFile.getVirtualFile());
       }
     }
 
-    treeStructure.validateCache();
+    super.rebuildCache(files);
   }
 }

@@ -17,10 +17,13 @@
 package com.intellij.ide.todo;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Vladimir Kondratyev
@@ -38,17 +41,13 @@ public class CurrentFileTodosTreeBuilder extends TodoTreeBuilder {
 
   @Override
   void rebuildCache(){
-    myFileTree.clear();
-    myDirtyFileSet.clear();
-    myFile2Highlighter.clear();
-
+    Set<VirtualFile> files = new HashSet<>();
     CurrentFileTodosTreeStructure treeStructure=(CurrentFileTodosTreeStructure)getTodoTreeStructure();
     PsiFile psiFile=treeStructure.getFile();
     if(treeStructure.accept(psiFile)){
-      myFileTree.add(psiFile.getVirtualFile());
+      files.add(psiFile.getVirtualFile());
     }
-
-    treeStructure.validateCache();
+    super.rebuildCache(files);
   }
 
   /**

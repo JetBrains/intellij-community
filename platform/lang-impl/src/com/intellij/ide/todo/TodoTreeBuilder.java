@@ -331,15 +331,12 @@ public abstract class TodoTreeBuilder implements Disposable {
   }
 
   void rebuildCache(){
-    myFileTree.clear();
-    myDirtyFileSet.clear();
-    myFile2Highlighter.clear();
-
+    Set<VirtualFile> files = new HashSet<>(); 
     collectFiles(virtualFile -> {
-      myFileTree.add(virtualFile);
+      files.add(virtualFile);
       return true;
     });
-    getTodoTreeStructure().validateCache();
+    rebuildCache(files);
   }
 
   void collectFiles(Processor<? super VirtualFile> collector) {
@@ -352,16 +349,24 @@ public abstract class TodoTreeBuilder implements Disposable {
     }
   }
 
-  void rebuildCache(Set<? extends VirtualFile> files){
-    myFileTree.clear();
-    myDirtyFileSet.clear();
-    myFile2Highlighter.clear();
+  void rebuildCache(Set<? extends VirtualFile> files) {
+    Runnable runnable = () -> {
+      myFileTree.clear();
+      myDirtyFileSet.clear();
+      myFile2Highlighter.clear();
 
-    for (VirtualFile virtualFile : files) {
-      myFileTree.add(virtualFile);
+      for (VirtualFile virtualFile : files) {
+        myFileTree.add(virtualFile);
+      }
+
+      getTodoTreeStructure().validateCache();
+    };
+    if (myModel != null) {
+      myModel.getInvoker().runOrInvokeLater(runnable);
     }
-
-    getTodoTreeStructure().validateCache();
+    else {
+      runnable.run();
+    }
   }
 
   private void validateCache() {
