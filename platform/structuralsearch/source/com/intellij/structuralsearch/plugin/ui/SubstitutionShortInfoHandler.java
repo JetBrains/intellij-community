@@ -16,8 +16,10 @@ import com.intellij.structuralsearch.NamedScriptableDefinition;
 import com.intellij.structuralsearch.ReplacementVariableDefinition;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HintHint;
 import com.intellij.util.SmartList;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -127,6 +129,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
 
     final StringBuilder buf = new StringBuilder();
 
+    final String inactiveTextColor = ColorUtil.toHtmlColor(UIUtil.getInactiveTextColor());
     final boolean oldDialog = !Registry.is("ssr.use.new.search.dialog");
     if (namedScriptableDefinition instanceof MatchVariableConstraint) {
       final MatchVariableConstraint constraint = (MatchVariableConstraint)namedScriptableDefinition;
@@ -138,7 +141,8 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
                                       constraint.isInvertRegExp() ? 1 : 0,
                                       StringUtil.escapeXml(constraint.getRegExp()),
                                       constraint.isWholeWordsOnly() ? 1 : 0,
-                                      constraint.isWithinHierarchy() ? 1 : 0));
+                                      constraint.isWithinHierarchy() ? 1 : 0,
+                                      inactiveTextColor));
       }
       else if (constraint.isWithinHierarchy()) {
         append(buf, SSRBundle.message("hierarchy.tooltip.message"));
@@ -152,14 +156,16 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
         append(buf, SSRBundle.message("exprtype.tooltip.message",
                                       constraint.isInvertExprType() ? 1 : 0,
                                       StringUtil.escapeXml(constraint.getNameOfExprType()),
-                                      constraint.isExprTypeWithinHierarchy() ? 1 : 0));
+                                      constraint.isExprTypeWithinHierarchy() ? 1 : 0,
+                                      inactiveTextColor));
       }
 
       if (constraint.getNameOfFormalArgType() != null && !constraint.getNameOfFormalArgType().isEmpty()) {
         append(buf, SSRBundle.message("expected.type.tooltip.message",
                                       constraint.isInvertFormalType() ? 1 : 0,
                                       StringUtil.escapeXml(constraint.getNameOfFormalArgType()),
-                                      constraint.isFormalArgTypeWithinHierarchy() ? 1 : 0));
+                                      constraint.isFormalArgTypeWithinHierarchy() ? 1 : 0,
+                                      inactiveTextColor));
       }
 
       if (StringUtil.isNotEmpty(constraint.getWithinConstraint())) {
