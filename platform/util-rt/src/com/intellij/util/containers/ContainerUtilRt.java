@@ -26,12 +26,6 @@ public class ContainerUtilRt {
   private static final int ARRAY_COPY_THRESHOLD = 20;
 
   @NotNull
-  @Contract(pure=true)
-  public static <T> T[] ar(@NotNull T... elements) {
-    return elements;
-  }
-
-  @NotNull
   @Contract(value = " -> new", pure = true)
   public static <K, V> HashMap<K, V> newHashMap() {
     return new java.util.HashMap<K, V>();
