@@ -114,8 +114,8 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
       } catch (Exception e) {
         LOG.error(e);
         if (Messages.showOkCancelDialog(myProject,
-                                "Code analysis failed with exception: " + e.getClass().getName() + ": " + e.getMessage(),
-                                "Code analysis failed", "&Commit", "&Cancel", null) == Messages.OK) {
+                                        "Code analysis failed with exception: " + e.getClass().getName() + ": " + e.getMessage(),
+                                        "Code analysis failed", "&Commit", "Ca&ncel", null) == Messages.OK) {
           return ReturnResult.COMMIT;
         }
         return ReturnResult.CANCEL;
