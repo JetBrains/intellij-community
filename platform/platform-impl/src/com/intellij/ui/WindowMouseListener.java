@@ -90,11 +90,16 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
    */
   protected boolean isDisabled(Component view) {
     if (view instanceof Frame) {
-      int state = ((Frame)view).getExtendedState();
+      Frame frame = (Frame)view;
+      int state = frame.getExtendedState();
       if (isStateSet(Frame.ICONIFIED, state)) return true;
-      if (isStateSet(Frame.MAXIMIZED_BOTH, state)) return true;
+      if (isStateSet(Frame.MAXIMIZED_BOTH, state)) return isDisabledInMaximizedBoth();
     }
     return false;
+  }
+
+  protected boolean isDisabledInMaximizedBoth() {
+    return true;
   }
 
   /**

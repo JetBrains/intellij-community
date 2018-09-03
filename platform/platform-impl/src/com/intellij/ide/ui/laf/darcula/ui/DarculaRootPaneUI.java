@@ -2,10 +2,7 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.Gray;
-import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.WindowMoveListener;
-import com.intellij.ui.WindowResizeListener;
+import com.intellij.ui.*;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
@@ -50,7 +47,7 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static ComponentUI createUI(JComponent comp) {
-    return isCustomDecoration() ? new DarculaRootPaneUI() : createDefaultWindowsRootPaneUI();
+    return JBUI.isCustomFrameDecoration() ? new DarculaRootPaneUI() : createDefaultWindowsRootPaneUI();
   }
 
   private static ComponentUI createDefaultWindowsRootPaneUI() {
@@ -65,7 +62,7 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
   public void installUI(JComponent c) {
     super.installUI(c);
 
-    if (isCustomDecoration()) {
+    if (JBUI.isCustomFrameDecoration()) {
       myRootPane = (JRootPane)c;
       int style = myRootPane.getWindowDecorationStyle();
       if (style != JRootPane.NONE) {
@@ -75,7 +72,7 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
   }
 
   public void installMenuBar(JMenuBar menu) {
-    if (menu != null && isCustomDecoration()) {
+    if (menu != null && JBUI.isCustomFrameDecoration()) {
       getTitlePane().add(menu);
     }
   }
@@ -84,7 +81,7 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
   public void uninstallUI(JComponent c) {
     super.uninstallUI(c);
 
-    if (isCustomDecoration()) {
+    if (JBUI.isCustomFrameDecoration()) {
       uninstallClientDecorations(myRootPane);
       myLayoutManager = null;
       myMouseInputListener = null;
@@ -132,6 +129,23 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
         if (myTitleMouseInputListener == null) {
           myTitleMouseInputListener = new WindowMoveListener(myTitlePane) {
             @Override
+            public void mousePressed(MouseEvent event) {
+              if(JBUI.isCustomFrameDecoration()) {
+                Component view = getView(getContent(event));
+                if (view instanceof Frame) {
+                  Frame frame = (Frame)view;
+                  int state = frame.getExtendedState();
+
+                  if (FrameState.isMaximized(state)) {
+                    frame.setExtendedState((state & ~Frame.MAXIMIZED_BOTH));
+                  }
+                }
+              }
+
+              super.mousePressed(event);
+            }
+
+            @Override
             protected boolean isDisabled(Component view) {
               if (view instanceof RootPaneContainer) {
                 RootPaneContainer container = (RootPaneContainer)view;
@@ -139,6 +153,11 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
                 if (pane != null && JRootPane.NONE == pane.getWindowDecorationStyle()) return true;
               }
               return super.isDisabled(view);
+            }
+
+            @Override
+            protected boolean isDisabledInMaximizedBoth() {
+              return !JBUI.isCustomFrameDecoration();
             }
           };
         }
@@ -367,7 +386,8 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
   }
 
   public void setMaximized() {
-    if (Registry.is("darcula.fix.maximized.frame.bounds")) return;
+    if (Registry.is("darcula.fix.maximized.frame.bounds") &&
+        !JBUI.isCustomFrameDecoration()) return;
 
     Component tla = myRootPane.getTopLevelAncestor();
     GraphicsConfiguration gc = (currentRootPaneGC != null) ? currentRootPaneGC : tla.getGraphicsConfiguration();

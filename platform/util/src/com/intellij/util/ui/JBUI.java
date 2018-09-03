@@ -1765,6 +1765,10 @@ public class JBUI {
     return value instanceof Integer ? (Integer)value : defaultValue;
   }
 
+  public static boolean isCustomFrameDecoration() {
+    return SystemInfo.isWindows && Registry.is("ide.win.frame.decoration");
+  }
+
   @NotNull
   private static Icon getIcon(@NotNull String propertyName, @NotNull Icon defaultIcon) {
     Icon icon = UIManager.getIcon(propertyName);

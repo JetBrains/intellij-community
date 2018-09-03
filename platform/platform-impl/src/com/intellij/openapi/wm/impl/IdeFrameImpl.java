@@ -253,7 +253,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
    */
   @Override
   public synchronized void setMaximizedBounds(Rectangle bounds) {
-    super.setMaximizedBounds(null);
+    super.setMaximizedBounds(JBUI.isCustomFrameDecoration() ? bounds : null);
   }
 
   private void setupCloseAction() {
@@ -545,7 +545,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     UISettings.setupAntialiasing(g);
     //noinspection Since15
     super.paint(g);
-    if (IdeRootPane.isFrameDecorated() && !isInFullScreen()) {
+    if (JBUI.isCustomFrameDecoration() && !isInFullScreen()) {
       final BufferedImage shadow = ourShadowPainter.createShadow(getRootPane(), getWidth(), getHeight());
       g.drawImage(shadow, 0, 0, null);
     }
@@ -553,13 +553,13 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
 
   @Override
   public Color getBackground() {
-    return IdeRootPane.isFrameDecorated() ? Gray.x00.withAlpha(0) : super.getBackground();
+    return JBUI.isCustomFrameDecoration() ? Gray.x00.withAlpha(0) : super.getBackground();
   }
 
   @Override
   public void doLayout() {
     super.doLayout();
-    if (!isInFullScreen() && IdeRootPane.isFrameDecorated()) {
+    if (!isInFullScreen() && JBUI.isCustomFrameDecoration()) {
       final int leftSide = AllIcons.Windows.Shadow.Left.getIconWidth();
       final int rightSide = AllIcons.Windows.Shadow.Right.getIconWidth();
       final int top = AllIcons.Windows.Shadow.Top.getIconHeight();

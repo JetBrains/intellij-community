@@ -122,7 +122,7 @@ public class DarculaLaf extends BasicLookAndFeel {
       defaults.remove("Spinner.arrowButtonBorder");
       defaults.put("Spinner.arrowButtonSize", JBUI.size(16, 5).asUIResource());
       MetalLookAndFeel.setCurrentTheme(createMetalTheme());
-      if (SystemInfo.isWindows && Registry.is("ide.win.frame.decoration")) {
+      if (JBUI.isCustomFrameDecoration()) {
         JFrame.setDefaultLookAndFeelDecorated(true);
         JDialog.setDefaultLookAndFeelDecorated(true);
       }
