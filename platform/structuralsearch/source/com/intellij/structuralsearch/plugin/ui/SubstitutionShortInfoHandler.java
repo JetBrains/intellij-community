@@ -62,13 +62,14 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
     while(start >=0 && Character.isJavaIdentifierPart(elements.charAt(start)) && elements.charAt(start)!='$') start--;
 
     String text = "";
+    String variableName = null;
     int end = -1;
     if (start >= 0 && elements.charAt(start) == '$') {
       end = offset;
 
       while (end < length && Character.isJavaIdentifierPart(elements.charAt(end)) && elements.charAt(end) != '$') end++;
       if (end < length && elements.charAt(end) == '$') {
-        final String variableName = elements.subSequence(start + 1, end).toString();
+        variableName = elements.subSequence(start + 1, end).toString();
 
         if (variables.contains(variableName)) {
           final NamedScriptableDefinition variable = configuration.findVariable(variableName);
@@ -91,10 +92,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
     }
 
     if (!text.isEmpty()) {
-      showTooltip(editor, start, end + 1, text);
-    }
-    else {
-      TooltipController.getInstance().cancelTooltips();
+      showTooltip(editor, start, end + 1, text, variableName);
     }
   }
 
@@ -190,7 +188,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
     buf.append(str);
   }
 
-  private static void showTooltip(@NotNull Editor editor, final int start, int end, @NotNull String text) {
+  private static void showTooltip(@NotNull Editor editor, final int start, int end, @NotNull String text, String variableName) {
     final Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
     final Point left = editor.logicalPositionToXY(editor.offsetToLogicalPosition(start));
     final int documentLength = editor.getDocument().getTextLength();
@@ -210,7 +208,14 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
                                                 editor.getComponent().getRootPane().getLayeredPane());
     final HintHint hint = new HintHint(editor, bestPoint).setAwtTooltip(true).setHighlighterType(true).setShowImmediately(true)
       .setCalloutShift(editor.getLineHeight() / 2 - 1);
-    TooltipController.getInstance().showTooltip(editor, p, StringUtil.escapeXml(text), visibleArea.width, false, SS_INFO_TOOLTIP_GROUP, hint);
+    final String dressedText;
+    if (Registry.is("ssr.use.new.search.dialog")) {
+      dressedText = StringUtil.escapeXml(text) + " <a href=\"#ssr_edit_filters/" + variableName + "\">Edit filters</a>";
+    }
+    else {
+      dressedText = StringUtil.escapeXml(text);
+    }
+    TooltipController.getInstance().showTooltip(editor, p, dressedText, visibleArea.width, false, SS_INFO_TOOLTIP_GROUP, hint);
   }
 
   static SubstitutionShortInfoHandler retrieve(Editor editor) {

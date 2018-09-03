@@ -83,7 +83,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   @NonNls private static final String REFORMAT_STATE = "structural.search.reformat";
   @NonNls private static final String USE_STATIC_IMPORT_STATE = "structural.search.use.static.import";
 
-  static final Key<StructuralSearchDialog> STRUCTURAL_SEARCH = Key.create("STRUCTURAL_SEARCH_AREA");
+  public static final Key<StructuralSearchDialog> STRUCTURAL_SEARCH = Key.create("STRUCTURAL_SEARCH_AREA");
   public static final String USER_DEFINED = SSRBundle.message("new.template.defaultname");
 
   private final SearchContext mySearchContext;
@@ -374,8 +374,7 @@ public class StructuralSearchDialog extends DialogWrapper {
       myScopePanel.setEnabled(false);
     }
 
-    myFilterPanel =
-      new FilterPanel(getProject(), StructuralSearchUtil.getProfileByFileType(myFileType), getDisposable());
+    myFilterPanel = new FilterPanel(getProject(), StructuralSearchUtil.getProfileByFileType(myFileType), getDisposable());
     myFilterPanel.getComponent().setMinimumSize(new Dimension(300, 50));
 
     final JLabel searchTargetLabel = new JLabel(SSRBundle.message("search.target.label"));
@@ -565,6 +564,7 @@ public class StructuralSearchDialog extends DialogWrapper {
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(myFilterButtonEnabled);
+        super.update(e);
       }
     };
     final DefaultActionGroup optionsActionGroup = new DefaultActionGroup(filterAction, templateActionGroup);
@@ -782,6 +782,11 @@ public class StructuralSearchDialog extends DialogWrapper {
       balloon.showInCenterOf(component);
       Disposer.register(myDisposable, balloon);
     });
+  }
+
+  public void showFilterPanel(String variableName) {
+    myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(variableName, myConfiguration));
+    mySearchEditorPanel.setSecondComponent(myFilterPanel.getComponent());
   }
 
   public void loadConfiguration(Configuration configuration) {
