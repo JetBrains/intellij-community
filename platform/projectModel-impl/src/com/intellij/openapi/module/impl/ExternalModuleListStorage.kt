@@ -5,6 +5,7 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
@@ -37,7 +38,7 @@ internal class ExternalModuleListStorage(private val project: Project) : Persist
 
   override fun getExternalSource(): ProjectModelExternalSource? {
     val externalProjectSystemRegistry = ExternalProjectSystemRegistry.getInstance()
-    for (module in ModuleManagerImpl.getInstanceImpl(project).modules) {
+    for (module in ModuleManager.getInstance(project).modules) {
       externalProjectSystemRegistry.getExternalSource(module)?.let {
         return it
       }
