@@ -83,7 +83,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   @NonNls private static final String REFORMAT_STATE = "structural.search.reformat";
   @NonNls private static final String USE_STATIC_IMPORT_STATE = "structural.search.use.static.import";
 
-  static final Key<Boolean> STRUCTURAL_SEARCH = Key.create("STRUCTURAL_SEARCH_AREA");
+  static final Key<StructuralSearchDialog> STRUCTURAL_SEARCH = Key.create("STRUCTURAL_SEARCH_AREA");
   public static final String USER_DEFINED = SSRBundle.message("new.template.defaultname");
 
   private final SearchContext mySearchContext;
@@ -178,7 +178,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     myUseLastConfiguration = useLastConfiguration;
   }
 
-  void setSearchPattern(final Configuration config) {
+  void setSearchPattern(Configuration config) {
     loadConfiguration(config);
     initiateValidation();
   }
@@ -208,7 +208,7 @@ public class StructuralSearchDialog extends DialogWrapper {
           DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(file, false);
         }
         TextCompletionUtil.installCompletionHint(editor);
-        editor.putUserData(STRUCTURAL_SEARCH, true);
+        editor.putUserData(STRUCTURAL_SEARCH, StructuralSearchDialog.this);
         editor.setEmbeddedIntoDialogWrapper(true);
         return editor;
       }
@@ -401,7 +401,7 @@ public class StructuralSearchDialog extends DialogWrapper {
         .addGap(2)
         .addComponent(myReplacePanel)
         .addComponent(myScopePanel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-        .addGap(2)
+        .addGap(16)
         .addGroup(layout.createParallelGroup()
                     .addComponent(searchTargetLabel)
                     .addComponent(myTargetComboBox, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
