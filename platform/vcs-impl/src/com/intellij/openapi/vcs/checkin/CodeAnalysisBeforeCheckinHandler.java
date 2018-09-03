@@ -91,8 +91,8 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
       if (DumbService.getInstance(myProject).isDumb()) {
         if (Messages.showOkCancelDialog(myProject, VcsBundle.message("code.smells.error.indexing.message",
                                                                      ApplicationNamesInfo.getInstance().getProductName()),
-                                VcsBundle.message("code.smells.error.indexing"),
-                                "&Wait", "&Commit", null) == Messages.OK) {
+                                        VcsBundle.message("code.smells.error.indexing"),
+                                        "&Wait", "&Commit", null) == Messages.OK) {
           return ReturnResult.CANCEL;
         }
         return ReturnResult.COMMIT;
@@ -115,7 +115,7 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
         LOG.error(e);
         if (Messages.showOkCancelDialog(myProject,
                                         "Code analysis failed with exception: " + e.getClass().getName() + ": " + e.getMessage(),
-                                        "Code analysis failed", "&Commit", "Ca&ncel", null) == Messages.OK) {
+                                        "Code Analysis Failed", "&Commit", "Ca&ncel", null) == Messages.OK) {
           return ReturnResult.COMMIT;
         }
         return ReturnResult.CANCEL;
