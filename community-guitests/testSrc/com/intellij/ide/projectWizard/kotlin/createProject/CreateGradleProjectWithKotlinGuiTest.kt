@@ -79,14 +79,15 @@ class CreateGradleProjectWithKotlinGuiTest(val testParameters: TestParameters) :
       projectPath = projectFolder,
       gradleOptions = gradleOptions
     )
-    waitAMoment(extraTimeOut)
+    waitAMoment()
+    waitForGradleReimport(gradleOptions.artifact, waitForProject = false)
     editSettingsGradle()
     editBuildGradle(
       kotlinVersion = kotlinVersion,
       isKotlinDslUsed = false
     )
     gradleReimport()
-    waitForGradleReimport(gradleOptions.artifact)
+    waitForGradleReimport(gradleOptions.artifact, waitForProject = true)
     waitAMoment()
 
     projectStructureDialogScenarios.checkGradleExplicitModuleGroups(

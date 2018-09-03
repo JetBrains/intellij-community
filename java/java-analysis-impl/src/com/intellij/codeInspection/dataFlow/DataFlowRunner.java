@@ -295,7 +295,17 @@ public class DataFlowRunner {
       }
       attachments = ArrayUtil.append(attachments, new Attachment("flow.txt", flowText));
       if (lastInstructionState != null) {
-        attachments = ArrayUtil.append(attachments, new Attachment("memory_state.txt", lastInstructionState.getMemoryState().toString()));
+        DfaMemoryState memoryState = lastInstructionState.getMemoryState();
+        String memStateText = null;
+        try {
+          memStateText = memoryState.toString();
+        }
+        catch (RuntimeException second) {
+          e.addSuppressed(second);
+        }
+        if (memStateText != null) {
+          attachments = ArrayUtil.append(attachments, new Attachment("memory_state.txt", memStateText));
+        }
       }
     }
     LOG.error(new RuntimeExceptionWithAttachments(e, attachments));

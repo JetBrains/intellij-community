@@ -17,6 +17,7 @@
 package com.intellij.ide.todo;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.todo.nodes.TodoFileNode;
 import com.intellij.ide.todo.nodes.TodoItemNode;
 import com.intellij.ide.todo.nodes.TodoTreeHelper;
@@ -42,7 +43,6 @@ import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.util.Processor;
@@ -56,8 +56,6 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
-
-import static com.intellij.ide.util.treeView.TreeState.expand;
 
 /**
  * @author Vladimir Kondratyev
@@ -334,15 +332,12 @@ public abstract class TodoTreeBuilder implements Disposable {
   }
 
   void rebuildCache(){
-    myFileTree.clear();
-    myDirtyFileSet.clear();
-    myFile2Highlighter.clear();
-
+    Set<VirtualFile> files = new HashSet<>(); 
     collectFiles(virtualFile -> {
-      myFileTree.add(virtualFile);
+      files.add(virtualFile);
       return true;
     });
-    getTodoTreeStructure().validateCache();
+    rebuildCache(files);
   }
 
   void collectFiles(Processor<? super VirtualFile> collector) {
@@ -355,16 +350,24 @@ public abstract class TodoTreeBuilder implements Disposable {
     }
   }
 
-  void rebuildCache(Set<? extends VirtualFile> files){
-    myFileTree.clear();
-    myDirtyFileSet.clear();
-    myFile2Highlighter.clear();
+  void rebuildCache(Set<? extends VirtualFile> files) {
+    Runnable runnable = () -> {
+      myFileTree.clear();
+      myDirtyFileSet.clear();
+      myFile2Highlighter.clear();
 
-    for (VirtualFile virtualFile : files) {
-      myFileTree.add(virtualFile);
+      for (VirtualFile virtualFile : files) {
+        myFileTree.add(virtualFile);
+      }
+
+      getTodoTreeStructure().validateCache();
+    };
+    if (myModel != null) {
+      myModel.getInvoker().runOrInvokeLater(runnable);
     }
-
-    getTodoTreeStructure().validateCache();
+    else {
+      runnable.run();
+    }
   }
 
   private void validateCache() {
@@ -396,12 +399,10 @@ public abstract class TodoTreeBuilder implements Disposable {
     // Now myDirtyFileSet should be empty
   }
 
-  /*@Override
   protected boolean isAutoExpandNode(NodeDescriptor descriptor) {
     return getTodoTreeStructure().isAutoExpandNode(descriptor);
   }
 
-  @Override
   protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
     final Object element= nodeDescriptor.getElement();
     if (element instanceof TodoItemNode){
@@ -415,7 +416,7 @@ public abstract class TodoTreeBuilder implements Disposable {
       }
     }
     return true;
-  }*/
+  }
 
   /**
    * @return first {@code SmartTodoItemPointer} that is the children (in depth) of the specified {@code element}.
@@ -474,42 +475,33 @@ public abstract class TodoTreeBuilder implements Disposable {
   }
 
   public void select(Object obj) {
-    Object root = myTree.getModel().getRoot();
-    TodoNodeVisitor visitor;
+    TodoNodeVisitor visitor = getVisitorFor(obj);
+
+    if (visitor == null) {
+      TreeUtil.promiseSelectFirst(myTree);
+    }
+    else {
+      TreeUtil.promiseSelect(myTree, visitor).onError(error -> {
+        //select root if path disappeared from the tree
+        TreeUtil.promiseSelectFirst(myTree);
+      });
+    }
+  }
+
+  private static TodoNodeVisitor getVisitorFor(Object obj) {
     if (obj instanceof TodoItemNode) {
       SmartTodoItemPointer value = ((TodoItemNode)obj).getValue();
       if (value != null) {
-        visitor = new TodoNodeVisitor(value::getTodoItem,
-                                      value.getTodoItem().getFile().getVirtualFile());
-      }
-      else {
-        visitor = new TodoNodeVisitor(() -> unwrapUserObject(new TreePath(root)), null);
+        return new TodoNodeVisitor(value::getTodoItem,
+                                   value.getTodoItem().getFile().getVirtualFile());
       }
     }
     else {
       Object o = obj instanceof AbstractTreeNode ? ((AbstractTreeNode)obj).getValue() : null;
-      visitor = new TodoNodeVisitor(() -> obj instanceof AbstractTreeNode ? ((AbstractTreeNode)obj).getValue() : obj,
-                                    o instanceof PsiElement ? PsiUtilCore.getVirtualFile((PsiElement)o) : null);
+      return new TodoNodeVisitor(() -> obj instanceof AbstractTreeNode ? ((AbstractTreeNode)obj).getValue() : obj,
+                                 o instanceof PsiElement ? PsiUtilCore.getVirtualFile((PsiElement)o) : null);
     }
-
-    expand(myTree, promise -> 
-      ((AsyncTreeModel)myTree.getModel())
-        .accept(visitor)
-        .onProcessed(path -> {
-          if (!selectPath(myTree, path) && root != null) {
-            //select root if path disappeared from the tree
-            selectPath(myTree, new TreePath(new Object[] {root, ((DefaultMutableTreeNode)root).getChildAt(0)}));
-          }
-          promise.setResult(null);
-        })
-    );
-  }
-
-  private static boolean selectPath(@NotNull JTree tree, TreePath path) {
-    if (path == null) return false;
-    tree.expandPath(path); // request to expand found path
-    TreeUtil.selectPath(tree, path); // select and scroll to center
-    return true;
+    return null;
   }
 
   static PsiFile getFileForNode(DefaultMutableTreeNode node) {
@@ -550,24 +542,12 @@ public abstract class TodoTreeBuilder implements Disposable {
     
     Object root = myTree.getModel().getRoot();
     if (root != null) {
-      TreeUtil.collectSelectedPaths(myTree, new TreePath(root)).forEach(path -> pathsToSelect.add(unwrapUserObject(path)));
+      TreeUtil.collectSelectedPaths(myTree, 
+                                    new TreePath(root)).forEach(path -> pathsToSelect.add(TreeUtil.getUserObject(path.getLastPathComponent())));
     }
     myTree.clearSelection();
     getTodoTreeStructure().validateCache();
-    updateTree()
-      .onSuccess(o -> {
-        for (Object obj : pathsToSelect) {
-          select(obj);
-        }
-      });
-  }
-  
-  private static Object unwrapUserObject(TreePath path) {
-    Object obj = path.getLastPathComponent();
-    if (obj instanceof DefaultMutableTreeNode) {
-      obj = ((DefaultMutableTreeNode)obj).getUserObject();
-    }
-    return obj;
+    updateTree().onSuccess(o -> TreeUtil.promiseSelect(myTree, pathsToSelect.stream().map(TodoTreeBuilder::getVisitorFor)));
   }
 
   /**

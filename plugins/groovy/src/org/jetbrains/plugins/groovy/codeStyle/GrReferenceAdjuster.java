@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeStyle;
 
 import com.intellij.lang.ASTNode;
@@ -190,7 +190,8 @@ public class GrReferenceAdjuster implements ReferenceAdjuster {
 
     PsiResolveHelper helper = JavaPsiFacade.getInstance(ref.getProject()).getResolveHelper();
     if (ref instanceof GrReferenceElement) {
-      final String classNameText = ((GrReferenceElement)ref).getClassNameText();
+      final String classNameText = ((GrReferenceElement)ref).getQualifiedReferenceName();
+      if (classNameText == null) return null;
       return helper.resolveReferencedClass(classNameText, ref);
     }
     return null;

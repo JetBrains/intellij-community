@@ -30,14 +30,28 @@ import static java.util.Collections.unmodifiableList;
 public class StructureTreeModel extends AbstractTreeModel implements Disposable, InvokerSupplier, ChildrenProvider<TreeNode> {
   private static final Logger LOG = Logger.getInstance(StructureTreeModel.class);
   private final Reference<Node> root = new Reference<>();
-  private final Invoker invoker = new Invoker.BackgroundThread(this);
-  private final AbstractTreeStructure structure;
+  private final Invoker invoker;
+  private volatile AbstractTreeStructure structure;
   private volatile Comparator<? super Node> comparator;
 
-  public StructureTreeModel(@NotNull AbstractTreeStructure structure,
-                            @Nullable Comparator<? super NodeDescriptor> comparator) {
+  public StructureTreeModel(boolean background) {
+    invoker = background
+              ? new Invoker.BackgroundThread(this)
+              : new Invoker.EDT(this);
+  }
+
+  public StructureTreeModel(@NotNull AbstractTreeStructure structure) {
+    this(true);
     this.structure = structure;
-    this.comparator = comparator == null ? null : (node1, node2) -> comparator.compare(node1.getDescriptor(), node2.getDescriptor());
+  }
+
+  public StructureTreeModel(@NotNull AbstractTreeStructure structure, @NotNull Comparator<? super NodeDescriptor> comparator) {
+    this(structure);
+    this.comparator = createComparator(comparator);
+  }
+
+  private static Comparator<? super Node> createComparator(@NotNull Comparator<? super NodeDescriptor> comparator) {
+    return (node1, node2) -> comparator.compare(node1.getDescriptor(), node2.getDescriptor());
   }
 
   /**
@@ -46,7 +60,7 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
   public final void setComparator(@Nullable Comparator<? super NodeDescriptor> comparator) {
     if (disposed) return;
     if (comparator != null) {
-      this.comparator = (node1, node2) -> comparator.compare(node1.getDescriptor(), node2.getDescriptor());
+      this.comparator = createComparator(comparator);
       invalidate();
     }
     else if (this.comparator != null) {
@@ -55,10 +69,20 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
     }
   }
 
+  /**
+   * @param structure a structure to build tree model or {@code null} to clear its content
+   */
+  public void setStructure(@Nullable AbstractTreeStructure structure) {
+    if (disposed) return;
+    this.structure = structure;
+    invalidate();
+  }
+
   @Override
   public void dispose() {
     super.dispose();
     comparator = null;
+    structure = null;
     Node node = root.set(null);
     if (node != null) node.dispose();
   }

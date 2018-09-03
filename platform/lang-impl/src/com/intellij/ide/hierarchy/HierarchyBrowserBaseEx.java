@@ -209,7 +209,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   protected abstract String getBrowserDataKey();
 
   @Nullable
-  private static Color getFileColorForNode(Object node) {
+  protected Color getFileColorForNode(Object node) {
     if (node instanceof HierarchyNodeDescriptor) {
       PsiFile containingFile = ((HierarchyNodeDescriptor) node).getContainingFile();
       return ProjectViewTree.getColorForElement(containingFile);
@@ -459,7 +459,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     return getBuilderForType(getCurrentViewType());
   }
 
-  private HierarchyTreeBuilder getBuilderForType(String viewType) {
+  protected final HierarchyTreeBuilder getBuilderForType(String viewType) {
     return viewType == null ? null : myType2BuilderMap.get(viewType);
   }
 

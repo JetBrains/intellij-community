@@ -227,7 +227,7 @@ public class OptionalInlining {
       .map(h -> h.s)
       .isPresent()</warning>;
 
-    opt.filter(h -> h.s == null).map(h -> h.s.<warning descr="Method invocation 'trim' may produce 'NullPointerException'">trim</warning>()).ifPresent(System.out::println);
+    opt.filter(h -> h.s == null).map(h -> h.s.<warning descr="Method invocation 'trim' will produce 'NullPointerException'">trim</warning>()).ifPresent(System.out::println);
   }
 
   private List<Integer> tryGetFromCache(List<String> keys, Map<String, Optional<Integer>> cache) {

@@ -18,8 +18,10 @@ package org.jetbrains.plugins.groovy.lang.psi.util;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.util.LightCacheKey;
@@ -71,4 +73,21 @@ public class GrImportUtil {
     }
     return aliases;
   }
+
+  /**
+   * @return qualified name imported via given alias, if any
+   */
+  @Nullable
+  public static String findAliasedImport(@NotNull GroovyPsiElement place, @NotNull String shortName) {
+    PsiFile file = place.getContainingFile();
+    if (!(file instanceof GroovyFile)) return null;
+
+    for (GrImportStatement anImport : ((GroovyFile)file).getImportStatements()) {
+      if (anImport.isAliasedImport() && shortName.equals(anImport.getImportedName())) {
+        return anImport.getImportFqn();
+      }
+    }
+    return null;
+  }
+
 }

@@ -152,7 +152,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
         Files.createDirectories(directoryPath);
       }
       else if (!Files.isDirectory(directoryPath) || !Files.isWritable(directoryPath)) {
-        return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.access"), false);
+        return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.access")).withOKEnabled();
       }
       return null;
     }
@@ -160,7 +160,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
       return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.invalid"));
     }
     catch (Exception e) {
-      return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.access"), false);
+      return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.access")).withOKEnabled();
     }
   }
 
@@ -323,7 +323,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
             errorMessageBuilder.append(error.getMessage());
             Throwable cause = error.getCause();
             if (cause != null) errorMessageBuilder.append(": ").append(cause.getMessage());
-            myRepositoryListLoadingErrors.add(new ValidationInfo(errorMessageBuilder.toString(), false));
+            myRepositoryListLoadingErrors.add(new ValidationInfo(errorMessageBuilder.toString()).asWarning());
           }
           startTrackingValidation();
         }

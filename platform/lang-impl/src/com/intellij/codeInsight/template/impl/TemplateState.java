@@ -55,8 +55,6 @@ import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.*;
 
 public class TemplateState implements Disposable {
@@ -66,28 +64,28 @@ public class TemplateState implements Disposable {
 
   private TemplateImpl myTemplate;
   private TemplateImpl myPrevTemplate;
-  private TemplateSegments mySegments = null;
+  private TemplateSegments mySegments;
   private Map<String, String> myPredefinedVariableValues;
 
-  private RangeMarker myTemplateRange = null;
+  private RangeMarker myTemplateRange;
   private final List<RangeHighlighter> myTabStopHighlighters = new ArrayList<>();
   private int myCurrentVariableNumber = -1;
   private int myCurrentSegmentNumber = -1;
-  private boolean ourLookupShown = false;
+  private boolean ourLookupShown;
 
   private boolean myDocumentChangesTerminateTemplate = true;
-  private boolean myDocumentChanged = false;
+  private boolean myDocumentChanged;
 
   @Nullable private LookupListener myLookupListener;
 
   private final List<TemplateEditingListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private DocumentListener myEditorDocumentListener;
   private final Map myProperties = new HashMap();
-  private boolean myTemplateIndented = false;
+  private boolean myTemplateIndented;
   private Document myDocument;
   private boolean myFinished;
-  @Nullable private PairProcessor<String, String> myProcessor;
-  private boolean mySelectionCalculated = false;
+  @Nullable private PairProcessor<? super String, ? super String> myProcessor;
+  private boolean mySelectionCalculated;
   private boolean myStarted;
 
   TemplateState(@NotNull Project project, @NotNull final Editor editor) {
@@ -117,14 +115,11 @@ public class TemplateState implements Disposable {
         }
       }
     };
-    LookupManager.getInstance(myProject).addPropertyChangeListener(new PropertyChangeListener() {
-      @Override
-      public void propertyChange(PropertyChangeEvent evt) {
-        if (LookupManager.PROP_ACTIVE_LOOKUP.equals(evt.getPropertyName())) {
-          Lookup lookup = (Lookup)evt.getNewValue();
-          if (lookup != null) {
-            lookup.addLookupListener(myLookupListener);
-          }
+    LookupManager.getInstance(myProject).addPropertyChangeListener(evt -> {
+      if (LookupManager.PROP_ACTIVE_LOOKUP.equals(evt.getPropertyName())) {
+        Lookup lookup = (Lookup)evt.getNewValue();
+        if (lookup != null) {
+          lookup.addLookupListener(myLookupListener);
         }
       }
     }, this);
@@ -134,7 +129,7 @@ public class TemplateState implements Disposable {
     }
     myDocument.addDocumentListener(myEditorDocumentListener, this);
     myProject.getMessageBus().connect(this).subscribe(CommandListener.TOPIC, new CommandListener() {
-      boolean started = false;
+      boolean started;
 
       @Override
       public void commandStarted(@NotNull CommandEvent event) {
@@ -335,7 +330,7 @@ public class TemplateState implements Disposable {
   }
 
   public void start(@NotNull TemplateImpl template,
-                    @Nullable final PairProcessor<String, String> processor,
+                    @Nullable final PairProcessor<? super String, ? super String> processor,
                     @Nullable Map<String, String> predefinedVarValues) {
     LOG.assertTrue(!myStarted, "Already started");
     myStarted = true;
@@ -397,7 +392,8 @@ public class TemplateState implements Disposable {
     }
   }
 
-  private static TemplateImpl substituteTemplate(final PsiFile file, int caretOffset, TemplateImpl template) {
+  @NotNull
+  private static TemplateImpl substituteTemplate(@NotNull PsiFile file, int caretOffset, @NotNull TemplateImpl template) {
     for (TemplateSubstitutor substitutor : Extensions.getExtensions(TemplateSubstitutor.EP_NAME)) {
       final TemplateImpl substituted = substitutor.substituteTemplate(file, caretOffset, template);
       if (substituted != null) {
@@ -616,7 +612,7 @@ public class TemplateState implements Disposable {
   }
 
   @NotNull
-  List<TemplateExpressionLookupElement> getCurrentExpressionLookupItems() {
+  private List<TemplateExpressionLookupElement> getCurrentExpressionLookupItems() {
     LookupElement[] elements = null;
     try {
       elements = getCurrentExpression().calculateLookupItems(getCurrentExpressionContext());
@@ -639,7 +635,8 @@ public class TemplateState implements Disposable {
     return createExpressionContext(mySegments.getSegmentStart(segmentNumber));
   }
 
-  Expression getCurrentExpression() {
+  @NotNull
+  private Expression getCurrentExpression() {
     return myTemplate.getExpressionAt(myCurrentVariableNumber);
   }
 
@@ -1117,9 +1114,6 @@ public class TemplateState implements Disposable {
 
   private boolean checkIfTabStop(int currentVariableNumber) {
     Expression expression = myTemplate.getExpressionAt(currentVariableNumber);
-    if (expression == null) {
-      return false;
-    }
     if (myCurrentVariableNumber == -1) {
       if (myTemplate.skipOnStart(currentVariableNumber)) return false;
     }

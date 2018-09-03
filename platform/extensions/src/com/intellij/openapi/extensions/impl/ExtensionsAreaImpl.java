@@ -273,6 +273,13 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     }
   }
 
+  @Override
+  public void removeAvailabilityListener(@NotNull String extensionPointName, @NotNull ExtensionPointAvailabilityListener listener) {
+    synchronized (myAvailabilityListeners) {
+      myAvailabilityListeners.remove(extensionPointName, listener);
+    }
+  }
+
   private boolean hasAvailabilityListener(@NotNull String extensionPointName, @NotNull ExtensionPointAvailabilityListener listener) {
     Collection<ExtensionPointAvailabilityListener> listeners = myAvailabilityListeners.get(extensionPointName);
     return ContainerUtil.containsIdentity(listeners, listener);

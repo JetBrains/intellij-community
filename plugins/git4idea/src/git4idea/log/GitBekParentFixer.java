@@ -15,6 +15,7 @@
  */
 package git4idea.log;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -42,7 +43,7 @@ class GitBekParentFixer {
 
   @NotNull
   static GitBekParentFixer prepare(@NotNull VirtualFile root, @NotNull GitLogProvider provider) throws VcsException {
-    if (!BekUtil.isBekEnabled()) {
+    if (!BekUtil.isBekEnabled() || !Registry.is("git.log.fix.merge.commits.parents.order")) {
       return new GitBekParentFixer(Collections.emptySet());
     }
     return new GitBekParentFixer(getIncorrectCommits(provider, root));

@@ -18,8 +18,10 @@ package com.intellij.spellchecker.generator;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.refactoring.NamesValidator;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -35,7 +37,6 @@ import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.spellchecker.inspections.Splitter;
 import com.intellij.spellchecker.tokenizer.TokenConsumer;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -73,22 +74,25 @@ public abstract class SpellCheckerDictionaryGenerator {
   public void generate() {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+      progressIndicator.setIndeterminate(false);
       // let's do result a bit more predictable
+      final List<String> dictionaries = new ArrayList<>(myDict2FolderMap.keySet());
 
       // ruby dictionary
       generate(myDefaultDictName, progressIndicator);
+      progressIndicator.setFraction(1. / (dictionaries.size() + 1));
 
       // other gem-related dictionaries in alphabet order
-      final List<String> dictionaries = new ArrayList<>(myDict2FolderMap.keySet());
       Collections.sort(dictionaries);
-
-      for (String dict : dictionaries) {
+      for (int i = 0; i < dictionaries.size(); i++) {
+        String dict = dictionaries.get(i);
         if (myDefaultDictName.equals(dict)) {
           continue;
         }
         generate(dict, progressIndicator);
+        progressIndicator.setFraction(i / (dictionaries.size() + 1.));
       }
-    }, "Generating Dictionaries", false, myProject);
+    }, "Generating Dictionaries", true, myProject);
   }
 
   private void generate(@NotNull String dict, ProgressIndicator progressIndicator) {
@@ -99,12 +103,15 @@ public abstract class SpellCheckerDictionaryGenerator {
   private void generateDictionary(final Project project, final Collection<VirtualFile> folderPaths, final String outFile,
                                   final ProgressIndicator progressIndicator) {
     final HashSet<String> seenNames = new HashSet<>();
+
     // Collect stuff
-    for (VirtualFile folder : folderPaths) {
-      progressIndicator.setText2("Scanning folder: " + folder.getPath());
-      final PsiManager manager = PsiManager.getInstance(project);
-      processFolder(seenNames, manager, folder);
-    }
+    ApplicationManager.getApplication().runReadAction(() -> {
+      for (VirtualFile folder : folderPaths) {
+        progressIndicator.setText2("Scanning folder: " + folder.getPath());
+        final PsiManager manager = PsiManager.getInstance(project);
+        processFolder(seenNames, manager, folder);
+      }
+    });
 
     if (seenNames.isEmpty()) {
       LOG.info("  No new words was found.");
@@ -141,6 +148,7 @@ public abstract class SpellCheckerDictionaryGenerator {
     VfsUtilCore.visitChildrenRecursively(folder, new VirtualFileVisitor() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
+        ProgressIndicatorProvider.checkCanceled();
         if (myExcludedFolders.contains(file)) {
           return false;
         }
@@ -157,7 +165,7 @@ public abstract class SpellCheckerDictionaryGenerator {
 
   protected abstract void processFile(PsiFile file, HashSet<String> seenNames);
 
-  protected void process(final PsiElement element, @NotNull final HashSet<String> seenNames) {
+  protected void process(@NotNull final PsiElement element, @NotNull final HashSet<String> seenNames) {
     final int endOffset = element.getTextRange().getEndOffset();
 
     // collect leafs  (spell checker inspection works with leafs)
@@ -193,7 +201,7 @@ public abstract class SpellCheckerDictionaryGenerator {
   }
 
   protected void addSeenWord(HashSet<String> seenNames, String word, Language language) {
-    final String lowerWord = word.toLowerCase();
+    final String lowerWord = word.toLowerCase(Locale.US);
     if (globalSeenNames.contains(lowerWord)) {
       return;
     }

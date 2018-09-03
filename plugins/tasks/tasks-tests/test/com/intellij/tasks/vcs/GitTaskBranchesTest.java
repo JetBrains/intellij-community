@@ -16,6 +16,7 @@
 package com.intellij.tasks.vcs;
 
 import com.intellij.dvcs.repo.Repository;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import git4idea.branch.GitBranchesCollection;
 import git4idea.config.GitVcsSettings;
@@ -50,10 +51,15 @@ public class GitTaskBranchesTest extends TaskBranchesTest {
   @NotNull
   @Override
   protected Repository initRepository(@NotNull String name) {
+    return createRepository(name, getProject());
+  }
+
+  @NotNull
+  public static Repository createRepository(@NotNull String name, Project project) {
     String tempDirectory = FileUtil.getTempDirectory();
     String root = tempDirectory + "/" + name;
     assertTrue(new File(root).mkdirs());
-    GitRepository repository = GitTestUtil.createRepository(getProject(), root);
+    GitRepository repository = GitTestUtil.createRepository(project, root);
     GitBranchesCollection branches = repository.getBranches();
     assertEquals(1, branches.getLocalBranches().size());
     return repository;

@@ -19,8 +19,6 @@ open class GuiTestSuiteRunner(private val suiteClass: Class<*>, builder: RunnerB
   //IDE type to run suite tests with
   var isFirstStart: Boolean = true
 
-  private var guiTestLocalRunner: GuiTestLocalRunner? = null
-
   protected val myIde: Ide = getIdeFromAnnotation(suiteClass)
   protected val UNDEFINED_FIRST_CLASS = "undefined"
   protected val myFirstStartClassName: String by lazy {
@@ -62,19 +60,12 @@ open class GuiTestSuiteRunner(private val suiteClass: Class<*>, builder: RunnerB
     return GuiTestLocalRunner(testClass, suiteClass, myIde)
   }
 
-  private fun getGuiTestLocalRunner(testClass:Class<*>, suiteClass:Class<*>, myIde: Ide): GuiTestLocalRunner {
-    if (guiTestLocalRunner == null)
-      guiTestLocalRunner = createGuiTestLocalRunner(testClass, suiteClass, myIde)
-
-    return guiTestLocalRunner!!
-  }
-
   override fun runChild(runner: Runner, notifier: RunNotifier?) {
     try {
       //let's start IDE to complete installation, import configs and etc before running tests
       if (isFirstStart) firstStart()
       val testClass = runner.description.testClass
-      val guiTestLocalRunner = getGuiTestLocalRunner(testClass, suiteClass, myIde)
+      val guiTestLocalRunner = createGuiTestLocalRunner(testClass, suiteClass, myIde)
       super.runChild(guiTestLocalRunner, notifier)
     }
     catch (e: Exception) {

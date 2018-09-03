@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -31,8 +32,9 @@ import java.awt.*;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
-public class ThemeColorAnnotator implements Annotator {
+public class ThemeColorAnnotator implements Annotator, DumbAware {
   private static final Pattern HEX_COLOR_PATTERN = Pattern.compile("^#([A-Fa-f0-9]{6})$");
+  private static final ColorLineMarkerProvider COLOR_LINE_MARKER_PROVIDER = new ColorLineMarkerProvider();
 
 
   @Override
@@ -45,15 +47,15 @@ public class ThemeColorAnnotator implements Annotator {
   }
 
   private static boolean isColorLineMarkerProviderEnabled() {
-    return LineMarkerSettings.getSettings().isEnabled(new ColorLineMarkerProvider());
+    return LineMarkerSettings.getSettings().isEnabled(COLOR_LINE_MARKER_PROVIDER);
   }
 
   private static boolean isTargetElement(@NotNull PsiElement element) {
     if (!(element instanceof JsonStringLiteral)) return false;
+    if (!ThemeJsonSchemaProviderFactory.isAllowedFileName(element.getContainingFile().getName())) return false;
 
     String text = ((JsonStringLiteral)element).getValue();
-    if (StringUtil.isEmpty(text)) return false;
-    if (!text.startsWith("#")) return false;
+    if (!StringUtil.startsWithChar(text, '#')) return false;
     if (text.length() != 7) return false; // '#FFFFFF'
     if (!HEX_COLOR_PATTERN.matcher(text).matches()) return false;
 

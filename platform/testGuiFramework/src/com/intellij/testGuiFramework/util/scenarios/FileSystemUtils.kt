@@ -27,6 +27,11 @@ fun FileSystemUtils.checkFileExists(filePath: Path) {
   assert(filePath.toFile().exists()) { "Can't find a file `$filePath`" }
 }
 
+fun FileSystemUtils.assertFileNotEmpty(filePath: Path) {
+  testCase.logTestStep("Going to check whether file `$filePath` is not empty")
+  assert(filePath.toFile().length() > 0) { "File `$filePath` is empty" }
+}
+
 fun FileSystemUtils.checkFileContainsLine(filePath: Path, line: String) {
   testCase.logTestStep("Going to check whether ${filePath.fileName} contains line `$line`")
   assert(Files.readAllLines(filePath).contains(line)) { "Line `$line` not found" }

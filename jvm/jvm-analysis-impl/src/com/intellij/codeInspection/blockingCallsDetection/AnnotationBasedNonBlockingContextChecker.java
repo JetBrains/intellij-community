@@ -21,7 +21,7 @@ public class AnnotationBasedNonBlockingContextChecker implements NonBlockingCont
   }
 
   @Override
-  public boolean isActive(@NotNull PsiFile file) {
+  public boolean isApplicable(@NotNull PsiFile file) {
     if (myNonBlockingAnnotations.isEmpty()) return false;
     PsiClass annotationClass = JavaPsiFacade.getInstance(file.getProject())
       .findClass(BlockingMethodInNonBlockingContextInspection.DEFAULT_NONBLOCKING_ANNOTATION, file.getResolveScope());

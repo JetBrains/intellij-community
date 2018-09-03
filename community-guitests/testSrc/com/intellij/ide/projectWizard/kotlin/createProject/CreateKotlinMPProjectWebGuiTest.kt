@@ -33,7 +33,8 @@ class CreateKotlinMPProjectWebGuiTest : KotlinGuiTestCase() {
     if (!isIdeFrameRun()) return
     createKotlinMPProjectWeb(projectPath = projectFolder)
 
-    waitAMoment(extraTimeOut)
+    waitAMoment()
+    waitForGradleReimport(projectName, waitForProject = false)
     editSettingsGradle()
     editBuildGradle(
       kotlinVersion = kotlinVersion,
@@ -41,7 +42,7 @@ class CreateKotlinMPProjectWebGuiTest : KotlinGuiTestCase() {
     )
 
     gradleReimport()
-    waitForGradleReimport(projectName)
+    waitForGradleReimport(projectName, waitForProject = true)
     waitAMoment()
 
     val expectedJars =

@@ -347,7 +347,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
         float arc = COMPONENT_ARC.getFloat();
 
         Object op = comboBox.getClientProperty("JComponent.outline");
-        if (op != null) {
+        if (comboBox.isEnabled() && op != null) {
           paintOutlineBorder(g2, r.width, r.height, arc, true, hasFocus, Outline.valueOf(op.toString()));
         } else {
           if (hasFocus) {

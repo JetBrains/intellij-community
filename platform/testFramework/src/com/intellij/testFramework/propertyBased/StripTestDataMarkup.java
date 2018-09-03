@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class StripTestDataMarkup extends ActionOnFile {
 
-  public StripTestDataMarkup(PsiFile file) {
+  public StripTestDataMarkup(@NotNull PsiFile file) {
     super(file);
   }
 

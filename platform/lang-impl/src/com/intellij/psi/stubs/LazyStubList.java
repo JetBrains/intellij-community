@@ -54,7 +54,7 @@ class LazyStubList extends StubList {
     if (stub != null) return stub;
 
     if (myStubs.compareAndSet(index, null, instantiateStub(index))) {
-      if (myInstantiated.incrementAndGet() == mySize) {
+      if (myInstantiated.incrementAndGet() == myStubs.length()) {
         myData = null; // free some memory
       }
     }

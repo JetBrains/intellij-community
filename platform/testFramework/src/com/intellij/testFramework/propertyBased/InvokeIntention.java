@@ -55,7 +55,7 @@ public class InvokeIntention extends ActionOnFile {
   private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.propertyBased.InvokeIntention");
   private final IntentionPolicy myPolicy;
 
-  public InvokeIntention(PsiFile file, IntentionPolicy policy) {
+  public InvokeIntention(@NotNull PsiFile file, @NotNull IntentionPolicy policy) {
     super(file);
     myPolicy = policy;
   }
@@ -140,7 +140,7 @@ public class InvokeIntention extends ActionOnFile {
       PsiTestUtil.checkPsiStructureWithCommit(getFile(), PsiTestUtil::checkStubsMatchText);
 
       if (!mayBreakCode && !hasErrors) {
-        checkNoNewErrors(project, editor, intentionString);
+        checkNoNewErrors(project, editor, intentionString, myPolicy);
       }
 
       if (checkComments) {
@@ -255,8 +255,8 @@ public class InvokeIntention extends ActionOnFile {
                       .collect(Collectors.toList());
   }
 
-  private static void checkNoNewErrors(Project project, Editor editor, String intentionString) {
-    List<HighlightInfo> errors = highlightErrors(project, editor);
+  private static void checkNoNewErrors(Project project, Editor editor, String intentionString, IntentionPolicy policy) {
+    List<HighlightInfo> errors = ContainerUtil.filter(highlightErrors(project, editor), info -> policy.shouldTolerateIntroducedError(info));
     if (!errors.isEmpty()) {
       throw new AssertionError("New highlighting errors introduced after invoking " + intentionString +
                                "\nIf this is correct, add it to IntentionPolicy#mayBreakCode." +

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -56,7 +42,6 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
     super(configurationType);
   }
 
-
   @Contract("null->false")
   protected boolean isTestClass(PsiClass psiClass) {
     if (psiClass != null) {
@@ -86,7 +71,7 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
   protected boolean isApplicableTestType(String type, ConfigurationContext context) {
     return true;
   }
-  
+
   @Override
   public boolean isConfigurationFromContext(T configuration, ConfigurationContext context) {
     if (isMultipleElementsSelected(context)) {
@@ -102,9 +87,7 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
       return false;
     }
     final PsiElement element = location.getPsiElement();
-
-    RunnerAndConfigurationSettings template =
-      RunManager.getInstance(location.getProject()).getConfigurationTemplate(getConfigurationFactory());
+    RunnerAndConfigurationSettings template = context.getRunManager().getConfigurationTemplate(getConfigurationFactory());
     final Module predefinedModule = ((T)template.getConfiguration()).getConfigurationModule().getModule();
     final String vmParameters =
       predefinedConfiguration instanceof CommonJavaRunConfigurationParameters

@@ -69,14 +69,14 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
       if (singleBranchName == null) {
         selectBranchAndPerformAction(ui, e, selectedBranch -> {
           ui.getFilterUi().setFilter(VcsLogBranchFilterImpl.fromBranch(selectedBranch));
-          dc.highlightInBackground(selectedBranch);
+          dc.startTask(selectedBranch);
         }, getGitRoots(project, ui));
         return;
       }
-      dc.highlightInBackground(singleBranchName);
+      dc.startTask(singleBranchName);
     }
     else {
-      dc.stopAndUnhighlight();
+      dc.stopTaskAndUnhighlight();
     }
   }
 
