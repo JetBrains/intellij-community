@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public abstract class HierarchyNodeDescriptor extends SmartElementDescriptor {
+  @NotNull
   protected CompositeAppearance myHighlightedText;
   private Object[] myCachedChildren;
   protected final boolean myIsBase;
@@ -81,6 +82,7 @@ public abstract class HierarchyNodeDescriptor extends SmartElementDescriptor {
     return true;
   }
 
+  @NotNull
   public final CompositeAppearance getHighlightedText() {
     return myHighlightedText;
   }
