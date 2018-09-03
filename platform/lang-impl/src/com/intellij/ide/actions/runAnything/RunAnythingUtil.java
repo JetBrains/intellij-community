@@ -52,6 +52,7 @@ public class RunAnythingUtil {
   private static final Key<Collection<Pair<String, String>>> RUN_ANYTHING_WRAPPED_COMMANDS = Key.create("RUN_ANYTHING_WRAPPED_COMMANDS");
   private static final Border RENDERER_TITLE_BORDER = JBUI.Borders.emptyTop(3);
   private static final String SHIFT_HOLD_USAGE = RunAnythingAction.RUN_ANYTHING + " - " + "SHIFT_HOLD";
+  private static final String TOOLTIP_TEXT = IdeBundle.message("run.anything.action.tooltip.text", getShortcut());
 
   static Font getTitleFont() {
     return UIUtil.getLabelFont().deriveFont(UIUtil.getFontSize(UIUtil.FontSize.SMALL));
@@ -91,7 +92,7 @@ public class RunAnythingUtil {
   }
 
   static void initTooltip(JComponent label) {
-    label.setToolTipText(IdeBundle.message("run.anything.action.tooltip.text", getShortcut()));
+    label.setToolTipText(TOOLTIP_TEXT);
   }
 
   @Nullable
