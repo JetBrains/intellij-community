@@ -29,6 +29,9 @@ internal class GroovyFileImportsImpl(
   override val staticStarImports: Collection<StaticStarImport> get() = getImports(ImportKind.StaticStar)
   override val allNamedImports: Collection<GroovyNamedImport> = flatten(regularImports, staticImports)
   private val allStarImports = flatten(starImports, staticStarImports)
+  private val allNamedImportsMap by lazy { allNamedImports.groupBy { it.name } }
+
+  override fun getImportsByName(name: String): Collection<GroovyNamedImport> = allNamedImportsMap[name] ?: emptyList()
 
   private fun ResolveState.putImport(import: GroovyImport): ResolveState {
     val state = put(importKey, import)

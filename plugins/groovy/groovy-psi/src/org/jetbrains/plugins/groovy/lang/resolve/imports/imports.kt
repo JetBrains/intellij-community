@@ -9,6 +9,7 @@ import com.intellij.psi.util.CachedValuesManager
 import gnu.trove.THashSet
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement
 import org.jetbrains.plugins.groovy.lang.psi.util.ErrorUtil
 import org.jetbrains.plugins.groovy.lang.resolve.imports.impl.GroovyImportCollector
@@ -45,3 +46,25 @@ private fun GroovyFile.doGetImports(): GroovyFileImports {
 }
 
 val GroovyFile.validImportStatements: List<GrImportStatement> get() = importStatements.filterNot(ErrorUtil::containsError)
+
+private fun findAliasedImports(place: GroovyPsiElement, shortName: String): List<GroovyNamedImport> {
+  val file = place.containingFile as? GroovyFileBase ?: return emptyList()
+  val imports = file.imports.getImportsByName(shortName)
+  return imports.filter {
+    it.isAliased
+  }
+}
+
+/**
+ * @return fully qualified names imported via given alias
+ */
+fun getAliasedFullyQualifiedNames(place: GroovyPsiElement, shortName: String): Set<String> {
+  return findAliasedImports(place, shortName).mapTo(HashSet()) { it.fullyQualifiedName }
+}
+
+/**
+ * @return short names imported via given alias
+ */
+fun getAliasedShortNames(place: GroovyPsiElement, shortName: String): Set<String> {
+  return findAliasedImports(place, shortName).mapTo(HashSet()) { it.shortName }
+}
