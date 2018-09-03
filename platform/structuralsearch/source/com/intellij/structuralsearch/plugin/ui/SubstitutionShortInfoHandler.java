@@ -91,7 +91,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
       myCurrentVariableCallback.accept(Configuration.CONTEXT_VAR_NAME);
     }
 
-    if (!text.isEmpty()) {
+    if (variableName != null) {
       showTooltip(editor, start, end + 1, text, variableName);
     }
   }
@@ -127,47 +127,53 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
 
     final StringBuilder buf = new StringBuilder();
 
+    final boolean oldDialog = !Registry.is("ssr.use.new.search.dialog");
     if (namedScriptableDefinition instanceof MatchVariableConstraint) {
       final MatchVariableConstraint constraint = (MatchVariableConstraint)namedScriptableDefinition;
-      if (constraint.isPartOfSearchResults() && !Registry.is("ssr.use.new.search.dialog")) {
+      if (constraint.isPartOfSearchResults() && oldDialog) {
         append(buf, SSRBundle.message("target.tooltip.message"));
       }
       if (constraint.getRegExp() != null && !constraint.getRegExp().isEmpty()) {
-        append(buf, SSRBundle.message("text.tooltip.message", constraint.isInvertRegExp() ? 1 : 0, constraint.getRegExp(),
-               constraint.isWholeWordsOnly() ? 1 : 0, constraint.isWithinHierarchy() ? 1 : 0));
+        append(buf, SSRBundle.message("text.tooltip.message",
+                                      constraint.isInvertRegExp() ? 1 : 0,
+                                      StringUtil.escapeXml(constraint.getRegExp()),
+                                      constraint.isWholeWordsOnly() ? 1 : 0,
+                                      constraint.isWithinHierarchy() ? 1 : 0));
       }
       else if (constraint.isWithinHierarchy()) {
         append(buf, SSRBundle.message("hierarchy.tooltip.message"));
       }
       if (!StringUtil.isEmpty(constraint.getReferenceConstraint())) {
-        final String text = StringUtil.unquoteString(constraint.getReferenceConstraint());
+        final String text = StringUtil.escapeXml(StringUtil.unquoteString(constraint.getReferenceConstraint()));
         append(buf, SSRBundle.message("reference.target.tooltip.message", constraint.isInvertReference() ? 1 : 0, text));
       }
 
       if (constraint.getNameOfExprType() != null && !constraint.getNameOfExprType().isEmpty()) {
         append(buf, SSRBundle.message("exprtype.tooltip.message",
-                                     constraint.isInvertExprType() ? 1 : 0,
-                                     constraint.getNameOfExprType(),
-                                     constraint.isExprTypeWithinHierarchy() ? 1 : 0));
+                                      constraint.isInvertExprType() ? 1 : 0,
+                                      StringUtil.escapeXml(constraint.getNameOfExprType()),
+                                      constraint.isExprTypeWithinHierarchy() ? 1 : 0));
       }
 
       if (constraint.getNameOfFormalArgType() != null && !constraint.getNameOfFormalArgType().isEmpty()) {
         append(buf, SSRBundle.message("expected.type.tooltip.message",
                                       constraint.isInvertFormalType() ? 1 : 0,
-                                      constraint.getNameOfFormalArgType(),
+                                      StringUtil.escapeXml(constraint.getNameOfFormalArgType()),
                                       constraint.isFormalArgTypeWithinHierarchy() ? 1 : 0));
       }
 
       if (StringUtil.isNotEmpty(constraint.getWithinConstraint())) {
-        final String text = StringUtil.unquoteString(constraint.getWithinConstraint());
+        final String text = StringUtil.escapeXml(StringUtil.unquoteString(constraint.getWithinConstraint()));
         append(buf, SSRBundle.message("within.constraints.tooltip.message", constraint.isInvertWithinConstraint() ? 1 : 0, text));
       }
 
       final String name = constraint.getName();
       if (!Configuration.CONTEXT_VAR_NAME.equals(name)) {
         final int maxCount = constraint.getMaxCount();
-        append(buf, SSRBundle.message("min.occurs.tooltip.message", constraint.getMinCount(),
-                                      (maxCount == Integer.MAX_VALUE) ? "∞" : maxCount));
+        final int minCount = constraint.getMinCount();
+        if (oldDialog || minCount != 1 || maxCount != 1) {
+          append(buf, SSRBundle.message("min.occurs.tooltip.message", minCount, (maxCount == Integer.MAX_VALUE) ? "∞" : maxCount));
+        }
       }
     }
 
@@ -177,7 +183,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
       append(buf, str);
     }
 
-    if (buf.length() == 0) {
+    if (buf.length() == 0 && oldDialog) {
       return SSRBundle.message("no.constraints.specified.tooltip.message");
     }
     return buf.toString();
@@ -210,10 +216,10 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
       .setCalloutShift(editor.getLineHeight() / 2 - 1);
     final String dressedText;
     if (Registry.is("ssr.use.new.search.dialog")) {
-      dressedText = StringUtil.escapeXml(text) + " <a href=\"#ssr_edit_filters/" + variableName + "\">Edit filters</a>";
+      dressedText = text + " <a href=\"#ssr_edit_filters/" + variableName + "\">Edit filters</a>";
     }
     else {
-      dressedText = StringUtil.escapeXml(text);
+      dressedText = text;
     }
     TooltipController.getInstance().showTooltip(editor, p, dressedText, visibleArea.width, false, SS_INFO_TOOLTIP_GROUP, hint);
   }
