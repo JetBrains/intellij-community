@@ -31,6 +31,9 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   private final Kind myKind;
 
   private volatile List<T> myExtensionsCache;
+  // https://bugs.openjdk.java.net/browse/JDK-6260652
+  // https://youtrack.jetbrains.com/issue/IDEA-198172
+  private volatile T[] myExtensionsCacheAsArray;
 
   private final ExtensionsAreaImpl myOwner;
   private final PluginDescriptor myDescriptor;
@@ -176,6 +179,7 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
             result = Collections.emptyList();
           }
           else {
+            myExtensionsCacheAsArray = array;
             result = Collections.unmodifiableList(Arrays.asList(array));
           }
           myExtensionsCache = result;
@@ -194,8 +198,7 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       return (T[])Array.newInstance(getExtensionClass(), 0);
     }
     else {
-      //noinspection unchecked
-      return (T[])list.toArray();
+      return myExtensionsCacheAsArray.clone();
     }
   }
 
@@ -294,8 +297,8 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   @Override
   @Nullable
   public T getExtension() {
-    T[] extensions = getExtensions();
-    return extensions.length == 0 ? null : extensions[0];
+    List<T> extensions = getExtensionList();
+    return extensions.isEmpty() ? null : extensions.get(0);
   }
 
   @Override
@@ -442,7 +445,7 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   public synchronized void reset() {
     myOwner.removeAllComponents(myExtensionAdapters);
     myExtensionAdapters = Collections.emptySet();
-    for (T extension : getExtensions()) {
+    for (T extension : getExtensionList()) {
       unregisterExtension(extension);
     }
   }
@@ -482,6 +485,7 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
   private void clearCache() {
     myExtensionsCache = null;
+    myExtensionsCacheAsArray = null;
   }
 
   private void unregisterExtensionAdapter(@NotNull ExtensionComponentAdapter adapter) {
