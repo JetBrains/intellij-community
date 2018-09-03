@@ -256,7 +256,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
             if ((mySearchField.hasFocus() && StringUtil.isEmpty(mySearchField.getSelectedText())) || myTable.hasFocus()) {
               int row = myTable.getSelectedRow();
               if (row != -1) {
-                Pair pair = (Pair)data[row][0];
+                Pair pair = (Pair)myTable.getModel().getValueAt(row, 0);
                 if (pair.second instanceof Color) {
                   return new TextCopyProvider() {
                     @Override
