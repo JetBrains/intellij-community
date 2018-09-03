@@ -223,15 +223,11 @@ public class ColorUtil {
   }
 
   /**
-   * Checks whether color is dark or not based on perceptional luminosity
-   * http://stackoverflow.com/questions/596216/formula-to-determine-brightness-of-rgb-color
-   *
    * @param c color to check
    * @return dark or not
    */
   public static boolean isDark(@NotNull Color c) {
-    // based on perceptional luminosity, see
-    return 1 - (0.299 * c.getRed() + 0.587 * c.getGreen() + 0.114 * c.getBlue()) / 255 >= 0.5;
+    return c.getRed()*0.299 + c.getGreen()*0.587 + c.getBlue()*0.114 < 186;
   }
 
   @NotNull
