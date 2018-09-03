@@ -745,6 +745,22 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
+  public void testFStringBackslashInsteadOfExpression() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringBackslashAfterExpression() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringBackslashBeforeExpression() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringBackslashInsideMultilineExpression() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
   // PY-19036
   public void testAwaitInNonAsyncNestedFunction() {
     doTest(LanguageLevel.PYTHON35);

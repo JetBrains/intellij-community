@@ -23,6 +23,8 @@ PyFile:FStringTerminatedByQuoteOfNestedStringLiteralInFormatPart.py
                     PsiElement(Py:FSTRING_FRAGMENT_START)('{')
                     PsiErrorElement:expression expected
                       <empty list>
+                    PsiErrorElement:type conversion, : or } expected
+                      <empty list>
               PsiErrorElement:Expected "
                 <empty list>
         PsiElement(Py:FSTRING_END)(''')

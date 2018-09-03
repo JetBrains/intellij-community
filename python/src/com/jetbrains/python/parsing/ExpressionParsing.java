@@ -151,11 +151,31 @@ public class ExpressionParsing extends Parsing {
   }
 
   private void parseFStringFragment() {
-    PsiBuilder builder = myContext.getBuilder();
+    final PsiBuilder builder = myContext.getBuilder();
     if (atToken(PyTokenTypes.FSTRING_FRAGMENT_START)) {
       final PsiBuilder.Marker marker = builder.mark();
       nextToken();
-      myContext.getExpressionParser().parseExpression();
+      PsiBuilder.Marker recoveryMarker = builder.mark();
+      final boolean parsedExpression = myContext.getExpressionParser().parseExpressionOptional();
+      if (parsedExpression) {
+        recoveryMarker.drop();
+        recoveryMarker = builder.mark();
+      }
+      boolean recovery = !parsedExpression;
+      while (!builder.eof() && !atAnyOfTokens(PyTokenTypes.FSTRING_FRAGMENT_TYPE_CONVERSION,
+                                              PyTokenTypes.FSTRING_FRAGMENT_FORMAT_START,
+                                              PyTokenTypes.FSTRING_FRAGMENT_END,
+                                              PyTokenTypes.FSTRING_END,
+                                              PyTokenTypes.STATEMENT_BREAK)) {
+        nextToken();
+        recovery = true;
+      }
+      if (recovery) {
+        recoveryMarker.error(parsedExpression ? "unexpected expression part" : "expression expected");
+      }
+      else {
+        recoveryMarker.drop();
+      }
       final boolean hasTypeConversion = matchToken(PyTokenTypes.FSTRING_FRAGMENT_TYPE_CONVERSION);
       final boolean hasFormatPart = atToken(PyTokenTypes.FSTRING_FRAGMENT_FORMAT_START);
       if (hasFormatPart) {
