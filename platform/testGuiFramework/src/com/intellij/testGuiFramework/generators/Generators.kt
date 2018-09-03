@@ -58,6 +58,7 @@ import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.InplaceButton
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBList
+import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.components.labels.ActionLink
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.messages.SheetController
@@ -434,6 +435,25 @@ class IdeFrameGenerator : GlobalContextCodeGenerator<JFrame>() {
 
   override fun generate(cmp: JFrame): String = "ideFrame {"
 }
+
+class TabbedPaneGenerator : ComponentCodeGenerator<Component> {
+  override fun priority(): Int = 2
+
+  override fun generate(cmp: Component, me: MouseEvent, cp: Point): String {
+    val tabbedPane = when {
+      cmp.parent.parent is JBTabbedPane -> cmp.parent.parent as JTabbedPane
+      else -> cmp.parent as JTabbedPane
+    }
+    val selectedTabIndex = tabbedPane.indexAtLocation(me.locationOnScreen.x - tabbedPane.locationOnScreen.x,
+                                                      me.locationOnScreen.y - tabbedPane.locationOnScreen.y)
+    val title = tabbedPane.getTitleAt(selectedTabIndex)
+
+    return """tab("${title}").selectTab()"""
+  }
+
+  override fun accept(cmp: Component): Boolean = cmp.parent.parent is JBTabbedPane || cmp.parent is JBTabbedPane
+}
+
 
 //**********LOCAL CONTEXT GENERATORS**********
 
