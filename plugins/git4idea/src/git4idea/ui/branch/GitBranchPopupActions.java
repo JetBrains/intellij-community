@@ -98,10 +98,12 @@ class GitBranchPopupActions {
 
     List<LocalBranchActions> localBranchActions = StreamEx.of(branchesCollection.getLocalBranches())
       .filter(branch -> !branch.equals(currentBranch))
-      .map(GitBranch::getName)
-      .sorted(StringUtil::naturalCompare)
-      .map(localName -> new LocalBranchActions(myProject, repositoryList, localName, myRepository))
-      .sorted(FAVORITE_BRANCH_COMPARATOR)
+      .map(branch -> new LocalBranchActions(myProject, repositoryList, branch.getName(), myRepository))
+      .sorted((b1, b2) -> {
+        int delta = FAVORITE_BRANCH_COMPARATOR.compare(b1, b2);
+        if (delta != 0) return delta;
+        return StringUtil.naturalCompare(b1.myBranchName, b2.myBranchName);
+      })
       .toList();
     int topShownBranches = getNumOfTopShownBranches(localBranchActions);
     if (currentBranch != null) {
