@@ -2,12 +2,11 @@
 from _pydevd_bundle.pydevd_breakpoints import LineBreakpoint
 from _pydevd_bundle.pydevd_constants import dict_iter_items, get_thread_id, PYTHON_SUSPEND
 from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK
-import sys
 from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle.pydevd_frame_utils import FCode
 
-class IpnbLineBreakpoint(LineBreakpoint):
 
+class IpnbLineBreakpoint(LineBreakpoint):
     def __init__(self, file, line, condition, func_name, expression):
         self.file = file
         LineBreakpoint.__init__(self, line, condition, func_name, expression)
@@ -27,16 +26,13 @@ class IpnbLineBreakpoint(LineBreakpoint):
                (self.file, self.line, self.cell_file, self.cell_line, self.update_cell_file)
 
 
-
 def add_line_breakpoint(plugin, pydb, type, file, line, condition, expression, func_name):
-    result = None
     if type == 'ipnb-line':
         breakpoint = IpnbLineBreakpoint(file, line, condition, func_name, expression)
         if not hasattr(pydb, 'ipnb_breakpoints'):
             _init_plugin_breaks(pydb)
-        result = breakpoint, pydb.ipnb_breakpoints
-        return result
-    return result
+        return breakpoint, pydb.ipnb_breakpoints
+    return None
 
 
 def _init_plugin_breaks(pydb):
@@ -93,13 +89,13 @@ def can_not_skip(plugin, pydb, pydb_frame, frame):
 
 def cmd_step_into(plugin, pydb, frame, event, args, stop_info, stop):
     stop = event == "line" or event == "return"
-    return stop, False
+    return stop, stop
 
 
 def cmd_step_over(plugin, pydb, frame, event, args, stop_info, stop):
     stop_frame = stop_info.pydev_step_stop
     stop = stop_frame is frame and (event == "line" or event == "return")
-    return stop, False
+    return stop, stop
 
 
 def stop(plugin, pydb, frame, event, args, stop_info, arg, step_cmd):
@@ -109,10 +105,11 @@ def stop(plugin, pydb, frame, event, args, stop_info, arg, step_cmd):
 def get_breakpoint(plugin, pydb, pydb_frame, frame, event, args):
     filename = frame.f_code.co_filename
     frame_line = frame.f_lineno
-    for file, breakpoints in dict_iter_items(plugin.main_debugger.ipnb_breakpoints):
-        for line, breakpoint in dict_iter_items(breakpoints):
-            if breakpoint.cell_file == filename and breakpoint.cell_line == frame_line:
-                return True, breakpoint, frame, "ipnb-line"
+    if event == "line":
+        for file, breakpoints in dict_iter_items(plugin.main_debugger.ipnb_breakpoints):
+            for line, breakpoint in dict_iter_items(breakpoints):
+                if breakpoint.cell_file == filename and breakpoint.cell_line == frame_line:
+                    return True, breakpoint, frame, "ipnb-line"
     return False
 
 

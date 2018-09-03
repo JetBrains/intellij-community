@@ -307,6 +307,7 @@ def process_net_command(py_db, cmd_id, seq, text):
                     expression = None
 
                 if type == 'python-line':
+                    # TODO: Temporary workaround for testing
                     type = 'ipnb-line'
 
                 if type == 'python-line':
@@ -350,6 +351,10 @@ def process_net_command(py_db, cmd_id, seq, text):
                 #command to remove some breakpoint
                 #text is type\file\tid. Remove from breakpoints dictionary
                 breakpoint_type, file, breakpoint_id = text.split('\t', 2)
+
+                if breakpoint_type == 'python-line':
+                    # TODO: Temporary workaround for testing
+                    breakpoint_type = 'ipnb-line'
 
                 if not IS_PY3K:  # In Python 3, the frame object will have unicode for the file, whereas on python 2 it has a byte-array encoded with the filesystem encoding.
                     file = file.encode(file_system_encoding)
