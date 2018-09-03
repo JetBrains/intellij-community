@@ -98,7 +98,13 @@ public class KeyedExtensionCollector<T, KeyT> {
     Disposer.register(parentDisposable, new Disposable() {
       @Override
       public void dispose() {
-        Extensions.getRootArea().removeAvailabilityListener(epName, myExtensionPointAvailabilityListener);
+        ExtensionsArea area = Extensions.getRootArea();
+        area.removeAvailabilityListener(epName, myExtensionPointAvailabilityListener);
+        if (area.hasExtensionPoint(epName)) {
+          ExtensionPoint point = area.getExtensionPoint(epName);
+          //noinspection unchecked
+          point.removeExtensionPointListener(myListener);
+        }
       }
     });
   }
