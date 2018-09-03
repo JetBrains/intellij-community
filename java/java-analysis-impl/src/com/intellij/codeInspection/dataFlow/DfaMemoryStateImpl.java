@@ -1421,7 +1421,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
             previousCanonical != newCanonical && newCanonical.getDepth() <= previousCanonical.getDepth()) {
           // Do not transfer to deeper qualifier. E.g. if we have two classes like (a, b.c) (a.d, e),
           // and flushing `a`, we do not convert `a.d` to `b.c.d`. Otherwise infinite qualifier explosion is possible.
-          assert convertQualifiers(previousCanonical, newCanonical);
+          boolean successfullyConverted = convertQualifiers(previousCanonical, newCanonical);
+          assert successfullyConverted;
         }
       }
     }
