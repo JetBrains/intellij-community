@@ -18,6 +18,8 @@ PyFile:FStringTerminatedByQuoteOfStringLiteralInFormatPart.py
               PsiElement(Py:FSTRING_FRAGMENT_START)('{')
               PsiErrorElement:expression expected
                 <empty list>
+              PsiErrorElement:type conversion, : or } expected
+                <empty list>
         PsiElement(Py:FSTRING_END)(''')
     PsiErrorElement:End of statement expected
       <empty list>
