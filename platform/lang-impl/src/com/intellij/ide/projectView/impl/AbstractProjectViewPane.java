@@ -288,9 +288,9 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     if (paths == null) return Collections.emptyList();
     final ArrayList<T> result = new ArrayList<>();
     for (TreePath path : paths) {
-      Object userObject = TreeUtil.getUserObject(path.getLastPathComponent());
-      if (userObject != null && ReflectionUtil.isAssignable(nodeClass, userObject.getClass())) {
-        result.add((T)userObject);
+      T userObject = TreeUtil.getLastUserObject(nodeClass, path);
+      if (userObject != null) {
+        result.add(userObject);
       }
     }
     return result;
@@ -334,9 +334,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   public final NodeDescriptor getSelectedDescriptor() {
-    TreePath path = getSelectedPath();
-    Object userObject = path == null ? null : TreeUtil.getUserObject(path.getLastPathComponent());
-    return userObject instanceof NodeDescriptor ? (NodeDescriptor)userObject : null;
+    return TreeUtil.getLastUserObject(NodeDescriptor.class, getSelectedPath());
   }
 
   /**

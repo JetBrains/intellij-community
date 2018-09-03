@@ -543,7 +543,7 @@ public abstract class TodoTreeBuilder implements Disposable {
     Object root = myTree.getModel().getRoot();
     if (root != null) {
       TreeUtil.collectSelectedPaths(myTree, 
-                                    new TreePath(root)).forEach(path -> pathsToSelect.add(TreeUtil.getUserObject(path.getLastPathComponent())));
+                                    new TreePath(root)).forEach(path -> pathsToSelect.add(TreeUtil.getLastUserObject(path)));
     }
     myTree.clearSelection();
     getTodoTreeStructure().validateCache();

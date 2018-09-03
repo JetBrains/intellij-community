@@ -112,16 +112,9 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
 
   @Nullable
   private PackageElement getSelectedPackageElement() {
-    PackageElement result = null;
-    TreePath path = getSelectedPath();
-    if (path != null) {
-      AbstractTreeNode node = TreeUtil.getUserObject(AbstractTreeNode.class, path.getLastPathComponent());
-      if (node != null) {
-        Object selected = node.getValue();
-        result = selected instanceof PackageElement ? (PackageElement)selected : null;
-      }
-    }
-    return result;
+    AbstractTreeNode node = TreeUtil.getLastUserObject(AbstractTreeNode.class, getSelectedPath());
+    Object selected = node == null ? null : node.getValue();
+    return selected instanceof PackageElement ? (PackageElement)selected : null;
   }
 
   @NotNull

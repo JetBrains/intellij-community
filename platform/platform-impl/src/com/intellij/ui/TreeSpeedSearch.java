@@ -31,7 +31,7 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
   private static final Convertor<TreePath, String> TO_STRING = path -> path.getLastPathComponent().toString();
   private final Convertor<? super TreePath, String> myToStringConvertor;
   public static final Convertor<TreePath, String> NODE_DESCRIPTOR_TOSTRING = path -> {
-    NodeDescriptor descriptor = TreeUtil.getUserObject(NodeDescriptor.class, path.getLastPathComponent());
+    NodeDescriptor descriptor = TreeUtil.getLastUserObject(NodeDescriptor.class, path);
     if (descriptor != null) return descriptor.toString();
     return TO_STRING.convert(path);
   };

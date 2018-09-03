@@ -90,7 +90,7 @@ public final class TreeUtil {
   @Nullable
   public static <T> T findObjectInPath(@Nullable TreePath path, @NotNull Class<T> clazz) {
     while (path != null) {
-      T object = getUserObject(clazz, path.getLastPathComponent());
+      T object = getLastUserObject(clazz, path);
       if (object != null) return object;
       path = path.getParentPath();
     }
@@ -992,6 +992,19 @@ public final class TreeUtil {
   public static <T> T getUserObject(@NotNull Class<T> type, @Nullable Object node) {
     node = getUserObject(node);
     return node != null && type.isInstance(node) ? type.cast(node) : null;
+  }
+
+  /**
+   * @return an user object retrieved from the last component of the specified {@code path}
+   */
+  @Nullable
+  public static Object getLastUserObject(@Nullable TreePath path) {
+    return path == null ? null : getUserObject(path.getLastPathComponent());
+  }
+
+  @Nullable
+  public static <T> T getLastUserObject(@NotNull Class<T> type, @Nullable TreePath path) {
+    return path == null ? null : getUserObject(type, path.getLastPathComponent());
   }
 
   @Nullable
