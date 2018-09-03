@@ -259,7 +259,7 @@ class IcsApplicationLoadListener : ApplicationLoadListener {
       val removeOtherXml = repositoryManager.delete("other.xml")
       if (migrateSchemes || migrateKeyMaps || removeOtherXml) {
         // schedule push to avoid merge conflicts
-        application.invokeLater({ icsManager.autoSyncManager.autoSync(force = true) })
+        application.invokeLater { icsManager.autoSyncManager.autoSync(force = true) }
       }
     }
 
