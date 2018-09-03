@@ -14,7 +14,6 @@ import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.execution.impl.NewRunConfigurationPopup;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -124,12 +123,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
           editRunConfiguration();
         }
       })
-      .setEditActionUpdater(new AnActionButtonUpdater() {
-        @Override
-        public boolean isEnabled(@NotNull AnActionEvent e) {
-          return myTable.getSelectedRow() >= 0;
-        }
-      })
+      .setEditActionUpdater(e -> myTable.getSelectedRow() >= 0)
       .disableUpAction().disableDownAction();
 
     final JPanel tasksPanel = myDecorator.createPanel();
@@ -204,13 +198,10 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
       @Override
       public void perform(@NotNull final Project project, @NotNull final Executor executor, @NotNull DataContext context) {
         final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
-        final Condition<ConfigurationType> filter = new Condition<ConfigurationType>() {
-          @Override
-          public boolean value(ConfigurationType configurationType) {
-            ConfigurationFactory factory;
-            return ((factory = runManager.getFactory(configurationType.getId(), null)) != null) &&
-                   ProgramRunner.getRunner(executor.getId(), runManager.getConfigurationTemplate(factory).getConfiguration()) != null;
-          }
+        final Condition<ConfigurationType> filter = configurationType -> {
+          ConfigurationFactory factory;
+          return ((factory = runManager.getFactory(configurationType.getId(), null)) != null) &&
+                 ProgramRunner.getRunner(executor.getId(), runManager.getConfigurationTemplate(factory).getConfiguration()) != null;
         };
         final ListPopup popup = NewRunConfigurationPopup.createAddPopup(ContainerUtil.filter(runManager.getConfigurationFactoriesWithoutUnknown(), filter), "",
                                                                         factory -> ApplicationManager.getApplication().invokeLater(() -> {
