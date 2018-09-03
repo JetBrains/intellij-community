@@ -132,24 +132,20 @@ fun <T : Any> Collection<Promise<T>>.collectResults(ignoreErrors: Boolean = fals
 
   val result = AsyncPromise<List<T>>()
   val latch = AtomicInteger(size)
-  // https://stackoverflow.com/a/6060887
-  val list = if (ignoreErrors) ContainerUtil.createConcurrentList<T>() else ContainerUtil.createConcurrentList<T>(Collections.nCopies(size, null))
+  val list = ContainerUtil.createConcurrentList<T>(Collections.nCopies(size, null))
 
   fun arrive() {
     if (latch.decrementAndGet() == 0) {
+      if (ignoreErrors) {
+        list.removeIf { it == null }
+      }
       result.setResult(list)
     }
   }
 
   for ((i, promise) in this.withIndex()) {
     promise.onSuccess {
-      if (ignoreErrors) {
-        list.add(it)
-      }
-      else {
-        list.set(i, it)
-      }
-
+      list.set(i, it)
       arrive()
     }
     promise.onError {
