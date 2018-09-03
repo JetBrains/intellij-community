@@ -63,6 +63,7 @@ class ExtendedJListCellReader : BasicJListCellReader(), JListCellReader {
   override fun valueAt(@Nonnull list: JList<*>, index: Int): String? {
 
     val element = list.model.getElementAt(index)
+    if(element == null) return null
     val cellRendererComponent = GuiTestUtil.getListCellRendererComponent(list, element, index)
     return getValueWithCellRenderer(cellRendererComponent)
   }
