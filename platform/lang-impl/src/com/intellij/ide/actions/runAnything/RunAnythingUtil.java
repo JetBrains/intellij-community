@@ -91,7 +91,7 @@ public class RunAnythingUtil {
   }
 
   static void initTooltip(JComponent label) {
-    label.setToolTipText("<html><body>Press <b>" + getShortcut() + "</b> to execute any command</body></html>");
+    label.setToolTipText(IdeBundle.message("run.anything.action.tooltip.text", getShortcut()));
   }
 
   @Nullable
