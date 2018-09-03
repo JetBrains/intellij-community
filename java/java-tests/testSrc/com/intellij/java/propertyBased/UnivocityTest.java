@@ -15,7 +15,6 @@
  */
 package com.intellij.java.propertyBased;
 
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiJavaFile;
@@ -29,12 +28,10 @@ import org.jetbrains.jetCheck.IntDistribution;
 import org.jetbrains.jetCheck.PropertyChecker;
 
 import java.io.File;
-import java.util.Calendar;
 import java.util.concurrent.atomic.AtomicLong;
 
 @SkipSlowTestLocally
 public class UnivocityTest extends AbstractApplyAndRevertTestCase {
-
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -42,7 +39,6 @@ public class UnivocityTest extends AbstractApplyAndRevertTestCase {
     MadTestingUtil.enableAllInspections(myProject, myProject);
   }
 
-  @Bombed(user = "ann", month = Calendar.SEPTEMBER, day = 30)
   public void testCompilabilityAfterIntentions() {
     initCompiler();
     PsiModificationTracker tracker = PsiManager.getInstance(myProject).getModificationTracker();
