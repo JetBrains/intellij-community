@@ -1227,6 +1227,7 @@ java_library(
     # do not sort: must match IML order
     exports = [
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/android-extensions-compiler",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/android-lint",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/jps/kotlin-jps-plugin",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/jvm-ide",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-gradle-tooling",
@@ -1235,6 +1236,7 @@ java_library(
     # do not sort: must match IML order
     runtime_deps = [
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/android-extensions-compiler",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/android-lint",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/jps/kotlin-jps-plugin",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/jvm-ide",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-gradle-tooling",

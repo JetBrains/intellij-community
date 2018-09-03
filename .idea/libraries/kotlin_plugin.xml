@@ -6,6 +6,7 @@
       <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kotlin-plugin/Kotlin/lib/android-extensions-compiler.jar!/" />
       <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kotlin-plugin/Kotlin/lib/kotlin-gradle-tooling.jar!/" />
       <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kotlin-plugin/Kotlin/lib/jps/kotlin-jps-plugin.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kotlin-plugin/Kotlin/lib/android-lint.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
