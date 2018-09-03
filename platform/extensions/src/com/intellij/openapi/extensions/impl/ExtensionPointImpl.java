@@ -31,8 +31,9 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   private final Kind myKind;
 
   private volatile List<T> myExtensionsCache;
-  // https://bugs.openjdk.java.net/browse/JDK-6260652
-  // https://youtrack.jetbrains.com/issue/IDEA-198172
+  // Since JDK 9 Arrays.ArrayList.toArray() doesn't return T[] array (https://bugs.openjdk.java.net/browse/JDK-6260652),
+  // but instead returns Object[], so, we cannot use toArray() anymore.
+  // Only array.clone should be used because of performance reasons (https://youtrack.jetbrains.com/issue/IDEA-198172).
   private volatile T[] myExtensionsCacheAsArray;
 
   private final ExtensionsAreaImpl myOwner;
