@@ -775,6 +775,9 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
       return type.configurationFactories.firstOrNull()
     }
 
+    if (type is SimpleConfigurationType) {
+      return type
+    }
     return type.configurationFactories.firstOrNull {
       factoryId == null || it.id == factoryId
     }
@@ -1048,7 +1051,7 @@ internal fun RunConfiguration.cloneBeforeRunTasks() {
 }
 
 fun callNewConfigurationCreated(factory: ConfigurationFactory, configuration: RunConfiguration) {
-  @Suppress("UNCHECKED_CAST")
+  @Suppress("UNCHECKED_CAST", "DEPRECATION")
   (factory as? ConfigurationFactoryEx<RunConfiguration>)?.onNewConfigurationCreated(configuration)
   (configuration as? RunConfigurationBase)?.onNewConfigurationCreated()
 }
