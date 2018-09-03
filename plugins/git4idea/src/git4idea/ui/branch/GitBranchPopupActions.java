@@ -564,12 +564,19 @@ class GitBranchPopupActions {
 
     public MergeAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
                        boolean localBranch) {
-      super("Merge into Current",
-            String.format("Merge %s into %s", getBranchPresentation(branchName), getCurrentBranchPresentation(repositories)), null);
+      super("Merge into Current");
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
       myLocalBranch = localBranch;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      String description = String.format("Merge %s into %s",
+                                         getBranchPresentation(myBranchName),
+                                         getCurrentBranchPresentation(myRepositories));
+      e.getPresentation().setDescription(description);
     }
 
     @Override
@@ -593,32 +600,30 @@ class GitBranchPopupActions {
     private final String myBranchName;
 
     public RebaseAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName) {
-      super("Rebase Current onto Selected", getDescription(branchName, repositories), null);
+      super("Rebase Current onto Selected");
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
     }
 
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      boolean isOnBranch = and(myRepositories, GitRepository::isOnBranch);
+
+      String description = isOnBranch
+                           ? String.format("Rebase %s onto %s",
+                                           getCurrentBranchPresentation(myRepositories),
+                                           getBranchPresentation(myBranchName))
+                           : "Rebase is not possible in the detached HEAD state";
+      e.getPresentation().setDescription(description);
+      e.getPresentation().setEnabled(isOnBranch);
+    }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       GitBrancher brancher = GitBrancher.getInstance(myProject);
       brancher.rebase(myRepositories, myBranchName);
       reportUsage(myProject, "git.branch.rebase");
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      super.update(e);
-      e.getPresentation().setEnabled(and(myRepositories, GitRepository::isOnBranch));
-    }
-
-    @NotNull
-    private static String getDescription(@NotNull String selectedBranch,
-                                         @NotNull Collection<GitRepository> repositories) {
-      return and(repositories, GitRepository::isOnBranch)
-             ? String.format("Rebase %s onto %s", getCurrentBranchPresentation(repositories), getBranchPresentation(selectedBranch))
-             : "Rebase is not possible in the detached HEAD state";
     }
   }
 
@@ -628,13 +633,19 @@ class GitBranchPopupActions {
     private final String myBranchName;
 
     public CheckoutWithRebaseAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName) {
-      super("Checkout and Rebase onto Current",
-            String.format("Checkout %s, and rebase it onto %s in one step (like `git rebase HEAD %s`)",
-                          getBranchPresentation(branchName), getCurrentBranchPresentation(repositories), branchName),
-            null);
+      super("Checkout and Rebase onto Current");
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      String description = String.format("Checkout %s, and rebase it onto %s in one step (like `git rebase HEAD %s`)",
+                                         getBranchPresentation(myBranchName),
+                                         getCurrentBranchPresentation(myRepositories),
+                                         myBranchName);
+      e.getPresentation().setDescription(description);
     }
 
     @Override
@@ -701,6 +712,6 @@ class GitBranchPopupActions {
 
   @NotNull
   private static String getBranchPresentation(@NotNull String branch) {
-    return String.format("'%s'", branch);
+    return "'" + branch + "'";
   }
 }
