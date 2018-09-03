@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.NamedScriptableDefinition;
@@ -130,54 +131,45 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
 
     if (namedScriptableDefinition instanceof MatchVariableConstraint) {
       final MatchVariableConstraint constraint = (MatchVariableConstraint)namedScriptableDefinition;
-      if (constraint.isPartOfSearchResults()) {
+      if (constraint.isPartOfSearchResults() && !Registry.is("ssr.use.new.search.dialog")) {
         append(buf, SSRBundle.message("target.tooltip.message"));
       }
       if (constraint.getRegExp() != null && !constraint.getRegExp().isEmpty()) {
-        append(buf, SSRBundle.message("text.tooltip.message",
-                                      constraint.isInvertRegExp() ? SSRBundle.message("not.tooltip.message") : "", constraint.getRegExp()));
+        append(buf, SSRBundle.message("text.tooltip.message", constraint.isInvertRegExp() ? 1 : 0, constraint.getRegExp(),
+               constraint.isWholeWordsOnly() ? 1 : 0, constraint.isWithinHierarchy() ? 1 : 0));
       }
-      if (constraint.isWithinHierarchy() || constraint.isStrictlyWithinHierarchy()) {
-        append(buf, SSRBundle.message("within.hierarchy.tooltip.message"));
+      else if (constraint.isWithinHierarchy()) {
+        append(buf, SSRBundle.message("hierarchy.tooltip.message"));
       }
       if (!StringUtil.isEmpty(constraint.getReferenceConstraint())) {
         final String text = StringUtil.unquoteString(constraint.getReferenceConstraint());
-        append(buf, SSRBundle.message("reference.target.tooltip.message",
-                                      constraint.isInvertReference() ? SSRBundle.message("not.tooltip.message") : "", text));
+        append(buf, SSRBundle.message("reference.target.tooltip.message", constraint.isInvertReference() ? 1 : 0, text));
       }
 
       if (constraint.getNameOfExprType() != null && !constraint.getNameOfExprType().isEmpty()) {
         append(buf, SSRBundle.message("exprtype.tooltip.message",
-                                     constraint.isInvertExprType() ? SSRBundle.message("not.tooltip.message") : "",
+                                     constraint.isInvertExprType() ? 1 : 0,
                                      constraint.getNameOfExprType(),
-                                     constraint.isExprTypeWithinHierarchy() ? SSRBundle.message("supertype.tooltip.message") : ""));
+                                     constraint.isExprTypeWithinHierarchy() ? 1 : 0));
       }
 
       if (constraint.getNameOfFormalArgType() != null && !constraint.getNameOfFormalArgType().isEmpty()) {
         append(buf, SSRBundle.message("expected.type.tooltip.message",
-                                      constraint.isInvertFormalType() ? SSRBundle.message("not.tooltip.message") : "",
+                                      constraint.isInvertFormalType() ? 1 : 0,
                                       constraint.getNameOfFormalArgType(),
-                                      constraint.isFormalArgTypeWithinHierarchy() ? SSRBundle.message("supertype.tooltip.message") : ""));
+                                      constraint.isFormalArgTypeWithinHierarchy() ? 1 : 0));
       }
 
       if (StringUtil.isNotEmpty(constraint.getWithinConstraint())) {
         final String text = StringUtil.unquoteString(constraint.getWithinConstraint());
-        append(buf, constraint.isInvertWithinConstraint()
-                    ? SSRBundle.message("not.within.constraints.tooltip.message", text)
-                    : SSRBundle.message("within.constraints.tooltip.message", text));
+        append(buf, SSRBundle.message("within.constraints.tooltip.message", constraint.isInvertWithinConstraint() ? 1 : 0, text));
       }
 
       final String name = constraint.getName();
       if (!Configuration.CONTEXT_VAR_NAME.equals(name)) {
-        if (constraint.getMinCount() == constraint.getMaxCount()) {
-          append(buf, SSRBundle.message("occurs.tooltip.message", constraint.getMinCount()));
-        }
-        else {
-          append(buf, SSRBundle.message("min.occurs.tooltip.message", constraint.getMinCount(),
-                                        constraint.getMaxCount() == Integer.MAX_VALUE ?
-                                        StringUtil.decapitalize(SSRBundle.message("editvarcontraints.unlimited")) :
-                                        constraint.getMaxCount()));
-        }
+        final int maxCount = constraint.getMaxCount();
+        append(buf, SSRBundle.message("min.occurs.tooltip.message", constraint.getMinCount(),
+                                      (maxCount == Integer.MAX_VALUE) ? "∞" : maxCount));
       }
     }
 

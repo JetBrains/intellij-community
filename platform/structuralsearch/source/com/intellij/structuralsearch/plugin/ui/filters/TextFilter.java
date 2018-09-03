@@ -27,7 +27,8 @@ public class TextFilter extends FilterAction {
 
   @Override
   public boolean hasFilter() {
-    return !StringUtil.isEmpty(myTable.getConstraint().getRegExp());
+    final MatchVariableConstraint constraint = myTable.getConstraint();
+    return !StringUtil.isEmpty(constraint.getRegExp()) || constraint.isWithinHierarchy();
   }
 
   @Override
