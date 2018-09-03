@@ -1757,6 +1757,24 @@ public class JBUI {
         return JBColor.namedColor("SearchEverywhere.List.Separator.Color", 0xdcdcdc);
       }
     }
+
+    public static class Validator {
+      public static Color errorBorderColor() {
+        return JBColor.namedColor("ValidationTooltip.errorBorderColor", 0xE0A8A9);
+      }
+
+      public static Color errorBackgroundColor() {
+        return JBColor.namedColor("ValidationTooltip.errorBackgroundColor", 0xF5E6E7);
+      }
+
+      public static Color warningBorderColor() {
+        return JBColor.namedColor("ValidationTooltip.warningBorderColor", 0xE0CEA8);
+      }
+
+      public static Color warningBackgroundColor() {
+        return JBColor.namedColor("ValidationTooltip.warningBackgroundColor", 0xF5F0E6);
+      }
+    }
   }
 
 

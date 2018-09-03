@@ -364,15 +364,16 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
       gc.weighty = myResizeY ? 1.0 : 0.0;
 
       if (StringUtil.isNotEmpty(myHTDescription) || !myCommentBelow) {
-        JPanel componentPanel = new JPanel(new BorderLayout());
-        componentPanel.add(myComponent, BorderLayout.CENTER);
+        JPanel componentPanel = new JPanel();
+        componentPanel.setLayout(new BoxLayout(componentPanel, BoxLayout.X_AXIS));
+        componentPanel.add(myComponent);
 
         if (StringUtil.isNotEmpty(myHTDescription)) {
           ContextHelpLabel lbl = StringUtil.isNotEmpty(myHTLinkText) && myHTAction != null ?
                                  ContextHelpLabel.createWithLink(null, myHTDescription, myHTLinkText, myHTAction) :
                                  ContextHelpLabel.create(myHTDescription);
           JBUI.Borders.emptyLeft(7).wrap(lbl);
-          componentPanel.add(lbl, BorderLayout.EAST);
+          componentPanel.add(lbl);
         }
         else if (!myCommentBelow) {
           comment.setBorder(getCommentBorder());

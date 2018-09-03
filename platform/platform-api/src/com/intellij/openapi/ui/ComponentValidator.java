@@ -7,7 +7,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
@@ -27,15 +26,11 @@ import java.beans.PropertyChangeListener;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import static com.intellij.util.ui.JBUI.CurrentTheme.Validator.*;
+
 public class ComponentValidator {
   private static final String PROPERTY_NAME = "JComponent.componentValidator";
   private static final JBValue MAX_WIDTH = new JBValue.UIInteger("ValidationTooltip.maxWidth", 384);
-
-  private static final Color ERROR_BORDER_COLOR = JBColor.namedColor("ValidationTooltip.errorBorderColor", 0xE0A8A9);
-  private static final Color ERROR_BACKGROUND_COLOR = JBColor.namedColor("ValidationTooltip.errorBackgroundColor", 0xF5E6E7);
-
-  private static final Color WARNING_BORDER_COLOR = JBColor.namedColor("ValidationTooltip.warningBorderColor", 0xE0CEA8);
-  private static final Color WARNING_BACKGROUND_COLOR = JBColor.namedColor("ValidationTooltip.warningBackgroundColor", 0xF5F0E6);
 
   private final Disposable parentDisposable;
   private Consumer<ComponentValidator> validator;
@@ -158,13 +153,13 @@ public class ComponentValidator {
                              String.format("<html><div>%s</div></html>", validationInfo.message);
 
           tipComponent.setText(labelText);
-          tipComponent.setBackground(validationInfo.warning ? WARNING_BACKGROUND_COLOR : ERROR_BACKGROUND_COLOR);
+          tipComponent.setBackground(validationInfo.warning ? warningBackgroundColor() : errorBackgroundColor());
           tipComponent.setOpaque(true);
           tipComponent.setBorder(getBorder());
           popupSize = tipComponent.getPreferredSize();
 
           popupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(tipComponent, null).
-            setBorderColor(validationInfo.warning ? WARNING_BORDER_COLOR : ERROR_BORDER_COLOR).
+            setBorderColor(validationInfo.warning ? warningBorderColor() : errorBorderColor()).
             setCancelOnClickOutside(false).
             setCancelOnMouseOutCallback(e -> e.getID() == MouseEvent.MOUSE_PRESSED && !withinComponent(e)).
             setShowShadow(false);
