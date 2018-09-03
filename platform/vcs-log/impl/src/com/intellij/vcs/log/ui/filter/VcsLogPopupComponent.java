@@ -158,7 +158,7 @@ public abstract class VcsLogPopupComponent extends JPanel {
   }
 
   private static Border createFocusedBorder() {
-    return BorderFactory.createCompoundBorder(new FilledRoundedBorder(UIUtil.getHeaderActiveColor(), 10, BORDER_SIZE),
+    return BorderFactory.createCompoundBorder(new FilledRoundedBorder(UIUtil.getFocusedBorderColor(), 10, BORDER_SIZE),
                                               JBUI.Borders.empty(2));
   }
 

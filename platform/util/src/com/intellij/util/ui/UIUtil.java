@@ -2770,6 +2770,10 @@ public class UIUtil {
     return ACTIVE_HEADER_COLOR;
   }
 
+  public static Color getFocusedBorderColor() {
+    return JBUI.CurrentTheme.Focus.focusColor();
+  }
+
   public static Color getHeaderInactiveColor() {
     return INACTIVE_HEADER_COLOR;
   }
