@@ -1518,8 +1518,18 @@ public class JBUI {
       }
 
       @NotNull
+      public static Color pressedBorder() {
+        return JBColor.namedColor("ActionButton.pressedBorderColor", Gray.xCF);
+      }
+
+      @NotNull
       public static Color hoverBackground() {
         return JBColor.namedColor("ActionButton.hoverBackground", Gray.xDF);
+      }
+
+      @NotNull
+      public static Color hoverBorder() {
+        return JBColor.namedColor("ActionButton.hoverBorderColor", Gray.xDF);
       }
     }
 
