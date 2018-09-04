@@ -1324,6 +1324,10 @@ public class PluginManagerCore {
     Set<String> available = ContainerUtil.map2Set(plugins, plugin -> plugin.getPluginId().getIdString());
     List<String> required = ((ApplicationInfoImpl)ApplicationInfoImpl.getShadowInstance()).getEssentialPluginsIds();
     Set<String> missing = JBIterable.from(required).filter(id -> !available.contains(id)).toSet();
+    // Android Studio: In unit test mode, the android plugin may not be present, even though it is marked as "essential".
+    if (PlatformUtils.isAndroidStudio() && isUnitTestMode()) {
+      missing = missing.stream().filter(id -> !"org.jetbrains.android".equals(id)).collect(Collectors.toSet());
+    }
     if (!missing.isEmpty()) {
       throw new EssentialPluginMissingException(missing);
     }
