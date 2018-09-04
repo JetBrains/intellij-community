@@ -199,7 +199,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
       }
     }
     val manager = runManager
-    for (type in manager.configurationFactories) {
+    for (type in ConfigurationType.CONFIGURATION_TYPE_EP.extensionList) {
       val configurations = manager.getConfigurationSettingsList(type).nullize() ?: continue
       val typeNode = DefaultMutableTreeNode(type)
       root.add(typeNode)
