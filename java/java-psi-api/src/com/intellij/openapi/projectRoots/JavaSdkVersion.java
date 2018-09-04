@@ -30,7 +30,7 @@ public enum JavaSdkVersion {
 
   private final LanguageLevel myMaxLanguageLevel;
 
-  JavaSdkVersion(LanguageLevel maxLanguageLevel) {
+  JavaSdkVersion(@NotNull LanguageLevel maxLanguageLevel) {
     myMaxLanguageLevel = maxLanguageLevel;
   }
 
