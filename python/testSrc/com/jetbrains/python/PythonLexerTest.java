@@ -450,6 +450,21 @@ public class PythonLexerTest extends PyLexerTestCase {
            "Py:FSTRING_START", "Py:FSTRING_TEXT", "Py:FSTRING_END", "Py:STATEMENT_BREAK");
   }
 
+  public void testFStringBackslashEscapedBraces() {
+    doTest("s = f'foo\\{x}'", 
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", 
+           "Py:FSTRING_START", "Py:FSTRING_TEXT", "Py:FSTRING_TEXT", 
+           "Py:FSTRING_FRAGMENT_START", "Py:IDENTIFIER", "Py:FSTRING_FRAGMENT_END", 
+           "Py:FSTRING_END", "Py:STATEMENT_BREAK");
+    doTest("s = f'{x:foo\\{y}bar\\}'", 
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", 
+           "Py:FSTRING_START", "Py:FSTRING_FRAGMENT_START", "Py:IDENTIFIER", 
+           "Py:FSTRING_FRAGMENT_FORMAT_START", "Py:FSTRING_TEXT", "Py:FSTRING_TEXT", 
+           "Py:FSTRING_FRAGMENT_START", "Py:IDENTIFIER", "Py:FSTRING_FRAGMENT_END", 
+           "Py:FSTRING_TEXT", "Py:FSTRING_TEXT", 
+           "Py:FSTRING_FRAGMENT_END", "Py:FSTRING_END", "Py:STATEMENT_BREAK");
+  }
+
   // PY-21697
   public void testTripleSingleQuotedStringWithEscapedSlashAfterOneQuote() {
     doTest("s = '''\n" +

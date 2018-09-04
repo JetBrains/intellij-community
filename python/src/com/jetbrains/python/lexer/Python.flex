@@ -72,11 +72,13 @@ FSTRING_PREFIX = [UuBbCcRr]{0,3}[fF][UuBbCcRr]{0,3}
 FSTRING_START = {FSTRING_PREFIX} (\"\"\"|'''|\"|')
 FSTRING_QUOTES = (\"{1,3}|'{1,3})
 FSTRING_ESCAPED_LBRACE = "{{"
+FSTRING_ESCAPE_SEQUENCE = \\[^{}\r\n]
+BACKSLASH_ESCAPED_BRACES = "\\{" | "\\}"
 // TODO report it in annotation
 //FSTRING_ESCAPED_RBRACE = "}}"
 NAMED_UNICODE_ESCAPE = \\N\{[\w ]*\}?
-FSTRING_TEXT_NO_QUOTES = ([^\\\'\"\r\n{] | {NAMED_UNICODE_ESCAPE} | {ESCAPE_SEQUENCE} | {FSTRING_ESCAPED_LBRACE} | (\\[\r\n]))+
-FSTRING_FORMAT_TEXT_NO_QUOTES = ([^\\\'\"\r\n{}] | {NAMED_UNICODE_ESCAPE} | (\\[\r\n]))+
+FSTRING_TEXT_NO_QUOTES = ([^\\\'\"\r\n{] | {NAMED_UNICODE_ESCAPE} | {FSTRING_ESCAPE_SEQUENCE} | {FSTRING_ESCAPED_LBRACE} | (\\[\r\n]) )+
+FSTRING_FORMAT_TEXT_NO_QUOTES = ([^\\\'\"\r\n{}] | {NAMED_UNICODE_ESCAPE} | {FSTRING_ESCAPE_SEQUENCE} | (\\[\r\n]) )+
 FSTRING_FRAGMENT_TYPE_CONVERSION = "!" [^=:'\"} \t\r\n]*
 
 %state PENDING_DOCSTRING
@@ -102,6 +104,7 @@ return yylength()-s.length();
 <FSTRING> {
   {FSTRING_TEXT_NO_QUOTES} { return PyTokenTypes.FSTRING_TEXT; }
   [\n] { return fStringHelper.handleLineBreakInLiteralText(); }
+  {BACKSLASH_ESCAPED_BRACES} { yypushback(1); return PyTokenTypes.FSTRING_TEXT; }
   {FSTRING_QUOTES} { return fStringHelper.handleFStringEnd(); }
   "{" { return fStringHelper.handleFragmentStart(); }
 }
@@ -132,6 +135,7 @@ return yylength()-s.length();
 <FSTRING_FRAGMENT_FORMAT> {
   {FSTRING_FORMAT_TEXT_NO_QUOTES} { return PyTokenTypes.FSTRING_TEXT; }
   [\n] { return fStringHelper.handleLineBreakInLiteralText(); }
+  {BACKSLASH_ESCAPED_BRACES} { yypushback(1); return PyTokenTypes.FSTRING_TEXT; }
   "{" { return fStringHelper.handleFragmentStart(); }
   "}" { return fStringHelper.handleFragmentEnd(); }
 
