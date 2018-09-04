@@ -14,7 +14,7 @@ PyFile:FStringTerminatedByQuoteInsideFStringLiteral.py
           PyStringLiteralExpression: 
             PyFormattedStringNode
               PsiElement(Py:FSTRING_START)('f"')
-              PsiErrorElement:Expected "
+              PsiErrorElement:" expected
                 <empty list>
           PsiErrorElement:type conversion, : or } expected
             <empty list>

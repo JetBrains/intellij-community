@@ -14,6 +14,6 @@ PyFile:SingleLineFStringContainsCommentInsteadOfExpression.py
             <empty list>
           PsiErrorElement:type conversion, : or } expected
             <empty list>
-        PsiErrorElement:Unexpected f-string token
+        PsiErrorElement:' expected
           <empty list>
     PsiComment(Py:END_OF_LINE_COMMENT)('# comment}'')

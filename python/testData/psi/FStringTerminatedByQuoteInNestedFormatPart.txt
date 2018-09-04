@@ -21,7 +21,7 @@ PyFile:FStringTerminatedByQuoteInNestedFormatPart.py
                   PsiElement(Py:FSTRING_FRAGMENT_FORMAT_START)(':')
                 PsiErrorElement:} expected
                   <empty list>
-              PsiErrorElement:Expected "
+              PsiErrorElement:" expected
                 <empty list>
         PsiElement(Py:FSTRING_END)(''')
     PsiErrorElement:End of statement expected

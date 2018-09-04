@@ -9,7 +9,7 @@ PyFile:FStringTerminatedByLineBreakInLiteralPart.py
       PyFormattedStringNode
         PsiElement(Py:FSTRING_START)('f'')
         PsiElement(Py:FSTRING_TEXT)('foo')
-        PsiErrorElement:Unexpected f-string token
+        PsiErrorElement:' expected
           <empty list>
   PsiWhiteSpace('\n')
   PyExpressionStatement

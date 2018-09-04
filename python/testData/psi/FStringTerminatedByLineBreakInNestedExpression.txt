@@ -22,9 +22,9 @@ PyFile:FStringTerminatedByLineBreakInNestedExpression.py
                   PsiElement(Py:PLUS)('+')
                   PsiErrorElement:expression expected
                     <empty list>
-              PsiErrorElement:Unexpected f-string token
+              PsiErrorElement:' expected
                 <empty list>
-        PsiErrorElement:Unexpected f-string token
+        PsiErrorElement:" expected
           <empty list>
   PsiWhiteSpace('\n')
   PyExpressionStatement
