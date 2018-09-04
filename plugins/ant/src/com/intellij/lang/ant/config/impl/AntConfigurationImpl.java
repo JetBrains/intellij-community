@@ -28,7 +28,10 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileListener;
@@ -38,7 +41,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.StringSetSpinAllocator;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.config.ValueProperty;
@@ -635,17 +637,12 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       for (String oldId : oldIds) {
         actionManager.unregisterAction(oldId);
       }
-      final Set<String> registeredIds = StringSetSpinAllocator.alloc();
-      try {
-        for (Pair<String, AnAction> pair : actionList) {
-          if (!registeredIds.contains(pair.first)) {
-            registeredIds.add(pair.first);
-            actionManager.registerAction(pair.first, pair.second);
-          }
+      final Set<String> registeredIds = new HashSet<>();
+      for (Pair<String, AnAction> pair : actionList) {
+        if (!registeredIds.contains(pair.first)) {
+          registeredIds.add(pair.first);
+          actionManager.registerAction(pair.first, pair.second);
         }
-      }
-      finally {
-        StringSetSpinAllocator.dispose(registeredIds);
       }
     }
   }
