@@ -83,9 +83,32 @@ public final class TreeUtil {
     return count == 0 ? JBIterable.empty() : NUMBERS.take(count).map(index -> treeNode.getChildAt(index));
   }
 
+  /**
+   * @param tree a tree, which viewable paths are processed
+   * @return a list of expanded paths
+   */
   @NotNull
-  public static List<TreePath> collectExpandedPaths(@NotNull JTree tree){
-    return treePathTraverser(tree).expandAndFilter(tree::isExpanded).toList();
+  public static List<TreePath> collectExpandedPaths(@NotNull JTree tree) {
+    return collectExpandedObjects(tree, Function.identity());
+  }
+
+  /**
+   * @param tree a tree, which viewable paths are processed
+   * @return a list of user objects which correspond to expanded paths under the specified root node
+   */
+  @NotNull
+  public static List<Object> collectExpandedUserObjects(@NotNull JTree tree) {
+    return collectExpandedObjects(tree, TreeUtil::getLastUserObject);
+  }
+
+  /**
+   * @param tree   a tree, which viewable paths are processed
+   * @param mapper a function to convert a expanded tree path to a corresponding object
+   * @return a list of objects which correspond to expanded paths under the specified root node
+   */
+  @NotNull
+  public static <T> List<T> collectExpandedObjects(@NotNull JTree tree, @NotNull Function<TreePath, T> mapper) {
+    return collectVisibleRows(tree, tree::isExpanded, mapper);
   }
 
   @Nullable
@@ -116,9 +139,36 @@ public final class TreeUtil {
     return Collections.emptyList();
   }
 
+  /**
+   * @param tree a tree, which viewable paths are processed
+   * @param root an ascendant tree path to filter expanded tree paths
+   * @return a list of expanded paths under the specified root node
+   */
   @NotNull
-  public static List<TreePath> collectExpandedPaths(@NotNull JTree tree, @NotNull TreePath path) {
-    return treePathTraverser(tree).expandAndFilter(tree::isExpanded).withRoot(path).toList();
+  public static List<TreePath> collectExpandedPaths(@NotNull JTree tree, @NotNull TreePath root) {
+    return collectExpandedObjects(tree, root, Function.identity());
+  }
+
+  /**
+   * @param tree a tree, which viewable paths are processed
+   * @param root an ascendant tree path to filter expanded tree paths
+   * @return a list of user objects which correspond to expanded paths under the specified root node
+   */
+  @NotNull
+  public static List<Object> collectExpandedUserObjects(@NotNull JTree tree, @NotNull TreePath root) {
+    return collectExpandedObjects(tree, root, TreeUtil::getLastUserObject);
+  }
+
+  /**
+   * @param tree   a tree, which viewable paths are processed
+   * @param root   an ascendant tree path to filter expanded tree paths
+   * @param mapper a function to convert a expanded tree path to a corresponding object
+   * @return a list of objects which correspond to expanded paths under the specified root node
+   */
+  @NotNull
+  public static <T> List<T> collectExpandedObjects(@NotNull JTree tree, @NotNull TreePath root, @NotNull Function<TreePath, T> mapper) {
+    if (!tree.isVisible(root)) return Collections.emptyList(); // invisible path should not be expanded
+    return collectVisibleRows(tree, path -> tree.isExpanded(path) && root.isDescendant(path), mapper);
   }
 
   /**
@@ -1441,5 +1491,28 @@ public final class TreeUtil {
       }
     }
     return null;
+  }
+
+  /**
+   * @param tree   a tree, which visible paths are processed
+   * @param filter a predicate to filter visible tree paths
+   * @param mapper a function to convert a visible tree path to a corresponding object
+   * @return a list of objects which correspond to filtered visible paths
+   */
+  @NotNull
+  private static <T> List<T> collectVisibleRows(@NotNull JTree tree,
+                                                @NotNull Predicate<TreePath> filter,
+                                                @NotNull Function<TreePath, T> mapper) {
+    int count = tree.getRowCount();
+    if (count == 0) return Collections.emptyList();
+    List<T> list = new ArrayList<>(count);
+    visitVisibleRows(tree, path -> {
+      if (filter.test(path)) {
+        T object = mapper.apply(path);
+        if (object != null) list.add(object);
+      }
+      return TreeVisitor.Action.CONTINUE;
+    });
+    return list;
   }
 }

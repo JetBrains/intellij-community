@@ -590,6 +590,88 @@ public final class TreeUtilVisitTest {
   }
 
   @Test
+  public void testCollectExpandedPaths() {
+    testCollectExpandedPaths(set("Root", "1", "2", "22", "3", "33", "333"), test
+      -> TreeUtil.collectExpandedPaths(test.getTree()));
+  }
+
+  @Test
+  public void testCollectExpandedPathsWithInvisibleRoot() {
+    testCollectExpandedPaths(set("1", "2", "22", "3", "33", "333"), test -> {
+      test.getTree().setRootVisible(false);
+      return TreeUtil.collectExpandedPaths(test.getTree());
+    });
+  }
+
+  @Test
+  public void testCollectExpandedPathsWithInvisibleRootUnder33() {
+    testCollectExpandedPaths(set("33", "333"), test -> {
+      test.getTree().setRootVisible(false);
+      TreePath root = test.getTree().getPathForRow(14); // 33
+      return TreeUtil.collectExpandedPaths(test.getTree(), root);
+    });
+  }
+
+  @Test
+  public void testCollectExpandedPathsWithInvisibleRootUnder333() {
+    testCollectExpandedPaths(set("333"), test -> {
+      test.getTree().setRootVisible(false);
+      TreePath root = test.getTree().getPathForRow(17); // 333
+      return TreeUtil.collectExpandedPaths(test.getTree(), root);
+    });
+  }
+
+  private static void testCollectExpandedPaths(@NotNull Set<String> expected, @NotNull Function<TreeTest, List<TreePath>> getter) {
+    testCollectSelection(test -> {
+      List<TreePath> paths = getter.apply(test);
+      Assert.assertEquals(expected.size(), paths.size());
+      paths.forEach(path -> Assert.assertTrue(expected.contains(TreeUtil.getLastUserObject(String.class, path))));
+      test.done();
+    });
+  }
+
+  @Test
+  public void testCollectExpandedUserObjects() {
+    testCollectExpandedUserObjects(set("Root", "1", "2", "22", "3", "33", "333"), test
+      -> TreeUtil.collectExpandedUserObjects(test.getTree()));
+  }
+
+  @Test
+  public void testCollectExpandedUserObjectsWithCollapsedPath() {
+    testCollectExpandedUserObjects(set("Root", "1", "2", "22", "3"), test -> {
+      test.getTree().collapseRow(15); // 33
+      return TreeUtil.collectExpandedUserObjects(test.getTree());
+    });
+  }
+
+  @Test
+  public void testCollectExpandedUserObjectsWithCollapsedPath33Under33() {
+    testCollectExpandedUserObjects(set(), test -> {
+      test.getTree().collapseRow(15); // 33
+      TreePath root = test.getTree().getPathForRow(15); // 33
+      return TreeUtil.collectExpandedUserObjects(test.getTree(), root);
+    });
+  }
+
+  @Test
+  public void testCollectExpandedUserObjectsWithCollapsedPath333Under33() {
+    testCollectExpandedUserObjects(set("33"), test -> {
+      test.getTree().collapseRow(18); // 333
+      TreePath root = test.getTree().getPathForRow(15); // 33
+      return TreeUtil.collectExpandedUserObjects(test.getTree(), root);
+    });
+  }
+
+  private static void testCollectExpandedUserObjects(@NotNull Set<String> expected, @NotNull Function<TreeTest, List<Object>> getter) {
+    testCollectSelection(test -> {
+      List<Object> objects = getter.apply(test);
+      Assert.assertEquals(expected.size(), objects.size());
+      objects.forEach(object -> Assert.assertTrue(expected.contains((String)object)));
+      test.done();
+    });
+  }
+
+  @Test
   public void testCollectSelectedPaths() {
     testCollectSelectedPaths(set("11", "222", "33", "3331", "3332", "3333", "Root"), test
       -> TreeUtil.collectSelectedPaths(test.getTree()));
