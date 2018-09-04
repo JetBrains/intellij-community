@@ -21,4 +21,5 @@ package com.intellij.stats.logger
  */
 interface FileLogger {
     fun println(message: String)
+    fun flush()
 }

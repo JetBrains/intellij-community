@@ -7,7 +7,6 @@ import com.intellij.formatting.ASTBlock;
 import com.intellij.formatting.Block;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
-import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.internal.psiView.PsiViewerDialog;
 import com.intellij.internal.psiView.ViewerPsiBasedTree;
 import com.intellij.lang.ASTNode;
@@ -27,8 +26,6 @@ import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.tree.TreePathUtil;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +39,6 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.HashMap;
-import java.util.Set;
 
 import static com.intellij.internal.psiView.PsiViewerDialog.initTree;
 
@@ -132,8 +128,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
     myBlockTree.setVisible(true);
     BlockTreeStructure blockTreeStructure = new BlockTreeStructure();
     BlockTreeNode rootNode = new BlockTreeNode(rootBlock, null);
-    StructureTreeModel treeModel = new StructureTreeModel(true);
-    treeModel.setStructure(blockTreeStructure);
+    StructureTreeModel treeModel = new StructureTreeModel(blockTreeStructure);
     initMap(rootNode, rootElement);
     assert myPsiToBlockMap != null;
 

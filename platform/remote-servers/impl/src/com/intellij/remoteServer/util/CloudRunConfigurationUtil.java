@@ -35,7 +35,7 @@ public class CloudRunConfigurationUtil {
     String name = generateRunConfigurationName(account, module);
 
     ConfigurationFactory configurationFactory = DeployToServerConfigurationTypesRegistrar.getDeployConfigurationType(account.getType()).getFactoryForType(deploymentSource.getType());
-    final RunnerAndConfigurationSettings runSettings = runManager.createRunConfiguration(name, configurationFactory);
+    final RunnerAndConfigurationSettings runSettings = runManager.createConfiguration(name, configurationFactory);
     @SuppressWarnings("unchecked")
     DeployToServerRunConfiguration<SC, DC> result = (DeployToServerRunConfiguration<SC, DC>)runSettings.getConfiguration();
     result.setServerName(account.getName());

@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class FilePsiMutation extends ActionOnFile {
 
-  public FilePsiMutation(PsiFile file) {
+  public FilePsiMutation(@NotNull PsiFile file) {
     super(file);
   }
 

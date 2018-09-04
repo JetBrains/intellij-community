@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.ui.HighlightedRegion;
@@ -42,6 +43,18 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
 
     myHighlightedRegions = new ArrayList<>();
     myAdditionalLines = new ArrayList<>();
+  }
+
+  @Override
+  public boolean contains(Object element) {
+    return canRepresent(element);
+  }
+
+  @Override
+  public boolean canRepresent(Object element) {
+    SmartTodoItemPointer value = getValue();
+    TodoItem item = value != null ? value.getTodoItem() : null;
+    return Comparing.equal(item, element);
   }
 
   @Override

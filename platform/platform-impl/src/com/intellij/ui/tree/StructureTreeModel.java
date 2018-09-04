@@ -40,13 +40,27 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
               : new Invoker.EDT(this);
   }
 
+  public StructureTreeModel(@NotNull AbstractTreeStructure structure) {
+    this.structure = structure;
+    invoker = new Invoker.BackgroundThread(this);
+  }
+
+  public StructureTreeModel(@NotNull AbstractTreeStructure structure, @NotNull Comparator<? super NodeDescriptor> comparator) {
+    this(structure);
+    this.comparator = createComparator(comparator);
+  }
+
+  private static Comparator<? super Node> createComparator(@NotNull Comparator<? super NodeDescriptor> comparator) {
+    return (node1, node2) -> comparator.compare(node1.getDescriptor(), node2.getDescriptor());
+  }
+
   /**
    * @param comparator a comparator to sort tree nodes or {@code null} to disable sorting
    */
   public final void setComparator(@Nullable Comparator<? super NodeDescriptor> comparator) {
     if (disposed) return;
     if (comparator != null) {
-      this.comparator = (node1, node2) -> comparator.compare(node1.getDescriptor(), node2.getDescriptor());
+      this.comparator = createComparator(comparator);
       invalidate();
     }
     else if (this.comparator != null) {
@@ -129,7 +143,7 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
   }
 
   @Override
-  public final Object getRoot() {
+  public final TreeNode getRoot() {
     if (disposed || !isValidThread()) return null;
     if (!root.isValid()) {
       Node newRoot = getValidRoot();
@@ -278,9 +292,9 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
     }
 
     private boolean canReuse(@NotNull Node node, Object element) {
-      if (super.allowsChildren != node.allowsChildren) return false;
+      if (allowsChildren != node.allowsChildren) return false;
       if (element != null && !element.equals(getElement())) return false;
-      super.userObject = node.userObject; // replace old descriptor
+      userObject = node.userObject; // replace old descriptor
       return true;
     }
 
@@ -380,5 +394,10 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
       root.set(getValidRoot());
     }
     return root.get();
+  }
+
+  @Override
+  public String toString() {
+    return String.valueOf(structure);
   }
 }

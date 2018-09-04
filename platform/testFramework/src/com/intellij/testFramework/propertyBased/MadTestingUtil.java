@@ -305,7 +305,7 @@ public class MadTestingUtil {
    * in languages employing {@link com.intellij.psi.tree.ILazyParseableElementTypeBase}.
    */
   @NotNull
-  public static Generator<MadTestingAction> randomEditsWithReparseChecks(PsiFile file) {
+  public static Generator<MadTestingAction> randomEditsWithReparseChecks(@NotNull PsiFile file) {
     return Generator.sampledFrom(
       new InsertString(file),
       new DeleteRange(file),
@@ -320,7 +320,7 @@ public class MadTestingUtil {
    * read accessors on all PSI elements in the file don't throw exceptions when invoked.
    */
   @NotNull
-  public static Function<PsiFile, Generator<? extends MadTestingAction>> randomEditsWithPsiAccessorChecks(Condition<? super Method> skipCondition) {
+  public static Function<PsiFile, Generator<? extends MadTestingAction>> randomEditsWithPsiAccessorChecks(@NotNull Condition<? super Method> skipCondition) {
     return file -> Generator.sampledFrom(
       new InsertString(file),
       new DeleteRange(file),

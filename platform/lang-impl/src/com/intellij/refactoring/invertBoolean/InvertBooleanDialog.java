@@ -4,8 +4,6 @@ package com.intellij.refactoring.invertBoolean;
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.lang.refactoring.NamesValidator;
-import com.intellij.openapi.help.HelpManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.RefactoringBundle;
@@ -49,14 +47,13 @@ public class InvertBooleanDialog extends RefactoringDialog {
 
   @Override
   protected void doAction() {
-    Project project = myElement.getProject();
     final String name = myNameField.getText().trim();
     final NamesValidator namesValidator = LanguageNamesValidation.INSTANCE.forLanguage(myElement.getLanguage());
     if (namesValidator != null && !namesValidator.isIdentifier(name, myProject)) {
       CommonRefactoringUtil.showErrorMessage(InvertBooleanHandler.REFACTORING_NAME,
                                              RefactoringBundle.message("please.enter.a.valid.name.for.inverted.element",
                                                                        UsageViewUtil.getType(myElement)),
-                                             InvertBooleanHandler.INVERT_BOOLEAN_HELP_ID, project);
+                                             getHelpId(), myProject);
       return;
     }
 
@@ -64,8 +61,8 @@ public class InvertBooleanDialog extends RefactoringDialog {
   }
 
   @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(InvertBooleanHandler.INVERT_BOOLEAN_HELP_ID);
+  protected String getHelpId() {
+    return InvertBooleanHandler.INVERT_BOOLEAN_HELP_ID;
   }
 
   @Override

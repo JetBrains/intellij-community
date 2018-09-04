@@ -425,12 +425,12 @@ public class JavaDebugProcess extends XDebugProcess {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myAutoModeEnabled;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean enabled) {
+    public void setSelected(@NotNull AnActionEvent e, boolean enabled) {
       myAutoModeEnabled = enabled;
       DebuggerSettings.getInstance().AUTO_VARIABLES_MODE = enabled;
       XDebuggerUtilImpl.rebuildAllSessionsViews(e.getProject());
@@ -463,12 +463,12 @@ public class JavaDebugProcess extends XDebugProcess {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return DebuggerSettings.getInstance().WATCH_RETURN_VALUES;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean watch) {
+    public void setSelected(@NotNull AnActionEvent e, boolean watch) {
       DebuggerSettings.getInstance().WATCH_RETURN_VALUES = watch;
       DebugProcessImpl process = getCurrentDebugProcess(e.getProject());
       if (process != null) {

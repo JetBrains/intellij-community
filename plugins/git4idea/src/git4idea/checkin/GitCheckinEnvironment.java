@@ -87,8 +87,6 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
-import static com.intellij.openapi.ui.DialogWrapper.BALLOON_WARNING_BACKGROUND;
-import static com.intellij.openapi.ui.DialogWrapper.BALLOON_WARNING_BORDER;
 import static com.intellij.openapi.util.text.StringUtil.escapeXml;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.*;
 import static com.intellij.util.ObjectUtils.assertNotNull;
@@ -1135,8 +1133,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       myAuthorNotificationBuilder = JBPopupFactory.getInstance().
         createBalloonBuilder(new JLabel(GitBundle.getString("commit.author.diffs"))).
         setBorderInsets(UIManager.getInsets("Balloon.error.textInsets")).
-        setBorderColor(BALLOON_WARNING_BORDER).
-        setFillColor(BALLOON_WARNING_BACKGROUND).
+        setBorderColor(JBUI.CurrentTheme.Validator.warningBorderColor()).
+        setFillColor(JBUI.CurrentTheme.Validator.warningBackgroundColor()).
         setHideOnClickOutside(true).
         setHideOnFrameResize(false);
       myAuthorField.addHierarchyListener(new HierarchyListener() {

@@ -62,7 +62,7 @@ public class UnstableApiUsageInspection extends LocalInspectionTool {
       @Override
       public void visitElement(PsiElement element) {
         super.visitElement(element);
-        if (element instanceof PsiLiteralExpression) {
+        if (element instanceof PsiLanguageInjectionHost) {
           return; // better performance
         }
 

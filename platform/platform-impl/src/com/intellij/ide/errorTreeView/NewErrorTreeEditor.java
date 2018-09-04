@@ -154,8 +154,7 @@ public class NewErrorTreeEditor extends AbstractCellEditor implements TreeCellEd
         myPanel.setForeground(tree.getForeground());
       }
 
-      if (UIUtil.isUnderGTKLookAndFeel() ||
-          WideSelectionTreeUI.isWideSelection(tree)) {
+      if (WideSelectionTreeUI.isWideSelection(tree)) {
         myPanel.setOpaque(false);
       }
       return myPanel;

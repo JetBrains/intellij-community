@@ -20,7 +20,7 @@ public class AnnotationBasedBlockingMethodChecker implements BlockingMethodCheck
   }
 
   @Override
-  public boolean isActive(@NotNull PsiFile file) {
+  public boolean isApplicable(@NotNull PsiFile file) {
     if (myBlockingAnnotations.isEmpty()) return false;
     PsiClass annotationClass = JavaPsiFacade.getInstance(file.getProject())
       .findClass(BlockingMethodInNonBlockingContextInspection.DEFAULT_BLOCKING_ANNOTATION, file.getResolveScope());

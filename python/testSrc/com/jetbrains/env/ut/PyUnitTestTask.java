@@ -162,7 +162,7 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
 
   protected void runConfiguration(ConfigurationFactory factory, String sdkHome, final Project project) throws Exception {
     final RunnerAndConfigurationSettings settings =
-      RunManager.getInstance(project).createRunConfiguration("test", factory);
+      RunManager.getInstance(project).createConfiguration("test", factory);
 
     AbstractPythonLegacyTestRunConfiguration config = (AbstractPythonLegacyTestRunConfiguration)settings.getConfiguration();
 

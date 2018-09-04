@@ -358,12 +358,12 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myFilterPanel.isVisible();
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myFilterPanel.setVisible(state);
       if (state) {
         IdeFocusManager.getInstance(getEventProject(e)).requestFocus(myFilterField, true);
@@ -379,12 +379,12 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return UISettings.getInstance().getMergeEqualStackTraces();
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       UISettings.getInstance().setMergeEqualStackTraces(state);
       updateThreadList();
     }

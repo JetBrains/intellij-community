@@ -15,24 +15,16 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInspection.dataFlow.MutationSignature;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
-
 public class AssertWithSideEffectsInspection extends BaseInspection {
-
-  @NonNls
-  private static final Set<String> resultSetSideEffectMethods =
-    ContainerUtil.newHashSet("next", "first", "last", "absolute", "relative", "previous");
-
   @Override
   @Nls
   @NotNull
@@ -101,19 +93,7 @@ public class AssertWithSideEffectsInspection extends BaseInspection {
       }
       super.visitMethodCallExpression(expression);
       final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
-        return;
-      }
-      if (methodHasSideEffects(method)) {
-        hasSideEffects = true;
-        return;
-      }
-      final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null || !"java.sql.ResultSet".equals(containingClass.getQualifiedName())) {
-        return;
-      }
-      final String methodName = method.getName();
-      if (resultSetSideEffectMethods.contains(methodName)) {
+      if (method != null && methodHasSideEffects(method)) {
         hasSideEffects = true;
       }
     }
@@ -130,6 +110,8 @@ public class AssertWithSideEffectsInspection extends BaseInspection {
   }
 
   private static boolean methodHasSideEffects(PsiMethod method) {
+    MutationSignature signature = MutationSignature.fromMethod(method);
+    if (signature.mutatesAnything()) return true;
     final PsiCodeBlock body = method.getBody();
     if (body == null) {
       return false;

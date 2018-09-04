@@ -34,12 +34,12 @@ public class ShowHideMergePanelAction extends DumbAwareToggleAction {
   }
 
   @Override
-  public boolean isSelected(final AnActionEvent e) {
+  public boolean isSelected(@NotNull final AnActionEvent e) {
     return myIsSelected;
   }
 
   @Override
-  public void setSelected(final AnActionEvent e, final boolean state) {
+  public void setSelected(@NotNull final AnActionEvent e, final boolean state) {
     myIsSelected = state;
     if (state) {
       myManager.setFilteringStrategy(myStrategy);

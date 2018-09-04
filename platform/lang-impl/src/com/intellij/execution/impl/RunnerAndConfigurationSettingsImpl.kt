@@ -14,7 +14,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionException
 import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.util.*
@@ -22,13 +21,12 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.getAttributeBooleanValue
+import com.intellij.util.text.nullize
 import gnu.trove.THashMap
 import gnu.trove.THashSet
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.util.*
-
-private val LOG = logger<RunnerAndConfigurationSettings>()
 
 private const val RUNNER_ID = "RunnerId"
 
@@ -44,7 +42,7 @@ private const val ACTIVATE_TOOLWINDOW_BEFORE_RUN = "activateToolWindowBeforeRun"
 private const val TEMP_CONFIGURATION = "tempConfiguration"
 internal const val TEMPLATE_FLAG_ATTRIBUTE = "default"
 
-const val SINGLETON: String = "singleton"
+const val SINGLETON = "singleton"
 
 enum class RunConfigurationLevel {
   WORKSPACE, PROJECT, TEMPORARY
@@ -243,11 +241,17 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
         if (!isNewSerializationAllowed) {
           element.setAttribute(TEMPLATE_FLAG_ATTRIBUTE, "false")
         }
-        element.setAttribute(NAME_ATTR, configuration.name)
+
+        configuration.name.nullize()?.let {
+          element.setAttribute(NAME_ATTR, it)
+        }
       }
 
+      val factory = factory
       element.setAttribute(CONFIGURATION_TYPE_ATTRIBUTE, factory.type.id)
-      element.setAttribute(FACTORY_NAME_ATTRIBUTE, factory.id)
+      if (factory.type !is SimpleConfigurationType) {
+        element.setAttribute(FACTORY_NAME_ATTRIBUTE, factory.id)
+      }
       if (folderName != null) {
         element.setAttribute(FOLDER_NAME, folderName!!)
       }
@@ -375,10 +379,10 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
         (data as JDOMExternalizable).readExternal(temp)
       }
       catch (e: WriteExternalException) {
-        LOG.error(e)
+        RunManagerImpl.LOG.error(e)
       }
       catch (e: InvalidDataException) {
-        LOG.error(e)
+        RunManagerImpl.LOG.error(e)
       }
     }
   }
@@ -438,7 +442,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
         runnersById.isEmpty() -> null
         runnersById.size == 1 -> runnersById.firstOrNull()
         else -> {
-          LOG.error("More than one runner found for ID: $runnerId")
+          RunManagerImpl.LOG.error("More than one runner found for ID: $runnerId")
           for (executor in ExecutorRegistry.getInstance().registeredExecutors) {
             runnersById.firstOrNull { it.canRun(executor.id, configuration)  }?.let {
               return it
@@ -503,7 +507,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
         return settings.getOrPut(runner) { createSettings(runner) }
       }
       catch (ignored: AbstractMethodError) {
-        LOG.error("Update failed for: ${configuration.type.displayName}, runner: ${runner.runnerId}", ExtensionException(runner.javaClass))
+        RunManagerImpl.LOG.error("Update failed for: ${configuration.type.displayName}, runner: ${runner.runnerId}", ExtensionException(runner.javaClass))
         return null
       }
     }

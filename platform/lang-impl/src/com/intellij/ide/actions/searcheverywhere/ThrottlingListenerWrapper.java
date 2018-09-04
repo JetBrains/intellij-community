@@ -22,7 +22,7 @@ class ThrottlingListenerWrapper implements MultithreadSearcher.Listener {
   private final Executor myDelegateExecutor;
 
   private final Buffer myBuffer = new Buffer();
-  private final BiConsumer<List<MultithreadSearcher.ElementInfo>, List<MultithreadSearcher.ElementInfo>> myFlushConsumer;
+  private final BiConsumer<List<SESearcher.ElementInfo>, List<SESearcher.ElementInfo>> myFlushConsumer;
 
   ThrottlingListenerWrapper(int throttlingDelay, MultithreadSearcher.Listener delegateListener, Executor delegateExecutor) {
     myThrottlingDelay = throttlingDelay;
@@ -40,13 +40,13 @@ class ThrottlingListenerWrapper implements MultithreadSearcher.Listener {
   }
 
   @Override
-  public void elementsAdded(@NotNull List<MultithreadSearcher.ElementInfo> list) {
+  public void elementsAdded(@NotNull List<SESearcher.ElementInfo> list) {
     myBuffer.addEvent(new Event(Event.ADD, list));
     flushBufferIfNeeded();
   }
 
   @Override
-  public void elementsRemoved(@NotNull List<MultithreadSearcher.ElementInfo> list) {
+  public void elementsRemoved(@NotNull List<SESearcher.ElementInfo> list) {
     myBuffer.addEvent(new Event(Event.REMOVE, list));
     flushBufferIfNeeded();
   }
@@ -70,9 +70,9 @@ class ThrottlingListenerWrapper implements MultithreadSearcher.Listener {
     static final int ADD = 1;
 
     final int type;
-    final List<MultithreadSearcher.ElementInfo> items;
+    final List<SESearcher.ElementInfo> items;
 
-    public Event(int type, List<MultithreadSearcher.ElementInfo> items) {
+    public Event(int type, List<SESearcher.ElementInfo> items) {
       this.type = type;
       this.items = items;
     }
@@ -89,9 +89,9 @@ class ThrottlingListenerWrapper implements MultithreadSearcher.Listener {
       return Optional.ofNullable(myQueue.peek()).map(pair -> pair.second);
     }
 
-    public void flush(BiConsumer<List<MultithreadSearcher.ElementInfo>, List<MultithreadSearcher.ElementInfo>> consumer) {
-      List<MultithreadSearcher.ElementInfo> added = new ArrayList<>();
-      List<MultithreadSearcher.ElementInfo> removed = new ArrayList<>();
+    public void flush(BiConsumer<List<SESearcher.ElementInfo>, List<SESearcher.ElementInfo>> consumer) {
+      List<SESearcher.ElementInfo> added = new ArrayList<>();
+      List<SESearcher.ElementInfo> removed = new ArrayList<>();
       myQueue.forEach(pair -> {
         Event event = pair.first;
         if (event.type == Event.ADD) {

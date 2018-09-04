@@ -21,7 +21,7 @@ public final class AntRunConfigurationType extends SimpleConfigurationType {
 
   @NotNull
   @Override
-  protected RunConfiguration createTemplateConfiguration(@NotNull Project project) {
-    return new AntRunConfiguration(project, getFactory());
+  public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
+    return new AntRunConfiguration(project, this);
   }
 }

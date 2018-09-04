@@ -3,6 +3,7 @@ package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.LazyInitializer.NotNullValue;
 import com.intellij.util.ui.ImageUtil;
@@ -229,6 +230,7 @@ public class SVGLoader {
 
   public static void setColorPatcher(@Nullable SvgColorPatcher colorPatcher) {
     ourColorPatcher = colorPatcher;
+    IconLoader.clearCache();
   }
 
   private BufferedImage createImage() throws TranscoderException {

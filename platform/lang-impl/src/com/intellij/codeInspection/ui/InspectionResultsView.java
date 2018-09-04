@@ -481,14 +481,31 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   private void showInRightPanel(@Nullable final RefEntity refEntity) {
     final JPanel editorPanel = new JPanel();
     editorPanel.setLayout(new BorderLayout());
+    final JPanel toolsPanel = new JPanel(new BorderLayout());
+    editorPanel.add(toolsPanel, BorderLayout.NORTH);
     final int problemCount = myTree.getSelectedProblemCount(true);
     JComponent previewPanel = null;
     final InspectionToolWrapper tool = myTree.getSelectedToolWrapper(true);
-    if (tool != null && refEntity != null && refEntity.isValid()) {
+    if (tool != null) {
+      final InspectionToolPresentation presentation = myGlobalInspectionContext.getPresentation(tool);
       final TreePath path = myTree.getSelectionPath();
-      if (path == null || !(path.getLastPathComponent() instanceof ProblemDescriptionNode)) {
-        final InspectionToolPresentation presentation = myGlobalInspectionContext.getPresentation(tool);
-        previewPanel = presentation.getCustomPreviewPanel(refEntity);
+      if (path != null) {
+        Object last = path.getLastPathComponent();
+        if (last instanceof ProblemDescriptionNode) {
+          CommonProblemDescriptor descriptor = ((ProblemDescriptionNode)last).getDescriptor();
+          if (descriptor != null) {
+            previewPanel = presentation.getCustomPreviewPanel(descriptor, this);
+            JComponent customTools = presentation.getCustomToolsPanel(descriptor, this);
+            if (customTools != null) {
+              toolsPanel.add(customTools, BorderLayout.EAST);
+            }
+          }
+        }
+        else {
+          if (refEntity != null && refEntity.isValid()) {
+            previewPanel = presentation.getCustomPreviewPanel(refEntity);
+          }
+        }
       }
     }
     EditorEx previewEditor = null;
@@ -507,7 +524,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
         if (previewEditor != null) {
           previewPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
         }
-        editorPanel.add(fixToolbar, BorderLayout.NORTH);
+        toolsPanel.add(fixToolbar, BorderLayout.WEST);
       }
     }
     if (previewEditor != null) {

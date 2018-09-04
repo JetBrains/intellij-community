@@ -39,6 +39,7 @@ import javax.swing.*;
 import javax.swing.plaf.basic.BasicButtonUI;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.icons.AllIcons.General.CollapseComponent;
@@ -232,20 +233,27 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   }
 
   private static List<AnAction> createSpeedSearchActions(@NotNull ActionGroup parentActionGroup, boolean isFirstLevel) {
+    if (parentActionGroup instanceof HideableActionGroup) {
+      parentActionGroup = ((HideableActionGroup)parentActionGroup).getDelegate();
+    }
+
+    if (parentActionGroup instanceof BranchActionGroup) return Collections.emptyList();
+
     // add per repository branches into the model as Speed Search elements and show them only if regular items were not found by mask;
-    @NotNull List<AnAction> speedSearchActions = ContainerUtil.newArrayList();
+    List<AnAction> speedSearchActions = ContainerUtil.newArrayList();
     if (!isFirstLevel) speedSearchActions.add(new Separator(parentActionGroup.getTemplatePresentation().getText()));
     for (AnAction child : parentActionGroup.getChildren(null)) {
       if (child instanceof ActionGroup) {
         ActionGroup childGroup = (ActionGroup)child;
+        if (childGroup instanceof HideableActionGroup) {
+          childGroup = ((HideableActionGroup)childGroup).getDelegate();
+        }
+
         if (isFirstLevel) {
           speedSearchActions.addAll(createSpeedSearchActions(childGroup, false));
         }
         else if (childGroup instanceof BranchActionGroup) {
           speedSearchActions.add(createSpeedSearchActionGroupWrapper(childGroup));
-        }
-        else if (childGroup instanceof HideableActionGroup) {
-          speedSearchActions.add(createSpeedSearchActionGroupWrapper(((HideableActionGroup)childGroup).getDelegate()));
         }
       }
     }
@@ -501,13 +509,13 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   }
 
   public static void wrapWithMoreActionIfNeeded(@NotNull Project project,
-                                                @NotNull DefaultActionGroup parentGroup, @NotNull List<? extends ActionGroup> actionList,
+                                                @NotNull LightActionGroup parentGroup, @NotNull List<? extends ActionGroup> actionList,
                                                 int maxIndex, @Nullable String settingName) {
     wrapWithMoreActionIfNeeded(project, parentGroup, actionList, maxIndex, settingName, false);
   }
 
   public static void wrapWithMoreActionIfNeeded(@NotNull Project project,
-                                                @NotNull DefaultActionGroup parentGroup, @NotNull List<? extends ActionGroup> actionList,
+                                                @NotNull LightActionGroup parentGroup, @NotNull List<? extends ActionGroup> actionList,
                                                 int maxIndex, @Nullable String settingName, boolean defaultExpandValue) {
     if (actionList.size() > maxIndex) {
       boolean hasFavorites =

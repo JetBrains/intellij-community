@@ -33,15 +33,23 @@ class EventLoggerWithValidation(private val fileLogger: FileLogger, private val 
         if (session.isEmpty() || event.sessionUid == session.first().sessionUid) {
             session.add(event)
         } else {
-            val lastSession = session.toList()
-            ApplicationManager.getApplication().executeOnPooledThread { validateAndLog(lastSession) }
-            session.clear()
+            validateAndLogInBackground(false)
             session.add(event)
         }
     }
 
     override fun dispose() {
-        validateAndLog(session.toList())
+        validateAndLogInBackground(true)
+    }
+
+    private fun validateAndLogInBackground(flush: Boolean) {
+        val lastSession = session.toList()
+        ApplicationManager.getApplication().executeOnPooledThread {
+            validateAndLog(lastSession)
+            if (flush) {
+                fileLogger.flush()
+            }
+        }
         session.clear()
     }
 

@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 /**
  * @author msokolov
  */
-class MultithreadSearcher {
+class MultithreadSearcher implements SESearcher {
 
   private static final Logger LOG = Logger.getInstance(MultithreadSearcher.class);
 
@@ -59,6 +59,7 @@ class MultithreadSearcher {
    * @param filterSupplier supplier of {@link SearchEverywhereContributorFilter}'s for different search contributors
    * @return {@link ProgressIndicator} that could be used to track and/or cancel searching process
    */
+  @Override
   public ProgressIndicator search(Map<SearchEverywhereContributor<?>, Integer> contributorsAndLimits, String pattern,
                                   boolean useNonProjectItems,
                                   Function<SearchEverywhereContributor<?>, SearchEverywhereContributorFilter<?>> filterSupplier) {
@@ -75,7 +76,7 @@ class MultithreadSearcher {
     };
     indicator.start();
 
-    Runnable finisherTask = createFinisherTask(phaser, accumulator);
+    Runnable finisherTask = createFinisherTask(phaser, accumulator, indicator);
     for (SearchEverywhereContributor<?> contributor : contributorsAndLimits.keySet()) {
       SearchEverywhereContributorFilter<?> filter = filterSupplier.apply(contributor);
       phaser.register();
@@ -97,6 +98,7 @@ class MultithreadSearcher {
    * @param filterSupplier supplier of {@link SearchEverywhereContributorFilter}'s for different search contributors
    * @return {@link ProgressIndicator} that could be used to track and/or cancel searching process
    */
+  @Override
   public ProgressIndicator findMoreItems(Map<SearchEverywhereContributor<?>, Collection<ElementInfo>> alreadyFound, String pattern,
                                          boolean useNonProjectItems, SearchEverywhereContributor<?> contributorToExpand, int newLimit,
                                          Function<SearchEverywhereContributor<?>, SearchEverywhereContributorFilter<?>> filterSupplier) {
@@ -119,22 +121,16 @@ class MultithreadSearcher {
     return ConcurrencyUtil.underThreadNameRunnable("SE-SearchTask", task);
   }
 
-  private static Runnable createFinisherTask(Phaser phaser, FullSearchResultsAccumulator accumulator) {
+  private static Runnable createFinisherTask(Phaser phaser, FullSearchResultsAccumulator accumulator, ProgressIndicator indicator) {
     phaser.register();
 
     return ConcurrencyUtil.underThreadNameRunnable("SE-FinisherTask", () -> {
       phaser.arriveAndAwaitAdvance();
-      accumulator.searchFinished();
+      if (!indicator.isCanceled()) {
+        accumulator.searchFinished();
+      }
+      indicator.stop();
     });
-  }
-
-  /**
-   * Search process listener interface
-   */
-  public interface Listener {
-    void elementsAdded(@NotNull List<ElementInfo> list);
-    void elementsRemoved(@NotNull List<ElementInfo> list);
-    void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors);
   }
 
   private static class ContributorSearchTask<F> implements Runnable {
@@ -182,6 +178,10 @@ class MultithreadSearcher {
                                         return false;
                                       }
                                     });
+        if (myIndicator.isCanceled()) {
+          return;
+        }
+
         myAccumulator.contributorFinished(myContributor);
       } finally {
         finishCallback.run();
@@ -190,39 +190,12 @@ class MultithreadSearcher {
     }
   }
 
-  /**
-   * Class containing info about found elements
-   */
-  public static class ElementInfo {
-    private final int priority;
-    private final Object element;
-    private final SearchEverywhereContributor<?> contributor;
-
-    public ElementInfo(Object element, int priority, SearchEverywhereContributor<?> contributor) {
-      this.priority = priority;
-      this.element = element;
-      this.contributor = contributor;
-    }
-
-    public int getPriority() {
-      return priority;
-    }
-
-    public Object getElement() {
-      return element;
-    }
-
-    public SearchEverywhereContributor<?> getContributor() {
-      return contributor;
-    }
-  }
-
   private static abstract class ResultsAccumulator {
-    protected final Map<SearchEverywhereContributor<?>, Collection<MultithreadSearcher.ElementInfo>> sections;
+    protected final Map<SearchEverywhereContributor<?>, Collection<ElementInfo>> sections;
     protected final MultithreadSearcher.Listener myListener;
     protected final Executor myNotificationExecutor;
 
-    ResultsAccumulator(Map<SearchEverywhereContributor<?>, Collection<MultithreadSearcher.ElementInfo>> sections, Listener listener,
+    ResultsAccumulator(Map<SearchEverywhereContributor<?>, Collection<ElementInfo>> sections, Listener listener,
                               Executor notificationExecutor) {
       this.sections = sections;
       myListener = listener;

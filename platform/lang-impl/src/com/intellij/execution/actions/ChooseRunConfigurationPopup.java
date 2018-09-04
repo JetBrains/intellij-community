@@ -979,7 +979,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
 
     Map<RunnerAndConfigurationSettings, ItemWrapper> wrappedExisting = new LinkedHashMap<>();
     RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
-    for (ConfigurationType type : runManager.getConfigurationFactoriesWithoutUnknown()) {
+    for (ConfigurationType type : ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList()) {
       Map<String, List<RunnerAndConfigurationSettings>> structure = runManager.getStructure(type);
       for (Map.Entry<String, List<RunnerAndConfigurationSettings>> entry : structure.entrySet()) {
         if (entry.getValue().isEmpty()) {

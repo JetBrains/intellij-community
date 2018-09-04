@@ -7,11 +7,12 @@ import com.sun.jdi.connect.AttachingConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * @author egor
@@ -29,9 +30,10 @@ public class SAPidRemoteConnection extends PidRemoteConnection {
   @Override
   public AttachingConnector getConnector() throws ExecutionException {
     try {
+      Path saJarPath = Paths.get(mySAJarPath);
       Class<?> connectorClass = Class.forName("sun.jvm.hotspot.jdi.SAPIDAttachingConnector",
                                               true,
-                                              new JBSAJDIClassLoader(getBaseSAJDIClassLoader(mySAJarPath), mySAJarPath));
+                                              new JBSAJDIClassLoader(getBaseSAJDIClassLoader(saJarPath), saJarPath));
       return (AttachingConnector)connectorClass.newInstance();
     }
     catch (Exception e) {
@@ -45,26 +47,25 @@ public class SAPidRemoteConnection extends PidRemoteConnection {
   }
 
   @NotNull
-  private static synchronized ClassLoader getBaseSAJDIClassLoader(String saJarPath) {
+  private static synchronized ClassLoader getBaseSAJDIClassLoader(Path fallback) {
     if (BASE_SA_JDI_CLASS_LOADER == null) {
-      File saJdiJar = new File(SystemProperties.getJavaHome(), "../lib/sa-jdi.jar");
-      if (saJdiJar.exists()) {
-        try {
-          saJarPath = saJdiJar.getCanonicalPath();
-        }
-        catch (IOException ignored) {
+      Path saJdiJar = Paths.get(SystemProperties.getJavaHome(), "lib/sa-jdi.jar");
+      if (!Files.exists(saJdiJar)) {
+        saJdiJar = Paths.get(SystemProperties.getJavaHome(), "../lib/sa-jdi.jar"); // MacOS
+        if (!Files.exists(saJdiJar)) {
+          saJdiJar = fallback;
         }
       }
-      BASE_SA_JDI_CLASS_LOADER = new JBSAJDIClassLoader(SAPidRemoteConnection.class.getClassLoader(), saJarPath);
+      BASE_SA_JDI_CLASS_LOADER = new JBSAJDIClassLoader(SAPidRemoteConnection.class.getClassLoader(), saJdiJar);
     }
     return BASE_SA_JDI_CLASS_LOADER;
   }
 
   private static class JBSAJDIClassLoader extends URLClassLoader {
-    JBSAJDIClassLoader(ClassLoader parent, String classPath) {
+    JBSAJDIClassLoader(ClassLoader parent, Path classPath) {
       super(new URL[0], parent);
       try {
-        addURL(new File(classPath).toURI().toURL());
+        addURL(classPath.toUri().toURL());
       }
       catch (MalformedURLException mue) {
         throw new RuntimeException(mue);

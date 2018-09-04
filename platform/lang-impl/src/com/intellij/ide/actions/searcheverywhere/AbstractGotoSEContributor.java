@@ -76,17 +76,20 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
     FilteringGotoByModel<F> model = createModel(myProject);
     model.setFilterItems(filter.getSelectedElements());
     ChooseByNamePopup popup = ChooseByNamePopup.createPopup(myProject, model, (PsiElement)null);
-    ApplicationManager.getApplication().runReadAction(() -> {
-      popup.getProvider().filterElements(popup, searchString, everywhere, progressIndicator, element -> {
-        if (progressIndicator.isCanceled()) return false;
-        if (element == null) {
-          LOG.error("Null returned from " + model + " in " + this);
-          return true;
-        }
-        return consumer.apply(element);
+    try {
+      ApplicationManager.getApplication().runReadAction(() -> {
+        popup.getProvider().filterElements(popup, searchString, everywhere, progressIndicator, element -> {
+          if (progressIndicator.isCanceled()) return false;
+          if (element == null) {
+            LOG.error("Null returned from " + model + " in " + this);
+            return true;
+          }
+          return consumer.apply(element);
+        });
       });
-    });
-    Disposer.dispose(popup);
+    } finally {
+      Disposer.dispose(popup);
+    }
   }
 
   //todo param is unnecessary #UX-1

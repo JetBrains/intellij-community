@@ -561,12 +561,12 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return VcsApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       if (!myTracker.isValid()) return;
       VcsApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES = state;
 

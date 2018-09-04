@@ -43,6 +43,10 @@ public final class ExtensionPointName<T> {
     return getExtensionList(null);
   }
 
+  public boolean hasAnyExtensions() {
+    return getPoint(null).hasAnyExtensions();
+  }
+
   @NotNull
   public List<T> getExtensionList(@Nullable AreaInstance areaInstance) {
     return getPoint(areaInstance).getExtensionList();

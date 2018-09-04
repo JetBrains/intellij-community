@@ -54,7 +54,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -69,7 +68,7 @@ public class BraceHighlightingHandler {
    * Is intended to be used to avoid submitting unnecessary new processing request from EDT, i.e. it's assumed that the collection
    * Must be accessed from the EDT only.
    */
-  private static final Set<Editor> PROCESSED_EDITORS = Collections.newSetFromMap(ContainerUtil.createWeakMap());
+  private static final Set<Editor> PROCESSED_EDITORS = ContainerUtil.createWeakSet();
 
   @NotNull private final Project myProject;
   @NotNull private final Editor myEditor;
@@ -100,60 +99,67 @@ public class BraceHighlightingHandler {
       // Assuming to be in EDT here.
       return;
     }
-    final int offset = editor.getCaretModel().getOffset();
-
     // any request to the UI component need to be done from EDT
     final ModalityState modalityState = ModalityState.stateForComponent(editor.getComponent());
-    final DumbAwareRunnable removeEditorFromProcessed = () -> PROCESSED_EDITORS.remove(editor);
+
+    final int offset = editor.getCaretModel().getOffset();
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(() ->
-        {
+      boolean success = ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
         try {
-        ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(()->{
-        if (!ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(()->{
-          if (!isValidEditor(editor)) {
-            removeFromProcessedLater(editor);
-            return;
-          }
-          @SuppressWarnings("ConstantConditions") // the `project` is valid after the `isValidEditor` call
-          @NotNull final Project project = editor.getProject();
-
-          final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
-          PsiFile injected = psiFile instanceof PsiBinaryFile || !isValidFile(psiFile)
-                             ? null
-                             : getInjectedFileIfAny(editor, project, offset, psiFile, alarm);
-          ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> {
-            try {
-              if (isValidEditor(editor) && isValidFile(injected)) {
-                Editor newEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injected);
-                BraceHighlightingHandler handler = new BraceHighlightingHandler(project, newEditor, alarm, injected);
-                processor.process(handler);
+          ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(() -> {
+            if (!ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
+              if (!isValidEditor(editor)) {
+                removeFromProcessedLater(editor);
+                return;
               }
+              @SuppressWarnings("ConstantConditions") // the `project` is valid after the `isValidEditor` call
+              @NotNull final Project project = editor.getProject();
+
+              final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
+              PsiFile injected = psiFile instanceof PsiBinaryFile || !isValidFile(psiFile)
+                                 ? null
+                                 : getInjectedFileIfAny(editor, project, offset, psiFile, alarm);
+              ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> {
+                try {
+                  if (isValidEditor(editor) && isValidFile(injected)) {
+                    Editor newEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injected);
+                    BraceHighlightingHandler handler = new BraceHighlightingHandler(project, newEditor, alarm, injected);
+                    processor.process(handler);
+                  }
+                }
+                finally {
+                  PROCESSED_EDITORS.remove(editor);
+                }
+              }, modalityState);
+            })) {
+              removeFromProcessedLater(editor);
             }
-            finally {
-              removeEditorFromProcessed.run();
             }
-          }, modalityState);
-        })) {
+          );
+        }
+        catch (Exception e) {
+          // Reset processing flag in case of unexpected exception.
           removeFromProcessedLater(editor);
-          }}
+          throw e;
+        }
+        }
       );
-      }
-      catch(Exception e) {
-        // Reset processing flag in case of unexpected exception.
-        removeFromProcessedLater(editor);
-        throw e;
-      }
-     }
-          )) {
+      if (!success) {
         // write action is queued in AWT. restart after it's finished
-        ApplicationManager.getApplication().invokeLater(() -> {
-          removeEditorFromProcessed.run();
-          lookForInjectedAndMatchBracesInOtherThread(editor, alarm, processor);
-        }, modalityState);
+        restartLater(editor, modalityState, alarm, processor);
       }
     });
+  }
+
+  private static void restartLater(@NotNull Editor editor,
+                                   @NotNull ModalityState modalityState,
+                                   @NotNull Alarm alarm,
+                                   @NotNull Processor<? super BraceHighlightingHandler> processor) {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      PROCESSED_EDITORS.remove(editor);
+      lookForInjectedAndMatchBracesInOtherThread(editor, alarm, processor);
+    }, modalityState);
   }
 
   private static void removeFromProcessedLater(@NotNull Editor editor) {

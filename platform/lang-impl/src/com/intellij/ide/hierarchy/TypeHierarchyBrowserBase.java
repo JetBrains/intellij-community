@@ -51,12 +51,12 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
 
   protected abstract boolean isInterface(@NotNull PsiElement psiElement);
 
-  protected void createTreeAndSetupCommonActions(@NotNull Map<String, JTree> trees, String typeHierarchyActionGroupName) {
+  protected void createTreeAndSetupCommonActions(@NotNull Map<String, JTree> trees, @NotNull String typeHierarchyActionGroupName) {
     ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(typeHierarchyActionGroupName);
     createTreeAndSetupCommonActions(trees, group);
   }
 
-  protected void createTreeAndSetupCommonActions(@NotNull Map<String, JTree> trees, ActionGroup group) {
+  protected void createTreeAndSetupCommonActions(@NotNull Map<String, JTree> trees, @NotNull ActionGroup group) {
     final BaseOnThisTypeAction baseOnThisTypeAction = createBaseOnThisAction();
     final JTree tree1 = createTree(true);
     PopupHandler.installPopupHandler(tree1, group, ActionPlaces.TYPE_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());

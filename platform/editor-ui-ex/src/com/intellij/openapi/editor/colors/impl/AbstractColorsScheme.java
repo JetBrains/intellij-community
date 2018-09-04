@@ -197,6 +197,14 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     return result;
   }
 
+  /**
+   * Returns the attributes defined in this scheme (not inherited from a parent).
+   */
+  @NotNull
+  public Map<TextAttributesKey, TextAttributes> getDirectlyDefinedAttributes() {
+    return new HashMap<>(myAttributesMap);
+  }
+
   @Override
   public void setEditorFontName(String fontName) {
     ModifiableFontPreferences currPreferences = ensureEditableFontPreferences();

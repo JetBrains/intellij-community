@@ -3,10 +3,9 @@ package com.theoryinpractice.testng.configuration;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.RunManager;
-import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.ConfigurationTypeBase;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.SimpleConfigurationType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -17,16 +16,21 @@ import com.theoryinpractice.testng.model.TestNGTestObject;
 import icons.TestngIcons;
 import org.jetbrains.annotations.NotNull;
 
-public final class TestNGConfigurationType extends ConfigurationTypeBase {
+public final class TestNGConfigurationType extends SimpleConfigurationType {
   public TestNGConfigurationType() {
     super("TestNG", "TestNG", null, LazyUtil.create(() -> TestngIcons.TestNG));
-    addFactory(new ConfigurationFactory(this) {
-      @NotNull
-      @Override
-      public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
-        return new TestNGConfiguration("", project, this);
-      }
-    });
+  }
+
+  @NotNull
+  @Override
+  public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
+    return new TestNGConfiguration("", project, this);
+  }
+
+  @NotNull
+  @Override
+  public String getTag() {
+    return "testNg";
   }
 
   public static TestNGConfigurationType getInstance() {

@@ -575,7 +575,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     }
     JTree tree = myStructureViewComponent.getTree();
     return JBIterable.of(tree.getSelectionModel().getSelectionPaths())
-      .map(o -> TreeUtil.getUserObject(o.getLastPathComponent()));
+      .map(TreeUtil::getLastUserObject);
   }
 
   @Nullable

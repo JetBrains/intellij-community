@@ -274,12 +274,12 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myStateBean.myFlattenPackages;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myStateBean.myFlattenPackages = state;
       final Object selectedValue = myBuilder.getSelectedValue();
       myBuilder.buildRoot();

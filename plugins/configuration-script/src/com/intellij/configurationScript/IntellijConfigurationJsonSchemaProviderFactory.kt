@@ -14,7 +14,6 @@ import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider
 import com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory
 import com.jetbrains.jsonSchema.extension.SchemaType
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion
-import org.intellij.lang.annotations.Language
 import java.nio.charset.StandardCharsets
 
 internal val LOG = logger<IntellijConfigurationJsonSchemaProviderFactory>()
@@ -70,51 +69,30 @@ internal class IntellijConfigurationJsonSchemaProviderFactory : JsonSchemaProvid
 }
 
 internal fun generateConfigurationSchema(): CharSequence {
-  // fake vars to avoid escaping
-  @Suppress("JsonStandardCompliance")
-  val schema = "\$schema"
-  @Suppress("JsonStandardCompliance")
-  val id = "\$id"
-  @Suppress("JsonStandardCompliance")
-  val ref = "\$ref"
+  val runConfigurationGenerator = RunConfigurationJsonSchemaGenerator()
+  val stringBuilder = StringBuilder()
+  stringBuilder.json {
+    "\$schema" to "http://json-schema.org/draft-07/schema#"
+    "\$id" to "https://jetbrains.com/intellij-configuration.schema.json"
+    "title" to "IntelliJ Configuration"
+    "description" to "IntelliJ Configuration to configure IDE behavior, run configurations and so on"
 
-  val defBuilder = StringBuilder()
-  val definitions = JsonObjectBuilder(defBuilder)
-
-  val rcProperties = JsonObjectBuilder(StringBuilder())
-  RunConfigurationJsonSchemaGenerator(definitions).generate(rcProperties)
-
-  definitions.map("RunConfigurations") {
-    rawBuilder("properties", rcProperties)
+    "type" to "object"
+    rawMap(runConfigurationGenerator.definitionNodeKey) {
+      it.append(runConfigurationGenerator.generate())
+    }
+    map("properties") {
+      map(Keys.runConfigurations) {
+        definitionReference(runConfigurationGenerator.definitionPointerPrefix, Keys.runConfigurations)
+      }
+    }
     "additionalProperties" to false
   }
-
-  @Suppress("UnnecessaryVariable")
-  @Language("JSON")
-  val data = """
-  {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "https://jetbrains.com/intellij-configuration.schema.json",
-    "title": "IntelliJ Configuration",
-    "description": "IntelliJ Configuration to configure IDE behavior, run configurations and so on",
-    "type": "object",
-    "definitions": {
-      $defBuilder
-    },
-    "properties": {
-      "${Keys.runConfigurations}": {
-        "description": "The run configurations",
-        "type": "object",
-        "$ref": "#/definitions/RunConfigurations"
-      }
-    },
-    "additionalProperties": false
-  }
-  """
-  return data
+  return stringBuilder
 }
 
 @Suppress("JsonStandardCompliance")
 internal object Keys {
   const val runConfigurations = "runConfigurations"
+  const val templates = "templates"
 }

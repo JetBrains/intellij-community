@@ -43,7 +43,7 @@ import java.util.Set;
 public class DeepCompareAction extends ToggleAction implements DumbAware {
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
     VcsLogDataProvider dataProvider = e.getData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER);
@@ -54,7 +54,7 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean selected) {
+  public void setSelected(@NotNull AnActionEvent e, boolean selected) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     final VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
     VcsLogDataProvider dataProvider = e.getData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER);
@@ -69,14 +69,14 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
       if (singleBranchName == null) {
         selectBranchAndPerformAction(ui, e, selectedBranch -> {
           ui.getFilterUi().setFilter(VcsLogBranchFilterImpl.fromBranch(selectedBranch));
-          dc.highlightInBackground(selectedBranch);
+          dc.startTask(selectedBranch);
         }, getGitRoots(project, ui));
         return;
       }
-      dc.highlightInBackground(singleBranchName);
+      dc.startTask(singleBranchName);
     }
     else {
-      dc.stopAndUnhighlight();
+      dc.stopTaskAndUnhighlight();
     }
   }
 

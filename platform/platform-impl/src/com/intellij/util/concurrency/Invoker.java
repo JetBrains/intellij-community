@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.util.containers.TransferToEDTQueue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -32,7 +33,7 @@ public abstract class Invoker implements Disposable {
   private volatile boolean disposed;
 
   private Invoker(@NotNull String prefix, @NotNull Disposable parent) {
-    description = UID.getAndIncrement() + ".Invoker." + prefix + ":" + parent.getClass().getName();
+    description = UID.getAndIncrement() + ".Invoker." + prefix + ": " + parent;
     register(parent, this);
   }
 
@@ -151,7 +152,7 @@ public abstract class Invoker implements Disposable {
         promise.setResult(null);
       }
     }
-    catch (ProcessCanceledException exception) {
+    catch (ProcessCanceledException | IndexNotReadyException exception) {
       if (canRestart(task, promise, attempt)) {
         count.incrementAndGet();
         int nextAttempt = attempt + 1;

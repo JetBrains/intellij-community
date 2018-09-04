@@ -250,8 +250,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   public void run(boolean requestEditorFocus) {
     TransactionGuard.submitTransaction(myProject, () -> FileDocumentManager.getInstance().saveAllDocuments());
 
-    UIUtil
-      .invokeLaterIfNeeded(() -> ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Connecting to Console", false) {
+    ApplicationManager.getApplication().executeOnPooledThread(
+      () -> ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Connecting to Console", false) {
         @Override
         public void run(@NotNull final ProgressIndicator indicator) {
           indicator.setText("Connecting to console...");
@@ -267,7 +267,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
             UIUtil.invokeAndWaitIfNeeded((Runnable)() -> showErrorsInConsole(e));
           }
         }
-      }));
+      })
+    );
   }
 
   private void showErrorsInConsole(Exception e) {
@@ -641,7 +642,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return isSelected;
     }
 
@@ -651,7 +652,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       isSelected = state;
       updateEditors();
       myConsoleSettings.setUseSoftWraps(isSelected);
@@ -823,7 +824,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return mySelected;
     }
 
@@ -839,7 +840,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       mySelected = state;
 
       if (mySelected) {

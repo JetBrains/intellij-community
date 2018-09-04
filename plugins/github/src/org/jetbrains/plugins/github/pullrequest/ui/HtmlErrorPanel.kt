@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui
 
-import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
@@ -59,8 +58,8 @@ class HtmlErrorPanel : Wrapper() {
     currentSeverity = severity
     currentLinkActivationListener = linkActivationListener
     background = when (severity) {
-      Severity.ERROR -> DialogWrapper.BALLOON_ERROR_BACKGROUND
-      Severity.WARNING -> DialogWrapper.BALLOON_WARNING_BACKGROUND
+      Severity.ERROR -> JBUI.CurrentTheme.Validator.errorBackgroundColor()
+      Severity.WARNING -> JBUI.CurrentTheme.Validator.warningBackgroundColor()
     }
     isVisible = true
   }

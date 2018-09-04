@@ -15,9 +15,7 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.breakpoints.FieldBreakpoint;
-import com.intellij.debugger.ui.impl.watch.DebuggerTree;
-import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
-import com.intellij.debugger.ui.impl.watch.FieldDescriptorImpl;
+import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -30,6 +28,8 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.sun.jdi.Field;
 import com.sun.jdi.ObjectReference;
 import org.jetbrains.annotations.NotNull;
@@ -127,26 +127,30 @@ public class ToggleFieldBreakpointAction extends AnAction {
       return null;
     }
 
-    final DebuggerTreeNodeImpl selectedNode = DebuggerAction.getSelectedNode(dataContext);
-    if(selectedNode != null && selectedNode.getDescriptor() instanceof FieldDescriptorImpl) {
-      final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(dataContext);
-      final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
-      if (debugProcess != null) { // if there is an active debug session
-        final Ref<SourcePosition> positionRef = new Ref<>(null);
-        debugProcess.getManagerThread().invokeAndWait(new DebuggerContextCommandImpl(debuggerContext) {
-          @Override
-          public Priority getPriority() {
-            return Priority.HIGH;
-          }
+    XValue value = XDebuggerTreeActionBase.getSelectedValue(dataContext);
+    if (value instanceof NodeDescriptorProvider) {
+      NodeDescriptorImpl descriptor = ((NodeDescriptorProvider)value).getDescriptor();
+      if (descriptor instanceof FieldDescriptorImpl) {
+        final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(dataContext);
+        final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
+        if (debugProcess != null) { // if there is an active debug session
+          final Ref<SourcePosition> positionRef = new Ref<>(null);
+          debugProcess.getManagerThread().invokeAndWait(new DebuggerContextCommandImpl(debuggerContext) {
+            @Override
+            public Priority getPriority() {
+              return Priority.HIGH;
+            }
 
-          @Override
-          public void threadAction(@NotNull SuspendContextImpl suspendContext) {
-            ApplicationManager.getApplication().runReadAction(() -> positionRef.set(SourcePositionProvider.getSourcePosition(selectedNode.getDescriptor(), project, debuggerContext)));
+            @Override
+            public void threadAction(@NotNull SuspendContextImpl suspendContext) {
+              ApplicationManager.getApplication().runReadAction(
+                () -> positionRef.set(SourcePositionProvider.getSourcePosition(descriptor, project, debuggerContext)));
+            }
+          });
+          final SourcePosition sourcePosition = positionRef.get();
+          if (sourcePosition != null) {
+            return sourcePosition;
           }
-        });
-        final SourcePosition sourcePosition = positionRef.get();
-        if (sourcePosition != null) {
-          return sourcePosition;
         }
       }
     }

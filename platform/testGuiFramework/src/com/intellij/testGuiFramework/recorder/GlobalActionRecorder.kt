@@ -42,9 +42,14 @@ object GlobalActionRecorder {
   }
 
   private val globalAwtProcessor = IdeEventQueue.EventDispatcher { awtEvent ->
-    when (awtEvent) {
-      is MouseEvent -> EventDispatcher.processMouseEvent(awtEvent)
-      is KeyEvent -> EventDispatcher.processKeyBoardEvent(awtEvent)
+    try {
+      when (awtEvent) {
+        is MouseEvent -> EventDispatcher.processMouseEvent(awtEvent)
+        is KeyEvent -> EventDispatcher.processKeyBoardEvent(awtEvent)
+      }
+    }
+    catch (e: Exception) {
+      LOG.warn(e)
     }
     false
   }

@@ -20,18 +20,19 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class ShowTabsInSingleRowAction extends ToggleAction implements DumbAware {
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return UISettings.getInstance().getScrollTabLayoutInEditor();
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     UISettings.getInstance().setScrollTabLayoutInEditor(state);
     LafManager.getInstance().repaintUI();
     UISettings.getInstance().fireUISettingsChanged();

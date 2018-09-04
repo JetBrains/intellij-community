@@ -35,7 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static com.intellij.util.ui.tree.TreeUtil.getUserObject;
+import static com.intellij.util.ui.tree.TreeUtil.getLastUserObject;
 
 /**
  * @author Anna
@@ -235,7 +235,7 @@ abstract class ProjectViewDropTarget implements DnDNativeTarget {
   private class MoveDropHandler extends MoveCopyDropHandler {
     @Override
     protected boolean canDrop(@NotNull TreePath[] sources, @NotNull TreePath target) {
-      DropTargetNode node = getUserObject(DropTargetNode.class, target.getLastPathComponent());
+      DropTargetNode node = getLastUserObject(DropTargetNode.class, target);
       if (node != null && node.canDrop(sources)) return true;
 
       PsiElement[] sourceElements = getPsiElements(sources);
@@ -246,7 +246,7 @@ abstract class ProjectViewDropTarget implements DnDNativeTarget {
 
     @Override
     public void doDrop(@NotNull TreePath[] sources, @NotNull TreePath target) {
-      DropTargetNode node = getUserObject(DropTargetNode.class, target.getLastPathComponent());
+      DropTargetNode node = getLastUserObject(DropTargetNode.class, target);
       if (node != null && node.canDrop(sources)) {
         node.drop(sources, DataManager.getInstance().getDataContext(myTree));
       }
@@ -311,7 +311,7 @@ abstract class ProjectViewDropTarget implements DnDNativeTarget {
     public void doDropFiles(List<? extends File> files, @NotNull TreePath target) {
       PsiFileSystemItem[] sourceFileArray = getPsiFiles(files);
 
-      DropTargetNode node = getUserObject(DropTargetNode.class, target.getLastPathComponent());
+      DropTargetNode node = getLastUserObject(DropTargetNode.class, target);
       if (node != null) {
         node.dropExternalFiles(sourceFileArray, DataManager.getInstance().getDataContext(myTree));
       }

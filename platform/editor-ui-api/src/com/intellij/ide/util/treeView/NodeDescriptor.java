@@ -157,7 +157,6 @@ public abstract class NodeDescriptor<E> {
   }
 
   public abstract static class NodeComparator<T extends NodeDescriptor> implements Comparator<T> {
-
     private long myStamp;
 
     public final void setStamp(long stamp) {
@@ -173,14 +172,14 @@ public abstract class NodeDescriptor<E> {
     }
 
     public static class Delegate<T extends NodeDescriptor> extends NodeComparator<T> {
-
+      @NotNull
       private NodeComparator<? super T> myDelegate;
 
-      protected Delegate(NodeComparator<? super T> delegate) {
+      protected Delegate(@NotNull NodeComparator<? super T> delegate) {
         myDelegate = delegate;
       }
 
-      public void setDelegate(NodeComparator<? super T> delegate) {
+      public void setDelegate(@NotNull NodeComparator<? super T> delegate) {
         myDelegate = delegate;
       }
 

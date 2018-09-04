@@ -2,13 +2,11 @@
 package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.EventDispatcher
-import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.CalledInBackground
 import org.jetbrains.plugins.github.api.*
@@ -19,20 +17,16 @@ import org.jetbrains.plugins.github.api.util.GithubApiSearchQueryBuilder
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchQuery
 import java.util.*
 
-class GithubPullRequestsLoader(private val progressManager: ProgressManager,
+class GithubPullRequestsLoader(progressManager: ProgressManager,
                                private val requestExecutorHolder: GithubApiRequestExecutorManager.ManagedHolder,
                                private val serverPath: GithubServerPath,
                                private val repoPath: GithubFullPath)
-  : Disposable, GithubApiRequestExecutorManager.ExecutorChangeListener {
-  private val LOG = logger<GithubPullRequestsLoader>()
+  : SingleWorkerProcessExecutor(progressManager, "GitHub PR loading breaker"), GithubApiRequestExecutorManager.ExecutorChangeListener {
 
-  private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("GitHub PR loading breaker", 1)
-  private var progressIndicator = createNonReusableIndicator()
   private var query: String = buildQuery(null)
   private var nextPageRequest: GithubApiRequest<GithubResponsePage<GithubSearchedIssue>>? = createInitialRequest()
-  private var isDisposed = false
 
-  private val stateEventDispatcher = EventDispatcher.create(StateListener::class.java)
+  private val stateEventDispatcher = EventDispatcher.create(PullRequestsLoadingListener::class.java)
 
   init {
     requestExecutorHolder.addListener(this, this)
@@ -55,51 +49,31 @@ class GithubPullRequestsLoader(private val progressManager: ProgressManager,
 
   @CalledInAwt
   fun requestLoadMore() {
-    if (isDisposed) return
-    LOG.debug("Requested more pull requests")
-    val indicator = progressIndicator
     val requestExecutor = requestExecutorHolder.executor
-    executor.execute {
-      if (indicator.isCanceled) return@execute
-      try {
-        stateEventDispatcher.multicaster.loadingStarted()
-        LOG.debug("Starting listeners notified")
-        progressManager.runProcess({ loadMore(requestExecutor, indicator) }, indicator)
-      }
-      catch (pce: ProcessCanceledException) {
-        // ignore
-      }
-      finally {
-        stateEventDispatcher.multicaster.loadingStopped()
-        LOG.debug("Stopping listeners notified")
-      }
-    }
+    submit { indicator -> loadMore(requestExecutor, indicator) }
   }
 
   @CalledInBackground
   private fun loadMore(requestExecutor: GithubApiRequestExecutor, progressIndicator: ProgressIndicator) {
     try {
-      LOG.debug("Loading pull requests")
       val request = nextPageRequest
       if (request == null) {
-        LOG.debug("Nothing to load")
+        runInEdt {
+          if (!progressIndicator.isCanceled) stateEventDispatcher.multicaster.moreDataLoaded(emptyList(), false)
+        }
         return
       }
       val loadedPage = requestExecutor.execute(progressIndicator, request)
       nextPageRequest = loadedPage.nextLink?.let { GithubApiRequests.Search.Issues.get(it) }
-      if (!progressIndicator.isCanceled) {
-        stateEventDispatcher.multicaster.moreDataLoaded(loadedPage.items, loadedPage.nextLink != null)
-        LOG.debug("Data listeners notified")
+      runInEdt {
+        if (!progressIndicator.isCanceled) stateEventDispatcher.multicaster.moreDataLoaded(loadedPage.items, loadedPage.nextLink != null)
       }
     }
     catch (pce: ProcessCanceledException) {
       //ignore
     }
     catch (error: Throwable) {
-      if (!progressIndicator.isCanceled) {
-        stateEventDispatcher.multicaster.loadingErrorOccurred(error)
-        LOG.debug("Error listeners notified")
-      }
+      runInEdt { if (!progressIndicator.isCanceled) stateEventDispatcher.multicaster.loadingErrorOccurred(error) }
     }
   }
 
@@ -109,33 +83,17 @@ class GithubPullRequestsLoader(private val progressManager: ProgressManager,
 
   @CalledInAwt
   fun reset() {
-    if (isDisposed) return
-    progressIndicator.cancel()
-    progressIndicator = createNonReusableIndicator()
-    executor.execute {
+    cancelCurrentTasks()
+    submit {
       nextPageRequest = createInitialRequest()
-      stateEventDispatcher.multicaster.loaderReset()
-      LOG.debug("Reset listeners notified")
+      runInEdt { stateEventDispatcher.multicaster.loaderReset() }
     }
   }
 
-  private fun createNonReusableIndicator(): ProgressIndicator = object : EmptyProgressIndicator() {
-    override fun start() {
-      checkCanceled()
-      super.start()
-    }
-  }
+  fun addLoadingListener(listener: PullRequestsLoadingListener, disposable: Disposable) = stateEventDispatcher.addListener(listener,
+                                                                                                                           disposable)
 
-  fun addStateListener(listener: StateListener, disposable: Disposable) = stateEventDispatcher.addListener(listener, disposable)
-
-  override fun dispose() {
-    progressIndicator.cancel()
-    isDisposed = true
-  }
-
-  interface StateListener : EventListener {
-    fun loadingStarted() {}
-    fun loadingStopped() {}
+  interface PullRequestsLoadingListener : EventListener {
     fun moreDataLoaded(data: List<GithubSearchedIssue>, hasNext: Boolean) {}
     fun loadingErrorOccurred(error: Throwable) {}
     fun loaderReset() {}

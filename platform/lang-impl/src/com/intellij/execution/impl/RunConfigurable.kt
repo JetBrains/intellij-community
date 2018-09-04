@@ -199,7 +199,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
       }
     }
     val manager = runManager
-    for (type in manager.configurationFactories) {
+    for (type in ConfigurationTypeUtil.getTypesWithUnknown()) {
       val configurations = manager.getConfigurationSettingsList(type).nullize() ?: continue
       val typeNode = DefaultMutableTreeNode(type)
       root.add(typeNode)
@@ -222,7 +222,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
 
     // add templates
     val templates = DefaultMutableTreeNode(TEMPLATES)
-    for (type in manager.configurationFactoriesWithoutUnknown) {
+    for (type in ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList()) {
       val configurationFactories = type.configurationFactories
       val typeNode = DefaultMutableTreeNode(type)
       templates.add(typeNode)
@@ -1001,7 +1001,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
     }
 
     private fun showAddPopup(showApplicableTypesOnly: Boolean) {
-      val allTypes = runManager.configurationFactoriesWithoutUnknown
+      val allTypes = ConfigurationType.CONFIGURATION_TYPE_EP.extensionList
       val configurationTypes: MutableList<ConfigurationType?> = getTypesToShow(showApplicableTypesOnly, allTypes).toMutableList()
       configurationTypes.sortWith(kotlin.Comparator { type1, type2 -> type1!!.displayName.compareTo(type2!!.displayName, ignoreCase = true) })
       val hiddenCount = allTypes.size - configurationTypes.size
@@ -1179,7 +1179,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
         val copyName = createUniqueName(typeNode, configuration.nameText, CONFIGURATION, TEMPORARY_CONFIGURATION)
         settings.name = copyName
         val factory = settings.factory
-        @Suppress("UNCHECKED_CAST")
+        @Suppress("UNCHECKED_CAST", "DEPRECATION")
         (factory as? ConfigurationFactoryEx<RunConfiguration>)?.onConfigurationCopied(settings.configuration)
         (settings.configuration as? RunConfigurationBase)?.onConfigurationCopied()
         val parentNode = selectedNode?.parent

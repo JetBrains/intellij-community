@@ -168,12 +168,12 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
     List<Integer> headIds = ContainerUtil.map(heads, head -> myPermanentCommitsInfo.getNodeId(head));
     if (!heads.isEmpty() && ContainerUtil.getFirstItem(heads) instanceof Integer) {
       final TIntHashSet branchNodes = new TIntHashSet();
-      myReachableNodes.walk(headIds, node -> branchNodes.add((Integer)myPermanentCommitsInfo.getCommitId(node)));
+      myReachableNodes.walkDown(headIds, node -> branchNodes.add((Integer)myPermanentCommitsInfo.getCommitId(node)));
       return new IntContainedInBranchCondition<>(branchNodes);
     }
     else {
       final Set<CommitId> branchNodes = ContainerUtil.newHashSet();
-      myReachableNodes.walk(headIds, node -> branchNodes.add(myPermanentCommitsInfo.getCommitId(node)));
+      myReachableNodes.walkDown(headIds, node -> branchNodes.add(myPermanentCommitsInfo.getCommitId(node)));
       return new ContainedInBranchCondition<>(branchNodes);
     }
   }

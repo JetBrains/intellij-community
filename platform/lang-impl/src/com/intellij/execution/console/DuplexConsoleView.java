@@ -297,7 +297,7 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       super.setSelected(e, state);
       DuplexConsoleView.this.getComponent().revalidate();
     }
@@ -311,12 +311,12 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
     }
 
     @Override
-    public boolean isSelected(final AnActionEvent event) {
+    public boolean isSelected(@NotNull final AnActionEvent event) {
       return !isPrimaryConsoleEnabled();
     }
 
     @Override
-    public void setSelected(final AnActionEvent event, final boolean flag) {
+    public void setSelected(@NotNull final AnActionEvent event, final boolean flag) {
       enableConsole(!flag);
       setStoredState(!flag);
       ApplicationManager.getApplication().invokeLater(() -> update(event));
@@ -353,12 +353,12 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myAction1.isSelected(e);
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myAction1.setSelected(e, state);
       myAction2.setSelected(e, state);
     }

@@ -199,7 +199,7 @@ fun RunConfigurationModel.connectDialog(): JDialogFixture =
 fun RunConfigurationModel.checkConfigurationExistsAndSelect(vararg configuration: String) {
   with(connectDialog()) {
     guiTestCase.logTestStep("Going to check that configuration '${configuration.joinToString()}' exists")
-    assert(guiTestCase.exists { jTree(*configuration) })
+    assert(guiTestCase.exists { jTree(*configuration) }){"Cannot find configuration '${configuration.joinToString()}'"}
     jTree(*configuration).clickPath()
   }
 }

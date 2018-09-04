@@ -605,6 +605,25 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   }
 
   @Override
+  public DfaInstructionState[] visitNot(NotInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    DfaValue dfaValue = memState.pop();
+
+    DfaMemoryState falseState = memState.createCopy();
+    DfaValueFactory factory = runner.getFactory();
+    List<DfaInstructionState> result = new ArrayList<>(2);
+    if (memState.applyCondition(dfaValue.createNegated())) {
+      pushExpressionResult(factory.getBoolean(true), instruction, memState);
+      result.add(new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), memState));
+    }
+    if (falseState.applyCondition(dfaValue)) {
+      pushExpressionResult(factory.getBoolean(false), instruction, falseState);
+      result.add(new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), falseState));
+    }
+
+    return result.toArray(DfaInstructionState.EMPTY_ARRAY);
+  }
+
+  @Override
   public DfaInstructionState[] visitBinop(BinopInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     DfaValue dfaRight = memState.pop();
     DfaValue dfaLeft = memState.pop();

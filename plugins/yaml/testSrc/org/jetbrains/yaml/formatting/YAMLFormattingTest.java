@@ -2,7 +2,6 @@
 package org.jetbrains.yaml.formatting;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -14,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLLanguage;
 import org.jetbrains.yaml.formatter.YAMLCodeStyleSettings;
 
-import java.util.Calendar;
 import java.util.function.Consumer;
 
 /**
@@ -82,8 +80,6 @@ public class YAMLFormattingTest extends LightPlatformCodeInsightFixtureTestCase 
     doPartialReformatTest(10, 11);
   }
 
-  // Thicket IDEA-197964
-  @Bombed(year = 2018, month = Calendar.SEPTEMBER, day = 3, user = "alexey.merkulov", description = "IDEA-197964")
   public void testPartialFormattingBugIdea197964() {
     doPartialReformatTest(7, 8);
   }

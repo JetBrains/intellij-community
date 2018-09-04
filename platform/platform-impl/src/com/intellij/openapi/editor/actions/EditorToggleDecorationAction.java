@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class EditorToggleDecorationAction extends ToggleAction implements DumbAware {
   @Override
-  public final void setSelected(AnActionEvent e, boolean state) {
+  public final void setSelected(@NotNull AnActionEvent e, boolean state) {
     final Editor editor = getEditor(e);
     assert editor != null;
     setOption(editor, state);
@@ -34,7 +34,7 @@ public abstract class EditorToggleDecorationAction extends ToggleAction implemen
   }
 
   @Override
-  public final boolean isSelected(AnActionEvent e) {
+  public final boolean isSelected(@NotNull AnActionEvent e) {
     Editor editor = getEditor(e);
     return editor != null && getOption(editor);
   }

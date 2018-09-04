@@ -282,12 +282,6 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     return file;
   }
 
-  @Override
-  public CommonCodeStyleSettings getDefaultCommonSettings() {
-    CommonCodeStyleSettings settings = new CommonCodeStyleSettings(JavaLanguage.INSTANCE);
-    settings.initIndentOptions();
-    return settings;
-  }
 
   @Override
   public IndentOptionsEditor getIndentOptionsEditor() {

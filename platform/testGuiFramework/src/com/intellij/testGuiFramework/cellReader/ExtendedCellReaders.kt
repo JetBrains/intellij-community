@@ -47,11 +47,13 @@ import javax.swing.tree.DefaultMutableTreeNode
  */
 class ExtendedJTreeCellReader : BasicJTreeCellReader(), JTreeCellReader {
 
-  override fun valueAt(tree: JTree, modelValue: Any?): String? {
+  override fun valueAt(tree: JTree, modelValue: Any?): String? = valueAtExtended(tree, modelValue, false)
+
+  fun valueAtExtended(tree: JTree, modelValue: Any?, isExtended: Boolean = true): String? {
     if (modelValue == null) return null
     val isLeaf: Boolean = try { modelValue is DefaultMutableTreeNode && modelValue.isLeaf } catch (e: Error) { false }
     val cellRendererComponent = tree.cellRenderer.getTreeCellRendererComponent(tree, modelValue, false, false, isLeaf, 0, false)
-    return getValueWithCellRenderer(cellRendererComponent)
+    return getValueWithCellRenderer(cellRendererComponent, isExtended)
   }
 }
 
@@ -61,6 +63,7 @@ class ExtendedJListCellReader : BasicJListCellReader(), JListCellReader {
   override fun valueAt(@Nonnull list: JList<*>, index: Int): String? {
 
     val element = list.model.getElementAt(index)
+    if(element == null) return null
     val cellRendererComponent = GuiTestUtil.getListCellRendererComponent(list, element, index)
     return getValueWithCellRenderer(cellRendererComponent)
   }
@@ -93,10 +96,13 @@ class ExtendedJComboboxCellReader : BasicJComboBoxCellReader(), JComboBoxCellRea
   }
 }
 
-private fun getValueWithCellRenderer(cellRendererComponent: Component): String? {
+private fun getValueWithCellRenderer(cellRendererComponent: Component, isExtended: Boolean = true): String? {
   val result = when (cellRendererComponent) {
     is JLabel -> cellRendererComponent.text
-    is NodeRenderer -> cellRendererComponent.getFirstText() //should stands before SimpleColoredComponent because it is more specific
+    is NodeRenderer -> {
+      if (isExtended) cellRendererComponent.getFullText()
+      else cellRendererComponent.getFirstText()
+    } //should stands before SimpleColoredComponent because it is more specific
     is SimpleColoredComponent -> cellRendererComponent.getFullText()
     is MultilineTreeCellRenderer -> cellRendererComponent.text
     else -> cellRendererComponent.findText()

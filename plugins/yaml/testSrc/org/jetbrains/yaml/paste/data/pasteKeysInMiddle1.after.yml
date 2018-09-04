@@ -1,0 +1,5 @@
+top:
+  first: value1
+  next:
+    subKey:<caret>
+  last: value2

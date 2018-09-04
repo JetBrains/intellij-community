@@ -60,7 +60,7 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
         clipForBorder(c, g2, r.width, r.height);
 
         Object op = ((JComponent)c).getClientProperty("JComponent.outline");
-        if (op != null) {
+        if (c.isEnabled() && op != null) {
           paintOutlineBorder(g2, r.width, r.height, 0, isSymmetric(), focused, Outline.valueOf(op.toString()));
         } else {
           if (focused) {

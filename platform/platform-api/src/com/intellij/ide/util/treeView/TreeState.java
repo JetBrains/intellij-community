@@ -38,9 +38,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
-import static java.util.stream.Collectors.toList;
-import static org.jetbrains.concurrency.Promises.collectResults;
-
 /**
  * @see #createOn(JTree)
  * @see #createOn(JTree, DefaultMutableTreeNode)
@@ -405,10 +402,8 @@ public class TreeState implements JDOMExternalizable {
 
     @Override
     public ActionCallback expand(TreePath treePath) {
-      Object userObject = TreeUtil.getUserObject(treePath.getLastPathComponent());
-      if (!(userObject instanceof NodeDescriptor)) return ActionCallback.REJECTED;
-
-      NodeDescriptor desc = (NodeDescriptor)userObject;
+      NodeDescriptor desc = TreeUtil.getLastUserObject(NodeDescriptor.class, treePath);
+      if (desc == null) return ActionCallback.REJECTED;
       Object element = myBuilder.getTreeStructureElement(desc);
       ActionCallback result = new ActionCallback();
       myBuilder.expand(element, result.createSetDoneRunnable());
@@ -453,17 +448,17 @@ public class TreeState implements JDOMExternalizable {
   }
 
   private static boolean isSelectionNeeded(List<TreePath> list, @NotNull JTree tree, AsyncPromise<Void> promise) {
-    if (list != null && tree.getSelectionCount() == 0) return true;
+    if (list != null && tree.isSelectionEmpty()) return true;
     if (promise != null) promise.setResult(null);
     return false;
   }
 
   private Promise<List<TreePath>> expand(@NotNull JTree tree) {
-    return collectResults(myExpandedPaths.stream().map(elements -> TreeUtil.promiseExpand(tree, new Visitor(elements))).collect(toList()));
+    return TreeUtil.promiseExpand(tree, myExpandedPaths.stream().map(elements -> new Visitor(elements)));
   }
 
   private Promise<List<TreePath>> select(@NotNull JTree tree) {
-    return collectResults(mySelectedPaths.stream().map(elements -> TreeUtil.promiseVisit(tree, new Visitor(elements))).collect(toList()));
+    return TreeUtil.promiseSelect(tree, mySelectedPaths.stream().map(elements -> new Visitor(elements)));
   }
 
   private boolean visit(@NotNull JTree tree) {
@@ -472,14 +467,7 @@ public class TreeState implements JDOMExternalizable {
 
     expand(tree, promise -> expand(tree).onProcessed(expanded -> {
       if (isSelectionNeeded(expanded, tree, promise)) {
-        select(tree).onProcessed(selected -> {
-          if (isSelectionNeeded(selected, tree, promise)) {
-            for (TreePath path : selected) {
-              tree.addSelectionPath(path);
-            }
-            promise.setResult(null);
-          }
-        });
+        select(tree).onProcessed(selected -> promise.setResult(null));
       }
     }));
     return true;

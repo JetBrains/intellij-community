@@ -3,7 +3,6 @@ package com.intellij.refactoring.introduceparameterobject;
 
 import com.intellij.ide.util.TreeJavaClassChooserDialog;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -253,9 +252,8 @@ public class IntroduceParameterObjectDialog extends AbstractIntroduceParameterOb
   }
 
   @Override
-  protected void doHelpAction() {
-    final HelpManager helpManager = HelpManager.getInstance();
-    helpManager.invokeHelp(HelpID.IntroduceParameterObject);
+  protected String getHelpId() {
+    return HelpID.IntroduceParameterObject;
   }
 
   public boolean useExistingClass() {

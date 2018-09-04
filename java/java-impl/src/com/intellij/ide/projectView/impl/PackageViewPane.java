@@ -42,7 +42,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
 import java.util.*;
 
 public class PackageViewPane extends AbstractProjectViewPSIPane {
@@ -112,16 +111,9 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
 
   @Nullable
   private PackageElement getSelectedPackageElement() {
-    PackageElement result = null;
-    TreePath path = getSelectedPath();
-    if (path != null) {
-      AbstractTreeNode node = TreeUtil.getUserObject(AbstractTreeNode.class, path.getLastPathComponent());
-      if (node != null) {
-        Object selected = node.getValue();
-        result = selected instanceof PackageElement ? (PackageElement)selected : null;
-      }
-    }
-    return result;
+    AbstractTreeNode node = TreeUtil.getLastUserObject(AbstractTreeNode.class, getSelectedPath());
+    Object selected = node == null ? null : node.getValue();
+    return selected instanceof PackageElement ? (PackageElement)selected : null;
   }
 
   @NotNull
@@ -163,12 +155,12 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent event) {
+    public boolean isSelected(@NotNull AnActionEvent event) {
       return ProjectView.getInstance(myProject).isShowLibraryContents(getId());
     }
 
     @Override
-    public void setSelected(AnActionEvent event, boolean flag) {
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       final ProjectViewImpl projectView = (ProjectViewImpl)ProjectView.getInstance(myProject);
       projectView.setShowLibraryContents(getId(), flag);
     }

@@ -55,7 +55,7 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
     internal val LOG = logger<RunManagerImpl>()
 
     @JvmStatic
-    fun getInstanceImpl(project: Project): RunManagerImpl = RunManager.getInstance(project) as RunManagerImpl
+    fun getInstanceImpl(project: Project) = RunManager.getInstance(project) as RunManagerImpl
 
     @JvmStatic
     fun canRunConfiguration(environment: ExecutionEnvironment): Boolean {
@@ -81,12 +81,37 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
 
   private val lock = ReentrantReadWriteLock()
 
-  private val idToType = LinkedHashMap<String, ConfigurationType>()
+  private val idToType = object {
+    private var cachedValue: Map<String, ConfigurationType>? = null
+
+    val value: Map<String, ConfigurationType>
+      get() {
+        var result = cachedValue
+        if (result == null) {
+          result = compute()
+          cachedValue = result
+        }
+        return result
+      }
+
+    fun drop() {
+      cachedValue = null
+    }
+
+    fun resolve(value: Map<String, ConfigurationType>) {
+      cachedValue = value
+    }
+
+    private fun compute(): Map<String, ConfigurationType> {
+      return buildConfigurationTypeMap(ConfigurationType.CONFIGURATION_TYPE_EP.extensionList)
+    }
+  }
 
   @Suppress("LeakingThis")
   private val listManager = RunConfigurationListManagerHelper(this)
 
   private val templateIdToConfiguration = THashMap<String, RunnerAndConfigurationSettingsImpl>()
+
   // template configurations are not included here
   private val idToSettings: LinkedHashMap<String, RunnerAndConfigurationSettings>
     get() = listManager.idToSettings
@@ -138,7 +163,7 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
   private val stringIdToBeforeRunProvider = object : ClearableLazyValue<ConcurrentMap<String, BeforeRunTaskProvider<*>>>() {
     override fun compute(): ConcurrentMap<String, BeforeRunTaskProvider<*>> {
       val result = ContainerUtil.newConcurrentMap<String, BeforeRunTaskProvider<*>>()
-      for (provider in BeforeRunTaskProvider.EXTENSION_POINT_NAME.getExtensions(project)) {
+      for (provider in BeforeRunTaskProvider.EXTENSION_POINT_NAME.getExtensionList(project)) {
         result.put(provider.id.toString(), provider)
       }
       return result
@@ -149,7 +174,6 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
     get() = project.messageBus.syncPublisher(RunManagerListener.TOPIC)
 
   init {
-    initializeConfigurationTypes(ConfigurationType.CONFIGURATION_TYPE_EP.extensionList)
     project.messageBus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
       override fun rootsChanged(event: ModuleRootEvent) {
         selectedConfiguration?.let {
@@ -160,16 +184,19 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
   }
 
   // separate method needed for tests
+  @TestOnly
   fun initializeConfigurationTypes(factories: List<ConfigurationType>) {
+    idToType.resolve(buildConfigurationTypeMap(factories))
+  }
+
+  private fun buildConfigurationTypeMap(factories: List<ConfigurationType>): Map<String, ConfigurationType> {
     val types = factories.toMutableList()
-    types.sortBy { it.displayName }
     types.add(UnknownConfigurationType.INSTANCE)
-    lock.write {
-      idToType.clear()
-      for (type in types) {
-        idToType.put(type.id, type)
-      }
+    val map = THashMap<String, ConfigurationType>()
+    for (type in types) {
+      map.put(type.id, type)
     }
+    return map
   }
 
   override fun createConfiguration(name: String, factory: ConfigurationFactory): RunnerAndConfigurationSettings {
@@ -198,12 +225,7 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
     }
   }
 
-  override fun getConfig(): RunManagerConfig = _config
-
-  override val configurationFactories: Array<ConfigurationType> by lazy { idToType.values.toTypedArray() }
-
-  override val configurationFactoriesWithoutUnknown: List<ConfigurationType>
-    get() = idToType.values.filterSmart { it.isManaged }
+  override fun getConfig() = _config
 
   /**
    * Template configuration is not included
@@ -227,13 +249,16 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
 
   fun getSettings(configuration: RunConfiguration): RunnerAndConfigurationSettingsImpl? = allSettings.firstOrNull { it.configuration === configuration } as? RunnerAndConfigurationSettingsImpl
 
-  override fun getConfigurationSettingsList(type: ConfigurationType): List<RunnerAndConfigurationSettings> = allSettings.filterSmart { it.type.id == type.id }
+  override fun getConfigurationSettingsList(type: ConfigurationType): List<RunnerAndConfigurationSettings> = allSettings.filterSmart { it.type === type }
 
   override fun getStructure(type: ConfigurationType): Map<String, List<RunnerAndConfigurationSettings>> {
     val result = LinkedHashMap<String?, MutableList<RunnerAndConfigurationSettings>>()
     val typeList = SmartList<RunnerAndConfigurationSettings>()
-    val settings = getConfigurationSettingsList(type)
-    for (setting in settings) {
+    for (setting in allSettings) {
+      if (setting.type !== type) {
+        continue
+      }
+
       val folderName = setting.folderName
       if (folderName == null) {
         typeList.add(setting)
@@ -247,7 +272,7 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
   }
 
   override fun getConfigurationTemplate(factory: ConfigurationFactory): RunnerAndConfigurationSettingsImpl {
-    val key = "${factory.type.id}.${factory.id}"
+    val key = getFactoryKey(factory)
     return lock.read { templateIdToConfiguration.get(key) } ?: lock.write {
       templateIdToConfiguration.getOrPut(key) {
         val template = createTemplateSettings(factory)
@@ -649,8 +674,7 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
   // used by MPS, don't delete
   fun clearAll() {
     clear(true)
-    idToType.clear()
-    initializeConfigurationTypes(emptyList())
+    idToType.drop()
   }
 
   private fun clear(allConfigurations: Boolean) {
@@ -708,7 +732,7 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
     if (settings.isTemplate) {
       val factory = settings.factory
       lock.write {
-        templateIdToConfiguration.put("${factory.type.id}.${factory.id}", settings)
+        templateIdToConfiguration.put(getFactoryKey(factory), settings)
       }
     }
     else {
@@ -759,11 +783,9 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
     configuration.beforeRunTasks = result ?: emptyList()
   }
 
-  override fun getConfigurationType(typeName: String): ConfigurationType? = idToType.get(typeName)
-
   @JvmOverloads
   fun getFactory(typeId: String?, factoryId: String?, checkUnknown: Boolean = false): ConfigurationFactory? {
-    val type = idToType.get(typeId)
+    val type = idToType.value.get(typeId)
     if (type == null) {
       if (checkUnknown && typeId != null) {
         UnknownFeaturesCollector.getInstance(project).registerUnknownRunConfiguration(typeId, factoryId)
@@ -775,6 +797,9 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
       return type.configurationFactories.firstOrNull()
     }
 
+    if (type is SimpleConfigurationType) {
+      return type
+    }
     return type.configurationFactories.firstOrNull {
       factoryId == null || it.id == factoryId
     }
@@ -1048,7 +1073,14 @@ internal fun RunConfiguration.cloneBeforeRunTasks() {
 }
 
 fun callNewConfigurationCreated(factory: ConfigurationFactory, configuration: RunConfiguration) {
-  @Suppress("UNCHECKED_CAST")
+  @Suppress("UNCHECKED_CAST", "DEPRECATION")
   (factory as? ConfigurationFactoryEx<RunConfiguration>)?.onNewConfigurationCreated(configuration)
   (configuration as? RunConfigurationBase)?.onNewConfigurationCreated()
+}
+
+private fun getFactoryKey(factory: ConfigurationFactory): String {
+  return when {
+    factory.type is SimpleConfigurationType -> factory.type.id
+    else -> "${factory.type.id}.${factory.id}"
+  }
 }

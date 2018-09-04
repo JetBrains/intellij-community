@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -101,15 +99,12 @@ public class GroovyImportUtil {
                 }
               }
               else {
-                final GrCodeReferenceElement importReference = importStatement.getImportReference();
-                if (importReference != null) {
-                  importedName = PsiUtil.getQualifiedReferenceText(importReference);
-                }
+                importedName = importStatement.getImportFqn();
               }
 
               if (importedName == null) return;
 
-              final String importRef = getImportReferenceText(importStatement);
+              final String importRef = importStatement.getImportFqn();
 
               if (importStatement.isAliasedImport()) {
                 if (aliased != null) {
@@ -176,7 +171,7 @@ public class GroovyImportUtil {
               usedImports.add(anImport);
             }
 
-            final String symbolName = getImportReferenceText(anImport);
+            final String symbolName = anImport.getImportFqn();
 
             if (anImport.isAliasedImport()) {
               if (aliased != null) {
@@ -206,7 +201,7 @@ public class GroovyImportUtil {
         public void visitImportStatement(@NotNull GrImportStatement importStatement) {
           final String annotationText = importStatement.getAnnotationList().getText();
           if (!StringUtil.isEmptyOrSpaces(annotationText)) {
-            final String importRef = getImportReferenceText(importStatement);
+            final String importRef = importStatement.getImportFqn();
             annotations.put(importRef, annotationText);
           }
         }
@@ -233,14 +228,5 @@ public class GroovyImportUtil {
 
   public static boolean isAnnotatedImport(GrImportStatement anImport) {
     return !StringUtil.isEmptyOrSpaces(anImport.getAnnotationList().getText());
-  }
-
-  @Nullable
-  public static String getImportReferenceText(GrImportStatement statement) {
-    GrCodeReferenceElement importReference = statement.getImportReference();
-    if (importReference != null) {
-      return importReference.getClassNameText();
-    }
-    return null;
   }
 }

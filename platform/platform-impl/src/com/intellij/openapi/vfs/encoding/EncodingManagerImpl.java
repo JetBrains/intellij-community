@@ -25,6 +25,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
@@ -126,20 +127,15 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
 
   private static final Key<String> DETECTING_ENCODING_KEY = Key.create("DETECTING_ENCODING_KEY");
   private void handleDocument(@NotNull final Document document) {
-    if (document.getUserData(DETECTING_ENCODING_KEY) == null) return;
-    try {
-      VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
-      if (virtualFile == null) return;
-      Project project = guessProject(virtualFile);
-      if (project != null && project.isDisposed()) return;
-      Charset charset = LoadTextUtil.charsetFromContentOrNull(project, virtualFile, document.getImmutableCharSequence());
-      Charset oldCached = getCachedCharsetFromContent(document);
-      if (!Comparing.equal(charset, oldCached)) {
-        setCachedCharsetFromContent(charset, oldCached, document);
-      }
-    }
-    finally {
-      document.putUserData(DETECTING_ENCODING_KEY, null);
+    if (!((UserDataHolderEx)document).replace(DETECTING_ENCODING_KEY, "", null)) return;
+    VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
+    if (virtualFile == null) return;
+    Project project = guessProject(virtualFile);
+    if (project != null && project.isDisposed()) return;
+    Charset charset = LoadTextUtil.charsetFromContentOrNull(project, virtualFile, document.getImmutableCharSequence());
+    Charset oldCached = getCachedCharsetFromContent(document);
+    if (!Comparing.equal(charset, oldCached)) {
+      setCachedCharsetFromContent(charset, oldCached, document);
     }
   }
 
@@ -174,10 +170,11 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     myDisposed.set(true);
   }
 
-  private void queueUpdateEncodingFromContent(@NotNull Document document) {
+  void queueUpdateEncodingFromContent(@NotNull Document document) {
     if (myDisposed.get()) return; // ignore re-detect requests on app close
-    document.putUserData(DETECTING_ENCODING_KEY, "");
-    changedDocumentExecutor.execute(new DocumentEncodingDetectRequest(document, myDisposed));
+    if (((UserDataHolderEx)document).replace(DETECTING_ENCODING_KEY, null, "")) {
+      changedDocumentExecutor.execute(new DocumentEncodingDetectRequest(document, myDisposed));
+    }
   }
 
   private static class DocumentEncodingDetectRequest implements Runnable {
@@ -242,8 +239,12 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     }
     ((BoundedTaskExecutor)changedDocumentExecutor).clearAndCancelAll();
     // after clear and canceling all queued tasks, make sure they all are finished
+    waitAllTasksExecuted(1, TimeUnit.MINUTES);
+  }
+
+  void waitAllTasksExecuted(long timeout, @NotNull TimeUnit unit) {
     try {
-      ((BoundedTaskExecutor)changedDocumentExecutor).waitAllTasksExecuted(1, TimeUnit.MINUTES);
+      ((BoundedTaskExecutor)changedDocumentExecutor).waitAllTasksExecuted(timeout, unit);
     }
     catch (Exception e) {
       LOG.error(e);
