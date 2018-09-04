@@ -5,15 +5,15 @@ from _pydevd_bundle.pydevd_constants import dict_iter_items
 
 
 def update_filenames(debugger, new_name):
-    if hasattr(debugger, "ipnb_breakpoints"):
-        debugger.ipnb_breakpoints[new_name] = {}
+    if hasattr(debugger, "jupyter_breakpoints"):
+        debugger.jupyter_breakpoints[new_name] = {}
 
-        for file, breakpoints in dict_iter_items(debugger.ipnb_breakpoints):
+        for file, breakpoints in dict_iter_items(debugger.jupyter_breakpoints):
             for line, breakpoint in dict_iter_items(breakpoints):
                 if breakpoint.update_cell_file:
                     breakpoint.cell_file = new_name
                     breakpoint.update_cell_file = False
-                    debugger.ipnb_cell_to_file[new_name] = breakpoint.file
+                    debugger.jupyter_cell_to_file[new_name] = breakpoint.file
 
 
 def compile_cache_wrapper(orig, ipython_shell):
@@ -59,7 +59,7 @@ def update_bp_filenames():
     ipython_shell = get_ipython()
     debugger = ipython_shell.debugger
 
-    if hasattr(debugger, "ipnb_breakpoints"):
-        for file, breakpoints in dict_iter_items(debugger.ipnb_breakpoints):
+    if hasattr(debugger, "jupyter_breakpoints"):
+        for file, breakpoints in dict_iter_items(debugger.jupyter_breakpoints):
             for line, breakpoint in dict_iter_items(breakpoints):
                 breakpoint.update_cell_file = True
