@@ -220,12 +220,19 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
 
       @Override
       public void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
-        hasMoreContributors.forEach(myListModel::setHasMore);
-        myResultsList.setEmptyText(getEmptyText());
-        ScrollingUtil.ensureSelectionExists(myResultsList);
         if (myResultsList.isEmpty()) {
-          handleEmptyResults();
+          if (nonProjectCheckBoxAutoSet && !isUseNonProjectItems() && !getSearchPattern().isEmpty()) {
+            doSetUseNonProjectItems(true, true);
+            notFoundString = getSearchPattern();
+            return;
+          }
+
+          hideHint();
         }
+
+        myResultsList.setEmptyText(getSearchPattern().isEmpty() ? "" : getNotFoundText());
+        hasMoreContributors.forEach(myListModel::setHasMore);
+        ScrollingUtil.ensureSelectionExists(myResultsList);
       }
     };
 
@@ -321,8 +328,6 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     if (nonProjectCheckBoxAutoSet && isUseNonProjectItems()) {
       doSetUseNonProjectItems(false, true);
     }
-
-    myResultsList.getEmptyText().setText(getEmptyText());
 
     repaint();
     rebuildList();
@@ -567,6 +572,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       mySearchProgressIndicator = null;
     }
 
+    myResultsList.setEmptyText(IdeBundle.message("label.choosebyname.searching"));
     String pattern = getSearchPattern();
     updateViewType(pattern.isEmpty() ? ViewType.SHORT : ViewType.FULL);
     String matcherString = mySelectedTab.getContributor()
@@ -577,7 +583,6 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     MatcherHolder.associateMatcher(myResultsList, matcher);
 
     mySearchAlarm.addRequest(() -> {
-      myResultsList.setEmptyText(IdeBundle.message("label.choosebyname.searching"));
       myListModel.clear();
       Map<SearchEverywhereContributor<?>, Integer> contributorsMap = mySelectedTab.getContributor()
         .map(contributor -> Collections.singletonMap(((SearchEverywhereContributor<?>) contributor), SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT))
@@ -649,8 +654,9 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
         String newSearchString = getSearchPattern();
         if (nonProjectCheckBoxAutoSet && isUseNonProjectItems() && !newSearchString.contains(notFoundString)) {
           doSetUseNonProjectItems(false, true);
+        } else {
+          rebuildList();
         }
-        rebuildList();
       }
     });
 
@@ -748,17 +754,6 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     if (mySearchProgressIndicator != null && !mySearchProgressIndicator.isCanceled()) {
       mySearchProgressIndicator.cancel();
     }
-  }
-
-  private void handleEmptyResults() {
-    assert EventQueue.isDispatchThread() : "Must be EDT";
-    if (nonProjectCheckBoxAutoSet && !isUseNonProjectItems() && !getSearchPattern().isEmpty()) {
-      doSetUseNonProjectItems(true, true);
-      notFoundString = getSearchPattern();
-      return;
-    }
-
-    hideHint();
   }
 
   @NotNull
@@ -1268,7 +1263,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     return label;
   }
 
-  private String getEmptyText() {
+  private String getNotFoundText() {
     return mySelectedTab.getContributor()
                         .map(c -> IdeBundle.message("searcheverywhere.nothing.found.for.contributor.anywhere", c.getGroupName()))
                         .orElse(IdeBundle.message("searcheverywhere.nothing.found.for.all.anywhere"));
