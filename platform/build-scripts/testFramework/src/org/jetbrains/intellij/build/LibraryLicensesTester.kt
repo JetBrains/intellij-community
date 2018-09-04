@@ -46,9 +46,6 @@ class LibraryLicensesTester(private val project: JpsProject, private val license
         // transitive deps
         val files = jpsLibrary.getFiles(JpsOrderRootType.COMPILED)
         for (file in files) {
-          val nameWithoutExtension = file.nameWithoutExtension
-          unusedLibrariesWithLicenses.remove(nameWithoutExtension.substringBefore('-'))
-          unusedLibrariesWithLicenses.remove(nameWithoutExtension)
           unusedLibrariesWithLicenses.remove(file.name)
         }
       }
