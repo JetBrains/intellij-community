@@ -7,7 +7,6 @@ import com.intellij.execution.PsiLocation;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.ide.DataManager;
@@ -300,14 +299,7 @@ public class ConfigurationContext {
    */
   @Nullable
   public RunConfiguration getOriginalConfiguration(@Nullable ConfigurationType type) {
-    if (type == null) {
-      return myRuntimeConfiguration;
-    }
-    if (myRuntimeConfiguration != null
-        && ConfigurationTypeUtil.equals(myRuntimeConfiguration.getType(), type)) {
-      return myRuntimeConfiguration;
-    }
-    return null;
+    return type == null || myRuntimeConfiguration.getType() == type ? myRuntimeConfiguration : null;
   }
 
   /**
@@ -321,7 +313,7 @@ public class ConfigurationContext {
    * @return true if the original run configuration is of the same type or it's undefined; false otherwise
    */
   public boolean isCompatibleWithOriginalRunConfiguration(@NotNull ConfigurationType type) {
-    return myRuntimeConfiguration == null || ConfigurationTypeUtil.equals(myRuntimeConfiguration.getType(), type);
+    return myRuntimeConfiguration == null || myRuntimeConfiguration.getType() == type;
   }
 
   @Deprecated

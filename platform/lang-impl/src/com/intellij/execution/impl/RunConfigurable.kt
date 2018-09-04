@@ -199,7 +199,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
       }
     }
     val manager = runManager
-    for (type in getTypesWithUnknown()) {
+    for (type in ConfigurationTypeUtil.getTypesWithUnknown()) {
       val configurations = manager.getConfigurationSettingsList(type).nullize() ?: continue
       val typeNode = DefaultMutableTreeNode(type)
       root.add(typeNode)
@@ -1179,7 +1179,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
         val copyName = createUniqueName(typeNode, configuration.nameText, CONFIGURATION, TEMPORARY_CONFIGURATION)
         settings.name = copyName
         val factory = settings.factory
-        @Suppress("UNCHECKED_CAST")
+        @Suppress("UNCHECKED_CAST", "DEPRECATION")
         (factory as? ConfigurationFactoryEx<RunConfiguration>)?.onConfigurationCopied(settings.configuration)
         (settings.configuration as? RunConfigurationBase)?.onConfigurationCopied()
         val parentNode = selectedNode?.parent

@@ -4,7 +4,7 @@ package com.intellij.execution.actions;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.impl.RunManagerImplKt;
+import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.idea.ActionsBundle;
@@ -192,7 +192,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     }
 
     final RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
-    for (ConfigurationType type : RunManagerImplKt.getTypesWithUnknown()) {
+    for (ConfigurationType type : ConfigurationTypeUtil.getTypesWithUnknown()) {
       final DefaultActionGroup actionGroup = new DefaultActionGroup();
       Map<String, List<RunnerAndConfigurationSettings>> structure = runManager.getStructure(type);
       for (Map.Entry<String, List<RunnerAndConfigurationSettings>> entry : structure.entrySet()) {

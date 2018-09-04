@@ -1076,7 +1076,3 @@ fun callNewConfigurationCreated(factory: ConfigurationFactory, configuration: Ru
   (factory as? ConfigurationFactoryEx<RunConfiguration>)?.onNewConfigurationCreated(configuration)
   (configuration as? RunConfigurationBase)?.onNewConfigurationCreated()
 }
-
-fun getTypesWithUnknown(): List<ConfigurationType> {
-  return ContainerUtil.concat(ConfigurationType.CONFIGURATION_TYPE_EP.extensionList, listOf(UnknownConfigurationType.INSTANCE))
-}
