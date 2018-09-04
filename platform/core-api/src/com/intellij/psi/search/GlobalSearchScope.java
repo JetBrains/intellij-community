@@ -27,7 +27,6 @@ import com.intellij.psi.PsiBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -509,7 +508,6 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
   private static class UnionScope extends GlobalSearchScope {
     private final GlobalSearchScope[] myScopes;
-    private final int myNestingLevel;
 
     private UnionScope(@NotNull GlobalSearchScope scope1, @NotNull GlobalSearchScope scope2) {
       this(new GlobalSearchScope[]{scope1, scope2});
@@ -518,19 +516,21 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     private UnionScope(@NotNull GlobalSearchScope[] scopes) {
       super(Stream.of(scopes).map(scope->scope.getProject()).findFirst().orElse(null));
       if (scopes.length <= 1) throw new IllegalArgumentException("Too few scopes: "+ Arrays.asList(scopes));
-      myScopes = scopes;
-      final int[] nested = {0};
-      ContainerUtil.process(scopes, new Processor<GlobalSearchScope>() {
-        @Override
-        public boolean process(GlobalSearchScope scope) {
-          nested[0] = Math.max(nested[0], scope instanceof UnionScope ? ((UnionScope)scope).myNestingLevel : 0);
-          return true;
+      List<GlobalSearchScope> result = null;
+      for (int i = 0; i < scopes.length; i++) {
+        GlobalSearchScope scope = scopes[i];
+        if (scope instanceof UnionScope) {
+          if (result == null) {
+            result = new ArrayList<>(scopes.length + ((UnionScope)scope).myScopes.length);
+            result.addAll(Arrays.asList(scopes).subList(0, i));
+          }
+          ContainerUtil.addAll(result, ((UnionScope)scope).myScopes);
         }
-      });
-      myNestingLevel = 1 + nested[0];
-      if (myNestingLevel > 1000) {
-        throw new IllegalStateException("Too many scopes combined (" + myNestingLevel + "): " +StringUtil.last(toString(), 500, true));
+        else if (result != null) {
+          result.add(scope);
+        }
       }
+      myScopes = result == null ? scopes : result.toArray(result.toArray(EMPTY_ARRAY));
     }
 
     @NotNull
