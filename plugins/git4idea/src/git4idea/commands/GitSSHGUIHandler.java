@@ -87,12 +87,13 @@ public class GitSSHGUIHandler {
     CredentialAttributes newAttributes = passphraseCredentialAttributes(keyPath);
     Credentials credentials = getAndMigrateCredentials(oldAttributes, newAttributes);
     if (credentials != null && !resetPassword) {
-      return credentials.getPasswordAsString();
+      String password = credentials.getPasswordAsString();
+      if (password != null && !password.isEmpty()) return password;
     }
     if (ignoreAuthenticationRequest) return null;
     return CredentialPromptDialog.askPassword(project, GitBundle.getString("ssh.ask.passphrase.title"),
                                               GitBundle.message("ssh.ask.passphrase.message", PathUtil.getFileName(keyPath)),
-                                              newAttributes, resetPassword, lastError);
+                                              newAttributes, true, lastError);
   }
 
   @NotNull
