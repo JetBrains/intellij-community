@@ -24,7 +24,7 @@ interface UOperand {
 
   operator fun div(other: UValue): UValue
 
-  operator fun mod(other: UValue): UValue
+  operator fun rem(other: UValue): UValue
 
   operator fun unaryMinus(): UValue
 

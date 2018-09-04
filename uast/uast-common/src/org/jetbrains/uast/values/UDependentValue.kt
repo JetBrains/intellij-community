@@ -45,7 +45,7 @@ open class UDependentValue protected constructor(
 
   internal fun inverseDiv(other: UValue) = wrapBinary(other.unwrap() / unwrap(), other)
 
-  override fun mod(other: UValue): UValue = wrapBinary(unwrap() % other.unwrap(), other)
+  override fun rem(other: UValue): UValue = wrapBinary(unwrap() % other.unwrap(), other)
 
   internal fun inverseMod(other: UValue) = wrapBinary(other.unwrap() % unwrap(), other)
 
