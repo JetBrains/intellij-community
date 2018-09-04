@@ -200,9 +200,6 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
 
   override fun getConfig() = _config
 
-  override val configurationFactoriesWithoutUnknown: List<ConfigurationType>
-    get() = idToType.values.filterSmart { it.isManaged }
-
   /**
    * Template configuration is not included
    */
@@ -1055,4 +1052,8 @@ fun callNewConfigurationCreated(factory: ConfigurationFactory, configuration: Ru
   @Suppress("UNCHECKED_CAST", "DEPRECATION")
   (factory as? ConfigurationFactoryEx<RunConfiguration>)?.onNewConfigurationCreated(configuration)
   (configuration as? RunConfigurationBase)?.onNewConfigurationCreated()
+}
+
+fun getTypesWithUnknown(): List<ConfigurationType> {
+  return ContainerUtil.concat(ConfigurationType.CONFIGURATION_TYPE_EP.extensionList, listOf(UnknownConfigurationType.INSTANCE))
 }

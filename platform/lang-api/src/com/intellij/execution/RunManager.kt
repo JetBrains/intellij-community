@@ -48,8 +48,6 @@ abstract class RunManager {
     }
   }
 
-  abstract val configurationFactoriesWithoutUnknown: List<ConfigurationType>
-
   /**
    * Returns the list of all configurations of a specified type.
    * @param type a run configuration type.
@@ -222,5 +220,5 @@ abstract class RunManager {
 
 private const val UNNAMED = "Unnamed"
 
-val IS_RUN_MANAGER_INITIALIZED: Key<Boolean> = Key.create<Boolean>("RunManagerInitialized")
-private  val LOG = Logger.getInstance(RunManager::class.java)
+val IS_RUN_MANAGER_INITIALIZED = Key.create<Boolean>("RunManagerInitialized")
+private val LOG = Logger.getInstance(RunManager::class.java)

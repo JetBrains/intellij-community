@@ -5,6 +5,7 @@ import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.TestStateStorage;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.impl.RunManagerImplKt;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
@@ -18,7 +19,6 @@ import static com.intellij.execution.testframework.sm.runner.states.TestStateInf
 interface ConfigurationByRecordProvider {
   RunnerAndConfigurationSettings getConfiguration(TestStateStorage.Record record);
 }
-
 
 class RunConfigurationByRecordProvider implements ConfigurationByRecordProvider {
   private final Project myProject;
@@ -37,7 +37,7 @@ class RunConfigurationByRecordProvider implements ConfigurationByRecordProvider 
 
   private void initRunConfigurationsMap() {
     RunManagerEx manager = RunManagerEx.getInstanceEx(myProject);
-    for (ConfigurationType type : ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList()) {
+    for (ConfigurationType type : RunManagerImplKt.getTypesWithUnknown()) {
       Map<String, List<RunnerAndConfigurationSettings>> structure = manager.getStructure(type);
       for (Map.Entry<String, List<RunnerAndConfigurationSettings>> e : structure.entrySet()) {
         for (RunnerAndConfigurationSettings settings : e.getValue()) {

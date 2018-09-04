@@ -25,9 +25,6 @@ class MockRunManager : RunManagerEx() {
 
   override fun makeStable(settings: RunnerAndConfigurationSettings) {}
 
-  override val configurationFactoriesWithoutUnknown: List<ConfigurationType>
-    get() = emptyList()
-
   override val allConfigurationsList: List<RunConfiguration>
     get() = emptyList()
 

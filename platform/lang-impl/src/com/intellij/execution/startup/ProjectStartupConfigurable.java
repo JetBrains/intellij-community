@@ -203,7 +203,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
           return ((factory = runManager.getFactory(configurationType.getId(), null)) != null) &&
                  ProgramRunner.getRunner(executor.getId(), runManager.getConfigurationTemplate(factory).getConfiguration()) != null;
         };
-        final ListPopup popup = NewRunConfigurationPopup.createAddPopup(ContainerUtil.filter(runManager.getConfigurationFactoriesWithoutUnknown(), filter), "",
+        final ListPopup popup = NewRunConfigurationPopup.createAddPopup(ContainerUtil.filter(ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList(), filter), "",
                                                                         factory -> ApplicationManager.getApplication().invokeLater(() -> {
                                                                           final EditConfigurationsDialog dialog = new EditConfigurationsDialog(project, factory);
                                                                           if (dialog.showAndGet()) {
