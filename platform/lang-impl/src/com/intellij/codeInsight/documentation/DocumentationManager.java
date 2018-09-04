@@ -695,6 +695,11 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     if (myDocInfoHintRef == null) return null;
     JBPopup hint = myDocInfoHintRef.get();
     if (hint == null || !hint.isVisible() && !ApplicationManager.getApplication().isUnitTestMode()) {
+      if (hint != null) {
+        // hint's window might've been hidden by AWT without notifying us
+        // dispose to remove the popup from IDE hierarchy and avoid leaking components
+        hint.cancel();
+      }
       myDocInfoHintRef = null;
       return null;
     }
