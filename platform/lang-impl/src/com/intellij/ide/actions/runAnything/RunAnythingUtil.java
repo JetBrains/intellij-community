@@ -8,23 +8,23 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.PopupPositionManager;
-import com.intellij.util.FontUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -40,7 +40,6 @@ import java.util.List;
 import java.util.Objects;
 
 import static com.intellij.ide.actions.runAnything.RunAnythingAction.EXECUTOR_KEY;
-import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 public class RunAnythingUtil {
   public static final Logger LOG = Logger.getInstance(RunAnythingUtil.class);
@@ -52,7 +51,6 @@ public class RunAnythingUtil {
   private static final Key<Collection<Pair<String, String>>> RUN_ANYTHING_WRAPPED_COMMANDS = Key.create("RUN_ANYTHING_WRAPPED_COMMANDS");
   private static final Border RENDERER_TITLE_BORDER = JBUI.Borders.emptyTop(3);
   private static final String SHIFT_HOLD_USAGE = RunAnythingAction.RUN_ANYTHING + " - " + "SHIFT_HOLD";
-  private static final String TOOLTIP_TEXT = IdeBundle.message("run.anything.action.tooltip.text", getShortcut());
 
   static Font getTitleFont() {
     return UIUtil.getLabelFont().deriveFont(UIUtil.getFontSize(UIUtil.FontSize.SMALL));
@@ -89,10 +87,6 @@ public class RunAnythingUtil {
 
   static int getPopupMaxWidth() {
     return PropertiesComponent.getInstance().getInt("run.anything.max.popup.width", JBUI.scale(600));
-  }
-
-  static void initTooltip(JComponent label) {
-    label.setToolTipText(TOOLTIP_TEXT);
   }
 
   @Nullable
@@ -155,14 +149,6 @@ public class RunAnythingUtil {
     }
   }
 
-
-  private static String getShortcut() {
-    Shortcut[] shortcuts = getActiveKeymapShortcuts(RunAnythingAction.RUN_ANYTHING_ACTION_ID).getShortcuts();
-    if (shortcuts.length == 0) {
-      return "Double" + (SystemInfo.isMac ? FontUtil.thinSpace() + MacKeymapUtil.CONTROL : " Ctrl");
-    }
-    return KeymapUtil.getShortcutsText(shortcuts);
-  }
 
   static void triggerShiftStatistics(@NotNull DataContext dataContext) {
     Project project = Objects.requireNonNull(CommonDataKeys.PROJECT.getData(dataContext));
