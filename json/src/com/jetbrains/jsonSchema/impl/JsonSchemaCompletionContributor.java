@@ -40,6 +40,7 @@ import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.*;
@@ -94,6 +95,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
     }
   }
 
+  @TestOnly
   public static List<LookupElement> getCompletionVariants(@NotNull final JsonSchemaObject schema,
                                                           @NotNull final PsiElement position, @NotNull final PsiElement originalPosition) {
     final List<LookupElement> result = new ArrayList<>();
