@@ -425,6 +425,19 @@ public class PythonLexerTest extends PyLexerTestCase {
            "Py:LINE_BREAK", "Py:INDENT", "Py:INTEGER_LITERAL", "Py:RBRACE", "Py:SINGLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
   }
 
+  public void testFStringUnmatchedQuotesAsTextParts() {
+    doTest("s = f'foo\"bar'", 
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", 
+           "Py:FSTRING_START", "Py:FSTRING_TEXT", "Py:FSTRING_TEXT", "Py:FSTRING_TEXT", "Py:FSTRING_END", "Py:STATEMENT_BREAK");
+  }
+
+  public void testFStringUnmatchedLineBreaksAsTextParts() {
+    doTest("s = f'''foo\n" +
+           "bar'''",
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", 
+           "Py:FSTRING_START", "Py:FSTRING_TEXT", "Py:FSTRING_TEXT", "Py:FSTRING_TEXT", "Py:FSTRING_END", "Py:STATEMENT_BREAK");
+  }
+
   // PY-21697
   public void testTripleSingleQuotedStringWithEscapedSlashAfterOneQuote() {
     doTest("s = '''\n" +
