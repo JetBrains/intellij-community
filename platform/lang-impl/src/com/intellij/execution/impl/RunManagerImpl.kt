@@ -111,6 +111,7 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
   private val listManager = RunConfigurationListManagerHelper(this)
 
   private val templateIdToConfiguration = THashMap<String, RunnerAndConfigurationSettingsImpl>()
+
   // template configurations are not included here
   private val idToSettings: LinkedHashMap<String, RunnerAndConfigurationSettings>
     get() = listManager.idToSettings
@@ -271,7 +272,7 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
   }
 
   override fun getConfigurationTemplate(factory: ConfigurationFactory): RunnerAndConfigurationSettingsImpl {
-    val key = if (factory.type is SimpleConfigurationType) factory.type.id else "${factory.type.id}.${factory.id}"
+    val key = getFactoryKey(factory)
     return lock.read { templateIdToConfiguration.get(key) } ?: lock.write {
       templateIdToConfiguration.getOrPut(key) {
         val template = createTemplateSettings(factory)
@@ -731,7 +732,7 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
     if (settings.isTemplate) {
       val factory = settings.factory
       lock.write {
-        templateIdToConfiguration.put("${factory.type.id}.${factory.id}", settings)
+        templateIdToConfiguration.put(getFactoryKey(factory), settings)
       }
     }
     else {
@@ -1075,4 +1076,11 @@ fun callNewConfigurationCreated(factory: ConfigurationFactory, configuration: Ru
   @Suppress("UNCHECKED_CAST", "DEPRECATION")
   (factory as? ConfigurationFactoryEx<RunConfiguration>)?.onNewConfigurationCreated(configuration)
   (configuration as? RunConfigurationBase)?.onNewConfigurationCreated()
+}
+
+private fun getFactoryKey(factory: ConfigurationFactory): String {
+  return when {
+    factory.type is SimpleConfigurationType -> factory.type.id
+    else -> "${factory.type.id}.${factory.id}"
+  }
 }
