@@ -1,8 +1,6 @@
 <idea-plugin>
     <id>org.toml.lang</id>
     <name>Toml</name>
-    <version>0.0.1</version>
-    <idea-version since-build="162" until-build="182.*"/>
 
     <vendor>JetBrains</vendor>
 
