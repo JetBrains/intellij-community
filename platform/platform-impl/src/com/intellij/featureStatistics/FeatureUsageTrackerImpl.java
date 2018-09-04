@@ -171,7 +171,6 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
      // TODO: LOG.error("Feature '" + featureId +"' must be registered prior triggerFeatureUsed() is called");
     }
     else {
-      FeatureUsageLogger.INSTANCE.log(descriptor.getGroupId(), descriptor.getId());
       descriptor.triggerUsed();
     }
   }
