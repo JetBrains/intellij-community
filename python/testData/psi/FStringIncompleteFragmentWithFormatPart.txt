@@ -7,7 +7,7 @@ PyFile:FStringIncompleteFragmentWithFormatPart.py
     PsiWhiteSpace(' ')
     PyStringLiteralExpression: {42:{width}
       PyFormattedStringNode
-        PsiElement(Py:FSTRING_START)('f'')
+        PsiElement(Py:FSTRING_START)('f"')
         PyFStringFragment
           PsiElement(Py:FSTRING_FRAGMENT_START)('{')
           PyNumericLiteralExpression
@@ -21,4 +21,4 @@ PyFile:FStringIncompleteFragmentWithFormatPart.py
               PsiElement(Py:FSTRING_FRAGMENT_END)('}')
           PsiErrorElement:} expected
             <empty list>
-        PsiElement(Py:FSTRING_END)(''')
+        PsiElement(Py:FSTRING_END)('"')
