@@ -1,0 +1,21 @@
+PyFile:MultilineFStringContainsCommentInsteadOfExpression.py
+  PyAssignmentStatement
+    PyTargetExpression: s
+      PsiElement(Py:IDENTIFIER)('s')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PyStringLiteralExpression: {
+  # comment
+}
+      PyFormattedStringNode
+        PsiElement(Py:FSTRING_START)('f'''')
+        PyFStringFragment
+          PsiElement(Py:FSTRING_FRAGMENT_START)('{')
+          PsiErrorElement:expression expected
+            <empty list>
+          PsiWhiteSpace('\n  ')
+          PsiComment(Py:END_OF_LINE_COMMENT)('# comment')
+          PsiWhiteSpace('\n')
+          PsiElement(Py:FSTRING_FRAGMENT_END)('}')
+        PsiElement(Py:FSTRING_END)(''''')
