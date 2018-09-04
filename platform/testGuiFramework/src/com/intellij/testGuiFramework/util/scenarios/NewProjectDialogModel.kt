@@ -575,8 +575,30 @@ fun NewProjectDialogModel.createJBossProject(projectPath: String, libs: Librarie
   createProjectInGroup(NewProjectDialogModel.Groups.JBoss, projectPath, libs)
 }
 
-fun NewProjectDialogModel.createSpringProject(projectPath: String, libs: LibrariesSet) {
-  createProjectInGroup(NewProjectDialogModel.Groups.Spring, projectPath, libs)
+fun NewProjectDialogModel.createSpringProject(projectPath: String, createSpringConfig: Boolean, libs: LibrariesSet) {
+  with(guiTestCase) {
+    fileSystemUtils.assertProjectPathExists(projectPath)
+    with(connectDialog()) {
+      selectProjectGroup(NewProjectDialogModel.Groups.Spring)
+      val checkSpringConfig = checkbox("Create empty spring-config.xml")
+      if(createSpringConfig != checkSpringConfig.isSelected){
+        checkSpringConfig.click()
+      }
+      ScreenshotOnFailure.takeScreenshot("screen1")
+      if (libs.isSetNotEmpty()) setLibrariesAndFrameworks(libs)
+      button(buttonNext).click()
+      logUIStep("Fill Project location with `$projectPath`")
+      textfield(textProjectLocation).click()
+      shortcut(Modifier.CONTROL + Key.X, Modifier.META + Key.X)
+      typeText(projectPath)
+      logUIStep("Close New Project dialog with Finish")
+      button(buttonFinish).click()
+    }
+    ideFrame {
+      this.waitForBackgroundTasksToFinish()
+      waitAMoment()
+    }
+  }
 }
 
 fun NewProjectDialogModel.createGroovyProject(projectPath: String, libs: LibrariesSet) {
