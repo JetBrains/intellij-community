@@ -299,7 +299,10 @@ public class ConfigurationContext {
    */
   @Nullable
   public RunConfiguration getOriginalConfiguration(@Nullable ConfigurationType type) {
-    return type == null || myRuntimeConfiguration.getType() == type ? myRuntimeConfiguration : null;
+    if (type == null || (myRuntimeConfiguration != null && myRuntimeConfiguration.getType() == type)) {
+      return myRuntimeConfiguration;
+    }
+    return null;
   }
 
   /**
