@@ -93,6 +93,7 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static com.intellij.vcs.log.util.VcsUserUtil.isSamePerson;
 import static git4idea.GitUtil.*;
+import static git4idea.repo.GitSubmoduleKt.isSubmodule;
 import static java.util.Arrays.asList;
 import static one.util.streamex.StreamEx.of;
 
@@ -270,6 +271,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
 
       getRepositoryManager(myProject).updateRepository(root);
+      if (isSubmodule(repository)) {
+        VcsDirtyScopeManager.getInstance(myProject).dirDirtyRecursively(repository.getRoot().getParent());
+      }
     }
     catch (VcsException e) {
       exceptions.add(e);
