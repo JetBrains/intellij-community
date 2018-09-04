@@ -1,9 +1,11 @@
 
 from _pydevd_bundle.pydevd_breakpoints import LineBreakpoint
-from _pydevd_bundle.pydevd_constants import dict_iter_items, get_thread_id, PYTHON_SUSPEND
+from _pydevd_bundle.pydevd_constants import dict_iter_items, get_thread_id, PYTHON_SUSPEND, JUPYTER_SUSPEND
 from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK
 from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle.pydevd_frame_utils import FCode
+
+import os
 
 
 class IpnbLineBreakpoint(LineBreakpoint):
@@ -87,19 +89,38 @@ def can_not_skip(plugin, pydb, pydb_frame, frame):
     return False
 
 
+def _is_jupyter_suspended(thread):
+    return thread.additional_info.suspend_type == JUPYTER_SUSPEND
+
+
 def cmd_step_into(plugin, pydb, frame, event, args, stop_info, stop):
-    stop = event == "line" or event == "return"
-    return stop, stop
+    plugin_stop = False
+    thread = args[3]
+    if _is_jupyter_suspended(thread):
+        stop = False
+        if _is_inside_ipnb_cell(frame):
+            stop_info['ipnb_stop'] = event == "line"
+            plugin_stop = stop_info['ipnb_stop']
+    return stop, plugin_stop
 
 
 def cmd_step_over(plugin, pydb, frame, event, args, stop_info, stop):
-    stop_frame = stop_info.pydev_step_stop
-    stop = stop_frame is frame and (event == "line" or event == "return")
+    thread = args[3]
+    if _is_jupyter_suspended(thread) and _is_inside_ipnb_cell(frame):
+        stop_frame = stop_info.pydev_step_stop
+        stop = stop_frame is frame and (event == "line" or event == "return")
     return stop, stop
 
 
 def stop(plugin, pydb, frame, event, args, stop_info, arg, step_cmd):
-    pass
+    main_debugger = args[0]
+    thread = args[3]
+    if 'ipnb_stop' in stop_info and stop_info['ipnb_stop'] and _is_inside_ipnb_cell(frame):
+        frame = suspend_ipnb(main_debugger, thread, frame, step_cmd)
+        if frame:
+            main_debugger.do_wait_suspend(thread, frame, event, arg)
+            return True
+    return False
 
 
 def get_breakpoint(plugin, pydb, pydb_frame, frame, event, args):
@@ -113,21 +134,46 @@ def get_breakpoint(plugin, pydb, pydb_frame, frame, event, args):
     return False
 
 
-def suspend(plugin, pydb, thread, frame, bp_type):
+def suspend_ipnb(pydb, thread, frame, cmd=CMD_SET_BREAK):
     frame = IpnbFrame(frame, pydb)
-    pydb.set_suspend(thread, CMD_SET_BREAK)
-    thread.additional_info.suspend_type = PYTHON_SUSPEND
+    pydb.set_suspend(thread, cmd)
+    thread.additional_info.suspend_type = JUPYTER_SUSPEND
     pydevd_vars.add_additional_frame_by_id(get_thread_id(thread), {id(frame): frame})
     return frame
+
+
+def _is_inside_ipnb_cell(frame):
+    while frame is not None:
+        filename = frame.f_code.co_filename
+        file_basename = os.path.basename(filename)
+        if file_basename.startswith("<ipython-input"):
+            return True
+        frame = frame.f_back
+    return False
+
+
+def suspend(plugin, pydb, thread, frame, bp_type):
+    if bp_type == 'ipnb-line':
+        return suspend_ipnb(pydb, thread, frame)
+    return None
 
 
 def exception_break(plugin, pydb, pydb_frame, frame, args, arg):
     return None
 
 
+def _convert_filename(frame, pydb):
+    filename = frame.f_code.co_filename
+    file_basename = os.path.basename(filename)
+    if file_basename.startswith("<ipython-input"):
+        return pydb.ipnb_cell_to_file[frame.f_code.co_filename]
+    else:
+        return filename
+
+
 class IpnbFrame(object):
-    def __init__(self, frame, py_db):
-        file_name = py_db.ipnb_cell_to_file[frame.f_code.co_filename]
+    def __init__(self, frame, pydb):
+        file_name = _convert_filename(frame, pydb)
         self.f_code = FCode('<ipython cell>', file_name)
         self.f_lineno = frame.f_lineno
         self.f_back = frame.f_back

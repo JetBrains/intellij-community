@@ -417,10 +417,6 @@ class PyDBFrame:
             if main_debugger._finish_debugging_session:
                 return None
 
-            file_basename = os.path.basename(filename)
-            # if file_basename.startswith("<ipython-input"):
-            #     print("pydevd_frame", filename, frame.f_lineno, event)
-
             plugin_manager = main_debugger.plugin
 
             is_exception_event = event == 'exception'
