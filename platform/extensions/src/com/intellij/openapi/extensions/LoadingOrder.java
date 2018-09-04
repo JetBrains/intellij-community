@@ -183,13 +183,26 @@ public class LoadingOrder {
     orderable.sort(builder.comparator());
   }
 
-  public static LoadingOrder readOrder(@NonNls String orderAttr) {
-    return orderAttr != null ? new LoadingOrder(orderAttr) : ANY;
+  @NotNull
+  public static LoadingOrder readOrder(@Nullable String orderAttr) {
+    if (orderAttr == null) {
+      return ANY;
+    }
+    else if (orderAttr.equals(FIRST_STR)) {
+      return FIRST;
+    }
+    else if (orderAttr.equals(LAST_STR)) {
+      return LAST;
+    }
+    else {
+      return new LoadingOrder(orderAttr);
+    }
   }
 
   public interface Orderable {
     @Nullable
     String getOrderId();
+
     LoadingOrder getOrder();
   }
 }
