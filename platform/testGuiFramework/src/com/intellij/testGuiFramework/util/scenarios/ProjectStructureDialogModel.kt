@@ -11,6 +11,7 @@ import com.intellij.testGuiFramework.util.logUIStep
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.buttonCancel
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.itemLibrary
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.menuArtifacts
+import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.menuFacets
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.menuLibraries
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.menuModules
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.menuSDKs
@@ -91,4 +92,8 @@ fun ProjectStructureDialogModel.checkArtifact(checks: JDialogFixture.()->Unit){
 
 fun ProjectStructureDialogModel.checkSDK(checks: JDialogFixture.()->Unit){
   checkPage(menuSDKs, checks)
+}
+
+fun ProjectStructureDialogModel.checkFacet(checks: JDialogFixture.()->Unit){
+  checkPage(menuFacets, checks)
 }
