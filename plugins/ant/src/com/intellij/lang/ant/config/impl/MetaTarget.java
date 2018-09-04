@@ -23,7 +23,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
-import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,18 +83,11 @@ public class MetaTarget implements AntBuildTargetBase {
     if (modelName == null || modelName.length() == 0) {
       return null;
     }
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      builder.append(AntConfiguration.getActionIdPrefix(myBuildFile.getProject()));
-      builder.append("_");
-      builder.append(modelName);
-      builder.append('_');
-      builder.append(getName());
-      return builder.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(builder);
-    }
+    return AntConfiguration.getActionIdPrefix(myBuildFile.getProject()) +
+           "_" +
+           modelName +
+           '_' +
+           getName();
   }
 
   @Override
