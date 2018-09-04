@@ -25,7 +25,7 @@ PyFile:FStringTerminatedByQuoteOfNestedStringLiteralInFormatPart.py
                       <empty list>
                     PsiErrorElement:type conversion, : or } expected
                       <empty list>
-              PsiErrorElement:Expected "
+              PsiErrorElement:" expected
                 <empty list>
         PsiElement(Py:FSTRING_END)(''')
     PsiErrorElement:End of statement expected

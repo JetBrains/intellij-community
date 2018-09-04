@@ -18,11 +18,11 @@ PyFile:FStringTerminatedByQuoteInsideNestedFStringLiteral.py
                 PyStringLiteralExpression: 
                   PyFormattedStringNode
                     PsiElement(Py:FSTRING_START)('f"')
-                    PsiErrorElement:Expected "
+                    PsiErrorElement:" expected
                       <empty list>
                 PsiErrorElement:type conversion, : or } expected
                   <empty list>
-              PsiErrorElement:Expected """
+              PsiErrorElement:""" expected
                 <empty list>
         PsiElement(Py:FSTRING_END)(''')
       PsiElement(Py:SINGLE_QUOTED_STRING)('"}"')

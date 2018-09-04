@@ -14,7 +14,7 @@ PyFile:FStringTerminatedByLineBreakInStringLiteral.py
             PsiElement(Py:TRIPLE_QUOTED_STRING)('"""')
           PsiErrorElement:type conversion, : or } expected
             <empty list>
-        PsiErrorElement:Unexpected f-string token
+        PsiErrorElement:' expected
           <empty list>
   PsiWhiteSpace('\n')
   PyExpressionStatement

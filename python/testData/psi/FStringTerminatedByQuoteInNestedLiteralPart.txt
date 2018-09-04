@@ -15,7 +15,7 @@ PyFile:FStringTerminatedByQuoteInNestedLiteralPart.py
             PyFormattedStringNode
               PsiElement(Py:FSTRING_START)('f"')
               PsiElement(Py:FSTRING_TEXT)('baz')
-              PsiErrorElement:Expected "
+              PsiErrorElement:" expected
                 <empty list>
           PsiErrorElement:type conversion, : or } expected
             <empty list>

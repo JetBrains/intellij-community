@@ -14,7 +14,7 @@ PyFile:SingleLineFStringContainsCommentInsideExpression.py
             PsiElement(Py:INTEGER_LITERAL)('42')
           PsiErrorElement:type conversion, : or } expected
             <empty list>
-        PsiErrorElement:Unexpected f-string token
+        PsiErrorElement:' expected
           <empty list>
     PsiWhiteSpace(' ')
     PsiComment(Py:END_OF_LINE_COMMENT)('# comment}'')
