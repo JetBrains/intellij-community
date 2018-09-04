@@ -55,7 +55,7 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
     internal val LOG = logger<RunManagerImpl>()
 
     @JvmStatic
-    fun getInstanceImpl(project: Project): RunManagerImpl = RunManager.getInstance(project) as RunManagerImpl
+    fun getInstanceImpl(project: Project) = RunManager.getInstance(project) as RunManagerImpl
 
     @JvmStatic
     fun canRunConfiguration(environment: ExecutionEnvironment): Boolean {
@@ -138,7 +138,7 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
   private val stringIdToBeforeRunProvider = object : ClearableLazyValue<ConcurrentMap<String, BeforeRunTaskProvider<*>>>() {
     override fun compute(): ConcurrentMap<String, BeforeRunTaskProvider<*>> {
       val result = ContainerUtil.newConcurrentMap<String, BeforeRunTaskProvider<*>>()
-      for (provider in BeforeRunTaskProvider.EXTENSION_POINT_NAME.getExtensions(project)) {
+      for (provider in BeforeRunTaskProvider.EXTENSION_POINT_NAME.getExtensionList(project)) {
         result.put(provider.id.toString(), provider)
       }
       return result
