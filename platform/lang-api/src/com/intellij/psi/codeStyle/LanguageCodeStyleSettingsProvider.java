@@ -10,6 +10,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.ApiStatus;
@@ -85,8 +86,22 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
    *         use its own language-specific common settings (the settings are shared with other languages).
    */
   @Nullable
+  @Deprecated
   public CommonCodeStyleSettings getDefaultCommonSettings() {
-    return new CommonCodeStyleSettings(getLanguage());
+    CommonCodeStyleSettings defaultSettings = new CommonCodeStyleSettings(getLanguage());
+    defaultSettings.initIndentOptions();
+    //noinspection ConstantConditions
+    customizeDefaults(defaultSettings, defaultSettings.getIndentOptions());
+    return defaultSettings;
+  }
+
+  /**
+   * Customize default settings: set values which are different from the ones after {@code CommonCodeStyleSettings} initialization.
+   *
+   * @param commonSettings Customizable instance of  common settings for the language.
+   * @param indentOptions  Customizable instance of indent options for the language.
+   */
+  protected void customizeDefaults(@NotNull CommonCodeStyleSettings commonSettings, @NotNull IndentOptions indentOptions) {
   }
 
   /**

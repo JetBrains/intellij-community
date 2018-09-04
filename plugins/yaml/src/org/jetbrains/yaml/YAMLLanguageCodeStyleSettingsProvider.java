@@ -32,13 +32,11 @@ public class YAMLLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
   };
 
   @Override
-  public CommonCodeStyleSettings getDefaultCommonSettings() {
-    CommonCodeStyleSettings defaultSettings = new CommonCodeStyleSettings(YAMLLanguage.INSTANCE);
-    CommonCodeStyleSettings.IndentOptions indentOptions = defaultSettings.initIndentOptions();
+  protected void customizeDefaults(@NotNull CommonCodeStyleSettings commonSettings,
+                                   @NotNull CommonCodeStyleSettings.IndentOptions indentOptions) {
     indentOptions.INDENT_SIZE = 2;
     indentOptions.CONTINUATION_INDENT_SIZE = 2;
     indentOptions.USE_TAB_CHARACTER = false;
-    return defaultSettings;
   }
 
   @Override
