@@ -6,7 +6,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 @State(
         name = "FeatureSuggesterSettings",
         storages = {
-                @Storage(id = "default", file = StoragePathMacros.APP_CONFIG + "/FeatureSuggester.xml")
+                @Storage(file = "FeatureSuggester.xml")
         }
 )
 public class FeatureSuggesterSettings implements PersistentStateComponent<FeatureSuggesterSettings> {

@@ -73,13 +73,13 @@ class FeatureSuggesterProjectComponent(project: Project) extends ProjectComponen
     //todo: enable/disable functionality
   }
 
-  def getComponentName: String = "Feature suggester project component"
+  override def getComponentName: String = "Feature suggester project component"
 
-  def projectOpened() {}
+  override def projectOpened() {}
 
-  def projectClosed() {}
+  override def projectClosed() {}
 
-  def initComponent() {
+  override def initComponent() {
     PsiManager.getInstance(project).addPsiTreeChangeListener(new PsiTreeChangeAdapter {
       override def propertyChanged(event: PsiTreeChangeEvent) {
         addAction(PropertyChangedAction(event.getParent))
@@ -107,9 +107,9 @@ class FeatureSuggesterProjectComponent(project: Project) extends ProjectComponen
     })
 
     ActionManager.getInstance().addAnActionListener(new AnActionListener {
-      def afterActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {}
+      override def afterActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {}
 
-      def beforeEditorTyping(c: Char, dataContext: DataContext) {}
+      override def beforeEditorTyping(c: Char, dataContext: DataContext) {}
 
       def beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
         action match {
@@ -132,5 +132,5 @@ class FeatureSuggesterProjectComponent(project: Project) extends ProjectComponen
     })
   }
 
-  def disposeComponent() {}
+  override def disposeComponent() {}
 }

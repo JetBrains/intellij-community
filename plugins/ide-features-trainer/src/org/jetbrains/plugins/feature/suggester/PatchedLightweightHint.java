@@ -365,7 +365,6 @@ public class PatchedLightweightHint extends LightweightHint {
     setSize(myComponent.getPreferredSize());
   }
 
-  @Override
   public void updateBounds(int x, int y) {
     setSize(myComponent.getPreferredSize());
     updateLocation(x, y);
