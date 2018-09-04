@@ -84,11 +84,6 @@ class MPSProperties extends ProductProperties {
             fileset(dir: "$context.paths.communityHome/lib/ant")
         }
 
-        // for terminal plugin
-        context.ant.copy(todir: "$targetDirectory/lib/libpty/") {
-            fileset(dir: "$context.paths.communityHome/lib/libpty/")
-        }
-
         // copy binaries
         context.ant.copy(todir: "$targetDirectory/bin/linux/") {
             fileset(dir: "$context.paths.communityHome/bin/linux/")
