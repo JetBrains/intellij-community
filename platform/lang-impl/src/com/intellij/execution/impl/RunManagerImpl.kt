@@ -227,13 +227,16 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
 
   fun getSettings(configuration: RunConfiguration): RunnerAndConfigurationSettingsImpl? = allSettings.firstOrNull { it.configuration === configuration } as? RunnerAndConfigurationSettingsImpl
 
-  override fun getConfigurationSettingsList(type: ConfigurationType): List<RunnerAndConfigurationSettings> = allSettings.filterSmart { it.type.id == type.id }
+  override fun getConfigurationSettingsList(type: ConfigurationType): List<RunnerAndConfigurationSettings> = allSettings.filterSmart { it.type === type }
 
   override fun getStructure(type: ConfigurationType): Map<String, List<RunnerAndConfigurationSettings>> {
     val result = LinkedHashMap<String?, MutableList<RunnerAndConfigurationSettings>>()
     val typeList = SmartList<RunnerAndConfigurationSettings>()
-    val settings = getConfigurationSettingsList(type)
-    for (setting in settings) {
+    for (setting in allSettings) {
+      if (setting.type !== type) {
+        continue
+      }
+
       val folderName = setting.folderName
       if (folderName == null) {
         typeList.add(setting)
