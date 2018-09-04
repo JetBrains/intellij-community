@@ -1571,6 +1571,18 @@ public class UIUtil {
     return false;
   }
 
+  @Deprecated
+  @SuppressWarnings("HardCodedStringLiteral")
+  public static boolean isUnderWindowsLookAndFeel() {
+    return SystemInfo.isWindows && UIManager.getLookAndFeel().getName().equals("Windows");
+  }
+
+  @Deprecated
+  @SuppressWarnings("HardCodedStringLiteral")
+  public static boolean isUnderWindowsClassicLookAndFeel() {
+    return UIManager.getLookAndFeel().getName().equals("Windows Classic");
+  }
+
   @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderAquaLookAndFeel() {
     return SystemInfo.isMac && UIManager.getLookAndFeel().getName().contains("Mac OS X");
@@ -1638,9 +1650,45 @@ public class UIUtil {
     }
   }
 
+  @Deprecated
+  public static final Color GTK_AMBIANCE_TEXT_COLOR = new Color(223, 219, 210);
+
+  @Deprecated
+  public static final Color GTK_AMBIANCE_BACKGROUND_COLOR = new Color(67, 66, 63);
+
+  @Deprecated
+  @SuppressWarnings("HardCodedStringLiteral")
+  @Nullable
+  public static String getGtkThemeName() {
+    final LookAndFeel laf = UIManager.getLookAndFeel();
+    if (laf != null && "GTKLookAndFeel".equals(laf.getClass().getSimpleName())) {
+      try {
+        final Method method = laf.getClass().getDeclaredMethod("getGtkThemeName");
+        method.setAccessible(true);
+        final Object theme = method.invoke(laf);
+        if (theme != null) {
+          return theme.toString();
+        }
+      }
+      catch (Exception ignored) {
+      }
+    }
+    return null;
+  }
+
   @NotNull
   public static Font getToolbarFont() {
     return SystemInfo.isMac ? getLabelFont(UIUtil.FontSize.SMALL) : getLabelFont();
+  }
+
+  @Deprecated
+  @SuppressWarnings("HardCodedStringLiteral")
+  public static boolean isMurrineBasedTheme() {
+    final String gtkTheme = getGtkThemeName();
+    return "Ambiance".equalsIgnoreCase(gtkTheme) ||
+           "Radiance".equalsIgnoreCase(gtkTheme) ||
+           "Dust".equalsIgnoreCase(gtkTheme) ||
+           "Dust Sand".equalsIgnoreCase(gtkTheme);
   }
 
   public static Color shade(final Color c, final double factor, final double alphaFactor) {
@@ -2610,6 +2658,17 @@ public class UIUtil {
     }
 
     return builder.append("</style>").toString();
+  }
+
+  @Deprecated
+  public static boolean isWinLafOnVista() {
+    return SystemInfo.isWinVistaOrNewer && "Windows".equals(UIManager.getLookAndFeel().getName());
+  }
+
+  @Deprecated
+  public static boolean isStandardMenuLAF() {
+    return isWinLafOnVista() ||
+           isUnderGTKLookAndFeel();
   }
 
   public static Color getFocusedFillColor() {
