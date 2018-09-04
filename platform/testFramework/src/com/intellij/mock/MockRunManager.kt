@@ -25,9 +25,6 @@ class MockRunManager : RunManagerEx() {
 
   override fun makeStable(settings: RunnerAndConfigurationSettings) {}
 
-  override val configurationFactories: Array<ConfigurationType>
-    get() = emptyArray()
-
   override val configurationFactoriesWithoutUnknown: List<ConfigurationType>
     get() = emptyList()
 
@@ -42,7 +39,7 @@ class MockRunManager : RunManagerEx() {
 
   override var selectedConfiguration: RunnerAndConfigurationSettings?
     get() = null
-    set(value) {}
+    set(_) {}
 
   override fun createConfiguration(runConfiguration: RunConfiguration, factory: ConfigurationFactory): RunnerAndConfigurationSettings {
     throw UnsupportedOperationException()

@@ -48,11 +48,6 @@ abstract class RunManager {
     }
   }
 
-  /**
-   * Returns the list of all registered configuration types.
-   */
-  abstract val configurationFactories: Array<ConfigurationType>
-
   abstract val configurationFactoriesWithoutUnknown: List<ConfigurationType>
 
   /**

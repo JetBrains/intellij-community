@@ -198,9 +198,7 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
     }
   }
 
-  override fun getConfig(): RunManagerConfig = _config
-
-  override val configurationFactories: Array<ConfigurationType> by lazy { idToType.values.toTypedArray() }
+  override fun getConfig() = _config
 
   override val configurationFactoriesWithoutUnknown: List<ConfigurationType>
     get() = idToType.values.filterSmart { it.isManaged }
