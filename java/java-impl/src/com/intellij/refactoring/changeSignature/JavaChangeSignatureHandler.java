@@ -152,7 +152,7 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
   }
 
   @Override
-  public PsiElement findTargetMember(PsiElement element) {
+  public PsiElement findTargetMember(@NotNull PsiElement element) {
     if (PsiTreeUtil.getParentOfType(element, PsiParameterList.class) != null) {
       return PsiTreeUtil.getParentOfType(element, PsiMethod.class);
     }
