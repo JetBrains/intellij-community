@@ -40,7 +40,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 import static java.util.stream.Collectors.toList;
 
 public final class TreeUtil {
@@ -359,7 +358,7 @@ public final class TreeUtil {
     return treeNodeTraverser(node).traverse(TreeTraversal.PRE_ORDER_DFS).processEach(traverse::accept);
   }
 
-  public static void selectPaths(@NotNull JTree tree, @NotNull Collection<TreePath> paths) {
+  public static void selectPaths(@NotNull JTree tree, @NotNull Collection<? extends TreePath> paths) {
     if (paths.isEmpty()) return;
     selectPaths(tree, paths.toArray(new TreePath[0]));
   }
@@ -557,15 +556,14 @@ public final class TreeUtil {
     if (visible.contains(bounds)) {
       selectRunnable.run();
       return ActionCallback.DONE;
-    } else {
-      final Component comp =
-        tree.getCellRenderer().getTreeCellRendererComponent(tree, path.getLastPathComponent(), true, true, false, row, false);
+    }
+    final Component comp =
+      tree.getCellRenderer().getTreeCellRendererComponent(tree, path.getLastPathComponent(), true, true, false, row, false);
 
-      if (comp instanceof SimpleColoredComponent) {
-        final SimpleColoredComponent renderer = (SimpleColoredComponent)comp;
-        final Dimension scrollableSize = renderer.computePreferredSize(true);
-        bounds.width = scrollableSize.width;
-      }
+    if (comp instanceof SimpleColoredComponent) {
+      final SimpleColoredComponent renderer = (SimpleColoredComponent)comp;
+      final Dimension scrollableSize = renderer.computePreferredSize(true);
+      bounds.width = scrollableSize.width;
     }
 
     final ActionCallback callback = new ActionCallback();
@@ -672,7 +670,7 @@ public final class TreeUtil {
     return rowHeight == 0 ? tree.getVisibleRowCount() : tree.getVisibleRect().height / rowHeight;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   public static void installActions(@NotNull final JTree tree) {
     tree.getActionMap().put("scrollUpChangeSelection", new AbstractAction() {
       @Override
@@ -848,9 +846,7 @@ public final class TreeUtil {
     final TreePath treePath = new TreePath(node.getPath());
     tree.expandPath(treePath);
     if (requestFocus) {
-      getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        getGlobalInstance().requestFocus(tree, true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(tree, true));
     }
     return selectPath(tree, treePath, center);
   }
@@ -980,12 +976,7 @@ public final class TreeUtil {
       int boxWidth;
       Insets i = aTree.getInsets();
 
-      if (expandedIcon != null) {
-        boxWidth = expandedIcon.getIconWidth();
-      }
-      else {
-        boxWidth = 8;
-      }
+      boxWidth = expandedIcon != null ? expandedIcon.getIconWidth() : 8;
 
       int boxLeftX = i != null ? i.left : 0;
 
@@ -1064,7 +1055,7 @@ public final class TreeUtil {
   @Nullable
   public static <T> T getUserObject(@NotNull Class<T> type, @Nullable Object node) {
     node = getUserObject(node);
-    return node != null && type.isInstance(node) ? type.cast(node) : null;
+    return type.isInstance(node) ? type.cast(node) : null;
   }
 
   /**
@@ -1177,7 +1168,7 @@ public final class TreeUtil {
    * @param visitors visitors to control expanding of tree nodes
    */
   @NotNull
-  public static Promise<List<TreePath>> promiseExpand(@NotNull JTree tree, @NotNull Stream<TreeVisitor> visitors) {
+  public static Promise<List<TreePath>> promiseExpand(@NotNull JTree tree, @NotNull Stream<? extends TreeVisitor> visitors) {
     return promiseMakeVisible(tree, visitors).onSuccess(paths -> paths.forEach(path -> expandPathWithDebug(tree, path)));
   }
 
@@ -1222,7 +1213,7 @@ public final class TreeUtil {
    * @param visitors visitors to control expanding of tree nodes
    */
   @NotNull
-  public static Promise<List<TreePath>> promiseMakeVisible(@NotNull JTree tree, @NotNull Stream<TreeVisitor> visitors) {
+  public static Promise<List<TreePath>> promiseMakeVisible(@NotNull JTree tree, @NotNull Stream<? extends TreeVisitor> visitors) {
     AsyncPromise<List<TreePath>> promise = new AsyncPromise<>();
     List<Promise<TreePath>> promises = visitors
       .filter(Objects::nonNull)
@@ -1300,7 +1291,7 @@ public final class TreeUtil {
    * @param visitors visitors to control expanding of tree nodes
    */
   @NotNull
-  public static Promise<List<TreePath>> promiseSelect(@NotNull JTree tree, @NotNull Stream<TreeVisitor> visitors) {
+  public static Promise<List<TreePath>> promiseSelect(@NotNull JTree tree, @NotNull Stream<? extends TreeVisitor> visitors) {
     return promiseMakeVisible(tree, visitors).onSuccess(paths -> {
       tree.setSelectionPaths(paths.toArray(new TreePath[0]));
       for (TreePath path : paths) {
@@ -1373,10 +1364,10 @@ public final class TreeUtil {
       default:
         return null; // skip children
     }
-    ArrayDeque<ArrayDeque<TreePath>> stack = new ArrayDeque<>();
+    Deque<Deque<TreePath>> stack = new ArrayDeque<>();
     stack.push(children(model, path));
     while (path != null) {
-      ArrayDeque<TreePath> siblings = stack.peek();
+      Deque<TreePath> siblings = stack.peek();
       if (siblings == null) return null; // nothing to process
 
       TreePath next = siblings.poll();
@@ -1404,11 +1395,14 @@ public final class TreeUtil {
     return null;
   }
 
-  private static ArrayDeque<TreePath> children(@NotNull TreeModel model, @NotNull TreePath path) {
+  @NotNull
+  private static Deque<TreePath> children(@NotNull TreeModel model, @NotNull TreePath path) {
     Object object = path.getLastPathComponent();
     int count = model.getChildCount(object);
-    ArrayDeque<TreePath> deque = new ArrayDeque<>(count);
-    for (int i = 0; i < count; i++) deque.add(path.pathByAddingChild(model.getChild(object, i)));
+    Deque<TreePath> deque = new ArrayDeque<>(count);
+    for (int i = 0; i < count; i++) {
+      deque.add(path.pathByAddingChild(model.getChild(object, i)));
+    }
     return deque;
   }
 
