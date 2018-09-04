@@ -438,6 +438,18 @@ public class PythonLexerTest extends PyLexerTestCase {
            "Py:FSTRING_START", "Py:FSTRING_TEXT", "Py:FSTRING_TEXT", "Py:FSTRING_TEXT", "Py:FSTRING_END", "Py:STATEMENT_BREAK");
   }
 
+  public void testFStringNamedUnicodeEscapes() {
+    doTest("s = f'\\N{LATIN SMALL LETTER A}'", 
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", 
+           "Py:FSTRING_START", "Py:FSTRING_TEXT", "Py:FSTRING_END", "Py:STATEMENT_BREAK");
+    doTest("s = f'\\N{LATIN SMALL LETTER A'",
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", 
+           "Py:FSTRING_START", "Py:FSTRING_TEXT", "Py:FSTRING_END", "Py:STATEMENT_BREAK");
+    doTest("s = f'\\N{'",
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", 
+           "Py:FSTRING_START", "Py:FSTRING_TEXT", "Py:FSTRING_END", "Py:STATEMENT_BREAK");
+  }
+
   // PY-21697
   public void testTripleSingleQuotedStringWithEscapedSlashAfterOneQuote() {
     doTest("s = '''\n" +
