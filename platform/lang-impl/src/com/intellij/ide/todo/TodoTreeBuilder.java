@@ -538,13 +538,7 @@ public abstract class TodoTreeBuilder implements Disposable {
   }
 
   private void rebuildTreeOnSettingChange() {
-    ArrayList<Object> pathsToSelect = new ArrayList<>();
-    
-    Object root = myTree.getModel().getRoot();
-    if (root != null) {
-      TreeUtil.collectSelectedPaths(myTree, 
-                                    new TreePath(root)).forEach(path -> pathsToSelect.add(TreeUtil.getLastUserObject(path)));
-    }
+    List<Object> pathsToSelect = TreeUtil.collectSelectedUserObjects(myTree);
     myTree.clearSelection();
     getTodoTreeStructure().validateCache();
     updateTree().onSuccess(o -> TreeUtil.promiseSelect(myTree, pathsToSelect.stream().map(TodoTreeBuilder::getVisitorFor)));

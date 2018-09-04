@@ -36,6 +36,8 @@ import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
@@ -868,18 +870,89 @@ public final class TreeUtil {
     return selectPath(tree, treePath, center);
   }
 
+  /**
+   * Returns {@code true} if the node identified by the {@code path} is currently viewable in the {@code tree}.
+   * The difference from the {@link JTree#isVisible(TreePath)} method is that this method
+   * returns {@code false} for the hidden root node, when {@link JTree#isRootVisible()} returns {@code false}.
+   *
+   * @param tree a tree, to which the given path belongs
+   * @param path a path whose visibility in the given tree is checking
+   * @return {@code true} if {@code path} is viewable in {@code tree}
+   * @see JTree#isRootVisible()
+   * @see JTree#isVisible(TreePath)
+   */
+  private static boolean isViewable(@NotNull JTree tree, @NotNull TreePath path) {
+    TreePath parent = path.getParentPath();
+    return parent != null ? tree.isExpanded(parent) : tree.isRootVisible();
+  }
+
+  /**
+   * @param tree   a tree, which selection is processed
+   * @param mapper a function to convert a selected tree path to a corresponding object
+   * @return a list of all selected paths
+   */
   @NotNull
-  public static List<TreePath> collectSelectedPaths(@NotNull final JTree tree, @NotNull final TreePath treePath) {
-    final ArrayList<TreePath> result = new ArrayList<>();
-    final TreePath[] selections = tree.getSelectionPaths();
-    if (selections != null) {
-      for (TreePath selection : selections) {
-        if (treePath.isDescendant(selection)) {
-          result.add(selection);
-        }
-      }
-    }
-    return result;
+  public static List<TreePath> collectSelectedPaths(@NotNull JTree tree) {
+    return collectSelectedObjects(tree, Function.identity());
+  }
+
+  /**
+   * @param tree   a tree, which selection is processed
+   * @param mapper a function to convert a selected tree path to a corresponding object
+   * @return a list of user objects which correspond to all selected paths
+   */
+  @NotNull
+  public static List<Object> collectSelectedUserObjects(@NotNull JTree tree) {
+    return collectSelectedObjects(tree, TreeUtil::getLastUserObject);
+  }
+
+  /**
+   * @param tree   a tree, which selection is processed
+   * @param mapper a function to convert a selected tree path to a corresponding object
+   * @return a list of objects which correspond to all selected paths
+   */
+  @NotNull
+  public static <T> List<T> collectSelectedObjects(@NotNull JTree tree, @NotNull Function<TreePath, T> mapper) {
+    return getSelection(tree, path -> isViewable(tree, path), mapper);
+  }
+
+  /**
+   * @param tree a tree, which selection is processed
+   * @param root an ascendant tree path to filter selected tree paths
+   * @return a list of selected paths under the specified root node
+   */
+  @NotNull
+  public static List<TreePath> collectSelectedPaths(@NotNull JTree tree, @NotNull TreePath root) {
+    return collectSelectedObjects(tree, root, Function.identity());
+  }
+
+  /**
+   * @param tree a tree, which selection is processed
+   * @param root an ascendant tree path to filter selected tree paths
+   * @return a list of user objects which correspond to selected paths under the specified root node
+   */
+  @NotNull
+  public static List<Object> collectSelectedUserObjects(@NotNull JTree tree, @NotNull TreePath root) {
+    return collectSelectedObjects(tree, root, TreeUtil::getLastUserObject);
+  }
+
+  /**
+   * @param tree   a tree, which selection is processed
+   * @param root   an ascendant tree path to filter selected tree paths
+   * @param mapper a function to convert a selected tree path to a corresponding object
+   * @return a list of objects which correspond to selected paths under the specified root node
+   */
+  @NotNull
+  public static <T> List<T> collectSelectedObjects(@NotNull JTree tree, @NotNull TreePath root, @NotNull Function<TreePath, T> mapper) {
+    if (!tree.isVisible(root)) return Collections.emptyList(); // invisible path should not be selected
+    return getSelection(tree, path -> isViewable(tree, path) && root.isDescendant(path), mapper);
+  }
+
+  @NotNull
+  private static <T> List<T> getSelection(@NotNull JTree tree, @NotNull Predicate<TreePath> filter, @NotNull Function<TreePath, T> mapper) {
+    TreePath[] paths = tree.getSelectionPaths();
+    if (paths == null || paths.length == 0) return Collections.emptyList(); // nothing is selected
+    return Stream.of(paths).filter(filter).map(mapper).filter(Objects::nonNull).collect(toList());
   }
 
   public static void unselectPath(@NotNull JTree tree, @Nullable TreePath path) {
