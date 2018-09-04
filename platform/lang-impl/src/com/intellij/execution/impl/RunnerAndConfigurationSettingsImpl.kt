@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.getAttributeBooleanValue
+import com.intellij.util.text.nullize
 import gnu.trove.THashMap
 import gnu.trove.THashSet
 import org.jdom.Element
@@ -243,11 +244,17 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
         if (!isNewSerializationAllowed) {
           element.setAttribute(TEMPLATE_FLAG_ATTRIBUTE, "false")
         }
-        element.setAttribute(NAME_ATTR, configuration.name)
+
+        configuration.name.nullize()?.let {
+          element.setAttribute(NAME_ATTR, it)
+        }
       }
 
+      val factory = factory
       element.setAttribute(CONFIGURATION_TYPE_ATTRIBUTE, factory.type.id)
-      element.setAttribute(FACTORY_NAME_ATTRIBUTE, factory.id)
+      if (factory.type !is SimpleConfigurationType) {
+        element.setAttribute(FACTORY_NAME_ATTRIBUTE, factory.id)
+      }
       if (folderName != null) {
         element.setAttribute(FOLDER_NAME, folderName!!)
       }

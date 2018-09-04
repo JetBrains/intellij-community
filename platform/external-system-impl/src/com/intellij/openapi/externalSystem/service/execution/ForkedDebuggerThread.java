@@ -9,7 +9,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ProgramRunnerUtil;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.impl.EditorHyperlinkSupport;
@@ -192,9 +191,7 @@ class ForkedDebuggerThread extends Thread {
   }
 
   private static void attachVM(@NotNull Project project, String runConfigName, @NotNull String debugPort, ProgramRunner.Callback callback) {
-    RemoteConfigurationType remoteConfigurationType = RemoteConfigurationType.getInstance();
-    ConfigurationFactory factory = remoteConfigurationType.getFactory();
-    RunnerAndConfigurationSettings runSettings = RunManager.getInstance(project).createConfiguration(runConfigName, factory);
+    RunnerAndConfigurationSettings runSettings = RunManager.getInstance(project).createConfiguration(runConfigName, RemoteConfigurationType.class);
     runSettings.setActivateToolWindowBeforeRun(false);
 
     RemoteConfiguration configuration = (RemoteConfiguration)runSettings.getConfiguration();
