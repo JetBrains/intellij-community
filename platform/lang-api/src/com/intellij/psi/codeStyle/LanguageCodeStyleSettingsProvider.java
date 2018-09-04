@@ -84,8 +84,10 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
    *
    * @return Created instance of {@code CommonCodeStyleSettings} or null if associated language doesn't
    *         use its own language-specific common settings (the settings are shared with other languages).
+   * @deprecated Override {@link #customizeDefaults(CommonCodeStyleSettings, IndentOptions)} method instead.
    */
-  @Nullable
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @NotNull
   @Deprecated
   public CommonCodeStyleSettings getDefaultCommonSettings() {
     CommonCodeStyleSettings defaultSettings = new CommonCodeStyleSettings(getLanguage());
@@ -157,6 +159,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
   @Nullable
   public static CommonCodeStyleSettings getDefaultCommonSettings(Language lang) {
     final LanguageCodeStyleSettingsProvider provider = forLanguage(lang);
+    //noinspection deprecation
     return provider != null ? provider.getDefaultCommonSettings() : null;
   }
 
