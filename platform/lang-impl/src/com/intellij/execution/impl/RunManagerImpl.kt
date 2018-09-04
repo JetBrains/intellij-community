@@ -81,7 +81,31 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
 
   private val lock = ReentrantReadWriteLock()
 
-  private val idToType = LinkedHashMap<String, ConfigurationType>()
+  private val idToType = object {
+    private var cachedValue: Map<String, ConfigurationType>? = null
+
+    val value: Map<String, ConfigurationType>
+      get() {
+        var result = cachedValue
+        if (result == null) {
+          result = compute()
+          cachedValue = result
+        }
+        return result
+      }
+
+    fun drop() {
+      cachedValue = null
+    }
+
+    fun resolve(value: Map<String, ConfigurationType>) {
+      cachedValue = value
+    }
+
+    private fun compute(): Map<String, ConfigurationType> {
+      return buildConfigurationTypeMap(ConfigurationType.CONFIGURATION_TYPE_EP.extensionList)
+    }
+  }
 
   @Suppress("LeakingThis")
   private val listManager = RunConfigurationListManagerHelper(this)
@@ -149,7 +173,6 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
     get() = project.messageBus.syncPublisher(RunManagerListener.TOPIC)
 
   init {
-    initializeConfigurationTypes(ConfigurationType.CONFIGURATION_TYPE_EP.extensionList)
     project.messageBus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
       override fun rootsChanged(event: ModuleRootEvent) {
         selectedConfiguration?.let {
@@ -160,16 +183,19 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
   }
 
   // separate method needed for tests
+  @TestOnly
   fun initializeConfigurationTypes(factories: List<ConfigurationType>) {
+    idToType.resolve(buildConfigurationTypeMap(factories))
+  }
+
+  private fun buildConfigurationTypeMap(factories: List<ConfigurationType>): Map<String, ConfigurationType> {
     val types = factories.toMutableList()
-    types.sortBy { it.displayName }
     types.add(UnknownConfigurationType.INSTANCE)
-    lock.write {
-      idToType.clear()
-      for (type in types) {
-        idToType.put(type.id, type)
-      }
+    val map = THashMap<String, ConfigurationType>()
+    for (type in types) {
+      map.put(type.id, type)
     }
+    return map
   }
 
   override fun createConfiguration(name: String, factory: ConfigurationFactory): RunnerAndConfigurationSettings {
@@ -647,8 +673,7 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
   // used by MPS, don't delete
   fun clearAll() {
     clear(true)
-    idToType.clear()
-    initializeConfigurationTypes(emptyList())
+    idToType.drop()
   }
 
   private fun clear(allConfigurations: Boolean) {
@@ -759,7 +784,7 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
 
   @JvmOverloads
   fun getFactory(typeId: String?, factoryId: String?, checkUnknown: Boolean = false): ConfigurationFactory? {
-    val type = idToType.get(typeId)
+    val type = idToType.value.get(typeId)
     if (type == null) {
       if (checkUnknown && typeId != null) {
         UnknownFeaturesCollector.getInstance(project).registerUnknownRunConfiguration(typeId, factoryId)
