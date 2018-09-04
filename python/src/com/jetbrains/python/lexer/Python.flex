@@ -74,8 +74,9 @@ FSTRING_QUOTES = (\"{1,3}|'{1,3})
 FSTRING_ESCAPED_LBRACE = "{{"
 // TODO report it in annotation
 //FSTRING_ESCAPED_RBRACE = "}}"
-FSTRING_TEXT_NO_QUOTES = ([^\\\'\"\r\n{] | {ESCAPE_SEQUENCE} | {FSTRING_ESCAPED_LBRACE} | (\\[\r\n]))+
-FSTRING_FORMAT_TEXT_NO_QUOTES = ([^\\\'\r\n{}] | (\\[\r\n]))+
+NAMED_UNICODE_ESCAPE = \\N\{[\w ]*\}?
+FSTRING_TEXT_NO_QUOTES = ([^\\\'\"\r\n{] | {NAMED_UNICODE_ESCAPE} | {ESCAPE_SEQUENCE} | {FSTRING_ESCAPED_LBRACE} | (\\[\r\n]))+
+FSTRING_FORMAT_TEXT_NO_QUOTES = ([^\\\'\r\n{}] | {NAMED_UNICODE_ESCAPE} | (\\[\r\n]))+
 FSTRING_FRAGMENT_TYPE_CONVERSION = "!" [^=:'\"} \t\r\n]*
 
 %state PENDING_DOCSTRING

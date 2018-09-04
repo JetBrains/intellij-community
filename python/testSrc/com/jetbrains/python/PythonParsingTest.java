@@ -777,6 +777,22 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
+  public void testFStringNamedUnicodeEscapeInLiteralPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringIncompleteNamedUnicodePrecedingFragment() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringNamedUnicodeEscapeInFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringNamedUnicodeEscapeInStringLiteral() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
   // PY-19036
   public void testAwaitInNonAsyncNestedFunction() {
     doTest(LanguageLevel.PYTHON35);
