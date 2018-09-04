@@ -148,7 +148,7 @@ class CommunityLibraryLicenses {
     // see BaseIdeaProperties.groovy
     new LibraryLicense(name: "Eclipse JDT Core", libraryName: "Eclipse", attachedTo: "intellij.platform.ide", version: "4.2.1", license: "CPL 1.0",
                        url: "http://www.eclipse.org/jdt/core/index.php"),
-    new LibraryLicense(name: "EdDSA-Java", libraryName: "eddsa", version: "0.2.0", license: "CC0 1.0 Universal",
+    new LibraryLicense(name: "EdDSA-Java", libraryName: "trilead-ssh2", version: "0.2.0", license: "CC0 1.0 Universal",
                        licenseUrl: "https://github.com/str4d/ed25519-java/blob/master/LICENSE.txt",
                        url: "https://github.com/str4d/ed25519-java"),
     new LibraryLicense(name: "EditorConfig Java Core", libraryName: "editorconfig-core-java.jar", version: "1.0", license: "Apache 2.0",
@@ -225,7 +225,7 @@ class CommunityLibraryLicenses {
                        licenseUrl: "https://github.com/jaxen-xpath/jaxen/blob/master/LICENSE.txt"),
     new LibraryLicense(name: "jayatana", libraryName: "jayatana", version: "1.2.4", license: "MIT License",
                        url: "https://code.google.com/p/java-swing-ayatana/", licenseUrl: "http://opensource.org/licenses/mit-license.php"),
-    new LibraryLicense(name: "JBcrypt", libraryName: "jbcrypt", version: "1.0.0", license: "ISC License",
+    new LibraryLicense(name: "JBcrypt", libraryName: "trilead-ssh2", version: "1.0.0", license: "ISC License",
                        licenseUrl: "https://github.com/jeremyh/jBCrypt/blob/master/LICENSE", url: "https://github.com/jeremyh/jBCrypt"),
     new LibraryLicense(name: "JCIP Annotations", libraryName: "jcip", license: "Creative Commons Attribution License",
                        url: "http://www.jcip.net", licenseUrl: "http://creativecommons.org/licenses/by/2.5"),
