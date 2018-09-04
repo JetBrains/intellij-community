@@ -65,6 +65,7 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
     }
   }
 
+  @NotNull
   @Override
   public String getValue() {
     // it is more correct way to strip quotes since injected xml may have quotes encoded
