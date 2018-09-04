@@ -146,7 +146,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "DTDParser", version: "1.13", license: "LGPL", url: "http://sourceforge.net/projects/dtdparser/",
                        licenseUrl: "http://www.opensource.org/licenses/lgpl-2.1"),
     // see BaseIdeaProperties.groovy
-    new LibraryLicense(name: "Eclipse JDT Core", libraryName: "Eclipse", attachedTo: "intellij.platform.ide", version: "4.2.1", license: "CPL 1.0",
+    new LibraryLicense(name: "Eclipse JDT Core", attachedTo: "intellij.platform.ide", version: "4.2.1", license: "CPL 1.0",
                        url: "http://www.eclipse.org/jdt/core/index.php"),
     new LibraryLicense(name: "EdDSA-Java", libraryName: "trilead-ssh2", version: "0.2.0", license: "CC0 1.0 Universal",
                        licenseUrl: "https://github.com/str4d/ed25519-java/blob/master/LICENSE.txt",
