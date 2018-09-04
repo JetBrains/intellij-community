@@ -23,7 +23,11 @@ class LibraryLicensesTester(private val project: JpsProject, private val license
     }
 
     val librariesWithLicenses = licenses.flatMapTo(THashSet()) { it.libraryNames }
-    val unusedLibrariesWithLicenses = licenses.filter { it.libraryName != null }.mapNotNullTo(THashSet()) { it.libraryName }
+    val unusedLibrariesWithLicenses = licenses
+      .mapNotNullTo(THashSet()) {
+        // for some libs (e.g. Eclipse both libraryName and attachedTo specified because of tricky layout)
+        if (it.libraryName != null && it.attachedTo == null) it.libraryName else null
+      }
 
     // what for?
     unusedLibrariesWithLicenses.remove("Servlets")
