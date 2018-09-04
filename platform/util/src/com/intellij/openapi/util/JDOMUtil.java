@@ -143,7 +143,7 @@ public class JDOMUtil {
     }
   }
 
-  private static class EmptyTextFilter implements Filter {
+  private static class EmptyTextFilter implements Filter<Content> {
     @Override
     public boolean matches(Object obj) {
       return !(obj instanceof Text) || !CharArrayUtil.containsOnlyWhiteSpaces(((Text)obj).getText());
