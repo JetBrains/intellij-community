@@ -777,7 +777,6 @@
               description="Disable ProcessCanceledException thrown in a background thread during read action, to simplify debugging"/>
       <group id="Internal.Performance" text="Performance" popup="true">
         <action id="LaggingMode" internal="true" class="com.intellij.internal.ToggleLaggingModeAction" text="Lagging mode"/>
-        <action internal="true" id="TestTransferToEDT" text="Test TransferToEDTQueue performance" class="com.intellij.diagnostic.TransferToEDTQueueTestAction"/>
       </group>
       <separator/>
       <group id="Internal.UI" popup="true" text="&amp;UI">

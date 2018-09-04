@@ -37,7 +37,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
@@ -45,9 +44,9 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
-import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.containers.WeakInterner;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -378,24 +377,27 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     return b.create();
   }
 
-  private final Map<TextRange, RangeMarker> ranges2markersCache = new THashMap<>();
-  private final TransferToEDTQueue<Trinity<ProblemDescriptor, LocalInspectionToolWrapper,ProgressIndicator>> myTransferToEDTQueue
-    = new TransferToEDTQueue<>("Apply inspection results", new Processor<Trinity<ProblemDescriptor, LocalInspectionToolWrapper, ProgressIndicator>>() {
-    private final InjectedLanguageManager ilManager = InjectedLanguageManager.getInstance(myProject);
-    private final List<HighlightInfo> infos = new ArrayList<>(2);
-    private final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+  private final Map<TextRange, RangeMarker> ranges2markersCache = new THashMap<>(); // accessed in EDT only
+  private final InjectedLanguageManager ilManager = InjectedLanguageManager.getInstance(myProject);
+  private final List<HighlightInfo> infos = new ArrayList<>(2); // accessed in EDT only
+  private final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+  private final Set<Pair<TextRange, String>> emptyActionRegistered = Collections.synchronizedSet(new THashSet<>());
 
-    @Override
-    public boolean process(Trinity<ProblemDescriptor, LocalInspectionToolWrapper, ProgressIndicator> trinity) {
-      ProgressIndicator indicator = trinity.getThird();
+  private void addDescriptorIncrementally(@NotNull final ProblemDescriptor descriptor,
+                                          @NotNull final LocalInspectionToolWrapper tool,
+                                          @NotNull final ProgressIndicator indicator) {
+    if (myIgnoreSuppressed && SuppressionUtil.inspectionResultSuppressed(descriptor.getPsiElement(), tool.getTool())) {
+      return;
+    }
+    EdtExecutorService.getInstance().execute(()->{
+      if (myProject.isDisposed()) return;
+
       if (indicator.isCanceled()) {
-        return false;
+        return;
       }
 
-      ProblemDescriptor descriptor = trinity.first;
-      LocalInspectionToolWrapper tool = trinity.second;
       PsiElement psiElement = descriptor.getPsiElement();
-      if (psiElement == null) return true;
+      if (psiElement == null) return;
       PsiFile file = psiElement.getContainingFile();
       Document thisDocument = documentManager.getDocument(file);
 
@@ -411,20 +413,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                                                    info, colorsScheme, getId(),
                                                                    ranges2markersCache);
       }
-
-      return true;
-    }
-  }, myProject.getDisposed());
-
-  private final Set<Pair<TextRange, String>> emptyActionRegistered = Collections.synchronizedSet(new THashSet<>());
-
-  private void addDescriptorIncrementally(@NotNull final ProblemDescriptor descriptor,
-                                          @NotNull final LocalInspectionToolWrapper tool,
-                                          @NotNull final ProgressIndicator indicator) {
-    if (myIgnoreSuppressed && SuppressionUtil.inspectionResultSuppressed(descriptor.getPsiElement(), tool.getTool())) {
-      return;
-    }
-    myTransferToEDTQueue.offer(Trinity.create(descriptor, tool, indicator));
+    });
   }
 
   private void appendDescriptors(@NotNull PsiFile file, @NotNull List<ProblemDescriptor> descriptors, @NotNull LocalInspectionToolWrapper tool) {
