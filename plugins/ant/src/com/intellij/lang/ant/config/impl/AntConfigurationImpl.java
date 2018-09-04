@@ -2,10 +2,6 @@
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.execution.RunManagerEx;
-import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.config.*;
@@ -211,7 +207,9 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     for (Element element : state.getChildren(CONTEXT_MAPPING)) {
       String url = element.getAttributeValue(URL);
       String contextUrl = element.getAttributeValue(CONTEXT);
+      assert url != null;
       VirtualFile file = vfManager.findFileByUrl(url);
+      assert contextUrl != null;
       VirtualFile contextFile = vfManager.findFileByUrl(contextUrl);
       if (file != null && contextFile != null) {
         myAntFileToContextFileMap.put(file, contextFile);
@@ -265,9 +263,6 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
                 for (Pair<Element, AntBuildFileBase> pair : buildFiles) {
                   final AntBuildFileBase buildFile = pair.getSecond();
                   buildFile.updateProperties();
-                  final VirtualFile vFile = buildFile.getVirtualFile();
-                  final String buildFileUrl = vFile != null? vFile.getUrl() : null;
-
                   for (Element e : pair.getFirst().getChildren(EXECUTE_ON_ELEMENT)) {
                     final String eventId = e.getAttributeValue(EVENT_ELEMENT);
                     ExecutionEvent event = null;
@@ -277,18 +272,6 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
                     }
                     else if (ExecuteAfterCompilationEvent.TYPE_ID.equals(eventId)) {
                       event = ExecuteAfterCompilationEvent.getInstance();
-                    }
-                    else if ("beforeRun".equals(eventId)) {
-                      /*
-                      for compatibility with previous format
-
-                      <buildFile url="file://$PROJECT_DIR$/module/src/support-scripts.xml">
-                        <executeOn event="beforeRun" target="prebuild-steps" runConfigurationType="Application" runConfigurationName="Main" />
-                      </buildFile>
-                      */
-                      final String configType = e.getAttributeValue("runConfigurationType");
-                      final String configName = e.getAttributeValue("runConfigurationName");
-                      convertToBeforeRunTask(myProject, buildFileUrl, targetName, configType, configName);
                     }
                     else if (ExecuteCompositeTargetEvent.TYPE_ID.equals(eventId)) {
                       try {
@@ -338,7 +321,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
 
   private volatile Boolean myIsInitialized;
   private volatile Thread myInitThread;
-  
+
   @Override
   public boolean isInitialized() {
     final Boolean initialized = myIsInitialized;
@@ -429,7 +412,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
 
   @Override
   public AntBuildTarget[] getMetaTargets(final AntBuildFile buildFile) {
-    final List<ExecutionEvent> events = getEventsByClass(ExecuteCompositeTargetEvent.class);
+    final List<ExecutionEvent> events = getEventsByClass();
     if (events.size() == 0) {
       return AntBuildTargetBase.EMPTY_ARRAY;
     }
@@ -472,7 +455,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     if (antBuildTarget != null) {
       return antBuildTarget;
     }
-    final List<ExecutionEvent> events = getEventsByClass(ExecuteCompositeTargetEvent.class);
+    final List<ExecutionEvent> events = getEventsByClass();
     if (events.size() == 0) {
       return null;
     }
@@ -589,10 +572,6 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       if (model.hasTargetWithActionId(id)) return buildFile;
     }
     return null;
-  }
-
-  private AntBuildModelBase createModel(final AntBuildFile buildFile) {
-    return new AntBuildModelImpl(buildFile);
   }
 
   private AntBuildFileBase addBuildFileImpl(final VirtualFile file) throws AntNoFileException {
@@ -731,7 +710,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     return result.get();
   }
 
-  private List<ExecutionEvent> getEventsByClass(Class eventClass) {
+  private List<ExecutionEvent> getEventsByClass() {
     final Thread initThread = myInitThread;
     if (initThread == null || initThread != Thread.currentThread()) {
       ensureInitialized();
@@ -739,7 +718,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     final List<ExecutionEvent> list = new ArrayList<>();
     synchronized (myEventToTargetMap) {
       for (final ExecutionEvent event : myEventToTargetMap.keySet()) {
-        if (eventClass.isInstance(event)) {
+        if (event instanceof ExecuteCompositeTargetEvent) {
           list.add(event);
         }
       }
@@ -747,46 +726,10 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     return list;
   }
 
-  private static void convertToBeforeRunTask(Project project, String buildFileUrl, String targetName, String configType, String configName) {
-    if (buildFileUrl == null || targetName == null || configType == null) {
-      return;
-    }
-    final RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
-    final ConfigurationType type = runManager.getConfigurationType(configType);
-    if (type == null) {
-      return;
-    }
-    if (configName != null) {
-      for (RunConfiguration configuration : runManager.getConfigurationsList(type)) {
-        if (configName.equals(configuration.getName())) {
-          final List<AntBeforeRunTask> tasks = runManager.getBeforeRunTasks(configuration, AntBeforeRunTaskProvider.ID);
-          if (!tasks.isEmpty()) {
-            AntBeforeRunTask task = tasks.get(0);//This is legacy code, we had only one task that time
-            task.setEnabled(true);
-            task.setTargetName(targetName);
-            task.setAntFileUrl(buildFileUrl);
-          }
-        }
-      }
-    }
-    else {
-      for (ConfigurationFactory factory : type.getConfigurationFactories()) {
-        final RunConfiguration template = runManager.getConfigurationTemplate(factory).getConfiguration();
-        final List<AntBeforeRunTask> tasks = runManager.getBeforeRunTasks(template, AntBeforeRunTaskProvider.ID);
-        if (!tasks.isEmpty()) {
-          AntBeforeRunTask task = tasks.get(0);//This is legacy code, we had only one task that time
-          task.setEnabled(true);
-          task.setTargetName(targetName);
-          task.setAntFileUrl(buildFileUrl);
-        }
-      }
-    }
-  }
-
   private static void queueLater(final Task task) {
     final Application app = ApplicationManager.getApplication();
     if (!app.isDispatchThread() || task.isHeadless()) {
-      // for headless tasks we need to ensure async execution. 
+      // for headless tasks we need to ensure async execution.
       // Otherwise calls to AntConfiguration.getInstance() from the task will cause SOE
       app.invokeLater(task::queue);
     }
@@ -854,13 +797,13 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
 
   private static class EventElementComparator implements Comparator<Element> {
     static final Comparator<? super Element> INSTANCE = new EventElementComparator();
-    
+
     private static final String[] COMPARABLE_ATTRIB_NAMES = new String[] {
-      EVENT_ELEMENT, 
-      TARGET_ELEMENT, 
+      EVENT_ELEMENT,
+      TARGET_ELEMENT,
       ExecuteCompositeTargetEvent.PRESENTABLE_NAME
     };
-    
+
     @Override
     public int compare(final Element o1, final Element o2) {
       for (String attribName : COMPARABLE_ATTRIB_NAMES) {

@@ -17,11 +17,9 @@ class MockRunManager : RunManagerEx() {
 
   override fun findSettings(configuration: RunConfiguration): RunnerAndConfigurationSettings? = null
 
-  override fun getConfigurationType(typeName: String): Nothing = TODO("not implemented")
-
   override fun hasSettings(settings: RunnerAndConfigurationSettings): Boolean = false
 
-  override fun getConfigurationsList(type: ConfigurationType): List<RunConfiguration> = emptyList<RunConfiguration>()
+  override fun getConfigurationsList(type: ConfigurationType): List<RunConfiguration> = emptyList()
 
   override fun makeStable(settings: RunnerAndConfigurationSettings) {}
 

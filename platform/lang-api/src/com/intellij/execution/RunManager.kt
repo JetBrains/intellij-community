@@ -198,7 +198,8 @@ abstract class RunManager {
     return oldName != configuration.name
   }
 
-  abstract fun getConfigurationType(typeName: String): ConfigurationType?
+  @Deprecated("Use ConfigurationTypeUtil", ReplaceWith("ConfigurationTypeUtil.findConfigurationType(typeName)", "com.intellij.execution.configurations.ConfigurationTypeUtil"))
+  fun getConfigurationType(typeName: String) = ConfigurationTypeUtil.findConfigurationType(typeName)
 
   abstract fun findConfigurationByName(name: String?): RunnerAndConfigurationSettings?
 

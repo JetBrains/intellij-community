@@ -245,7 +245,7 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
   }
 
   override fun getConfigurationTemplate(factory: ConfigurationFactory): RunnerAndConfigurationSettingsImpl {
-    val key = "${factory.type.id}.${factory.id}"
+    val key = if (factory.type is SimpleConfigurationType) factory.type.id else "${factory.type.id}.${factory.id}"
     return lock.read { templateIdToConfiguration.get(key) } ?: lock.write {
       templateIdToConfiguration.getOrPut(key) {
         val template = createTemplateSettings(factory)
@@ -756,8 +756,6 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
 
     configuration.beforeRunTasks = result ?: emptyList()
   }
-
-  override fun getConfigurationType(typeName: String): ConfigurationType? = idToType.get(typeName)
 
   @JvmOverloads
   fun getFactory(typeId: String?, factoryId: String?, checkUnknown: Boolean = false): ConfigurationFactory? {
