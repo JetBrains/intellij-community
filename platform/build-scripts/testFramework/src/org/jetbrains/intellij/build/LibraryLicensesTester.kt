@@ -51,7 +51,9 @@ class LibraryLicensesTester(private val project: JpsProject, private val license
     }
 
     if (unusedLibrariesWithLicenses.isNotEmpty()) {
-      collector.addError(AssertionFailedError("License specified for unknown libraries:\n\n${unusedLibrariesWithLicenses.joinToString("\n")}"))
+      for (item in unusedLibrariesWithLicenses) {
+        collector.addError(AssertionFailedError("License specified for unknown library: $item"))
+      }
     }
   }
 }
