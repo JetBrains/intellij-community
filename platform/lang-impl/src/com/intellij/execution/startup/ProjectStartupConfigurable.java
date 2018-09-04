@@ -28,8 +28,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
@@ -198,12 +196,12 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
       @Override
       public void perform(@NotNull final Project project, @NotNull final Executor executor, @NotNull DataContext context) {
         final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
-        final Condition<ConfigurationType> filter = configurationType -> {
+        List<ConfigurationType> typesToShow = ContainerUtil.filter(ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList(), configurationType -> {
           ConfigurationFactory factory;
           return ((factory = runManager.getFactory(configurationType.getId(), null)) != null) &&
                  ProgramRunner.getRunner(executor.getId(), runManager.getConfigurationTemplate(factory).getConfiguration()) != null;
-        };
-        final ListPopup popup = NewRunConfigurationPopup.createAddPopup(ContainerUtil.filter(ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList(), filter), "",
+        });
+        final ListPopup popup = NewRunConfigurationPopup.createAddPopup(typesToShow, "",
                                                                         factory -> ApplicationManager.getApplication().invokeLater(() -> {
                                                                           final EditConfigurationsDialog dialog = new EditConfigurationsDialog(project, factory);
                                                                           if (dialog.showAndGet()) {
@@ -214,7 +212,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
                                                                               }
                                                                             }, project.getDisposed());
                                                                           }
-                                                                        }, project.getDisposed()), null, EmptyRunnable.getInstance(), false);
+                                                                        }, project.getDisposed()), null, null, false);
         showPopup(button, popup);
       }
 
