@@ -11,7 +11,10 @@ configurations {
 
 dependencies {
   kotlinPlugin "com.jetbrains.plugins:org.jetbrains.kotlin:$kotlinPluginBuild@zip"
-  kotlinPluginCidr tc(buildTypeId: 'Kotlin_dev_CompilerAllPlugins', version: "${kotlinPluginBuildForKotlinNative.split('-')[0..2].join('-')}", artifactPath: "internal/kotlin-plugin-${kotlinPluginBuildForKotlinNative}.zip")
+  def components = kotlinPluginBuildForKotlinNative.split('-').toList()
+  components.remove(3)
+  def artifactVersion = components.join('-')
+  kotlinPluginCidr tc(buildTypeId: 'Kotlin_13M2_CompilerAllPlugins', version: "${kotlinPluginBuildForKotlinNative.split('-')[0..3].join('-')}", artifactPath: "internal/kotlin-plugin-${ artifactVersion}.zip")
 }
 
 task setupKotlinPluginCidr(dependsOn: configurations.kotlinPluginCidr, type: Sync) {
