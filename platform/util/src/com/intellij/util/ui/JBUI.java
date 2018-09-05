@@ -1747,6 +1747,10 @@ public class JBUI {
         return JBColor.namedColor("SearchEverywhere.Tab.selected.background", 0xdedede);
       }
 
+      public static Color selectedTabTextColor() {
+        return JBColor.namedColor("SearchEverywhere.Tab.selected.foreground", 0x000000);
+      }
+
       public static Color searchFieldBackground() {
         return JBColor.namedColor("SearchEverywhere.SearchField.background", 0xffffff);
       }
