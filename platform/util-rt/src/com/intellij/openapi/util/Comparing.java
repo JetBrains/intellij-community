@@ -166,7 +166,7 @@ public class Comparing {
   }
 
   public static int compare(double o1, double o2) {
-    return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
+    return Double.compare(o1, o2);
   }
 
   public static int compare(@Nullable byte[] o1, @Nullable byte[] o2) {

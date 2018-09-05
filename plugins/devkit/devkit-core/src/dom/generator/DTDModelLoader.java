@@ -301,7 +301,7 @@ public class DTDModelLoader implements ModelLoader {
 
   private static void checkDTDRootElement(DTD dtd) throws Exception {
     if (dtd.rootElement == null) {
-      StringBuffer sb = new StringBuffer("Empty root: possible elements: ");
+      StringBuilder sb = new StringBuilder("Empty root: possible elements: ");
       HashMap map = new HashMap(dtd.elements);
       for (Object o : dtd.elements.values()) {
         DTDElement el = (DTDElement) o;

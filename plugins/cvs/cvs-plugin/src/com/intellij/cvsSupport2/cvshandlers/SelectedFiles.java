@@ -30,8 +30,7 @@ class SelectedFiles extends AnyProcessedFiles {
   private final Collection<VirtualFile> myFiles = new ArrayList<>();
 
   public SelectedFiles(FilePath[] files) {
-    for (int i = 0; i < files.length; i++) {
-      FilePath file = files[i];
+    for (FilePath file : files) {
       VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile != null) {
         myFiles.add(virtualFile);

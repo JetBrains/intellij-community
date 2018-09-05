@@ -1,20 +1,18 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testIntegration;
 
-import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.TestStateStorage;
-import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.configurations.ConfigurationTypeUtil;
+import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.TIntObjectHashMap;
 
 import java.util.List;
 import java.util.Map;
 
 import static com.intellij.execution.testframework.sm.runner.states.TestStateInfo.Magnitude.values;
-
 
 interface ConfigurationByRecordProvider {
   RunnerAndConfigurationSettings getConfiguration(TestStateStorage.Record record);
@@ -22,7 +20,7 @@ interface ConfigurationByRecordProvider {
 
 class RunConfigurationByRecordProvider implements ConfigurationByRecordProvider {
   private final Project myProject;
-  private final Map<Integer, RunnerAndConfigurationSettings> myConfigurationsMap = ContainerUtil.newHashMap();
+  private final TIntObjectHashMap<RunnerAndConfigurationSettings> myConfigurationsMap = new TIntObjectHashMap<>();
 
   public RunConfigurationByRecordProvider(Project project) {
     myProject = project;
@@ -31,23 +29,15 @@ class RunConfigurationByRecordProvider implements ConfigurationByRecordProvider 
 
   @Override
   public RunnerAndConfigurationSettings getConfiguration(TestStateStorage.Record record) {
-    Integer runConfigurationHash = new Integer((int)record.configurationHash);
-    return myConfigurationsMap.get(runConfigurationHash);
+    return myConfigurationsMap.get((int)record.configurationHash);
   }
 
   private void initRunConfigurationsMap() {
-    RunManagerEx manager = RunManagerEx.getInstanceEx(myProject);
-    for (ConfigurationType type : ConfigurationTypeUtil.getTypesWithUnknown()) {
-      Map<String, List<RunnerAndConfigurationSettings>> structure = manager.getStructure(type);
-      for (Map.Entry<String, List<RunnerAndConfigurationSettings>> e : structure.entrySet()) {
-        for (RunnerAndConfigurationSettings settings : e.getValue()) {
-          myConfigurationsMap.put(settings.getName().hashCode(), settings);
-        }
-      }
+    for (RunnerAndConfigurationSettings settings : RunManagerImpl.getInstanceImpl(myProject).getAllSettings()) {
+      myConfigurationsMap.put(settings.getName().hashCode(), settings);
     }
   }
 }
-
 
 public class RecentTestsListProvider {
   private final Map<String, TestStateStorage.Record> myRecords;

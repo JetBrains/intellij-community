@@ -26,4 +26,9 @@ public final class AppletConfigurationType extends SimpleConfigurationType {
   public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
     return new AppletConfiguration(project, this);
   }
+
+  @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.Applet";
+  }
 }

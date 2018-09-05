@@ -1503,7 +1503,7 @@ public class EclipseXMLOutputter implements Cloneable {
      * @return a string listing the settings for this XMLOutputter instance
      */
     public String toString() {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         for (int i = 0; i < userFormat.lineSeparator.length(); i++) {
             char ch = userFormat.lineSeparator.charAt(i);
             switch (ch) {

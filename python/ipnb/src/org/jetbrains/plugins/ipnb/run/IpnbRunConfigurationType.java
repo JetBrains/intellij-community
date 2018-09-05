@@ -46,6 +46,11 @@ public final class IpnbRunConfigurationType implements ConfigurationType {
     return new ConfigurationFactory[]{IPNB_FACTORY};
   }
 
+  @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.JupiterNotebook";
+  }
+
   private static class IpnbRunConfigurationFactory extends PythonConfigurationFactoryBase {
     public IpnbRunConfigurationFactory(@NotNull ConfigurationType type) {
       super(type);

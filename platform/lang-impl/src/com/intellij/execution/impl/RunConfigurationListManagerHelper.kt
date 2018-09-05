@@ -5,9 +5,9 @@ import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.compound.CompoundRunConfiguration
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.openapi.util.text.NaturalComparator
-import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.ObjectIntHashMap
+import org.jdom.Element
 import java.util.*
 
 internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
@@ -16,7 +16,7 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
 
   private val customOrder = ObjectIntHashMap<String>()
 
-  private var isCustomOrderApplied = true
+  private var isSorted = true
     set(value) {
       if (field != value) {
         field = value
@@ -36,7 +36,7 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
     customOrder.ensureCapacity(sorted.size)
     sorted.mapIndexed { index, settings -> customOrder.put(settings.uniqueID, index) }
     immutableSortedSettingsList = null
-    isCustomOrderApplied = false
+    isSorted = false
   }
 
   fun requestSort() {
@@ -44,15 +44,28 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
       sortAlphabetically()
     }
     else {
-      isCustomOrderApplied = false
+      isSorted = false
     }
     immutableSortedSettingsList = null
   }
 
-  fun setCustomOrder(order: List<String>) {
-    customOrder.clear()
-    customOrder.ensureCapacity(order.size)
-    order.mapIndexed { index, id -> customOrder.put(id, index) }
+  fun readCustomOrder(element: Element) {
+    var isRequestSort = false
+    element.getChild("list")?.let { listElement ->
+      val order = listElement.getChildren("item").mapNotNull { it.getAttributeValue("itemvalue") }
+      customOrder.clear()
+      customOrder.ensureCapacity(order.size)
+      order.mapIndexed { index, id -> customOrder.put(id, index) }
+      isRequestSort = true
+    }
+
+    if (isRequestSort) {
+      requestSort()
+    }
+    else {
+      isSorted = false
+      immutableSortedSettingsList = null
+    }
   }
 
   private fun sortAlphabetically() {
@@ -60,11 +73,28 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
       return
     }
 
+    val folderNames = getSortedFolderNames(idToSettings.values)
     val list = idToSettings.values.sortedWith(Comparator { o1, o2 ->
+      val type1 = o1.type
+      val type2 = o2.type
+      if (type1 !== type2) {
+        return@Comparator NaturalComparator.INSTANCE.compare(type1.displayName, type2.displayName)
+      }
+
       val temporary1 = o1.isTemporary
       val temporary2 = o2.isTemporary
       when {
-        temporary1 == temporary2 -> o1.uniqueID.compareTo(o2.uniqueID)
+        temporary1 == temporary2 -> {
+          if (o1.folderName != o2.folderName) {
+            val folder1 = folderNames.indexOf(o1.folderName)
+            val folder2 = folderNames.indexOf(o2.folderName)
+            if (folder1 != folder2) {
+              return@Comparator folder1 - folder2
+            }
+          }
+
+          NaturalComparator.INSTANCE.compare(o1.name, o2.name)
+        }
         temporary1 -> 1
         else -> -1
       }
@@ -86,50 +116,12 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
     }
 
     // IDEA-63663 Sort run configurations alphabetically if clean checkout
-    if (!isCustomOrderApplied && !customOrder.isEmpty) {
-      val list = idToSettings.values.toTypedArray()
-      val folderNames = SmartList<String>()
-      for (settings in list) {
-        val folderName = settings.folderName
-        if (folderName != null && !folderNames.contains(folderName)) {
-          folderNames.add(folderName)
-        }
+    if (!isSorted) {
+      if (customOrder.isEmpty) {
+        sortAlphabetically()
       }
-
-      folderNames.sortWith(NaturalComparator.INSTANCE)
-      folderNames.add(null)
-
-      list.sortWith(Comparator { o1, o2 ->
-        if (o1.folderName != o2.folderName) {
-          val i1 = folderNames.indexOf(o1.folderName)
-          val i2 = folderNames.indexOf(o2.folderName)
-          if (i1 != i2) {
-            return@Comparator i1 - i2
-          }
-        }
-
-        val temporary1 = o1.isTemporary
-        val temporary2 = o2.isTemporary
-        when {
-          temporary1 == temporary2 -> {
-            val index1 = customOrder.get(o1.uniqueID)
-            val index2 = customOrder.get(o2.uniqueID)
-            if (index1 == -1 && index2 == -1) {
-              o1.name.compareTo(o2.name)
-            }
-            else {
-              index1 - index2
-            }
-          }
-          temporary1 -> 1
-          else -> -1
-        }
-      })
-
-      isCustomOrderApplied = true
-      idToSettings.clear()
-      for (settings in list) {
-        idToSettings.put(settings.uniqueID, settings)
+      else {
+        doCustomSort()
       }
     }
 
@@ -138,10 +130,48 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
     return result
   }
 
+  private fun doCustomSort() {
+    val list = idToSettings.values.toTypedArray()
+    val folderNames = getSortedFolderNames(idToSettings.values)
+
+    list.sortWith(Comparator { o1, o2 ->
+      if (o1.folderName != o2.folderName) {
+        val i1 = folderNames.indexOf(o1.folderName)
+        val i2 = folderNames.indexOf(o2.folderName)
+        if (i1 != i2) {
+          return@Comparator i1 - i2
+        }
+      }
+
+      val temporary1 = o1.isTemporary
+      val temporary2 = o2.isTemporary
+      when {
+        temporary1 == temporary2 -> {
+          val index1 = customOrder.get(o1.uniqueID)
+          val index2 = customOrder.get(o2.uniqueID)
+          if (index1 == -1 && index2 == -1) {
+            o1.name.compareTo(o2.name)
+          }
+          else {
+            index1 - index2
+          }
+        }
+        temporary1 -> 1
+        else -> -1
+      }
+    })
+
+    isSorted = true
+    idToSettings.clear()
+    for (settings in list) {
+      idToSettings.put(settings.uniqueID, settings)
+    }
+  }
+
   fun afterMakeStable() {
     immutableSortedSettingsList = null
     if (!customOrder.isEmpty) {
-      isCustomOrderApplied = false
+      isSorted = false
     }
   }
 
@@ -175,4 +205,18 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
       }
     }
   }
+}
+
+private fun getSortedFolderNames(list: Collection<RunnerAndConfigurationSettings>): List<String?> {
+  val folderNames = ArrayList<String?>()
+  for (settings in list) {
+    val folderName = settings.folderName
+    if (folderName != null && !folderNames.contains(folderName)) {
+      folderNames.add(folderName)
+    }
+  }
+
+  folderNames.sortWith(NaturalComparator.INSTANCE)
+  folderNames.add(null)
+  return folderNames
 }

@@ -54,6 +54,11 @@ public final class RestRunConfigurationType implements ConfigurationType {
     return new ConfigurationFactory[] {DOCUTILS_FACTORY, SPHINX_FACTORY};
   }
 
+  @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.docs";
+  }
+
   private static abstract class RestConfigurationFactory extends PythonConfigurationFactoryBase {
     private final String myName;
 

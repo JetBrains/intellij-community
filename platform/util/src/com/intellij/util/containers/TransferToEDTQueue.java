@@ -33,7 +33,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Processes elements in batches, no longer than 200ms (or maxUnitOfWorkThresholdMs constructor parameter) per batch,
  * and reschedules processing later for longer batches.
  * Usage: {@link TransferToEDTQueue#offer(Object)} } : schedules element for processing in EDT (via invokeLater)
+ * @deprecated use {@link com.intellij.util.concurrency.EdtExecutorService} instead
  */
+@Deprecated
 public class TransferToEDTQueue<T> {
   /**
    * This is a default threshold used to join units of work.

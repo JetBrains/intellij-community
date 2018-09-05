@@ -271,8 +271,7 @@ public final class LogInformation {
 		if (symbolicNames == null) {
 			createSymNames();
 		}
-		for (Iterator it = symbolicNames.iterator(); it.hasNext();) {
-			final SymbolicName item = (SymbolicName)it.next();
+		for (final SymbolicName item : symbolicNames) {
 			if (item.getName().equals(symName)) {
 				return item;
 			}

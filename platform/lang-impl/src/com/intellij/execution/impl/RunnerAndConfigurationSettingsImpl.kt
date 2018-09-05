@@ -81,7 +81,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
 
   private var uniqueId: String? = null
 
-  override fun getFactory(): ConfigurationFactory = _configuration?.factory ?: UnknownConfigurationType.getFactory()
+  override fun getFactory(): ConfigurationFactory = _configuration?.factory ?: UnknownConfigurationType.getInstance()
 
   override fun isTemplate(): Boolean = isTemplate
 
@@ -102,7 +102,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
     }
   }
 
-  override fun getConfiguration(): RunConfiguration = _configuration ?: UnknownConfigurationType.getFactory().createTemplateConfiguration(manager.project)
+  override fun getConfiguration(): RunConfiguration = _configuration ?: UnknownConfigurationType.getInstance().createTemplateConfiguration(manager.project)
 
   override fun createFactory(): Factory<RunnerAndConfigurationSettings> {
     return Factory {

@@ -3,8 +3,7 @@
 package com.intellij.execution.actions;
 
 import com.intellij.execution.*;
-import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.configurations.ConfigurationTypeUtil;
+import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.idea.ActionsBundle;
@@ -160,14 +159,13 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     return panel;
   }
 
-  private void performWhenButton(@NotNull Component src, String place) {
+  private static void performWhenButton(@NotNull Component src, String place) {
     ActionManager manager = ActionManager.getInstance();
     manager.tryToExecute(manager.getAction(IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS),
       new MouseEvent(src, MouseEvent.MOUSE_PRESSED, System.currentTimeMillis(), 0, 0, 0, 0,false, 0),
       src, place, true
     );
   }
-
 
   @Override
   @NotNull
@@ -191,12 +189,11 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       allActionsGroup.addSeparator();
     }
 
-    final RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
-    for (ConfigurationType type : ConfigurationTypeUtil.getTypesWithUnknown()) {
+    for (Map<String, List<RunnerAndConfigurationSettings>> structure : RunManagerImpl.getInstanceImpl(project).getConfigurationsGroupedByTypeAndFolder(true).values()) {
       final DefaultActionGroup actionGroup = new DefaultActionGroup();
-      Map<String, List<RunnerAndConfigurationSettings>> structure = runManager.getStructure(type);
       for (Map.Entry<String, List<RunnerAndConfigurationSettings>> entry : structure.entrySet()) {
-        DefaultActionGroup group = entry.getKey() != null ? new DefaultActionGroup(entry.getKey(), true) : actionGroup;
+        String folderName = entry.getKey();
+        DefaultActionGroup group = folderName == null ? actionGroup : new DefaultActionGroup(folderName, true);
         group.getTemplatePresentation().setIcon(AllIcons.Nodes.Folder);
         for (RunnerAndConfigurationSettings settings : entry.getValue()) {
           group.add(new SelectConfigAction(settings, project));

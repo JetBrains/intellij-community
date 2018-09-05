@@ -74,7 +74,9 @@ class LayoutBuilder {
     //we cannot set 'spec' as delegate because 'delegate' will be overwritten by AntBuilder
     def body = data.rehydrate(null, spec, data.thisObject)
     body.resolveStrategy = Closure.OWNER_FIRST
+    context.messages.debug("Creating layout in $targetDirectory:")
     ant.layout(toDir: targetDirectory, body)
+    context.messages.debug("Finish creating layout in $targetDirectory.")
   }
 
   class LayoutSpec {
@@ -135,9 +137,10 @@ class LayoutBuilder {
      * in the {@code body} of {@link #jar} with 'preserveDuplicates' set to {@code true}
      */
     def modulePatches(Collection<String> moduleNames, Closure body = {}) {
-      moduleNames.each {
-        moduleOutputPatches.get(it)?.each {
+      moduleNames.each { String moduleName ->
+        moduleOutputPatches.get(moduleName)?.each {
           ant.fileset(dir: it, body)
+          context.messages.debug(" include $it with pathces for module '$moduleName'")
         }
       }
     }
@@ -148,6 +151,7 @@ class LayoutBuilder {
     def module(String moduleName, Closure body = {}) {
       usedModules << moduleName
       ant.module(name: moduleName, body)
+      context.messages.debug(" include output of module '$moduleName'")
     }
 
     /**
@@ -155,6 +159,7 @@ class LayoutBuilder {
      */
     def moduleTests(String moduleName, Closure body = {}) {
       ant.moduleTests(name: moduleName, body)
+      context.messages.debug(" include tests of module '$moduleName'")
     }
 
     /**
@@ -185,6 +190,7 @@ class LayoutBuilder {
       else {
         ant.fileset(dir: artifact.outputPath)
       }
+      context.messages.debug(" include artifact '$artifactName'")
     }
 
     /**
@@ -209,10 +215,13 @@ class LayoutBuilder {
       library.getFiles(JpsOrderRootType.COMPILED).each {
         def matcher = it.name =~ JAR_NAME_WITH_VERSION_PATTERN
         if (removeVersionFromJarName && matcher.matches()) {
-          ant.renamedFile(filePath: it.absolutePath, newName: matcher.group(1) + ".jar")
+          def newName = matcher.group(1) + ".jar"
+          ant.renamedFile(filePath: it.absolutePath, newName: newName)
+          context.messages.debug(" include $newName (renamed from $it.absolutePath) from library '${getLibraryName(library)}'")
         }
         else {
           ant.fileset(file: it.absolutePath)
+          context.messages.debug(" include $it.name ($it.absolutePath) from library '${getLibraryName(library)}'")
         }
       }
     }

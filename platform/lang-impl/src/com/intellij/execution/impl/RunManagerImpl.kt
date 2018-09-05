@@ -191,7 +191,7 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
 
   private fun buildConfigurationTypeMap(factories: List<ConfigurationType>): Map<String, ConfigurationType> {
     val types = factories.toMutableList()
-    types.add(UnknownConfigurationType.INSTANCE)
+    types.add(UnknownConfigurationType.getInstance())
     val map = THashMap<String, ConfigurationType>()
     for (type in types) {
       map.put(type.id, type)
@@ -251,24 +251,19 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
 
   override fun getConfigurationSettingsList(type: ConfigurationType): List<RunnerAndConfigurationSettings> = allSettings.filterSmart { it.type === type }
 
-  override fun getStructure(type: ConfigurationType): Map<String, List<RunnerAndConfigurationSettings>> {
-    val result = LinkedHashMap<String?, MutableList<RunnerAndConfigurationSettings>>()
-    val typeList = SmartList<RunnerAndConfigurationSettings>()
+  fun getConfigurationsGroupedByTypeAndFolder(isIncludeUnknown: Boolean): Map<ConfigurationType, Map<String?, List<RunnerAndConfigurationSettings>>> {
+    val result = LinkedHashMap<ConfigurationType, MutableMap<String?, MutableList<RunnerAndConfigurationSettings>>>()
+    // use allSettings to return sorted result
     for (setting in allSettings) {
-      if (setting.type !== type) {
+      val type = setting.type
+      if (!isIncludeUnknown && type === UnknownConfigurationType.getInstance()) {
         continue
       }
 
-      val folderName = setting.folderName
-      if (folderName == null) {
-        typeList.add(setting)
-      }
-      else {
-        result.getOrPut(folderName) { SmartList() }.add(setting)
-      }
+      val folderToConfigurations = result.getOrPut(type) { LinkedHashMap() }
+      folderToConfigurations.getOrPut(setting.folderName) { SmartList() }.add(setting)
     }
-    result.put(null, Collections.unmodifiableList(typeList))
-    return Collections.unmodifiableMap(result)
+    return result
   }
 
   override fun getConfigurationTemplate(factory: ConfigurationFactory): RunnerAndConfigurationSettingsImpl {
@@ -609,10 +604,7 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
 
     // apply order after loading shared RC
     lock.write {
-      parentNode.getChild("list")?.let { listElement ->
-        listManager.setCustomOrder(listElement.getChildren("item").mapNotNull { it.getAttributeValue("itemvalue") })
-      }
-      listManager.immutableSortedSettingsList = null
+      listManager.readCustomOrder(parentNode)
     }
 
     runConfigurationFirstLoaded()
@@ -639,7 +631,6 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
   }
 
   private fun runConfigurationFirstLoaded() {
-    requestSort()
     if (selectedConfiguration == null) {
       selectedConfiguration = allSettings.firstOrNull { it.type !is UnknownRunConfiguration }
     }
@@ -790,7 +781,7 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
       if (checkUnknown && typeId != null) {
         UnknownFeaturesCollector.getInstance(project).registerUnknownRunConfiguration(typeId, factoryId)
       }
-      return UnknownConfigurationType.getFactory()
+      return UnknownConfigurationType.getInstance()
     }
 
     if (type is UnknownConfigurationType) {

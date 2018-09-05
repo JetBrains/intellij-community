@@ -561,6 +561,13 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
              ? JBUI.CurrentTheme.SearchEverywhere.selectedTabColor()
              : super.getBackground();
     }
+
+    @Override
+    public Color getForeground() {
+      return mySelectedTab == this
+             ? JBUI.CurrentTheme.SearchEverywhere.selectedTabTextColor()
+             : super.getForeground();
+    }
   }
 
   private void rebuildList() {

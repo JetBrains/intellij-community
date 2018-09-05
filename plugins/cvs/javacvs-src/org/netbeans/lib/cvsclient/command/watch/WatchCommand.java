@@ -70,9 +70,9 @@ public final class WatchCommand extends AbstractCommand {
 		addFileRequests(cvsFiles, requests, clientEnvironment);
 		if (getWatchMode().isWatchOptionAllowed()) {
 			final String[] arguments = getWatchNotNull().getArguments();
-			for (int i = 0; i < arguments.length; i++) {
+			for (String argument : arguments) {
 				requests.addArgumentRequest("-a");
-				requests.addArgumentRequest(arguments[i]);
+				requests.addArgumentRequest(argument);
 			}
 		}
 		requests.addLocalPathDirectoryRequest();

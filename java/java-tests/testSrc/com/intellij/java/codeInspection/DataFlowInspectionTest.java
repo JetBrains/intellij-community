@@ -639,4 +639,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testVoidIsAlwaysNull() { doTest(); }
   public void testStringEquality() { doTest(); }
   public void testAssignmentFieldAliasing() { doTest(); }
+  public void testNewBoxedNumberEquality() { doTest(); }
 }

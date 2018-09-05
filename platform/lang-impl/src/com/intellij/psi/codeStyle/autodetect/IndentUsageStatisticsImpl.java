@@ -26,7 +26,7 @@ import java.util.List;
 
 public class IndentUsageStatisticsImpl implements IndentUsageStatistics {
   private static final Comparator<IndentUsageInfo> DECREASING_ORDER =
-    (o1, o2) -> o1.getTimesUsed() < o2.getTimesUsed() ? 1 : o1.getTimesUsed() == o2.getTimesUsed() ? 0 : -1;
+    (o1, o2) -> Integer.compare(o2.getTimesUsed(), o1.getTimesUsed());
 
   private final List<LineIndentInfo> myLineInfos;
 

@@ -212,12 +212,10 @@ public class UITheme {
         String tail = key.substring(1);
         Object finalValue = value;
 
-        //please DO NOT invoke forEach on UIDefaults directly
-        ((UIDefaults)defaults.clone()).entrySet().forEach(e -> {
-          if (e.getKey() instanceof String && ((String)e.getKey()).endsWith(tail)) {
-            defaults.put(e.getKey(), finalValue);
-          }
-        });
+        //please DO NOT stream on UIDefaults directly
+        ((UIDefaults)defaults.clone()).keySet().stream()
+          .filter(k -> k instanceof String && ((String)k).endsWith(tail))
+          .forEach(k -> defaults.put(k, finalValue));
       } else {
         defaults.put(key, value);
       }
