@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.typing
 
-import com.google.common.cache.CacheBuilder
+import com.google.common.cache.Cache
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl
@@ -9,6 +9,7 @@ import com.intellij.codeInspection.ui.ListEditForm
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
@@ -25,7 +26,6 @@ import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.sdk.PythonSdkType
-import java.time.Duration
 import javax.swing.JComponent
 
 class PyStubPackagesAdvertiser : PyInspection() {
@@ -35,11 +35,6 @@ class PyStubPackagesAdvertiser : PyInspection() {
 
     private val BALLOON_SHOWING = Key.create<Boolean>("showingStubPackagesAdvertiserBalloon")
     private val BALLOON_NOTIFICATIONS = NotificationGroup("Python Stub Packages Advertiser", NotificationDisplayType.STICKY_BALLOON, false)
-
-    private val CACHE = CacheBuilder.newBuilder()
-      .maximumSize(200)
-      .expireAfterAccess(Duration.ofMinutes(5))
-      .build<Pair<Sdk, String>, Set<RepoPackage>>()
   }
 
   @Suppress("MemberVisibilityCanBePrivate")
@@ -67,23 +62,26 @@ class PyStubPackagesAdvertiser : PyInspection() {
       val availablePackages = PyPackageManagers.getInstance().getManagementService(node.project, sdk).allPackagesCached
       if (availablePackages.isEmpty()) return
 
-      processWhiteListedPackages(node, module, sdk, availablePackages, installedPackages)
-      processNotWhiteListedPackages(node, module, sdk, availablePackages, installedPackages)
+      val cache = ServiceManager.getService(PyStubPackagesAdvertiserCache::class.java).forSdk(sdk)
+
+      processWhiteListedPackages(node, module, sdk, availablePackages, installedPackages, cache)
+      processNotWhiteListedPackages(node, module, sdk, availablePackages, installedPackages, cache)
     }
 
     private fun processWhiteListedPackages(file: PyFile,
                                            module: Module,
                                            sdk: Sdk,
                                            availablePackages: List<RepoPackage>,
-                                           installedPackages: List<PyPackage>) {
-      val (sourcesToLoad, cached) = splitIntoNotCachedAndCached(whiteListedSourcesToProcess(file), sdk)
+                                           installedPackages: List<PyPackage>,
+                                           cache: Cache<String, Set<RepoPackage>>) {
+      val (sourcesToLoad, cached) = splitIntoNotCachedAndCached(whiteListedSourcesToProcess(file), cache)
 
       val sourceToStubPkgsAvailableToInstall = sourceToStubPackagesAvailableToInstall(
         whiteListedSourceToInstalledRuntimeAndStubPackages(sourcesToLoad, installedPackages),
         availablePackages
       )
 
-      sourceToStubPkgsAvailableToInstall.forEach { source, stubPkgs -> CACHE.put(sdk to source, stubPkgs) }
+      sourceToStubPkgsAvailableToInstall.forEach { source, stubPkgs -> cache.put(source, stubPkgs) }
 
       val reqs = toRequirements(sourceToStubPkgsAvailableToInstall, cached)
       if (reqs.isNotEmpty()) {
@@ -105,18 +103,19 @@ class PyStubPackagesAdvertiser : PyInspection() {
                                               module: Module,
                                               sdk: Sdk,
                                               availablePackages: List<RepoPackage>,
-                                              installedPackages: List<PyPackage>) {
+                                              installedPackages: List<PyPackage>,
+                                              cache: Cache<String, Set<RepoPackage>>) {
       val project = file.project
       if (project.getUserData(BALLOON_SHOWING) == true) return
 
-      val (sourcesToLoad, cached) = splitIntoNotCachedAndCached(notWhiteListedSourcesToProcess(file), sdk)
+      val (sourcesToLoad, cached) = splitIntoNotCachedAndCached(notWhiteListedSourcesToProcess(file), cache)
 
       val sourceToStubPkgsAvailableToInstall = sourceToStubPackagesAvailableToInstall(
         notWhiteListedSourceToInstalledRuntimeAndStubPackages(sourcesToLoad, installedPackages),
         availablePackages
       )
 
-      sourceToStubPkgsAvailableToInstall.forEach { source, stubPkgs -> CACHE.put(sdk to source, stubPkgs) }
+      sourceToStubPkgsAvailableToInstall.forEach { source, stubPkgs -> cache.put(source, stubPkgs) }
 
       val reqs = toRequirements(sourceToStubPkgsAvailableToInstall, cached)
       if (reqs.isNotEmpty()) {
@@ -178,25 +177,24 @@ class PyStubPackagesAdvertiser : PyInspection() {
         .toSet()
     }
 
-    private fun splitIntoNotCachedAndCached(sources: Set<String>, sdk: Sdk): Pair<Set<String>, Set<RepoPackage>> {
+    private fun splitIntoNotCachedAndCached(sources: Set<String>,
+                                            cache: Cache<String, Set<RepoPackage>>): Pair<Set<String>, Set<RepoPackage>> {
       val notCached = mutableSetOf<String>()
       val cached = mutableSetOf<RepoPackage>()
 
-      synchronized(CACHE) {
+      synchronized(cache) {
         // despite cache is thread-safe,
         // here we have sync block to guarantee only one reader
         // and as a result not run processing for sources that are already evaluating
 
         sources.forEach { source ->
-          val key = sdk to source
-
-          CACHE.getIfPresent(key).let {
+          cache.getIfPresent(source).let {
             if (it == null) {
               notCached.add(source)
 
               // mark this source as evaluating
               // if source processing failed, this value would mean that such source was handled
-              CACHE.put(key, emptySet())
+              cache.put(source, emptySet())
             }
             else {
               cached.addAll(it)
