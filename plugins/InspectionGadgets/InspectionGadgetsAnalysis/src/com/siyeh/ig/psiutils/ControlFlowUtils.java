@@ -552,7 +552,7 @@ public class ControlFlowUtils {
     return i == count;
   }
 
-  public static <T extends PsiElement> boolean isNestedElement(@NotNull T element, @NotNull Class<T> aClass) {
+  public static <T extends PsiElement> boolean isNestedElement(@NotNull T element, @NotNull Class<? extends T> aClass) {
     return PsiTreeUtil.getParentOfType(element, aClass, true, PsiClass.class, PsiLambdaExpression.class) != null;
   }
 

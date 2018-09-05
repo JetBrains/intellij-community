@@ -129,7 +129,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
       })
       .addListener(new JBPopupAdapter() {
         @Override
-        public void onClosed(LightweightWindowEvent event) {
+        public void onClosed(@NotNull LightweightWindowEvent event) {
           highlighter.dropHighlight();
         }
       })

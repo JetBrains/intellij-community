@@ -25,7 +25,7 @@ abstract class BasePartiallyExcludedChangesTest : BaseLineStatusTrackerManagerTe
       Disposer.register(testRootDisposable, this)
     }
 
-    override fun getElementsStream(): Stream<FilePath> = paths.stream()
+    override fun getTrackableElementsStream(): Stream<FilePath> = paths.stream()
 
     override fun findElementFor(tracker: PartialLocalLineStatusTracker): FilePath? {
       return paths.find { it.virtualFile == tracker.virtualFile }

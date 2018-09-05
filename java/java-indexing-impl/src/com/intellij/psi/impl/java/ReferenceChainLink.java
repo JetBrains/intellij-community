@@ -134,7 +134,7 @@ public class ReferenceChainLink {
     expensive.add(this);
   }
 
-  public List<? extends PsiMember> getSymbolMembers(Set<PsiClass> qualifiers) {
+  public List<? extends PsiMember> getSymbolMembers(Set<? extends PsiClass> qualifiers) {
     return isCall ? ApproximateResolver.getPossibleMethods(qualifiers, referenceName, argCount)
                   : ApproximateResolver.getPossibleNonMethods(qualifiers, referenceName);
   }

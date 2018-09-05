@@ -68,7 +68,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
     MessageBusConnection busConnection = project.getMessageBus().connect(this);
     busConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void projectClosed(Project project) {
+      public void projectClosed(@NotNull Project project) {
         if (project == myProject) {
           closeAllFiles();
         }

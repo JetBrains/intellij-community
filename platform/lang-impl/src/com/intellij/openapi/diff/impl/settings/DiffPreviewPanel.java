@@ -163,7 +163,7 @@ class DiffPreviewPanel implements PreviewPanel {
     }
 
     @Override
-    public void mouseMoved(EditorMouseEvent e) {
+    public void mouseMoved(@NotNull EditorMouseEvent e) {
       int line = getLineNumber(mySide, e);
       if (getChange(mySide, line) != null || getFoldRegion(mySide, line) != null) {
         EditorUtil.setHandCursor(e.getEditor());

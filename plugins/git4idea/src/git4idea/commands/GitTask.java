@@ -187,7 +187,7 @@ public class GitTask {
       }
 
       @Override
-      public void startFailed(Throwable exception) {
+      public void startFailed(@NotNull Throwable exception) {
         myHandler.addError(new VcsException("Git start failed: " + exception.getMessage(), exception));
       }
 
@@ -224,7 +224,7 @@ public class GitTask {
       }
 
       @Override
-      public void startFailed(Throwable exception) {
+      public void startFailed(@NotNull Throwable exception) {
         task.dispose();
       }
     });

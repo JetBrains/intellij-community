@@ -83,28 +83,28 @@ public class OwnerOptional {
     return new OwnerOptional(owner);
   }
 
-  public OwnerOptional ifDialog(Consumer<Dialog> consumer) {
+  public OwnerOptional ifDialog(Consumer<? super Dialog> consumer) {
     if (myPermanentOwner instanceof Dialog) {
       consumer.consume((Dialog)myPermanentOwner);
     }
     return this;
   }
 
-  public OwnerOptional ifNull(Consumer<Frame> consumer) {
+  public OwnerOptional ifNull(Consumer<? super Frame> consumer) {
     if (myPermanentOwner == null) {
       consumer.consume(null);
     }
     return this;
   }
 
-  public OwnerOptional ifWindow(Consumer<Window> consumer) {
+  public OwnerOptional ifWindow(Consumer<? super Window> consumer) {
     if (myPermanentOwner != null) {
       consumer.consume(myPermanentOwner);
     }
     return this;
   }
 
-  public OwnerOptional ifFrame(Consumer<Frame> consumer) {
+  public OwnerOptional ifFrame(Consumer<? super Frame> consumer) {
     if (myPermanentOwner instanceof Frame) {
       if (myPermanentOwner instanceof IdeFrame.Child) {
         IdeFrame.Child ideFrameChild = (IdeFrame.Child)myPermanentOwner;

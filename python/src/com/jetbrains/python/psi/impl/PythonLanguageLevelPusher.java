@@ -292,7 +292,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
     };
     project.getMessageBus().connect(task).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         DumbService.getInstance(project).cancelTask(task);
       }
     });

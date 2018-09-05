@@ -91,7 +91,7 @@ public class AbstractClassWithoutAbstractMethodsInspection
     }
 
     private static void calculateOverriddenMethods(
-      PsiMethod method, Set<PsiMethod> overriddenMethods) {
+      PsiMethod method, Set<? super PsiMethod> overriddenMethods) {
       final PsiMethod[] superMethods = method.findSuperMethods();
       for (final PsiMethod superMethod : superMethods) {
         overriddenMethods.add(superMethod);

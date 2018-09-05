@@ -31,15 +31,15 @@ import static com.intellij.openapi.util.Conditions.not;
 public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBase<T, Self>> implements Iterable<T> {
 
   private final Meta<T> myMeta;
-  private final Function<T, ? extends Iterable<? extends T>> myTree;
+  private final Function<? super T, ? extends Iterable<? extends T>> myTree;
 
-  protected FilteredTraverserBase(@Nullable Meta<T> meta, @NotNull Function<T, ? extends Iterable<? extends T>> tree) {
+  protected FilteredTraverserBase(@Nullable Meta<T> meta, @NotNull Function<? super T, ? extends Iterable<? extends T>> tree) {
     this.myTree = tree;
     this.myMeta = meta == null ? Meta.<T>empty() : meta;
   }
 
   @NotNull
-  public Function<T, ? extends Iterable<? extends T>> getTree() {
+  public Function<? super T, ? extends Iterable<? extends T>> getTree() {
     return myTree;
   }
 

@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -9,7 +8,6 @@ import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -153,18 +151,11 @@ public class LayoutProjectCodeDialog extends DialogWrapper implements ReformatFi
   private static boolean isMaskValid(@NotNull String mask) {
     try {
       FindInProjectUtil.createFileMaskCondition(mask);
+      return true;
     }
     catch (PatternSyntaxException e) {
       return false;
     }
-
-    return true;
-  }
-
-  @NotNull
-  @Override
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
   @Override
@@ -173,8 +164,8 @@ public class LayoutProjectCodeDialog extends DialogWrapper implements ReformatFi
   }
 
   @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HELP_ID);
+  protected String getHelpId() {
+    return HELP_ID;
   }
 
   @Override

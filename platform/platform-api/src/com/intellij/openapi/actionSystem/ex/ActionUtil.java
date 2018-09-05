@@ -243,7 +243,7 @@ public class ActionUtil {
     return !visibilityMatters || e.getPresentation().isVisible();
   }
 
-  public static void performActionDumbAwareWithCallbacks(AnAction action, AnActionEvent e, DataContext context) {
+  public static void performActionDumbAwareWithCallbacks(@NotNull AnAction action, @NotNull AnActionEvent e, @NotNull DataContext context) {
     final ActionManagerEx manager = ActionManagerEx.getInstanceEx();
     manager.fireBeforeActionPerformed(action, context, e);
     performActionDumbAware(action, e);
@@ -381,11 +381,14 @@ public class ActionUtil {
     AnActionEvent event = new AnActionEvent(
       inputEvent, dataContext, place, presentation, ActionManager.getInstance(), 0);
     performDumbAwareUpdate(false, action, event, true);
+    final ActionManagerEx manager = ActionManagerEx.getInstanceEx();
     if (event.getPresentation().isEnabled() && event.getPresentation().isVisible()) {
+      manager.fireBeforeActionPerformed(action, dataContext, event);
       action.actionPerformed(event);
       if (onDone != null) {
         onDone.run();
       }
+      manager.fireAfterActionPerformed(action, dataContext, event);
     }
   }
 

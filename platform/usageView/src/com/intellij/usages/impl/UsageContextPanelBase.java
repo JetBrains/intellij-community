@@ -62,5 +62,5 @@ public abstract class UsageContextPanelBase extends JBPanelWithEmptyText impleme
     AppUIExecutor.onUiThread().withDocumentsCommitted(myProject).expireWith(this).execute(() -> updateLayoutLater(infos));
   }
 
-  protected abstract void updateLayoutLater(@Nullable List<UsageInfo> infos);
+  protected abstract void updateLayoutLater(@Nullable List<? extends UsageInfo> infos);
 }

@@ -282,6 +282,7 @@ public class MavenUtil {
     return (collection instanceof Set ? collection : new THashSet<>(collection));
   }
 
+  @NotNull
   public static <T, U> List<Pair<T, U>> mapToList(Map<T, U> map) {
     return ContainerUtil.map2List(map.entrySet(), tuEntry -> Pair.create(tuEntry.getKey(), tuEntry.getValue()));
   }

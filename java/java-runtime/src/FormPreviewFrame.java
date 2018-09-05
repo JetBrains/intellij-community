@@ -31,7 +31,7 @@ public class FormPreviewFrame {
 
     JFrame frame = new JFrame(ourBundle.getString("form.preview.title"));
     frame.setContentPane(f.myComponent);
-    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    frame.setDefaultCloseOperation(3); //WindowConstants.EXIT_ON_CLOSE is not presented in JDK 1.3
 
     // Add menu bar
     final JMenuBar menuBar = new JMenuBar();

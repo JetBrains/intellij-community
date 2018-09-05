@@ -24,7 +24,7 @@ public class CleanupInspectionUtilImpl implements CleanupInspectionUtil {
 @Override
   public AbstractPerformFixesTask applyFixesNoSort(@NotNull Project project,
                                                    @NotNull String presentationText,
-                                                   @NotNull List<ProblemDescriptor> descriptions,
+                                                   @NotNull List<? extends ProblemDescriptor> descriptions,
                                                    @Nullable Class quickfixClass,
                                                    boolean startInWriteAction,
                                                    boolean markGlobal) {
@@ -52,7 +52,7 @@ public class CleanupInspectionUtilImpl implements CleanupInspectionUtil {
   @Override
   public AbstractPerformFixesTask applyFixesNoSort(@NotNull Project project,
                                                    @NotNull String presentationText,
-                                                   @NotNull List<ProblemDescriptor> descriptions,
+                                                   @NotNull List<? extends ProblemDescriptor> descriptions,
                                                    @Nullable Class quickfixClass,
                                                    boolean startInWriteAction) {
     return applyFixesNoSort(project, presentationText, descriptions, quickfixClass, startInWriteAction, true);

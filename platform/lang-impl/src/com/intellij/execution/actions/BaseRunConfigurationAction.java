@@ -71,7 +71,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
 
   @NotNull
   protected List<AnAction> createChildActions(@NotNull ConfigurationContext context,
-                                              @NotNull List<ConfigurationFromContext> configurations) {
+                                              @NotNull List<? extends ConfigurationFromContext> configurations) {
     if (configurations.size() <= 1) {
       return Collections.emptyList();
     }

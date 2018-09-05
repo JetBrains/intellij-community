@@ -24,6 +24,7 @@ public final class CompoundRunConfigurationType extends ConfigurationTypeBase {
         return new CompoundRunConfiguration(project, "Compound Run Configuration", this);
       }
 
+      @NotNull
       @Override
       public String getName() {
         return "Compound Run Configuration";
@@ -35,5 +36,10 @@ public final class CompoundRunConfigurationType extends ConfigurationTypeBase {
         return RunConfigurationSingletonPolicy.SINGLE_INSTANCE_ONLY;
       }
     });
+  }
+
+  @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.CompoundRunConfigurationType";
   }
 }

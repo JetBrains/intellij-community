@@ -39,11 +39,13 @@ public class PackageViewModuleGroupNode extends ModuleGroupNode {
     super(project, value, viewSettings);
   }
 
+  @NotNull
   @Override
   protected AbstractTreeNode createModuleNode(Module module) {
     return new PackageViewModuleNode(module.getProject(), module, getSettings());
   }
 
+  @NotNull
   @Override
   protected ModuleGroupNode createModuleGroupNode(ModuleGroup moduleGroup) {
     return new PackageViewModuleGroupNode(getProject(), moduleGroup, getSettings());

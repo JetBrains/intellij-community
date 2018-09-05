@@ -169,6 +169,9 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
         if (qResolved instanceof PsiVariable) {
           aClass = PsiUtil.resolveClassInClassTypeOnly(((PsiVariable)qResolved).getType());
         }
+        else if (qResolved instanceof PsiClass) {
+          aClass = (PsiClass)qResolved;
+        }
       }
     }
     return aClass;

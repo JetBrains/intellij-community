@@ -53,7 +53,7 @@ public class TestsPattern extends TestPackage {
   }
 
   @Override
-  protected void searchTests(Module module, TestClassFilter classFilter, Set<String> classNames) {
+  protected void searchTests(Module module, TestClassFilter classFilter, Set<? super String> classNames) {
     JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     Project project = getConfiguration().getProject();
     for (String className : data.getPatterns()) {

@@ -159,7 +159,7 @@ class CompilationContextImpl implements CompilationContext {
       ["jps/kotlin-jps-plugin.jar", "kotlin-plugin.jar", "kotlin-reflect.jar"].each {
         BuildUtils.addToJpsClassPath("$kotlinPluginLibPath/$it", ant)
       }
-      ["kotlin-runtime.jar"].each {
+      ["kotlin-stdlib.jar"].each {
         BuildUtils.addToJpsClassPath("$kotlincLibPath/$it", ant)
       }
     }

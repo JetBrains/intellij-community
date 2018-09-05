@@ -238,7 +238,7 @@ public class TouchBarsManager {
     if (editor instanceof EditorEx)
       ((EditorEx)editor).addFocusListener(new FocusChangeListener() {
       @Override
-      public void focusGained(Editor editor) {
+      public void focusGained(@NotNull Editor editor) {
         // System.out.println("reset optional-context of default because editor window gained focus: " + editor);
         pd.get(BarType.DEFAULT).setOptionalContextVisible(null);
 
@@ -250,7 +250,7 @@ public class TouchBarsManager {
         }
       }
       @Override
-      public void focusLost(Editor editor) {}
+      public void focusLost(@NotNull Editor editor) {}
     });
   }
 

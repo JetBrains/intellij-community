@@ -73,7 +73,7 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
 
 
       @Override
-      public boolean isSelected(AnActionEvent e) {
+      public boolean isSelected(@NotNull AnActionEvent e) {
         return GROUP_BY_SEVERITY;
       }
 
@@ -92,7 +92,7 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
 
 
       @Override
-      public boolean isSelected(AnActionEvent e) {
+      public boolean isSelected(@NotNull AnActionEvent e) {
         return FILTER_RESOLVED_ITEMS;
       }
 
@@ -108,7 +108,7 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
     return new InspectionResultsViewToggleAction(view, message, message, AllIcons.Actions.GroupByPackage) {
 
       @Override
-      public boolean isSelected(AnActionEvent e) {
+      public boolean isSelected(@NotNull AnActionEvent e) {
         return SHOW_STRUCTURE;
       }
 
@@ -141,7 +141,7 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
     }
 
     @Override
-    public final void setSelected(AnActionEvent e, boolean state) {
+    public final void setSelected(@NotNull AnActionEvent e, boolean state) {
       setSelected(state);
       myView.update();
     }

@@ -316,4 +316,15 @@ public class CodeStyle {
     codeStyleBean.setRootSettings(getSettings(project));
     return codeStyleBean;
   }
+
+  /**
+   * Checks if the file can be formatted according to code style settings. If formatting is disabled, all related operations including
+   * optimize imports and rearrange code should be blocked (cause no changes).
+   *
+   * @param file The PSI file to check.
+   * @return True if the file is formattable, false otherwise.
+   */
+  public static boolean isFormattingEnabled(@NotNull PsiFile file) {
+    return !getSettings(file).getExcludedFiles().contains(file);
+  }
 }

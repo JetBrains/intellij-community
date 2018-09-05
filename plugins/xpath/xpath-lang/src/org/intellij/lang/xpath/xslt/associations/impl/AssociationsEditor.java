@@ -245,6 +245,7 @@ class AssociationsEditor {
       return Collections.EMPTY_LIST;
     }
 
+    @Override
     public Object[] getChildElements(Object obj) {
       final Object[] childElements = super.getChildElements(obj);
       List l = new ArrayList(childElements.length);
@@ -265,6 +266,7 @@ class AssociationsEditor {
       return l.size() != childElements.length ? (Object[])l.toArray(new Object[l.size()]) : childElements;
     }
 
+    @Override
     public boolean isShowMembers() {
       return false;
     }
@@ -343,7 +345,7 @@ class AssociationsEditor {
     }
 
     @Override
-    public void customizeCellRenderer(JTree tree,
+    public void customizeCellRenderer(@NotNull JTree tree,
                                       Object value,
                                       boolean selected,
                                       boolean expanded,

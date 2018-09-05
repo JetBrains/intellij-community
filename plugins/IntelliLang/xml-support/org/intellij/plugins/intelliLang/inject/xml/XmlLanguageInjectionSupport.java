@@ -334,7 +334,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
   }
 
   @Override
-  public AnAction[] createAddActions(final Project project, final Consumer<BaseInjection> consumer) {
+  public AnAction[] createAddActions(final Project project, final Consumer<? super BaseInjection> consumer) {
     return new AnAction[] {
       new AnAction("XML Tag Injection", null, PlatformIcons.XML_TAG_ICON) {
         @Override
@@ -354,7 +354,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
   }
 
   @Override
-  public AnAction createEditAction(final Project project, final Factory<BaseInjection> producer) {
+  public AnAction createEditAction(final Project project, final Factory<? extends BaseInjection> producer) {
     return new AnAction() {
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {

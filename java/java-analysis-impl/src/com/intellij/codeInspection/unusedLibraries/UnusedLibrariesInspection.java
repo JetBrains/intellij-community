@@ -237,10 +237,10 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
   }
 
   private static class RemoveUnusedLibrary implements QuickFix<ModuleProblemDescriptor> {
-    private final Set<VirtualFile> myFiles;
+    private final Set<? extends VirtualFile> myFiles;
     private final String myLibraryName;
 
-    public RemoveUnusedLibrary(String libraryName, final Set<VirtualFile> files) {
+    public RemoveUnusedLibrary(String libraryName, final Set<? extends VirtualFile> files) {
       myLibraryName = libraryName;
       myFiles = files;
     }

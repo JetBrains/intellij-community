@@ -3,6 +3,7 @@ package com.jetbrains.env.python.testing;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -10,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.PathUtil;
+import com.intellij.util.ThrowableRunnable;
 import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
@@ -20,10 +22,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant;
-import com.jetbrains.python.testing.ConfigurationTarget;
-import com.jetbrains.python.testing.PyTestConfiguration;
-import com.jetbrains.python.testing.PyTestFactory;
-import com.jetbrains.python.testing.PyTestFrameworkService;
+import com.jetbrains.python.testing.*;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.hamcrest.Matchers;
 import org.jdom.Element;
@@ -64,6 +63,32 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
         return new PyTestTestProcessRunner("test_test.py", 1);
       }
     });
+  }
+
+
+  @Test
+  public void testDiff() {
+    runPythonTest(
+      new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/diff", SdkCreationType.EMPTY_SDK) {
+
+        @NotNull
+        @Override
+        protected PyTestTestProcessRunner createProcessRunner() {
+          return new PyTestTestProcessRunner("test_diff.py", 1);
+        }
+
+        @Override
+        protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
+                                        @NotNull final String stdout,
+                                        @NotNull final String stderr,
+                                        @NotNull final String all) {
+
+          final String expectedConsoleText = "Expected :expected\n" +
+                                             "Actual   :actual\n" +
+                                             " <Click to see difference>";
+          Assert.assertThat("No diff", runner.getAllConsoleText(), Matchers.containsString(expectedConsoleText));
+        }
+      });
   }
 
   /**
@@ -330,6 +355,37 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   public void testConfigurationProducer() {
     runPythonTest(
       new CreateConfigurationByFileTask<>(myFrameworkName, PyTestConfiguration.class));
+  }
+
+  @Test
+  @EnvTestTagsRequired(tags = "python3")
+  public void testResolveQName() {
+    runPythonTest(new CreateConfigurationTestTask.PyConfigurationCreationTask() {
+      @NotNull
+      @Override
+      protected PyAbstractTestFactory<PyTestConfiguration> createFactory() {
+        return PyTestFactory.INSTANCE;
+      }
+
+      @Override
+      public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) {
+        super.runTestOn(sdkHome, existingSdk);
+        myFixture.copyDirectoryToProject("testRunner/env/createConfigurationTest/configurationByContext/foo", "");
+        final PyAbstractTestConfiguration configuration = getConfiguration();
+        configuration.getTarget().setTargetType(PyRunTargetVariant.PYTHON);
+        configuration.getTarget().setTarget("test_foo");
+        configuration.setWorkingDirectory(myFixture.getTempDirPath());
+
+        ReadAction.run(new ThrowableRunnable<RuntimeException>() {
+          @Override
+          public void run() throws RuntimeException {
+            Assert.assertThat("Failed to resolve qname",
+                              configuration.getTarget().asPsiElement(configuration),
+                              Matchers.instanceOf(PyFile.class));
+          }
+        });
+      }
+    });
   }
 
   @Test

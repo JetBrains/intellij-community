@@ -210,14 +210,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
     }
 
     private fun getHead(pack: DataPack): Hash? {
-      val refs = pack.refsModel.allRefsByRoot[root]
-      val headOptional = refs!!.streamBranches().filter { br -> br.name == "HEAD" }.findFirst()
-      if (headOptional.isPresent) {
-        val head = headOptional.get()
-        assert(head.root == root)
-        return head.commitHash
-      }
-      return null
+      return VcsLogUtil.findBranch(pack.refsModel, root, "HEAD")?.commitHash
     }
   }
 

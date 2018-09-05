@@ -220,13 +220,13 @@ public class TranslatingCompilerFilesMonitor implements BulkFileListener {
         FileUtil.isAncestor(PathManager.getConfigPath(), file.getPath(), false); // is config file
   }
 
-  private void notifyFilesChanged(@NotNull Collection<File> paths) {
+  private void notifyFilesChanged(@NotNull Collection<? extends File> paths) {
     if (!paths.isEmpty()) {
       myBuildManager.notifyFilesChanged(paths);
     }
   }
 
-  private void notifyFilesDeleted(@NotNull Collection<File> paths) {
+  private void notifyFilesDeleted(@NotNull Collection<? extends File> paths) {
     if (!paths.isEmpty()) {
       myBuildManager.notifyFilesDeleted(paths);
     }

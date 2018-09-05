@@ -3,10 +3,14 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.diagnostic.Dumpable;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.actionSystem.CaretSpecificDataContext;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
@@ -187,7 +191,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
         }
         else if (columnShift == 1) {
           while (myEditor.getInlayModel().hasInlineElementAt(
-            new VisualPosition(myVisibleCaret.line, 
+            new VisualPosition(myVisibleCaret.line,
                                myVisibleCaret.column + columnShift - (hasSelection() && oldOffset == getSelectionStart() ? 0 : 1)))) {
             columnShift++;
           }
@@ -440,7 +444,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     myDesiredSelectionStartColumn = myDesiredSelectionEndColumn = -1;
     myVisibleCaret = myEditor.logicalToVisualPosition(myLogicalCaret);
     myVisualColumnAdjustment = 0;
-    
+
     updateOffsetsFromLogicalPosition();
     int newOffset = getOffset();
     if (debugBuffer != null) {
@@ -586,7 +590,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
     setCurrentLogicalCaret(myEditor.visualToLogicalPosition(myVisibleCaret));
     VisualPosition mappedPosition = myEditor.logicalToVisualPosition(myLogicalCaret);
-    myVisualColumnAdjustment = mappedPosition.line == myVisibleCaret.line && myVisibleCaret.column > mappedPosition.column && 
+    myVisualColumnAdjustment = mappedPosition.line == myVisibleCaret.line && myVisibleCaret.column > mappedPosition.column &&
                                !myLogicalCaret.leansForward ? myVisibleCaret.column - mappedPosition.column : 0;
     updateOffsetsFromLogicalPosition();
 
@@ -1169,7 +1173,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       mySelectionMarker = marker;
 
       if (fireListeners) {
-        myEditor.getSelectionModel().fireSelectionChanged(new SelectionEvent(myEditor, 
+        myEditor.getSelectionModel().fireSelectionChanged(new SelectionEvent(myEditor,
                                                                              oldSelectionStart, oldSelectionEnd, startOffset, endOffset));
       }
 
@@ -1292,7 +1296,10 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
       try {
         EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET);
-        handler.execute(myEditor, this, myEditor.getDataContext());
+        DataContext context = AnActionEvent.getInjectedDataContext(new CaretSpecificDataContext(myEditor.getDataContext(), this));
+        Caret caret = context.getData(CommonDataKeys.CARET);
+        assert caret != null;
+        handler.execute(caret.getEditor(), caret, context);
       }
       finally {
         if (needOverrideSetting) {

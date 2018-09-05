@@ -59,7 +59,7 @@ public class TraitTransformationSupport implements AstTransformationSupport {
     });
   }
 
-  private static void process(@NotNull TransformationContext context, @NotNull PairConsumer<PsiClass, PsiSubstitutor> consumer) {
+  private static void process(@NotNull TransformationContext context, @NotNull PairConsumer<? super PsiClass, ? super PsiSubstitutor> consumer) {
     Deque<Pair<PsiClass, PsiSubstitutor>> stack = new ArrayDeque<>();
 
     for (PsiClassType superType : context.getSuperTypes()) {

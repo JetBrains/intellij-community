@@ -183,7 +183,7 @@ public class DFSTBuilder<Node> {
       mySCCs.reverse(); // have to place SCCs in topological order too
     }
 
-    private void strongConnect(@NotNull List<List<Node>> sccs) {
+    private void strongConnect(@NotNull List<? super List<Node>> sccs) {
       int successor = -1;
       nextNode:
       while (!frames.isEmpty()) {

@@ -32,11 +32,11 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
-  private final Namer<T> myNamer;
-  private final Factory<T> myFactory;
+  private final Namer<? super T> myNamer;
+  private final Factory<? extends T> myFactory;
   private final Cloner<T> myCloner;
   private final List<T> myItems = new ArrayList<>();
-  private final Equality<T> myComparer;
+  private final Equality<? super T> myComparer;
   private List<T> myResultItems;
   private final List<T> myOriginalItems;
   private boolean myShowIcons;
@@ -49,10 +49,10 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
     this(namer, factory, cloner, comparer, items, true);
   }
 
-  protected NamedItemsListEditor(Namer<T> namer,
-                                 Factory<T> factory,
+  protected NamedItemsListEditor(Namer<? super T> namer,
+                                 Factory<? extends T> factory,
                                  Cloner<T> cloner,
-                                 Equality<T> comparer,
+                                 Equality<? super T> comparer,
                                  List<T> items,
                                  boolean initInConstructor) {
     myNamer = namer;

@@ -191,7 +191,7 @@ public class GitHandlerUtil {
      * {@inheritDoc}
      */
     @Override
-    public void startFailed(final Throwable exception) {
+    public void startFailed(@NotNull final Throwable exception) {
       //noinspection ThrowableInstanceNeverThrown
       myHandler.addError(new VcsException("Git start failed: " + exception.getMessage(), exception));
       if (myShowErrors) {

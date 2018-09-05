@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.Nullable;
+import sun.awt.AWTAccessor;
 import sun.misc.Unsafe;
 
 import javax.swing.*;
@@ -325,7 +326,7 @@ public class X11UiUtil {
   private static boolean hasWindowProperty(JFrame frame, long name, long expected) {
     if (X11 == null) return false;
     try {
-      @SuppressWarnings("deprecation") ComponentPeer peer = frame.getPeer();
+      ComponentPeer peer = AWTAccessor.getComponentAccessor().getPeer(frame);
       if (peer != null) {
         long window = (Long)X11.getWindow.invoke(peer);
         long[] values = X11.getLongArrayProperty(window, name, XA_ATOM);
@@ -347,7 +348,7 @@ public class X11UiUtil {
     if (X11 == null) return;
 
     try {
-      @SuppressWarnings("deprecation") ComponentPeer peer = frame.getPeer();
+      @SuppressWarnings("deprecation") ComponentPeer peer = AWTAccessor.getComponentAccessor().getPeer(frame);
       if (peer == null) throw new IllegalStateException(frame + " has no peer");
       long window = (Long)X11.getWindow.invoke(peer);
       long screen = (Long)X11.getScreenNumber.invoke(peer);

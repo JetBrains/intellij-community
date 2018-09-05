@@ -41,17 +41,17 @@ public final class MapBasedTree<K, N> {
   private static final Logger LOG = Logger.getInstance(MapBasedTree.class);
 
   private final Map<K, Entry<N>> map;
-  private final Function<N, K> keyFunction;
+  private final Function<? super N, ? extends K> keyFunction;
   private final TreePath path;
   private volatile Entry<N> root;
-  private volatile Consumer<N> nodeRemoved;
-  private volatile Consumer<N> nodeInserted;
+  private volatile Consumer<? super N> nodeRemoved;
+  private volatile Consumer<? super N> nodeInserted;
 
-  public MapBasedTree(boolean identity, @NotNull Function<N, K> keyFunction) {
+  public MapBasedTree(boolean identity, @NotNull Function<? super N, ? extends K> keyFunction) {
     this(identity, keyFunction, null);
   }
 
-  public MapBasedTree(boolean identity, @NotNull Function<N, K> keyFunction, TreePath path) {
+  public MapBasedTree(boolean identity, @NotNull Function<? super N, ? extends K> keyFunction, TreePath path) {
     map = identity ? new IdentityHashMap<>() : new HashMap<>();
     this.keyFunction = keyFunction;
     this.path = path;
@@ -62,13 +62,13 @@ public final class MapBasedTree<K, N> {
     map.values().forEach(entry -> entry.invalidate());
   }
 
-  public void onRemove(@NotNull Consumer<N> consumer) {
-    Consumer<N> old = nodeRemoved;
+  public void onRemove(@NotNull Consumer<? super N> consumer) {
+    Consumer old = (Consumer<N>)nodeRemoved;
     nodeRemoved = old == null ? consumer : old.andThen(consumer);
   }
 
-  public void onInsert(@NotNull Consumer<N> consumer) {
-    Consumer<N> old = nodeInserted;
+  public void onInsert(@NotNull Consumer<? super N> consumer) {
+    Consumer old = (Consumer<N>)nodeInserted;
     nodeInserted = old == null ? consumer : old.andThen(consumer);
   }
 
@@ -99,7 +99,7 @@ public final class MapBasedTree<K, N> {
     return null;
   }
 
-  public boolean updateRoot(Pair<N, Boolean> pair) {
+  public boolean updateRoot(Pair<? extends N, Boolean> pair) {
     N node = Pair.getFirst(pair);
     if (root == null ? node == null : root.node == node) return false;
 
@@ -118,7 +118,7 @@ public final class MapBasedTree<K, N> {
     return true;
   }
 
-  public UpdateResult<N> update(@NotNull Entry<N> parent, List<Pair<N, Boolean>> children) {
+  public UpdateResult<N> update(@NotNull Entry<N> parent, List<? extends Pair<N, Boolean>> children) {
     List<Entry<N>> newChildren = new ArrayList<>(children == null ? 0 : children.size());
     List<Entry<N>> oldChildren = parent.children;
     Map<Entry<N>, K> mapInserted = new IdentityHashMap<>();
@@ -196,7 +196,7 @@ public final class MapBasedTree<K, N> {
       }
     }
     removeChildren(entry, entry.children);
-    Consumer<N> consumer = nodeRemoved;
+    Consumer<? super N> consumer = nodeRemoved;
     if (consumer != null) consumer.accept(entry.node);
   }
 
@@ -209,11 +209,11 @@ public final class MapBasedTree<K, N> {
         return;
       }
     }
-    Consumer<N> consumer = nodeInserted;
+    Consumer<? super N> consumer = nodeInserted;
     if (consumer != null) consumer.accept(entry.node);
   }
 
-  private static <T> List<T> guard(List<T> list) {
+  private static <T> List<T> guard(List<? extends T> list) {
     return list == null || list.isEmpty() ? emptyList() : unmodifiableList(list);
   }
 

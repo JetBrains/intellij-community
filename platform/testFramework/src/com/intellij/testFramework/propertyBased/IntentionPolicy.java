@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework.propertyBased;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -112,4 +113,12 @@ public class IntentionPolicy {
    * @return a wrap suffix for {@link #getElementsToWrap(PsiElement)}.
    */
   public String getWrapSuffix() { return "";}
+
+  /**
+   * If after intention invocation new errors appeared, allows to suppress test failing because of that. To be used
+   * only in cases when {@link #mayBreakCode(IntentionAction, Editor, PsiFile)} isn't enough (e.g. highlighting infrastructure issues).
+   */
+  public boolean shouldTolerateIntroducedError(@NotNull HighlightInfo info) {
+    return false;
+  }
 }

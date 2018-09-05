@@ -26,11 +26,11 @@ public class BatchModeDescriptorsUtil {
       return refElement;
     };
 
-  static void addProblemDescriptors(@NotNull List<ProblemDescriptor> descriptors,
+  static void addProblemDescriptors(@NotNull List<? extends ProblemDescriptor> descriptors,
                                     boolean filterSuppressed,
                                     @NotNull GlobalInspectionContext context,
                                     @Nullable LocalInspectionTool tool,
-                                    @NotNull TripleFunction<LocalInspectionTool, PsiElement, GlobalInspectionContext, RefElement> getProblemElementFunction,
+                                    @NotNull TripleFunction<? super LocalInspectionTool, ? super PsiElement, ? super GlobalInspectionContext, ? extends RefElement> getProblemElementFunction,
                                     @NotNull InspectionToolPresentation dpi) {
     if (descriptors.isEmpty()) return;
 
@@ -71,7 +71,7 @@ public class BatchModeDescriptorsUtil {
     }
   }
 
-  public static void addProblemDescriptors(@NotNull List<ProblemDescriptor> descriptors,
+  public static void addProblemDescriptors(@NotNull List<? extends ProblemDescriptor> descriptors,
                                            @NotNull InspectionToolPresentation dpi,
                                            boolean filterSuppressed,
                                            @NotNull GlobalInspectionContext inspectionContext,

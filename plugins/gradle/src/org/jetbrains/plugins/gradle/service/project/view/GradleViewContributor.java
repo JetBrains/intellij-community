@@ -99,7 +99,7 @@ public class GradleViewContributor extends ExternalSystemViewContributor {
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       super.update(presentation);
       presentation.setIcon(AllIcons.Nodes.ModuleGroup);
     }
@@ -117,7 +117,7 @@ public class GradleViewContributor extends ExternalSystemViewContributor {
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       super.update(presentation);
       presentation.setIcon(AllIcons.Modules.SourceFolder);
 

@@ -560,14 +560,16 @@ public class FileManagerImpl implements FileManager {
   }
 
   private void markInvalidations(@NotNull Map<VirtualFile, FileViewProvider> originalFileToPsiFileMap) {
-    DebugUtil.performPsiModification(null, ()->{
-      for (Map.Entry<VirtualFile, FileViewProvider> entry : originalFileToPsiFileMap.entrySet()) {
-        FileViewProvider viewProvider = entry.getValue();
-        if (getVFileToViewProviderMap().get(entry.getKey()) != viewProvider) {
-          markInvalidated(viewProvider);
+    if (!originalFileToPsiFileMap.isEmpty()) {
+      DebugUtil.performPsiModification(null, ()->{
+        for (Map.Entry<VirtualFile, FileViewProvider> entry : originalFileToPsiFileMap.entrySet()) {
+          FileViewProvider viewProvider = entry.getValue();
+          if (getVFileToViewProviderMap().get(entry.getKey()) != viewProvider) {
+            markInvalidated(viewProvider);
+          }
         }
-      }
-    });
+      });
+    }
   }
 
   @Override

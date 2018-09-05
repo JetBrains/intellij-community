@@ -46,7 +46,7 @@ public class ToDoRootNode extends BaseToDoNode{
   }
 
   @Override
-  public void update(PresentationData presentation) {
+  public void update(@NotNull PresentationData presentation) {
   }
 
   public Object getSummaryNode() {

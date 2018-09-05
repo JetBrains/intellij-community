@@ -484,7 +484,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     }
 
     @Override
-    public void paused(final SuspendContext suspendContext) {
+    public void paused(@NotNull final SuspendContext suspendContext) {
       pauseExecution();
       myTarget.paused(suspendContext);
     }
@@ -496,12 +496,12 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     }
 
     @Override
-    public void processDetached(final DebugProcess process, final boolean closedByUser) {
+    public void processDetached(@NotNull final DebugProcess process, final boolean closedByUser) {
       myTarget.processDetached(process, closedByUser);
     }
 
     @Override
-    public void processAttached(final DebugProcess process) {
+    public void processAttached(@NotNull final DebugProcess process) {
       myTarget.processAttached(process);
     }
 

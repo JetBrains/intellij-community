@@ -269,7 +269,7 @@ public class AsyncStacksUtils {
     debugProcess.putUserData(key, value);
     debugProcess.addDebugProcessListener(new DebugProcessListener() {
       @Override
-      public void processDetached(DebugProcess process, boolean closedByUser) {
+      public void processDetached(@NotNull DebugProcess process, boolean closedByUser) {
         process.putUserData(key, null);
       }
     });

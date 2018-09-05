@@ -55,8 +55,8 @@ public class SliceLeafAnalyzer {
   }
 
   static SliceNode filterTree(SliceNode oldRoot,
-                              NullableFunction<SliceNode, SliceNode> filter,
-                              PairProcessor<SliceNode, List<SliceNode>> postProcessor) {
+                              NullableFunction<? super SliceNode, ? extends SliceNode> filter,
+                              PairProcessor<? super SliceNode, ? super List<SliceNode>> postProcessor) {
     SliceNode filtered = filter.fun(oldRoot);
     if (filtered == null) return null;
 
@@ -75,7 +75,7 @@ public class SliceLeafAnalyzer {
     return filtered;
   }
 
-  private void groupByValues(@NotNull Collection<PsiElement> leaves,
+  private void groupByValues(@NotNull Collection<? extends PsiElement> leaves,
                                     @NotNull SliceRootNode oldRoot,
                                     @NotNull Map<SliceNode, Collection<PsiElement>> map) {
     assert oldRoot.myCachedChildren.size() == 1;
@@ -88,7 +88,7 @@ public class SliceLeafAnalyzer {
   }
 
   @NotNull
-  public SliceRootNode createTreeGroupedByValues(@NotNull Collection<PsiElement> leaves,
+  public SliceRootNode createTreeGroupedByValues(@NotNull Collection<? extends PsiElement> leaves,
                                                         @NotNull SliceRootNode oldRoot,
                                                         @NotNull Map<SliceNode, Collection<PsiElement>> map) {
     SliceNode oldRootStart = oldRoot.myCachedChildren.get(0);

@@ -94,13 +94,13 @@ public class IntelliSortChooserPopupAction extends DumbAwareAction {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myProperties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE) &&
              myProperties.get(MainVcsLogUiProperties.BEK_SORT_TYPE).equals(mySortType);
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       if (state && myProperties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE)) {
         myProperties.set(MainVcsLogUiProperties.BEK_SORT_TYPE, mySortType);
       }

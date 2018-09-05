@@ -21,13 +21,12 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultTreeModel;
 
 public class ScopeBasedTodosTreeBuilder extends TodoTreeBuilder{
   private final ScopeChooserCombo myScopes;
 
-  public ScopeBasedTodosTreeBuilder(JTree tree, DefaultTreeModel treeModel, Project project, ScopeChooserCombo scopes){
-    super(tree,treeModel,project);
+  public ScopeBasedTodosTreeBuilder(JTree tree, Project project, ScopeChooserCombo scopes){
+    super(tree, project);
     myScopes = scopes;
   }
 

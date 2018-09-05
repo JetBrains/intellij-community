@@ -83,7 +83,7 @@ class DirtyScopeHolder extends UserDataHolderBase implements BulkFileListener {
 
       connect.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
         @Override
-        public void beforeRootsChange(ModuleRootEvent event) {
+        public void beforeRootsChange(@NotNull ModuleRootEvent event) {
           final Module[] modules = ModuleManager.getInstance(myService.getProject()).getModules();
           synchronized (myLock) {
             ContainerUtil.addAll(myVFSChangedModules, modules);

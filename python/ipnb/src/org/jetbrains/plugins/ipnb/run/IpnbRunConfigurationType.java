@@ -12,13 +12,14 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class IpnbRunConfigurationType implements ConfigurationType {
+public final class IpnbRunConfigurationType implements ConfigurationType {
   public final IpnbRunConfigurationFactory IPNB_FACTORY = new IpnbRunConfigurationFactory(this);
 
   public static IpnbRunConfigurationType getInstance() {
     return ConfigurationTypeUtil.findConfigurationType(IpnbRunConfigurationType.class);
   }
 
+  @NotNull
   @Override
   public String getDisplayName() {
     return "Jupyter Notebook";
@@ -45,6 +46,11 @@ public class IpnbRunConfigurationType implements ConfigurationType {
     return new ConfigurationFactory[]{IPNB_FACTORY};
   }
 
+  @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.JupiterNotebook";
+  }
+
   private static class IpnbRunConfigurationFactory extends PythonConfigurationFactoryBase {
     public IpnbRunConfigurationFactory(@NotNull ConfigurationType type) {
       super(type);
@@ -56,6 +62,7 @@ public class IpnbRunConfigurationType implements ConfigurationType {
       return new IpnbRunConfiguration(project, this);
     }
 
+    @NotNull
     @Override
     public String getName() {
       return "Jupyter Notebook";

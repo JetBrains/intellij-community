@@ -51,8 +51,8 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   @NonNls public static final DataKey<List<FilePath>> MISSING_FILES_DATA_KEY = DataKey.create("ChangeListView.MissingFiles");
   @NonNls public static final DataKey<List<LocallyDeletedChange>> LOCALLY_DELETED_CHANGES = DataKey.create("ChangeListView.LocallyDeletedChanges");
 
-  public ChangesListView(@NotNull Project project) {
-    super(project, false, true);
+  public ChangesListView(@NotNull Project project, boolean showCheckboxes) {
+    super(project, showCheckboxes, true);
     setDragEnabled(true);
   }
 

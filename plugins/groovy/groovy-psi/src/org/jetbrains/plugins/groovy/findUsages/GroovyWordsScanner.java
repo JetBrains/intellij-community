@@ -62,7 +62,7 @@ class GroovyWordsScanner extends VersionedWordsScanner
     return 2;
   }
 
-  private static boolean stripWords(final Processor<WordOccurrence> processor,
+  private static boolean stripWords(final Processor<? super WordOccurrence> processor,
                                     final CharSequence tokenText,
                                     int from,
                                     int to,

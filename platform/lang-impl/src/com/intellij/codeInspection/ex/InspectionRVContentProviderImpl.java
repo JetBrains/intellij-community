@@ -87,7 +87,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
                                                   final boolean showStructure,
                                                   boolean groupBySeverity,
                                                   @NotNull final Map<String, Set<RefEntity>> contents,
-                                                  @NotNull final Function<RefEntity, CommonProblemDescriptor[]> problems) {
+                                                  @NotNull final Function<? super RefEntity, CommonProblemDescriptor[]> problems) {
     final InspectionToolWrapper toolWrapper = toolNode.getToolWrapper();
     InspectionNode mergedToolNode = (InspectionNode)merge(toolNode, parentNode, !groupBySeverity);
 

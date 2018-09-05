@@ -55,7 +55,7 @@ final class TodoCompositeRenderer implements TreeCellRenderer {
       result = myColorTreeCellRenderer;
     }
     else {
-      result = myNodeRenderer.getTreeCellRendererComponent(tree, null, selected, expanded, leaf, row, hasFocus);
+      result = myNodeRenderer.getTreeCellRendererComponent(tree, obj, selected, expanded, leaf, row, hasFocus);
     }
 
     if (result instanceof JComponent) {

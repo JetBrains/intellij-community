@@ -382,7 +382,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     }
   }
 
-  private void collectSupers(PsiClass psiClass, ArrayList<PsiClass> classes) {
+  private void collectSupers(PsiClass psiClass, ArrayList<? super PsiClass> classes) {
     classes.add(psiClass);
 
     final PsiClass[] supers = psiClass.getSupers();

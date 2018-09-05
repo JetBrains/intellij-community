@@ -158,7 +158,7 @@ public class JBTabbedTerminalWidget extends AbstractTabbedTerminalWidget<JBTabIn
         }
 
         @Override
-        public void tabRemoved(TabInfo tabInfo) {
+        public void tabRemoved(@NotNull TabInfo tabInfo) {
           for (TabChangeListener each : myListeners) {
             each.tabRemoved();
           }

@@ -30,7 +30,6 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultTreeModel;
 import java.util.*;
 
 /**
@@ -45,9 +44,9 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
   private PsiTodoSearchHelper myPsiTodoSearchHelper;
   private final ChangeListManager myChangeListManager;
 
-  public CustomChangelistTodosTreeBuilder(JTree tree, DefaultTreeModel treeModel, Project project, final String title,
+  public CustomChangelistTodosTreeBuilder(JTree tree, Project project, final String title,
                                           final Collection<TodoItem> todoItems) {
-    super(tree, treeModel, project);
+    super(tree, project);
     myProject = project;
     myTitle = title;
     myMap = new MultiMap<>();
@@ -178,20 +177,16 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
 
   @Override
   void rebuildCache() {
-    myMap.clear();
-    myFileTree.clear();
-    myDirtyFileSet.clear();
-    myFile2Highlighter.clear();
-
+    Set<VirtualFile> files = new HashSet<>();
     TodoTreeStructure treeStructure=getTodoTreeStructure();
     PsiFile[] psiFiles= myPsiTodoSearchHelper.findFilesWithTodoItems();
     for(int i=0;i<psiFiles.length;i++){
       PsiFile psiFile=psiFiles[i];
       if(myPsiTodoSearchHelper.getTodoItemsCount(psiFile) > 0 && treeStructure.accept(psiFile)){
-        myFileTree.add(psiFile.getVirtualFile());
+        files.add(psiFile.getVirtualFile());
       }
     }
 
-    treeStructure.validateCache();
+    super.rebuildCache(files);
   }
 }

@@ -149,7 +149,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     return myWorkingDirectoryComboBox;
   }
 
-  public void addWorkingDirectoryListener(Consumer<String> onTextChange) {
+  public void addWorkingDirectoryListener(Consumer<? super String> onTextChange) {
     myWorkingDirectoryComboBox.getChildComponent().addActionListener(event -> onTextChange.accept(myWorkingDirectoryComboBox.getText()));
   }
 

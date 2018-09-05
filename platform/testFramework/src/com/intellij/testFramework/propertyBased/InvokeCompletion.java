@@ -54,7 +54,7 @@ public class InvokeCompletion extends ActionOnFile {
   private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.propertyBased.InvokeCompletion");
   private final CompletionPolicy myPolicy;
 
-  public InvokeCompletion(PsiFile file, CompletionPolicy policy) {
+  public InvokeCompletion(@NotNull PsiFile file, @NotNull CompletionPolicy policy) {
     super(file);
     myPolicy = policy;
   }

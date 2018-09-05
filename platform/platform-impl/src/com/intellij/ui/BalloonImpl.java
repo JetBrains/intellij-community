@@ -583,7 +583,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     if (ApplicationManager.getApplication() != null) {
       ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(AnActionListener.TOPIC, new AnActionListener() {
           @Override
-          public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
+          public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
             if (myHideOnAction && !(action instanceof HintManagerImpl.ActionToIgnore)) {
               hide();
             }
@@ -1529,10 +1529,10 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   public class ActionButton extends NonOpaquePanel implements IdeGlassPane.TopComponent {
     private final Icon myIcon;
     private final Icon myHoverIcon;
-    private final Consumer<MouseEvent> myListener;
+    private final Consumer<? super MouseEvent> myListener;
     protected final BaseButtonBehavior myButton;
 
-    public ActionButton(@NotNull Icon icon, @Nullable Icon hoverIcon, @Nullable String hint, @NotNull Consumer<MouseEvent> listener) {
+    public ActionButton(@NotNull Icon icon, @Nullable Icon hoverIcon, @Nullable String hint, @NotNull Consumer<? super MouseEvent> listener) {
       myIcon = icon;
       myHoverIcon = hoverIcon;
       myListener = listener;
@@ -1575,7 +1575,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   }
 
   private class CloseButton extends ActionButton {
-    private CloseButton(@NotNull Consumer<MouseEvent> listener) {
+    private CloseButton(@NotNull Consumer<? super MouseEvent> listener) {
       super(getCloseButton(), null, null, listener);
       setVisible(myEnableButtons);
     }

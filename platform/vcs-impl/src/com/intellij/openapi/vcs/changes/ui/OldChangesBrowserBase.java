@@ -217,7 +217,7 @@ public abstract class OldChangesBrowserBase extends JPanel implements TypeSafeDa
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       Change change = e.getData(VcsDataKeys.CURRENT_CHANGE);
       if (change == null) return;
 

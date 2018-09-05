@@ -52,11 +52,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.plaf.basic.BasicSliderUI;
 import java.awt.*;
 import java.lang.ref.WeakReference;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class HectorComponent extends JPanel {
   private static final Logger LOG = Logger.getInstance("com.intellij.openapi.editor.impl.HectorComponent");
@@ -91,11 +90,6 @@ public class HectorComponent extends JPanel {
       }
 
       final JSlider slider = new JSlider(SwingConstants.VERTICAL, 1, notInLibrary ? 3 : 2, 1);
-      if (UIUtil.isUnderGTKLookAndFeel()) {
-        // default GTK+ slider UI is way too ugly
-        slider.putClientProperty("Slider.paintThumbArrowShape", true);
-        slider.setUI(new BasicSliderUI(slider));
-      }
       slider.setLabelTable(sliderLabels);
       UIUtil.setSliderIsFilled(slider, true);
       slider.setPaintLabels(true);

@@ -130,8 +130,8 @@ class MapBinding extends Binding implements MultiNodeBinding {
 
   @Nullable
   @Override
-  public Object deserializeList(@Nullable Object context, @NotNull List<Element> elements) {
-    List<Element> childNodes;
+  public Object deserializeList(@Nullable Object context, @NotNull List<? extends Element> elements) {
+    List<? extends Element> childNodes;
     if (isSurroundWithTag()) {
       assert elements.size() == 1;
       childNodes = elements.get(0).getChildren();
@@ -168,7 +168,7 @@ class MapBinding extends Binding implements MultiNodeBinding {
   }
 
   @Nullable
-  private Map deserialize(@Nullable Object context, @NotNull List<Element> childNodes) {
+  private Map deserialize(@Nullable Object context, @NotNull List<? extends Element> childNodes) {
     // if accessor is null, it is sub-map and we must not use context
     Map map = myAccessor == null ? null : (Map)context;
     if (map != null) {

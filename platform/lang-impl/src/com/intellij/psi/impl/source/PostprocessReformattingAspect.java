@@ -517,9 +517,9 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     return !(currentTask instanceof ReindentTask);
   }
 
-  private static void createActionsMap(@NotNull List<ASTNode> astNodes,
+  private static void createActionsMap(@NotNull List<? extends ASTNode> astNodes,
                                        @NotNull FileViewProvider provider,
-                                       @NotNull Collection<PostprocessFormattingTask> rangesToProcess) {
+                                       @NotNull Collection<? super PostprocessFormattingTask> rangesToProcess) {
     final Set<ASTNode> nodesToProcess = new HashSet<>(astNodes);
     final Document document = provider.getDocument();
     if (document == null) {
@@ -588,7 +588,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     }
   }
 
-  private static void handleReformatMarkers(@NotNull final FileViewProvider key, @NotNull final Set<PostprocessFormattingTask> rangesToProcess) {
+  private static void handleReformatMarkers(@NotNull final FileViewProvider key, @NotNull final Set<? super PostprocessFormattingTask> rangesToProcess) {
     final Document document = key.getDocument();
     if (document == null) {
       return;

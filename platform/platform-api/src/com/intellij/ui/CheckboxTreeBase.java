@@ -177,10 +177,6 @@ public class CheckboxTreeBase extends Tree {
       }
       myTextRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
 
-      if (UIUtil.isUnderGTKLookAndFeel()) {
-        final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
-        UIUtil.changeBackGround(this, background);
-      }
       customizeRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
       revalidate();
 

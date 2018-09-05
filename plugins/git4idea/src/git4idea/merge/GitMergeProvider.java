@@ -120,7 +120,7 @@ public class GitMergeProvider implements MergeProvider2 {
         GitFileRevision current = new GitFileRevision(myProject, path, new GitRevisionNumber(":" + yoursRevision(root)));
         GitFileRevision last = new GitFileRevision(myProject, path, new GitRevisionNumber(":" + theirsRevision(root)));
         try {
-          mergeData.ORIGINAL = original.getContent();
+          mergeData.ORIGINAL = original.loadContent();
         }
         catch (Exception ex) {
           /// unable to load original revision, use the current instead
@@ -417,7 +417,7 @@ public class GitMergeProvider implements MergeProvider2 {
 
   private static byte[] loadRevisionCatchingErrors(@NotNull GitFileRevision revision) throws VcsException {
     try {
-      return revision.getContent();
+      return revision.loadContent();
     } catch (VcsException e) {
       String m = e.getMessage().trim();
       if (m.startsWith("fatal: ambiguous argument ")

@@ -2,7 +2,6 @@
 package com.intellij.debugger.impl.attach;
 
 import com.intellij.debugger.engine.RemoteStateState;
-import com.intellij.debugger.impl.DebuggerManagerImpl;
 import com.intellij.debugger.impl.GenericDebuggerRunner;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
@@ -244,12 +243,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
 
     @Override
     RemoteConnection createConnection() {
-      return new RemoteConnection(myUseSocket, DebuggerManagerImpl.LOCALHOST_ADDRESS_FALLBACK, myAddress, false);
-    }
-
-    @Override
-    String getSessionName() {
-      return "localhost:" + myAddress;
+      return new PidRemoteConnection(myPid);
     }
 
     @Override
@@ -335,7 +329,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     }
   }
 
-  private static class ProcessAttachRunConfigurationType implements ConfigurationType {
+  private static final class ProcessAttachRunConfigurationType implements ConfigurationType {
     static final ProcessAttachRunConfigurationType INSTANCE = new ProcessAttachRunConfigurationType();
     static final ConfigurationFactory FACTORY = new ConfigurationFactory(INSTANCE) {
       @NotNull
@@ -345,6 +339,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       }
     };
 
+    @NotNull
     @Nls
     @Override
     public String getDisplayName() {
@@ -372,12 +367,17 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     public ConfigurationFactory[] getConfigurationFactories() {
       return new ConfigurationFactory[]{FACTORY};
     }
+
+    @Override
+    public String getHelpTopic() {
+      return "reference.dialogs.rundebug.ProcessAttachRunConfigurationType";
+    }
   }
 
   static void attach(JavaAttachDebuggerProvider.LocalAttachInfo info, Project project) {
     RunnerAndConfigurationSettings runSettings =
       RunManager
-        .getInstance(project).createRunConfiguration(info.getSessionName(), JavaAttachDebuggerProvider.ProcessAttachRunConfigurationType.FACTORY);
+        .getInstance(project).createConfiguration(info.getSessionName(), JavaAttachDebuggerProvider.ProcessAttachRunConfigurationType.FACTORY);
     ((JavaAttachDebuggerProvider.ProcessAttachRunConfiguration)runSettings.getConfiguration()).myAttachInfo = info;
     ProgramRunnerUtil.executeConfiguration(runSettings, JavaAttachDebuggerProvider.ProcessAttachDebugExecutor.INSTANCE);
   }

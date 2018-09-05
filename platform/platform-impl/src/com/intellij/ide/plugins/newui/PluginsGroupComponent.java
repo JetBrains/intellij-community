@@ -199,9 +199,13 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
   }
 
   public void initialSelection() {
+    initialSelection(true);
+  }
+
+  public void initialSelection(boolean scrollAndFocus) {
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> {
-      myEventHandler.initialSelection();
+      myEventHandler.initialSelection(scrollAndFocus);
       if (getComponentCount() > 0) {
         scrollRectToVisible(getComponent(0).getBounds());
       }

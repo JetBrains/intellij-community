@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
-import com.sun.javafx.application.PlatformImpl;
+import javafx.application.Platform;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +33,7 @@ public class IpnbSettings implements PersistentStateComponent<IpnbSettings> {
   public boolean hasFx() {
     if (hasFx) {
       try {
-        PlatformImpl.setImplicitExit(false);
+        Platform.setImplicitExit(false);
       }
       catch (NoClassDefFoundError e) {
         hasFx = false;

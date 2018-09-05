@@ -281,7 +281,7 @@ public class TabLabel extends JPanel implements Accessible {
     }
   }
 
-  public void doTranslate(PairConsumer<Integer, Integer> consumer) {
+  public void doTranslate(PairConsumer<? super Integer, ? super Integer> consumer) {
     final JBTabsPosition pos = myTabs.getTabsPosition();
 
     int dX = 0;

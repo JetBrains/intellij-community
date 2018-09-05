@@ -737,7 +737,7 @@ class LineStatusTrackerManager(
   }
 
   private inner class MyCommandListener : CommandListener {
-    override fun commandFinished(event: CommandEvent?) {
+    override fun commandFinished(event: CommandEvent) {
       if (!partialChangeListsEnabled) return
 
       if (CommandProcessor.getInstance().currentCommand == null &&

@@ -362,6 +362,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
       expectedTypeConstraints.setVisible(typeComponent &&
                                          myProfile.isApplicableConstraint(UIUtil.EXPECTED_TYPE, nodes, completePattern, false));
       referenceTargetConstraints.setVisible(myProfile.isApplicableConstraint(UIUtil.REFERENCE, nodes, completePattern, false));
+      partOfSearchResults.setVisible(true);
       containedInConstraints.setVisible(completePattern);
       scriptConstraints.setVisible(true);
 

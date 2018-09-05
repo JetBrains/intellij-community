@@ -69,7 +69,7 @@ public class ImportTree extends NodeRenderer {
   }
 
   @Override
-  public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+  public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     if (customize(tree, value, selected, expanded, leaf, row, hasFocus)) return;
     super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
   }

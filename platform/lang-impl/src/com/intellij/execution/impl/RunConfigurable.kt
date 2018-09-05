@@ -35,7 +35,6 @@ import com.intellij.util.ArrayUtilRt
 import com.intellij.util.IconUtil
 import com.intellij.util.PlatformIcons
 import com.intellij.util.containers.TreeTraversal
-import com.intellij.util.containers.nullize
 import com.intellij.util.ui.*
 import com.intellij.util.ui.tree.TreeUtil
 import gnu.trove.THashMap
@@ -199,30 +198,28 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
       }
     }
     val manager = runManager
-    for (type in manager.configurationFactories) {
-      val configurations = manager.getConfigurationSettingsList(type).nullize() ?: continue
+    for ((type, folderMap) in manager.getConfigurationsGroupedByTypeAndFolder(true)) {
       val typeNode = DefaultMutableTreeNode(type)
       root.add(typeNode)
-      val folderMapping = THashMap<String, DefaultMutableTreeNode>()
-      for (configuration in configurations) {
-        val folder = configuration.folderName
+      for ((folder, configurations) in folderMap.entries) {
+        val node: DefaultMutableTreeNode
         if (folder == null) {
-          typeNode.add(DefaultMutableTreeNode(configuration))
+          node = typeNode
         }
         else {
-          val node = folderMapping.getOrPut(folder) {
-            val node = DefaultMutableTreeNode(folder)
-            typeNode.insert(node, folderMapping.size)
-            node
-          }
-          node.add(DefaultMutableTreeNode(configuration))
+          node = DefaultMutableTreeNode(folder)
+          typeNode.add(node)
+        }
+
+        for (it in configurations) {
+          node.add(DefaultMutableTreeNode(it))
         }
       }
     }
 
     // add templates
     val templates = DefaultMutableTreeNode(TEMPLATES)
-    for (type in manager.configurationFactoriesWithoutUnknown) {
+    for (type in ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList()) {
       val configurationFactories = type.configurationFactories
       val typeNode = DefaultMutableTreeNode(type)
       templates.add(typeNode)
@@ -971,8 +968,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
     val name = createUniqueName(typeNode, suggestedName, CONFIGURATION, TEMPORARY_CONFIGURATION)
     configuration.name = name
     (configuration as? LocatableConfigurationBase)?.setNameChangedByUser(false)
-    @Suppress("UNCHECKED_CAST")
-    (factory as? ConfigurationFactoryEx<RunConfiguration>)?.onNewConfigurationCreated(configuration)
+    callNewConfigurationCreated(factory, configuration)
     return createNewConfiguration(settings, node, selectedNode)
   }
 
@@ -1002,7 +998,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
     }
 
     private fun showAddPopup(showApplicableTypesOnly: Boolean) {
-      val allTypes = runManager.configurationFactoriesWithoutUnknown
+      val allTypes = ConfigurationType.CONFIGURATION_TYPE_EP.extensionList
       val configurationTypes: MutableList<ConfigurationType?> = getTypesToShow(showApplicableTypesOnly, allTypes).toMutableList()
       configurationTypes.sortWith(kotlin.Comparator { type1, type2 -> type1!!.displayName.compareTo(type2!!.displayName, ignoreCase = true) })
       val hiddenCount = allTypes.size - configurationTypes.size
@@ -1180,8 +1176,9 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
         val copyName = createUniqueName(typeNode, configuration.nameText, CONFIGURATION, TEMPORARY_CONFIGURATION)
         settings.name = copyName
         val factory = settings.factory
-        @Suppress("UNCHECKED_CAST")
+        @Suppress("UNCHECKED_CAST", "DEPRECATION")
         (factory as? ConfigurationFactoryEx<RunConfiguration>)?.onConfigurationCopied(settings.configuration)
+        (settings.configuration as? RunConfigurationBase)?.onConfigurationCopied()
         val parentNode = selectedNode?.parent
         val node = (if ((parentNode as? DefaultMutableTreeNode)?.userObject is String) parentNode else typeNode) as DefaultMutableTreeNode
         val configurable = createNewConfiguration(settings, node, selectedNode)

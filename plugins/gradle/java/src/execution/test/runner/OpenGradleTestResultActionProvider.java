@@ -13,6 +13,7 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunCo
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.config.BooleanProperty;
 import icons.GradleIcons;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -51,7 +52,7 @@ public class OpenGradleTestResultActionProvider implements ToggleModelActionProv
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       final String reportFilePath = getReportFilePath();
       if (reportFilePath != null) {
         BrowserUtil.browse(reportFilePath);

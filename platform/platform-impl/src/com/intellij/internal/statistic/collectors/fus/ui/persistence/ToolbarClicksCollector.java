@@ -2,6 +2,8 @@
 package com.intellij.internal.statistic.collectors.fus.ui.persistence;
 
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
+import com.intellij.internal.statistic.collectors.fus.ui.ToolbarClicksUsagesCollector;
+import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionWithDelegate;
@@ -59,6 +61,8 @@ public class ToolbarClicksCollector implements PersistentStateComponent<ToolbarC
     ToolbarClicksCollector collector = getInstance();
     if (collector != null) {
       String key = ConvertUsagesUtil.escapeDescriptorName(actionId + "@" + place);
+      FeatureUsageLogger.INSTANCE.log(ToolbarClicksUsagesCollector.GROUP_ID, key);
+
       ClicksState state = collector.getState();
       if (state != null) {
         final Integer count = state.myValues.get(key);

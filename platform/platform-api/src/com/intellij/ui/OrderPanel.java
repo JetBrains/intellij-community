@@ -187,7 +187,7 @@ public abstract class OrderPanel<T> extends JPanel {
     }
   }
 
-  public void addAll(Collection<T> orderEntries) {
+  public void addAll(Collection<? extends T> orderEntries) {
     for (T orderEntry : orderEntries) {
       add(orderEntry);
     }

@@ -17,11 +17,12 @@ package com.intellij.build;
 
 import com.intellij.build.events.BuildEvent;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
  */
 @ApiStatus.Experimental
 public interface BuildProgressListener {
-  void onEvent(BuildEvent event);
+  void onEvent(@NotNull BuildEvent event);
 }

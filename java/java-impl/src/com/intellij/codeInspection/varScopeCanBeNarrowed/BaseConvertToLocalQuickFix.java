@@ -96,7 +96,7 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
     return moveDeclaration(project, variable, references, true);
   }
 
-  protected PsiElement moveDeclaration(Project project, V variable, final Collection<PsiReference> references, boolean delete) {
+  protected PsiElement moveDeclaration(Project project, V variable, final Collection<? extends PsiReference> references, boolean delete) {
     final PsiCodeBlock anchorBlock = findAnchorBlock(references);
     if (anchorBlock == null) return null; //was assert, but need to fix the case when obsolete inspection highlighting is left
 
@@ -143,8 +143,8 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
                                     @NotNull final String localName,
                                     @Nullable final PsiExpression initializer,
                                     @NotNull final V variable,
-                                    @NotNull final Collection<PsiReference> references,
-                                    final boolean delete, @NotNull final NotNullFunction<PsiDeclarationStatement, PsiElement> action) {
+                                    @NotNull final Collection<? extends PsiReference> references,
+                                    final boolean delete, @NotNull final NotNullFunction<? super PsiDeclarationStatement, ? extends PsiElement> action) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
 
     return WriteAction.compute(() -> {
@@ -168,8 +168,8 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
                                        String localName,
                                        V variable,
                                        PsiExpression initializer,
-                                       NotNullFunction<PsiDeclarationStatement, PsiElement> action,
-                                       Collection<PsiReference> references) {
+                                       NotNullFunction<? super PsiDeclarationStatement, ? extends PsiElement> action,
+                                       Collection<? extends PsiReference> references) {
     final PsiDeclarationStatement declaration = elementFactory.createVariableDeclarationStatement(localName, variable.getType(), initializer);
     if (references.stream()
                   .map(PsiReference::getElement)
@@ -214,7 +214,7 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
   @NotNull
   protected abstract String suggestLocalName(@NotNull Project project, @NotNull V variable, @NotNull PsiCodeBlock scope);
 
-  private static void retargetReferences(PsiElementFactory elementFactory, String localName, Collection<PsiReference> refs)
+  private static void retargetReferences(PsiElementFactory elementFactory, String localName, Collection<? extends PsiReference> refs)
     throws IncorrectOperationException {
     final PsiReferenceExpression refExpr = (PsiReferenceExpression)elementFactory.createExpressionFromText(localName, null);
     for (PsiReference ref : refs) {
@@ -234,7 +234,7 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
   }
 
   @Nullable
-  private static PsiElement getLowestOffsetElement(@NotNull Collection<PsiReference> refs) {
+  private static PsiElement getLowestOffsetElement(@NotNull Collection<? extends PsiReference> refs) {
     PsiElement firstElement = null;
     for (PsiReference reference : refs) {
       final PsiElement element = reference.getElement();
@@ -246,7 +246,7 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
     return firstElement;
   }
 
-  private static PsiCodeBlock findAnchorBlock(final Collection<PsiReference> refs) {
+  private static PsiCodeBlock findAnchorBlock(final Collection<? extends PsiReference> refs) {
     PsiCodeBlock result = null;
     for (PsiReference psiReference : refs) {
       final PsiElement element = psiReference.getElement();

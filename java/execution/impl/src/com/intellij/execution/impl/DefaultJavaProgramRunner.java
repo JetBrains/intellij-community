@@ -4,7 +4,8 @@ package com.intellij.execution.impl;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.impl.attach.JavaDebuggerAttachUtil;
-import com.intellij.debugger.impl.attach.SAPidRemoteConnection;
+import com.intellij.debugger.impl.attach.PidRemoteConnection;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -83,6 +84,13 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     if (state instanceof JavaCommandLine) {
       final JavaParameters parameters = ((JavaCommandLine)state).getJavaParameters();
       patch(parameters, env.getRunnerSettings(), env.getRunProfile(), true);
+
+      if (Registry.is("execution.java.always.debug") && DebuggerSettings.getInstance().ALWAYS_DEBUG) {
+        ParametersList parametersList = parameters.getVMParametersList();
+        if (parametersList.getList().stream().noneMatch(s -> s.startsWith("-agentlib:jdwp"))) {
+          parametersList.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,quiet=y");
+        }
+      }
 
       ProcessProxy proxy = ProcessProxyFactory.getInstance().createCommandLineProxy((JavaCommandLine)state);
       executionResult = state.execute(env.getExecutor(), this);
@@ -216,8 +224,9 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
         @Override
         public void startNotified(@NotNull ProcessEvent event) {
           // 1 second delay to allow jvm to start correctly
-          JobScheduler.getScheduler().schedule(
-            () -> myEnabled.set(JavaDebuggerAttachUtil.canAttach(myProcessHandler.getProcess())), 1, TimeUnit.SECONDS);
+          JobScheduler.getScheduler()
+            .schedule(() -> myEnabled.set(JavaDebuggerAttachUtil.canAttach(OSProcessUtil.getProcessID(myProcessHandler.getProcess()))),
+                      1, TimeUnit.SECONDS);
         }
 
         @Override
@@ -249,8 +258,8 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
           void processEvent(@NotNull XDebugProcess debugProcess, boolean started) {
             if (debugProcess instanceof JavaDebugProcess) {
               RemoteConnection connection = ((JavaDebugProcess)debugProcess).getDebuggerSession().getProcess().getConnection();
-              if (connection instanceof SAPidRemoteConnection) {
-                if (((SAPidRemoteConnection)connection).getPid()
+              if (connection instanceof PidRemoteConnection) {
+                if (((PidRemoteConnection)connection).getPid()
                   .equals(String.valueOf(OSProcessUtil.getProcessID(myProcessHandler.getProcess())))) {
                   myAttached.set(started);
                 }
@@ -268,7 +277,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      myAttached.set(JavaDebuggerAttachUtil.attach(myProcessHandler.getProcess(), e.getProject()));
+      myAttached.set(JavaDebuggerAttachUtil.attach(OSProcessUtil.getProcessID(myProcessHandler.getProcess()), e.getProject()));
     }
 
     public static void add(RunContentBuilder contentBuilder, ProcessHandler processHandler) {

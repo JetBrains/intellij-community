@@ -15,7 +15,7 @@ import java.util.List;
  */
 public class PackAction extends AbstractGuiEditorAction {
   @Override
-  protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
+  protected void actionPerformed(final GuiEditor editor, final List<? extends RadComponent> selection, final AnActionEvent e) {
     RadContainer container = getContainerToPack(selection);
     if (container != null) {
       container.getDelegee().setSize(container.getMinimumSize());
@@ -24,11 +24,11 @@ public class PackAction extends AbstractGuiEditorAction {
   }
 
   @Override
-  protected void update(@NotNull GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
+  protected void update(@NotNull GuiEditor editor, final ArrayList<? extends RadComponent> selection, final AnActionEvent e) {
     e.getPresentation().setEnabled(getContainerToPack(selection) != null);
   }
 
-  private static RadContainer getContainerToPack(final List<RadComponent> selection) {
+  private static RadContainer getContainerToPack(final List<? extends RadComponent> selection) {
     if (selection.size() != 1 || !(selection.get(0) instanceof RadContainer)) {
       return null;
     }

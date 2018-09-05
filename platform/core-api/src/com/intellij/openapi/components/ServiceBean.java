@@ -36,7 +36,7 @@ public class ServiceBean implements PluginAware {
   public String serviceInterface;
   private PluginDescriptor myPluginDescriptor;
 
-  public static <T> List<T> loadServicesFromBeans(final ExtensionPointName<ServiceBean> epName, Class<T> componentClass) {
+  public static <T> List<T> loadServicesFromBeans(final ExtensionPointName<? extends ServiceBean> epName, Class<T> componentClass) {
     final List<T> components = new ArrayList<>();
     for (ServiceBean exportableBean : Extensions.getExtensions(epName)) {
       final String serviceClass = exportableBean.serviceInterface;

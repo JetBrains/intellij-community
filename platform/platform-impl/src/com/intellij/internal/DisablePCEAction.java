@@ -22,12 +22,12 @@ public class DisablePCEAction extends DumbAwareToggleAction {
   private static final String STATUS_BAR_WIDGET_ID = "PCEDisabledStatus";
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return !CoreProgressManager.ENABLED;
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     changePCEEnabledStatus(!state);
   }
 

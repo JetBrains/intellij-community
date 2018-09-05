@@ -89,7 +89,7 @@ class GutterIntentionAction extends AbstractIntentionAction implements Comparabl
   }
 
   static void addActions(@NotNull Editor hostEditor,
-                         @NotNull ShowIntentionsPass.IntentionsInfo intentions, Project project, List<RangeHighlighterEx> result) {
+                         @NotNull ShowIntentionsPass.IntentionsInfo intentions, Project project, List<? extends RangeHighlighterEx> result) {
     AnActionEvent event = createActionEvent((EditorEx)hostEditor);
     for (RangeHighlighterEx highlighter : result) {
       addActions(project, highlighter, intentions.guttersToShow, event);

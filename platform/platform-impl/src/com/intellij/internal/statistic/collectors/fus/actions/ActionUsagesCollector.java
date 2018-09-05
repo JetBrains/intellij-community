@@ -30,6 +30,6 @@ public final class ActionUsagesCollector extends ApplicationUsagesCollector impl
 
   @Override
   public FUSUsageContext getContext() {
-    return FUSUsageContext.DEFAULT;
+    return FUSUsageContext.OS_CONTEXT;
   }
 }

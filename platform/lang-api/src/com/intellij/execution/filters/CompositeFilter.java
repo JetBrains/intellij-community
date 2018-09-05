@@ -125,7 +125,8 @@ public class CompositeFilter implements Filter, FilterMixin {
       List<ResultItem> newItems = newResult.getResultItems();
       for (int i = 0; i < newItems.size(); i++) {
         ResultItem item = newItems.get(i);
-        if ((item.getHyperlinkInfo() == null || !intersects(resultItems, item)) &&
+        if ((item.getHyperlinkInfo() == null || !
+          intersects(resultItems, item)) &&
             checkOffsetsCorrect(item, entireLength, filter)) {
           resultItems.add(item);
         }
@@ -144,7 +145,7 @@ public class CompositeFilter implements Filter, FilterMixin {
     return true;
   }
 
-  protected boolean intersects(List<ResultItem> items, ResultItem newItem) {
+  protected boolean intersects(List<? extends ResultItem> items, ResultItem newItem) {
     TextRange newItemTextRange = null;
 
     for (int i = 0; i < items.size(); i++) {

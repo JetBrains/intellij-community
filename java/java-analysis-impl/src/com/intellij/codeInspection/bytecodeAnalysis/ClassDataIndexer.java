@@ -373,7 +373,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
                                           Type resultType,
                                           final boolean stable,
                                           boolean jsr,
-                                          List<Equation> result,
+                                          List<? super Equation> result,
                                           NegationAnalysis negatedAnalysis) throws AnalyzerException {
         final boolean isReferenceResult = ASMUtils.isReferenceType(resultType);
         final boolean isBooleanResult = ASMUtils.isBooleanType(resultType);
@@ -497,7 +497,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
                                              ControlFlowGraph graph,
                                              Type returnType,
                                              boolean stable,
-                                             List<Equation> result) throws AnalyzerException {
+                                             List<? super Equation> result) throws AnalyzerException {
         CombinedAnalysis analyzer = new CombinedAnalysis(method, graph);
         analyzer.analyze();
         ContainerUtil.addIfNotNull(result, analyzer.outContractEquation(stable));

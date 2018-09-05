@@ -45,12 +45,12 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
 
     actionGroup.add(new ToggleAction(PropertiesBundle.message("show.only.incomplete.action.text"), null, AllIcons.General.Error) {
       @Override
-      public boolean isSelected(AnActionEvent e) {
+      public boolean isSelected(@NotNull AnActionEvent e) {
         return ((ResourceBundleStructureViewModel)getTreeModel()).isShowOnlyIncomplete();
       }
 
       @Override
-      public void setSelected(AnActionEvent e, boolean state) {
+      public void setSelected(@NotNull AnActionEvent e, boolean state) {
         ((ResourceBundleStructureViewModel)getTreeModel()).setShowOnlyIncomplete(state);
         rebuild();
       }

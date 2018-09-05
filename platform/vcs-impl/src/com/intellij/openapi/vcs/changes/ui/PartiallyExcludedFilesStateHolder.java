@@ -41,7 +41,7 @@ public abstract class PartiallyExcludedFilesStateHolder<T> implements Disposable
 
 
   @NotNull
-  protected abstract Stream<T> getElementsStream();
+  protected abstract Stream<? extends T> getTrackableElementsStream();
 
   @Nullable
   protected abstract T findElementFor(@NotNull PartialLocalLineStatusTracker tracker);
@@ -51,7 +51,7 @@ public abstract class PartiallyExcludedFilesStateHolder<T> implements Disposable
 
   @NotNull
   private Stream<Pair<T, PartialLocalLineStatusTracker>> getTrackersStream() {
-    return getElementsStream().map(element -> {
+    return getTrackableElementsStream().<Pair<T, PartialLocalLineStatusTracker>>map(element -> {
       PartialLocalLineStatusTracker tracker = findTrackerFor(element);
       if (tracker != null) {
         return Pair.create(element, tracker);

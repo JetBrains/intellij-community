@@ -134,11 +134,7 @@ public class VcsHistoryUtil {
 
   @NotNull
   public static byte[] loadRevisionContent(@NotNull VcsFileRevision revision) throws VcsException, IOException {
-    byte[] content = revision.getContent();
-    if (content == null) {
-      revision.loadContent();
-      content = revision.getContent();
-    }
+    byte[] content = revision.loadContent();
     if (content == null) throw new VcsException("Failed to load content for revision " + revision.getRevisionNumber().asString());
     return content;
   }

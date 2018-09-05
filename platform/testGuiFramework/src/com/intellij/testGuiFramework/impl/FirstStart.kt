@@ -68,7 +68,7 @@ abstract class FirstStart(val ideType: IdeType) {
   }
 
   private fun takeScreenshot(e: Throwable) {
-    ScreenshotOnFailure.takeScreenshotOnFailure(e, "FirstStartFailed")
+    ScreenshotOnFailure.takeScreenshot("FirstStartFailed", e)
   }
 
   private fun exceptionWithHierarchy(e: Throwable): Throwable {

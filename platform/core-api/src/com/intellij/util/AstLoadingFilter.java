@@ -163,7 +163,7 @@ public class AstLoadingFilter {
     }
   }
 
-  private static <E extends Throwable> ThrowableComputable<?, E> toComputable(ThrowableRunnable<E> runnable) {
+  private static <E extends Throwable> ThrowableComputable<?, E> toComputable(ThrowableRunnable<? extends E> runnable) {
     return () -> {
       runnable.run();
       return null;

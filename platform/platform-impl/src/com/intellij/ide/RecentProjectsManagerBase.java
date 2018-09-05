@@ -589,7 +589,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
   private class MyProjectListener implements ProjectManagerListener {
     @Override
-    public void projectOpened(final Project project) {
+    public void projectOpened(@NotNull final Project project) {
       String path = getProjectPath(project);
       if (path != null) {
         markPathRecent(path, project);
@@ -604,10 +604,10 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     }
 
     @Override
-    public void projectClosing(Project project) {
+    public void projectClosing(@NotNull Project project) {
       String path = getProjectPath(project);
       if (path == null) return;
-      
+
       synchronized (myStateLock) {
         myState.names.put(path, getProjectDisplayName(project));
       }
@@ -615,7 +615,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     }
 
     @Override
-    public void projectClosed(final Project project) {
+    public void projectClosed(@NotNull final Project project) {
       Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
       if (openProjects.length > 0) {
         Project openProject = openProjects[openProjects.length - 1];

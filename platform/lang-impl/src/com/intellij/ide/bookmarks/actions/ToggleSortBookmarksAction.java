@@ -20,6 +20,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import org.jetbrains.annotations.NotNull;
 
 class ToggleSortBookmarksAction extends ToggleAction {
   ToggleSortBookmarksAction() {
@@ -28,12 +29,12 @@ class ToggleSortBookmarksAction extends ToggleAction {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return UISettings.getInstance().getSortBookmarks();
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     UISettings.getInstance().setSortBookmarks(state);
     UISettings.getInstance().fireUISettingsChanged();
   }

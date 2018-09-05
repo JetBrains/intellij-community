@@ -87,7 +87,7 @@ public class GitLogProvider implements VcsLogProvider {
     // need to query more to sort them manually; this doesn't affect performance: it is equal for -1000 and -2000
     int commitCount = requirements.getCommitCount() * 2;
 
-    String[] params = new String[]{"HEAD", "--branches", "--remotes", "--max-count=" + commitCount};
+    String[] params = new String[]{GitUtil.HEAD, "--branches", "--remotes", "--max-count=" + commitCount};
     // NB: not specifying --tags, because it introduces great slowdown if there are many tags,
     // but makes sense only if there are heads without branch or HEAD labels (rare case). Such cases are partially handled below.
 
@@ -379,7 +379,7 @@ public class GitLogProvider implements VcsLogProvider {
     }
     String currentRevision = repository.getCurrentRevision();
     if (currentRevision != null) { // null => fresh repository
-      refs.add(myVcsObjectsFactory.createRef(HashImpl.build(currentRevision), "HEAD", GitRefManager.HEAD, root));
+      refs.add(myVcsObjectsFactory.createRef(HashImpl.build(currentRevision), GitUtil.HEAD, GitRefManager.HEAD, root));
     }
     sw.report();
     return refs;
@@ -433,7 +433,7 @@ public class GitLogProvider implements VcsLogProvider {
         Collection<GitBranch> branches = ContainerUtil
           .newArrayList(ContainerUtil.concat(repository.getBranches().getLocalBranches(), repository.getBranches().getRemoteBranches()));
         Collection<String> branchNames = GitBranchUtil.convertBranchesToNames(branches);
-        Collection<String> predefinedNames = ContainerUtil.list("HEAD");
+        Collection<String> predefinedNames = ContainerUtil.list(GitUtil.HEAD);
 
         for (String branchName : ContainerUtil.concat(branchNames, predefinedNames)) {
           if (branchFilter.matches(branchName)) {
@@ -544,7 +544,7 @@ public class GitLogProvider implements VcsLogProvider {
     if (repository == null) return null;
     String currentBranchName = repository.getCurrentBranchName();
     if (currentBranchName == null && repository.getCurrentRevision() != null) {
-      return "HEAD";
+      return GitUtil.HEAD;
     }
     return currentBranchName;
   }

@@ -114,7 +114,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
     return false;
   }
 
-  protected boolean checkTargetClasses(List<PsiClass> classes, String methodName) {
+  protected boolean checkTargetClasses(List<? extends PsiClass> classes, String methodName) {
     return true;
   }
 
@@ -269,7 +269,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
     final boolean isStatic1 = isStatic;
     startTemplate(editor, template, project, new TemplateEditingAdapter() {
       @Override
-      public void beforeTemplateFinished(final TemplateState state, Template template) {
+      public void beforeTemplateFinished(@NotNull final TemplateState state, Template template) {
         ApplicationManager.getApplication().runWriteAction(() -> {
           String fieldName1 = state.getVariableValue(FIELD_VARIABLE).getText();
           if (!PsiNameHelper.getInstance(project).isIdentifier(fieldName1)) return;
@@ -302,7 +302,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
       }
 
       @Override
-      public void templateFinished(Template template, boolean brokenOff) {
+      public void templateFinished(@NotNull Template template, boolean brokenOff) {
         PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
         final int offset = editor.getCaretModel().getOffset();
         final PsiMethod generatedMethod = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiMethod.class, false);

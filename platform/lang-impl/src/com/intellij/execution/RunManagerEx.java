@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
-import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -12,7 +11,6 @@ import javax.swing.*;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 public abstract class RunManagerEx extends RunManager {
   @NotNull
@@ -74,9 +72,6 @@ public abstract class RunManagerEx extends RunManager {
   @Deprecated
   public void addRunManagerListener(@NotNull RunManagerListener listener) {
   }
-
-  @NotNull
-  public abstract Map<String, List<RunnerAndConfigurationSettings>> getStructure(@NotNull ConfigurationType type);
 
   @SafeVarargs
   public static void disableTasks(Project project, RunConfiguration settings, @NotNull Key<? extends BeforeRunTask>... keys) {

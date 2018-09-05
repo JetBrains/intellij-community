@@ -197,6 +197,14 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     return result;
   }
 
+  /**
+   * Returns the attributes defined in this scheme (not inherited from a parent).
+   */
+  @NotNull
+  public Map<TextAttributesKey, TextAttributes> getDirectlyDefinedAttributes() {
+    return new HashMap<>(myAttributesMap);
+  }
+
   @Override
   public void setEditorFontName(String fontName) {
     ModifiableFontPreferences currPreferences = ensureEditableFontPreferences();
@@ -426,24 +434,26 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   private void migrateErrorStripeColorFrom14(@NotNull TextAttributesKey name, @NotNull TextAttributes attr) {
     if (myVersion >= 141 || myParentScheme == null) return;
 
-    Couple<Color> m = DEFAULT_STRIPE_COLORS.get(name.getExternalName());
+    Couple<Color> m = DefaultSripeColors.MAP.get(name.getExternalName());
     if (m != null && Comparing.equal(m.first, attr.getErrorStripeColor())) {
       attr.setErrorStripeColor(m.second);
     }
   }
 
-  @SuppressWarnings("UseJBColor")
-  private static final Map<String, Couple<Color>> DEFAULT_STRIPE_COLORS = new THashMap<String, Couple<Color>>() {
-    {
-      put(ERRORS_ATTRIBUTES.getExternalName(),                        of(Color.red,          fromHex("CF5B56")));
-      put(WARNINGS_ATTRIBUTES.getExternalName(),                      of(Color.yellow,       fromHex("EBC700")));
-      put("EXECUTIONPOINT_ATTRIBUTES",                                of(Color.blue,         fromHex("3763b0")));
-      put(IDENTIFIER_UNDER_CARET_ATTRIBUTES.getExternalName(),        of(fromHex("CCCFFF"),  fromHex("BAA8FF")));
-      put(WRITE_IDENTIFIER_UNDER_CARET_ATTRIBUTES.getExternalName(),  of(fromHex("FFCCE5"),  fromHex("F0ADF0")));
-      put(TEXT_SEARCH_RESULT_ATTRIBUTES.getExternalName(),            of(fromHex("586E75"),  fromHex("71B362")));
-      put(TODO_DEFAULT_ATTRIBUTES.getExternalName(),                  of(fromHex("268BD2"),  fromHex("54AAE3")));
-    }
-  };
+  private static class DefaultSripeColors {
+    @SuppressWarnings("UseJBColor")
+    private static final Map<String, Couple<Color>> MAP = new THashMap<String, Couple<Color>>() {
+      {
+        put(ERRORS_ATTRIBUTES.getExternalName(),                        of(Color.red,          fromHex("CF5B56")));
+        put(WARNINGS_ATTRIBUTES.getExternalName(),                      of(Color.yellow,       fromHex("EBC700")));
+        put("EXECUTIONPOINT_ATTRIBUTES",                                of(Color.blue,         fromHex("3763b0")));
+        put(IDENTIFIER_UNDER_CARET_ATTRIBUTES.getExternalName(),        of(fromHex("CCCFFF"),  fromHex("BAA8FF")));
+        put(WRITE_IDENTIFIER_UNDER_CARET_ATTRIBUTES.getExternalName(),  of(fromHex("FFCCE5"),  fromHex("F0ADF0")));
+        put(TEXT_SEARCH_RESULT_ATTRIBUTES.getExternalName(),            of(fromHex("586E75"),  fromHex("71B362")));
+        put(TODO_DEFAULT_ATTRIBUTES.getExternalName(),                  of(fromHex("268BD2"),  fromHex("54AAE3")));
+      }
+    };
+  }
 
   private void readColors(Element childNode) {
     for (Element colorElement : childNode.getChildren(OPTION_ELEMENT)) {
@@ -1091,7 +1101,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     myParentScheme = newParent;
   }
 
-  void resolveParent(@NotNull Function<String,EditorColorsScheme> nameResolver) {
+  void resolveParent(@NotNull Function<? super String, ? extends EditorColorsScheme> nameResolver) {
     if (myParentScheme instanceof TemporaryParent) {
       String parentName = ((TemporaryParent)myParentScheme).getParentName();
       EditorColorsScheme newParent = nameResolver.apply(parentName);
