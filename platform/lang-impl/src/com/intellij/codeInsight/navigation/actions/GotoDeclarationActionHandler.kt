@@ -6,7 +6,6 @@ import com.intellij.codeInsight.findAllTargets
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction.*
 import com.intellij.codeInsight.navigation.chooseTarget
-import com.intellij.concurrency.UnconfinedEdt
 import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.lang.LanguageNamesValidation
 import com.intellij.navigation.NavigationTarget
@@ -19,7 +18,7 @@ import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiFile
-import kotlinx.coroutines.experimental.launch
+import com.intellij.util.Consumer
 
 object GotoDeclarationActionHandler : CodeInsightActionHandler {
 
@@ -42,9 +41,10 @@ object GotoDeclarationActionHandler : CodeInsightActionHandler {
       notifyCantGoAnywhere(project, editor, file)
       return
     }
-    else launch(UnconfinedEdt) {
-      val target = chooseTarget(project, editor, targets.toList())
-      gotoTarget(project, editor, file, target)
+    else {
+      chooseTarget(project, editor, targets.toList(), Consumer {
+        gotoTarget(project, editor, file, it)
+      })
     }
   }
 

@@ -12,25 +12,23 @@ import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.list.SearchAwareRenderer
-import kotlin.coroutines.experimental.suspendCoroutine
+import com.intellij.util.Consumer
 
-internal suspend fun chooseTarget(project: Project, editor: Editor, targets: List<NavigationTarget>): NavigationTarget {
+internal fun chooseTarget(project: Project, editor: Editor, targets: List<NavigationTarget>, handler: Consumer<NavigationTarget>) {
   targets.singleOrNull()?.let {
-    return it
+    return handler.consume(it)
   }
   val renderer = createRenderer(project)
-  return suspendCoroutine { cont ->
-    JBPopupFactory.getInstance()
-      .createPopupChooserBuilder(targets)
-      .setRenderer(renderer)
-      .setNamerForFiltering(renderer::getItemName)
-      .setFont(EditorUtil.getEditorFont())
-      .setTitle(CodeInsightBundle.message("declaration.navigation.title"))
-      .setItemChosenCallback(cont::resume)
-      .withHintUpdateSupply()
-      .createPopup()
-      .showInBestPositionFor(editor)
-  }
+  JBPopupFactory.getInstance()
+    .createPopupChooserBuilder(targets)
+    .setRenderer(renderer)
+    .setNamerForFiltering(renderer::getItemName)
+    .setFont(EditorUtil.getEditorFont())
+    .setTitle(CodeInsightBundle.message("declaration.navigation.title"))
+    .setItemChosenCallback(handler)
+    .withHintUpdateSupply()
+    .createPopup()
+    .showInBestPositionFor(editor)
 }
 
 private fun createRenderer(project: Project): SearchAwareRenderer<NavigationTarget> {
