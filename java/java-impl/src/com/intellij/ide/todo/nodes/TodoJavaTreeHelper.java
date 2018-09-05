@@ -100,7 +100,7 @@ public class TodoJavaTreeHelper extends TodoTreeHelper {
         }
         // add non-dir items
         final Iterator<PsiFile> filesUnderDirectory = builder.getFilesUnderDirectory(directory);
-        for (;filesUnderDirectory.hasNext();) {
+        while (filesUnderDirectory.hasNext()) {
           final PsiFile file = filesUnderDirectory.next();
           TodoFileNode todoFileNode = new TodoFileNode(project, file, builder, false);
           if (!children.contains(todoFileNode)){
