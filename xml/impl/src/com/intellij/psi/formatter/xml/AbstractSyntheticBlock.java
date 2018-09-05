@@ -118,8 +118,7 @@ public abstract class AbstractSyntheticBlock implements Block {
   }
 
   public boolean isTagDescription() {
-    final ASTNode startTreeNode = myStartTreeNode;
-    return isTagDescription(startTreeNode);
+    return isTagDescription(myStartTreeNode);
   }
 
   private static boolean isTagDescription(final ASTNode startTreeNode) {

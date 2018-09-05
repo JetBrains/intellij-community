@@ -31,9 +31,8 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
   static void show(int aType, JLayeredPane aPane, Rectangle aRectangle, DnDEvent aEvent) {
     List<DropTargetHighlighter> toShow = new ArrayList<>();
     for (DropTargetHighlighter ourHightlighter : ourHightlighters) {
-      DropTargetHighlighter each = (DropTargetHighlighter)ourHightlighter;
-      if ((each.getMask() & aType) != 0) {
-        toShow.add(each);
+      if ((ourHightlighter.getMask() & aType) != 0) {
+        toShow.add(ourHightlighter);
       }
     }
 
