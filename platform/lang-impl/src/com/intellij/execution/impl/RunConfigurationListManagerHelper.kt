@@ -7,6 +7,7 @@ import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.ObjectIntHashMap
+import com.intellij.util.isEmpty
 import org.jdom.Element
 import java.util.*
 
@@ -47,6 +48,21 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
       isSorted = false
     }
     immutableSortedSettingsList = null
+  }
+
+  fun writeOrder(parent: Element) {
+    if (customOrder.isEmpty) {
+      return
+    }
+
+    val listElement = Element("list")
+    idToSettings.values.forEachManaged {
+      listElement.addContent(Element("item").setAttribute("itemvalue", it.uniqueID))
+    }
+
+    if (!listElement.isEmpty()) {
+      parent.addContent(listElement)
+    }
   }
 
   fun readCustomOrder(element: Element) {
@@ -219,4 +235,12 @@ private fun getSortedFolderNames(list: Collection<RunnerAndConfigurationSettings
   folderNames.sortWith(NaturalComparator.INSTANCE)
   folderNames.add(null)
   return folderNames
+}
+
+internal inline fun Collection<RunnerAndConfigurationSettings>.forEachManaged(handler: (settings: RunnerAndConfigurationSettings) -> Unit) {
+  for (settings in this) {
+    if (settings.type.isManaged) {
+      handler(settings)
+    }
+  }
 }
