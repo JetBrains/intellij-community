@@ -12,7 +12,7 @@ import java.util.Collection;
 public interface SymbolReference {
 
   @NotNull
-  Iterable<? extends SymbolResolveResult> resolve(boolean incomplete);
+  Iterable<? extends SymbolResolveResult> resolveReference();
 
   @NotNull
   default Collection<? extends NavigationTarget> getNavigationTargets(@NotNull Project project) {
@@ -20,6 +20,6 @@ public interface SymbolReference {
   }
 
   default boolean references(@NotNull Symbol target) {
-    return ContainerUtil.or(resolve(false), it -> it.getTarget().equals(target));
+    return ContainerUtil.or(resolveReference(), it -> it.getTarget().equals(target));
   }
 }
