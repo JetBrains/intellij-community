@@ -77,17 +77,17 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
   }
 
   @NotNull
-  List<IntentionAction> getOptionIntentions() {
+  public List<IntentionAction> getOptionIntentions() {
     return myOptionIntentions;
   }
 
   @NotNull
-  List<IntentionAction> getOptionErrorFixes() {
+  public List<IntentionAction> getOptionErrorFixes() {
     return myOptionErrorFixes;
   }
 
   @NotNull
-  List<IntentionAction> getOptionInspectionFixes() {
+  public List<IntentionAction> getOptionInspectionFixes() {
     return myOptionInspectionFixes;
   }
 
