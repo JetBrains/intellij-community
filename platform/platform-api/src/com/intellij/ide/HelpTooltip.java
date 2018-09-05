@@ -25,12 +25,8 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBEmptyBorder;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
-import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -500,10 +496,10 @@ public class HelpTooltip {
 
       // Compute preferred size
       FontMetrics tfm = getFontMetrics(titleFont);
-      int titleWidth = SwingUtilities2.stringWidth(this, tfm, title);
+      int titleWidth = UIUtilities.stringWidth(this, tfm, title);
 
       FontMetrics fm = getFontMetrics(font);
-      titleWidth += StringUtil.isNotEmpty(shortcut) ? hgap() + SwingUtilities2.stringWidth(this, fm, shortcut) : 0;
+      titleWidth += StringUtil.isNotEmpty(shortcut) ? hgap() + UIUtilities.stringWidth(this, fm, shortcut) : 0;
 
       boolean limitWidth = StringUtil.isNotEmpty(description) || link != null;
       isMultiline = limitWidth && (titleWidth > maxWidth());
