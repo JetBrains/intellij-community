@@ -1,20 +1,14 @@
 
 import sys
 import traceback
-from _pydevd_bundle.pydevd_constants import dict_iter_items
 
 
 def update_cell_name(pydb, new_name):
-    if hasattr(pydb, "latest_hash"):
-        latest_hash = pydb.latest_hash
-        if not hasattr(pydb, "jupyter_hash_to_cell"):
-            pydb.jupyter_hash_to_cell = {}
-        pydb.jupyter_hash_to_cell[latest_hash] = new_name
-        pydb.jupyter_cell_to_hash[new_name] = latest_hash
-        # if hasattr(pydb, "jupyter_breakpoints"):
-        #     line_to_breakpoint = pydb.jupyter_breakpoints[latest_hash]
-        #     for line, bp in dict_iter_items(line_to_breakpoint):
-        #         bp.cell_file = new_name
+    if hasattr(pydb, "latest_cell_id"):
+        latest_cell_id = pydb.latest_cell_id
+        pydb.jupyter_cell_id_to_name[latest_cell_id] = new_name
+        pydb.jupyter_cell_name_to_id[new_name] = latest_cell_id
+        # update breakpoints?
 
 
 def compile_cache_wrapper(orig, ipython_shell):
@@ -56,6 +50,6 @@ def attach_to_debugger(debugger_port):
         sys.stderr.write('Version of Python does not support debuggable Interactive Console.\n')
 
 
-def set_latest_hash(latest_hash):
+def set_latest_cell_id(latest_cell_id):
     ipython_shell = get_ipython()
-    ipython_shell.debugger.latest_hash = latest_hash
+    ipython_shell.debugger.latest_cell_id = latest_cell_id

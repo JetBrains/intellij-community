@@ -36,7 +36,8 @@ def add_line_breakpoint(plugin, pydb, type, file, line, condition, expression, f
 def _init_plugin_breaks(pydb):
     pydb.jupyter_exception_break = {}
     pydb.jupyter_breakpoints = {}
-    pydb.jupyter_cell_to_hash = {}
+    pydb.jupyter_cell_name_to_id = {}
+    pydb.jupyter_cell_id_to_name = {}
 
 
 def add_exception_breakpoint(plugin, pydb, type, exception):
@@ -81,9 +82,9 @@ def can_not_skip(plugin, pydb, pydb_frame, frame, info):
         return True
     if pydb.jupyter_breakpoints:
         filename = frame.f_code.co_filename
-        if filename in pydb.jupyter_cell_to_hash:
-            hash_num = pydb.jupyter_cell_to_hash[filename]
-            line_to_bp = pydb.jupyter_breakpoints[hash_num]
+        if filename in pydb.jupyter_cell_name_to_id:
+            cell_id = pydb.jupyter_cell_name_to_id[filename]
+            line_to_bp = pydb.jupyter_breakpoints[cell_id]
             if len(line_to_bp) > 0:
                 return True
     return False
@@ -156,9 +157,9 @@ def get_breakpoint(plugin, pydb, pydb_frame, frame, event, args):
     filename = frame.f_code.co_filename
     frame_line = frame.f_lineno
     if event == "line":
-        if filename in pydb.jupyter_cell_to_hash:
-            hash_num = pydb.jupyter_cell_to_hash[filename]
-            line_to_bp = pydb.jupyter_breakpoints[hash_num]
+        if filename in pydb.jupyter_cell_name_to_id:
+            cell_id = pydb.jupyter_cell_name_to_id[filename]
+            line_to_bp = pydb.jupyter_breakpoints[cell_id]
             if frame_line in line_to_bp:
                 bp = line_to_bp[frame_line]
                 return True, bp, frame, "jupyter-line"
@@ -197,7 +198,7 @@ def _convert_filename(frame, pydb):
     filename = frame.f_code.co_filename
     file_basename = os.path.basename(filename)
     if file_basename.startswith("<ipython-input"):
-        return pydb.jupyter_cell_to_hash[frame.f_code.co_filename]
+        return pydb.jupyter_cell_name_to_id[filename]
     else:
         return filename
 

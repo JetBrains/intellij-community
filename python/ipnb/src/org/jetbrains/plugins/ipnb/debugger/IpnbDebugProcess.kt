@@ -46,16 +46,16 @@ class IpnbDebugProcess(session: XDebugSession,
     connectionManager.executeCode(codePanel, connectionId, createPydevConnectionCommand(portToConnect))
   }
 
-  private fun setLatestHash(hash: String): String {
+  private fun setLatestCellId(cellId: String): String {
     val command = StringBuilder()
     command.append("from pydev_jupyter import pydev_debug_jupyter\n")
-    command.append("pydev_debug_jupyter.set_latest_hash('$hash')\n")
+    command.append("pydev_debug_jupyter.set_latest_cell_id('$cellId')\n")
     return command.toString()
   }
 
-  fun updateLatestHash(connectionId: String, codePanel: IpnbCodePanel, hash: String) {
+  fun updateLatestCellId(connectionId: String, codePanel: IpnbCodePanel, cellId: String) {
     val connectionManager = IpnbConnectionManager.getInstance(project)
-    connectionManager.executeCode(codePanel, connectionId, setLatestHash(hash))
+    connectionManager.executeCode(codePanel, connectionId, setLatestCellId(cellId))
   }
 
 }

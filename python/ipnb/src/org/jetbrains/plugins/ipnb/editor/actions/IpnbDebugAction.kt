@@ -42,7 +42,7 @@ class IpnbDebugAction(private val myFileEditor: IpnbFileEditor) : AnAction("Debu
       if (debugProcess is IpnbDebugProcess && debugProcess.isConnected) {
         val selectedCellPanel = myFileEditor.ipnbFilePanel.selectedCellPanel
         if (selectedCellPanel is IpnbCodePanel) {
-          debugProcess.updateLatestHash(filePath, selectedCellPanel, "/home/user/PycharmProjects/Jupiter_Test/playground.py")
+          debugProcess.updateLatestCellId(filePath, selectedCellPanel, "/home/user/PycharmProjects/Jupiter_Test/playground.py")
         }
 
         IpnbRunCellAction.runCell(myFileEditor.ipnbFilePanel, false)
