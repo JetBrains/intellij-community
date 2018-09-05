@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.EventDispatcher
@@ -10,7 +11,7 @@ import org.jetbrains.annotations.CalledInBackground
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.api.GithubApiRequests
-import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailed
+import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailedWithHtml
 import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
 import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestsListSelectionModel
 import java.util.*
@@ -24,12 +25,14 @@ class GithubPullRequestsDetailsLoader(progressManager: ProgressManager,
     GithubPullRequestsListSelectionModel.SelectionChangedListener {
 
   @set:CalledInAwt
-  var request: Future<GithubPullRequestDetailed>? by Delegates.observable<Future<GithubPullRequestDetailed>?>(null) { _, _, _ ->
-    changeEventDispatcher.multicaster.requestChanged()
-  }
+  var request: Future<GithubPullRequestDetailedWithHtml>?
+    by Delegates.observable<Future<GithubPullRequestDetailedWithHtml>?>(null) { _, _, _ ->
+      changeEventDispatcher.multicaster.requestChanged()
+    }
     private set
 
   private val changeEventDispatcher = EventDispatcher.create(RequestChangedListener::class.java)
+  private val loadingEventDispatcher = EventDispatcher.create(LoadingListener::class.java)
 
   init {
     selectionModel.addChangesListener(this, this)
@@ -40,6 +43,7 @@ class GithubPullRequestsDetailsLoader(progressManager: ProgressManager,
     val selection = selectionModel.current
     if (selection == null) {
       request = null
+      loadingEventDispatcher.multicaster.loaderCleared()
     }
     else {
       val requestExecutor = requestExecutorHolder.executor
@@ -49,15 +53,35 @@ class GithubPullRequestsDetailsLoader(progressManager: ProgressManager,
 
   @CalledInBackground
   private fun loadDetails(indicator: ProgressIndicator, requestExecutor: GithubApiRequestExecutor, searchedIssue: GithubSearchedIssue)
-    : GithubPullRequestDetailed {
-    val links = searchedIssue.pullRequestLinks ?: throw IllegalStateException("Missing pull request links")
-    return requestExecutor.execute(indicator, GithubApiRequests.Repos.PullRequests.get(links.url))
+    : GithubPullRequestDetailedWithHtml {
+    try {
+      val links = searchedIssue.pullRequestLinks ?: throw IllegalStateException("Missing pull request links")
+      val details = requestExecutor.execute(indicator, GithubApiRequests.Repos.PullRequests.getHtml(links.url))
+      loadingEventDispatcher.multicaster.detailsLoaded(details)
+      return details
+    }
+    catch (pce: ProcessCanceledException) {
+      throw pce
+    }
+    catch (e: Exception) {
+      loadingEventDispatcher.multicaster.errorOccurred(e)
+      throw e
+    }
   }
 
   fun addRequestChangeListener(listener: RequestChangedListener, disposable: Disposable) =
     changeEventDispatcher.addListener(listener, disposable)
 
+  fun addLoadingListener(listener: LoadingListener, disposable: Disposable) =
+    loadingEventDispatcher.addListener(listener, disposable)
+
   interface RequestChangedListener : EventListener {
     fun requestChanged()
+  }
+
+  interface LoadingListener : EventListener {
+    fun detailsLoaded(details: GithubPullRequestDetailedWithHtml)
+    fun errorOccurred(error: Throwable)
+    fun loaderCleared()
   }
 }

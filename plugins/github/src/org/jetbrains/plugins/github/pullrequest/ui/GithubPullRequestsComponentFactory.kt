@@ -47,18 +47,18 @@ class GithubPullRequestsComponentFactory(private val project: Project,
     val branchFetcher = GithubPullRequestsBranchesFetcher(progressManager, git, detailsLoader, repository, remote)
     val changesLoader = GithubPullRequestsChangesLoader(project, progressManager, branchFetcher, repository)
 
-    val changes = GithubPullRequestChangesComponent(project, changesLoader)
-    list.setToolbarHeightReferent(changes.toolbarComponent)
+    val preview = GithubPullRequestPreviewComponent(project, detailsLoader, changesLoader)
+    list.setToolbarHeightReferent(preview.toolbarComponent)
 
     val splitter = OnePixelSplitter("Github.PullRequests.Component", 0.7f)
     splitter.firstComponent = list
-    splitter.secondComponent = changes
+    splitter.secondComponent = preview
 
     // disposed by content manager when tab is closed
     val wrapper = WrappingComponent(splitter, repository, remote, repoPath, account, listLoader, detailsLoader, branchFetcher)
     Disposer.register(wrapper, Disposable {
       Disposer.dispose(list)
-      Disposer.dispose(changes)
+      Disposer.dispose(preview)
 
       Disposer.dispose(listLoader)
       Disposer.dispose(changesLoader)
