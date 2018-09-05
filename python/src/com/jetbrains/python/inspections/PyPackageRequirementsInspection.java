@@ -358,14 +358,24 @@ public class PyPackageRequirementsInspection extends PyInspection {
     @NotNull private final Module myModule;
     @NotNull private final Sdk mySdk;
     @NotNull private final List<PyRequirement> myUnsatisfied;
+    @NotNull private final List<String> myExtraArgs;
 
     public PyInstallRequirementsFix(@Nullable String name, @NotNull Module module, @NotNull Sdk sdk,
                                     @NotNull List<PyRequirement> unsatisfied) {
+      this(name, module, sdk, unsatisfied, Collections.emptyList());
+    }
+
+    public PyInstallRequirementsFix(@Nullable String name,
+                                    @NotNull Module module,
+                                    @NotNull Sdk sdk,
+                                    @NotNull List<PyRequirement> unsatisfied,
+                                    @NotNull List<String> extraArgs) {
       final boolean plural = unsatisfied.size() > 1;
       myName = name != null ? name : String.format("Install requirement%s", plural ? "s" : "");
       myModule = module;
       mySdk = sdk;
       myUnsatisfied = unsatisfied;
+      myExtraArgs = extraArgs;
     }
 
     @NotNull
@@ -434,7 +444,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
     private void installRequirements(Project project, List<PyRequirement> requirements) {
       final PyPackageManagerUI ui = new PyPackageManagerUI(project, mySdk, new RunningPackagingTasksListener(myModule));
-      ui.install(requirements, Collections.emptyList());
+      ui.install(requirements, myExtraArgs);
     }
   }
 
