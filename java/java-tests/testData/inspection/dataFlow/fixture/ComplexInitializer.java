@@ -1,5 +1,6 @@
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Contract;
 
 class InitializerTest {
   int x = Math.random() > 0.5 ? 0 : 1;
