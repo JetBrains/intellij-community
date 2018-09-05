@@ -111,6 +111,11 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
     return super.getTokenEnd();
   }
 
+  @NotNull
+  private String getBaseTokenText() {
+    return getBufferSequence().subSequence(getBaseTokenStart(), getBaseTokenEnd()).toString();
+  }
+
   private boolean isBaseAt(IElementType tokenType) {
     return getBaseTokenType() == tokenType;
   }
@@ -189,10 +194,12 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
   }
 
   private void checkFString() {
-    final String tokenText = getTokenText();
+    final String tokenText = getBaseTokenText();
     if (isBaseAt(PyTokenTypes.FSTRING_START)) {
       final int prefixLength = PyStringLiteralUtil.getPrefixLength(tokenText);
-      myFStringStack.push(tokenText.substring(prefixLength));
+      final String openingQuotes = tokenText.substring(prefixLength);
+      assert !openingQuotes.isEmpty();
+      myFStringStack.push(openingQuotes);
     }
     else if (isBaseAt(PyTokenTypes.FSTRING_END)) {
       while (!myFStringStack.isEmpty()) {
