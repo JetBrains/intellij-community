@@ -213,9 +213,9 @@ public class UITheme {
         Object finalValue = value;
 
         //please DO NOT invoke forEach on UIDefaults directly
-        ((UIDefaults)defaults.clone()).entrySet().forEach(e -> {
-          if (e.getKey() instanceof String && ((String)e.getKey()).endsWith(tail)) {
-            defaults.put(e.getKey(), finalValue);
+        ((UIDefaults)defaults.clone()).keySet().forEach(defaultKey -> {
+          if (defaultKey instanceof String && ((String)defaultKey).endsWith(tail)) {
+            defaults.put(defaultKey, finalValue);
           }
         });
       } else {
