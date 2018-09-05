@@ -85,7 +85,7 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   }
 
   @Override
-  public final void setName(String name) {
+  public final void setName(@Nullable String name) {
     myName = StringUtil.nullize(name);
   }
 
