@@ -48,6 +48,7 @@ public class IncomingChangesIndicator {
     final VcsListener listener = new VcsListener() {
       @Override
       public void directoryMappingChanged() {
+        if (myProject.isDisposed()) return;
         UIUtil.invokeLaterIfNeeded(() -> updateIndicatorVisibility());
       }
     };
