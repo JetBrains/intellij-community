@@ -141,6 +141,11 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     myData = data;
   }
 
+  protected JUnitConfiguration(@NotNull Project project, Data data, @NotNull ConfigurationFactory configurationFactory) {
+    super(new JavaRunConfigurationModule(project, false), configurationFactory);
+    myData = data;
+  }
+
   @Override
   public TestObject getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
     return TestObject.fromString(myData.TEST_OBJECT, this, env);
