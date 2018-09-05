@@ -3,13 +3,17 @@ package com.intellij.configurationScript
 import com.intellij.execution.RunManager
 import com.intellij.execution.RunManagerListener
 import com.intellij.execution.configurations.ConfigurationFactory
+import com.intellij.execution.impl.RUN_CONFIGURATION_TEMPLATE_PROVIDER_EP
+import com.intellij.execution.impl.RunConfigurationTemplateProvider
 import com.intellij.execution.impl.RunManagerImpl
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.io.exists
 import com.intellij.util.io.inputStreamIfExists
+import gnu.trove.THashMap
 import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.constructor.SafeConstructor
 import org.yaml.snakeyaml.nodes.MappingNode
@@ -30,11 +34,43 @@ internal class IntellijConfigurationAppInitializer : ApplicationInitializedListe
         // todo listen file changes
         val file = findConfigurationFile(project) ?: return
         val inputStream = file.inputStreamIfExists() ?: return
+        val map = THashMap<ConfigurationFactory, FactoryEntry>()
         inputStream.use {
-          parseConfigurationFile(it.bufferedReader()) { _, _ -> }
+          parseConfigurationFile(it.bufferedReader()) { factory, state ->
+            map.put(factory, FactoryEntry(state))
+          }
         }
+        RUN_CONFIGURATION_TEMPLATE_PROVIDER_EP.findExtension(MyRunConfigurationTemplateProvider::class.java, project)!!.setTemplates(map)
       }
     })
+  }
+}
+
+private class FactoryEntry(state: Any) {
+  var state: Any? = state
+  var settings: RunnerAndConfigurationSettingsImpl? = null
+}
+
+private class MyRunConfigurationTemplateProvider : RunConfigurationTemplateProvider {
+  @Volatile
+  private var map: Map<ConfigurationFactory, FactoryEntry>? = null
+
+  override fun getRunConfigurationTemplate(factory: ConfigurationFactory, runManager: RunManagerImpl): RunnerAndConfigurationSettingsImpl? {
+    val item = map?.get(factory) ?: return null
+    synchronized(item) {
+      var settings = item.settings
+      if (settings != null) {
+        return settings
+      }
+
+      settings = RunnerAndConfigurationSettingsImpl(runManager, isTemplate = true)
+      item.settings = settings
+      return settings
+    }
+  }
+
+  internal fun setTemplates(value: Map<ConfigurationFactory, FactoryEntry>) {
+    map = value
   }
 }
 

@@ -165,6 +165,7 @@ class TestingTasksImpl extends TestingTasks {
           "org.jetbrains.instrumentation.trace.file": getTestDiscoveryTraceFilePath(),
           "test.discovery.include.class.patterns"   : options.testDiscoveryIncludePatterns,
           "test.discovery.exclude.class.patterns"   : options.testDiscoveryExcludePatterns,
+          "test.discovery.affected.roots"           : context.paths.projectHome,
         ] as Map<String, String>)
     }
   }

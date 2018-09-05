@@ -364,6 +364,7 @@ public final class PreviewFormAction extends AnAction{
       };
     }
 
+    @NotNull
     @Override
     public String getName() {
       return UIDesignerBundle.message("title.form.preview");

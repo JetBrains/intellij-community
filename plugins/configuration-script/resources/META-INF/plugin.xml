@@ -13,5 +13,6 @@
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
     <applicationInitializedListener implementation="com.intellij.configurationScript.IntellijConfigurationAppInitializer"/>
+    <runConfigurationTemplateProvider implementation="com.intellij.configurationScript.MyRunConfigurationTemplateProvider"/>
   </extensions>
 </idea-plugin>

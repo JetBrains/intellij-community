@@ -15,6 +15,8 @@
  */
 package com.siyeh.ig.fixes.migration;
 
+import com.intellij.application.options.CodeStyle;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.migration.ForCanBeForeachInspection;
@@ -31,6 +33,17 @@ public class ForCanBeForeachFixTest extends IGQuickFixesTestCase {
   public void testForOuterClass() { doTest(); }
   public void testForOuterClassIterator() { doTest(); }
   public void testForQualifiedArray() { doTest(); }
+  public void testForFieldName() {
+    JavaCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
+    String oldPrefix = settings.FIELD_NAME_PREFIX;
+    settings.FIELD_NAME_PREFIX = "my";
+    try {
+      doTest();
+    }
+    finally {
+      settings.FIELD_NAME_PREFIX = oldPrefix;
+    }
+  }
 
   @Override
   public void setUp() throws Exception {

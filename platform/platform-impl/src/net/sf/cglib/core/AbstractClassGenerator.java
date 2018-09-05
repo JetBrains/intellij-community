@@ -235,8 +235,6 @@ implements ClassGenerator
             return firstInstance(gen);
         } catch (RuntimeException e) {
             throw e;
-        } catch (Error e) {
-            throw e;
         } catch (Exception e) {
             throw new CodeGenerationException(e);
         }

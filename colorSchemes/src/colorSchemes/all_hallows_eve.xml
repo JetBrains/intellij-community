@@ -413,7 +413,11 @@
         <option name="FOREGROUND" value="3387CC" />
       </value>
     </option>
-    <option baseAttributes="DEFAULT_IDENTIFIER" name="DEFAULT_FUNCTION_CALL" />
+    <option name="DEFAULT_FUNCTION_CALL">
+      <value>
+        <option name="FOREGROUND" value="C83730" />
+      </value>
+    </option>
     <option baseAttributes="DEFAULT_IDENTIFIER" name="DEFAULT_FUNCTION_DECLARATION" />
     <option name="DEFAULT_GLOBAL_VARIABLE">
       <value>

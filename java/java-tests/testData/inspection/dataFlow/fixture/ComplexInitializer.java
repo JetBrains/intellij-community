@@ -58,6 +58,8 @@ class Constants {
   static final Object C10 = get();
   static final Object C11 = get();
 
+  // Reset " -> new" inferred contract; otherwise we don't get "too complex" warning
+  @Contract("-> _")
   static Object get() {
     System.out.println();
     return new Object();

@@ -17,7 +17,6 @@
 package com.intellij.ide.todo;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
-import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.todo.nodes.TodoFileNode;
 import com.intellij.ide.todo.nodes.TodoItemNode;
 import com.intellij.ide.todo.nodes.TodoTreeHelper;
@@ -54,7 +53,6 @@ import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreePath;
 import java.util.*;
 
 /**
@@ -401,21 +399,6 @@ public abstract class TodoTreeBuilder implements Disposable {
 
   protected boolean isAutoExpandNode(NodeDescriptor descriptor) {
     return getTodoTreeStructure().isAutoExpandNode(descriptor);
-  }
-
-  protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
-    final Object element= nodeDescriptor.getElement();
-    if (element instanceof TodoItemNode){
-      return false;
-    } else if(element instanceof PsiFileNode) {
-      try {
-        return getTodoTreeStructure().mySearchHelper.getTodoItemsCount(((PsiFileNode)element).getValue()) > 0;
-      }
-      catch (IndexNotReadyException e) {
-        return true;
-      }
-    }
-    return true;
   }
 
   /**

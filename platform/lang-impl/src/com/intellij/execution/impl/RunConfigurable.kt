@@ -635,7 +635,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
 
       additionalSettings.forEach { it.first.apply() }
 
-      manager.setOrder(Comparator.comparingInt(ToIntFunction<RunnerAndConfigurationSettings> { settingsToOrder.get(it) }))
+      manager.setOrder(Comparator.comparingInt(ToIntFunction { settingsToOrder.get(it) }))
     }
     finally {
       manager.fireEndUpdate()

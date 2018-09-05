@@ -212,9 +212,8 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
       if (!(item instanceof BlockTreeNode)) return;
       BlockTreeNode descriptor = (BlockTreeNode)item;
 
-      PsiElement rootPsi = myRootElement;
       int blockStart = descriptor.getBlock().getTextRange().getStartOffset();
-      PsiFile file = rootPsi.getContainingFile();
+      PsiFile file = myRootElement.getContainingFile();
       PsiElement currentPsiEl = InjectedLanguageUtil.findElementAtNoCommit(file, blockStart);
       if (currentPsiEl == null) currentPsiEl = file;
       int blockLength = descriptor.getBlock().getTextRange().getLength();

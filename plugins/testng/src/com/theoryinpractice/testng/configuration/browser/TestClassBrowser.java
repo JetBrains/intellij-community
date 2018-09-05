@@ -14,7 +14,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.theoryinpractice.testng.MessageInfoException;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.configuration.TestNGConfigurationEditor;
-import com.theoryinpractice.testng.configuration.TestNGConfigurationType;
 import com.theoryinpractice.testng.model.TestClassFilter;
 
 /**
@@ -60,7 +59,7 @@ public class TestClassBrowser extends BrowseModuleValueActionListener
   }
 
   public ClassFilter.ClassFilterWithScope getFilter() throws MessageInfoException {
-    TestNGConfiguration config = new TestNGConfiguration("<no-name>", getProject(), TestNGConfigurationType.getInstance());
+    TestNGConfiguration config = new TestNGConfiguration(getProject());
     editor.applyEditorTo(config);
     GlobalSearchScope scope = getSearchScope(config.getModules());
     if (scope == null) {

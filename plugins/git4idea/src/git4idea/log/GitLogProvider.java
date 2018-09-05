@@ -136,7 +136,7 @@ public class GitLogProvider implements VcsLogProvider {
       validateDataAndReportError(root, allRefs, sortedCommits, data, branches, currentTagNames, commitsFromTags);
     }
 
-    return new LogDataImpl(allRefs, sortedCommits);
+    return new LogDataImpl(allRefs, GitBekParentFixer.fixCommits(sortedCommits));
   }
 
   private static void validateDataAndReportError(@NotNull final VirtualFile root,
@@ -301,7 +301,7 @@ public class GitLogProvider implements VcsLogProvider {
     List<String> parameters = new ArrayList<>(GitLogUtil.LOG_ALL);
     parameters.add("--date-order");
 
-    final GitBekParentFixer parentFixer = GitBekParentFixer.prepare(root, this);
+    final GitBekParentFixer parentFixer = GitBekParentFixer.prepare(myProject, root);
     Set<VcsUser> userRegistry = newHashSet();
     Set<VcsRef> refs = newHashSet();
     GitLogUtil.readTimedCommits(myProject, root, parameters, new CollectConsumer<>(userRegistry), new CollectConsumer<>(refs),
@@ -470,19 +470,11 @@ public class GitLogProvider implements VcsLogProvider {
       }
     }
 
-    boolean regexp = true;
-    boolean caseSensitive = false;
     VcsLogTextFilter textFilter = filterCollection.get(VcsLogFilterCollection.TEXT_FILTER);
-    if (textFilter != null) {
-      regexp = textFilter.isRegex();
-      caseSensitive = textFilter.matchesCase();
-      String text = textFilter.getText();
-      filterParameters.add(prepareParameter("grep", text));
-    }
-    filterParameters.add(regexp ? "--extended-regexp" : "--fixed-strings");
-    if (!caseSensitive) {
-      filterParameters.add("--regexp-ignore-case"); // affects case sensitivity of any filter (except file filter)
-    }
+    String text = textFilter != null ? textFilter.getText() : null;
+    boolean regexp = textFilter == null || textFilter.isRegex();
+    boolean caseSensitive = textFilter != null && textFilter.matchesCase();
+    appendTextFilterParameters(text, regexp, caseSensitive, filterParameters);
 
     VcsLogUserFilter userFilter = filterCollection.get(VcsLogFilterCollection.USER_FILTER);
     if (userFilter != null) {
@@ -523,6 +515,17 @@ public class GitLogProvider implements VcsLogProvider {
     GitLogUtil.readTimedCommits(myProject, root, filterParameters, EmptyConsumer.getInstance(),
                                 EmptyConsumer.getInstance(), new CollectConsumer<>(commits));
     return commits;
+  }
+
+  public static void appendTextFilterParameters(@Nullable String text, boolean regexp, boolean caseSensitive,
+                                                @NotNull List<String> filterParameters) {
+    if (text != null) {
+      filterParameters.add(prepareParameter("grep", text));
+    }
+    filterParameters.add(regexp ? "--extended-regexp" : "--fixed-strings");
+    if (!caseSensitive) {
+      filterParameters.add("--regexp-ignore-case"); // affects case sensitivity of any filter (except file filter)
+    }
   }
 
   @Nullable

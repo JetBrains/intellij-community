@@ -13,6 +13,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -643,20 +644,14 @@ public class ForCanBeForeachInspection extends BaseInspection {
   static  String createNewVariableName(@NotNull PsiElement scope, PsiType type, @Nullable String containerName) {
     final Project project = scope.getProject();
     final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
-    @NonNls String baseName;
+    final PsiExpression expr;
     if (containerName != null) {
-      baseName = StringUtils.createSingularFromName(containerName);
+      expr = JavaPsiFacade.getElementFactory(project).createExpressionFromText(containerName+"[0]", scope);
+    } else {
+      expr = null;
     }
-    else {
-      final SuggestedNameInfo suggestions = codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, type);
-      final String[] names = suggestions.names;
-      if (names != null && names.length > 0) {
-        baseName = names[0];
-      }
-      else {
-        baseName = "value";
-      }
-    }
+    final SuggestedNameInfo suggestions = codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, expr, type, true);
+    @NonNls String baseName = ArrayUtil.getFirstElement(suggestions.names);
     if (baseName == null || baseName.isEmpty()) {
       baseName = "value";
     }

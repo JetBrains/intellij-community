@@ -113,7 +113,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
 
   public RunProfile createProfile(Location<PsiMethod>[] testMethods,
                                   Module module,
-                                  ConfigurationContext context, 
+                                  ConfigurationContext context,
                                   String configurationName) {
     RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(context);
     JavaTestConfigurationBase configuration = (JavaTestConfigurationBase)settings.getConfiguration();
@@ -219,6 +219,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
       return createProfile(myTestMethods, myModule, myConfiguration, environment);
     }
 
+    @NotNull
     @Override
     public String getName() {
       return myConfigurationName;
@@ -248,7 +249,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
     }
 
     @Override
-    public void setName(String name) {
+    public void setName(@NotNull String name) {
     }
 
     @NotNull

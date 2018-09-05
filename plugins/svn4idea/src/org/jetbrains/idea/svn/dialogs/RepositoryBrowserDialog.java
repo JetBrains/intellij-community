@@ -1056,8 +1056,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       return;
     }
 
-    Project p = myProject;
-    CheckoutOptionsDialog dialog = new CheckoutOptionsDialog(p, url, dir, SvnUtil.getVirtualFile(dir.getAbsolutePath()), relativePath);
+    CheckoutOptionsDialog dialog = new CheckoutOptionsDialog(myProject, url, dir, SvnUtil.getVirtualFile(dir.getAbsolutePath()), relativePath);
     dialog.show();
     dir = dialog.getTarget();
     if (dialog.isOK() && dir != null) {

@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.AnActionListener
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.subscribe
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.testGuiFramework.recorder.ui.GuiScriptEditorPanel
@@ -58,7 +58,7 @@ object GlobalActionRecorder {
     if (isActive) return
     LOG.info("Global action recorder is active")
     disposable = Disposer.newDisposable()
-    ApplicationManager.getApplication().messageBus.connect(disposable!!).subscribe(AnActionListener.TOPIC, globalActionListener)
+    AnActionListener.TOPIC.subscribe(disposable!!, globalActionListener)
     IdeEventQueue.getInstance().addDispatcher(globalAwtProcessor, disposable) //todo: add disposal dependency on component
     isActive = true
   }
