@@ -604,10 +604,7 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
 
     // apply order after loading shared RC
     lock.write {
-      parentNode.getChild("list")?.let { listElement ->
-        listManager.setCustomOrder(listElement.getChildren("item").mapNotNull { it.getAttributeValue("itemvalue") })
-      }
-      listManager.immutableSortedSettingsList = null
+      listManager.readCustomOrder(parentNode)
     }
 
     runConfigurationFirstLoaded()
@@ -634,7 +631,6 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
   }
 
   private fun runConfigurationFirstLoaded() {
-    requestSort()
     if (selectedConfiguration == null) {
       selectedConfiguration = allSettings.firstOrNull { it.type !is UnknownRunConfiguration }
     }
