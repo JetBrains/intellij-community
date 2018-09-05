@@ -210,8 +210,9 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
           node = DefaultMutableTreeNode(folder)
           typeNode.add(node)
         }
+
         for (it in configurations) {
-          typeNode.add(DefaultMutableTreeNode(it))
+          node.add(DefaultMutableTreeNode(it))
         }
       }
     }
