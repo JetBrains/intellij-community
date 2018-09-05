@@ -24,7 +24,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.StringUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -93,8 +92,7 @@ public class InstantiatingObjectToGetClassObjectInspection
       }
       else if (type instanceof PsiClassType) {
         final String canonicalText = type.getCanonicalText();
-        final String typeText =
-          StringUtils.stripAngleBrackets(canonicalText);
+        final String typeText = PsiNameHelper.getQualifiedClassName(canonicalText, false);
         text.insert(0, typeText);
       }
       else {
