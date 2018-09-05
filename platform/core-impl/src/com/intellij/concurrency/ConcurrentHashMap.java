@@ -27,6 +27,7 @@ import com.intellij.util.containers.ThreadLocalRandom;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Generated;
 import java.io.ObjectStreamField;
 import java.io.Serializable;
 import java.lang.reflect.ParameterizedType;
@@ -47,6 +48,7 @@ import java.util.stream.Stream;
 // Null keys are NOT allowed
 // Null values are NOT allowed
 // NOT serializable
+@Generated("to turn off inspections")
 
 /**
  * A hash table supporting full concurrency of retrievals and
