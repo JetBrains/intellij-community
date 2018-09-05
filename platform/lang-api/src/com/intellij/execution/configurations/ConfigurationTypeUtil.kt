@@ -16,6 +16,7 @@ object ConfigurationTypeUtil {
   }
 
   @JvmStatic
+  @Deprecated("Use equals", ReplaceWith("type1.id == type2.id"))
   fun equals(type1: ConfigurationType, type2: ConfigurationType): Boolean {
     return type1.id == type2.id
   }
