@@ -17,7 +17,7 @@ class NavigationServiceImpl(private val project: Project) : NavigationService {
       // fallback to old API
       return TargetElementUtil.getInstance().getTargetCandidates(reference).map(::PsiElementNavigationTarget)
     }
-    val results = reference.resolve(false)
+    val results = reference.resolveReference()
     val symbols = results.map { it.target }
     return symbols.flatMap {
       it.getNavigationTargets(project)
