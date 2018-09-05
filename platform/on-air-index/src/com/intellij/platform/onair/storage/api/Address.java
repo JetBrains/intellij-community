@@ -5,7 +5,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Base64;
 import java.util.List;
-import java.util.Objects;
 
 // 128 bit key
 public class Address {
@@ -50,8 +49,12 @@ public class Address {
 
   @Override
   public int hashCode() {
-    // TODO: inline
-    return Objects.hash(highBytes, lowBytes);
+    int result = 1;
+
+    result = 31 * result + Long.hashCode(highBytes);
+    result = 31 * result + Long.hashCode(lowBytes);
+
+    return result;
   }
 
   @Override
