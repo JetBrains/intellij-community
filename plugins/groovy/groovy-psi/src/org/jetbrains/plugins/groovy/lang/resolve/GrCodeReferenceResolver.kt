@@ -40,7 +40,7 @@ internal object GrCodeReferenceResolver : GroovyResolver<GrCodeReferenceElement>
     return when (ref.kind) {
       PACKAGE_REFERENCE -> ref.resolveAsPackageReference()
       IMPORT_REFERENCE -> ref.resolveAsImportReference()
-      REFERENCE -> ref.resolveReference()
+      REFERENCE -> ref.resolveAsReference()
     }
   }
 }
@@ -90,7 +90,7 @@ private fun resolveImportReference(file: GroovyFile, import: GroovyImport): Coll
   return listOf(ElementResolveResult(resolved))
 }
 
-private fun GrCodeReferenceElement.resolveReference(): Collection<GroovyResolveResult> {
+private fun GrCodeReferenceElement.resolveAsReference(): Collection<GroovyResolveResult> {
   val name = referenceName ?: return emptyList()
 
   if (canResolveToTypeParameter()) {

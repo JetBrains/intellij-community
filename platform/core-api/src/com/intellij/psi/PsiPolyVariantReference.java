@@ -28,8 +28,8 @@ public interface PsiPolyVariantReference extends PsiReference {
 
   @NotNull
   @Override
-  default Iterable<? extends SymbolResolveResult> resolve(boolean incomplete) {
-    ResolveResult[] results = multiResolve(incomplete);
+  default Iterable<? extends SymbolResolveResult> resolveReference() {
+    ResolveResult[] results = multiResolve(false);
     return ContainerUtil.filter(results, it -> it.getElement() != null);
   }
 }

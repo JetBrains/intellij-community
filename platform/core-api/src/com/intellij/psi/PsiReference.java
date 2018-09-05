@@ -127,7 +127,7 @@ public interface PsiReference extends SymbolReference {
 
   @NotNull
   @Override
-  default Iterable<? extends SymbolResolveResult> resolve(boolean incomplete) {
+  default Iterable<? extends SymbolResolveResult> resolveReference() {
     PsiElement resolved = resolve();
     return resolved == null ? Collections.emptyList() : Collections.singletonList(new PsiSymbolResolveResult(resolved));
   }
