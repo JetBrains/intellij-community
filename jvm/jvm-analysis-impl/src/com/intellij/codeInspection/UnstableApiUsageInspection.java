@@ -5,7 +5,6 @@ import com.intellij.analysis.JvmAnalysisBundle;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.siyeh.ig.ui.ExternalizableStringSet;
@@ -73,17 +72,5 @@ public class UnstableApiUsageInspection extends AnnotatedElementInspectionBase {
       return false;
     }
     return ProjectFileIndex.getInstance(element.getProject()).isInLibraryClasses(containingVirtualFile);
-  }
-
-  @NotNull
-  private static String getReferenceText(@NotNull PsiReference reference) {
-    if (reference instanceof PsiQualifiedReference) {
-      String referenceName = ((PsiQualifiedReference)reference).getReferenceName();
-      if (referenceName != null) {
-        return referenceName;
-      }
-    }
-    // references are not PsiQualifiedReference for annotation attributes
-    return StringUtil.getShortName(reference.getCanonicalText());
   }
 }

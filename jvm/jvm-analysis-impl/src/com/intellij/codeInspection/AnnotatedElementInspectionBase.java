@@ -4,6 +4,7 @@ package com.intellij.codeInspection;
 import com.intellij.analysis.JvmAnalysisBundle;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -112,5 +113,17 @@ public abstract class AnnotatedElementInspectionBase extends LocalInspectionTool
     }
 
     return false;
+  }
+
+  @NotNull
+  protected static String getReferenceText(@NotNull PsiReference reference) {
+    if (reference instanceof PsiQualifiedReference) {
+      String referenceName = ((PsiQualifiedReference)reference).getReferenceName();
+      if (referenceName != null) {
+        return referenceName;
+      }
+    }
+    // references are not PsiQualifiedReference for annotation attributes
+    return StringUtil.getShortName(reference.getCanonicalText());
   }
 }
