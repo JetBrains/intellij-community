@@ -2,6 +2,7 @@
 package com.intellij.ide.ui.search;
 
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -11,5 +12,5 @@ import javax.swing.*;
 public interface ComponentHighligtingListener {
   Topic<ComponentHighligtingListener> TOPIC = Topic.create("highlightComponent", ComponentHighligtingListener.class);
 
-  void hilight(JComponent component);
+  void hilight(@NotNull JComponent component, @NotNull String seachString);
 }

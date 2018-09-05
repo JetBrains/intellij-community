@@ -608,7 +608,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
   }
 
   @Override
-  public final void hilight(JComponent component) {
+  public final void hilight(@NotNull JComponent component, @NotNull String searchString) {
     if (isInsideThisPanel(component)) {
       if (component instanceof TabLabel) {
         Container parent = component.getParent();

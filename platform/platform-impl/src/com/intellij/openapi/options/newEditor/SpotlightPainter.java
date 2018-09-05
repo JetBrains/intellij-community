@@ -27,6 +27,7 @@ import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.Component;
 import java.awt.Graphics2D;
@@ -104,7 +105,7 @@ abstract class SpotlightPainter extends AbstractPainter implements ComponentHigh
   }
 
   @Override
-  public void hilight(JComponent component) {
+  public void hilight(@NotNull JComponent component, @NotNull String searchString) {
     myGlassPanel.addSpotlight(component);
   }
 }
