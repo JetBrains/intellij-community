@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.psiutils;
 
-public class StringUtils {
-  private StringUtils() {
-    super();
-  }
+// "Replace with 'foreach'" "true"
+import java.util.*;
 
-  public static String stripAngleBrackets(String string) {
-    final int index = string.indexOf('<');
-    if (index == -1) {
-      return string;
+public class Test {
+  private List<String> myChildren;
+
+  void test() {
+    fo<caret>r ( int i = 0; i< myChildren.size(); i++){
+      System.out.println(myChildren.get(i));
     }
-    return string.substring(0, index);
   }
 }
