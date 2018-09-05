@@ -570,9 +570,8 @@ public final class Generator {
     PsiClass beanClass = null;
 
     // find get/set pair and bean class
-    outer: for (int i = 0; i < allGetDataMethods.length; i++) {
-      final PsiMethod _getMethod = allGetDataMethods[i];
-
+    outer:
+    for (final PsiMethod _getMethod : allGetDataMethods) {
       if (!PsiType.VOID.equals(_getMethod.getReturnType())) {
         continue;
       }

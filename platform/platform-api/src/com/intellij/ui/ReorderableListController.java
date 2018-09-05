@@ -140,8 +140,7 @@ public abstract class ReorderableListController <T> {
     }
 
     protected void runPostHandlers(final V change) {
-      for (Iterator<ActionNotification<V>> iterator = myPostHandlers.iterator(); iterator.hasNext();) {
-        final ActionNotification<V> runnable = iterator.next();
+      for (final ActionNotification<V> runnable : myPostHandlers) {
         runnable.afterActionPerformed(change);
       }
     }

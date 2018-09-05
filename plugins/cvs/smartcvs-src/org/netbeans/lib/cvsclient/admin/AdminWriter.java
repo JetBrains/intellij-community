@@ -227,8 +227,7 @@ public final class AdminWriter implements IAdminWriter {
       return;
     }
 
-    for (int i = 0; i < files.length; i++) {
-      final File file = files[i];
+    for (final File file : files) {
       if (file.isDirectory()) {
         deleteDirectoryRecursively(file);
       }

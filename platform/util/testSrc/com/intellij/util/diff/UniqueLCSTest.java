@@ -104,15 +104,15 @@ public class UniqueLCSTest extends TestCase {
 
   private static void checkMaxSequence(int[] sequence, int[] expected) {
     int max = 0;
-    for (int i = 0; i < sequence.length; i++) {
-      max = Math.max(sequence[i] + 1, max);
+    for (int aSequence : sequence) {
+      max = Math.max(aSequence + 1, max);
     }
 
     int[] first = new int[sequence.length];
     int[] second = new int[max + 2];
 
     for (int i = 0; i < sequence.length; i++) {
-      assertEquals("Elements in sequence should be unique", second[sequence[i]], 0);
+      assertEquals("Elements in sequence should be unique", 0, second[sequence[i]]);
       first[i] = i + 1;
       second[sequence[i]] = i + 1;
     }

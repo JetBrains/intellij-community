@@ -79,8 +79,7 @@ public class ByWord implements DiffPolicy {
 
   private static int countNotWhitespaces(@NotNull Word[] words) {
     int counter = 0;
-    for (int i = 0; i < words.length; i++) {
-      Word word = words[i];
+    for (Word word : words) {
       if (!word.isWhitespace()) counter++;
     }
     return counter;
@@ -197,8 +196,7 @@ public class ByWord implements DiffPolicy {
     public Version getVersion2() { return myVersion2; }
 
     private void addAll(@NotNull DiffFragment[] fragments) {
-      for (int i = 0; i < fragments.length; i++) {
-        DiffFragment fragment = fragments[i];
+      for (DiffFragment fragment : fragments) {
         add(fragment);
       }
     }

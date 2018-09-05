@@ -47,9 +47,8 @@ public class SelectionSaver implements TreeSelectionListener, TreeModelListener,
     TreePath pathToDelete = treeModelEvent.getTreePath();
     Object[] children = treeModelEvent.getChildren();
 
-    for (int i = 0; i < children.length; i++) {
-      Object nodeToDelete = children[i];
-      if (myCurrentSelection.contains(nodeToDelete)){
+    for (Object nodeToDelete : children) {
+      if (myCurrentSelection.contains(nodeToDelete)) {
         int deletedRow = myTree.getRowForPath(pathToDelete.pathByAddingChild(nodeToDelete));
         if (deletedRow == 0) return;
         TreePath treePath = new TreePath(myTree.getPathForRow(deletedRow - 1));
@@ -64,8 +63,7 @@ public class SelectionSaver implements TreeSelectionListener, TreeModelListener,
     myCurrentSelection = new ArrayList<>();
     TreePath[] selection = myTree.getSelectionModel().getSelectionPaths();
     if (selection == null) return;
-    for (int i = 0; i < selection.length; i++) {
-      TreePath treePath = selection[i];
+    for (TreePath treePath : selection) {
       myCurrentSelection.add((TreeNode)treePath.getLastPathComponent());
     }
   }

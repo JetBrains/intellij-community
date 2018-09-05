@@ -42,9 +42,9 @@ public class ListModelPropertyCodeGenerator extends PropertyCodeGenerator {
     generator.invokeConstructor(myListModelType, ourInitMethod);
     generator.storeLocal(listModelLocal);
 
-    for(int i=0; i<items.length; i++) {
+    for (String item : items) {
       generator.loadLocal(listModelLocal);
-      generator.push(items [i]);
+      generator.push(item);
       generator.invokeVirtual(myListModelType, ourAddElementMethod);
     }
 

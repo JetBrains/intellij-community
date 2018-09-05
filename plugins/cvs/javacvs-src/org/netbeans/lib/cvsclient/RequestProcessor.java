@@ -150,8 +150,8 @@ public final class RequestProcessor implements IRequestProcessor {
     if (envVariables == null) {
       return;
     }
-    for (Iterator iterator = envVariables.keySet().iterator(); iterator.hasNext();) {
-      String varName = (String)iterator.next();
+    for (Object o : envVariables.keySet()) {
+      String varName = (String)o;
       String varValue = (String)envVariables.get(varName);
       sendRequest(new SetRequest(varName, varValue), connectionStreams);
     }
@@ -277,8 +277,8 @@ public final class RequestProcessor implements IRequestProcessor {
 
   private void sendRequests(Requests requests, IConnectionStreams connectionStreams, IRequestsProgressHandler communicationProgressHandler)
     throws CommandAbortedException, IOException {
-    for (Iterator it = requests.getRequests().iterator(); it.hasNext();) {
-      final IRequest request = (IRequest)it.next();
+    for (Object o : requests.getRequests()) {
+      final IRequest request = (IRequest)o;
 
       sendRequest(request, connectionStreams);
 

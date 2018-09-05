@@ -96,8 +96,8 @@ public class ListUtil {
     int firstSelectedIndex = idxs[0];
     ArrayList<T> removedItems = new ArrayList<>();
     int deletedCount = 0;
-    for (int idx = 0; idx < idxs.length; idx++) {
-      int index = idxs[idx] - deletedCount;
+    for (int idx1 : idxs) {
+      int index = idx1 - deletedCount;
       if (index < 0 || index >= model.getSize()) continue;
       T obj = (T)get(model, index);
       if (condition == null || condition.value(obj)) {
@@ -132,8 +132,7 @@ public class ListUtil {
       return false;
     }
 
-    for (int idx = 0; idx < idxs.length; idx++) {
-      int index = idxs[idx];
+    for (int index : idxs) {
       if (index < 0 || index >= model.getSize()) continue;
       Object obj = getExtensions(model).get(model, index);
       if (applyable == null || applyable.value(obj)) {
@@ -148,8 +147,7 @@ public class ListUtil {
     DefaultListModel model = getModel(list);
     int[] indices = list.getSelectedIndices();
     if (!canMoveSelectedItemsUp(list)) return 0;
-    for(int i = 0; i < indices.length; i++){
-      int index = indices[i];
+    for (int index : indices) {
       Object temp = model.get(index);
       model.set(index, model.get(index - 1));
       model.set(index - 1, temp);
