@@ -16,8 +16,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.psi.PsiElementVisitor
-import com.intellij.util.CatchingConsumer
-import com.intellij.webcore.packaging.PackageManagementService
+import com.intellij.webcore.packaging.RepoPackage
 import com.jetbrains.python.inspections.PyInspection
 import com.jetbrains.python.inspections.PyInspectionVisitor
 import com.jetbrains.python.inspections.PyPackageRequirementsInspection.PyInstallRequirementsFix
@@ -27,10 +26,6 @@ import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.sdk.PythonSdkType
 import java.time.Duration
-import java.util.*
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.JComponent
 
 class PyStubPackagesAdvertiser : PyInspection() {
@@ -44,7 +39,7 @@ class PyStubPackagesAdvertiser : PyInspection() {
     private val CACHE = CacheBuilder.newBuilder()
       .maximumSize(200)
       .expireAfterAccess(Duration.ofMinutes(5))
-      .build<Pair<Sdk, String>, Set<PyRequirement>>()
+      .build<Pair<Sdk, String>, Set<RepoPackage>>()
   }
 
   @Suppress("MemberVisibilityCanBePrivate")
@@ -65,76 +60,70 @@ class PyStubPackagesAdvertiser : PyInspection() {
     override fun visitPyFile(node: PyFile) {
       val module = ModuleUtilCore.findModuleForFile(node) ?: return
       val sdk = PythonSdkType.findPythonSdk(module) ?: return
-      val service = PyPackageManagers.getInstance().getManagementService(node.project, sdk)
+
       val installedPackages = PyPackageManager.getInstance(sdk).packages ?: emptyList()
       if (installedPackages.isEmpty()) return
 
-      processWhiteListedPackages(node, module, sdk, service, installedPackages)
-      processNotWhiteListedPackages(node, module, sdk, service, installedPackages)
+      val availablePackages = PyPackageManagers.getInstance().getManagementService(node.project, sdk).allPackagesCached
+      if (availablePackages.isEmpty()) return
+
+      processWhiteListedPackages(node, module, sdk, availablePackages, installedPackages)
+      processNotWhiteListedPackages(node, module, sdk, availablePackages, installedPackages)
     }
 
     private fun processWhiteListedPackages(file: PyFile,
                                            module: Module,
                                            sdk: Sdk,
-                                           service: PackageManagementService,
+                                           availablePackages: List<RepoPackage>,
                                            installedPackages: List<PyPackage>) {
       val (sourcesToLoad, cached) = splitIntoNotCachedAndCached(whiteListedSourcesToProcess(file), sdk)
 
-      createSuitableRequirements(
-        sourceToInstalledRuntimeAndStubPackagesAvailableToInstall(
-          whiteListedSourceToInstalledRuntimeAndStubPackages(sourcesToLoad, installedPackages),
-          service
-        ),
-        sdk,
-        service
+      val sourceToStubPkgsAvailableToInstall = sourceToStubPackagesAvailableToInstall(
+        whiteListedSourceToInstalledRuntimeAndStubPackages(sourcesToLoad, installedPackages),
+        availablePackages
       )
-      { loadedReqs ->
-        if (!file.isValid) return@createSuitableRequirements
 
-        val reqs = loadedReqs + cached
-        if (reqs.isNotEmpty() && file.isValid) {
-          val plural = reqs.size > 1
-          val reqsToString = PyPackageUtil.requirementsToString(reqs)
+      sourceToStubPkgsAvailableToInstall.forEach { source, stubPkgs -> CACHE.put(sdk to source, stubPkgs) }
 
-          val installQuickFix = PyInstallRequirementsFix("Install stub package" + if (plural) "s" else "", module, sdk, reqs)
-          val ignoreQuickFix = createIgnorePackagesQuickFix(reqs, ignoredPackages)
+      val reqs = toRequirements(sourceToStubPkgsAvailableToInstall, cached)
+      if (reqs.isNotEmpty()) {
+        val plural = reqs.size > 1
+        val reqsToString = PyPackageUtil.requirementsToString(reqs)
 
-          registerProblem(file,
-                          "Stub package${if (plural) "s" else ""} $reqsToString ${if (plural) "are" else "is"} not installed. " +
-                          "${if (plural) "They" else "It"} contain${if (plural) "" else "s"} type hints needed for better code insight.",
-                          installQuickFix,
-                          ignoreQuickFix)
-        }
+        val installQuickFix = PyInstallRequirementsFix("Install stub package" + if (plural) "s" else "", module, sdk, reqs)
+        val ignoreQuickFix = createIgnorePackagesQuickFix(reqs, ignoredPackages)
+
+        registerProblem(file,
+                        "Stub package${if (plural) "s" else ""} $reqsToString ${if (plural) "are" else "is"} not installed. " +
+                        "${if (plural) "They" else "It"} contain${if (plural) "" else "s"} type hints needed for better code insight.",
+                        installQuickFix,
+                        ignoreQuickFix)
       }
     }
 
     private fun processNotWhiteListedPackages(file: PyFile,
                                               module: Module,
                                               sdk: Sdk,
-                                              service: PackageManagementService,
+                                              availablePackages: List<RepoPackage>,
                                               installedPackages: List<PyPackage>) {
       val project = file.project
       if (project.getUserData(BALLOON_SHOWING) == true) return
 
       val (sourcesToLoad, cached) = splitIntoNotCachedAndCached(notWhiteListedSourcesToProcess(file), sdk)
 
-      createSuitableRequirements(
-        sourceToInstalledRuntimeAndStubPackagesAvailableToInstall(
-          notWhiteListedSourceToInstalledRuntimeAndStubPackages(sourcesToLoad, installedPackages),
-          service
-        ),
-        sdk,
-        service
+      val sourceToStubPkgsAvailableToInstall = sourceToStubPackagesAvailableToInstall(
+        notWhiteListedSourceToInstalledRuntimeAndStubPackages(sourcesToLoad, installedPackages),
+        availablePackages
       )
-      { loadedReqs ->
-        if (!file.isValid) return@createSuitableRequirements
 
-        val reqs = loadedReqs + cached
-        if (reqs.isNotEmpty()) {
-          val plural = reqs.size > 1
-          val reqsToString = PyPackageUtil.requirementsToString(reqs)
+      sourceToStubPkgsAvailableToInstall.forEach { source, stubPkgs -> CACHE.put(sdk to source, stubPkgs) }
 
-          project.putUserData(BALLOON_SHOWING, true)
+      val reqs = toRequirements(sourceToStubPkgsAvailableToInstall, cached)
+      if (reqs.isNotEmpty()) {
+        val plural = reqs.size > 1
+        val reqsToString = PyPackageUtil.requirementsToString(reqs)
+
+        project.putUserData(BALLOON_SHOWING, true)
 
           BALLOON_NOTIFICATIONS
             .createNotification(
@@ -169,13 +158,12 @@ class PyStubPackagesAdvertiser : PyInspection() {
                   }
                 }
               }
-              finally {
-                notification.expire()
-                project.putUserData(BALLOON_SHOWING, false)
-              }
+            finally {
+              notification.expire()
+              project.putUserData(BALLOON_SHOWING, false)
             }
-            .notify(project)
-        }
+          }
+          .notify(project)
       }
     }
 
@@ -190,9 +178,9 @@ class PyStubPackagesAdvertiser : PyInspection() {
         .toSet()
     }
 
-    private fun splitIntoNotCachedAndCached(sources: Set<String>, sdk: Sdk): Pair<Set<String>, Set<PyRequirement>> {
+    private fun splitIntoNotCachedAndCached(sources: Set<String>, sdk: Sdk): Pair<Set<String>, Set<RepoPackage>> {
       val notCached = mutableSetOf<String>()
-      val cached = mutableSetOf<PyRequirement>()
+      val cached = mutableSetOf<RepoPackage>()
 
       synchronized(CACHE) {
         // despite cache is thread-safe,
@@ -250,81 +238,24 @@ class PyStubPackagesAdvertiser : PyInspection() {
       return result
     }
 
-    private fun sourceToInstalledRuntimeAndStubPackagesAvailableToInstall(sourceToInstalledRuntimeAndStubPkgs: Map<String, List<Pair<PyPackage, PyPackage?>>>,
-                                                                          service: PackageManagementService): Map<String, List<Pair<PyPackage, String>>> {
-      val stubPkgNamesAvailableToInstall = service.allPackagesCached
-        .asSequence()
+    private fun sourceToStubPackagesAvailableToInstall(sourceToInstalledRuntimeAndStubPkgs: Map<String, List<Pair<PyPackage, PyPackage?>>>,
+                                                       availablePackages: List<RepoPackage>): Map<String, Set<RepoPackage>> {
+      val stubPkgsAvailableToInstall = mutableMapOf<String, RepoPackage>()
+      availablePackages
         // TODO uncomment after testing
         // .filter { PyPIPackageUtil.isPyPIRepository(it.repoUrl) } // remove when PY-22079 would be fixed
-        .mapNotNull { it.name }
-        .filter { it.endsWith(STUBS_SUFFIX) }
-        .toSet()
+        .forEach { if (it.name.endsWith(STUBS_SUFFIX)) stubPkgsAvailableToInstall[it.name] = it }
 
-      val result = mutableMapOf<String, List<Pair<PyPackage, String>>>()
+      val result = mutableMapOf<String, Set<RepoPackage>>()
       sourceToInstalledRuntimeAndStubPkgs.forEach { source, runtimeAndStubPkgs ->
         result[source] = runtimeAndStubPkgs
           .asSequence()
-          .map { it.first }
-          .filter { "${it.name}$STUBS_SUFFIX" in stubPkgNamesAvailableToInstall }
-          .map { it to "${it.name}$STUBS_SUFFIX" }
-          .toList()
+          .filter { it.second == null }
+          .mapNotNull { stubPkgsAvailableToInstall["${it.first.name}$STUBS_SUFFIX"] }
+          .toSet()
       }
 
       return result
-    }
-
-    private fun createSuitableRequirements(sourceToInstalledRuntimeAndStubPkgsAvailableToInstall: Map<String, List<Pair<PyPackage, String>>>,
-                                           sdk: Sdk,
-                                           service: PackageManagementService,
-                                           consumer: (List<PyRequirement>) -> Unit) {
-      if (sourceToInstalledRuntimeAndStubPkgsAvailableToInstall.isEmpty()) {
-        consumer(emptyList())
-        return
-      }
-
-      val count = AtomicInteger(sourceToInstalledRuntimeAndStubPkgsAvailableToInstall.size)
-      val forConsumer = CopyOnWriteArrayList<PyRequirement>()
-      val toCache = mutableMapOf<String, MutableSet<PyRequirement>>()
-
-      sourceToInstalledRuntimeAndStubPkgsAvailableToInstall.keys.forEach { toCache[it] = ConcurrentHashMap.newKeySet() }
-
-      sourceToInstalledRuntimeAndStubPkgsAvailableToInstall.forEach { entry ->
-        val source = entry.key
-
-        entry.value.forEach { installedRuntimeAndStubPkgAvailableToInstall ->
-          val stubPkgName = installedRuntimeAndStubPkgAvailableToInstall.second
-
-          service.fetchPackageVersions(
-            stubPkgName,
-            object : CatchingConsumer<List<String>, Exception> {
-              override fun consume(e: Exception?) {
-                if (count.decrementAndGet() == 0) {
-                  toCache.forEach { source, reqs -> CACHE.put(sdk to source, reqs) }
-                  consumer(forConsumer)
-                }
-              }
-
-              override fun consume(t: List<String>?) {
-                if (t != null) {
-                  val packageManager = PyPackageManager.getInstance(sdk)
-
-                  selectStubPackageVersionToInstall(installedRuntimeAndStubPkgAvailableToInstall.first, t)
-                    ?.let { packageManager.parseRequirement(stubPkgName + PyRequirementRelation.EQ.presentableText + it) }
-                    ?.let {
-                      toCache[source]?.add(it)
-                      forConsumer.add(it)
-                    }
-                }
-
-                if (count.decrementAndGet() == 0) {
-                  toCache.forEach { source, reqs -> CACHE.put(sdk to source, reqs) }
-                  consumer(forConsumer)
-                }
-              }
-            }
-          )
-        }
-      }
     }
 
     private fun createIgnorePackagesQuickFix(reqs: List<PyRequirement>, ignoredPkgs: MutableList<String>): LocalQuickFix {
@@ -336,6 +267,14 @@ class PyStubPackagesAdvertiser : PyInspection() {
           if (ignoredPkgs.addAll(pkgNames)) ProjectInspectionProfileManager.getInstance(project).fireProfileChanged()
         }
       }
+    }
+
+    private fun toRequirements(loaded: Map<String, Set<RepoPackage>>, cached: Set<RepoPackage>): List<PyRequirement> {
+      return (cached + loaded.values.flatten())
+        .map {
+          val version = it.latestVersion
+          if (version == null) pyRequirement(it.name) else pyRequirement(it.name, PyRequirementRelation.EQ, version)
+        }
     }
 
     private fun installedRuntimeAndStubPackages(pkgName: String,
@@ -352,14 +291,6 @@ class PyStubPackagesAdvertiser : PyInspection() {
       }
 
       return if (runtime == null) null else runtime to stub
-    }
-
-    private fun selectStubPackageVersionToInstall(runtimePkg: PyPackage, stubPkgVersions: List<String>): String? {
-      val sorted = TreeSet(PyPackageVersionComparator.STR_COMPARATOR)
-      sorted.addAll(stubPkgVersions)
-
-      val runtimePkgVersion = runtimePkg.version
-      return (sorted.ceiling(runtimePkgVersion) ?: sorted.lower(runtimePkgVersion))
     }
   }
 }
