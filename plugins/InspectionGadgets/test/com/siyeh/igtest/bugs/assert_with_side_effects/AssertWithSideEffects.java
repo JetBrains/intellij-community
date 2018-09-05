@@ -1,7 +1,7 @@
 package com.siyeh.igtest.bugs.assert_with_side_effects;
 import java.sql.*;
 import java.util.*;
-import java.util.regex.*;
+
 public class AssertWithSideEffects {
     private int sideEffect = 0;
     private boolean noEffect = false;
@@ -34,7 +34,8 @@ public class AssertWithSideEffects {
     void assertMutation(Set<String> set) {
         assert set.add("foo");
 
-        Matcher m = Pattern.compile("foobar").matcher("foo");
-        assert m.matches();
+        assert new HashSet<>().add("bar");
+
+        assert (set.isEmpty() ? new TreeSet<>() : new HashSet<>()).add("baz");
     }
 }
