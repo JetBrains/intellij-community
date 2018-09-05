@@ -293,6 +293,7 @@ public abstract class UsefulTestCase extends TestCase {
 
     Runnable runnable = () -> {
       try {
+        TestLoggerFactory.onTestStarted();
         super.runTest();
         TestLoggerFactory.onTestFinished(true);
       }

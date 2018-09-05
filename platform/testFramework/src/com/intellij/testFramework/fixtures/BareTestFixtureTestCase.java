@@ -7,10 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.SkipInHeadlessEnvironment;
-import com.intellij.testFramework.SkipSlowTestLocally;
-import com.intellij.testFramework.TestFrameworkUtil;
+import com.intellij.testFramework.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.junit.After;
@@ -18,6 +15,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
+import org.junit.rules.TestRule;
 
 import static com.intellij.testFramework.TestFrameworkUtil.SKIP_HEADLESS;
 import static com.intellij.testFramework.TestFrameworkUtil.SKIP_SLOW;
@@ -61,4 +59,7 @@ public abstract class BareTestFixtureTestCase extends Assert {
   public final Disposable getTestRootDisposable() {
     return myFixture.getTestRootDisposable();
   }
+
+  @Rule
+  public TestRule watcher = TestLoggerFactory.createTestWatcher();
 }
