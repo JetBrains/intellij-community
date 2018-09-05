@@ -331,7 +331,7 @@ def _is_django_exception_break_context(frame):
 # Django Step Commands
 #=======================================================================================================================
 
-def can_not_skip(plugin, main_debugger, pydb_frame, frame):
+def can_not_skip(plugin, main_debugger, pydb_frame, frame, info):
     return main_debugger.django_breakpoints and _is_django_render_call(frame)
 
 

@@ -481,7 +481,7 @@ class PyDBFrame:
 
                     if can_skip:
                         if plugin_manager is not None and main_debugger.has_plugin_line_breaks:
-                            can_skip = not plugin_manager.can_not_skip(main_debugger, self, frame)
+                            can_skip = not plugin_manager.can_not_skip(main_debugger, self, frame, info)
 
                         # CMD_STEP_OVER = 108
                         if can_skip and is_return and main_debugger.show_return_values and info.pydev_step_cmd == 108 and frame.f_back is info.pydev_step_stop:

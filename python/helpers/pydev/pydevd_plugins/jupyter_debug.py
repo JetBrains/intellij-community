@@ -79,7 +79,10 @@ def has_line_breaks(plugin):
     return False
 
 
-def can_not_skip(plugin, pydb, pydb_frame, frame):
+def can_not_skip(plugin, pydb, pydb_frame, frame, info):
+    step_cmd = info.pydev_step_cmd
+    if step_cmd == 108 and _is_equals(frame, _get_stop_frame(info)):
+        return True
     if pydb.jupyter_breakpoints:
         filename = frame.f_code.co_filename
         for file, breakpoints in dict_iter_items(pydb.jupyter_breakpoints):
@@ -104,12 +107,41 @@ def cmd_step_into(plugin, pydb, frame, event, args, stop_info, stop):
     return stop, plugin_stop
 
 
+def _is_equals(frame, other_frame):
+    # we can't compare frame directly, because Jupyter compiles ast nodes in cell separately
+    return frame.f_code.co_filename == other_frame.f_code.co_filename and \
+        frame.f_code.co_name == other_frame.f_code.co_name
+
+
+def _get_stop_frame(info):
+    stop_frame = None
+    if hasattr(info, 'pydev_step_stop'):
+        if isinstance(info.pydev_step_stop, JupyterFrame):
+            stop_frame = info.pydev_step_stop.f_back
+        else:
+            stop_frame = info.pydev_step_stop
+    return stop_frame
+
+
 def cmd_step_over(plugin, pydb, frame, event, args, stop_info, stop):
     thread = args[3]
-    if _is_jupyter_suspended(thread) and _is_inside_jupyter_cell(frame):
-        stop_frame = stop_info.pydev_step_stop
-        stop = stop_frame is frame and (event == "line" or event == "return")
-    return stop, stop
+    plugin_stop = False
+    info = args[2]
+    if _is_jupyter_suspended(thread):
+        stop = False
+        if _is_inside_jupyter_cell(frame):
+            stop_frame = _get_stop_frame(info)
+            if stop_frame is None:
+                if event == "line":
+                    plugin_stop = stop_info['jupyter_stop'] = True
+            else:
+                if event == "line":
+                    stop_info['jupyter_stop'] = _is_equals(frame, stop_frame)
+                    plugin_stop = stop_info['jupyter_stop']
+                elif event == "return":
+                    if not _is_equals(frame.f_back, stop_frame):
+                        info.pydev_step_stop = info.pydev_step_stop.f_back
+    return stop, plugin_stop
 
 
 def stop(plugin, pydb, frame, event, args, stop_info, arg, step_cmd):
@@ -176,7 +208,7 @@ class JupyterFrame(object):
         file_name = _convert_filename(frame, pydb)
         self.f_code = FCode('<ipython cell>', file_name)
         self.f_lineno = frame.f_lineno
-        self.f_back = frame.f_back
+        self.f_back = frame
         self.f_globals = frame.f_globals
         self.f_locals = frame.f_locals
         self.f_trace = None

@@ -228,7 +228,7 @@ def has_line_breaks(plugin):
             return True
     return False
 
-def can_not_skip(plugin, pydb, pydb_frame, frame):
+def can_not_skip(plugin, pydb, pydb_frame, frame, info):
     if pydb.jinja2_breakpoints and _is_jinja2_render_call(frame):
         filename = _get_jinja2_template_filename(frame)
         jinja2_breakpoints_for_file = pydb.jinja2_breakpoints.get(filename)
