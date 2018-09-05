@@ -2,29 +2,20 @@
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.JvmAnalysisBundle;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.UImportStatement;
-import org.jetbrains.uast.UastContextKt;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-public class UnstableApiUsageInspection extends LocalInspectionTool {
-  public boolean myIgnoreInsideImports = true;
-
+public class UnstableApiUsageInspection extends AnnotatedElementInspectionBase {
   public final List<String> unstableApiAnnotations = new ExternalizableStringSet(
     "org.jetbrains.annotations.ApiStatus.Experimental",
     "com.google.common.annotations.Beta",
@@ -35,11 +26,27 @@ public class UnstableApiUsageInspection extends LocalInspectionTool {
     "org.apache.http.annotation.Beta"
   );
 
-  @Nullable
+  @NotNull
   @Override
-  public JComponent createOptionsPanel() {
-    SingleCheckboxOptionsPanel checkboxPanel = new SingleCheckboxOptionsPanel(
-      JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.ignore.inside.imports"), this, "myIgnoreInsideImports");
+  protected List<String> getAnnotations() {
+    return unstableApiAnnotations;
+  }
+
+  @Override
+  protected void createProblem(@NotNull PsiReference reference, @NotNull ProblemsHolder holder) {
+    String message = JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.description", getReferenceText(reference));
+    holder.registerProblem(reference, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+  }
+
+  @Override
+  protected boolean shouldProcessElement(@NotNull PsiModifierListOwner element) {
+    return isLibraryElement(element);
+  }
+
+  @NotNull
+  @Override
+  public JPanel createOptionsPanel() {
+    JPanel checkboxPanel = super.createOptionsPanel();
 
     //TODO in add annotation window "Include non-project items" should be enabled by default
     JPanel annotationsListControl = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
@@ -51,55 +58,7 @@ public class UnstableApiUsageInspection extends LocalInspectionTool {
     return panel;
   }
 
-  @NotNull
-  @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!isApplicable(holder.getFile(), holder.getProject())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
-
-    return new PsiElementVisitor() {
-      @Override
-      public void visitElement(PsiElement element) {
-        super.visitElement(element);
-        if (element instanceof PsiLanguageInjectionHost) {
-          return; // better performance
-        }
-
-        if (myIgnoreInsideImports && isInsideImport(element)) {
-          return;
-        }
-
-        // Java constructors must be handled a bit differently (works fine with Kotlin)
-        PsiMethod resolvedConstructor = null;
-        PsiElement elementParent = element.getParent();
-        if (elementParent instanceof PsiConstructorCall) {
-          resolvedConstructor = ((PsiConstructorCall)elementParent).resolveConstructor();
-        }
-
-        for (PsiReference reference : element.getReferences()) {
-          PsiModifierListOwner modifierListOwner = getModifierListOwner(reference, resolvedConstructor);
-          if (modifierListOwner == null || !isLibraryElement(modifierListOwner)) {
-            continue;
-          }
-
-          for (String annotation : unstableApiAnnotations) {
-            if (modifierListOwner.hasAnnotation(annotation)) {
-              holder.registerProblem(reference,
-                                     JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.description", getReferenceText(reference)),
-                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-              return;
-            }
-          }
-        }
-      }
-    };
-  }
-
-  private static boolean isInsideImport(@NotNull PsiElement element) {
-    return PsiTreeUtil.findFirstParent(element, parent -> UastContextKt.toUElement(parent, UImportStatement.class) != null) != null;
-  }
-
+  @SuppressWarnings("Duplicates")
   private static boolean isLibraryElement(@NotNull PsiElement element) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return true;
@@ -126,38 +85,5 @@ public class UnstableApiUsageInspection extends LocalInspectionTool {
     }
     // references are not PsiQualifiedReference for annotation attributes
     return StringUtil.getShortName(reference.getCanonicalText());
-  }
-
-  @Nullable
-  private static PsiModifierListOwner getModifierListOwner(@NotNull PsiReference reference, @Nullable PsiMethod resolvedConstructor) {
-    if (resolvedConstructor != null) {
-      return resolvedConstructor;
-    }
-
-    if (reference instanceof ResolvingHint && !((ResolvingHint)reference).canResolveTo(PsiModifierListOwner.class)) {
-      return null;
-    }
-
-    PsiElement resolvedElement = reference.resolve();
-    if (resolvedElement instanceof PsiModifierListOwner) {
-      return (PsiModifierListOwner)resolvedElement;
-    }
-    return null;
-  }
-
-  private boolean isApplicable(@Nullable PsiFile file, @Nullable Project project) {
-    if (file == null || project == null) {
-      return false;
-    }
-
-    JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
-    GlobalSearchScope scope = file.getResolveScope();
-    for (String annotation : unstableApiAnnotations) {
-      if (javaPsiFacade.findClass(annotation, scope) != null) {
-        return true;
-      }
-    }
-
-    return false;
   }
 }
