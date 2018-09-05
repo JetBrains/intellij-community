@@ -620,15 +620,12 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             this.next = next;
         }
 
-        @Override
         public final K getKey()     { return key; }
-        @Override
         public final V getValue()   { return val; }
         public final int hashCode() { return hashingStrategy.computeHashCode(key) ^ val.hashCode(); }
         public final String toString() {
             return Helpers.mapEntryToString(key, val);
         }
-        @Override
         public final V setValue(V value) {
             throw new UnsupportedOperationException();
         }
@@ -682,7 +679,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * to incorporate impact of the highest bits that would otherwise
      * never be used in index calculations because of table bounds.
      */
-    static int spread(int h) {
+    static final int spread(int h) {
         return (h ^ (h >>> 16)) & HASH_BITS;
     }
 
@@ -690,7 +687,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * Returns a power of two table size for the given desired capacity.
      * See Hackers Delight, sec 3.2
      */
-    private static int tableSizeFor(int c) {
+    private static final int tableSizeFor(int c) {
         int n = c - 1;
         n |= n >>> 1;
         n |= n >>> 2;
@@ -752,16 +749,16 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      */
 
     @SuppressWarnings("unchecked")
-    static <K,V> Node<K,V> tabAt(Node<K,V>[] tab, int i) {
+    static final <K,V> Node<K,V> tabAt(Node<K,V>[] tab, int i) {
         return (Node<K,V>)U.getObjectVolatile(tab, ((long)i << ASHIFT) + ABASE);
     }
 
-    static <K,V> boolean casTabAt(Node<K,V>[] tab, int i,
-                                  Node<K,V> c, Node<K,V> v) {
+    static final <K,V> boolean casTabAt(Node<K,V>[] tab, int i,
+                                        Node<K,V> c, Node<K,V> v) {
         return U.compareAndSwapObject(tab, ((long)i << ASHIFT) + ABASE, c, v);
     }
 
-    static <K,V> void setTabAt(Node<K,V>[] tab, int i, Node<K,V> v) {
+    static final <K,V> void setTabAt(Node<K,V>[] tab, int i, Node<K,V> v) {
         U.putObjectVolatile(tab, ((long)i << ASHIFT) + ABASE, v);
     }
 
@@ -925,7 +922,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     /**
      * {@inheritDoc}
      */
-    @Override
     public int size() {
         long n = sumCount();
         return ((n < 0L) ? 0 :
@@ -936,7 +932,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     /**
      * {@inheritDoc}
      */
-    @Override
     public boolean isEmpty() {
         return sumCount() <= 0L; // ignore transient negative values
     }
@@ -952,7 +947,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      *
      * @throws NullPointerException if the specified key is null
      */
-    @Override
     public V get(Object key) {
         Node<K,V>[] tab; Node<K,V> e, p; int n, eh; K ek;
         int h = hash((K)key);
@@ -982,7 +976,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      *         {@code equals} method; {@code false} otherwise
      * @throws NullPointerException if the specified key is null
      */
-    @Override
     public boolean containsKey(Object key) {
         return get(key) != null;
     }
@@ -997,7 +990,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      *         specified value
      * @throws NullPointerException if the specified value is null
      */
-    @Override
     public boolean containsValue(Object value) {
         if (value == null)
             throw new NullPointerException();
@@ -1026,7 +1018,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      *         {@code null} if there was no mapping for {@code key}
      * @throws NullPointerException if the specified key or value is null
      */
-    @Override
     public V put(K key, V value) {
         return putVal(key, value, false);
     }
@@ -1103,7 +1094,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      *
      * @param m mappings to be stored in this map
      */
-    @Override
     public void putAll(Map<? extends K, ? extends V> m) {
         tryPresize(m.size());
         for (Map.Entry<? extends K, ? extends V> e : m.entrySet())
@@ -1119,7 +1109,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      *         {@code null} if there was no mapping for {@code key}
      * @throws NullPointerException if the specified key is null
      */
-    @Override
     public V remove(Object key) {
         return replaceNode(key, null, null);
     }
@@ -1205,7 +1194,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     /**
      * Removes all of the mappings from this map.
      */
-    @Override
     public void clear() {
         long delta = 0L; // negative number of deletions
         int i = 0;
@@ -1256,7 +1244,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      *
      * @return the set view
      */
-    @Override
     public KeySetView<K,V> keySet() {
         KeySetView<K,V> ks;
         if ((ks = keySet) != null) return ks;
@@ -1281,7 +1268,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      *
      * @return the collection view
      */
-    @Override
     public Collection<V> values() {
         ValuesView<K,V> vs;
         if ((vs = values) != null) return vs;
@@ -1305,7 +1291,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      *
      * @return the set view
      */
-    @Override
     public Set<Map.Entry<K,V>> entrySet() {
         EntrySetView<K,V> es;
         if ((es = entrySet) != null) return es;
@@ -1420,7 +1405,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      *         or {@code null} if there was no mapping for the key
      * @throws NullPointerException if the specified key or value is null
      */
-    @Override
     public V putIfAbsent(K key, V value) {
         return putVal(key, value, true);
     }
@@ -1430,7 +1414,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      *
      * @throws NullPointerException if the specified key is null
      */
-    @Override
     public boolean remove(Object key, Object value) {
         if (key == null)
             throw new NullPointerException();
@@ -1442,7 +1425,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      *
      * @throws NullPointerException if any of the arguments are null
      */
-    @Override
     public boolean replace(K key, V oldValue, V newValue) {
         if (key == null || oldValue == null || newValue == null)
             throw new NullPointerException();
@@ -1456,7 +1438,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      *         or {@code null} if there was no mapping for the key
      * @throws NullPointerException if the specified key or value is null
      */
-    @Override
     public V replace(K key, V value) {
         if (key == null || value == null)
             throw new NullPointerException();
@@ -1476,13 +1457,11 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * @return the mapping for the key, if present; else the default value
      * @throws NullPointerException if the specified key is null
      */
-    @Override
     public V getOrDefault(Object key, V defaultValue) {
         V v;
         return (v = get(key)) == null ? defaultValue : v;
     }
 
-    @Override
     public void forEach(BiConsumer<? super K, ? super V> action) {
         if (action == null) throw new NullPointerException();
         Node<K,V>[] t;
@@ -1494,7 +1473,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
         }
     }
 
-    @Override
     public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
         if (function == null) throw new NullPointerException();
         Node<K,V>[] t;
@@ -1575,7 +1553,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * @throws RuntimeException or Error if the mappingFunction does so,
      *         in which case the mapping is left unestablished
      */
-    @Override
     public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
         if (key == null || mappingFunction == null)
             throw new NullPointerException();
@@ -1681,7 +1658,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * @throws RuntimeException or Error if the remappingFunction does so,
      *         in which case the mapping is unchanged
      */
-    @Override
     public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
         if (key == null || remappingFunction == null)
             throw new NullPointerException();
@@ -1774,7 +1750,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * @throws RuntimeException or Error if the remappingFunction does so,
      *         in which case the mapping is unchanged
      */
-    @Override
     public V compute(K key,
                      BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
         if (key == null || remappingFunction == null)
@@ -1904,7 +1879,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * @throws RuntimeException or Error if the remappingFunction does so,
      *         in which case the mapping is unchanged
      */
-    @Override
     public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
         if (key == null || value == null || remappingFunction == null)
             throw new NullPointerException();
@@ -2117,7 +2091,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             this.nextTable = tab;
         }
 
-        @Override
         Node<K,V> find(int h, Object k) {
             // loop to avoid arbitrarily deep recursion on forwarding nodes
             outer: for (Node<K,V>[] tab = nextTable;;) {
@@ -2153,7 +2126,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             super(RESERVED, null, null,hashingStrategy);
         }
 
-        @Override
         Node<K,V> find(int h, Object k) {
             return null;
         }
@@ -2165,14 +2137,14 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * Returns the stamp bits for resizing a table of size n.
      * Must be negative when shifted left by RESIZE_STAMP_SHIFT.
      */
-    static int resizeStamp(int n) {
+    static final int resizeStamp(int n) {
         return Integer.numberOfLeadingZeros(n) | (1 << (RESIZE_STAMP_BITS - 1));
     }
 
     /**
      * Initializes table, using the size recorded in sizeCtl.
      */
-    private Node<K,V>[] initTable() {
+    private final Node<K,V>[] initTable() {
         Node<K,V>[] tab; int sc;
         while ((tab = table) == null || tab.length == 0) {
             if ((sc = sizeCtl) < 0)
@@ -2205,7 +2177,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * @param x the count to add
      * @param check if <0, don't check resize, if <= 1 only check if uncontended
      */
-    private void addCount(long x, int check) {
+    private final void addCount(long x, int check) {
         CounterCell[] as; long b, s;
         if ((as = counterCells) != null ||
             !U.compareAndSwapLong(this, BASECOUNT, b = baseCount, s = b + x)) {
@@ -2271,7 +2243,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      *
      * @param size number of elements (doesn't need to be perfectly accurate)
      */
-    private void tryPresize(int size) {
+    private final void tryPresize(int size) {
         int c = (size >= (MAXIMUM_CAPACITY >>> 1)) ? MAXIMUM_CAPACITY :
             tableSizeFor(size + (size >>> 1) + 1);
         int sc;
@@ -2307,7 +2279,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * Moves and/or copies the nodes in each bin to new table. See
      * above for explanation.
      */
-    private void transfer(Node<K,V>[] tab, Node<K,V>[] nextTab) {
+    private final void transfer(Node<K,V>[] tab, Node<K,V>[] nextTab) {
         int n = tab.length, stride;
         if ((stride = (NCPU > 1) ? (n >>> 3) / NCPU : n) < MIN_TRANSFER_STRIDE)
             stride = MIN_TRANSFER_STRIDE; // subdivide range
@@ -2464,7 +2436,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     }
 
     // See LongAdder version for explanation
-    private void fullAddCount(long x, boolean wasUncontended) {
+    private final void fullAddCount(long x, boolean wasUncontended) {
         int h;
         if ((h = ThreadLocalRandom.getProbe()) == 0) {
             ThreadLocalRandom.localInit();      // force initialization
@@ -2551,7 +2523,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * Replaces all linked nodes in bin at given index unless table is
      * too small, in which case resizes instead.
      */
-    private void treeifyBin(Node<K,V>[] tab, int index) {
+    private final void treeifyBin(Node<K,V>[] tab, int index) {
         Node<K,V> b; int n;
         if (tab != null) {
             if ((n = tab.length) < MIN_TREEIFY_CAPACITY)
@@ -2611,7 +2583,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             this.parent = parent;
         }
 
-        @Override
         Node<K,V> find(int h, Object k) {
             return findTreeNode(h, k, null);
         }
@@ -2736,7 +2707,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
         /**
          * Acquires write lock for tree restructuring.
          */
-        private void lockRoot() {
+        private final void lockRoot() {
             if (!U.compareAndSwapInt(this, LOCKSTATE, 0, WRITER))
                 contendedLock(); // offload to separate method
         }
@@ -2744,14 +2715,14 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
         /**
          * Releases write lock for tree restructuring.
          */
-        private void unlockRoot() {
+        private final void unlockRoot() {
             lockState = 0;
         }
 
         /**
          * Possibly blocks awaiting root lock.
          */
-        private void contendedLock() {
+        private final void contendedLock() {
             boolean waiting = false;
             for (int s;;) {
                 if (((s = lockState) & ~WAITER) == 0) {
@@ -2777,7 +2748,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
          * using tree comparisons from root, but continues linear
          * search when lock not available.
          */
-        @Override
         final Node<K,V> find(int h, Object k) {
             if (k != null) {
                 for (Node<K,V> e = first; e != null; ) {
@@ -3352,7 +3322,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             super(tab, size, index, limit, map);
         }
 
-        @Override
         public final K next() {
             Node<K,V> p;
             if ((p = next) == null)
@@ -3363,7 +3332,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             return k;
         }
 
-        @Override
         public final K nextElement() { return next(); }
     }
 
@@ -3374,7 +3342,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             super(tab, size, index, limit, map);
         }
 
-        @Override
         public final V next() {
             Node<K,V> p;
             if ((p = next) == null)
@@ -3385,7 +3352,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             return v;
         }
 
-        @Override
         public final V nextElement() { return next(); }
     }
 
@@ -3396,7 +3362,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             super(tab, size, index, limit, map);
         }
 
-        @Override
         public final Map.Entry<K,V> next() {
             Node<K,V> p;
             if ((p = next) == null)
@@ -3421,9 +3386,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             this.val = val;
             this.map = map;
         }
-        @Override
         public K getKey()        { return key; }
-        @Override
         public V getValue()      { return val; }
         public int hashCode()    { return map.hash(key) ^ val.hashCode(); }
         public String toString() {
@@ -3447,7 +3410,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
          * could even have been removed, in which case the put will
          * re-establish). We do not and cannot guarantee more.
          */
-        @Override
         public V setValue(V value) {
             if (value == null) throw new NullPointerException();
             V v = val;
@@ -3466,7 +3428,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             this.est = est;
         }
 
-        @Override
         public KeySpliterator<K,V> trySplit() {
             int i, f, h;
             return (h = ((i = baseIndex) + (f = baseLimit)) >>> 1) <= i ? null :
@@ -3474,14 +3435,12 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                                         f, est >>>= 1);
         }
 
-        @Override
         public void forEachRemaining(Consumer<? super K> action) {
             if (action == null) throw new NullPointerException();
             for (Node<K,V> p; (p = advance()) != null;)
                 action.accept(p.key);
         }
 
-        @Override
         public boolean tryAdvance(Consumer<? super K> action) {
             if (action == null) throw new NullPointerException();
             Node<K,V> p;
@@ -3491,10 +3450,8 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             return true;
         }
 
-        @Override
         public long estimateSize() { return est; }
 
-        @Override
         public int characteristics() {
             return Spliterator.DISTINCT | Spliterator.CONCURRENT |
                 Spliterator.NONNULL;
@@ -3510,7 +3467,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             this.est = est;
         }
 
-        @Override
         public ValueSpliterator<K,V> trySplit() {
             int i, f, h;
             return (h = ((i = baseIndex) + (f = baseLimit)) >>> 1) <= i ? null :
@@ -3518,14 +3474,12 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                                           f, est >>>= 1);
         }
 
-        @Override
         public void forEachRemaining(Consumer<? super V> action) {
             if (action == null) throw new NullPointerException();
             for (Node<K,V> p; (p = advance()) != null;)
                 action.accept(p.val);
         }
 
-        @Override
         public boolean tryAdvance(Consumer<? super V> action) {
             if (action == null) throw new NullPointerException();
             Node<K,V> p;
@@ -3535,10 +3489,8 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             return true;
         }
 
-        @Override
         public long estimateSize() { return est; }
 
-        @Override
         public int characteristics() {
             return Spliterator.CONCURRENT | Spliterator.NONNULL;
         }
@@ -3555,7 +3507,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             this.est = est;
         }
 
-        @Override
         public EntrySpliterator<K,V> trySplit() {
             int i, f, h;
             return (h = ((i = baseIndex) + (f = baseLimit)) >>> 1) <= i ? null :
@@ -3563,14 +3514,12 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                                           f, est >>>= 1, map);
         }
 
-        @Override
         public void forEachRemaining(Consumer<? super Map.Entry<K,V>> action) {
             if (action == null) throw new NullPointerException();
             for (Node<K,V> p; (p = advance()) != null; )
                 action.accept(new MapEntry<K,V>(p.key, p.val, map));
         }
 
-        @Override
         public boolean tryAdvance(Consumer<? super Map.Entry<K,V>> action) {
             if (action == null) throw new NullPointerException();
             Node<K,V> p;
@@ -3580,10 +3529,8 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             return true;
         }
 
-        @Override
         public long estimateSize() { return est; }
 
-        @Override
         public int characteristics() {
             return Spliterator.DISTINCT | Spliterator.CONCURRENT |
                 Spliterator.NONNULL;
@@ -4354,11 +4301,8 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
          * Removes all of the elements from this view, by removing all
          * the mappings from the map backing this view.
          */
-        @Override
         public final void clear()      { map.clear(); }
-        @Override
         public final int size()        { return map.size(); }
-        @Override
         public final boolean isEmpty() { return map.isEmpty(); }
 
         // implementations below rely on concrete classes supplying these
@@ -4371,16 +4315,12 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
          *
          * @return an iterator over the elements in this collection
          */
-        @Override
         public abstract Iterator<E> iterator();
-        @Override
         public abstract boolean contains(Object o);
-        @Override
         public abstract boolean remove(Object o);
 
         private static final String OOME_MSG = "Required array size too large";
 
-        @Override
         public final Object[] toArray() {
             long sz = map.mappingCount();
             if (sz > MAX_ARRAY_SIZE)
@@ -4403,7 +4343,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             return (i == n) ? r : Arrays.copyOf(r, i);
         }
 
-        @Override
         @SuppressWarnings("unchecked")
         public final <T> T[] toArray(T[] a) {
             long sz = map.mappingCount();
@@ -4461,7 +4400,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             return sb.append(']').toString();
         }
 
-        @Override
         public final boolean containsAll(Collection<?> c) {
             if (c != this) {
                 for (Object e : c) {
@@ -4472,7 +4410,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             return true;
         }
 
-        @Override
         public final boolean removeAll(Collection<?> c) {
             if (c == null) throw new NullPointerException();
             boolean modified = false;
@@ -4485,7 +4422,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             return modified;
         }
 
-        @Override
         public final boolean retainAll(Collection<?> c) {
             if (c == null) throw new NullPointerException();
             boolean modified = false;
@@ -4533,7 +4469,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
          * {@inheritDoc}
          * @throws NullPointerException if the specified key is null
          */
-        @Override
         public boolean contains(Object o) { return map.containsKey(o); }
 
         /**
@@ -4545,13 +4480,11 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
          * @return {@code true} if the backing map contained the specified key
          * @throws NullPointerException if the specified key is null
          */
-        @Override
         public boolean remove(Object o) { return map.remove(o) != null; }
 
         /**
          * @return an iterator over the keys of the backing map
          */
-        @Override
         public Iterator<K> iterator() {
             Node<K,V>[] t;
             ConcurrentHashMap<K,V> m = map;
@@ -4569,7 +4502,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
          * @throws UnsupportedOperationException if no default mapped value
          * for additions was provided
          */
-        @Override
         public boolean add(K e) {
             V v;
             if ((v = value) == null)
@@ -4588,7 +4520,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
          * @throws UnsupportedOperationException if no default mapped value
          * for additions was provided
          */
-        @Override
         public boolean addAll(Collection<? extends K> c) {
             boolean added = false;
             V v;
@@ -4615,7 +4546,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                      (containsAll(c) && c.containsAll(this))));
         }
 
-        @Override
         public Spliterator<K> spliterator() {
             Node<K,V>[] t;
             ConcurrentHashMap<K,V> m = map;
@@ -4624,7 +4554,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             return new KeySpliterator<K,V>(t, f, 0, f, n < 0L ? 0L : n);
         }
 
-        @Override
         public void forEach(Consumer<? super K> action) {
             if (action == null) throw new NullPointerException();
             Node<K,V>[] t;
@@ -4645,12 +4574,10 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
         implements Collection<V>, java.io.Serializable {
         private static final long serialVersionUID = 2249069246763182397L;
         ValuesView(ConcurrentHashMap<K,V> map) { super(map); }
-        @Override
         public final boolean contains(Object o) {
             return map.containsValue(o);
         }
 
-        @Override
         public final boolean remove(Object o) {
             if (o != null) {
                 for (Iterator<V> it = iterator(); it.hasNext();) {
@@ -4663,7 +4590,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             return false;
         }
 
-        @Override
         public final Iterator<V> iterator() {
             ConcurrentHashMap<K,V> m = map;
             Node<K,V>[] t;
@@ -4671,21 +4597,17 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             return new ValueIterator<K,V>(t, f, 0, f, m);
         }
 
-        @Override
         public final boolean add(V e) {
             throw new UnsupportedOperationException();
         }
-        @Override
         public final boolean addAll(Collection<? extends V> c) {
             throw new UnsupportedOperationException();
         }
 
-        @Override
         public boolean removeIf(Predicate<? super V> filter) {
             return map.removeValueIf(filter);
         }
 
-        @Override
         public Spliterator<V> spliterator() {
             Node<K,V>[] t;
             ConcurrentHashMap<K,V> m = map;
@@ -4694,7 +4616,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             return new ValueSpliterator<K,V>(t, f, 0, f, n < 0L ? 0L : n);
         }
 
-        @Override
         public void forEach(Consumer<? super V> action) {
             if (action == null) throw new NullPointerException();
             Node<K,V>[] t;
@@ -4716,7 +4637,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
         private static final long serialVersionUID = 2249069246763182397L;
         EntrySetView(ConcurrentHashMap<K,V> map) { super(map); }
 
-        @Override
         public boolean contains(Object o) {
             Object k, v, r; Map.Entry<?,?> e;
             return ((o instanceof Map.Entry) &&
@@ -4726,7 +4646,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                     (v == r || v.equals(r)));
         }
 
-        @Override
         public boolean remove(Object o) {
             Object k, v; Map.Entry<?,?> e;
             return ((o instanceof Map.Entry) &&
@@ -4738,7 +4657,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
         /**
          * @return an iterator over the entries of the backing map
          */
-        @Override
         public Iterator<Map.Entry<K,V>> iterator() {
             ConcurrentHashMap<K,V> m = map;
             Node<K,V>[] t;
@@ -4746,12 +4664,10 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             return new EntryIterator<K,V>(t, f, 0, f, m);
         }
 
-        @Override
         public boolean add(Entry<K,V> e) {
             return map.putVal(e.getKey(), e.getValue(), false) == null;
         }
 
-        @Override
         public boolean addAll(Collection<? extends Entry<K,V>> c) {
             boolean added = false;
             for (Entry<K,V> e : c) {
@@ -4761,7 +4677,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             return added;
         }
 
-        @Override
         public boolean removeIf(Predicate<? super Entry<K,V>> filter) {
             return map.removeEntryIf(filter);
         }
@@ -4785,7 +4700,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                      (containsAll(c) && c.containsAll(this))));
         }
 
-        @Override
         public Spliterator<Map.Entry<K,V>> spliterator() {
             Node<K,V>[] t;
             ConcurrentHashMap<K,V> m = map;
@@ -4794,7 +4708,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             return new EntrySpliterator<K,V>(t, f, 0, f, n < 0L ? 0L : n, m);
         }
 
-        @Override
         public void forEach(Consumer<? super Map.Entry<K,V>> action) {
             if (action == null) throw new NullPointerException();
             Node<K,V>[] t;
@@ -4918,7 +4831,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             super(p, b, i, f, t);
             this.action = action;
         }
-        @Override
         public final void compute() {
             final Consumer<? super K> action;
             if ((action = this.action) != null) {
@@ -4946,7 +4858,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             super(p, b, i, f, t);
             this.action = action;
         }
-        @Override
         public final void compute() {
             final Consumer<? super V> action;
             if ((action = this.action) != null) {
@@ -4974,7 +4885,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             super(p, b, i, f, t);
             this.action = action;
         }
-        @Override
         public final void compute() {
             final Consumer<? super Entry<K,V>> action;
             if ((action = this.action) != null) {
@@ -5002,7 +4912,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             super(p, b, i, f, t);
             this.action = action;
         }
-        @Override
         public final void compute() {
             final BiConsumer<? super K, ? super V> action;
             if ((action = this.action) != null) {
@@ -5031,7 +4940,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             super(p, b, i, f, t);
             this.transformer = transformer; this.action = action;
         }
-        @Override
         public final void compute() {
             final Function<? super K, ? extends U> transformer;
             final Consumer<? super U> action;
@@ -5065,7 +4973,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             super(p, b, i, f, t);
             this.transformer = transformer; this.action = action;
         }
-        @Override
         public final void compute() {
             final Function<? super V, ? extends U> transformer;
             final Consumer<? super U> action;
@@ -5099,7 +5006,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             super(p, b, i, f, t);
             this.transformer = transformer; this.action = action;
         }
-        @Override
         public final void compute() {
             final Function<Map.Entry<K,V>, ? extends U> transformer;
             final Consumer<? super U> action;
@@ -5134,7 +5040,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             super(p, b, i, f, t);
             this.transformer = transformer; this.action = action;
         }
-        @Override
         public final void compute() {
             final BiFunction<? super K, ? super V, ? extends U> transformer;
             final Consumer<? super U> action;
@@ -5169,9 +5074,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             super(p, b, i, f, t);
             this.searchFunction = searchFunction; this.result = result;
         }
-        @Override
         public final U getRawResult() { return result.get(); }
-        @Override
         public final void compute() {
             final Function<? super K, ? extends U> searchFunction;
             final AtomicReference<U> result;
@@ -5215,9 +5118,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             super(p, b, i, f, t);
             this.searchFunction = searchFunction; this.result = result;
         }
-        @Override
         public final U getRawResult() { return result.get(); }
-        @Override
         public final void compute() {
             final Function<? super V, ? extends U> searchFunction;
             final AtomicReference<U> result;
@@ -5261,9 +5162,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             super(p, b, i, f, t);
             this.searchFunction = searchFunction; this.result = result;
         }
-        @Override
         public final U getRawResult() { return result.get(); }
-        @Override
         public final void compute() {
             final Function<Entry<K,V>, ? extends U> searchFunction;
             final AtomicReference<U> result;
@@ -5307,9 +5206,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             super(p, b, i, f, t);
             this.searchFunction = searchFunction; this.result = result;
         }
-        @Override
         public final U getRawResult() { return result.get(); }
-        @Override
         public final void compute() {
             final BiFunction<? super K, ? super V, ? extends U> searchFunction;
             final AtomicReference<U> result;
@@ -5354,9 +5251,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             super(p, b, i, f, t); this.nextRight = nextRight;
             this.reducer = reducer;
         }
-        @Override
         public final K getRawResult() { return result; }
-        @Override
         public final void compute() {
             final BiFunction<? super K, ? super K, ? extends K> reducer;
             if ((reducer = this.reducer) != null) {
@@ -5404,9 +5299,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             super(p, b, i, f, t); this.nextRight = nextRight;
             this.reducer = reducer;
         }
-        @Override
         public final V getRawResult() { return result; }
-        @Override
         public final void compute() {
             final BiFunction<? super V, ? super V, ? extends V> reducer;
             if ((reducer = this.reducer) != null) {
@@ -5454,9 +5347,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             super(p, b, i, f, t); this.nextRight = nextRight;
             this.reducer = reducer;
         }
-        @Override
         public final Map.Entry<K,V> getRawResult() { return result; }
-        @Override
         public final void compute() {
             final BiFunction<Map.Entry<K,V>, Map.Entry<K,V>, ? extends Map.Entry<K,V>> reducer;
             if ((reducer = this.reducer) != null) {
@@ -5505,9 +5396,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             this.transformer = transformer;
             this.reducer = reducer;
         }
-        @Override
         public final U getRawResult() { return result; }
-        @Override
         public final void compute() {
             final Function<? super K, ? extends U> transformer;
             final BiFunction<? super U, ? super U, ? extends U> reducer;
@@ -5561,9 +5450,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             this.transformer = transformer;
             this.reducer = reducer;
         }
-        @Override
         public final U getRawResult() { return result; }
-        @Override
         public final void compute() {
             final Function<? super V, ? extends U> transformer;
             final BiFunction<? super U, ? super U, ? extends U> reducer;
@@ -5617,9 +5504,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             this.transformer = transformer;
             this.reducer = reducer;
         }
-        @Override
         public final U getRawResult() { return result; }
-        @Override
         public final void compute() {
             final Function<Map.Entry<K,V>, ? extends U> transformer;
             final BiFunction<? super U, ? super U, ? extends U> reducer;
@@ -5673,9 +5558,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             this.transformer = transformer;
             this.reducer = reducer;
         }
-        @Override
         public final U getRawResult() { return result; }
-        @Override
         public final void compute() {
             final BiFunction<? super K, ? super V, ? extends U> transformer;
             final BiFunction<? super U, ? super U, ? extends U> reducer;
@@ -5731,9 +5614,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             this.transformer = transformer;
             this.basis = basis; this.reducer = reducer;
         }
-        @Override
         public final Double getRawResult() { return result; }
-        @Override
         public final void compute() {
             final ToDoubleFunction<? super K> transformer;
             final DoubleBinaryOperator reducer;
@@ -5783,9 +5664,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             this.transformer = transformer;
             this.basis = basis; this.reducer = reducer;
         }
-        @Override
         public final Double getRawResult() { return result; }
-        @Override
         public final void compute() {
             final ToDoubleFunction<? super V> transformer;
             final DoubleBinaryOperator reducer;
@@ -5835,9 +5714,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             this.transformer = transformer;
             this.basis = basis; this.reducer = reducer;
         }
-        @Override
         public final Double getRawResult() { return result; }
-        @Override
         public final void compute() {
             final ToDoubleFunction<Map.Entry<K,V>> transformer;
             final DoubleBinaryOperator reducer;
@@ -5887,9 +5764,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             this.transformer = transformer;
             this.basis = basis; this.reducer = reducer;
         }
-        @Override
         public final Double getRawResult() { return result; }
-        @Override
         public final void compute() {
             final ToDoubleBiFunction<? super K, ? super V> transformer;
             final DoubleBinaryOperator reducer;
@@ -5939,9 +5814,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             this.transformer = transformer;
             this.basis = basis; this.reducer = reducer;
         }
-        @Override
         public final Long getRawResult() { return result; }
-        @Override
         public final void compute() {
             final ToLongFunction<? super K> transformer;
             final LongBinaryOperator reducer;
@@ -5991,9 +5864,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             this.transformer = transformer;
             this.basis = basis; this.reducer = reducer;
         }
-        @Override
         public final Long getRawResult() { return result; }
-        @Override
         public final void compute() {
             final ToLongFunction<? super V> transformer;
             final LongBinaryOperator reducer;
@@ -6043,9 +5914,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             this.transformer = transformer;
             this.basis = basis; this.reducer = reducer;
         }
-        @Override
         public final Long getRawResult() { return result; }
-        @Override
         public final void compute() {
             final ToLongFunction<Map.Entry<K,V>> transformer;
             final LongBinaryOperator reducer;
@@ -6095,9 +5964,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             this.transformer = transformer;
             this.basis = basis; this.reducer = reducer;
         }
-        @Override
         public final Long getRawResult() { return result; }
-        @Override
         public final void compute() {
             final ToLongBiFunction<? super K, ? super V> transformer;
             final LongBinaryOperator reducer;
@@ -6147,9 +6014,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             this.transformer = transformer;
             this.basis = basis; this.reducer = reducer;
         }
-        @Override
         public final Integer getRawResult() { return result; }
-        @Override
         public final void compute() {
             final ToIntFunction<? super K> transformer;
             final IntBinaryOperator reducer;
@@ -6199,9 +6064,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             this.transformer = transformer;
             this.basis = basis; this.reducer = reducer;
         }
-        @Override
         public final Integer getRawResult() { return result; }
-        @Override
         public final void compute() {
             final ToIntFunction<? super V> transformer;
             final IntBinaryOperator reducer;
@@ -6251,9 +6114,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             this.transformer = transformer;
             this.basis = basis; this.reducer = reducer;
         }
-        @Override
         public final Integer getRawResult() { return result; }
-        @Override
         public final void compute() {
             final ToIntFunction<Map.Entry<K,V>> transformer;
             final IntBinaryOperator reducer;
@@ -6303,9 +6164,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             this.transformer = transformer;
             this.basis = basis; this.reducer = reducer;
         }
-        @Override
         public final Integer getRawResult() { return result; }
-        @Override
         public final void compute() {
             final ToIntBiFunction<? super K, ? super V> transformer;
             final IntBinaryOperator reducer;
