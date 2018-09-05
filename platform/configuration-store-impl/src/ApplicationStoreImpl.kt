@@ -37,18 +37,14 @@ class ApplicationStoreImpl(private val application: Application, pathMacroManage
   }
 }
 
-class ApplicationStorageManager(application: Application, pathMacroManager: PathMacroManager? = null) : StateStorageManagerImpl("application", pathMacroManager?.createTrackingSubstitutor(), application) {
+class ApplicationStorageManager(application: Application, pathMacroManager: PathMacroManager? = null)
+  : StateStorageManagerImpl("application", pathMacroManager?.createTrackingSubstitutor(), application) {
 
-  override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? {
-    return if (component is NamedJDOMExternalizable) {
-      "${component.externalFileName}${FileStorageCoreUtil.DEFAULT_EXT}"
-    }
-    else {
-      DEFAULT_STORAGE_SPEC
-    }
-  }
+  override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? =
+    if (component is NamedJDOMExternalizable) "${component.externalFileName}${FileStorageCoreUtil.DEFAULT_EXT}" else DEFAULT_STORAGE_SPEC
 
-  override fun getMacroSubstitutor(fileSpec: String): TrackingPathMacroSubstitutor? = if (fileSpec == JpsGlobalLoader.PathVariablesSerializer.STORAGE_FILE_NAME) null else super.getMacroSubstitutor(fileSpec)
+  override fun getMacroSubstitutor(fileSpec: String): TrackingPathMacroSubstitutor? =
+    if (fileSpec == JpsGlobalLoader.PathVariablesSerializer.STORAGE_FILE_NAME) null else super.getMacroSubstitutor(fileSpec)
 
   override val isUseXmlProlog: Boolean
     get() = false
@@ -58,21 +54,14 @@ class ApplicationStorageManager(application: Application, pathMacroManager: Path
 
   override fun providerDataStateChanged(storage: FileBasedStorage, writer: DataWriter?, type: DataStateChanged) {
     // IDEA-144052 When "Settings repository" is enabled changes in 'Path Variables' aren't saved to default path.macros.xml file causing errors in build process
-    if (storage.fileSpec != "path.macros.xml") {
-      return
-    }
-
-    LOG.runAndLogException {
-      writer.writeTo(storage.file)
+    if (storage.fileSpec == "path.macros.xml") {
+      LOG.runAndLogException {
+        writer.writeTo(storage.file)
+      }
     }
   }
 
   override fun normalizeFileSpec(fileSpec: String): String = removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), APP_CONFIG)
 
-  override fun expandMacros(path: String): String = if (path[0] == '$') {
-    super.expandMacros(path)
-  }
-  else {
-    "${expandMacro(APP_CONFIG)}/$path"
-  }
+  override fun expandMacros(path: String): String = if (path[0] == '$') super.expandMacros(path) else "${expandMacro(APP_CONFIG)}/$path"
 }
