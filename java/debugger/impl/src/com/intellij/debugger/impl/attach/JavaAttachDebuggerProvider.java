@@ -367,6 +367,11 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     public ConfigurationFactory[] getConfigurationFactories() {
       return new ConfigurationFactory[]{FACTORY};
     }
+
+    @Override
+    public String getHelpTopic() {
+      return "reference.dialogs.rundebug.ProcessAttachRunConfigurationType";
+    }
   }
 
   static void attach(JavaAttachDebuggerProvider.LocalAttachInfo info, Project project) {

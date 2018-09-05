@@ -100,6 +100,11 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
     return myFactories;
   }
 
+  @Override
+  public String getHelpTopic() {
+    return null;
+  }
+
   @NotNull
   public static String generateName(@NotNull Project project, @NotNull ExternalSystemTaskExecutionSettings settings) {
     return generateName(

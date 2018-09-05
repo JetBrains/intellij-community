@@ -36,6 +36,11 @@ public final class UnknownConfigurationType extends SimpleConfigurationType {
   }
 
   @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.Unknown";
+  }
+
+  @Override
   public boolean isManaged() {
     return false;
   }

@@ -34,6 +34,11 @@ public final class RemoteConfigurationType extends SimpleConfigurationType {
     return "jvmRemote";
   }
 
+  @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug." + getId();
+  }
+
   @NotNull
   @Deprecated
   public ConfigurationFactory getFactory() {

@@ -58,6 +58,11 @@ public final class PythonTestConfigurationType extends ConfigurationTypeBase {
     return myFactories.getValue();
   }
 
+  @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.tests";
+  }
+
   @NotNull
   @Override
   public String getTag() {

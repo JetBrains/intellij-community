@@ -62,6 +62,11 @@ public class ApplicationConfigurationType implements ConfigurationType {
   }
 
   @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.Application";
+  }
+
+  @Override
   public boolean isDumbAware() {
     return true;
   }

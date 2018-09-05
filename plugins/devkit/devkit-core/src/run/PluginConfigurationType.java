@@ -62,6 +62,11 @@ public final class PluginConfigurationType extends SimpleConfigurationType {
     return "plugin";
   }
 
+  @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.#org.jetbrains.idea.devkit.run.PluginConfigurationType";
+  }
+
   @NotNull
   private String getVmParameters() {
     if (myVmParameters == null) {

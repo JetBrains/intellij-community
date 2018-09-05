@@ -33,6 +33,11 @@ public final class TestNGConfigurationType extends SimpleConfigurationType {
     return "testNg";
   }
 
+  @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.TestNG";
+  }
+
   public static TestNGConfigurationType getInstance() {
     return ConfigurationTypeUtil.findConfigurationType(TestNGConfigurationType.class);
   }

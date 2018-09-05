@@ -109,6 +109,11 @@ public final class MavenRunConfigurationType implements ConfigurationType {
   }
 
   @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.MavenRunConfiguration";
+  }
+
+  @Override
   @NonNls
   @NotNull
   public String getId() {

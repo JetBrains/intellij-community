@@ -10,6 +10,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -81,6 +82,12 @@ public final class MockRuntimeConfiguration extends LocatableConfigurationBase i
     @Override
     public ConfigurationFactory[] getConfigurationFactories() {
       return new ConfigurationFactory[0];
+    }
+
+    @Nullable
+    @Override
+    public String getHelpTopic() {
+      return null;
     }
   }
 }

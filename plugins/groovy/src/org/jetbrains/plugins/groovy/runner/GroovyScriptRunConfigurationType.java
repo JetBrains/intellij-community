@@ -51,6 +51,11 @@ public final class GroovyScriptRunConfigurationType implements ConfigurationType
     return new ConfigurationFactory[]{myConfigurationFactory};
   }
 
+  @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.GroovyScriptRunConfiguration";
+  }
+
   public static GroovyScriptRunConfigurationType getInstance() {
     return ConfigurationTypeUtil.findConfigurationType(GroovyScriptRunConfigurationType.class);
   }
