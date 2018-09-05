@@ -81,7 +81,15 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
       if (component != null) {
         reset(configurable);
         if (ConfigurableWrapper.cast(MasterDetails.class, configurable) == null) {
-          if (ConfigurableWrapper.cast(Configurable.NoMargin.class, configurable) == null) {
+          final boolean setMargin = ConfigurableWrapper.cast(Configurable.NoMargin.class, configurable) == null;
+          final boolean setScroll = ConfigurableWrapper.cast(Configurable.NoScroll.class, configurable) == null;
+          if ((setMargin || setScroll) && component.getBorder() != null) {
+            final String name = configurable.getDisplayName();
+            final String id = ConfigurableVisitor.ByID.getID(configurable);
+            LOG.error("The border of the component '" + name + "'(" + id + ") will be overridden");
+          }
+
+          if (setMargin) {
             if (!component.getClass().equals(JPanel.class)) {
               // some custom components do not support borders
               JPanel panel = new JPanel(new BorderLayout());
@@ -90,7 +98,7 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
             }
             component.setBorder(JBUI.Borders.empty(5, 10, 10, 10));
           }
-          if (ConfigurableWrapper.cast(Configurable.NoScroll.class, configurable) == null) {
+          if (setScroll) {
             JScrollPane scroll = ScrollPaneFactory.createScrollPane(null, true);
             scroll.setViewport(new GradientViewport(component, JBUI.insetsTop(5), true));
             component = scroll;
