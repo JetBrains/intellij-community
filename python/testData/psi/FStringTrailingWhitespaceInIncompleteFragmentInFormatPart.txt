@@ -18,6 +18,6 @@ PyFile:FStringTrailingWhitespaceInIncompleteFragmentInFormatPart.py
               PsiElement(Py:FSTRING_FRAGMENT_START)('{')
               PsiErrorElement:expression expected
                 PsiWhiteSpace(' ')
-              PsiErrorElement:type conversion, : or } expected
+              PsiErrorElement:} expected
                 <empty list>
         PsiElement(Py:FSTRING_END)(''')
