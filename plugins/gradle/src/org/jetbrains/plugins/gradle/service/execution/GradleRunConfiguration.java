@@ -15,6 +15,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 public class GradleRunConfiguration extends ExternalSystemRunConfiguration {
@@ -66,7 +67,7 @@ public class GradleRunConfiguration extends ExternalSystemRunConfiguration {
     if (editor instanceof SettingsEditorGroup) {
       final SettingsEditorGroup group = (SettingsEditorGroup)editor;
       //noinspection unchecked
-      group.addEditor(GradleConstants.SYSTEM_ID.getReadableName(), new GradleDebugSettingsEditor());
+      group.addEditor(GradleBundle.message("gradle.settings.title.debug"), new GradleDebugSettingsEditor());
     }
     return editor;
   }

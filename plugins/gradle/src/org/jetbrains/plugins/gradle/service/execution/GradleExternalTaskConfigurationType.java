@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import javax.swing.*;
+import java.awt.*;
 
 public final class GradleExternalTaskConfigurationType extends AbstractExternalSystemTaskConfigurationType {
   public GradleExternalTaskConfigurationType() {
@@ -40,9 +41,7 @@ public final class GradleExternalTaskConfigurationType extends AbstractExternalS
 
 
 class GradleDebugSettingsEditor extends SettingsEditor<GradleRunConfiguration> {
-
-  JCheckBox myCheckBox;
-  JLabel myLabel;
+  private JCheckBox myCheckBox;
 
   @Override
   protected void resetEditorFrom(@NotNull GradleRunConfiguration s) {
@@ -57,11 +56,9 @@ class GradleDebugSettingsEditor extends SettingsEditor<GradleRunConfiguration> {
   @NotNull
   @Override
   protected JComponent createEditor() {
-    JPanel panel = new JPanel();
-    myLabel = new JLabel("Enable Gradle script debugging");
-    myCheckBox = new JCheckBox("Debug gradle script");
+    JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    myCheckBox = new JCheckBox("Enable Gradle script debugging");
     panel.add(myCheckBox);
-    panel.add(myLabel);
     return panel;
   }
 }
