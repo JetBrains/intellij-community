@@ -88,7 +88,7 @@ public final class CreateDialogAction extends AbstractCreateFormAction {
     final boolean generateCancel,
     final boolean generateMain
   ) {
-    @NonNls final StringBuffer result = new StringBuffer(1024);
+    @NonNls final StringBuilder result = new StringBuilder(1024);
 
     result.append("public class ").append(className).append(" extends javax.swing.JDialog {\n");
     result.append("private javax.swing.JPanel contentPane;\n");

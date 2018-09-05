@@ -61,7 +61,7 @@ public class SplitBySeparatorPolicy extends FilePathSplittingPolicy {
       return name;
     }
 
-    StringBuffer result = new StringBuffer();
+    StringBuilder result = new StringBuilder();
 
     for (Iterator<String> iterator = begin.iterator(); iterator.hasNext();) {
       result.append(iterator.next());

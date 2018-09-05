@@ -238,7 +238,7 @@ public class DirectoryChooser extends DialogWrapper {
   @Nullable
   private static String concat(String[] strings, int headLimit, int tailLimit) {
     if (strings.length <= headLimit + tailLimit) return null;
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     String separator = "";
     for (int i = headLimit; i < strings.length - tailLimit; i++) {
       buffer.append(separator);

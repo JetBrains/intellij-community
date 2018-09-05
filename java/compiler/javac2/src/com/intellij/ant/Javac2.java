@@ -351,7 +351,7 @@ public class Javac2 extends Javac {
         }
         final FormErrorInfo[] errors = codeGenerator.getErrors();
         if (errors.length > 0) {
-          StringBuffer message = new StringBuffer();
+          StringBuilder message = new StringBuilder();
           for (int j = 0; j < errors.length; j++) {
             if (message.length() > 0) {
               message.append("\n");
@@ -380,7 +380,7 @@ public class Javac2 extends Javac {
    * @return a URL classloader
    */
   private InstrumentationClassFinder buildClasspathClassLoader() {
-    final StringBuffer classPathBuffer = new StringBuffer();
+    final StringBuilder classPathBuffer = new StringBuilder();
     final Project project = getProject();
     final Path cp = new Path(project);
     appendPath(cp, getBootclasspath());

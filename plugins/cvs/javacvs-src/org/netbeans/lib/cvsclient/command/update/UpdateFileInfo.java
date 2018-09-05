@@ -51,7 +51,7 @@ public final class UpdateFileInfo
 	}
 
 	public String toString() {
-		@NonNls final StringBuffer buffer = new StringBuffer();
+		@NonNls final StringBuilder buffer = new StringBuilder();
 		buffer.append(type);
 		buffer.append("  ");
 		if (isDirectory()) {

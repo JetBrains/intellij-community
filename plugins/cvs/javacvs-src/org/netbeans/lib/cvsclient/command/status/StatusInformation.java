@@ -235,7 +235,7 @@ public final class StatusInformation {
 	 */
 	@SuppressWarnings({"HardCodedStringLiteral"})
         public String toString() {
-		final StringBuffer buf = new StringBuffer();
+		final StringBuilder buf = new StringBuilder();
 		buf.append("\nFile: ");
 		buf.append((file != null) ? file.getAbsolutePath()
 		           : "null");

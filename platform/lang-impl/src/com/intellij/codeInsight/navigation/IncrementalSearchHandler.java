@@ -218,7 +218,7 @@ public class IncrementalSearchHandler {
       final boolean caseSensitive = detectSmartCaseSensitive(prefix);
 
       if (acceptableRegExp(prefix)) {
-        @NonNls final StringBuffer buf = new StringBuffer(prefix.length());
+        @NonNls final StringBuilder buf = new StringBuilder(prefix.length());
         final int len = prefix.length();
 
         for (int i = 0; i < len; ++i) {

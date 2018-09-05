@@ -245,9 +245,9 @@ public final class Generator {
     final LwRootContainer[] rootContainer = new LwRootContainer[1];
     final FormProperty[] formProperties = exposeForm(data.myProject, data.myFormFile, rootContainer);
 
-    final StringBuffer getDataBody = new StringBuffer();
-    final StringBuffer setDataBody = new StringBuffer();
-    final StringBuffer isModifiedBody = new StringBuffer();
+    final StringBuilder getDataBody = new StringBuilder();
+    final StringBuilder setDataBody = new StringBuilder();
+    final StringBuilder isModifiedBody = new StringBuilder();
 
     // iterate exposed formproperties
 
