@@ -160,7 +160,7 @@ public final class RequestProcessor implements IRequestProcessor {
   private boolean processRequests(final Requests requests,
                                   final IConnectionStreams connectionStreams,
                                   final IRequestsProgressHandler communicationProgressHandler)
-    throws CommandException, IOCommandException {
+    throws CommandException {
 
     BugLog.getInstance().assertNotNull(requests);
 
@@ -183,7 +183,7 @@ public final class RequestProcessor implements IRequestProcessor {
     public boolean processRequests(final Requests requests,
                                    final IConnectionStreams connectionStreams,
                                    final IRequestsProgressHandler communicationProgressHandler)
-      throws CommandException, IOCommandException {
+      throws CommandException {
       final Runnable runnable = () -> {
         try {
           checkCanceled();

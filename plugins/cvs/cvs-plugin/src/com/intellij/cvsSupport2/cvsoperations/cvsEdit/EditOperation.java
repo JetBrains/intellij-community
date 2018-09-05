@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.command.Command;
-import org.netbeans.lib.cvsclient.command.CommandAbortedException;
 import org.netbeans.lib.cvsclient.command.CommandException;
 import org.netbeans.lib.cvsclient.command.Watch;
 import org.netbeans.lib.cvsclient.command.reservedcheckout.EditCommand;
@@ -108,8 +107,7 @@ public class EditOperation extends CvsOperationOnFiles {
   @Override
   protected void execute(CvsRootProvider root,
                          CvsExecutionEnvironment executionEnvironment,
-                         ReadWriteStatistics statistics, IProgressViewer progressViewer) throws CommandException,
-      CommandAbortedException, VcsException {
+                         ReadWriteStatistics statistics, IProgressViewer progressViewer) throws CommandException, VcsException {
     super.execute(root, executionEnvironment, statistics, progressViewer);
     final VcsException vcsException = new CvsException(FILES_BEING_EDITED_EXCEPTION, root.getCvsRootAsString());
 
