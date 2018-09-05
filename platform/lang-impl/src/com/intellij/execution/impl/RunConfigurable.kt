@@ -35,7 +35,6 @@ import com.intellij.util.ArrayUtilRt
 import com.intellij.util.IconUtil
 import com.intellij.util.PlatformIcons
 import com.intellij.util.containers.TreeTraversal
-import com.intellij.util.containers.nullize
 import com.intellij.util.ui.*
 import com.intellij.util.ui.tree.TreeUtil
 import gnu.trove.THashMap
@@ -199,23 +198,20 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
       }
     }
     val manager = runManager
-    for (type in ConfigurationTypeUtil.getTypesWithUnknown()) {
-      val configurations = manager.getConfigurationSettingsList(type).nullize() ?: continue
+    for ((type, folderMap) in manager.getConfigurationsGroupedByTypeAndFolder(true)) {
       val typeNode = DefaultMutableTreeNode(type)
       root.add(typeNode)
-      val folderMapping = THashMap<String, DefaultMutableTreeNode>()
-      for (configuration in configurations) {
-        val folder = configuration.folderName
+      for ((folder, configurations) in folderMap.entries) {
+        val node: DefaultMutableTreeNode
         if (folder == null) {
-          typeNode.add(DefaultMutableTreeNode(configuration))
+          node = typeNode
         }
         else {
-          val node = folderMapping.getOrPut(folder) {
-            val node = DefaultMutableTreeNode(folder)
-            typeNode.insert(node, folderMapping.size)
-            node
-          }
-          node.add(DefaultMutableTreeNode(configuration))
+          node = DefaultMutableTreeNode(folder)
+          typeNode.add(node)
+        }
+        for (it in configurations) {
+          typeNode.add(DefaultMutableTreeNode(it))
         }
       }
     }

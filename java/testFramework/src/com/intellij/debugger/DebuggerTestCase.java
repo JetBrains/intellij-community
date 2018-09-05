@@ -504,7 +504,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
     @Override
     public ConfigurationFactory getFactory() {
-      return UnknownConfigurationType.getFactory();
+      return UnknownConfigurationType.getInstance();
     }
 
     @Override

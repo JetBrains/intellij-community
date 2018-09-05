@@ -125,7 +125,7 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
     }
     else if (scheme.isTemplate) {
       val factory = scheme.factory
-      if (factory != UnknownConfigurationType.getFactory() && !templateDifferenceHelper.isTemplateModified(result, factory)) {
+      if (factory != UnknownConfigurationType.getInstance() && !templateDifferenceHelper.isTemplateModified(result, factory)) {
         return null
       }
     }

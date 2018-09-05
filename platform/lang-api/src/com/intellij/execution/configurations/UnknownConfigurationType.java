@@ -7,34 +7,32 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.LazyUtil;
 import org.jetbrains.annotations.NotNull;
 
-public final class UnknownConfigurationType extends ConfigurationTypeBase {
+public final class UnknownConfigurationType extends SimpleConfigurationType {
   @NotNull
-  public static final UnknownConfigurationType INSTANCE = new UnknownConfigurationType();
+  private static final UnknownConfigurationType INSTANCE = new UnknownConfigurationType();
+
+  private static final String NAME = "Unknown";
 
   private UnknownConfigurationType() {
     super(NAME, NAME, ExecutionBundle.message("run.configuration.unknown.description"), LazyUtil.create(() -> AllIcons.Actions.Help));
-
-    addFactory(new ConfigurationFactory(this) {
-      @NotNull
-      @Override
-      public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
-        return new UnknownRunConfiguration(this, project);
-      }
-
-      @NotNull
-      @Override
-      public RunConfigurationSingletonPolicy getSingletonPolicy() {
-        // in any case you cannot run UnknownConfigurationType
-        return RunConfigurationSingletonPolicy.SINGLE_INSTANCE_ONLY;
-      }
-    });
   }
 
-  public static final String NAME = "Unknown";
+  @NotNull
+  public static UnknownConfigurationType getInstance() {
+    return INSTANCE;
+  }
 
   @NotNull
-  public static ConfigurationFactory getFactory() {
-    return INSTANCE.getConfigurationFactories()[0];
+  @Override
+  public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
+    return new UnknownRunConfiguration(this, project);
+  }
+
+  @NotNull
+  @Override
+  public RunConfigurationSingletonPolicy getSingletonPolicy() {
+    // in any case you cannot run UnknownConfigurationType
+    return RunConfigurationSingletonPolicy.SINGLE_INSTANCE_ONLY;
   }
 
   @Override

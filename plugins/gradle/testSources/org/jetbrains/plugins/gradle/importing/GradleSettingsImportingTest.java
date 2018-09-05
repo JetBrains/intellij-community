@@ -410,7 +410,7 @@ class TestRunConfigurationImporter implements RunConfigurationImporter {
   @NotNull
   @Override
   public ConfigurationFactory getConfigurationFactory() {
-    return UnknownConfigurationType.getFactory();
+    return UnknownConfigurationType.getInstance();
   }
 
   public Map<String, Map<String, Object>> getConfigs() {

@@ -191,7 +191,7 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
 
   private fun buildConfigurationTypeMap(factories: List<ConfigurationType>): Map<String, ConfigurationType> {
     val types = factories.toMutableList()
-    types.add(UnknownConfigurationType.INSTANCE)
+    types.add(UnknownConfigurationType.getInstance())
     val map = THashMap<String, ConfigurationType>()
     for (type in types) {
       map.put(type.id, type)
@@ -256,7 +256,7 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
     // use allSettings to return sorted result
     for (setting in allSettings) {
       val type = setting.type
-      if (!isIncludeUnknown && type === UnknownConfigurationType.INSTANCE) {
+      if (!isIncludeUnknown && type === UnknownConfigurationType.getInstance()) {
         continue
       }
 
@@ -785,7 +785,7 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
       if (checkUnknown && typeId != null) {
         UnknownFeaturesCollector.getInstance(project).registerUnknownRunConfiguration(typeId, factoryId)
       }
-      return UnknownConfigurationType.getFactory()
+      return UnknownConfigurationType.getInstance()
     }
 
     if (type is UnknownConfigurationType) {
