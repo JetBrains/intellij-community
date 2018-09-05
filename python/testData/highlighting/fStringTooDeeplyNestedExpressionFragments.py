@@ -3,5 +3,5 @@ f'{x:{y:<error descr="Expression fragment inside f-string is nested too deeply">
 f'{x:{y:<error descr="Expression fragment inside f-string is nested too deeply">{z<error descr="Illegal conversion character 'z': should be one of 's', 'r', 'a'">!z</error>}</error>}}'
 f'{x:{y:<error descr="Expression fragment inside f-string is nested too deeply">{z:<error descr="Expression fragment inside f-string is nested too deeply">{42}</error>}</error>}}'
 f'{<error descr="expression expected">:</error>{<error descr="expression expected">:</error><error descr="Expression fragment inside f-string is nested too deeply">{<error descr="expression expected">:</error><error descr="Expression fragment inside f-string is nested too deeply">{<error descr="expression expected">}</error></error>}</error>}}'
-f'{x:{y:<error descr="Expression fragment inside f-string is nested too deeply">{z</error><error descr="type conversion, : or } expected">'</error>
+f'{x:{y:<error descr="Expression fragment inside f-string is nested too deeply">{z</error><error descr="} expected">'</error>
 f'{x:{y:<error descr="Expression fragment inside f-string is nested too deeply">{z</error><EOLError descr="type conversion, : or } expected"></EOLError><EOLError descr="' expected"></EOLError>

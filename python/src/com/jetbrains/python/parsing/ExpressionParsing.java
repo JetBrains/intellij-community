@@ -189,7 +189,7 @@ public class ExpressionParsing extends Parsing {
         parseFStringFragmentFormatPart();
       }
       String errorMessage = "} expected";
-      if (!hasFormatPart) {
+      if (!hasFormatPart && !atToken(PyTokenTypes.FSTRING_END)) {
         errorMessage = ": or " + errorMessage;
         if (!hasTypeConversion) {
           errorMessage = "type conversion, " + errorMessage;
