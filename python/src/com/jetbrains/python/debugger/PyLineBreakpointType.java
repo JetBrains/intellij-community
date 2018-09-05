@@ -67,14 +67,7 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
 
   @Override
   public boolean canPutAt(@NotNull final VirtualFile file, final int line, @NotNull final Project project) {
-    final Ref<Boolean> stoppable = Ref.create(false);
-    final Document document = FileDocumentManager.getInstance().getDocument(file);
-    if (document != null) {
-      lineHasStoppablePsi(project, file, line, PythonFileType.INSTANCE, document, UNSTOPPABLE_ELEMENTS, UNSTOPPABLE_ELEMENT_TYPES, stoppable
-      );
-    }
-
-    return stoppable.get();
+    return false;
   }
 
   public static void lineHasStoppablePsi(@NotNull Project project,

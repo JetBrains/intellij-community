@@ -9,7 +9,7 @@ import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.debugger.PyDebuggerEditorsProvider
 import com.jetbrains.python.debugger.PyLineBreakpointType
 
-class IpnbLineBreakpointType : PyLineBreakpointType(ID, "Ipnb Line Breakpoint", PyDebuggerEditorsProvider()) {
+class IpnbLineBreakpointType : PyLineBreakpointType(ID, "Jupyter Line Breakpoint", PyDebuggerEditorsProvider()) {
 
   override fun canPutAt(file: VirtualFile, line: Int, project: Project): Boolean {
     val stoppable = Ref.create(false)
@@ -27,7 +27,7 @@ class IpnbLineBreakpointType : PyLineBreakpointType(ID, "Ipnb Line Breakpoint", 
   }
 
   companion object {
-    val ID = "ipnb-line"
+    val ID = "jupyter-line"
   }
 
 }
