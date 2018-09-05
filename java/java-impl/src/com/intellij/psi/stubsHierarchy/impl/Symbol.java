@@ -192,9 +192,5 @@ abstract class Symbol {
     }
   }
 
-  private static final Comparator<ClassSymbol> CLASS_SYMBOL_BY_NAME_COMPARATOR = (s1, s2) -> {
-    int name1 = s1.myShortName;
-    int name2 = s2.myShortName;
-    return (name1 < name2) ? -1 : ((name1 == name2) ? 0 : 1);
-  };
+  private static final Comparator<ClassSymbol> CLASS_SYMBOL_BY_NAME_COMPARATOR = Comparator.comparingInt(s -> s.myShortName);
 }
