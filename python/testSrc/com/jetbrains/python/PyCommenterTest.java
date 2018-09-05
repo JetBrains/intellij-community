@@ -17,6 +17,7 @@ package com.jetbrains.python;
 
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 
 /**
  * @author yole
@@ -28,6 +29,11 @@ public class PyCommenterTest extends PyTestCase {
 
   public void testUncommentWithoutSpace() {
     doTest();
+  }
+
+  // PY-20777
+  public void testLineCommentInFStringFragment() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
 
   private void doTest() {

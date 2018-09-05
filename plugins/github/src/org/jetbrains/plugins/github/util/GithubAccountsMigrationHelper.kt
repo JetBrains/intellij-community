@@ -16,6 +16,7 @@ import org.jetbrains.plugins.github.api.GithubTask
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.authentication.ui.GithubLoginDialog
+import java.awt.Component
 import java.io.IOException
 
 internal const val GITHUB_SETTINGS_PASSWORD_KEY = "GITHUB_SETTINGS_PASSWORD_KEY"
@@ -52,7 +53,8 @@ class GithubAccountsMigrationHelper internal constructor(private val settings: G
    * @return false if process was cancelled by user, true otherwise
    */
   @CalledInAwt
-  fun migrate(project: Project): Boolean {
+  @JvmOverloads
+  fun migrate(project: Project, parentComponent: Component? = null): Boolean {
     LOG.debug("Migrating old auth")
     val login = settings.login
     val host = settings.host
@@ -83,14 +85,15 @@ class GithubAccountsMigrationHelper internal constructor(private val settings: G
             }
             catch (e: Exception) {
               LOG.debug("Failed to migrate old token-based auth. Showing dialog.", e)
-              val dialog = GithubLoginDialog(project).withServer(hostToUse, false).withToken(password).withError(e)
+              val dialog = GithubLoginDialog(project, parentComponent)
+                .withServer(hostToUse, false).withToken(password).withError(e)
               dialogCancelled = !registerFromDialog(dialog)
             }
           }
         }
         GithubAuthData.AuthType.BASIC -> {
           LOG.debug("Migrating basic auth")
-          val dialog = GithubLoginDialog(project, message = "Password authentication is no longer supported for Github.\n" +
+          val dialog = GithubLoginDialog(project,parentComponent, message = "Password authentication is no longer supported for Github.\n" +
                                                             "Personal access token can be acquired instead.")
             .withServer(hostToUse, false).withCredentials(login, password)
           dialogCancelled = !registerFromDialog(dialog)

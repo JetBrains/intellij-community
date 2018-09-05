@@ -17,6 +17,8 @@ package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.TipsOfTheDayUsagesCollector;
+import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -97,6 +99,7 @@ public class TipDialog extends DialogWrapper{
     }
 
     public void actionPerformed(ActionEvent e){
+      FUSApplicationUsageTrigger.getInstance().trigger(TipsOfTheDayUsagesCollector.class, "previous.tip");
       myTipPanel.prevTip();
       UsageTrigger.trigger("tips.of.the.day.prev");
     }
@@ -110,6 +113,7 @@ public class TipDialog extends DialogWrapper{
     }
 
     public void actionPerformed(ActionEvent e){
+      FUSApplicationUsageTrigger.getInstance().trigger(TipsOfTheDayUsagesCollector.class, "next.tip");
       myTipPanel.nextTip();
       UsageTrigger.trigger("tips.of.the.day.next");
     }

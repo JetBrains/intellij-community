@@ -23,10 +23,10 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
-import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -129,7 +129,10 @@ public class ThrowSearchUtil {
     if (element instanceof PsiThrowStatement) {
       final PsiThrowStatement aThrow = (PsiThrowStatement)element;
       final PsiExpression exn = aThrow.getException();
-      return new Root[]{new Root(aThrow.getParent(), exn.getType(), isExactExnType(exn))};
+      PsiType exType = exn == null ? null : exn.getType();
+      if (exType == null) return null;
+
+      return new Root[]{new Root(aThrow.getParent(), exType, isExactExnType(exn))};
     }
     if (element instanceof PsiKeyword) {
       final PsiKeyword kwd = (PsiKeyword)element;

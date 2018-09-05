@@ -26,7 +26,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class JsonPsiImplUtils {
-  private static final Key<List<Pair<TextRange, String>>> STRING_FRAGMENTS = new Key<>("JSON string fragments");
+  static final Key<List<Pair<TextRange, String>>> STRING_FRAGMENTS = new Key<>("JSON string fragments");
 
   @NotNull
   public static String getName(@NotNull JsonProperty property) {

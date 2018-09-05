@@ -113,6 +113,16 @@ public class PyCallingNonCallableInspectionTest extends PyInspectionTestCase {
     doMultiFileTest();
   }
 
+  // PY-24161
+  public void testGenericClassObjectTypeAnnotation() {
+    doTest();
+  }
+
+  // PY-24161
+  public void testExplicitClassObjectTypeAnnotation() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

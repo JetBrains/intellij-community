@@ -43,7 +43,6 @@ public class DifferenceReverterTest extends IntegrationTestCase {
     f = myRoot.findChild("foo.txt");
     assertNotNull(f);
     assertEquals(123, f.contentsToByteArray()[0]);
-    assertEquals(4000, f.getTimeStamp());
   }
 
   public void testDirDeletion() throws Exception {
@@ -62,7 +61,6 @@ public class DifferenceReverterTest extends IntegrationTestCase {
     f = subdir.findChild("foo.txt");
     assertNotNull(f);
     assertEquals(123, f.contentsToByteArray()[0]);
-    assertEquals(4000, f.getTimeStamp());
   }
 
   public void testDeletionOfFileAndCreationOfDirAtTheSameTime() throws Exception {
@@ -107,7 +105,6 @@ public class DifferenceReverterTest extends IntegrationTestCase {
     f = myRoot.findChild("foo.txt");
     assertNotNull(f);
     assertEquals(123, f.contentsToByteArray()[0]);
-    assertEquals(4000, f.getTimeStamp());
   }
 
   public void testMovement() throws Exception {
@@ -126,7 +123,6 @@ public class DifferenceReverterTest extends IntegrationTestCase {
     f = dir1.findChild("foo.txt");
     assertNotNull(f);
     assertEquals(123, f.contentsToByteArray()[0]);
-    assertEquals(4000, f.getTimeStamp());
   }
 
   public void testParentRename() throws Exception {
@@ -144,7 +140,6 @@ public class DifferenceReverterTest extends IntegrationTestCase {
     f = dir.findChild("foo.txt");
     assertNotNull(f);
     assertEquals(123, f.contentsToByteArray()[0]);
-    assertEquals(4000, f.getTimeStamp());
   }
 
   public void testParentAndChildRename() throws Exception {
@@ -167,7 +162,6 @@ public class DifferenceReverterTest extends IntegrationTestCase {
     f = dir.findChild("foo.txt");
     assertNotNull(f);
     assertEquals(123, f.contentsToByteArray()[0]);
-    assertEquals(4000, f.getTimeStamp());
   }
 
   public void testRevertContentChange() throws Exception {
@@ -182,7 +176,6 @@ public class DifferenceReverterTest extends IntegrationTestCase {
     f = myRoot.findChild("foo.txt");
     assertNotNull(f);
     assertEquals(1, f.contentsToByteArray()[0]);
-    assertEquals(1000, f.getTimeStamp());
   }
 
   public void testContentChangeWhenDirectoryExists() throws Exception {
@@ -205,7 +198,6 @@ public class DifferenceReverterTest extends IntegrationTestCase {
     assertNotNull(f);
     assertFalse(f.isDirectory());
     assertEquals(1, f.contentsToByteArray()[0]);
-    assertEquals(1000, f.getTimeStamp());
   }
 
   public void testRevertingFromOldRevisionsWhenFileAlreadyDeleted() throws Exception {
@@ -279,7 +271,6 @@ public class DifferenceReverterTest extends IntegrationTestCase {
     f = dir.findChild("foo.txt");
     assertNotNull(f);
     assertEquals(1, f.contentsToByteArray()[0]);
-    assertEquals(1000, f.getTimeStamp());
   }
 
   private void revertLastChange(int... diffsIndices) throws Exception {

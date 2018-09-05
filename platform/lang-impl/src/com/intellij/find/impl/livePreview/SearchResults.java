@@ -287,7 +287,7 @@ public class SearchResults implements DocumentListener {
         result = null;
       }
       if (result == null || !result.isStringFound()) break;
-      int newOffset = result.getEndOffset();
+      final int newOffset = result.getEndOffset();
       if (result.getEndOffset() > maxOffset) break;
       if (offset == newOffset) {
         if (offset < maxOffset - 1) {
@@ -300,6 +300,7 @@ public class SearchResults implements DocumentListener {
       }
       else {
         offset = newOffset;
+        if (offset == result.getStartOffset()) ++offset; // skip zero width result
       }
       results.add(result);
     }

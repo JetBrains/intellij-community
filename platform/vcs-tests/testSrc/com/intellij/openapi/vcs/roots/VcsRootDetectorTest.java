@@ -9,6 +9,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -100,7 +101,7 @@ public class VcsRootDetectorTest extends VcsRootBaseTest {
     String linkedRoot = "linked_root";
     File linkedRootDir = new File(testRoot, linkedRoot);
     assertTrue(new File(linkedRootDir, DOT_MOCK).mkdirs());
-    myRootModel.addContentEntry(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(linkedRootDir));
+    PsiTestUtil.addContentRoot(myRootModule, LocalFileSystem.getInstance().refreshAndFindFileByIoFile(linkedRootDir));
 
     Collection<VcsRoot> roots = detect(projectRoot);
 
@@ -151,7 +152,7 @@ public class VcsRootDetectorTest extends VcsRootBaseTest {
   }
 
   private void markAsExcluded(@NotNull VirtualFile dir) {
-    ModuleRootModificationUtil.updateExcludedFolders(myRootModel.getModule(), dir, emptyList(), singletonList(dir.getUrl()));
+    ModuleRootModificationUtil.updateExcludedFolders(myRootModule, dir, emptyList(), singletonList(dir.getUrl()));
   }
 
   @NotNull

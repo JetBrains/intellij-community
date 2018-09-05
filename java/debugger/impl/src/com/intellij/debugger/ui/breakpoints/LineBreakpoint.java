@@ -37,6 +37,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,16 +99,18 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
       return;
     }
     try {
-      List<Location> locations =
-        MethodBytecodeUtil.removeSameLineLocations(debugProcess.getPositionManager().locationsOfLine(classType, getSourcePosition()));
+      List<Location> locations = debugProcess.getPositionManager().locationsOfLine(classType, getSourcePosition());
       if (!locations.isEmpty()) {
-        for (Location loc : locations) {
+        locations = StreamEx.of(locations).peek(loc -> {
           if (LOG.isDebugEnabled()) {
-            LOG.debug("Found location [codeIndex=" + loc.codeIndex() +"] for reference type " + classType.name() + " at line " + getLineIndex() + "; isObsolete: " + (debugProcess.getVirtualMachineProxy().versionHigher("1.4") && loc.method().isObsolete()));
+            LOG.debug("Found location [codeIndex=" + loc.codeIndex() +
+                      "] for reference type " + classType.name() +
+                      " at line " + getLineIndex() +
+                      "; isObsolete: " + (debugProcess.getVirtualMachineProxy().versionHigher("1.4") && loc.method().isObsolete()));
           }
-          if (!acceptLocation(debugProcess, classType, loc)) {
-            continue;
-          }
+        }).filter(l -> acceptLocation(debugProcess, classType, l)).toList();
+        locations = MethodBytecodeUtil.removeSameLineLocations(locations);
+        for (Location loc : locations) {
           createLocationBreakpointRequest(this, loc, debugProcess);
           if (LOG.isDebugEnabled()) {
             LOG.debug("Created breakpoint request for reference type " + classType.name() + " at line " + getLineIndex() + "; codeIndex=" + loc.codeIndex());

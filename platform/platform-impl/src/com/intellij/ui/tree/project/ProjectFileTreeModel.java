@@ -6,6 +6,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -104,8 +105,9 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
     return result;
   }
 
-  private static boolean isVisible(@NotNull FileNode node, @Nullable VirtualFileFilter filter) {
-    if (!node.getVirtualFile().isValid()) return false;
+  private boolean isVisible(@NotNull FileNode node, @Nullable VirtualFileFilter filter) {
+    if (!node.file.isValid() || root.project.isDisposed()) return false;
+    if (!root.showExcludedFiles && ProjectFileIndex.getInstance(root.project).isExcluded(node.file)) return false;
     if (filter == null) return true;
     ThreeState visibility = node.visibility;
     if (visibility == ThreeState.NO) return false;
@@ -142,12 +144,17 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
     });
   }
 
-  public void setShowModules(boolean showModules) {
+  public void setSettings(boolean showExcludedFiles, boolean showModules) {
     onValidThread(() -> {
-      if (root.showModules == showModules) return;
-      root.showModules = showModules;
-      root.valid = false; // need to reload content roots
-      pathChanged(null);
+      if (root.showExcludedFiles != showExcludedFiles) {
+        if (root.filter != null) root.resetVisibility();
+        root.showExcludedFiles = showExcludedFiles;
+        root.valid = false; // need to reload from root
+      }
+      if (root.showModules != showModules) {
+        root.showModules = showModules;
+        root.valid = false; // need to reload from root
+      }
     });
   }
 
@@ -217,6 +224,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
 
   private static class ProjectNode extends Node<RootNode> {
     volatile VirtualFileFilter filter;
+    volatile boolean showExcludedFiles;
     volatile boolean showModules;
     final Project project;
 

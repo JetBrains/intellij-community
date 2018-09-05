@@ -28,13 +28,13 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import java.util.HashSet;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -86,7 +86,7 @@ public class UndoChangeRevertingVisitor extends ChangeVisitor {
     if (shouldRevert(c)) {
       try {
         VirtualFile f = myGateway.findOrCreateFileSafely(c.getPath(), false);
-        registerDelayedContentApply(f, c.getOldContent(), c.getOldTimestamp());
+        registerDelayedContentApply(f, c.getOldContent());
       }
       catch (IOException e) {
         throw new RuntimeIOException(e);
@@ -165,13 +165,13 @@ public class UndoChangeRevertingVisitor extends ChangeVisitor {
       for (Entry child : e.getChildren()) revertDeletion(f, child);
     }
     else {
-      registerDelayedContentApply(f, e.getContent(), e.getTimestamp());
+      registerDelayedContentApply(f, e.getContent());
       registerDelayedROStatusApply(f, e.isReadOnly());
     }
   }
 
-  private void registerDelayedContentApply(VirtualFile f, Content content, long timestamp) {
-    registerDelayedApply(new DelayedContentApply(f, content, timestamp));
+  private void registerDelayedContentApply(VirtualFile f, Content content) {
+    registerDelayedApply(new DelayedContentApply(f, content));
   }
 
   private void registerDelayedROStatusApply(VirtualFile f, boolean isReadOnly) {
@@ -234,12 +234,10 @@ public class UndoChangeRevertingVisitor extends ChangeVisitor {
 
   private static class DelayedContentApply extends DelayedApply {
     private final Content myContent;
-    private final long myTimestamp;
 
-    public DelayedContentApply(VirtualFile f, Content content, long timestamp) {
+    public DelayedContentApply(VirtualFile f, Content content) {
       super(f);
       myContent = content;
-      myTimestamp = timestamp;
     }
 
     @Override
@@ -252,7 +250,7 @@ public class UndoChangeRevertingVisitor extends ChangeVisitor {
       Document doc = FileDocumentManager.getInstance().getCachedDocument(myFile);
       DocumentUndoProvider.startDocumentUndo(doc);
       try {
-        myFile.setBinaryContent(myContent.getBytes(), -1, myTimestamp);
+        myFile.setBinaryContent(myContent.getBytes());
       }
       finally {
         DocumentUndoProvider.finishDocumentUndo(doc);

@@ -20,7 +20,7 @@
 import socket
 import struct
 import urllib2
-from mercurial import  ui, util
+from mercurial import  ui, util, error
 from mercurial.i18n import _
 
 try:
@@ -45,7 +45,7 @@ def receiveIntWithMessage(client, message):
     while len(buffer)<requiredLength:
         chunk = client.recv(requiredLength-len(buffer))
         if chunk == '':
-            raise util.Abort( message )
+            raise error.Abort( message )
         buffer = buffer + chunk
         
     # struct.unpack always returns a tuple, even if that tuple only contains a single
@@ -67,7 +67,7 @@ def receiveWithMessage( client, message ):
     while len(buffer) < length :
         chunk = client.recv(length - len(buffer))
         if chunk == '':
-            raise util.Abort( message)
+            raise error.Abort( message)
         buffer = buffer+chunk
         
     return buffer
@@ -83,7 +83,7 @@ def sendchoicestoidea(ui, msg, choices, default):
     port = int(ui.config( 'hg4ideaprompt', 'port', None, True))
 
     if not port:
-        raise util.Abort("No port was specified")
+        raise error.Abort("No port was specified")
     if (type(choices) is int) and (type(msg) is str):
         # since Mercurial 2.7 the promptchoice method doesn't accept 'choices' as parameter, so we need to parse them from msg
         # see ui.py -> promptchoice(self, prompt, default=0)
@@ -108,7 +108,7 @@ def sendchoicestoidea(ui, msg, choices, default):
     
         answer = receiveInt( client )
         if answer == -1:
-            raise util.Abort("User cancelled")
+            raise error.Abort("User cancelled")
         else:      
             return answer
     except:
@@ -138,7 +138,7 @@ def warn(self, *msg):
     port = int(hg4ideaWarnConfig)
   
     if not port:
-        raise util.Abort("No port was specified")
+        raise error.Abort("No port was specified")
 
     self.debug( "hg4idea prompt server waiting on port %s" % port )
 
@@ -156,7 +156,7 @@ def warn(self, *msg):
 def retrieve_pass_from_server(ui, uri,path, proposed_user):
     port = int(ui.config('hg4ideapass', 'port', None, True))
     if port is None:
-        raise util.Abort("No port was specified")
+        raise error.Abort("No port was specified")
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     ui.debug("connecting ...")
     client.connect(('127.0.0.1', port))
@@ -176,7 +176,7 @@ original_retrievepass=passwordmgr.find_user_password
 def find_user_password(self, realm, authuri):
     try:
         return original_retrievepass(self, realm, authuri)
-    except util.Abort:
+    except error.Abort:
 
         # In mercurial 1.8 the readauthtoken method was replaced with
         # the readauthforuri method, which has different semantics
@@ -220,7 +220,7 @@ def find_user_password(self, realm, authuri):
         reduced_uri, path = pmWithRealm.reduce_uri(authuri, False)
         retrievedPass = retrieve_pass_from_server(self.ui, reduced_uri, path, user)
         if retrievedPass is None:
-            raise util.Abort(_('http authorization required'))
+            raise error.Abort(_('http authorization required'))
         user, passwd = retrievedPass
         pmWithRealm.add_password(realm, authuri, user, passwd)
         return retrievedPass

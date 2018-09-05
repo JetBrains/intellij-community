@@ -105,6 +105,7 @@ public class HgHistoryProvider implements VcsHistoryProvider {
     return new VcsAbstractHistorySession(revisions, number) {
       @Nullable
       protected VcsRevisionNumber calcCurrentRevisionNumber() {
+        if (filePath.isDirectory()) return new HgWorkingCopyRevisionsCommand(myProject).firstParent(vcsRoot);
         return new HgWorkingCopyRevisionsCommand(myProject).parents(vcsRoot, filePath).first;
       }
 

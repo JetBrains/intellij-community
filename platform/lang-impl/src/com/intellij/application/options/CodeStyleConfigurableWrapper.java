@@ -46,7 +46,7 @@ public class CodeStyleConfigurableWrapper
   @Override
   public JComponent createComponent() {
     if (myPanel == null) {
-      myPanel = new CodeStyleMainPanel(myOwner.ensureModel(), myFactory, canBeShared());
+      myPanel = new CodeStyleMainPanel(myOwner.getModel(), myFactory, canBeShared());
     }
     return myPanel;
   }
@@ -128,7 +128,7 @@ public class CodeStyleConfigurableWrapper
   @Override
   public Set<String> processListOptions() {
     if (myPanel == null) {
-      myPanel = new CodeStyleMainPanel(myOwner.ensureModel(), myFactory, canBeShared());
+      myPanel = new CodeStyleMainPanel(myOwner.getModel(), myFactory, canBeShared());
     }
     return myPanel.processListOptions();
   }

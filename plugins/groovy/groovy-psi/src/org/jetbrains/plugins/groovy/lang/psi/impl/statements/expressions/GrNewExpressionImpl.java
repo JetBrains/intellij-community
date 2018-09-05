@@ -34,6 +34,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.jetbrains.plugins.groovy.lang.resolve.processors.inference.InferenceKt.buildTopLevelArgumentTypes;
+
 /**
  * @author ilyas
  */
@@ -202,11 +204,9 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
       }
     }
 
-    PsiType[] types = PsiUtil.getArgumentTypes(ref, true);
+    PsiType[] types = buildTopLevelArgumentTypes(ref);
 
-    if (types != null) {
-      types = GrInnerClassConstructorUtil.addEnclosingArgIfNeeded(types, this, (PsiClass)classCandidate.getElement());
-    }
+    types = GrInnerClassConstructorUtil.addEnclosingArgIfNeeded(types, this, (PsiClass)classCandidate.getElement());
     return PsiUtil.getConstructorCandidates(ref, classCandidate, types);
   }
 

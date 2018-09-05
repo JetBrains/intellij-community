@@ -288,18 +288,20 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(path + "/varType-result.java");
   }
 
-  public void testExtraSpace() { doJavaTest(); }
+  public void testExtraSpace() { doJavaTest('\n'); }
 
-  public void testAnnotation() { doJavaTest(); }
+  public void testAnnotation() { doJavaTest('\n'); }
 
-  public void testInStaticImport() { doJavaTest(); }
+  public void testInStaticImport() { doJavaTest('\n'); }
 
-  public void testInCommentWithPackagePrefix() { doJavaTest(); }
+  public void testInCommentWithPackagePrefix() { doJavaTest('\n'); }
 
-  private void doJavaTest() {
+  public void testNestedAnonymousTab() { doJavaTest('\t');}
+
+  private void doJavaTest(char toType) {
     final String path = "/nameCompletion/java";
     myFixture.configureByFile(path + "/" + getTestName(false) + "-source.java");
-    performAction();
+    performAction(toType);
     checkResultByFile(path + "/" + getTestName(false) + "-result.java");
   }
 
@@ -309,9 +311,12 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   private void performAction() {
+    performAction('\n');
+  }
+  private void performAction(char toType) {
     complete();
     if (LookupManager.getActiveLookup(myFixture.getEditor()) != null) {
-      myFixture.type('\n');
+      myFixture.type(toType);
     }
   }
 }

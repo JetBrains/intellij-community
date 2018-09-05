@@ -51,7 +51,6 @@ public class HistoryReverterToLabelTest extends IntegrationTestCase {
     f = myRoot.findChild("foo.txt");
     assertNotNull(f);
     assertEquals(123, f.contentsToByteArray()[0]);
-    assertEquals(4000, f.getTimeStamp());
   }
 
   public void testFileDeletion() throws Exception {
@@ -63,7 +62,6 @@ public class HistoryReverterToLabelTest extends IntegrationTestCase {
     f = myRoot.findChild("foo.txt");
     assertNotNull(f);
     assertEquals(123, f.contentsToByteArray()[0]);
-    assertEquals(4000, f.getTimeStamp());
   }
 
   public void testFileDeletionWithContent() throws Exception {
@@ -98,7 +96,6 @@ public class HistoryReverterToLabelTest extends IntegrationTestCase {
     f = dir.findChild("foo.txt");
     assertNotNull(f);
     assertEquals(123, f.contentsToByteArray()[0]);
-    assertEquals(4000, f.getTimeStamp());
 
     revertToLabel(testLabel1, myRoot);
     assertNull(myRoot.findChild("dir2"));
@@ -109,7 +106,6 @@ public class HistoryReverterToLabelTest extends IntegrationTestCase {
     f = dir.findChild("foo.txt");
     assertNotNull(f);
     assertEquals(123, f.contentsToByteArray()[0]);
-    assertEquals(4000, f.getTimeStamp());
   }
 
   public void testRevertContentChange() throws Exception {
@@ -124,7 +120,6 @@ public class HistoryReverterToLabelTest extends IntegrationTestCase {
     f = myRoot.findChild("foo.txt");
     assertNotNull(f);
     assertEquals(1, f.contentsToByteArray()[0]);
-    assertEquals(1000, f.getTimeStamp());
   }
 
   public void testRevertContentChangeOnlyForFile() throws Exception {
@@ -141,10 +136,8 @@ public class HistoryReverterToLabelTest extends IntegrationTestCase {
     f = myRoot.findChild("foo.txt");
     assertNotNull(f);
     assertEquals(1, f.contentsToByteArray()[0]);
-    assertEquals(1000, f.getTimeStamp());
     f2 = myRoot.findChild("foo2.txt");
     assertNotNull(f2);
     assertEquals(3, f2.contentsToByteArray()[0]);
-    assertEquals(3000, f2.getTimeStamp());
   }
 }

@@ -238,6 +238,31 @@ class SomeClass {
     measureHighlighting(text, 14_000)
   }
 
+  void "test constructor call's"() {
+    def text = """
+class Cl {
+
+    Cl(Map<String, Integer> a, Condition<Cl> con, String s) {
+    }
+
+    interface Condition<T> {}
+
+    static <T> Condition<T> alwaysFalse() {
+        return (Condition<T>)null
+    }
+
+
+    static m() {
+        ${'''new Cl(alwaysFalse(), name: 1, m: 2, new Object().toString(), sad: 12)\n'''*100}
+    }
+}
+"""
+    IdeaTestUtil.startPerformanceTest(getTestName(false), 750, configureAndHighlight(text))
+      .attempts(20)
+      .usesAllCPUCores()
+      .assertTiming()
+  }
+
   void "test infer only the variable types that are needed"() {
     addGdsl '''contribute(currentType(String.name)) {
   println 'sleeping'

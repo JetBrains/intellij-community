@@ -24,6 +24,7 @@ import com.intellij.openapi.externalSystem.service.project.settings.FacetConfigu
 import com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationImporter;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
@@ -50,6 +51,7 @@ import static com.intellij.openapi.externalSystem.service.project.settings.Confi
  */
 public class GradleSettingsImportingTest extends GradleImportingTestCase {
 
+  public static final String IDEA_EXT_PLUGIN_VERSION = "0.4.1";
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   @Parameterized.Parameters(name = "with Gradle-{0}")
@@ -82,13 +84,14 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
         "idea {\n" +
         "  project.settings {\n" +
         "    inspections {\n" +
+        "      myInspection { enabled = false }\n" +
         "    }\n" +
         "  }\n" +
         "}")
     );
 
     final InspectionProfileImpl profile = InspectionProfileManager.getInstance(myProject).getCurrentProfile();
-    assertEquals("Gradle Imported", profile.getName());
+      assertEquals("Gradle Imported", profile.getName());
   }
 
   @Test
@@ -261,7 +264,8 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
     assertInstanceOf(gradleBeforeRunTask, ExternalSystemBeforeRunTask.class);
     final ExternalSystemTaskExecutionSettings settings = ((ExternalSystemBeforeRunTask)gradleBeforeRunTask).getTaskExecutionSettings();
     assertContain(settings.getTaskNames(), "projects");
-    assertEquals(":", settings.getExternalProjectPath());
+    assertEquals(FileUtil.toSystemIndependentName(getProjectPath()),
+                 FileUtil.toSystemIndependentName(settings.getExternalProjectPath()));
   }
 
 
@@ -365,25 +369,19 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
     assertEquals(GradleSystemRunningSettings.PreferredTestRunner.CHOOSE_PER_TEST, settings.getPreferredTestRunner());
   }
 
-  private String getGradlePluginPath() {
-    return getClass().getResource("/testCompilerConfigurationSettingsImport/gradle-idea-ext.jar").toString();
+  @NotNull
+  @Override
+  protected String injectRepo(String config) {
+    return config; // Do not inject anything
   }
 
   @NotNull
   protected String withGradleIdeaExtPlugin(@NonNls @Language("Groovy") String script) {
-    return "buildscript {\n" +
-           "  repositories {\n" +
-           "    mavenCentral()\n" +
-           "    mavenLocal()\n" +
-           "  }\n" +
-           "  dependencies {\n" +
-           "     classpath files('" + getGradlePluginPath() + "')\n" +
-           "     classpath 'com.google.code.gson:gson:2+'\n" +
-           "     classpath 'com.google.guava:guava:25.1-jre'\n" +
-           "  }\n" +
-           "}\n" +
-           "apply plugin: 'org.jetbrains.gradle.plugin.idea-ext'\n" +
-           script;
+    return
+      "plugins {\n" +
+      "  id \"org.jetbrains.gradle.plugin.idea-ext\" version \"" + IDEA_EXT_PLUGIN_VERSION + "\"\n" +
+      "}\n" +
+      script;
   }
 
 }

@@ -21,5 +21,8 @@ public interface MultiCharQuoteHandler extends QuoteHandler {
    */
   default void insertClosingQuote(@NotNull Editor editor, int offset, @NotNull CharSequence closingQuote) {
     editor.getDocument().insertString(offset, closingQuote);
+    if (closingQuote.length() == 1) {
+      TabOutScopesTracker.getInstance().registerEmptyScope(editor, offset);
+    }
   }
 }

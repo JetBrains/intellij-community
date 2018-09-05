@@ -16,6 +16,7 @@
 package com.intellij.testFramework.propertyBased;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryException;
@@ -64,7 +65,7 @@ import java.util.function.Supplier;
  */
 public class MadTestingUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.propertyBased.MadTestingUtil");
-  
+
   public static void restrictChangesToDocument(Document document, Runnable r) {
     letSaveAllDocumentsPassIfAny();
     watchDocumentChanges(r::run, event -> {
@@ -158,11 +159,26 @@ public class MadTestingUtil {
                                });
   }
 
-  public static void enableAllInspections(Project project, Disposable disposable) {
+  /**
+   * Enables all inspections in the test project profile except for "HighlightVisitorInternal" and other passed inspections.<p>
+   *
+   * "HighlightVisitorInternal" inspection has error-level by default and highlights the first token from erroneous range,
+   * which is not very stable and also masks other warning-level inspections available on the same token.
+   *
+   * @param disposable when this is disposed, reverts to the previous project inspection profile
+   * @param except short names of inspections to disable
+   */
+  public static void enableAllInspections(Project project, Disposable disposable, String... except) {
     InspectionProfileImpl.INIT_INSPECTIONS = true;
     InspectionProfileImpl profile = new InspectionProfileImpl("allEnabled");
     profile.enableAllTools(project);
-    
+
+    disableInspection(project, profile, "HighlightVisitorInternal");
+
+    for (String shortId : except) {
+      disableInspection(project, profile, shortId);
+    }
+
     ProjectInspectionProfileManager manager = (ProjectInspectionProfileManager)InspectionProjectProfileManager.getInstance(project);
     manager.addProfile(profile);
     InspectionProfileImpl prev = manager.getCurrentProfile();
@@ -172,6 +188,13 @@ public class MadTestingUtil {
       manager.setCurrentProfile(prev);
       manager.deleteProfile(profile);
     });
+  }
+
+  private static void disableInspection(Project project, InspectionProfileImpl profile, String shortId) {
+    ToolsImpl tools = profile.getToolsOrNull(shortId, project);
+    if (tools != null) {
+      tools.setEnabled(false);
+    }
   }
 
   private static Generator<File> randomFiles(String rootPath, FileFilter fileFilter) {

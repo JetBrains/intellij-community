@@ -10,6 +10,7 @@ import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.util.ArrayUtil
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
@@ -21,7 +22,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 
 class GroovyInferenceSessionBuilder(val ref: GrReferenceExpression, val candidate: MethodCandidate) {
@@ -111,18 +111,19 @@ class GroovyInferenceSessionBuilder(val ref: GrReferenceExpression, val candidat
     else if (parent is GrAssignmentExpression && call == parent.rValue) {
       val lValue = PsiUtil.skipParentheses(parent.lValue, false)
       return if (lValue is GrExpression && lValue !is GrIndexProperty) lValue.nominalType else null
-    } else if (parent is GrArgumentList && gparent is GrNewExpression) { // TODO: fix with moving constructor resolve to new API
-      val resolveResult = gparent.advancedResolve()
-      val parameters = GrClosureSignatureUtil.mapArgumentsToParameters(
-        resolveResult,
-        gparent,
-        false,
-        true,
-        gparent.namedArguments,
-        gparent.expressionArguments,
-        gparent.closureArguments)
-      return parameters?.get(call)?.second
-    } else if (parent is GrVariable) {
+    }
+    else if (parent is GrArgumentList && gparent is GrNewExpression) { // TODO: fix with moving constructor resolve to new API
+      with(gparent) {
+        val resolveResult = advancedResolve()
+        if (resolveResult is GroovyMethodResult) {
+          val methodCandidate = MethodCandidate(resolveResult.element, resolveResult.getSubstitutor(false), null,
+                                                buildArguments(referenceElement!!), call)
+          return methodCandidate.argumentMapping[Argument(null, call)]?.second
+        }
+      }
+      return null
+    }
+    else if (parent is GrVariable) {
       return parent.declaredType
     }
     return null

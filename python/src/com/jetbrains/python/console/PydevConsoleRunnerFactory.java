@@ -221,7 +221,7 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
     Sdk sdk = config.getSdk() != null ? config.getSdk() : consoleParameters.sdk;
     String workingDir = config.getWorkingDirectory() != null ? config.getWorkingDirectory() : consoleParameters.workingDir;
 
-    return new PydevConsoleWithFileRunnerImpl(project, sdk, consoleParameters.consoleType, workingDir,
+    return new PydevConsoleWithFileRunnerImpl(project, sdk, consoleParameters.consoleType, config.getName(), workingDir,
                                               consoleParameters.envs, consoleParameters.settingsProvider, rerunAction, config,
                                               consoleParameters.setupFragment);
   }

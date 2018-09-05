@@ -9,22 +9,17 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -37,13 +32,15 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInfe
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSessionBuilder;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCandidate;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.PropertyUtilKt.isPropertyName;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isAccessible;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isStaticsOK;
-import static org.jetbrains.plugins.groovy.lang.resolve.processors.inference.InferenceKt.getTopLevelTypeCached;
+import static org.jetbrains.plugins.groovy.lang.resolve.processors.inference.InferenceKt.*;
 
 public abstract class GroovyResolverProcessor implements PsiScopeProcessor, ElementClassHint, NameHint, DynamicMembersHint {
 
@@ -73,7 +70,7 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
 
     myTypeArguments = ref.getTypeArguments();
     if (kinds.contains(GroovyResolveKind.METHOD) || myIsLValue) {
-      myArgumentTypes = NullableLazyValue.createValue(() -> buildArgumentTypes());
+      myArgumentTypes = NullableLazyValue.createValue(() -> buildTopLevelArgumentTypes(myRef));
     }
     else {
       myArgumentTypes = NullableLazyValue.createValue(() -> null);
@@ -195,7 +192,7 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
     final PsiSubstitutor siteSubstitutor = updateSubst(myRef.getTypeArguments(), method.getTypeParameters(), substitutor);
     GrExpression qualifierExpression = myRef.getQualifierExpression();
     Argument qualifierConstraint = buildQualifier(state, qualifierExpression);
-    List<Argument> argumentConstraints = buildArguments();
+    List<Argument> argumentConstraints = buildArguments(myRef);
 
     if (method instanceof GrGdkMethod) {
       ArrayList<Argument> arguments = new ArrayList<>();
@@ -224,43 +221,8 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
     return new Argument(resolvedThis != null ? resolvedThis : type, null);
   }
 
-  @NotNull
-  private List<Argument> buildArguments() {
-    PsiElement parent = myRef.getParent();
-    if (parent instanceof GrCall) {
-      List<Argument> result = new ArrayList<>();
-      GrCall call = (GrCall)parent;
-      GrNamedArgument[] namedArgs = call.getNamedArguments();
-      GrExpression[] expressions = call.getExpressionArguments();
-      GrClosableBlock[] closures = call.getClosureArguments();
 
-      if (namedArgs.length > 0) {
-        GrNamedArgument context = namedArgs[0];
-        result.add(new Argument(GrMapType.createFromNamedArgs(context, namedArgs), null));
-      }
 
-      GrExpression[] argExp = ArrayUtil.mergeArrays(expressions, closures);
-
-      List<Argument> constraints = Arrays.stream(argExp).map((exp) -> new Argument(null, exp)).collect(Collectors.toList());
-      result.addAll(constraints);
-      return result;
-    }
-
-    PsiType[] argumentTypes = PsiUtil.getArgumentTypes(myRef, false, null);
-    if (argumentTypes == null) return Collections.emptyList();
-    return Arrays.stream(argumentTypes).map((t) -> new Argument(t, null)).collect(Collectors.toList());
-  }
-
-  @NotNull
-  private PsiType[] buildArgumentTypes() {
-    return buildArguments().stream().map(it -> {
-      if (it.getExpression() != null) {
-        return getTopLevelTypeCached(it.getExpression());
-      } else {
-        return it.getType();
-      }
-    }).toArray(PsiType[]::new);
-  }
 
   @NotNull
   private static PsiSubstitutor updateSubst(@NotNull PsiType[] arguments,
