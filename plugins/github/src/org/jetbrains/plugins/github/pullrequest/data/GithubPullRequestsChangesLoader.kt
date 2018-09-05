@@ -15,29 +15,29 @@ import java.util.*
 
 class GithubPullRequestsChangesLoader(private val project: Project,
                                       progressManager: ProgressManager,
-                                      private val detailsLoader: GithubPullRequestsDetailsLoader,
+                                      private val branchesFetcher: GithubPullRequestsBranchesFetcher,
                                       private val repository: GitRepository)
   : SingleWorkerProcessExecutor(progressManager, "GitHub PR changes loading breaker"),
-    GithubPullRequestsDetailsLoader.RequestChangedListener {
+    GithubPullRequestsBranchesFetcher.RequestChangedListener {
 
   private val loadingEventDispatcher = EventDispatcher.create(ChangesLoadingListener::class.java)
 
   init {
-    detailsLoader.addRequestChangeListener(this, this)
+    branchesFetcher.addBranchChangeListener(this, this)
   }
 
   override fun requestChanged() {
     cancelCurrentTasks()
 
-    val detailsFuture = detailsLoader.request
-    if (detailsFuture == null) {
+    val fetchFuture = branchesFetcher.request
+    if (fetchFuture == null) {
       loadingEventDispatcher.multicaster.loaderCleared()
     }
     else submit { indicator ->
       try {
-        val pullRequest = detailsFuture.get()
+        val commits = fetchFuture.get()
 
-        val details = GitLogUtil.collectFullDetails(project, repository.root, "${pullRequest.base.sha}..${pullRequest.head.sha}")
+        val details = GitLogUtil.collectFullDetails(project, repository.root, "${commits.first}..${commits.second}")
         val changes = CommittedChangesTreeBrowser.zipChanges(details.reversed().flatMap { it.changes })
 
         runInEdt { if (!indicator.isCanceled) loadingEventDispatcher.multicaster.changesLoaded(changes) }

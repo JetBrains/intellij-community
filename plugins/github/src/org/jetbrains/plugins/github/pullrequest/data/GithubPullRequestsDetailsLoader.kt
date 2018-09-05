@@ -5,9 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.EventDispatcher
-import git4idea.commands.Git
-import git4idea.repo.GitRemote
-import git4idea.repo.GitRepository
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.CalledInBackground
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
@@ -22,10 +19,7 @@ import kotlin.properties.Delegates
 
 class GithubPullRequestsDetailsLoader(progressManager: ProgressManager,
                                       private val requestExecutorHolder: GithubApiRequestExecutorManager.ManagedHolder,
-                                      private val git: Git,
-                                      private val selectionModel: GithubPullRequestsListSelectionModel,
-                                      private val repository: GitRepository,
-                                      private val remote: GitRemote)
+                                      private val selectionModel: GithubPullRequestsListSelectionModel)
   : SingleWorkerProcessExecutor(progressManager, "GitHub PR info loading breaker"),
     GithubPullRequestsListSelectionModel.SelectionChangedListener {
 
@@ -49,28 +43,15 @@ class GithubPullRequestsDetailsLoader(progressManager: ProgressManager,
     }
     else {
       val requestExecutor = requestExecutorHolder.executor
-      request = submit { indicator -> loadInformationAndFetchBranch(indicator, requestExecutor, selection) }
+      request = submit { indicator -> loadDetails(indicator, requestExecutor, selection) }
     }
   }
 
   @CalledInBackground
-  private fun loadInformationAndFetchBranch(indicator: ProgressIndicator,
-                                            requestExecutor: GithubApiRequestExecutor,
-                                            searchedIssue: GithubSearchedIssue): GithubPullRequestDetailed {
-
+  private fun loadDetails(indicator: ProgressIndicator, requestExecutor: GithubApiRequestExecutor, searchedIssue: GithubSearchedIssue)
+    : GithubPullRequestDetailed {
     val links = searchedIssue.pullRequestLinks ?: throw IllegalStateException("Missing pull request links")
-    val pullRequest = requestExecutor.execute(indicator, GithubApiRequests.Repos.PullRequests.get(links.url))
-
-    if (!isCommitFetched(pullRequest.head.sha)) {
-      git.fetch(repository, remote, emptyList(), "refs/pull/${pullRequest.number}/head:").throwOnError()
-    }
-    if (!isCommitFetched(pullRequest.head.sha)) throw IllegalStateException("Pull request head is not available after fetch")
-    return pullRequest
-  }
-
-  private fun isCommitFetched(commitHash: String): Boolean {
-    val result = git.getObjectType(repository, commitHash)
-    return result.success() && result.outputAsJoinedString == "commit"
+    return requestExecutor.execute(indicator, GithubApiRequests.Repos.PullRequests.get(links.url))
   }
 
   fun addRequestChangeListener(listener: RequestChangedListener, disposable: Disposable) =

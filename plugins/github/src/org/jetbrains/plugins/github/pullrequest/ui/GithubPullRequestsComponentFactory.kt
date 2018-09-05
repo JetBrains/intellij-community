@@ -18,6 +18,7 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.api.GithubFullPath
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
+import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBranchesFetcher
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsChangesLoader
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDetailsLoader
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsLoader
@@ -42,8 +43,9 @@ class GithubPullRequestsComponentFactory(private val project: Project,
     val selectionModel = GithubPullRequestsListSelectionModel()
     val list = GithubPullRequestsListComponent(project, actionManager, autoPopupController, popupFactory, selectionModel, listLoader)
 
-    val detailsLoader = GithubPullRequestsDetailsLoader(progressManager, requestExecutorHolder, git, selectionModel, repository, remote)
-    val changesLoader = GithubPullRequestsChangesLoader(project, progressManager, detailsLoader, repository)
+    val detailsLoader = GithubPullRequestsDetailsLoader(progressManager, requestExecutorHolder, selectionModel)
+    val branchFetcher = GithubPullRequestsBranchesFetcher(progressManager, git, detailsLoader, repository, remote)
+    val changesLoader = GithubPullRequestsChangesLoader(project, progressManager, branchFetcher, repository)
 
     val changes = GithubPullRequestChangesComponent(project, changesLoader)
     list.setToolbarHeightReferent(changes.toolbarComponent)
@@ -53,13 +55,14 @@ class GithubPullRequestsComponentFactory(private val project: Project,
     splitter.secondComponent = changes
 
     // disposed by content manager when tab is closed
-    val wrapper = WrappingComponent(splitter, repository, remote, repoPath, account, listLoader, detailsLoader)
+    val wrapper = WrappingComponent(splitter, repository, remote, repoPath, account, listLoader, detailsLoader, branchFetcher)
     Disposer.register(wrapper, Disposable {
       Disposer.dispose(list)
       Disposer.dispose(changes)
 
       Disposer.dispose(listLoader)
       Disposer.dispose(changesLoader)
+      Disposer.dispose(branchFetcher)
       Disposer.dispose(detailsLoader)
 
       Disposer.dispose(requestExecutorHolder)
@@ -74,7 +77,8 @@ class GithubPullRequestsComponentFactory(private val project: Project,
                                     private val repoPath: GithubFullPath,
                                     private val account: GithubAccount,
                                     private val listLoader: GithubPullRequestsLoader,
-                                    private val detailsLoader: GithubPullRequestsDetailsLoader)
+                                    private val detailsLoader: GithubPullRequestsDetailsLoader,
+                                    private val branchesFetcher: GithubPullRequestsBranchesFetcher)
       : Wrapper(wrapped), Disposable, DataProvider {
       init {
         isFocusCycleRoot = true
@@ -88,6 +92,7 @@ class GithubPullRequestsComponentFactory(private val project: Project,
           GithubPullRequestKeys.SERVER_PATH.`is`(dataId) -> account.server
           GithubPullRequestKeys.PULL_REQUESTS_LOADER.`is`(dataId) -> listLoader
           GithubPullRequestKeys.PULL_REQUESTS_DETAILS_LOADER.`is`(dataId) -> detailsLoader
+          GithubPullRequestKeys.PULL_REQUESTS_BRANCHES_FETCHER.`is`(dataId) -> branchesFetcher
           else -> null
         }
       }
