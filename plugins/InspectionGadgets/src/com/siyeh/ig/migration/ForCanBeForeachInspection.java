@@ -644,10 +644,9 @@ public class ForCanBeForeachInspection extends BaseInspection {
   static  String createNewVariableName(@NotNull PsiElement scope, PsiType type, @Nullable String containerName) {
     final Project project = scope.getProject();
     final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
-    final PsiArrayAccessExpression expr;
+    final PsiExpression expr;
     if (containerName != null) {
-      expr = (PsiArrayAccessExpression)JavaPsiFacade.getInstance(scope.getProject())
-        .getElementFactory().createExpressionFromText(containerName+"[0]", scope);
+      expr = JavaPsiFacade.getElementFactory(project).createExpressionFromText(containerName+"[0]", scope);
     } else {
       expr = null;
     }
