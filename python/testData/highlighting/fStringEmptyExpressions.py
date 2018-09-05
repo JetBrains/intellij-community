@@ -4,7 +4,7 @@ f'{<EOLError descr="type conversion, : or } expected"></EOLError><EOLError descr
 f'{<error descr="expression expected">!</error>r}'
 f'{<error descr="expression expected">:</error>2.3}'
 f'{42:2.{<error descr="expression expected">}</error>}'
-f'{<error descr="expression expected"> </error> }'
+f'{<error descr="expression expected">  </error>}'
 f'{42:{<error descr="expression expected"> </error>}}'
-f'{<error descr="expression expected"> </error> :{<error descr="expression expected"><error descr="type conversion, : or } expected"> </error></error> '
-f'{<error descr="expression expected"> </error>   !r:{<error descr="expression expected"> </error>  :42}}'
+f'{<error descr="expression expected">  </error>:{<error descr="expression expected">  </error><error descr="type conversion, : or } expected">'</error>
+f'{<error descr="expression expected">    </error>!r:{<error descr="expression expected">   </error>:42}}'

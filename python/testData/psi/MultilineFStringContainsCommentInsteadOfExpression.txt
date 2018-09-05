@@ -13,9 +13,8 @@ PyFile:MultilineFStringContainsCommentInsteadOfExpression.py
         PyFStringFragment
           PsiElement(Py:FSTRING_FRAGMENT_START)('{')
           PsiErrorElement:expression expected
-            <empty list>
-          PsiWhiteSpace('\n  ')
-          PsiComment(Py:END_OF_LINE_COMMENT)('# comment')
-          PsiWhiteSpace('\n')
+            PsiWhiteSpace('\n  ')
+            PsiComment(Py:END_OF_LINE_COMMENT)('# comment')
+            PsiWhiteSpace('\n')
           PsiElement(Py:FSTRING_FRAGMENT_END)('}')
         PsiElement(Py:FSTRING_END)(''''')
