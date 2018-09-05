@@ -4,9 +4,7 @@ package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintManagerImpl;
-import com.intellij.codeInsight.lookup.LookupEvent;
 import com.intellij.codeInsight.lookup.LookupEx;
-import com.intellij.codeInsight.lookup.LookupListener;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -26,9 +24,7 @@ import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
@@ -125,7 +121,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private final Stack<Context> myForwardStack = new Stack<>();
   private final ActionToolbar myToolBar;
   private volatile boolean myIsEmpty;
-  private boolean myIsShown;
+  private boolean mySizeTrackerRegistered;
   private boolean myResizing;
   private JSlider myFontSizeSlider;
   private final JComponent mySettingsPanel;
@@ -169,7 +165,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   public DocumentationComponent(DocumentationManager manager) {
     myManager = manager;
     myIsEmpty = true;
-    myIsShown = false;
 
     myEditorPane = new JEditorPane(UIUtil.HTML_MIME, "") {
       {
@@ -799,149 +794,62 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private void showHint() {
-    Editor editor = myManager.getEditor();
-    Component popupAnchor = getPopupAnchor(editor);
-    if (popupAnchor instanceof JPanel && ((JPanel)popupAnchor).getComponent(0) == this) {
-      // we don't want to use our own popup as an anchor
-      popupAnchor = null;
-    }
-    int maxWidth = popupAnchor != null ? JBUI.scale(435) : MAX_DEFAULT.width;
-    if (myHint != null) {
-      Dimension hintSize;
-      if (myHint.getDimensionServiceKey() == null) {
-        Dimension preferredSize = myEditorPane.getPreferredSize();
-        int width = definitionPreferredWidth();
-        width = width < 0 ? preferredSize.width : width;
-        width = Math.min(maxWidth, Math.max(JBUI.scale(300), width));
-        myEditorPane.setBounds(0, 0, width, MAX_DEFAULT.height);
-        myEditorPane.setText(myEditorPane.getText());
-        preferredSize = myEditorPane.getPreferredSize();
+    if (myHint == null) return;
 
-        int height = preferredSize.height + (needsToolbar() ? myControlPanel.getPreferredSize().height : 0);
-        height = Math.min(MAX_DEFAULT.height, Math.max(MIN_DEFAULT.height, height));
-        hintSize = new Dimension(width, height);
-      }
-      else {
-        hintSize = DimensionService.getInstance().getSize(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE, myManager.myProject);
-        if (hintSize == null) {
-          hintSize = new Dimension(MIN_DEFAULT);
-        }
-        else {
-          hintSize.width = Math.max(hintSize.width, MIN_DEFAULT.width);
-          hintSize.height = Math.max(hintSize.height, MIN_DEFAULT.height);
-        }
-      }
+    myResizing = true;
 
-      Point location = myHint.getLocationOnScreen();
-      if (popupAnchor != null && location.x < popupAnchor.getLocationOnScreen().x) {
-        // pin upper right corner (instead of default upper left)
-        location = new RelativePoint(popupAnchor, new Point(-hintSize.width - 5, 0)).getScreenPoint();
-        myHint.setLocation(location);
-      }
-      else if (editor != null && editor.getComponent().isShowing()) {
-        // pin lower bound (instead of default upper)
-        Point preferredLocation = JBPopupFactory.getInstance().guessBestPopupLocation(editor).getScreenPoint();
-        preferredLocation.y -= editor.getLineHeight();
-        if (location.y < preferredLocation.y) {
-          location = new Point(location.x, preferredLocation.y - hintSize.height);
-          myHint.setLocation(location);
-        }
-      }
-      if (myIsShown) {
-        Rectangle screen = ScreenUtil.getScreenRectangle(myEditorPane);
-        int xLeftOverdraft = screen.x - location.x;
-        if (xLeftOverdraft > 0) {
-          location.x += xLeftOverdraft;
-          hintSize.width -= xLeftOverdraft;
-        }
-        int xRightOverdraft = location.x + hintSize.width - screen.x - screen.width;
-        if (xRightOverdraft > 0) {
-          myHint.setLocation(new Point(location.x - xRightOverdraft, location.y));
-        }
+    setHintSize();
 
-        int yTopOverdraft = screen.y - location.y;
-        if (yTopOverdraft > 0) {
-          location.y += yTopOverdraft;
-          hintSize.height -= yTopOverdraft;
-        }
-        int yBottomOverdraft = location.y + hintSize.height - screen.y - screen.height;
-        if (yBottomOverdraft > 0) {
-          hintSize.height -= yBottomOverdraft;
-        }
-      }
-      myResizing = true;
-      myHint.setSize(hintSize);
+    Component focusOwner = IdeFocusManager.getInstance(myManager.myProject).getFocusOwner();
+    DataContext dataContext = DataManager.getInstance().getDataContext(focusOwner);
+    PopupPositionManager.positionPopupInBestPosition(myHint, myManager.getEditor(), dataContext,
+                                                     PopupPositionManager.Position.RIGHT, PopupPositionManager.Position.LEFT);
+    myResizing = false;
 
-      if (!myIsShown && !ApplicationManager.getApplication().isUnitTestMode()) {
-        myResizing = true;
-        Component focusOwner = IdeFocusManager.getInstance(myManager.myProject).getFocusOwner();
-        DataContext dataContext = DataManager.getInstance().getDataContext(focusOwner);
-        if (popupAnchor != null) {
-          Point lookupPosition = popupAnchor.getLocationOnScreen();
-          Rectangle screenRectangle = ScreenUtil.getScreenRectangle(popupAnchor);
-          int lookupWidthAndGap = popupAnchor.getWidth() + 5;
-          int x = lookupPosition.x + lookupWidthAndGap;
-          RelativePoint point;
-          // if documentation doesn't fit into screen, put it on the left hand side
-          if (x + Math.max(hintSize.width, maxWidth) > screenRectangle.width) {
-            point = new RelativePoint(popupAnchor, new Point(-hintSize.width - 5, 0));
-          }
-          else {
-            point = new RelativePoint(popupAnchor, new Point(lookupWidthAndGap, 0));
-          }
-          myHint.show(point);
-          LookupEx lookup = LookupManager.getActiveLookup(editor);
-          if (lookup != null) {
-            lookup.addLookupListener(new LookupListener() {
-              @Override
-              public void lookupCanceled(@NotNull LookupEvent event) {
-                AbstractPopup hint = myHint;
-                if (hint != null && hint.canClose() && hint.isVisible()) {
-                  hint.cancel();
-                }
-              }
-            });
-          }
-        }
-        else if (editor != null && editor.getComponent().isShowing()) {
-          // let's try to fit at least of half of maximum size on the bottom
-          Point preferredLocation = JBPopupFactory.getInstance().guessBestPopupLocation(editor).getScreenPoint();
-          Rectangle preferred = new Rectangle(preferredLocation.x, preferredLocation.y, MAX_DEFAULT.width, MAX_DEFAULT.height / 2);
-          Rectangle adjusted = (Rectangle)preferred.clone();
-          ScreenUtil.fitToScreen(adjusted);
-          // if we fail, show documentation on top
-          if (preferred.y != adjusted.y) {
-            preferredLocation.y -= editor.getLineHeight() + hintSize.height;
-          }
-
-          myHint.show(new RelativePoint(preferredLocation));
-        }
-        else {
-          PopupPositionManager.positionPopupInBestPosition(myHint, editor, dataContext);
-        }
-        myIsShown = true;
-        // workaround for IDEA-188907
-        Window window = myHint.getPopupWindow();
-        if (window != null) {
-          window.setFocusableWindowState(true);
-          window.setFocusable(true);
-        }
-        if (myHint.getDimensionServiceKey() == null) {
-          SwingUtilities.invokeLater(this::registerSizeTracker);
-        }
-      }
+    if (myHint.getDimensionServiceKey() == null) {
+      registerSizeTracker();
     }
   }
 
-  private static Component getPopupAnchor(Editor editor) {
-    LookupEx lookup = LookupManager.getActiveLookup(editor);
+  private void setHintSize() {
+    Component popupAnchor = getPopupAnchor();
+    int maxWidth = popupAnchor != null ? JBUI.scale(435) : MAX_DEFAULT.width;
+    Dimension hintSize;
+    if (myHint.getDimensionServiceKey() == null) {
+      Dimension preferredSize = myEditorPane.getPreferredSize();
+      int width = definitionPreferredWidth();
+      width = width < 0 ? preferredSize.width : width;
+      width = Math.min(maxWidth, Math.max(JBUI.scale(300), width));
+      myEditorPane.setBounds(0, 0, width, MAX_DEFAULT.height);
+      myEditorPane.setText(myEditorPane.getText());
+      preferredSize = myEditorPane.getPreferredSize();
+
+      int height = preferredSize.height + (needsToolbar() ? myControlPanel.getPreferredSize().height : 0);
+      height = Math.min(MAX_DEFAULT.height, Math.max(MIN_DEFAULT.height, height));
+      hintSize = new Dimension(width, height);
+    }
+    else {
+      hintSize = DimensionService.getInstance().getSize(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE, myManager.myProject);
+      if (hintSize == null) {
+        hintSize = new Dimension(MIN_DEFAULT);
+      }
+      else {
+        hintSize.width = Math.max(hintSize.width, MIN_DEFAULT.width);
+        hintSize.height = Math.max(hintSize.height, MIN_DEFAULT.height);
+      }
+    }
+    myHint.setSize(hintSize);
+  }
+
+  private Component getPopupAnchor() {
+    LookupEx lookup = LookupManager.getActiveLookup(myManager.getEditor());
 
     if (lookup != null && lookup.getCurrentItem() != null && lookup.getComponent().isShowing()) {
       return lookup.getComponent();
     }
     Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     JBPopup popup = PopupUtil.getPopupContainerFor(focusOwner);
-    if (popup != null) {
+    if (popup != null && popup != myHint) {
       return popup.getContent();
     }
     return null;
@@ -949,16 +857,13 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private void registerSizeTracker() {
     AbstractPopup hint = myHint;
-    if (hint == null) return;
+    if (hint == null || mySizeTrackerRegistered) return;
+    mySizeTrackerRegistered = true;
     Window window = hint.getPopupWindow();
     ComponentAdapter listener = new ComponentAdapter() {
       @Override
       public void componentResized(ComponentEvent e) {
-        if (myResizing) {
-          myResizing = false;
-          return;
-        }
-        hint.setDimensionServiceKey(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE);
+        if (!myResizing) hint.setDimensionServiceKey(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE);
       }
     };
     window.addComponentListener(listener);

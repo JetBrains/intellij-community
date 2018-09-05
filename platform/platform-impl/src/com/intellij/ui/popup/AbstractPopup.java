@@ -452,6 +452,17 @@ public class AbstractPopup implements JBPopup {
   }
 
   @Override
+  public Point getBestPositionFor(@NotNull DataContext dataContext) {
+    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    if (editor != null && editor.getComponent().isShowing()) {
+      return getBestPositionFor(editor).getScreenPoint();
+    }
+    else {
+      return relativePointByQuickSearch(dataContext).getScreenPoint();
+    }
+  }
+
+  @Override
   public void showInBestPositionFor(@NotNull DataContext dataContext) {
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor != null && editor.getComponent().isShowing()) {
@@ -511,14 +522,19 @@ public class AbstractPopup implements JBPopup {
     // a window context change -- the tooltip is "logically" hosted
     // inside the component (e.g. editor) it appears on top of.
     AccessibleContextUtil.setParent((Component)myComponent, editor.getContentComponent());
+    show(getBestPositionFor(editor));
+  }
+
+  @NotNull
+  private RelativePoint getBestPositionFor(@NotNull Editor editor) {
     DataContext context = ((EditorEx)editor).getDataContext();
     Rectangle dominantArea = PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.getData(context);
     if (dominantArea != null && !myRequestFocus) {
       final JLayeredPane layeredPane = editor.getContentComponent().getRootPane().getLayeredPane();
-      show(relativePointWithDominantRectangle(layeredPane, dominantArea));
+      return relativePointWithDominantRectangle(layeredPane, dominantArea);
     }
     else {
-      show(guessBestPopupLocation(editor));
+      return guessBestPopupLocation(editor);
     }
   }
 
@@ -1495,11 +1511,15 @@ public class AbstractPopup implements JBPopup {
   }
 
   @Override
-  public void setLocation(@NotNull final Point screenPoint) {
+  public void setLocation(@NotNull Point screenPoint) {
     if (myPopup == null) {
       myForcedLocation = screenPoint;
     }
     else if (!isBusy()) {
+      final Insets insets = myContent.getInsets();
+      if (insets != null && (insets.top != 0 || insets.left != 0)) {
+        screenPoint = new Point(screenPoint.x - insets.left, screenPoint.y - insets.top);
+      }
       moveTo(myContent, screenPoint, myLocateByContent ? myHeaderPanel.getPreferredSize() : null);
     }
   }

@@ -61,10 +61,19 @@ public interface JBPopup extends Disposable, LightweightWindow {
   void showInScreenCoordinates(@NotNull Component owner, @NotNull Point point);
 
   /**
+   * Returns location most appropriate for the specified data context.
+   *
+   * @see #showInBestPositionFor(DataContext)
+   * @see #setLocation(Point)
+   */
+  Point getBestPositionFor(@NotNull DataContext dataContext);
+
+  /**
    * Shows the popup in the position most appropriate for the specified data context.
    *
    * @param dataContext the data context to which the popup is related.
    * @see com.intellij.openapi.ui.popup.JBPopupFactory#guessBestPopupLocation(com.intellij.openapi.actionSystem.DataContext)
+   * @see #getBestPositionFor(DataContext)
    */
   void showInBestPositionFor(@NotNull DataContext dataContext);
 
