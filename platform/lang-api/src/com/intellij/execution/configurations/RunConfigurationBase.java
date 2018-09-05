@@ -15,7 +15,6 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
@@ -85,8 +84,8 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   }
 
   @Override
-  public final void setName(@Nullable String name) {
-    myName = StringUtil.nullize(name);
+  public final void setName(@NotNull String name) {
+    myName = name;
   }
 
   @NotNull
@@ -101,10 +100,12 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
     return myFactory == null ? null : myFactory.getIcon();
   }
 
+  @NotNull
   @Override
   @Transient
   public final String getName() {
-    // todo is clients ready for null?
+    // a lot of clients not ready that name can be null and in most cases it is not convenient - just add more work to handle null value
+    // in any case for run configuration empty name it is the same as null, we don't need to bother clients and use null
     return StringUtilRt.notNullize(myName);
   }
 

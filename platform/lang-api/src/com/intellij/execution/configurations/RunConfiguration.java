@@ -48,10 +48,8 @@ public interface RunConfiguration extends RunProfile, Cloneable {
 
   /**
    * Sets the name of the configuration.
-   *
-   * @param name the new name of the configuration.
    */
-  void setName(@Nullable String name);
+  void setName(@NotNull String name);
 
   /**
    * Returns the UI control for editing the run configuration settings. If additional control over validation is required, the object

@@ -219,6 +219,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
       return createProfile(myTestMethods, myModule, myConfiguration, environment);
     }
 
+    @NotNull
     @Override
     public String getName() {
       return myConfigurationName;
@@ -248,7 +249,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
     }
 
     @Override
-    public void setName(@Nullable String name) {
+    public void setName(@NotNull String name) {
     }
 
     @NotNull

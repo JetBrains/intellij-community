@@ -194,7 +194,7 @@ abstract class RunManager {
    */
   fun setUniqueNameIfNeed(configuration: RunConfiguration): Boolean {
     val oldName = configuration.name
-    configuration.name = suggestUniqueName(StringUtil.notNullize(oldName, UNNAMED), configuration.type)
+    configuration.setName(suggestUniqueName(StringUtil.notNullize(oldName, UNNAMED), configuration.type))
     return oldName != configuration.name
   }
 

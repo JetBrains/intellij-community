@@ -47,7 +47,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.sun.jdi.Location;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -509,7 +508,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     }
 
     @Override
-    public void setName(@Nullable String name) { }
+    public void setName(@NotNull String name) { }
 
     @NotNull
     @Override
@@ -532,6 +531,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       return null;
     }
 
+    @NotNull
     @Override
     public String getName() {
       return "";
