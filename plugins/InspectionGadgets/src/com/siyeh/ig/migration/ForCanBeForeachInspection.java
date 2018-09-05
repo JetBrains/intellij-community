@@ -14,6 +14,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -1211,37 +1212,30 @@ public class ForCanBeForeachInspection extends BaseInspection {
       if (!(declaredIterator instanceof PsiVariable)) {
         return null;
       }
-      final PsiVariable iteratorVariable = (PsiVariable)declaredIterator;
-      final PsiMethodCallExpression initializer =
-        (PsiMethodCallExpression)iteratorVariable.getInitializer();
+      final PsiVariable iterator = (PsiVariable)declaredIterator;
+      final PsiMethodCallExpression initializer = (PsiMethodCallExpression)iterator.getInitializer();
       if (initializer == null) {
         return null;
       }
-      final PsiType iteratorType = initializer.getType();
-      if (iteratorType == null) {
+      final PsiReferenceExpression methodExpression = initializer.getMethodExpression();
+      final PsiExpression collection = ExpressionUtils.getQualifierOrThis(methodExpression);
+      final PsiType collectionType = collection.getType();
+      if (collectionType == null) {
         return null;
       }
-      final PsiType iteratorContentType = getContentType(iteratorType, CommonClassNames.JAVA_UTIL_ITERATOR);
-      final PsiType iteratorVariableType = iteratorVariable.getType();
-      final PsiType contentType;
-      final PsiClassType javaLangObject = TypeUtils.getObjectType(forStatement);
+      final PsiType contentType = getContentType(collectionType, CommonClassNames.JAVA_LANG_ITERABLE);
+      if (contentType == null) {
+        return null;
+      }
+      PsiType iteratorContentType = getContentType(iterator.getType(), CommonClassNames.JAVA_UTIL_ITERATOR);
+      if (TypeUtils.isJavaLangObject(iteratorContentType)) {
+        iteratorContentType = getContentType(initializer.getType(), CommonClassNames.JAVA_UTIL_ITERATOR);
+      }
       if (iteratorContentType == null) {
-        final PsiType iteratorVariableContentType =
-          getContentType(iteratorVariableType, CommonClassNames.JAVA_UTIL_ITERATOR);
-        if (iteratorVariableContentType == null) {
-          contentType = javaLangObject;
-        }
-        else {
-          contentType = iteratorVariableContentType;
-        }
+        return null;
       }
-      else {
-        contentType = iteratorContentType;
-      }
-      final PsiReferenceExpression methodExpression =
-        initializer.getMethodExpression();
-      final PsiExpression collection = ExpressionUtils.getQualifierOrThis(methodExpression);
-      final boolean isDeclaration = isIteratorNextDeclaration(firstStatement, iteratorVariable, contentType);
+
+      final boolean isDeclaration = isIteratorNextDeclaration(firstStatement, iterator, contentType);
       final PsiStatement statementToSkip;
       @NonNls final String finalString;
       final String contentVariableName;
@@ -1285,7 +1279,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
         }
         statementToSkip = null;
       }
-      final String contentTypeString = contentType.getCanonicalText();
+      final String contentTypeString = iteratorContentType.getCanonicalText();
       @NonNls final StringBuilder out = new StringBuilder();
       out.append("for(");
       out.append(finalString);
@@ -1293,12 +1287,12 @@ public class ForCanBeForeachInspection extends BaseInspection {
       out.append(' ');
       out.append(contentVariableName);
       out.append(": ");
-      if (!contentType.equals(javaLangObject) && iteratorContentType == null) {
+      if (!TypeConversionUtil.isAssignable(iteratorContentType, contentType)) {
         out.append('(').append("java.lang.Iterable<").append(contentTypeString).append('>').append(')');
       }
       out.append(collection.getText());
       out.append(')');
-      replaceIteratorNext(body, contentVariableName, iteratorVariable, contentType, statementToSkip, out);
+      replaceIteratorNext(body, contentVariableName, iterator, contentType, statementToSkip, out);
       return out.toString();
     }
 
