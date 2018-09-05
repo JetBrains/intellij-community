@@ -165,7 +165,6 @@ public class JavaDocLexer extends MergingLexerAdapter {
     }
 
     private void flexLocateToken() {
-      //noinspection Duplicates
       try {
         myState = myFlex.yystate();
         myFlex.goTo(myBufferIndex);

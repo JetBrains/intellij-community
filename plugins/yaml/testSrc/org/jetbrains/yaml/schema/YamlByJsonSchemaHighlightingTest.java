@@ -70,7 +70,6 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
            "}}}", "prop: 14");
   }
 
-  @SuppressWarnings("Duplicates")
   public void testEnum() throws Exception {
     @Language("JSON") final String schema = "{\"properties\": {\"prop\": {\"enum\": [1,2,3,\"18\"]}}}";
     doTest(schema, "prop: 18");
@@ -78,7 +77,6 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTest(schema, "prop: <warning descr=\"Schema validation: Value should be one of: 1, 2, 3, \\\"18\\\"\">6</warning>");
   }
 
-  @SuppressWarnings("Duplicates")
   public void testSimpleString() throws Exception {
     @Language("JSON") final String schema = "{\"properties\": {\"prop\": {\"type\": \"string\", \"minLength\": 2, \"maxLength\": 3}}}";
     doTest(schema, "prop: <warning descr=\"Schema validation: String is shorter than 2\">s</warning>");
@@ -198,7 +196,6 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTest(schema, "<warning descr=\"Schema validation: Number of properties is greater than 3\">a: 1\nb: 22\nc: 333\nd: 4444</warning>");
   }
 
-  @SuppressWarnings("Duplicates")
   public void testOneOf() throws Exception {
     final List<String> subSchemas = new ArrayList<>();
     subSchemas.add("{\"type\": \"number\"}");
@@ -209,7 +206,6 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTest(schema, "prop: <warning descr=\"Schema validation: Type is not allowed. Expected one of: boolean, number.\">aaa</warning>");
   }
 
-  @SuppressWarnings("Duplicates")
   public void testOneOfForTwoMatches() throws Exception {
     final List<String> subSchemas = new ArrayList<>();
     subSchemas.add("{\"type\": \"string\", \"enum\": [\"a\", \"b\"]}");
@@ -220,7 +216,6 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTest(schema, "prop: <warning descr=\"Schema validation: Validates to more than one variant\">a</warning>");
   }
 
-  @SuppressWarnings("Duplicates")
   public void testOneOfSelectError() throws Exception {
     final List<String> subSchemas = new ArrayList<>();
     subSchemas.add("{\"type\": \"string\",\n" +
@@ -234,7 +229,6 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTest(schema, "prop: <warning descr=\"Schema validation: Value should be one of: \\\"off\\\", \\\"warn\\\", \\\"error\\\"\">wrong</warning>");
   }
 
-  @SuppressWarnings("Duplicates")
   public void testAnyOf() throws Exception {
     final List<String> subSchemas = new ArrayList<>();
     subSchemas.add("{\"type\": \"string\", \"enum\": [\"a\", \"b\"]}");
@@ -246,7 +240,6 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTest(schema, "prop: <warning descr=\"Schema validation: Value should be one of: \\\"a\\\", \\\"b\\\", \\\"c\\\"\">d</warning>");
   }
 
-  @SuppressWarnings("Duplicates")
   public void testAllOf() throws Exception {
     final List<String> subSchemas = new ArrayList<>();
     subSchemas.add("{\"type\": \"integer\", \"multipleOf\": 2}");

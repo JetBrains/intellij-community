@@ -90,7 +90,6 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase {
   }
 
   @Override
-  @SuppressWarnings("Duplicates")
   protected void tearDown() throws Exception {
     try {
       myFixture.tearDown();
