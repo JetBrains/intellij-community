@@ -16,6 +16,7 @@
 package com.intellij.ui.treeStructure.treetable;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -145,7 +146,7 @@ public class TreeTableModelAdapter extends AbstractTableModel {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (stamp != modificationStamp.get()) return;
       fireTableDataChanged();
-    });
+    }, ModalityState.any());
   }
 
   @Override

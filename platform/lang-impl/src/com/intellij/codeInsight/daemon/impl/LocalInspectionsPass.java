@@ -44,7 +44,6 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
-import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.containers.WeakInterner;
@@ -389,13 +388,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     if (myIgnoreSuppressed && SuppressionUtil.inspectionResultSuppressed(descriptor.getPsiElement(), tool.getTool())) {
       return;
     }
-    EdtExecutorService.getInstance().execute(()->{
-      if (myProject.isDisposed()) return;
-
-      if (indicator.isCanceled()) {
-        return;
-      }
-
+    ApplicationManager.getApplication().invokeLater(()->{
       PsiElement psiElement = descriptor.getPsiElement();
       if (psiElement == null) return;
       PsiFile file = psiElement.getContainingFile();
@@ -413,7 +406,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                                                    info, colorsScheme, getId(),
                                                                    ranges2markersCache);
       }
-    });
+    }, __->myProject.isDisposed() || indicator.isCanceled());
   }
 
   private void appendDescriptors(@NotNull PsiFile file, @NotNull List<ProblemDescriptor> descriptors, @NotNull LocalInspectionToolWrapper tool) {
