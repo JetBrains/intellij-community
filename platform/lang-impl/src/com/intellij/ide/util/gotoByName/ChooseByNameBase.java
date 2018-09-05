@@ -648,6 +648,10 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     myList.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(@NotNull ListSelectionEvent e) {
+        if (checkDisposed()) {
+          return;
+        }
+
         chosenElementMightChange();
         updateDocumentation();
 
