@@ -105,6 +105,4 @@ private fun parse(@Language("YAML") data: String): List<Any> {
   return list
 }
 
-private class TestConfigurationType(id: String) : ConfigurationTypeBase(id, id, "", null as Icon?) {
-  override fun getHelpTopic() = null
-}
+private class TestConfigurationType(id: String) : ConfigurationTypeBase(id, id, "", null as Icon?)
