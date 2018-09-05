@@ -16,6 +16,7 @@
 package com.jetbrains.python.parsing;
 
 import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.WhitespacesAndCommentsBinder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -30,6 +31,7 @@ import static com.jetbrains.python.PyBundle.message;
  */
 public class ExpressionParsing extends Parsing {
   private static final Logger LOG = Logger.getInstance("#ru.yole.pythonlanguage.parsing.ExpressionParsing");
+  public static final WhitespacesAndCommentsBinder CONSUME_COMMENTS_AND_SPACES_TO_LEFT = (tokens, atStreamEdge, getter) -> tokens.size();
 
   public ExpressionParsing(ParsingContext context) {
     super(context);
@@ -176,6 +178,7 @@ public class ExpressionParsing extends Parsing {
       }
       if (recovery) {
         recoveryMarker.error(parsedExpression ? "unexpected expression part" : "expression expected");
+        recoveryMarker.setCustomEdgeTokenBinders(null, CONSUME_COMMENTS_AND_SPACES_TO_LEFT);
       }
       else {
         recoveryMarker.drop();
@@ -193,6 +196,7 @@ public class ExpressionParsing extends Parsing {
         }
       }
       checkMatches(PyTokenTypes.FSTRING_FRAGMENT_END, errorMessage);
+      marker.setCustomEdgeTokenBinders(null, CONSUME_COMMENTS_AND_SPACES_TO_LEFT);
       marker.done(PyElementTypes.FSTRING_FRAGMENT);
     }
   }
