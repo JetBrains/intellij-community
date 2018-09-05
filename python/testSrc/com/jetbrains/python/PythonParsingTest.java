@@ -725,6 +725,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
+  public void testMultilineFStringContainingMultilineExpressionAfterStatementBreak() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
   public void testNestedMultilineFStringsWithMultilineExpressions() {
     doTest(LanguageLevel.PYTHON36);
   }
