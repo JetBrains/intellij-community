@@ -46,10 +46,11 @@ public interface RunConfiguration extends RunProfile, Cloneable {
   @Nullable
   ConfigurationFactory getFactory();
 
+  // do not annotate as Nullable because in this case Kotlin compiler will forbid field style access (because of different nullability for getter and setter).
   /**
    * Sets the name of the configuration.
    */
-  void setName(@NotNull String name);
+  void setName(String name);
 
   /**
    * Returns the UI control for editing the run configuration settings. If additional control over validation is required, the object
