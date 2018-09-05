@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.options.newEditor;
 
+import com.intellij.ide.ui.search.ComponentHighligtingListener;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,6 +24,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 
@@ -34,7 +36,7 @@ import javax.swing.JComponent;
 /**
  * @author Sergey.Malenkov
  */
-abstract class SpotlightPainter extends AbstractPainter {
+abstract class SpotlightPainter extends AbstractPainter implements ComponentHighligtingListener {
   private final IdentityHashMap<Configurable, String> myConfigurableOption = new IdentityHashMap<>();
   private final MergingUpdateQueue myQueue;
   private final GlassPanel myGlassPanel;
@@ -46,6 +48,8 @@ abstract class SpotlightPainter extends AbstractPainter {
     myGlassPanel = new GlassPanel(target);
     myTarget = target;
     IdeGlassPaneUtil.installPainter(target, this, parent);
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(parent);
+    connection.subscribe(ComponentHighligtingListener.TOPIC, this);
   }
 
   @Override
@@ -97,5 +101,10 @@ abstract class SpotlightPainter extends AbstractPainter {
       return;
     }
     fireNeedsRepaint(myGlassPanel);
+  }
+
+  @Override
+  public void hilight(JComponent component) {
+    myGlassPanel.addSpotlight(component);
   }
 }
