@@ -921,11 +921,12 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     Document document = ObjectUtils.notNull(getDocument(file));
     WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, " "));
     EncodingManagerImpl encodingManager = (EncodingManagerImpl)EncodingManager.getInstance();
+    encodingManager.waitAllTasksExecuted(10, TimeUnit.SECONDS);
     PlatformTestUtil.startPerformanceTest("encoding re-detect requests", 10_000, ()->{
       for (int i=0; i<100_000_000;i++) {
         encodingManager.queueUpdateEncodingFromContent(document);
       }
-      encodingManager.waitAllTasksExecuted(500, TimeUnit.MILLISECONDS);
+      encodingManager.waitAllTasksExecuted(10, TimeUnit.SECONDS);
       UIUtil.dispatchAllInvocationEvents();
     }).assertTiming();
   }
