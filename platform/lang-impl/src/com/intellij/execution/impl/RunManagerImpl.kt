@@ -251,24 +251,19 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
 
   override fun getConfigurationSettingsList(type: ConfigurationType): List<RunnerAndConfigurationSettings> = allSettings.filterSmart { it.type === type }
 
-  override fun getStructure(type: ConfigurationType): Map<String, List<RunnerAndConfigurationSettings>> {
-    val result = LinkedHashMap<String?, MutableList<RunnerAndConfigurationSettings>>()
-    val typeList = SmartList<RunnerAndConfigurationSettings>()
+  fun getConfigurationsGroupedByTypeAndFolder(isIncludeUnknown: Boolean): Map<ConfigurationType, Map<String?, List<RunnerAndConfigurationSettings>>> {
+    val result = LinkedHashMap<ConfigurationType, MutableMap<String?, MutableList<RunnerAndConfigurationSettings>>>()
+    // use allSettings to return sorted result
     for (setting in allSettings) {
-      if (setting.type !== type) {
+      val type = setting.type
+      if (!isIncludeUnknown && type === UnknownConfigurationType.INSTANCE) {
         continue
       }
 
-      val folderName = setting.folderName
-      if (folderName == null) {
-        typeList.add(setting)
-      }
-      else {
-        result.getOrPut(folderName) { SmartList() }.add(setting)
-      }
+      val folderToConfigurations = result.getOrPut(type) { LinkedHashMap() }
+      folderToConfigurations.getOrPut(setting.folderName) { SmartList() }.add(setting)
     }
-    result.put(null, Collections.unmodifiableList(typeList))
-    return Collections.unmodifiableMap(result)
+    return result
   }
 
   override fun getConfigurationTemplate(factory: ConfigurationFactory): RunnerAndConfigurationSettingsImpl {

@@ -48,10 +48,6 @@ class MockRunManager : RunManagerEx() {
     return emptyList()
   }
 
-  override fun getStructure(type: ConfigurationType): Map<String, List<RunnerAndConfigurationSettings>> {
-    return emptyMap()
-  }
-
   override fun setTemporaryConfiguration(tempConfiguration: RunnerAndConfigurationSettings?) {}
 
   override fun getConfig(): RunManagerConfig {
