@@ -83,7 +83,7 @@ class PyStubPackagesAdvertiser : PyInspection() {
 
       sourceToStubPkgsAvailableToInstall.forEach { source, stubPkgs -> cache.put(source, stubPkgs) }
 
-      val reqs = toRequirements(sourceToStubPkgsAvailableToInstall, cached)
+      val (reqs, args) = toRequirementsAndExtraArgs(sourceToStubPkgsAvailableToInstall, cached)
       if (reqs.isNotEmpty()) {
         val plural = reqs.size > 1
         val reqsToString = PyPackageUtil.requirementsToString(reqs)
@@ -117,7 +117,7 @@ class PyStubPackagesAdvertiser : PyInspection() {
 
       sourceToStubPkgsAvailableToInstall.forEach { source, stubPkgs -> cache.put(source, stubPkgs) }
 
-      val reqs = toRequirements(sourceToStubPkgsAvailableToInstall, cached)
+      val (reqs, args) = toRequirementsAndExtraArgs(sourceToStubPkgsAvailableToInstall, cached)
       if (reqs.isNotEmpty()) {
         val plural = reqs.size > 1
         val reqsToString = PyPackageUtil.requirementsToString(reqs)
@@ -145,18 +145,18 @@ class PyStubPackagesAdvertiser : PyInspection() {
                   true
                 )
 
-                when (event.description) {
-                  "#yes" -> {
-                    val installQuickFix = PyInstallRequirementsFix("Install stub package" + if (plural) "s" else "", module, sdk, reqs)
-                    installQuickFix.applyFix(project, problemDescriptor)
-                  }
-                  "#no" -> createIgnorePackagesQuickFix(reqs, ignoredPackages).applyFix(project, problemDescriptor)
-                  "#settings" -> {
-                    val profile = ProjectInspectionProfileManager.getInstance(project).currentProfile
-                    EditInspectionToolsSettingsAction.editToolSettings(project, profile, PyStubPackagesAdvertiser::class.simpleName)
-                  }
+              when (event.description) {
+                "#yes" -> {
+                  val installQuickFix = PyInstallRequirementsFix("Install stub package" + if (plural) "s" else "", module, sdk, reqs, args)
+                  installQuickFix.applyFix(project, problemDescriptor)
+                }
+                "#no" -> createIgnorePackagesQuickFix(reqs, ignoredPackages).applyFix(project, problemDescriptor)
+                "#settings" -> {
+                  val profile = ProjectInspectionProfileManager.getInstance(project).currentProfile
+                  EditInspectionToolsSettingsAction.editToolSettings(project, profile, PyStubPackagesAdvertiser::class.simpleName)
                 }
               }
+            }
             finally {
               notification.expire()
               project.putUserData(BALLOON_SHOWING, false)
@@ -239,10 +239,7 @@ class PyStubPackagesAdvertiser : PyInspection() {
     private fun sourceToStubPackagesAvailableToInstall(sourceToInstalledRuntimeAndStubPkgs: Map<String, List<Pair<PyPackage, PyPackage?>>>,
                                                        availablePackages: List<RepoPackage>): Map<String, Set<RepoPackage>> {
       val stubPkgsAvailableToInstall = mutableMapOf<String, RepoPackage>()
-      availablePackages
-        // TODO uncomment after testing
-        // .filter { PyPIPackageUtil.isPyPIRepository(it.repoUrl) } // remove when PY-22079 would be fixed
-        .forEach { if (it.name.endsWith(STUBS_SUFFIX)) stubPkgsAvailableToInstall[it.name] = it }
+      availablePackages.forEach { if (it.name.endsWith(STUBS_SUFFIX)) stubPkgsAvailableToInstall[it.name] = it }
 
       val result = mutableMapOf<String, Set<RepoPackage>>()
       sourceToInstalledRuntimeAndStubPkgs.forEach { source, runtimeAndStubPkgs ->
@@ -267,12 +264,27 @@ class PyStubPackagesAdvertiser : PyInspection() {
       }
     }
 
-    private fun toRequirements(loaded: Map<String, Set<RepoPackage>>, cached: Set<RepoPackage>): List<PyRequirement> {
-      return (cached + loaded.values.flatten())
-        .map {
+    private fun toRequirementsAndExtraArgs(loaded: Map<String, Set<RepoPackage>>,
+                                           cached: Set<RepoPackage>): Pair<List<PyRequirement>, List<String>> {
+      val reqs = mutableListOf<PyRequirement>()
+      val args = mutableListOf<String>()
+
+      (cached + loaded.values.flatten())
+        .forEach {
           val version = it.latestVersion
-          if (version == null) pyRequirement(it.name) else pyRequirement(it.name, PyRequirementRelation.EQ, version)
+          val url = it.repoUrl
+
+          reqs.add(if (version == null) pyRequirement(it.name) else pyRequirement(it.name, PyRequirementRelation.EQ, version))
+
+          if (url != null && !PyPIPackageUtil.isPyPIRepository(url)) {
+            with(args) {
+              add("--extra-index-url")
+              add(url)
+            }
+          }
         }
+
+      return reqs to args
     }
 
     private fun installedRuntimeAndStubPackages(pkgName: String,
