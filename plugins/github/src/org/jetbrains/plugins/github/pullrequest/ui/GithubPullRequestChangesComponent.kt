@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
@@ -40,28 +39,26 @@ class GithubPullRequestChangesComponent(project: Project, loader: GithubPullRequ
   override fun processStarted() {
     changesLoadingPanel.startLoading()
     changesBrowser.emptyText.clear()
-    clear()
+    changesBrowser.changes = emptyList()
   }
 
   override fun processFinished() {
     changesLoadingPanel.stopLoading()
-    if (changesBrowser.emptyText.text.isEmpty()) changesBrowser.emptyText.text = DEFAULT_EMPTY_TEXT
   }
 
   override fun changesLoaded(changes: List<Change>) {
-    changesBrowser.changes = changes
     changesBrowser.emptyText.text = "Pull request does not contain any changes"
+    changesBrowser.changes = changes
   }
 
   override fun errorOccurred(error: Throwable) {
-    runInEdt {
-      changesBrowser.emptyText
-        .appendText("Cannot load changes", SimpleTextAttributes.ERROR_ATTRIBUTES)
-        .appendSecondaryText(error.message ?: "Unknown error", SimpleTextAttributes.ERROR_ATTRIBUTES, null)
-    }
+    changesBrowser.emptyText
+      .appendText("Cannot load changes", SimpleTextAttributes.ERROR_ATTRIBUTES)
+      .appendSecondaryText(error.message ?: "Unknown error", SimpleTextAttributes.ERROR_ATTRIBUTES, null)
   }
 
-  private fun clear() {
+  override fun loaderCleared() {
+    changesBrowser.emptyText.text = DEFAULT_EMPTY_TEXT
     changesBrowser.changes = emptyList()
   }
 

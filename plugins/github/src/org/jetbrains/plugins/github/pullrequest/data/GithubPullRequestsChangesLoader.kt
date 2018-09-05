@@ -11,49 +11,52 @@ import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser
 import com.intellij.util.EventDispatcher
 import git4idea.history.GitLogUtil
 import git4idea.repo.GitRepository
-import org.jetbrains.annotations.CalledInAwt
-import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
-import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestsListComponent
 import java.util.*
 
 class GithubPullRequestsChangesLoader(private val project: Project,
                                       progressManager: ProgressManager,
-                                      private val informationLoader: GithubPullRequestsDetailsLoader,
+                                      private val detailsLoader: GithubPullRequestsDetailsLoader,
                                       private val repository: GitRepository)
   : SingleWorkerProcessExecutor(progressManager, "GitHub PR changes loading breaker"),
-    GithubPullRequestsListComponent.PullRequestSelectionListener {
+    GithubPullRequestsDetailsLoader.RequestChangedListener {
 
-  private val stateEventDispatcher = EventDispatcher.create(ChangesLoadingListener::class.java)
+  private val loadingEventDispatcher = EventDispatcher.create(ChangesLoadingListener::class.java)
 
-  override fun selectionChanged(selection: GithubSearchedIssue?) {
-    showChanges()
+  init {
+    detailsLoader.addRequestChangeListener(this, this)
   }
 
-  @CalledInAwt
-  fun showChanges() {
+  override fun requestChanged() {
     cancelCurrentTasks()
-    submit { indicator ->
+
+    val detailsFuture = detailsLoader.request
+    if (detailsFuture == null) {
+      loadingEventDispatcher.multicaster.loaderCleared()
+    }
+    else submit { indicator ->
       try {
-        val pullRequest = informationLoader.detailsFuture?.get() ?: return@submit
+        val pullRequest = detailsFuture.get()
 
         val details = GitLogUtil.collectFullDetails(project, repository.root, "${pullRequest.base.sha}..${pullRequest.head.sha}")
         val changes = CommittedChangesTreeBrowser.zipChanges(details.reversed().flatMap { it.changes })
 
-        runInEdt { if (!indicator.isCanceled) stateEventDispatcher.multicaster.changesLoaded(changes) }
+        runInEdt { if (!indicator.isCanceled) loadingEventDispatcher.multicaster.changesLoaded(changes) }
       }
       catch (pce: ProcessCanceledException) {
         // ignore
       }
       catch (e: Exception) {
-        runInEdt { if (!indicator.isCanceled) stateEventDispatcher.multicaster.errorOccurred(e) }
+        runInEdt { if (!indicator.isCanceled) loadingEventDispatcher.multicaster.errorOccurred(e) }
       }
     }
   }
 
-  fun addLoadingListener(listener: ChangesLoadingListener, disposable: Disposable) = stateEventDispatcher.addListener(listener, disposable)
+  fun addLoadingListener(listener: ChangesLoadingListener, disposable: Disposable) =
+    loadingEventDispatcher.addListener(listener, disposable)
 
   interface ChangesLoadingListener : EventListener {
     fun changesLoaded(changes: List<Change>) {}
     fun errorOccurred(error: Throwable) {}
+    fun loaderCleared() {}
   }
 }

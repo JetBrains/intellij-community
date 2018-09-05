@@ -11,19 +11,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
 import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDetailsLoader
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsLoader
 import org.jetbrains.plugins.github.pullrequest.data.SingleWorkerProcessExecutor
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchComponent
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchModel
 import java.awt.Component
-import java.util.*
 import javax.swing.JComponent
 import javax.swing.JScrollBar
 import javax.swing.ScrollPaneConstants
@@ -33,8 +30,7 @@ class GithubPullRequestsListComponent(project: Project,
                                       actionManager: ActionManager,
                                       autoPopupController: AutoPopupController,
                                       popupFactory: JBPopupFactory,
-                                      private val externalDataProvider: DataProvider,
-                                      private val detailsLoader: GithubPullRequestsDetailsLoader,
+                                      private val selectionModel: GithubPullRequestsListSelectionModel,
                                       private val loader: GithubPullRequestsLoader)
   : BorderLayoutPanel(), Disposable,
     GithubPullRequestsLoader.PullRequestsLoadingListener, SingleWorkerProcessExecutor.ProcessStateListener,
@@ -56,8 +52,6 @@ class GithubPullRequestsListComponent(project: Project,
   private val search = GithubPullRequestSearchComponent(project, autoPopupController, popupFactory, searchModel)
   private val tableToolbarWrapper: Wrapper
 
-  private val selectionEventDispatcher = EventDispatcher.create(PullRequestSelectionListener::class.java)
-
   init {
     loader.addProcessListener(this, this)
     loader.addLoadingListener(this, this)
@@ -71,11 +65,10 @@ class GithubPullRequestsListComponent(project: Project,
 
     table.selectionModel.addListSelectionListener { e: ListSelectionEvent ->
       if (!e.valueIsAdjusting) {
-        if (table.selectedRow < 0) selectionEventDispatcher.multicaster.selectionChanged(null)
-        else selectionEventDispatcher.multicaster.selectionChanged(tableModel.getValueAt(table.selectedRow, 0))
+        if (table.selectedRow < 0) selectionModel.current = null
+        else selectionModel.current = tableModel.getValueAt(table.selectedRow, 0)
       }
     }
-    selectionEventDispatcher.addListener(detailsLoader, this)
 
     val toolbar = actionManager.createActionToolbar("GithubPullRequestListToolbar",
                                                     actionManager.getAction("Github.PullRequest.ToolWindow.List.Toolbar") as ActionGroup,
@@ -113,19 +106,12 @@ class GithubPullRequestsListComponent(project: Project,
   }
 
   override fun getData(dataId: String): Any? {
-    return when {
-      GithubPullRequestKeys.PULL_REQUESTS_LOADER.`is`(dataId) -> loader
-      GithubPullRequestKeys.PULL_REQUESTS_DETAILS_LOADER.`is`(dataId) -> detailsLoader
-      else -> externalDataProvider.getData(dataId) ?: table.getData(dataId)
-    }
+    return if (GithubPullRequestKeys.SELECTED_PULL_REQUEST.`is`(dataId)) selectionModel.current else null
   }
 
   fun setToolbarHeightReferent(referent: JComponent) {
     tableToolbarWrapper.setVerticalSizeReferent(referent)
   }
-
-  fun addSelectionListener(listener: PullRequestSelectionListener, disposable: Disposable) =
-    selectionEventDispatcher.addListener(listener, disposable)
 
   private fun potentiallyLoadMore() {
     if (loadOnScrollThreshold && isScrollAtThreshold(scrollPane.verticalScrollBar)) {
@@ -210,9 +196,5 @@ class GithubPullRequestsListComponent(project: Project,
 
   override fun dispose() {
     isDisposed = true
-  }
-
-  interface PullRequestSelectionListener : EventListener {
-    fun selectionChanged(selection: GithubSearchedIssue?)
   }
 }
