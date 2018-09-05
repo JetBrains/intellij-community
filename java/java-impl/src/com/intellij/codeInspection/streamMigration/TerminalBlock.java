@@ -253,7 +253,7 @@ class TerminalBlock {
     FilterOp filter = tb.getLastOperation(FilterOp.class);
     if (filter == null) return this;
     PsiBinaryExpression binOp = tryCast(PsiUtil.skipParenthesizedExprDown(filter.getExpression()), PsiBinaryExpression.class);
-    if (binOp == null || !ComparisonUtils.isComparison(binOp)) return this;
+    if (!ComparisonUtils.isComparison(binOp)) return this;
     String comparison = filter.isNegated() ? ComparisonUtils.getNegatedComparison(binOp.getOperationTokenType())
                         : binOp.getOperationSign().getText();
     boolean flipped = false;
@@ -477,7 +477,7 @@ class TerminalBlock {
       }
       StreamEx.ofTree(statement, (PsiElement s) -> StreamEx.of(s.getChildren()))
         .select(PsiContinueStatement.class)
-        .forEach(stmt -> stmt.replace(factory.createStatementFromText("return;", null)));
+        .forEach(stmt -> new CommentTracker().replaceAndRestoreComments(stmt, "return;"));
     }
   }
 

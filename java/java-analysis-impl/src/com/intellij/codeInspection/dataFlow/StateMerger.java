@@ -460,13 +460,6 @@ class StateMerger {
       return new EqualityFact(var, true, val);
     }
 
-    static DfaValue normalize(DfaValue value) {
-      if (value instanceof DfaVariableValue && ((DfaVariableValue)value).isNegated()) {
-        return ((DfaVariableValue)value).createNegated();
-      }
-      return value;
-    }
-
     static Fact unpack(DfaValueFactory factory, long packed) {
       int lo = (int)(packed & 0xFFFF_FFFFL);
       int hi = (int)(packed >> 32);
@@ -525,8 +518,7 @@ class StateMerger {
     @Override
     boolean invalidatesFact(@NotNull Fact another) {
       if (!(another instanceof EqualityFact)) return false;
-      DfaValue normalizedVar = normalize(myVar);
-      return normalizedVar == normalize(another.myVar) || normalizedVar == normalize(((EqualityFact)another).myArg);
+      return myVar == another.myVar || myVar == ((EqualityFact)another).myArg;
     }
 
     @Override
@@ -572,7 +564,7 @@ class StateMerger {
     boolean invalidatesFact(@NotNull Fact another) {
       return another instanceof InstanceofFact &&
              myType == ((InstanceofFact)another).myType &&
-             normalize(myVar) == normalize(another.myVar);
+             myVar == another.myVar;
     }
 
     @Override

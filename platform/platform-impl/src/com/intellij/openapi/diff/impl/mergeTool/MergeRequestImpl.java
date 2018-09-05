@@ -306,7 +306,7 @@ public class MergeRequestImpl extends MergeRequest {
     }
 
     @Override
-    public void onCountersChanged(ChangeCounter counter) {
+    public void onCountersChanged(@NotNull ChangeCounter counter) {
       if (myWasInvoked) return;
       if (counter.getChangeCounter() != 0 || counter.getConflictCounter() != 0) return;
       ApplicationManager.getApplication().invokeLater(this);

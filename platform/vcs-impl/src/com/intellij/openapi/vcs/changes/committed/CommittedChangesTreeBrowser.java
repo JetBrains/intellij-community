@@ -108,7 +108,6 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     myChangesTree.setExpandableItemsEnabled(false);
 
     myDetailsView = new MyRepositoryChangesViewer(project);
-    myDetailsView.getViewerScrollPane().setBorder(RIGHT_BORDER);
 
     myChangesTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       @Override
@@ -590,6 +589,12 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     @Override
     protected JComponent createHeaderPanel() {
       return myHeaderPanel;
+    }
+
+    @NotNull
+    @Override
+    protected Border createViewerBorder() {
+      return RIGHT_BORDER;
     }
 
     public void syncSizeWithToolbar(@NotNull JComponent toolbar) {

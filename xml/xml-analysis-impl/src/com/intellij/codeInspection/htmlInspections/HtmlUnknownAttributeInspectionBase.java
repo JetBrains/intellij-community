@@ -116,7 +116,7 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
     }
   }
 
-  private static void addSimilarAttributesQuickFixes(XmlTag tag, String name, ArrayList<LocalQuickFix> quickfixes) {
+  private static void addSimilarAttributesQuickFixes(XmlTag tag, String name, ArrayList<? super LocalQuickFix> quickfixes) {
     XmlElementDescriptor descriptor = tag.getDescriptor();
     if (descriptor == null) return;
     XmlAttributeDescriptor[] descriptors = descriptor.getAttributesDescriptors(tag);

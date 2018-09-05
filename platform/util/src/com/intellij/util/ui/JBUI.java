@@ -653,7 +653,7 @@ public class JBUI {
 
     @NotNull
     public static JBFont toolbarSmallComboBoxFont() {
-      return UIUtil.isUnderGTKLookAndFeel() ? label() : label(11);
+      return label(11);
     }
   }
 
@@ -1001,13 +1001,13 @@ public class JBUI {
      * @param <S> the context type
      */
     public static class Cache<D, S extends BaseScaleContext> {
-      private final Function<S, D> myDataProvider;
+      private final Function<? super S, ? extends D> myDataProvider;
       private final AtomicReference<Pair<Double, D>> myData = new AtomicReference<Pair<Double, D>>(null);
 
       /**
        * @param dataProvider provides a data object matching the passed scale context
        */
-      public Cache(@NotNull Function<S, D> dataProvider) {
+      public Cache(@NotNull Function<? super S, ? extends D> dataProvider) {
         this.myDataProvider = dataProvider;
       }
 
@@ -1254,7 +1254,7 @@ public class JBUI {
     }
 
     public static class Cache<D> extends BaseScaleContext.Cache<D, ScaleContext> {
-      public Cache(@NotNull Function<ScaleContext, D> dataProvider) {
+      public Cache(@NotNull Function<? super ScaleContext, ? extends D> dataProvider) {
         super(dataProvider);
       }
     }
@@ -1518,8 +1518,18 @@ public class JBUI {
       }
 
       @NotNull
+      public static Color pressedBorder() {
+        return JBColor.namedColor("ActionButton.pressedBorderColor", Gray.xCF);
+      }
+
+      @NotNull
       public static Color hoverBackground() {
         return JBColor.namedColor("ActionButton.hoverBackground", Gray.xDF);
+      }
+
+      @NotNull
+      public static Color hoverBorder() {
+        return JBColor.namedColor("ActionButton.hoverBorderColor", Gray.xDF);
       }
     }
 
@@ -1755,6 +1765,24 @@ public class JBUI {
 
       public static Color listSeparatorColor() {
         return JBColor.namedColor("SearchEverywhere.List.Separator.Color", 0xdcdcdc);
+      }
+    }
+
+    public static class Validator {
+      public static Color errorBorderColor() {
+        return JBColor.namedColor("ValidationTooltip.errorBorderColor", 0xE0A8A9);
+      }
+
+      public static Color errorBackgroundColor() {
+        return JBColor.namedColor("ValidationTooltip.errorBackgroundColor", 0xF5E6E7);
+      }
+
+      public static Color warningBorderColor() {
+        return JBColor.namedColor("ValidationTooltip.warningBorderColor", 0xE0CEA8);
+      }
+
+      public static Color warningBackgroundColor() {
+        return JBColor.namedColor("ValidationTooltip.warningBackgroundColor", 0xF5F0E6);
       }
     }
   }

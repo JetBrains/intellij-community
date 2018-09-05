@@ -1,28 +1,24 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.scratch;
 
-import com.intellij.execution.application.ApplicationConfigurationType;
-import com.intellij.execution.configuration.ConfigurationFactoryEx;
 import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.ConfigurationTypeBase;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
-import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.util.LazyUtil;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 
 /**
  * @author Eugene Zhuravlev
  */
-public class JavaScratchConfigurationType extends ApplicationConfigurationType{
-  private final ConfigurationFactory myFactory;
-
+public final class JavaScratchConfigurationType extends ConfigurationTypeBase {
   public JavaScratchConfigurationType() {
-    myFactory = new ConfigurationFactoryEx(this) {
+    super("Java Scratch", "Java Scratch", "Configuration for java scratch files", LazyUtil.create(() -> LayeredIcon.create(AllIcons.RunConfigurations.Application, AllIcons.Actions.Scratch)));
+    addFactory(new ConfigurationFactory(this) {
       @Override
       public boolean isApplicable(@NotNull Project project) {
         return false;
@@ -35,42 +31,15 @@ public class JavaScratchConfigurationType extends ApplicationConfigurationType{
       }
 
       @Override
-      public void onNewConfigurationCreated(@NotNull RunConfiguration configuration) {
-        ((ModuleBasedConfiguration)configuration).onNewConfigurationCreated();
-      }
-
-      @Override
       public Class<? extends BaseState> getOptionsClass() {
         return JavaScratchConfigurationOptions.class;
       }
-    };
-  }
-
-  @NotNull
-  @Override
-  public String getId() {
-    return "Java Scratch";
-  }
-
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Java Scratch";
+    });
   }
 
   @Override
-  public String getConfigurationTypeDescription() {
-    return "Configuration for java scratch files";
-  }
-
-  @Override
-  public Icon getIcon() {
-    return LayeredIcon.create(super.getIcon(), AllIcons.Actions.Scratch); // todo
-  }
-
-  @Override
-  public ConfigurationFactory[] getConfigurationFactories() {
-    return new ConfigurationFactory[] {myFactory};
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.Java Scratch";
   }
 
   /** @noinspection MethodOverridesStaticMethodOfSuperclass*/

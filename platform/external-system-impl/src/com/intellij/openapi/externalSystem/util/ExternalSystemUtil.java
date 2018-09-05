@@ -605,7 +605,7 @@ public class ExternalSystemUtil {
         }
       }
 
-      private void sendSyncFinishEvent(@NotNull Ref<Supplier<FinishBuildEvent>> finishSyncEventSupplier) {
+      private void sendSyncFinishEvent(@NotNull Ref<? extends Supplier<FinishBuildEvent>> finishSyncEventSupplier) {
         Exception exception = null;
         FinishBuildEvent finishBuildEvent = null;
         Supplier<FinishBuildEvent> finishBuildEventSupplier = finishSyncEventSupplier.get();
@@ -985,7 +985,7 @@ public class ExternalSystemUtil {
     }
 
     String name = AbstractExternalSystemTaskConfigurationType.generateName(project, taskSettings);
-    RunnerAndConfigurationSettings settings = RunManager.getInstance(project).createRunConfiguration(name, configurationType.getFactory());
+    RunnerAndConfigurationSettings settings = RunManager.getInstance(project).createConfiguration(name, configurationType.getFactory());
     ((ExternalSystemRunConfiguration)settings.getConfiguration()).getSettings().setFrom(taskSettings);
     return settings;
   }
@@ -1026,7 +1026,7 @@ public class ExternalSystemUtil {
   public static void linkExternalProject(@NotNull final ProjectSystemId externalSystemId,
                                          @NotNull final ExternalProjectSettings projectSettings,
                                          @NotNull final Project project,
-                                         @Nullable final Consumer<Boolean> executionResultCallback,
+                                         @Nullable final Consumer<? super Boolean> executionResultCallback,
                                          boolean isPreviewMode,
                                          @NotNull final ProgressExecutionMode progressExecutionMode) {
     ExternalProjectRefreshCallback callback = new ExternalProjectRefreshCallback() {

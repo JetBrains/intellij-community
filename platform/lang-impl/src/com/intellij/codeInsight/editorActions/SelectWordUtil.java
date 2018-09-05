@@ -180,7 +180,7 @@ public class SelectWordUtil {
                                    @NotNull CharSequence text,
                                    int cursorOffset,
                                    @NotNull Editor editor,
-                                   @NotNull Processor<TextRange> consumer) {
+                                   @NotNull Processor<? super TextRange> consumer) {
     if (element == null) return;
 
     PsiFile file = element.getContainingFile();
@@ -213,7 +213,7 @@ public class SelectWordUtil {
   }
 
   private static void processInFile(@NotNull final PsiElement element,
-                                    @NotNull Processor<TextRange> consumer,
+                                    @NotNull Processor<? super TextRange> consumer,
                                     @NotNull CharSequence text,
                                     final int cursorOffset,
                                     @NotNull Editor editor) {
@@ -227,7 +227,7 @@ public class SelectWordUtil {
   }
 
   private static boolean processElement(@NotNull PsiElement element,
-                                        @NotNull Processor<TextRange> processor,
+                                        @NotNull Processor<? super TextRange> processor,
                                         @NotNull CharSequence text,
                                         int cursorOffset,
                                         @NotNull Editor editor) {

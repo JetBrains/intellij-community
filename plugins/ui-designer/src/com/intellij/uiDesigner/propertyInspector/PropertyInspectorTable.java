@@ -949,7 +949,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
 
   private final class MyPropertyEditorListener implements PropertyEditorListener {
     @Override
-    public void valueCommitted(final PropertyEditor source, final boolean continueEditing, final boolean closeEditorOnError){
+    public void valueCommitted(@NotNull final PropertyEditor source, final boolean continueEditing, final boolean closeEditorOnError){
       if(isEditing()){
         final Object value;
         final TableCellEditor tableCellEditor = cellEditor;
@@ -971,7 +971,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     }
 
     @Override
-    public void editingCanceled(final PropertyEditor source) {
+    public void editingCanceled(@NotNull final PropertyEditor source) {
       if(isEditing()){
         cellEditor.cancelCellEditing();
       }
@@ -1361,7 +1361,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     }
 
     @Override
-    public void lookAndFeelChanged(final LafManager source) {
+    public void lookAndFeelChanged(@NotNull final LafManager source) {
       updateUI(myBorderProperty);
       updateUI(MarginProperty.getInstance(myProject));
       updateUI(HGapProperty.getInstance(myProject));

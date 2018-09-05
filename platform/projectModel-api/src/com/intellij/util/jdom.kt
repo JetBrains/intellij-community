@@ -47,7 +47,7 @@ fun loadElement(chars: CharSequence): Element = JDOMUtil.load(chars)
 fun loadElement(reader: Reader): Element = JDOMUtil.load(reader)
 
 @Throws(IOException::class, JDOMException::class)
-fun loadElement(stream: InputStream): Element = JDOMUtil.loadDocument(stream.bufferedReader()).detachRootElement()
+fun loadElement(stream: InputStream): Element = JDOMUtil.load(stream.bufferedReader())
 
 @Throws(IOException::class, JDOMException::class)
 fun loadElement(path: Path): Element = loadElement(path.inputStream())
@@ -127,11 +127,16 @@ private fun getSpecialSaxBuilder(): SAXBuilder {
 }
 
 @Throws(IOException::class, JDOMException::class)
-fun loadElementAndKeepBoundaryWhitespace(stream: InputStream): Element {
-  return stream.use { getSpecialSaxBuilder().build(it).detachRootElement() }
+fun loadDocumentAndKeepBoundaryWhitespace(stream: InputStream): Document {
+  return stream.use { getSpecialSaxBuilder().build(it) }
 }
 
 @Throws(IOException::class, JDOMException::class)
 fun loadElementAndKeepBoundaryWhitespace(chars: CharSequence): Element {
   return getSpecialSaxBuilder().build(CharSequenceReader(chars)).detachRootElement()
+}
+
+@Throws(IOException::class, JDOMException::class)
+fun loadElementAndKeepBoundaryWhitespace(stream: InputStream): Element {
+  return stream.use { getSpecialSaxBuilder().build(it) }.detachRootElement()
 }

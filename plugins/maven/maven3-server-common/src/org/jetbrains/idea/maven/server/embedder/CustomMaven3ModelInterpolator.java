@@ -43,7 +43,7 @@ public class CustomMaven3ModelInterpolator extends StringSearchModelInterpolator
   @Override
   public Model interpolate(Model model, File projectDir, ProjectBuilderConfiguration config, boolean debugEnabled)
       throws ModelInterpolationException {
-    this.interpolateObject(ContainerUtilRt.ar(model.getParent(), model), model, projectDir, config, debugEnabled);
+    this.interpolateObject(new Object[]{model.getParent(), model}, model, projectDir, config, debugEnabled);
     return model;
   }
 

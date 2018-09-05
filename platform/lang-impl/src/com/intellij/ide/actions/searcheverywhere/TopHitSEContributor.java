@@ -44,9 +44,9 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
 
   private final Project myProject;
   private final Component myContextComponent;
-  private final Consumer<String> mySearchStringSetter;
+  private final Consumer<? super String> mySearchStringSetter;
 
-  public TopHitSEContributor(Project project, Component component, Consumer<String> setter) {
+  public TopHitSEContributor(Project project, Component component, Consumer<? super String> setter) {
     myProject = project;
     myContextComponent = component;
     mySearchStringSetter = setter;
@@ -80,20 +80,9 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
   }
 
   @Override
-  public ContributorSearchResult<Object> search(String pattern, boolean everywhere, SearchEverywhereContributorFilter<Void> filter, ProgressIndicator progressIndicator, int elementsLimit) {
-    Collection<Object> res = new LinkedHashSet<>();
-    final Function<Object, Boolean> consumer = o -> {
-      if (elementsLimit < 0 || res.size() < elementsLimit) {
-        res.add(o);
-        return true;
-      }
-      else {
-        return false;
-      }
-    };
-
-    boolean interrupted = fill(pattern, consumer);
-    return new ContributorSearchResult<>(new ArrayList<>(res), interrupted);
+  public void fetchElements(String pattern, boolean everywhere, SearchEverywhereContributorFilter<Void> filter,
+                            ProgressIndicator progressIndicator, Function<Object, Boolean> consumer) {
+    fill(pattern, consumer);
   }
 
   @Override

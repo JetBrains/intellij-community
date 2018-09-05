@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.Function;
 
 public class ActionSearchEverywhereContributor implements SearchEverywhereContributor<Void> {
   private static final Logger LOG = Logger.getInstance(ActionSearchEverywhereContributor.class);
@@ -56,16 +57,12 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
   }
 
   @Override
-  public ContributorSearchResult<Object> search(String pattern,
-                                                boolean everywhere,
-                                                SearchEverywhereContributorFilter<Void> filter,
-                                                ProgressIndicator progressIndicator,
-                                                int elementsLimit) {
+  public void fetchElements(String pattern, boolean everywhere, SearchEverywhereContributorFilter<Void> filter,
+                            ProgressIndicator progressIndicator, Function<Object, Boolean> consumer) {
     if (StringUtil.isEmptyOrSpaces(pattern)) {
-      return ContributorSearchResult.empty();
+      return;
     }
 
-    ContributorSearchResult.Builder<Object> builder = ContributorSearchResult.builder();
     myProvider.filterElements(pattern, element -> {
       if (progressIndicator.isCanceled()) return false;
 
@@ -78,17 +75,9 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
         return true;
       }
 
-      if (builder.itemsCount() < elementsLimit) {
-        builder.addItem(element);
-        return true;
-      }
-      else {
-        builder.setHasMore(true);
-        return false;
-      }
+      return consumer.apply(element);
     });
 
-    return builder.build();
   }
 
   @Override

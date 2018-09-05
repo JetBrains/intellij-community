@@ -264,6 +264,8 @@
     <extensionPoint qualifiedName="com.intellij.diff.lang.DiffIgnoredRangeProvider" interface="com.intellij.diff.lang.DiffIgnoredRangeProvider"/>
     <extensionPoint qualifiedName="com.intellij.diff.impl.DiffToolSubstitutor" interface="com.intellij.diff.impl.DiffToolSubstitutor"/>
     <extensionPoint name="testStatusListener" interface="com.intellij.execution.testframework.TestStatusListener"/>
+    <extensionPoint name="guiRecorderListener" interface="com.intellij.testGuiFramework.recorder.GuiRecorderListener"/>
+    <extensionPoint name="generatedCodeReceiver" interface="com.intellij.testGuiFramework.recorder.GeneratedCodeReceiver"/>
 
     <extensionPoint name="diff.actions.ShowDiffAction.ExtensionProvider" interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"/>
 

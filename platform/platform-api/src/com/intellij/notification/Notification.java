@@ -316,7 +316,7 @@ public class Notification {
     myBalloonRef = new WeakReference<>(balloon);
     balloon.addListener(new JBPopupAdapter() {
       @Override
-      public void onClosed(LightweightWindowEvent event) {
+      public void onClosed(@NotNull LightweightWindowEvent event) {
         if (SoftReference.dereference(myBalloonRef) == balloon) {
           myBalloonRef = null;
         }

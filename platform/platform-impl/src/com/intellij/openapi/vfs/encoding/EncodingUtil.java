@@ -149,7 +149,7 @@ public class EncodingUtil {
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(disposable);
     connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
       @Override
-      public void beforeFileContentReload(VirtualFile file, @NotNull Document document) {
+      public void beforeFileContentReload(@NotNull VirtualFile file, @NotNull Document document) {
         if (!file.equals(virtualFile)) return;
         Disposer.dispose(disposable); // disconnect
 
@@ -195,7 +195,7 @@ public class EncodingUtil {
   }
 
   @Nullable
-  static FailReason checkCanReload(@NotNull VirtualFile virtualFile, @Nullable Ref<Charset> current) {
+  static FailReason checkCanReload(@NotNull VirtualFile virtualFile, @Nullable Ref<? super Charset> current) {
     if (virtualFile.isDirectory()) {
       return FailReason.IS_DIRECTORY;
     }

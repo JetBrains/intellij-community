@@ -85,11 +85,6 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor<F
     return super.getDataForItem(element, dataId);
   }
 
-  @Override
-  protected boolean isDumbModeSupported() {
-    return true;
-  }
-
   public static class Factory implements SearchEverywhereContributorFactory<FileType> {
     @NotNull
     @Override

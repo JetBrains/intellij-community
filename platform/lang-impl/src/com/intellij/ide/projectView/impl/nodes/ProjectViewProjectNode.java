@@ -72,8 +72,9 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
     return nodes;
   }
 
+  @NotNull
   @Override
-  protected AbstractTreeNode createModuleGroup(final Module module) {
+  protected AbstractTreeNode createModuleGroup(@NotNull final Module module) {
     List<VirtualFile> roots = ProjectViewDirectoryHelper.getInstance(myProject).getTopLevelModuleRoots(module, getSettings());
     if (roots.size() == 1) {
       final PsiDirectory psi = PsiManager.getInstance(myProject).findDirectory(roots.get(0));
@@ -98,8 +99,9 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
     return new ProjectViewUnloadedModuleNode(getProject(), moduleDescription, getSettings());
   }
 
+  @NotNull
   @Override
-  protected AbstractTreeNode createModuleGroupNode(final ModuleGroup moduleGroup) {
+  protected AbstractTreeNode createModuleGroupNode(@NotNull final ModuleGroup moduleGroup) {
     return new ProjectViewModuleGroupNode(getProject(), moduleGroup, getSettings());
   }
 }

@@ -239,7 +239,7 @@ public class ProcessedModulesTable extends JPanel {
     return elements;
   }
 
-  public void sort(Comparator<Module> comparator) {
+  public void sort(Comparator<? super Module> comparator) {
     myTableModel.sort(comparator);
   }
 
@@ -284,7 +284,7 @@ public class ProcessedModulesTable extends JPanel {
       myProject = project;
     }
 
-    public void sort(Comparator<Module> comparator) {
+    public void sort(Comparator<? super Module> comparator) {
       Collections.sort(myElements, comparator);
       fireTableDataChanged();
     }

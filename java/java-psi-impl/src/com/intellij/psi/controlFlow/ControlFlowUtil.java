@@ -577,7 +577,7 @@ public class ControlFlowUtil {
       }
 
       @NotNull
-      private IntArrayList getCatchOrFinallyOffsets(@NotNull List<PsiTryStatement> tryStatements, @NotNull List<PsiClassType> thrownExceptions) {
+      private IntArrayList getCatchOrFinallyOffsets(@NotNull List<? extends PsiTryStatement> tryStatements, @NotNull List<? extends PsiClassType> thrownExceptions) {
         final IntArrayList catchOrFinallyOffsets = new IntArrayList();
         for (PsiTryStatement tryStatement : tryStatements) {
           final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
@@ -1506,7 +1506,7 @@ public class ControlFlowUtil {
     internalDepthFirstSearch(flow.getInstructions(), visitor, startOffset, endOffset);
   }
 
-  private static void internalDepthFirstSearch(@NotNull List<Instruction> instructions,
+  private static void internalDepthFirstSearch(@NotNull List<? extends Instruction> instructions,
                                                @NotNull InstructionClientVisitor clientVisitor,
                                                int startOffset,
                                                int endOffset) {
@@ -1720,7 +1720,7 @@ public class ControlFlowUtil {
       this(Arrays.asList(infos));
     }
 
-    CopyOnWriteList(@NotNull Collection<VariableInfo> infos) {
+    CopyOnWriteList(@NotNull Collection<? extends VariableInfo> infos) {
       list = new SmartList<>(infos);
     }
 

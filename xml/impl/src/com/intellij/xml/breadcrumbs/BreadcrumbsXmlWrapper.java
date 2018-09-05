@@ -239,7 +239,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     return provider == null ? defaultProvider : provider;
   }
 
-  private static PsiElement[] toPsiElementArray(Collection<Pair<PsiElement, BreadcrumbsProvider>> pairs) {
+  private static PsiElement[] toPsiElementArray(Collection<? extends Pair<PsiElement, BreadcrumbsProvider>> pairs) {
     PsiElement[] elements = new PsiElement[pairs.size()];
     int index = 0;
     for (Pair<PsiElement, BreadcrumbsProvider> pair : pairs) {

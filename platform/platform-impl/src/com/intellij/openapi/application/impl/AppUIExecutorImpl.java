@@ -192,7 +192,7 @@ class AppUIExecutorImpl implements AppUIExecutor {
     return promise;
   }
 
-  private <T> void checkConstraints(@NotNull Callable<T> task, AsyncPromise<T> future, List<ConstrainedExecutor> log) {
+  private <T> void checkConstraints(@NotNull Callable<? extends T> task, AsyncPromise<? super T> future, List<? super ConstrainedExecutor> log) {
     Application app = ApplicationManager.getApplication();
     if (!app.isDispatchThread()) {
       app.invokeLater(() -> checkConstraints(task, future, log), myModality);

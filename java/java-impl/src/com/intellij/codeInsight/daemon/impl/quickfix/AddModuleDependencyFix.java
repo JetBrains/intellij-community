@@ -41,7 +41,7 @@ class AddModuleDependencyFix extends OrderEntryFix {
   private final boolean myExported;
   private final List<SmartPsiElementPointer<PsiClass>> myClasses;
 
-  public AddModuleDependencyFix(PsiReference reference, Module currentModule, DependencyScope scope, List<PsiClass> classes) {
+  public AddModuleDependencyFix(PsiReference reference, Module currentModule, DependencyScope scope, List<? extends PsiClass> classes) {
     super(reference);
     myCurrentModule = currentModule;
     myModules = new LinkedHashSet<>();

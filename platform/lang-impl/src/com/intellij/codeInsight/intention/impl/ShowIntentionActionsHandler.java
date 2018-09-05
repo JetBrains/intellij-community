@@ -135,7 +135,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   }
 
   @Nullable
-  public static Pair<PsiFile,Editor> chooseBetweenHostAndInjected(@NotNull PsiFile hostFile, @NotNull Editor hostEditor, @NotNull PairProcessor<PsiFile, Editor> predicate) {
+  public static Pair<PsiFile,Editor> chooseBetweenHostAndInjected(@NotNull PsiFile hostFile, @NotNull Editor hostEditor, @NotNull PairProcessor<? super PsiFile, ? super Editor> predicate) {
     Editor editorToApply = null;
     PsiFile fileToApply = null;
 

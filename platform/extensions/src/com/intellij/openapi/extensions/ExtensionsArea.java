@@ -29,6 +29,7 @@ public interface ExtensionsArea  {
   ExtensionPoint[] getExtensionPoints();
 
   void addAvailabilityListener(@NotNull String extensionPointName, @NotNull ExtensionPointAvailabilityListener listener);
+  void removeAvailabilityListener(@NotNull String extensionPointName, @NotNull ExtensionPointAvailabilityListener listener);
 
   @NotNull
   AreaPicoContainer getPicoContainer();

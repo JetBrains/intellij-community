@@ -170,7 +170,7 @@ public class EditableSchemesCombo<T extends Scheme> {
     });
   }
 
-  public void startEdit(@NotNull String initialName, boolean isProjectScheme, @NotNull Consumer<String> nameConsumer) {
+  public void startEdit(@NotNull String initialName, boolean isProjectScheme, @NotNull Consumer<? super String> nameConsumer) {
     showHint();
     myNameEditData = new NameEditData(initialName, nameConsumer, isProjectScheme);
     myNameEditorField.setText(initialName);
@@ -179,7 +179,7 @@ public class EditableSchemesCombo<T extends Scheme> {
     focusManager.doWhenFocusSettlesDown(() -> focusManager.requestFocus(myNameEditorField, true));
   }
 
-  public void resetSchemes(@NotNull Collection<T> schemes) {
+  public void resetSchemes(@NotNull Collection<? extends T> schemes) {
     myComboBox.resetSchemes(schemes);
   }
 
@@ -214,10 +214,10 @@ public class EditableSchemesCombo<T extends Scheme> {
 
   private static class NameEditData {
     private @NotNull final String initialName;
-    private @NotNull final Consumer<String> nameConsumer;
+    private @NotNull final Consumer<? super String> nameConsumer;
     private final boolean isProjectScheme;
 
-    private NameEditData(@NotNull String name, @NotNull Consumer<String> nameConsumer, boolean isProjectScheme) {
+    private NameEditData(@NotNull String name, @NotNull Consumer<? super String> nameConsumer, boolean isProjectScheme) {
       initialName = name;
       this.nameConsumer = nameConsumer;
       this.isProjectScheme = isProjectScheme;

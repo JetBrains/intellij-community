@@ -20,7 +20,7 @@ import java.util.List;
  */
 public abstract class JBTableRowEditor extends JPanel {
   public interface RowDocumentListener {
-    void documentChanged(DocumentEvent e, int column);
+    void documentChanged(@NotNull DocumentEvent e, int column);
   }
 
   private final List<RowDocumentListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -38,7 +38,7 @@ public abstract class JBTableRowEditor extends JPanel {
     myListeners.add(listener);
   }
 
-  public void fireDocumentChanged(DocumentEvent e, int column) {
+  public void fireDocumentChanged(@NotNull DocumentEvent e, int column) {
     for (RowDocumentListener listener : myListeners) {
       listener.documentChanged(e, column);
     }

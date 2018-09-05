@@ -104,7 +104,7 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
   }
 
   @NotNull
-  public static Condition<SdkTypeId> notSimpleJavaSdkType(@Nullable Condition<SdkTypeId> condition) {
+  public static Condition<SdkTypeId> notSimpleJavaSdkType(@Nullable Condition<? super SdkTypeId> condition) {
     return sdkTypeId -> notSimpleJavaSdkType().value(sdkTypeId) && (condition == null || condition.value(sdkTypeId));
   }
 }

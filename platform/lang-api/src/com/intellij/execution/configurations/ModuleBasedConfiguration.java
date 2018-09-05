@@ -36,7 +36,7 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
   }
 
   public ModuleBasedConfiguration(@NotNull ConfigurationModule configurationModule, @NotNull ConfigurationFactory factory) {
-    super(configurationModule.getProject(), factory, "");
+    super(configurationModule.getProject(), factory);
 
     myModule = configurationModule;
     setInitialModuleName();
@@ -181,6 +181,7 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     return false;
   }
 
+  @Override
   public void onNewConfigurationCreated() {
     final RunConfigurationModule configurationModule = getConfigurationModule();
     if (configurationModule.getModule() == null) {

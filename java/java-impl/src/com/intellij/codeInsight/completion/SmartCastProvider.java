@@ -59,7 +59,7 @@ class SmartCastProvider extends CompletionProvider<CompletionParameters> {
     addCastVariants(parameters, result.getPrefixMatcher(), result, false);
   }
 
-  static void addCastVariants(@NotNull CompletionParameters parameters, PrefixMatcher matcher, @NotNull Consumer<LookupElement> result, boolean quick) {
+  static void addCastVariants(@NotNull CompletionParameters parameters, PrefixMatcher matcher, @NotNull Consumer<? super LookupElement> result, boolean quick) {
     if (!shouldSuggestCast(parameters)) return;
 
     PsiElement position = parameters.getPosition();
@@ -121,7 +121,7 @@ class SmartCastProvider extends CompletionProvider<CompletionParameters> {
            Collections.singletonList(new ExpectedTypeInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.NONE, null, () -> null));
   }
 
-  private static void addHierarchyTypes(CompletionParameters parameters, PrefixMatcher matcher, ExpectedTypeInfo info, Consumer<PsiType> result, boolean quick) {
+  private static void addHierarchyTypes(CompletionParameters parameters, PrefixMatcher matcher, ExpectedTypeInfo info, Consumer<? super PsiType> result, boolean quick) {
     PsiType infoType = info.getType();
     PsiClass infoClass = PsiUtil.resolveClassInClassTypeOnly(infoType);
     if (info.getKind() == ExpectedTypeInfo.TYPE_OR_SUPERTYPE) {

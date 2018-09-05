@@ -186,7 +186,7 @@ public class SearchUtil {
     return result;
   }
 
-  private static void processUILabel(String title, Set<OptionDescription> configurableOptions, String path) {
+  private static void processUILabel(String title, Set<? super OptionDescription> configurableOptions, String path) {
     title = HTML_PATTERN.matcher(title).replaceAll(" ");
     final Set<String> words = SearchableOptionsRegistrar.getInstance().getProcessedWordsWithoutStemming(title);
     final String regex = "[\\W&&[^\\p{Punct}\\p{Blank}]]";
@@ -471,7 +471,7 @@ public class SearchUtil {
   }
 
   private static void appendSelectedWords(final String text,
-                                          final List<String> selectedWords,
+                                          final List<? super String> selectedWords,
                                           final int pos,
                                           int end,
                                           final String filter) {
@@ -486,7 +486,7 @@ public class SearchUtil {
     }
   }
 
-  public static List<Set<String>> findKeys(String filter, Set<String> quoted) {
+  public static List<Set<String>> findKeys(String filter, Set<? super String> quoted) {
     filter = processFilter(filter.toLowerCase(Locale.US), quoted);
     final List<Set<String>> keySetList = new ArrayList<>();
     final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
@@ -507,7 +507,7 @@ public class SearchUtil {
     return keySetList;
   }
 
-  public static String processFilter(String filter, Set<String> quoted) {
+  public static String processFilter(String filter, Set<? super String> quoted) {
     String withoutQuoted = "";
     int beg = 0;
     final Matcher matcher = QUOTED.matcher(filter);
@@ -543,7 +543,7 @@ public class SearchUtil {
                                                         ((SearchableConfigurable.Parent)configurable).isVisible());
   }
 
-  private static void addChildren(Configurable configurable, List<Configurable> list) {
+  private static void addChildren(Configurable configurable, List<? super Configurable> list) {
     if (configurable instanceof Configurable.Composite) {
       final Configurable[] kids = ((Configurable.Composite)configurable).getConfigurables();
       for (Configurable eachKid : kids) {

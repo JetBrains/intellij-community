@@ -386,10 +386,10 @@ public class RefreshWorker {
     }
   }
 
-  private static Function<VirtualFile, Boolean> ourCancellingCondition;
+  private static Function<? super VirtualFile, Boolean> ourCancellingCondition;
 
   @TestOnly
-  public static void setCancellingCondition(@Nullable Function<VirtualFile, Boolean> condition) {
+  public static void setCancellingCondition(@Nullable Function<? super VirtualFile, Boolean> condition) {
     assert ApplicationManager.getApplication().isUnitTestMode();
     LocalFileSystemRefreshWorker.setCancellingCondition(condition);
     ourCancellingCondition = condition;

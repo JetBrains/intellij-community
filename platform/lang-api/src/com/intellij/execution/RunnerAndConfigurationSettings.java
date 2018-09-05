@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
  * settings.
  *
  * @author anna
- * @see RunManager#createRunConfiguration(String, com.intellij.execution.configurations.ConfigurationFactory)
+ * @see RunManager#createConfiguration(String, com.intellij.execution.configurations.ConfigurationFactory)
  */
 public interface RunnerAndConfigurationSettings {
   /**

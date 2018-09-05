@@ -3,29 +3,30 @@
 package com.intellij.execution.junit;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.configuration.ConfigurationFactoryEx;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.ConfigurationTypeUtil;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+// cannot be final because of backward compatibility (1 external usage)
+/**
+ * DO NOT extend this class directly.
+ */
 public class JUnitConfigurationType implements ConfigurationType {
   private final ConfigurationFactory myFactory;
 
   /**reflection*/
   public JUnitConfigurationType() {
-    myFactory = new ConfigurationFactoryEx(this) {
+    myFactory = new ConfigurationFactory(this) {
       @Override
       @NotNull
       public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
         return new JUnitConfiguration("", project, this);
-      }
-
-      @Override
-      public void onNewConfigurationCreated(@NotNull RunConfiguration configuration) {
-        ((ModuleBasedConfiguration)configuration).onNewConfigurationCreated();
       }
     };
   }
@@ -52,6 +53,11 @@ public class JUnitConfigurationType implements ConfigurationType {
   }
 
   @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.JUnit";
+  }
+
+  @Override
   @NotNull
   public String getId() {
     return "JUnit";
@@ -59,7 +65,7 @@ public class JUnitConfigurationType implements ConfigurationType {
 
   @NotNull
   @Override
-  public String getConfigurationPropertyName() {
+  public String getTag() {
     String id = getId();
     return id.equals("JUnit") ? "junit" : id;
   }

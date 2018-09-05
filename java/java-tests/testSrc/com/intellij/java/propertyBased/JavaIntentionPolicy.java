@@ -15,6 +15,7 @@
  */
 package com.intellij.java.propertyBased;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
@@ -46,6 +47,11 @@ class JavaIntentionPolicy extends IntentionPolicy {
   @Override
   public boolean mayBreakCode(@NotNull IntentionAction action, @NotNull Editor editor, @NotNull PsiFile file) {
     return mayBreakCompilation(action.getText()) || requiresRealJdk(action, file);
+  }
+
+  @Override
+  public boolean shouldTolerateIntroducedError(@NotNull HighlightInfo info) {
+    return info.getText().contains("is public, should be declared in a file named"); // https://youtrack.jetbrains.com/issue/IDEA-196018
   }
 
   private static boolean requiresRealJdk(@NotNull IntentionAction action, @NotNull PsiFile file) {
@@ -139,6 +145,7 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
     return actionText.equals("Add clarifying parentheses") ||
            actionText.equals("Remove unnecessary parentheses") ||
            actionText.equals("See other similar duplicates") ||
+           actionText.equals("Replace character literal with string") ||
            actionText.matches("Simplify '\\(+(true|false)\\)+' to \\1") ||
            // Parenthesizing sub-expression causes cutting the action name at different position, so name changes significantly
            actionText.matches("Compute constant value of '.+'") ||

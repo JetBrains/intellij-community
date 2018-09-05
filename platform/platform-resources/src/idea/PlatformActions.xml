@@ -777,14 +777,14 @@
               description="Disable ProcessCanceledException thrown in a background thread during read action, to simplify debugging"/>
       <group id="Internal.Performance" text="Performance" popup="true">
         <action id="LaggingMode" internal="true" class="com.intellij.internal.ToggleLaggingModeAction" text="Lagging mode"/>
-        <action internal="true" id="TestTransferToEDT" text="Test TransferToEDTQueue performance" class="com.intellij.diagnostic.TransferToEDTQueueTestAction"/>
       </group>
       <separator/>
       <group id="Internal.UI" popup="true" text="&amp;UI">
         <action id="NotificationTestAction" internal="true" class="com.intellij.notification.impl.actions.NotificationTestAction"
                 text="Add Test Notification"/>
         <action id="TestMessageBoxAction" internal="true" class="com.intellij.diagnostic.TestMessageBoxAction" text="Show Test Dialog"/>
-        <action id="ComponentPanelTestAction" internal="true" class="com.intellij.internal.ui.ComponentPanelTestAction" text="Show standard panels"/>
+        <action id="ComponentPanelTestAction" internal="true" class="com.intellij.internal.ui.ComponentPanelTestAction"
+                text="Show Standard Panels"/>
         <separator/>
         <action id="EditorRenderingBenchmarkAction" internal="true" class="com.intellij.internal.performance.EditorRenderingBenchmarkAction"
                 text="Editor Rendering Benchmark"/>
@@ -807,6 +807,10 @@
 
         <action id="UiInspector" internal="true" class="com.intellij.internal.inspector.UiInspectorAction" text="UI &amp;Inspector">
           <abbreviation value="uii"/>
+        </action>
+        <action id="ShowHeatMap" internal="true" description="Paints tool bar buttons and menus based on statistics" text="Show HeatMap"
+                class="com.intellij.internal.heatmap.actions.ShowHeatMapAction">
+          <abbreviation value="shm"/>
         </action>
         <action id="UiDropper" internal="true" class="com.intellij.internal.inspector.UiDropperAction" text="UI &amp;Dropper"/>
         <action id="HidpiInfo" internal="true" class="com.intellij.internal.HidpiInfo" text="Show &amp;HiDPI Info"/>

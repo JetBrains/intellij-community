@@ -26,7 +26,7 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
     setRenderer(new MyListCellRenderer());
   }
 
-  public void resetSchemes(@NotNull Collection<T> schemes) {
+  public void resetSchemes(@NotNull Collection<? extends T> schemes) {
     final MyComboBoxModel<T> model = (MyComboBoxModel<T>)getModel();
     model.removeAllElements();
     if (supportsProjectSchemes()) {
@@ -75,7 +75,7 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
   @NotNull
   protected abstract SimpleTextAttributes getSchemeAttributes(T scheme);
 
-  private void addItems(@NotNull Collection<T> schemes, Predicate<T> filter) {
+  private void addItems(@NotNull Collection<? extends T> schemes, Predicate<? super T> filter) {
     for (T scheme : schemes) {
       if (filter.test(scheme)) {
         ((MyComboBoxModel<T>) getModel()).addElement(new MySchemeListItem<>(scheme));

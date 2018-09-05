@@ -134,12 +134,12 @@ public abstract class CommandLineState implements RunProfileState {
     }
 
     @Override
-    public boolean isSelected(final AnActionEvent event) {
+    public boolean isSelected(@NotNull final AnActionEvent event) {
       return myConsole.isOutputPaused();
     }
 
     @Override
-    public void setSelected(final AnActionEvent event, final boolean flag) {
+    public void setSelected(@NotNull final AnActionEvent event, final boolean flag) {
       myConsole.setOutputPaused(flag);
       ApplicationManager.getApplication().invokeLater(() -> update(event));
     }

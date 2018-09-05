@@ -36,7 +36,6 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -146,14 +145,14 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
                                    .createNavigatable(myProject, messageNode.getFile(), messageNode.getOffset());
       }
 
+      @NotNull
       @Override
-      @Nullable
       public String getNextOccurenceActionName() {
         return AntBundle.message("ant.execution.next.error.warning.action.name");
       }
 
+      @NotNull
       @Override
-      @Nullable
       public String getPreviousOccurenceActionName() {
         return AntBundle.message("ant.execution.previous.error.warning.action.name");
       }
@@ -240,33 +239,34 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
 
   @Override
   public void addJavacMessage(AntMessage message, String url) {
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      final VirtualFile file = message.getFile();
-      if (message.getLine() > 0) {
-        if (file != null) {
-          ApplicationManager.getApplication().runReadAction(() -> {
-            String presentableUrl = file.getPresentableUrl();
-            builder.append(presentableUrl);
-            builder.append(' ');
-          });
-        }
-        else if (url != null) {
-          builder.append(url);
+    final String builder = printMessage(message, url);
+    addJavacMessageImpl(new AntMessage(message.getType(), message.getPriority(), builder.toString() + message.getText(),
+                                       message.getFile(), message.getLine(), message.getColumn()));
+  }
+
+  @NotNull
+  static String printMessage(@NotNull AntMessage message, String url) {
+    final StringBuilder builder = new StringBuilder();
+    final VirtualFile file = message.getFile();
+    if (message.getLine() > 0) {
+      if (file != null) {
+        ApplicationManager.getApplication().runReadAction(() -> {
+          String presentableUrl = file.getPresentableUrl();
+          builder.append(presentableUrl);
           builder.append(' ');
-        }
-        builder.append('(');
-        builder.append(message.getLine());
-        builder.append(':');
-        builder.append(message.getColumn());
-        builder.append(") ");
+        });
       }
-      addJavacMessageImpl(new AntMessage(message.getType(), message.getPriority(), builder.toString() + message.getText(),
-                                         message.getFile(), message.getLine(), message.getColumn()));
+      else if (url != null) {
+        builder.append(url);
+        builder.append(' ');
+      }
+      builder.append('(');
+      builder.append(message.getLine());
+      builder.append(':');
+      builder.append(message.getColumn());
+      builder.append(") ");
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(builder);
-    }
+    return builder.toString();
   }
 
   private void addJavacMessageImpl(AntMessage message) {
@@ -580,11 +580,13 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     return myAutoScrollToSourceHandler.createToggleAction();
   }
 
+  @NotNull
   @Override
   public String getNextOccurenceActionName() {
     return myOccurenceNavigatorSupport.getNextOccurenceActionName();
   }
 
+  @NotNull
   @Override
   public String getPreviousOccurenceActionName() {
     return myOccurenceNavigatorSupport.getPreviousOccurenceActionName();

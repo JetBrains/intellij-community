@@ -90,13 +90,13 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     }
   }
 
-  private void listAdded(String listName) {
+  private void listAdded(@NotNull String listName) {
     for (FavoritesListener listener : myListeners) {
       listener.listAdded(listName);
     }
   }
 
-  private void listRemoved(String listName) {
+  private void listRemoved(@NotNull String listName) {
     for (FavoritesListener listener : myListeners) {
       listener.listRemoved(listName);
     }

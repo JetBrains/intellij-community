@@ -439,7 +439,7 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
     
     myPopup.addListener(new JBPopupListener() {
       @Override
-      public void onClosed(LightweightWindowEvent event) {
+      public void onClosed(@NotNull LightweightWindowEvent event) {
         highlighter.dropHighlight();
         injectionHighlighter.dropHighlight();
         myPopupShown = false;

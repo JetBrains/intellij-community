@@ -191,8 +191,8 @@ public class DependentGroovycRunner {
     }
   }
 
-  private static String fillFromArgsFile(File argsFile, CompilerConfiguration compilerConfiguration, List<CompilationUnitPatcher> patchers, List<CompilerMessage> compilerMessages,
-                                         List<File> srcFiles, Map<String, File> class2File, String[] finalOutputs) {
+  private static String fillFromArgsFile(File argsFile, CompilerConfiguration compilerConfiguration, List<? super CompilationUnitPatcher> patchers, List<? super CompilerMessage> compilerMessages,
+                                         List<? super File> srcFiles, Map<String, File> class2File, String[] finalOutputs) {
     String moduleClasspath = null;
 
     BufferedReader reader = null;
@@ -274,7 +274,7 @@ public class DependentGroovycRunner {
     return moduleClasspath;
   }
 
-  private static void addSources(boolean forStubs, List<File> srcFiles, final CompilationUnit unit) {
+  private static void addSources(boolean forStubs, List<? extends File> srcFiles, final CompilationUnit unit) {
     for (final File file : srcFiles) {
       if (forStubs && file.getName().endsWith(".java")) {
         continue;
@@ -284,7 +284,7 @@ public class DependentGroovycRunner {
     }
   }
 
-  private static void runPatchers(List<CompilationUnitPatcher> patchers, List<CompilerMessage> compilerMessages, CompilationUnit unit, final AstAwareResourceLoader loader, List<File> srcFiles) {
+  private static void runPatchers(List<? extends CompilationUnitPatcher> patchers, List<? super CompilerMessage> compilerMessages, CompilationUnit unit, final AstAwareResourceLoader loader, List<File> srcFiles) {
     if (!patchers.isEmpty()) {
       for (CompilationUnitPatcher patcher : patchers) {
         try {
@@ -297,7 +297,7 @@ public class DependentGroovycRunner {
     }
   }
 
-  private static void reportCompiledItems(List<GroovyCompilerWrapper.OutputItem> compiledFiles) {
+  private static void reportCompiledItems(List<? extends GroovyCompilerWrapper.OutputItem> compiledFiles) {
     for (GroovyCompilerWrapper.OutputItem compiledFile : compiledFiles) {
       /*
       * output path
@@ -329,7 +329,7 @@ public class DependentGroovycRunner {
     System.out.println();
   }
 
-  private static void addExceptionInfo(List<CompilerMessage> compilerMessages, Throwable e, String message) {
+  private static void addExceptionInfo(List<? super CompilerMessage> compilerMessages, Throwable e, String message) {
     final StringWriter writer = new StringWriter();
     e.printStackTrace(new PrintWriter(writer));
     compilerMessages.add(new CompilerMessage(GroovyCompilerMessageCategories.WARNING, message + ":\n" + writer, "<exception>", -1, -1));

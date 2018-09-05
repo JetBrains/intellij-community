@@ -93,7 +93,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
   @NotNull
   @Override
   protected List<AnAction> createChildActions(@NotNull ConfigurationContext context,
-                                              @NotNull List<ConfigurationFromContext> configurations) {
+                                              @NotNull List<? extends ConfigurationFromContext> configurations) {
     final List<AnAction> childActions = new ArrayList<>(super.createChildActions(context, configurations));
     boolean isMultipleConfigurationsFromAlternativeLocations =
       configurations.size() > 1 && configurations.get(0).isFromAlternativeLocation();
@@ -106,7 +106,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
   }
 
   @NotNull
-  private AnAction runAllConfigurationsAction(@NotNull ConfigurationContext context, @NotNull List<ConfigurationFromContext> configurationsFromContext) {
+  private AnAction runAllConfigurationsAction(@NotNull ConfigurationContext context, @NotNull List<? extends ConfigurationFromContext> configurationsFromContext) {
     return new AnAction(
       "Run all",
       "Run all configurations available in this context",

@@ -52,7 +52,7 @@ public class MacIntelliJComboBoxBorder extends MacIntelliJTextBorder {
         clipForBorder(c, g2, width, height);
 
         Object op = ((JComponent)c).getClientProperty("JComponent.outline");
-        if (op != null) {
+        if (c.isEnabled() && op != null) {
           paintOutlineBorder(g2, width, height, arc, isSymmetric(), focused, Outline.valueOf(op.toString()));
         } else if (focused) {
           paintOutlineBorder(g2, width, height, arc, isSymmetric(), true, Outline.focus);

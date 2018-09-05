@@ -70,12 +70,12 @@ public class YamlEnumType extends YamlScalarType {
     super.validateScalarValue(scalarValue, holder);
 
     String text = scalarValue.getTextValue();
-    if (text.length() == 0) {
+    if (text.isEmpty()) {
       // not our business
       return;
     }
 
-    if (Arrays.stream(myDeprecatedLiterals).anyMatch(text::equals)) {
+    if (Arrays.asList(myDeprecatedLiterals).contains(text)) {
       holder.registerProblem(scalarValue,
                              YAMLBundle.message("YamlEnumType.validation.warning.value.deprecated", text),
                              ProblemHighlightType.LIKE_DEPRECATED);

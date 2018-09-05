@@ -15,6 +15,8 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -47,7 +49,7 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
 
   private List<BeforeRunTask<?>> myBeforeRunTasks = Collections.emptyList();
 
-  protected RunConfigurationBase(@NotNull Project project, @Nullable ConfigurationFactory factory, String name) {
+  protected RunConfigurationBase(@NotNull Project project, @Nullable ConfigurationFactory factory, @Nullable String name) {
     myProject = project;
     myFactory = factory;
     myName = name;
@@ -83,8 +85,8 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   }
 
   @Override
-  public final void setName(final String name) {
-    myName = name;
+  public final void setName(String name) {
+    myName = StringUtil.nullize(name);
   }
 
   @NotNull
@@ -102,7 +104,8 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   @Override
   @Transient
   public final String getName() {
-    return myName;
+    // todo is clients ready for null?
+    return StringUtilRt.notNullize(myName);
   }
 
   public final int hashCode() {
@@ -307,5 +310,15 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   @Deprecated
   protected boolean isNewSerializationUsed() {
     return false;
+  }
+
+  /**
+   * Called when configuration created via UI (Add Configuration).
+   * Suitable to perform some initialization tasks (in most cases it is indicator that you do something wrong, so, please override this method with care and only if really need).
+   */
+  public void onNewConfigurationCreated() {
+  }
+
+  public void onConfigurationCopied() {
   }
 }

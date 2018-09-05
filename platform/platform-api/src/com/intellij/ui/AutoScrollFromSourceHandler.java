@@ -105,12 +105,12 @@ public abstract class AutoScrollFromSourceHandler implements Disposable {
     }
 
     @Override
-    public boolean isSelected(final AnActionEvent event) {
+    public boolean isSelected(@NotNull final AnActionEvent event) {
       return isAutoScrollEnabled();
     }
 
     @Override
-    public void setSelected(final AnActionEvent event, final boolean flag) {
+    public void setSelected(@NotNull final AnActionEvent event, final boolean flag) {
       setAutoScrollEnabled(flag);
     }
   }

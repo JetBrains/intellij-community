@@ -135,7 +135,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
     });
     connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void projectClosed(final Project project) {
+      public void projectClosed(@NotNull final Project project) {
         // perform cleanup
         synchronized (myInProgress) {
           for (Iterator<Trinity<Project, String, String>> it = myInProgress.iterator(); it.hasNext(); ) {

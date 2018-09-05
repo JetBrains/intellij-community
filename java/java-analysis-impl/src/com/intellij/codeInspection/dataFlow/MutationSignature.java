@@ -41,6 +41,17 @@ public class MutationSignature {
   }
 
   /**
+   * @return true if known to mutate any parameter or receiver; false if pure or not known
+   */
+  public boolean mutatesAnything() {
+    if (myThis) return true;
+    for (boolean parameter : myParameters) {
+      if (parameter) return true;
+    }
+    return false;
+  }
+
+  /**
    * @param signature to parse
    * @return a parsed mutation signature
    * @throws IllegalArgumentException if signature is invalid

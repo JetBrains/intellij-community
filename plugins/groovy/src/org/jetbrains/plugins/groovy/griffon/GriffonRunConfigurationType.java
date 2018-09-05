@@ -14,11 +14,10 @@ import com.intellij.openapi.util.Key;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class GriffonRunConfigurationType implements ConfigurationType {
+public final class GriffonRunConfigurationType implements ConfigurationType {
   private final ConfigurationFactory myConfigurationFactory;
   @NonNls private static final String GRIFFON_APPLICATION = "Griffon";
 
@@ -65,12 +64,6 @@ public class GriffonRunConfigurationType implements ConfigurationType {
   @Override
   public ConfigurationFactory[] getConfigurationFactories() {
     return new ConfigurationFactory[]{myConfigurationFactory};
-  }
-
-  @Nullable
-  @Override
-  public String getHelpTopic() {
-    return null;
   }
 
   public static GriffonRunConfigurationType getInstance() {

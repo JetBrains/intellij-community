@@ -20,6 +20,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -30,12 +31,12 @@ public abstract class TabsPlacementAction extends ToggleAction implements DumbAw
   abstract int getPlace();
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return UISettings.getInstance().getEditorTabPlacement() == getPlace();
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     UISettings.getInstance().setEditorTabPlacement(getPlace());
     LafManager.getInstance().repaintUI();
     UISettings.getInstance().fireUISettingsChanged();

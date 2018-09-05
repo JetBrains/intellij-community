@@ -22,7 +22,7 @@ public class UngroupButtonsAction extends AbstractGuiEditorAction {
   }
 
   @Override
-  protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
+  protected void actionPerformed(final GuiEditor editor, final List<? extends RadComponent> selection, final AnActionEvent e) {
     if (selection.size() == 1) {
       final RadComponent component = selection.get(0);
       IButtonGroup group = FormEditingUtil.findGroupForComponent(editor.getRootContainer(), component);
@@ -36,20 +36,20 @@ public class UngroupButtonsAction extends AbstractGuiEditorAction {
   }
 
   @Override
-  protected void update(@NotNull final GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
+  protected void update(@NotNull final GuiEditor editor, final ArrayList<? extends RadComponent> selection, final AnActionEvent e) {
     boolean visible = GroupButtonsAction.allButtons(selection);
     e.getPresentation().setVisible(visible);
     e.getPresentation().setEnabled(visible && canUngroup(editor, selection));
   }
 
-  private static boolean canUngroup(final GuiEditor editor, final ArrayList<RadComponent> selectedComponents) {
+  private static boolean canUngroup(final GuiEditor editor, final List<? extends RadComponent> selectedComponents) {
     if (selectedComponents.size() < 2) {
       return selectedComponents.size() == 1;
     }
     return isSameGroup(editor, selectedComponents);
   }
 
-  public static boolean isSameGroup(final GuiEditor editor, final ArrayList<RadComponent> selectedComponents) {
+  public static boolean isSameGroup(final GuiEditor editor, final List<? extends RadComponent> selectedComponents) {
     final RadRootContainer rootContainer = editor.getRootContainer();
     IButtonGroup group = FormEditingUtil.findGroupForComponent(rootContainer, selectedComponents.get(0));
     if (group == null) {

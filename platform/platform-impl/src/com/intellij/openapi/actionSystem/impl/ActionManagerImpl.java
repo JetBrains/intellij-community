@@ -359,6 +359,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return "";
   }
 
+  @NotNull
   private static DataContext getContextBy(Component contextComponent) {
     final DataManager dataManager = DataManager.getInstance();
     return contextComponent != null ? dataManager.getDataContext(contextComponent) : dataManager.getDataContext();
@@ -421,7 +422,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   @NotNull
   @Override
-  public ActionToolbar createActionToolbar(final String place, @NotNull final ActionGroup group, final boolean horizontal) {
+  public ActionToolbar createActionToolbar(@NotNull final String place, @NotNull final ActionGroup group, final boolean horizontal) {
     return createActionToolbar(place, group, horizontal, false);
   }
 
@@ -1095,7 +1096,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  public void removeActionPopup(final Object menu) {
+  void removeActionPopup(final Object menu) {
     final boolean removed = myPopups.remove(menu);
     if (removed && menu instanceof ActionPopupMenu) {
       for (ActionPopupMenuListener listener : myActionPopupMenuListeners) {
@@ -1108,7 +1109,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   @Override
-  public void queueActionPerformedEvent(final AnAction action, DataContext context, AnActionEvent event) {
+  public void queueActionPerformedEvent(@NotNull final AnAction action, @NotNull DataContext context, @NotNull AnActionEvent event) {
     if (!myPopups.isEmpty()) {
       myQueuedNotifications.put(action, context);
     }
@@ -1199,17 +1200,15 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   @Override
-  public void fireBeforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-    if (action != null) {
-      myPrevPerformedActionId = myLastPreformedActionId;
-      myLastPreformedActionId = getId(action);
-      if (myLastPreformedActionId == null && action instanceof ActionIdProvider) {
-        myLastPreformedActionId = ((ActionIdProvider)action).getId();
-      }
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      IdeaLogger.ourLastActionId = myLastPreformedActionId;
-      ActionsCollectorImpl.getInstance().record(myLastPreformedActionId, action.getClass());
+  public void fireBeforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+    myPrevPerformedActionId = myLastPreformedActionId;
+    myLastPreformedActionId = getId(action);
+    if (myLastPreformedActionId == null && action instanceof ActionIdProvider) {
+      myLastPreformedActionId = ((ActionIdProvider)action).getId();
     }
+    //noinspection AssignmentToStaticFieldFromInstanceMethod
+    IdeaLogger.ourLastActionId = myLastPreformedActionId;
+    ActionsCollectorImpl.getInstance().record(myLastPreformedActionId, action.getClass());
     for (AnActionListener listener : myActionListeners) {
       listener.beforeActionPerformed(action, dataContext, event);
     }
@@ -1217,13 +1216,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   @Override
-  public void fireAfterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-    if (action != null) {
-      myPrevPerformedActionId = myLastPreformedActionId;
-      myLastPreformedActionId = getId(action);
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      IdeaLogger.ourLastActionId = myLastPreformedActionId;
-    }
+  public void fireAfterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
+    myPrevPerformedActionId = myLastPreformedActionId;
+    myLastPreformedActionId = getId(action);
+    //noinspection AssignmentToStaticFieldFromInstanceMethod
+    IdeaLogger.ourLastActionId = myLastPreformedActionId;
     for (AnActionListener listener : myActionListeners) {
       try {
         listener.afterActionPerformed(action, dataContext, event);
@@ -1253,7 +1250,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   @Override
-  public void fireBeforeEditorTyping(char c, DataContext dataContext) {
+  public void fireBeforeEditorTyping(char c, @NotNull DataContext dataContext) {
     myLastTimeEditorWasTypedIn = System.currentTimeMillis();
     for (AnActionListener listener : myActionListeners) {
       listener.beforeEditorTyping(c, dataContext);
@@ -1314,7 +1311,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return result;
   }
 
-  private void tryToExecuteNow(final AnAction action, final InputEvent inputEvent, final Component contextComponent, final String place, final ActionCallback result) {
+  private void tryToExecuteNow(@NotNull AnAction action, final InputEvent inputEvent, final Component contextComponent, final String place, final ActionCallback result) {
     final Presentation presentation = action.getTemplatePresentation().clone();
 
     IdeFocusManager.findInstanceByContext(getContextBy(contextComponent)).doWhenFocusSettlesDown(
@@ -1380,13 +1377,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       final MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
       connection.subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
         @Override
-        public void applicationActivated(IdeFrame ideFrame) {
+        public void applicationActivated(@NotNull IdeFrame ideFrame) {
           setDelay(TIMER_DELAY);
           restart();
         }
 
         @Override
-        public void applicationDeactivated(IdeFrame ideFrame) {
+        public void applicationDeactivated(@NotNull IdeFrame ideFrame) {
           setDelay(DEACTIVATED_TIMER_DELAY);
         }
       });
@@ -1432,7 +1429,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       }
     }
 
-    private void notifyListeners(final List<TimerListener> timerListeners, final Set<TimerListener> notified) {
+    private void notifyListeners(final List<TimerListener> timerListeners, final Set<? super TimerListener> notified) {
       for (TimerListener listener : timerListeners) {
         if (notified.add(listener)) {
           runListenerAction(listener);

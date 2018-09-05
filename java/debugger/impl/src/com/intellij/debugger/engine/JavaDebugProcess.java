@@ -331,7 +331,7 @@ public class JavaDebugProcess extends XDebugProcess {
         ui.addContent(threadsContent, 0, PlaceInGrid.left, true);
         ui.addListener(new ContentManagerAdapter() {
           @Override
-          public void selectionChanged(ContentManagerEvent event) {
+          public void selectionChanged(@NotNull ContentManagerEvent event) {
             if (event.getContent() == threadsContent) {
               if (threadsContent.isSelected()) {
                 panel.setUpdateEnabled(true);
@@ -377,7 +377,7 @@ public class JavaDebugProcess extends XDebugProcess {
         final DebuggerManagerThreadImpl managerThread = process.getManagerThread();
         ui.addListener(new ContentManagerAdapter() {
           @Override
-          public void selectionChanged(ContentManagerEvent event) {
+          public void selectionChanged(@NotNull ContentManagerEvent event) {
             if (event != null && event.getContent() == memoryViewContent) {
               classesFilteredView.setActive(memoryViewContent.isSelected(), managerThread);
             }
@@ -425,12 +425,12 @@ public class JavaDebugProcess extends XDebugProcess {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myAutoModeEnabled;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean enabled) {
+    public void setSelected(@NotNull AnActionEvent e, boolean enabled) {
       myAutoModeEnabled = enabled;
       DebuggerSettings.getInstance().AUTO_VARIABLES_MODE = enabled;
       XDebuggerUtilImpl.rebuildAllSessionsViews(e.getProject());
@@ -463,12 +463,12 @@ public class JavaDebugProcess extends XDebugProcess {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return DebuggerSettings.getInstance().WATCH_RETURN_VALUES;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean watch) {
+    public void setSelected(@NotNull AnActionEvent e, boolean watch) {
       DebuggerSettings.getInstance().WATCH_RETURN_VALUES = watch;
       DebugProcessImpl process = getCurrentDebugProcess(e.getProject());
       if (process != null) {

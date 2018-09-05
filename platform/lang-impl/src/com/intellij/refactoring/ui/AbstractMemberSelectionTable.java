@@ -220,7 +220,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     }
 
     @Override
-    public void memberInfoChanged(MemberInfoChange<T, M> event) {
+    public void memberInfoChanged(@NotNull MemberInfoChange<T, M> event) {
     }
 
     @Override

@@ -165,7 +165,7 @@ public class AnnotationProcessorsPanel extends JPanel {
     splitter.setSecondComponent(myProfilePanel);
   }
 
-  public void initProfiles(ProcessorConfigProfile defaultProfile, Collection<ProcessorConfigProfile> moduleProfiles) {
+  public void initProfiles(ProcessorConfigProfile defaultProfile, Collection<? extends ProcessorConfigProfile> moduleProfiles) {
     myDefaultProfile.initFrom(defaultProfile);
     myModuleProfiles.clear();
     for (ProcessorConfigProfile profile : moduleProfiles) {

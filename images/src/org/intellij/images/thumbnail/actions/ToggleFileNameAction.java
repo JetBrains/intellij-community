@@ -24,13 +24,13 @@ import org.jetbrains.annotations.NotNull;
 
 public final class ToggleFileNameAction extends ToggleAction {
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
         ImageComponentDecorator decorator = ImageComponentDecorator.DATA_KEY.getData(e.getDataContext());
         return decorator != null && decorator.isEnabledForActionPlace(e.getPlace()) && decorator.isFileNameVisible();
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
         ImageComponentDecorator decorator = ImageComponentDecorator.DATA_KEY.getData(e.getDataContext());
         if (decorator != null && decorator.isEnabledForActionPlace(e.getPlace())) {
             decorator.setFileNameVisible(state);

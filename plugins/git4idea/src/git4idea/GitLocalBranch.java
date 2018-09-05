@@ -15,6 +15,7 @@
  */
 package git4idea;
 
+import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -36,11 +37,7 @@ public class GitLocalBranch extends GitBranch {
 
   @Nullable
   public GitRemoteBranch findTrackedBranch(@NotNull GitRepository repository) {
-    for (GitBranchTrackInfo info : repository.getBranchTrackInfos()) {
-      if (info.getLocalBranch().equals(this)) {
-        return info.getRemoteBranch();
-      }
-    }
-    return null;
+    GitBranchTrackInfo info = GitBranchUtil.getTrackInfoForBranch(repository, this);
+    return info != null ? info.getRemoteBranch() : null;
   }
 }

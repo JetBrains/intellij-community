@@ -19,6 +19,7 @@ import com.intellij.ui.TitlePanel;
 import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
+import com.intellij.util.SingleAlarm;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -175,11 +176,11 @@ class ProgressDialog implements Disposable {
   void enableCancelButtonIfNeeded(boolean enable) {
     if (!myProgressWindow.myShouldShowCancel || myDisableCancelAlarm.isDisposed()) return;
 
-    myDisableCancelAlarm.cancelAllRequests();
-    myDisableCancelAlarm.addRequest(enable ? this::setCancelButtonEnabledInEDT : this::setCancelButtonDisabledInEDT, 500);
+    (enable ? myEnableCancelAlarm : myDisableCancelAlarm).request();
   }
 
-  private final Alarm myDisableCancelAlarm = new Alarm(this);
+  private final SingleAlarm myDisableCancelAlarm = new SingleAlarm(this::setCancelButtonDisabledInEDT, 500,this);
+  private final SingleAlarm myEnableCancelAlarm = new SingleAlarm(this::setCancelButtonEnabledInEDT, 500,this);
 
   private void createCenterPanel() {
     // Cancel button (if any)

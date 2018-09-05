@@ -12,10 +12,11 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.SmartList;
-import com.intellij.util.StringSetSpinAllocator;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -27,10 +28,8 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 
 public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extends DialogWrapper {
@@ -130,29 +129,22 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
     tree.repaint();
   }
 
+  @NotNull
   private DefaultMutableTreeNode buildNodes() {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode(new Descriptor());
     RunManager runManager = RunManager.getInstance(myProject);
-    for (final ConfigurationType type : runManager.getConfigurationFactories()) {
+    for (ConfigurationType type : ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList()) {
       final Icon icon = type.getIcon();
       DefaultMutableTreeNode typeNode = new DefaultMutableTreeNode(new ConfigurationTypeDescriptor(type, icon, isConfigurationAssigned(type)));
       root.add(typeNode);
-      final Set<String> addedNames = StringSetSpinAllocator.alloc();
-      try {
-        List<RunConfiguration> configurations = runManager.getConfigurationsList(type);
-        for (final RunConfiguration configuration : configurations) {
-          final String configurationName = configuration.getName();
-          if (addedNames.contains(configurationName)) {
-            // add only the first configuration if more than one has the same name
-            continue;
-          }
-          addedNames.add(configurationName);
-          typeNode.add(new DefaultMutableTreeNode(
-            new ConfigurationDescriptor(configuration, isConfigurationAssigned(configuration))));
+      final Set<String> addedNames = new THashSet<>();
+      for (final RunConfiguration configuration : runManager.getConfigurationsList(type)) {
+        final String configurationName = configuration.getName();
+        if (!addedNames.add(configurationName)) {
+          // add only the first configuration if more than one has the same name
+          continue;
         }
-      }
-      finally {
-        StringSetSpinAllocator.dispose(addedNames);
+        typeNode.add(new DefaultMutableTreeNode(new ConfigurationDescriptor(configuration, isConfigurationAssigned(configuration))));
       }
     }
 

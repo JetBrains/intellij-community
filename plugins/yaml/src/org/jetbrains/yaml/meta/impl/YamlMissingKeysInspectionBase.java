@@ -124,7 +124,7 @@ public abstract class YamlMissingKeysInspectionBase extends YamlMetaTypeInspecti
 
   @NotNull
   private static String composeKeyList(@NotNull final Collection<String> missingKeys) {
-    return missingKeys.stream().collect(Collectors.joining(", "));
+    return String.join(", ", missingKeys);
   }
 
   @NotNull

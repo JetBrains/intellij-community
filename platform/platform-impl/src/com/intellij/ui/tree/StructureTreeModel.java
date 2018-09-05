@@ -11,6 +11,7 @@ import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.ui.tree.AbstractTreeModel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -31,7 +32,7 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
   private final Reference<Node> root = new Reference<>();
   private final Invoker invoker;
   private volatile AbstractTreeStructure structure;
-  private volatile Comparator<Node> comparator;
+  private volatile Comparator<? super Node> comparator;
 
   public StructureTreeModel(boolean background) {
     invoker = background
@@ -39,10 +40,27 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
               : new Invoker.EDT(this);
   }
 
-  public final void setComparator(Comparator<NodeDescriptor> comparator) {
+  public StructureTreeModel(@NotNull AbstractTreeStructure structure) {
+    this.structure = structure;
+    invoker = new Invoker.BackgroundThread(this);
+  }
+
+  public StructureTreeModel(@NotNull AbstractTreeStructure structure, @NotNull Comparator<? super NodeDescriptor> comparator) {
+    this(structure);
+    this.comparator = createComparator(comparator);
+  }
+
+  private static Comparator<? super Node> createComparator(@NotNull Comparator<? super NodeDescriptor> comparator) {
+    return (node1, node2) -> comparator.compare(node1.getDescriptor(), node2.getDescriptor());
+  }
+
+  /**
+   * @param comparator a comparator to sort tree nodes or {@code null} to disable sorting
+   */
+  public final void setComparator(@Nullable Comparator<? super NodeDescriptor> comparator) {
     if (disposed) return;
     if (comparator != null) {
-      this.comparator = (node1, node2) -> comparator.compare(node1.getDescriptor(), node2.getDescriptor());
+      this.comparator = createComparator(comparator);
       invalidate();
     }
     else if (this.comparator != null) {
@@ -51,7 +69,10 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
     }
   }
 
-  public void setStructure(AbstractTreeStructure structure) {
+  /**
+   * @param structure a structure to build tree model or {@code null} to clear its content
+   */
+  public void setStructure(@Nullable AbstractTreeStructure structure) {
     if (disposed) return;
     this.structure = structure;
     invalidate();
@@ -122,7 +143,7 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
   }
 
   @Override
-  public final Object getRoot() {
+  public final TreeNode getRoot() {
     if (disposed || !isValidThread()) return null;
     if (!root.isValid()) {
       Node newRoot = getValidRoot();
@@ -146,7 +167,7 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
     return node;
   }
 
-  private boolean isNodeRemoved(Node node) {
+  private boolean isNodeRemoved(@NotNull Node node) {
     return !node.isNodeAncestor(root.get());
   }
 
@@ -217,6 +238,7 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
     return newNode;
   }
 
+  @Nullable
   private List<Node> getValidChildren(@NotNull Node node) {
     AbstractTreeStructure structure = this.structure;
     if (structure == null) return null;
@@ -236,7 +258,7 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
         list.add(new Node(structure, element, descriptor)); // an exception may be thrown while getting children
       }
     }
-    Comparator<Node> comparator = this.comparator;
+    Comparator<? super Node> comparator = this.comparator;
     if (comparator != null) list.sort(comparator); // an exception may be thrown while sorting children
 
     HashMap<Object, Node> map = new HashMap<>();
@@ -270,9 +292,9 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
     }
 
     private boolean canReuse(@NotNull Node node, Object element) {
-      if (super.allowsChildren != node.allowsChildren) return false;
+      if (allowsChildren != node.allowsChildren) return false;
       if (element != null && !element.equals(getElement())) return false;
-      super.userObject = node.userObject; // replace old descriptor
+      userObject = node.userObject; // replace old descriptor
       return true;
     }
 
@@ -372,5 +394,10 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
       root.set(getValidRoot());
     }
     return root.get();
+  }
+
+  @Override
+  public String toString() {
+    return String.valueOf(structure);
   }
 }

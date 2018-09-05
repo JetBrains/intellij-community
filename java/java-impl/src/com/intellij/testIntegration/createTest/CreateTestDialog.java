@@ -16,7 +16,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbService;
@@ -212,9 +211,8 @@ public class CreateTestDialog extends DialogWrapper {
   }
 
   @Override
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
+  protected String getHelpId() {
+    return "reference.dialogs.createTest";
   }
 
   @Override
@@ -597,11 +595,6 @@ public class CreateTestDialog extends DialogWrapper {
   private String getPackageName() {
     String name = myTargetPackageField.getText();
     return name != null ? name.trim() : "";
-  }
-
-  @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp("reference.dialogs.createTest");
   }
 
   private class MyChooseSuperClassAction implements ActionListener {

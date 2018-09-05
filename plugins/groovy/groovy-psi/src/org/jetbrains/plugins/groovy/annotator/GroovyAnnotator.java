@@ -1651,7 +1651,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
   private static void checkReferenceList(@NotNull AnnotationHolder holder,
                                          @NotNull GrReferenceList list,
-                                         @NotNull Condition<PsiClass> applicabilityCondition,
+                                         @NotNull Condition<? super PsiClass> applicabilityCondition,
                                          @NotNull String message,
                                          @Nullable IntentionAction fix) {
     for (GrCodeReferenceElement refElement : list.getReferenceElementsGroovy()) {

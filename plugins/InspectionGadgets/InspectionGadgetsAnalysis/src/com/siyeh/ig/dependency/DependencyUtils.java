@@ -55,7 +55,7 @@ public class DependencyUtils {
     return newDependencies;
   }
 
-  private static void tabulateDependencyClasses(RefJavaElement element, Set<RefClass> dependencies) {
+  private static void tabulateDependencyClasses(RefJavaElement element, Set<? super RefClass> dependencies) {
     addOwnerClassesToSet(element.getOutReferences(), dependencies);
     addOwnerClassesToSet(element.getOutTypeReferences(), dependencies);
     final List<RefEntity> children = element.getChildren();
@@ -66,7 +66,7 @@ public class DependencyUtils {
     }
   }
 
-  private static void addOwnerClassesToSet(Collection<? extends RefElement> references, Set<RefClass> set) {
+  private static void addOwnerClassesToSet(Collection<? extends RefElement> references, Set<? super RefClass> set) {
     final RefJavaUtil refUtil = RefJavaUtil.getInstance();
     for (RefElement reference : references) {
       final RefClass refClass = reference instanceof RefClass ? (RefClass)reference : refUtil.getOwnerClass(reference);
@@ -88,7 +88,7 @@ public class DependencyUtils {
   }
 
   private static void tabulateTransitiveDependencyClasses(
-    RefClass refClass, Set<RefClass> newDependencies) {
+    RefClass refClass, Set<? super RefClass> newDependencies) {
     final LinkedList<RefClass> pendingClasses = new LinkedList<>();
     pendingClasses.addLast(refClass);
     final Set<RefClass> processedClasses = new HashSet<>();
@@ -120,7 +120,7 @@ public class DependencyUtils {
     return newDependents;
   }
 
-  private static void tabulateDependentClasses(RefElement element, Set<RefClass> dependents) {
+  private static void tabulateDependentClasses(RefElement element, Set<? super RefClass> dependents) {
     addOwnerClassesToSet(element.getInReferences(), dependents);
     if (element instanceof RefClass) {
       final RefClass refClass = (RefClass)element;
@@ -146,7 +146,7 @@ public class DependencyUtils {
   }
 
   private static void tabulateTransitiveDependentClasses(
-    RefClass refClass, Set<RefClass> newDependents) {
+    RefClass refClass, Set<? super RefClass> newDependents) {
     final LinkedList<RefClass> pendingClasses = new LinkedList<>();
     pendingClasses.addLast(refClass);
     final Set<RefClass> processedClasses = new HashSet<>();
@@ -180,7 +180,7 @@ public class DependencyUtils {
     return newDependencies;
   }
 
-  private static void tabulateDependencyPackages(RefEntity entity, Set<RefPackage> dependencies) {
+  private static void tabulateDependencyPackages(RefEntity entity, Set<? super RefPackage> dependencies) {
     if (entity instanceof RefElement) {
       final RefElement element = (RefElement)entity;
       final Collection<RefElement> references = element.getOutReferences();
@@ -213,7 +213,7 @@ public class DependencyUtils {
     return newDependents;
   }
 
-  private static void tabulateDependentPackages(RefEntity entity, Set<RefPackage> dependents) {
+  private static void tabulateDependentPackages(RefEntity entity, Set<? super RefPackage> dependents) {
     if (entity instanceof RefElement) {
       final RefElement element = (RefElement)entity;
       final Collection<RefElement> references = element.getInReferences();
@@ -246,7 +246,7 @@ public class DependencyUtils {
   }
 
   private static void tabulateTransitiveDependentPackages(
-    RefPackage refPackage, Set<RefPackage> newDependents) {
+    RefPackage refPackage, Set<? super RefPackage> newDependents) {
     final LinkedList<RefPackage> pendingPackages =
       new LinkedList<>();
     pendingPackages.addLast(refPackage);
@@ -282,7 +282,7 @@ public class DependencyUtils {
   }
 
   private static void tabulateTransitiveDependencyPackages(
-    RefPackage refPackage, Set<RefPackage> newDependencies) {
+    RefPackage refPackage, Set<? super RefPackage> newDependencies) {
     final LinkedList<RefPackage> pendingPackages =
       new LinkedList<>();
     pendingPackages.addLast(refPackage);

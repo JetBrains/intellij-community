@@ -45,19 +45,17 @@ class AsyncProjectViewSupport {
   private final StructureTreeModel myStructureTreeModel;
   private final AsyncTreeModel myAsyncTreeModel;
 
-  public AsyncProjectViewSupport(Disposable parent,
-                                 Project project,
-                                 JTree tree,
-                                 AbstractTreeStructure structure,
-                                 Comparator<NodeDescriptor> comparator) {
-    myStructureTreeModel = new StructureTreeModel(true);
-    myStructureTreeModel.setStructure(structure);
-    myStructureTreeModel.setComparator(comparator);
+  AsyncProjectViewSupport(@NotNull Disposable parent,
+                          @NotNull Project project,
+                          @NotNull JTree tree,
+                          @NotNull AbstractTreeStructure structure,
+                          @NotNull Comparator<NodeDescriptor> comparator) {
+    myStructureTreeModel = new StructureTreeModel(structure, comparator);
     myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, true, parent);
     myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
     myNodeUpdater = new ProjectFileNodeUpdater(project, myStructureTreeModel.getInvoker()) {
       @Override
-      protected void updateStructure(boolean fromRoot, @NotNull Set<VirtualFile> updatedFiles) {
+      protected void updateStructure(boolean fromRoot, @NotNull Set<? extends VirtualFile> updatedFiles) {
         if (fromRoot) {
           updateAll(null);
         }
@@ -151,7 +149,7 @@ class AsyncProjectViewSupport {
     });
   }
 
-  public void setComparator(Comparator<NodeDescriptor> comparator) {
+  public void setComparator(@NotNull Comparator<? super NodeDescriptor> comparator) {
     myStructureTreeModel.setComparator(comparator);
   }
 
@@ -205,7 +203,7 @@ class AsyncProjectViewSupport {
     myStructureTreeModel.invalidate(path, structure);
   }
 
-  public void update(@NotNull List<TreePath> list, boolean structure) {
+  public void update(@NotNull List<? extends TreePath> list, boolean structure) {
     for (TreePath path : list) update(path, structure);
   }
 
@@ -224,7 +222,7 @@ class AsyncProjectViewSupport {
     acceptAndUpdate(AbstractProjectViewPane.createVisitor(element, file, path -> !list.add(path)), list, structure);
   }
 
-  private void acceptAndUpdate(TreeVisitor visitor, List<TreePath> list, boolean structure) {
+  private void acceptAndUpdate(TreeVisitor visitor, List<? extends TreePath> list, boolean structure) {
     if (visitor != null) {
       myAsyncTreeModel.accept(visitor, false)
                       .onSuccess(path -> update(list, structure));

@@ -106,15 +106,15 @@ public class ModelMergerUtil {
   }
 
   @NotNull
-  public static <T> Processor<T> createFilteringProcessor(final Processor<T> processor) {
+  public static <T> Processor<T> createFilteringProcessor(final Processor<? super T> processor) {
     return new ImplementationProcessor<>(processor, false);
   }
 
   public static class ImplementationProcessor<T> implements Processor<T> {
-    private final Processor<T> myProcessor;
+    private final Processor<? super T> myProcessor;
     private final boolean myProcessMerged;
 
-    public ImplementationProcessor(Processor<T> processor, final boolean processMerged) {
+    public ImplementationProcessor(Processor<? super T> processor, final boolean processMerged) {
       myProcessor = processor;
       myProcessMerged = processMerged;
     }

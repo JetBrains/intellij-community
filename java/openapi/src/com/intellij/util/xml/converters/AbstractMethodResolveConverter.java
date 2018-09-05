@@ -98,7 +98,7 @@ public abstract class AbstractMethodResolveConverter<ParentType extends DomEleme
   }
 
   @SuppressWarnings({"WeakerAccess"})
-  protected void processMethods(final ConvertContext context, Processor<PsiMethod> processor, Function<PsiClass, PsiMethod[]> methodGetter) {
+  protected void processMethods(final ConvertContext context, Processor<? super PsiMethod> processor, Function<? super PsiClass, PsiMethod[]> methodGetter) {
     for (PsiClass psiClass : getPsiClasses(getParent(context), context)) {
       if (psiClass != null) {
         for (PsiMethod psiMethod : methodGetter.fun(psiClass)) {

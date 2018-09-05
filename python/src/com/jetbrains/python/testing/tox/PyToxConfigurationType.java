@@ -11,7 +11,7 @@ import javax.swing.*;
 /**
  * @author Ilya.Kazakevich
  */
-public class PyToxConfigurationType implements ConfigurationType {
+public final class PyToxConfigurationType implements ConfigurationType {
 
   public static final String ID = "Tox";
   public static final ConfigurationType INSTANCE = new PyToxConfigurationType();
@@ -19,6 +19,11 @@ public class PyToxConfigurationType implements ConfigurationType {
   @Override
   public ConfigurationFactory[] getConfigurationFactories() {
     return new ConfigurationFactory[]{new PyToxConfigurationFactory(this)};
+  }
+
+  @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.Tox";
   }
 
   @NotNull

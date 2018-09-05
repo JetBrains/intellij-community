@@ -45,7 +45,7 @@ public class BlockTreeNode extends SimpleNode {
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
     String name = myBlock.getDebugName();
     if (name == null) name = myBlock.getClass().getSimpleName();
     if (myBlock instanceof DataLanguageBlockWrapper) {

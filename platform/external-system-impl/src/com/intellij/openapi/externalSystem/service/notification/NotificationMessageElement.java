@@ -128,8 +128,7 @@ public class NotificationMessageElement extends NavigatableMessageElement {
       }
     }
 
-    if (UIUtil.isUnderGTKLookAndFeel() ||
-        tree != null && WideSelectionTreeUI.isWideSelection(tree)) {
+    if (tree != null && WideSelectionTreeUI.isWideSelection(tree)) {
       editorPane.setOpaque(false);
     }
     else {

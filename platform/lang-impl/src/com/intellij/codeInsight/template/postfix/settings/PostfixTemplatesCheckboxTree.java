@@ -227,7 +227,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
     });
   }
 
-  private void visitTemplateNodes(@NotNull Consumer<PostfixTemplateCheckedTreeNode> consumer) {
+  private void visitTemplateNodes(@NotNull Consumer<? super PostfixTemplateCheckedTreeNode> consumer) {
     Enumeration languages = myRoot.children();
     while (languages.hasMoreElements()) {
       CheckedTreeNode langNode = (CheckedTreeNode)languages.nextElement();

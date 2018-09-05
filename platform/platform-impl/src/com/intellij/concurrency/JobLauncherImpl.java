@@ -133,7 +133,7 @@ public class JobLauncherImpl extends JobLauncher {
 
   @NotNull
   @Override
-  public Job<Void> submitToJobThread(@NotNull final Runnable action, @Nullable Consumer<Future> onDoneCallback) {
+  public Job<Void> submitToJobThread(@NotNull final Runnable action, @Nullable Consumer<? super Future<?>> onDoneCallback) {
     VoidForkJoinTask task = new VoidForkJoinTask(action, onDoneCallback);
     task.submit();
     return task;
@@ -141,7 +141,7 @@ public class JobLauncherImpl extends JobLauncher {
 
   private static class VoidForkJoinTask implements Job<Void> {
     private final Runnable myAction;
-    private final Consumer<Future> myOnDoneCallback;
+    private final Consumer<? super Future<?>> myOnDoneCallback;
     private enum Status { STARTED, EXECUTED } // null=not yet executed, STARTED=started execution, EXECUTED=finished
     private volatile Status myStatus;
     private final ForkJoinTask<Void> myForkJoinTask = new ForkJoinTask<Void>() {
@@ -174,7 +174,7 @@ public class JobLauncherImpl extends JobLauncher {
       }
     };
 
-    private VoidForkJoinTask(@NotNull Runnable action, @Nullable Consumer<Future> onDoneCallback) {
+    private VoidForkJoinTask(@NotNull Runnable action, @Nullable Consumer<? super Future<?>> onDoneCallback) {
       myAction = action;
       myOnDoneCallback = onDoneCallback;
     }

@@ -352,7 +352,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     }
 
     @Override
-    public boolean remove(@NotNull Collection<Artifact> artifacts) {
+    public boolean remove(@NotNull Collection<? extends Artifact> artifacts) {
       for (Artifact artifact : artifacts) {
         myPackagingEditorContext.getOrCreateModifiableArtifactModel().removeArtifact(artifact);
         myContext.getDaemonAnalyzer().removeElement(myPackagingEditorContext.getOrCreateArtifactElement(artifact));

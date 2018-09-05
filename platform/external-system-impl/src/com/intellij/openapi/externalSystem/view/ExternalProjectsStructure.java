@@ -103,7 +103,7 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
     return null;
   }
 
-  public void updateProjects(Collection<DataNode<ProjectData>> toImport) {
+  public void updateProjects(Collection<? extends DataNode<ProjectData>> toImport) {
     List<String> orphanProjects = ContainerUtil.mapNotNull(
       myNodeMapping.entrySet(), entry -> entry.getValue() instanceof ProjectNode ? entry.getKey() : null);
     for (DataNode<ProjectData> each : toImport) {
@@ -220,13 +220,13 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
     return myNodeMapping.get(projectPath);
   }
 
-  public <T extends ExternalSystemNode> void updateNodes(@NotNull Class<T> nodeClass) {
+  public <T extends ExternalSystemNode> void updateNodes(@NotNull Class<? extends T> nodeClass) {
     for (T node : getNodes(nodeClass)) {
       updateFrom(node);
     }
   }
 
-  public <T extends ExternalSystemNode> void visitNodes(@NotNull Class<T> nodeClass, @NotNull Consumer<T> consumer) {
+  public <T extends ExternalSystemNode> void visitNodes(@NotNull Class<? extends T> nodeClass, @NotNull Consumer<? super T> consumer) {
     for (T node : getNodes(nodeClass)) {
       consumer.consume(node);
     }

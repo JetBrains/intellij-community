@@ -16,7 +16,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import javax.swing.*;
 
-public class GroovyScriptRunConfigurationType implements ConfigurationType {
+public final class GroovyScriptRunConfigurationType implements ConfigurationType {
   private final GroovyFactory myConfigurationFactory;
 
   public GroovyScriptRunConfigurationType() {
@@ -49,6 +49,11 @@ public class GroovyScriptRunConfigurationType implements ConfigurationType {
   @Override
   public ConfigurationFactory[] getConfigurationFactories() {
     return new ConfigurationFactory[]{myConfigurationFactory};
+  }
+
+  @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.GroovyScriptRunConfiguration";
   }
 
   public static GroovyScriptRunConfigurationType getInstance() {

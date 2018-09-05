@@ -15,8 +15,7 @@
  */
 package com.intellij.testGuiFramework.fixtures
 
-import com.intellij.ide.actions.ViewNavigationBarAction
-import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.ide.ui.UISettings
 import org.fest.swing.core.Robot
 import org.fest.swing.fixture.ContainerFixture
 import javax.swing.JPanel
@@ -34,10 +33,7 @@ class NavigationBarFixture(robot: Robot, panel: JPanel, private val myIdeFrame: 
     if (isShowing()) myIdeFrame.invokeMainMenu(VIEW_NAV_BAR_ACTION)
   }
 
-  fun isShowing(): Boolean {
-    val action = ActionManager.getInstance().getAction(VIEW_NAV_BAR_ACTION) as ViewNavigationBarAction
-    return action.isSelected(null)
-  }
+  fun isShowing(): Boolean = UISettings.instance.showNavigationBar
 
   companion object {
     fun createNavigationBarFixture(robot: Robot, ideFrame: IdeFrameFixture): NavigationBarFixture {

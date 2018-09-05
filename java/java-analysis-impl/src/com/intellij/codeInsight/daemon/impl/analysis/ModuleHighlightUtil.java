@@ -103,10 +103,10 @@ public class ModuleHighlightUtil {
     return results;
   }
 
-  private static <T extends PsiStatement> void checkDuplicateRefs(Iterable<T> statements,
-                                                                  Function<T, String> ref,
+  private static <T extends PsiStatement> void checkDuplicateRefs(Iterable<? extends T> statements,
+                                                                  Function<? super T, String> ref,
                                                                   @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) String key,
-                                                                  List<HighlightInfo> results) {
+                                                                  List<? super HighlightInfo> results) {
     Set<String> filter = ContainerUtil.newTroveSet();
     for (T statement : statements) {
       String refText = ref.apply(statement);

@@ -68,7 +68,7 @@ class DiffColorDescriptionPanel extends JPanel implements OptionsPanelImpl.Color
     return this;
   }
 
-  private void onSettingsChanged(ActionEvent e) {
+  private void onSettingsChanged(@NotNull ActionEvent e) {
     myDispatcher.getMulticaster().onSettingsChanged(e);
   }
 

@@ -15,7 +15,7 @@ import javax.swing.*;
 /**
  * @author yole
  */
-public class PythonConfigurationType implements ConfigurationType {
+public final class PythonConfigurationType implements ConfigurationType {
 
   private final PythonConfigurationFactory myFactory = new PythonConfigurationFactory(this);
 
@@ -54,6 +54,11 @@ public class PythonConfigurationType implements ConfigurationType {
   @Override
   public ConfigurationFactory[] getConfigurationFactories() {
     return new ConfigurationFactory[]{myFactory};
+  }
+
+  @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.PythonConfigurationType";
   }
 
   public PythonConfigurationFactory getFactory() {

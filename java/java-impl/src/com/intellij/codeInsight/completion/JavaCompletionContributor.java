@@ -312,7 +312,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     return false;
   }
 
-  private static void suggestSmartCast(CompletionParameters parameters, JavaCompletionSession session, boolean quick, Consumer<LookupElement> result) {
+  private static void suggestSmartCast(CompletionParameters parameters, JavaCompletionSession session, boolean quick, Consumer<? super LookupElement> result) {
     if (SmartCastProvider.shouldSuggestCast(parameters)) {
       session.flushBatchItems();
       SmartCastProvider.addCastVariants(parameters, session.getMatcher(), element -> {

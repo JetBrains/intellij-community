@@ -87,7 +87,7 @@ abstract class FunctionHelper {
    */
   void rename(String oldName, String newName, StreamToLoopReplacementContext context) {}
 
-  void registerReusedElements(Consumer<PsiElement> consumer) {}
+  void registerReusedElements(Consumer<? super PsiElement> consumer) {}
 
   @Nullable
   String getParameterName(int index) {
@@ -347,7 +347,7 @@ abstract class FunctionHelper {
     }
 
     @Override
-    void registerReusedElements(Consumer<PsiElement> consumer) {
+    void registerReusedElements(Consumer<? super PsiElement> consumer) {
       consumer.accept(myMethodRef);
     }
 
@@ -465,7 +465,7 @@ abstract class FunctionHelper {
     }
 
     @Override
-    void registerReusedElements(Consumer<PsiElement> consumer) {
+    void registerReusedElements(Consumer<? super PsiElement> consumer) {
       consumer.accept(myExpression);
     }
 
@@ -504,7 +504,7 @@ abstract class FunctionHelper {
     }
 
     @Override
-    void registerReusedElements(Consumer<PsiElement> consumer) {
+    void registerReusedElements(Consumer<? super PsiElement> consumer) {
       consumer.accept(myReference);
     }
   }
@@ -580,7 +580,7 @@ abstract class FunctionHelper {
     }
 
     @Override
-    void registerReusedElements(Consumer<PsiElement> consumer) {
+    void registerReusedElements(Consumer<? super PsiElement> consumer) {
       consumer.accept(myBody);
     }
 

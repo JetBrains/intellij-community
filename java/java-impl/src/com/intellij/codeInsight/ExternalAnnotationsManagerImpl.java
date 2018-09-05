@@ -84,7 +84,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     myBus = project.getMessageBus();
     myBus.connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         dropCache();
       }
     });
@@ -387,7 +387,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
 
   private boolean processExistingExternalAnnotations(@NotNull final PsiModifierListOwner listOwner,
                                                      @NotNull final String annotationFQN,
-                                                     @NotNull final Processor<XmlTag> annotationTagProcessor) {
+                                                     @NotNull final Processor<? super XmlTag> annotationTagProcessor) {
     try {
       final List<XmlFile> files = findExternalAnnotationsXmlFiles(listOwner);
       if (files == null) {

@@ -62,12 +62,12 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return SETTINGS.isIgnoreWhitespaces();
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean enabled) {
+    public void setSelected(@NotNull AnActionEvent e, boolean enabled) {
       SETTINGS.setIgnoreWhitespaces(enabled);
       resetAllAnnotations(myProject);
     }
@@ -82,13 +82,13 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return SETTINGS.getAnnotateDetectMovementsOption() == AnnotateDetectMovementsOption.INNER ||
              SETTINGS.getAnnotateDetectMovementsOption() == AnnotateDetectMovementsOption.OUTER;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean enabled) {
+    public void setSelected(@NotNull AnActionEvent e, boolean enabled) {
       if (enabled) {
         SETTINGS.setAnnotateDetectMovementsOption(AnnotateDetectMovementsOption.INNER);
       }
@@ -108,12 +108,12 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return SETTINGS.getAnnotateDetectMovementsOption() == AnnotateDetectMovementsOption.OUTER;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean enabled) {
+    public void setSelected(@NotNull AnActionEvent e, boolean enabled) {
       if (enabled) {
         SETTINGS.setAnnotateDetectMovementsOption(AnnotateDetectMovementsOption.OUTER);
       }

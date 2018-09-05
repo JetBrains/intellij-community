@@ -21,6 +21,7 @@ import com.intellij.ide.plugins.PluginTableModel;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
@@ -40,7 +41,7 @@ public abstract class AbstractSortByAction extends ToggleAction implements DumbA
   protected abstract void setSelected(boolean state);
 
   @Override
-  public final boolean isSelected(AnActionEvent e) {
+  public final boolean isSelected(@NotNull AnActionEvent e) {
     return isSelected();
   }
 
@@ -50,7 +51,7 @@ public abstract class AbstractSortByAction extends ToggleAction implements DumbA
   }
 
   @Override
-  public final void setSelected(AnActionEvent e, boolean state) {
+  public final void setSelected(@NotNull AnActionEvent e, boolean state) {
     IdeaPluginDescriptor[] selected = myTable.getSelectedObjects();
     setSelected(state);
     myModel.sort();

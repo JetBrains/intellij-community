@@ -113,7 +113,7 @@ class GitLogOutputSplitter implements GitLineHandlerListener {
   }
 
   @Override
-  public void startFailed(Throwable exception) {
+  public void startFailed(@NotNull Throwable exception) {
     myException = new VcsException(exception);
   }
 

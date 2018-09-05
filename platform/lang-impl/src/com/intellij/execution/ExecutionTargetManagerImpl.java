@@ -243,7 +243,7 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
   }
 
   private boolean doWithEachNonCompoundWithSpecifiedTarget(
-    @Nullable RunnerAndConfigurationSettings settings, @NotNull Processor<Pair<RunnerAndConfigurationSettings, ExecutionTarget>> action) {
+    @Nullable RunnerAndConfigurationSettings settings, @NotNull Processor<? super Pair<RunnerAndConfigurationSettings, ExecutionTarget>> action) {
     if (settings == null) return true;
 
     RunManagerImpl runManager = (RunManagerImpl)RunManager.getInstance(myProject);

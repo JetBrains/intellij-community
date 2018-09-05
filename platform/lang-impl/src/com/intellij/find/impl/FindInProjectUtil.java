@@ -208,7 +208,7 @@ public class FindInProjectUtil {
   public static void findUsages(@NotNull FindModel findModel,
                                 @NotNull final Project project,
                                 @NotNull FindUsagesProcessPresentation processPresentation,
-                                @NotNull Set<VirtualFile> filesToStart,
+                                @NotNull Set<? extends VirtualFile> filesToStart,
                                 @NotNull final Processor<? super UsageInfo> consumer) {
     new FindInProjectTask(findModel, project, filesToStart).findUsages(processPresentation, consumer);
   }

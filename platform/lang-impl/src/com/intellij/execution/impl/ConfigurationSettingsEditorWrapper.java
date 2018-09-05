@@ -146,7 +146,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   }
 
   @Override
-  public void titleChanged(String title) {
+  public void titleChanged(@NotNull String title) {
     myDecorator.setTitle(title);
   }
 

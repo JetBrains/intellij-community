@@ -390,7 +390,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
   public static void cleanupElements(@NotNull final Project project,
                                      @Nullable final Runnable runnable,
-                                     final List<SmartPsiElementPointer<PsiElement>> elements) {
+                                     final List<? extends SmartPsiElementPointer<PsiElement>> elements) {
     Runnable cleanupRunnable = () -> {
       final List<PsiElement> psiElements = new ArrayList<>();
       for (SmartPsiElementPointer<PsiElement> element : elements) {

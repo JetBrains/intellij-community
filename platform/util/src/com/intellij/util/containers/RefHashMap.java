@@ -32,11 +32,11 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   private final ReferenceQueue<K> myReferenceQueue = new ReferenceQueue<K>();
   private final HardKey myHardKeyInstance = new HardKey(); // "singleton"
   @NotNull
-  private final TObjectHashingStrategy<K> myStrategy;
+  private final TObjectHashingStrategy<? super K> myStrategy;
   private Set<Entry<K, V>> entrySet;
   private boolean processingQueue;
 
-  RefHashMap(int initialCapacity, float loadFactor, @NotNull final TObjectHashingStrategy<K> strategy) {
+  RefHashMap(int initialCapacity, float loadFactor, @NotNull final TObjectHashingStrategy<? super K> strategy) {
     myStrategy = strategy;
     myMap = new MyMap(initialCapacity, loadFactor);
   }
@@ -53,16 +53,16 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     this(4);
   }
 
-  RefHashMap(@NotNull Map<K, V> t) {
+  RefHashMap(@NotNull Map<? extends K, ? extends V> t) {
     this(Math.max(2 * t.size(), 11), 0.75f);
     putAll(t);
   }
 
-  RefHashMap(@NotNull final TObjectHashingStrategy<K> hashingStrategy) {
+  RefHashMap(@NotNull final TObjectHashingStrategy<? super K> hashingStrategy) {
     this(4, 0.8f, hashingStrategy);
   }
 
-  static <K> boolean keyEqual(K k1, K k2, TObjectHashingStrategy<K> strategy) {
+  static <K> boolean keyEqual(K k1, K k2, TObjectHashingStrategy<? super K> strategy) {
     return k1 == k2 || strategy.equals(k1, k2);
   }
 

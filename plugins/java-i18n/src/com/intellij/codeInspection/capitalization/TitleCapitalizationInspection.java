@@ -98,7 +98,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
   }
 
   @Nullable
-  private static String getTitleValue(@Nullable PsiExpression arg, Set<PsiElement> processed) {
+  private static String getTitleValue(@Nullable PsiExpression arg, Set<? super PsiElement> processed) {
     if (arg instanceof PsiLiteralExpression) {
       Object value = ((PsiLiteralExpression)arg).getValue();
       if (value instanceof String) {

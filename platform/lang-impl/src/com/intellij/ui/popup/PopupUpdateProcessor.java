@@ -26,7 +26,7 @@ public abstract class PopupUpdateProcessor extends PopupUpdateProcessorBase {
   }
 
   @Override
-  public void beforeShown(final LightweightWindowEvent windowEvent) {
+  public void beforeShown(@NotNull final LightweightWindowEvent windowEvent) {
     final Lookup activeLookup = LookupManager.getInstance(myProject).getActiveLookup();
     if (activeLookup != null) {
       activeLookup.addLookupListener(new LookupListener() {

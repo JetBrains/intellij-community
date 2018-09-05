@@ -280,7 +280,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
   protected void processSimpleChild(final ASTNode child,
                                   final Indent indent,
-                                  final List<Block> result,
+                                  final List<? super Block> result,
                                   final Wrap wrap,
                                   final Alignment alignment) {
     if (isXmlTag(child)) {
@@ -317,7 +317,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   @Nullable
-  protected ASTNode createAnotherTreeNode(final List<Block> result,
+  protected ASTNode createAnotherTreeNode(final List<? super Block> result,
                                             final ASTNode child,
                                             PsiElement tag,
                                             final Indent indent,
@@ -394,7 +394,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.xml.AbstractXmlBlock");
 
-  protected void createJspTextNode(final List<Block> localResult, final ASTNode child, final Indent indent) {
+  protected void createJspTextNode(final List<? super Block> localResult, final ASTNode child, final Indent indent) {
   }
 
   @Nullable

@@ -57,7 +57,7 @@ public abstract class JpsDependenciesRootsEnumeratorBase<E extends JpsDependenci
     return files;
   }
 
-  private void processUrls(final Consumer<String> urlConsumer) {
+  private void processUrls(final Consumer<? super String> urlConsumer) {
     myDependenciesEnumerator.processDependencies(dependencyElement -> {
       if (dependencyElement instanceof JpsModuleSourceDependency) {
         processModuleRootUrls(dependencyElement.getContainingModule(), dependencyElement, urlConsumer);
@@ -84,12 +84,12 @@ public abstract class JpsDependenciesRootsEnumeratorBase<E extends JpsDependenci
     });
   }
 
-  private boolean processLibraryRootUrls(JpsLibrary library, Consumer<String> urlConsumer) {
+  private boolean processLibraryRootUrls(JpsLibrary library, Consumer<? super String> urlConsumer) {
     for (String url : library.getRootUrls(myRootType)) {
       urlConsumer.consume(url);
     }
     return true;
   }
 
-  protected abstract boolean processModuleRootUrls(JpsModule module, JpsDependencyElement dependencyElement, Consumer<String> urlConsumer);
+  protected abstract boolean processModuleRootUrls(JpsModule module, JpsDependencyElement dependencyElement, Consumer<? super String> urlConsumer);
 }

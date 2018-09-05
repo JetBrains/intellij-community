@@ -17,19 +17,11 @@ class MockRunManager : RunManagerEx() {
 
   override fun findSettings(configuration: RunConfiguration): RunnerAndConfigurationSettings? = null
 
-  override fun getConfigurationType(typeName: String): Nothing = TODO("not implemented")
-
   override fun hasSettings(settings: RunnerAndConfigurationSettings): Boolean = false
 
-  override fun getConfigurationsList(type: ConfigurationType): List<RunConfiguration> = emptyList<RunConfiguration>()
+  override fun getConfigurationsList(type: ConfigurationType): List<RunConfiguration> = emptyList()
 
   override fun makeStable(settings: RunnerAndConfigurationSettings) {}
-
-  override val configurationFactories: Array<ConfigurationType>
-    get() = emptyArray()
-
-  override val configurationFactoriesWithoutUnknown: List<ConfigurationType>
-    get() = emptyList()
 
   override val allConfigurationsList: List<RunConfiguration>
     get() = emptyList()
@@ -42,7 +34,7 @@ class MockRunManager : RunManagerEx() {
 
   override var selectedConfiguration: RunnerAndConfigurationSettings?
     get() = null
-    set(value) {}
+    set(_) {}
 
   override fun createConfiguration(runConfiguration: RunConfiguration, factory: ConfigurationFactory): RunnerAndConfigurationSettings {
     throw UnsupportedOperationException()
@@ -54,10 +46,6 @@ class MockRunManager : RunManagerEx() {
 
   override fun getConfigurationSettingsList(type: ConfigurationType): List<RunnerAndConfigurationSettings> {
     return emptyList()
-  }
-
-  override fun getStructure(type: ConfigurationType): Map<String, List<RunnerAndConfigurationSettings>> {
-    return emptyMap()
   }
 
   override fun setTemporaryConfiguration(tempConfiguration: RunnerAndConfigurationSettings?) {}

@@ -137,7 +137,7 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
       final MoveToStandardViewAction moveToStandardViewAction = new MoveToStandardViewAction();
       myContentManager.addContentManagerListener(new ContentManagerAdapter() {
         @Override
-        public void selectionChanged(ContentManagerEvent event) {
+        public void selectionChanged(@NotNull ContentManagerEvent event) {
           if (myInnerSelectionChange || event.getOperation() != ContentManagerEvent.ContentOperation.add) return;
           PreviewInfo previewInfo = event.getContent().getUserData(INFO_KEY);
           if (previewInfo != null) {
@@ -331,12 +331,12 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myActiveProviderIds.contains(myProvider.getId());
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       if (state) {
         myActiveProviderIds.add(myProvider.getId());
       }

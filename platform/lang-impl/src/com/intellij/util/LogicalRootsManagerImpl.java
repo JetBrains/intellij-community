@@ -47,7 +47,7 @@ public class LogicalRootsManagerImpl extends LogicalRootsManager {
     });
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         bus.syncPublisher(LOGICAL_ROOTS).logicalRootsChanged();
       }
     });

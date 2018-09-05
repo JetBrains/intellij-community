@@ -13,7 +13,7 @@ import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 import com.intellij.debugger.engine.requests.MethodReturnValueWatcher;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.*;
-import com.intellij.debugger.impl.attach.SAPidRemoteConnection;
+import com.intellij.debugger.impl.attach.PidRemoteConnection;
 import com.intellij.debugger.jdi.EmptyConnectorArgument;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
@@ -143,7 +143,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     reloadRenderers();
     myDebugProcessDispatcher.addListener(new DebugProcessListener() {
       @Override
-      public void paused(SuspendContext suspendContext) {
+      public void paused(@NotNull SuspendContext suspendContext) {
         myThreadBlockedMonitor.stopWatching(
           suspendContext.getSuspendPolicy() != EventRequest.SUSPEND_ALL ? suspendContext.getThread() : null);
       }
@@ -443,8 +443,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
       final String address = myConnection.getAddress();
 
-      if (myConnection instanceof SAPidRemoteConnection) {
-        SAPidRemoteConnection pidRemoteConnection = (SAPidRemoteConnection)myConnection;
+      if (myConnection instanceof PidRemoteConnection) {
+        PidRemoteConnection pidRemoteConnection = (PidRemoteConnection)myConnection;
         AttachingConnector connector = pidRemoteConnection.getConnector();
         String pid = pidRemoteConnection.getPid();
         if (StringUtil.isEmpty(pid)) {
@@ -590,7 +590,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   @NotNull
-  static Connector findConnector(String connectorName) throws ExecutionException {
+  public static Connector findConnector(String connectorName) throws ExecutionException {
     VirtualMachineManager virtualMachineManager;
     try {
       virtualMachineManager = Bootstrap.virtualMachineManager();

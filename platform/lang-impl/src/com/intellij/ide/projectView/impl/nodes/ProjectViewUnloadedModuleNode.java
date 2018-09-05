@@ -48,7 +48,7 @@ public class ProjectViewUnloadedModuleNode extends ProjectViewNode<UnloadedModul
   }
 
   @Override
-  public void update(PresentationData presentation) {
+  public void update(@NotNull PresentationData presentation) {
     UnloadedModuleDescription module = getValue();
     if (module == null) {
       setValue(null);
