@@ -7,9 +7,11 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyFStringFragment;
 import com.jetbrains.python.psi.PyFormattedStringNode;
 import com.jetbrains.python.psi.PyStringLiteralUtil;
@@ -26,10 +28,28 @@ public class PyFormattedStringNodeImpl extends PyElementImpl implements PyFormat
     super(astNode);
   }
 
+  @Override
+  protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
+    pyVisitor.visitPyFormattedStringNode(this);
+  }
+
   @NotNull
   @Override
   public List<PyFStringFragment> getFragments() {
     return findChildrenByType(PyElementTypes.FSTRING_FRAGMENT);
+  }
+
+  @NotNull
+  @Override
+  public List<TextRange> getLiteralPartRanges() {
+    final int nodeStart = getTextRange().getStartOffset();
+    final TextRange contentRange = getContentRange();
+    return SyntaxTraverser.psiApi()
+      .children(this)
+      .filter(child -> child.getNode().getElementType() == PyTokenTypes.FSTRING_TEXT)
+      .map(part -> part.getTextRange().shiftLeft(nodeStart))
+      .map(range -> range.intersection(contentRange))
+      .toList();
   }
 
   @NotNull
