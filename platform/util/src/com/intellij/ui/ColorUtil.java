@@ -204,7 +204,8 @@ public class ColorUtil {
   }
 
   @Nullable
-  public static Color fromHex(@NotNull String str, @Nullable Color defaultValue) {
+  public static Color fromHex(@Nullable String str, @Nullable Color defaultValue) {
+    if (str == null) return defaultValue;
     try {
       return fromHex(str);
     }
