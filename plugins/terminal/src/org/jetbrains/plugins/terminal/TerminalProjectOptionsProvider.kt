@@ -54,7 +54,7 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
     }
 
 
-  private fun currentProjectFolder() = project.guessProjectDir()?.canonicalPath
+  private fun currentProjectFolder() = if (project.isDefault) null else project.guessProjectDir()?.canonicalPath
 
   val defaultShellPath: String
     get() {
