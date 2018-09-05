@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.AnActionListener
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.subscribe
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import org.junit.rules.TestWatcher
@@ -29,7 +29,7 @@ class LogActionsDuringTest : TestWatcher() {
 
   override fun starting(description: Description) {
     disposable = Disposer.newDisposable()
-    ApplicationManager.getApplication().messageBus.connect(disposable!!).subscribe(AnActionListener.TOPIC, actionListener)
+    AnActionListener.TOPIC.subscribe(disposable!!, actionListener)
   }
 
   override fun finished(description: Description) {

@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Topics;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.xdebugger.XDebugSession;
@@ -37,7 +38,7 @@ public abstract class InstancesViewBase extends JBPanel implements Disposable {
     session.addSessionListener(debugSessionListener, this);
     final XValueMarkers<?, ?> markers = getValueMarkers(session);
     if (markers != null) {
-      ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(AnActionListener.TOPIC, new MyActionListener(markers));
+      Topics.subscribe(AnActionListener.TOPIC, this, new MyActionListener(markers));
     }
   }
 
