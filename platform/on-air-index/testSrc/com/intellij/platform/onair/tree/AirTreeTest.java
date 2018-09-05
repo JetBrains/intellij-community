@@ -44,11 +44,20 @@ public class AirTreeTest extends AirTreeTestBase {
 
     checkTree(accessor, tree, total);
 
+    final AtomicInteger size = new AtomicInteger();
+    tree.forEachBulk(200, (key, value) -> {
+      int i = size.getAndIncrement();
+      Assert.assertArrayEquals(key(i), key);
+      Assert.assertArrayEquals(v(i), value);
+      return true;
+    });
+    Assert.assertEquals(total, size.get());
+
     for (int i = 0; i < total; i++) {
       Assert.assertTrue(tree.put(accessor, key(i), v(2 * i)));
     }
 
-    long size = novelty.getSize();
+    long noveltySize = novelty.getSize();
 
     checkTree(accessor, tree, total, 2);
 
@@ -60,7 +69,7 @@ public class AirTreeTest extends AirTreeTestBase {
 
     checkTree(accessor, tree, total, 3);
 
-    Assert.assertEquals(size, novelty.getSize());
+    Assert.assertEquals(noveltySize, novelty.getSize());
   }
 
   private static void checkTree(Novelty.Accessor txn, Tree tree, final int total, final int multiplier) {
@@ -84,6 +93,6 @@ public class AirTreeTest extends AirTreeTestBase {
       Assert.assertArrayEquals(v(i), value);
       return true;
     });
-    Assert.assertEquals(size.get(), total);
+    Assert.assertEquals(total, size.get());
   }
 }

@@ -8,19 +8,26 @@ import com.intellij.platform.onair.storage.api.Tree;
 import com.intellij.platform.onair.tree.BTree;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public class DummyStorageImpl implements Storage {
   public static final Storage INSTANCE = new DummyStorageImpl();
 
   private DummyStorageImpl() {
   }
 
-  @NotNull
   @Override
+  @NotNull
   public byte[] lookup(@NotNull Address address) {
     throw new UnsupportedOperationException();
   }
 
   @Override
+  public void bulkLookup(@NotNull List<Address> addresses, @NotNull DataConsumer consumer) {
+  }
+
+  @Override
+  @NotNull
   public Address alloc(@NotNull byte[] what) {
     throw new UnsupportedOperationException();
   }

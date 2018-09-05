@@ -54,10 +54,10 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
   private final Editor myEditor;
 
   public IntentionListStep(@Nullable IntentionHintComponent intentionHintComponent,
-                    @Nullable Editor editor,
-                    @NotNull PsiFile file,
-                    @NotNull Project project,
-                    CachedIntentions intentions) {
+                           @Nullable Editor editor,
+                           @NotNull PsiFile file,
+                           @NotNull Project project,
+                           CachedIntentions intentions) {
     myIntentionHintComponent = intentionHintComponent;
     myProject = project;
     myFile = file;

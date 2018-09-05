@@ -11,7 +11,7 @@ import java.util.Arrays;
 import static com.intellij.platform.onair.tree.BTree.BYTES_PER_ADDRESS;
 
 public class BottomPage extends BasePage {
-  private int mask;
+  protected int mask;
 
   public BottomPage(byte[] backingArray, BTree tree, Address address, int size, int mask) {
     super(backingArray, tree, address, size);
@@ -223,19 +223,23 @@ public class BottomPage extends BasePage {
   @Override
   protected byte[] getValue(@NotNull Novelty.Accessor novelty, int index) {
     if ((mask & (1L << index)) != 0) {
-      final int keySize = tree.getKeySize();
-      final int offset = (keySize + BYTES_PER_ADDRESS) * index + keySize;
-      final int length = backingArray[offset + BYTES_PER_ADDRESS - 1] & 0xff;
-      if (length >= BYTES_PER_ADDRESS) {
-        throw new IllegalStateException("invalid length stored");
-      }
-      final byte[] result = new byte[length];
-      System.arraycopy(backingArray, offset, result, 0, length);
-      return result;
+      return getInlineValue(index);
     }
     else {
       return super.getValue(novelty, index);
     }
+  }
+
+  protected byte[] getInlineValue(int index) {
+    final int keySize = tree.getKeySize();
+    final int offset = (keySize + BYTES_PER_ADDRESS) * index + keySize;
+    final int length = backingArray[offset + BYTES_PER_ADDRESS - 1] & 0xff;
+    if (length >= BYTES_PER_ADDRESS) {
+      throw new IllegalStateException("invalid length stored");
+    }
+    final byte[] result = new byte[length];
+    System.arraycopy(backingArray, offset, result, 0, length);
+    return result;
   }
 
   @Override
