@@ -74,7 +74,8 @@ public class PyStringLiteralUtil {
   public static boolean isStringLiteralToken(@NotNull String text) {
     final PythonLexer lexer = new PythonLexer();
     lexer.start(text);
-    return PyTokenTypes.STRING_NODES.contains(lexer.getTokenType()) && lexer.getTokenEnd() == lexer.getBufferEnd();
+    return PyTokenTypes.STRING_NODES.contains(lexer.getTokenType()) && lexer.getTokenEnd() == lexer.getBufferEnd() || 
+           PyTokenTypes.FSTRING_START == lexer.getTokenType();
   }
 
   /**

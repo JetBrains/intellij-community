@@ -821,6 +821,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
+  public void testFStringDeeplyNestedEmptyFragments() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
   // PY-19036
   public void testAwaitInNonAsyncNestedFunction() {
     doTest(LanguageLevel.PYTHON35);
