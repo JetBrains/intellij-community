@@ -4,22 +4,23 @@ import traceback
 from _pydevd_bundle.pydevd_constants import dict_iter_items
 
 
-def update_filenames(debugger, new_name):
-    if hasattr(debugger, "jupyter_breakpoints"):
-        debugger.jupyter_breakpoints[new_name] = {}
-
-        for file, breakpoints in dict_iter_items(debugger.jupyter_breakpoints):
-            for line, breakpoint in dict_iter_items(breakpoints):
-                if breakpoint.update_cell_file:
-                    breakpoint.cell_file = new_name
-                    breakpoint.update_cell_file = False
-                    debugger.jupyter_cell_to_file[new_name] = breakpoint.file
+def update_cell_name(pydb, new_name):
+    if hasattr(pydb, "latest_hash"):
+        latest_hash = pydb.latest_hash
+        if not hasattr(pydb, "jupyter_hash_to_cell"):
+            pydb.jupyter_hash_to_cell = {}
+        pydb.jupyter_hash_to_cell[latest_hash] = new_name
+        pydb.jupyter_cell_to_hash[new_name] = latest_hash
+        # if hasattr(pydb, "jupyter_breakpoints"):
+        #     line_to_breakpoint = pydb.jupyter_breakpoints[latest_hash]
+        #     for line, bp in dict_iter_items(line_to_breakpoint):
+        #         bp.cell_file = new_name
 
 
 def compile_cache_wrapper(orig, ipython_shell):
     def compile_cache(*args, **kwargs):
         cache_name = orig(*args, **kwargs)
-        update_filenames(ipython_shell.debugger, cache_name)
+        update_cell_name(ipython_shell.debugger, cache_name)
         return cache_name
     return compile_cache
 
@@ -55,11 +56,6 @@ def attach_to_debugger(debugger_port):
         sys.stderr.write('Version of Python does not support debuggable Interactive Console.\n')
 
 
-def update_bp_filenames():
+def set_latest_hash(latest_hash):
     ipython_shell = get_ipython()
-    debugger = ipython_shell.debugger
-
-    if hasattr(debugger, "jupyter_breakpoints"):
-        for file, breakpoints in dict_iter_items(debugger.jupyter_breakpoints):
-            for line, breakpoint in dict_iter_items(breakpoints):
-                breakpoint.update_cell_file = True
+    ipython_shell.debugger.latest_hash = latest_hash

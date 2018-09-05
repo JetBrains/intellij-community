@@ -10,22 +10,18 @@ import os
 
 class JupyterLineBreakpoint(LineBreakpoint):
     def __init__(self, file, line, condition, func_name, expression):
-        self.file = file
         LineBreakpoint.__init__(self, line, condition, func_name, expression)
+        self.file = file
         self.cell_file = None
-        self.cell_line = line
-        self.update_cell_file = False
 
     def is_triggered(self, template_frame_file, template_frame_line):
         return self.file == template_frame_file and self.line == template_frame_line
 
     def __str__(self):
-        return "JupyterLineBreakpoint: %s-%d-%s-%s-%s" % \
-               (self.file, self.line, self.cell_file, self.cell_line, self.update_cell_file)
+        return "JupyterLineBreakpoint: %s-%d-%s" % (self.file, self.line, self.cell_file)
 
     def __repr__(self):
-        return "JupyterLineBreakpoint: %s-%d-%s-%s-%s" % \
-               (self.file, self.line, self.cell_file, self.cell_line, self.update_cell_file)
+        return "JupyterLineBreakpoint: %s-%d-%s" % (self.file, self.line, self.cell_file)
 
 
 def add_line_breakpoint(plugin, pydb, type, file, line, condition, expression, func_name):
@@ -40,7 +36,7 @@ def add_line_breakpoint(plugin, pydb, type, file, line, condition, expression, f
 def _init_plugin_breaks(pydb):
     pydb.jupyter_exception_break = {}
     pydb.jupyter_breakpoints = {}
-    pydb.jupyter_cell_to_file = {}
+    pydb.jupyter_cell_to_hash = {}
 
 
 def add_exception_breakpoint(plugin, pydb, type, exception):
@@ -85,10 +81,11 @@ def can_not_skip(plugin, pydb, pydb_frame, frame, info):
         return True
     if pydb.jupyter_breakpoints:
         filename = frame.f_code.co_filename
-        for file, breakpoints in dict_iter_items(pydb.jupyter_breakpoints):
-            for line, breakpoint in dict_iter_items(breakpoints):
-                if breakpoint.cell_file == filename:
-                    return True
+        if filename in pydb.jupyter_cell_to_hash:
+            hash_num = pydb.jupyter_cell_to_hash[filename]
+            line_to_bp = pydb.jupyter_breakpoints[hash_num]
+            if len(line_to_bp) > 0:
+                return True
     return False
 
 
@@ -159,10 +156,12 @@ def get_breakpoint(plugin, pydb, pydb_frame, frame, event, args):
     filename = frame.f_code.co_filename
     frame_line = frame.f_lineno
     if event == "line":
-        for file, breakpoints in dict_iter_items(plugin.main_debugger.jupyter_breakpoints):
-            for line, breakpoint in dict_iter_items(breakpoints):
-                if breakpoint.cell_file == filename and breakpoint.cell_line == frame_line:
-                    return True, breakpoint, frame, "jupyter-line"
+        if filename in pydb.jupyter_cell_to_hash:
+            hash_num = pydb.jupyter_cell_to_hash[filename]
+            line_to_bp = pydb.jupyter_breakpoints[hash_num]
+            if frame_line in line_to_bp:
+                bp = line_to_bp[frame_line]
+                return True, bp, frame, "jupyter-line"
     return False
 
 
@@ -198,7 +197,7 @@ def _convert_filename(frame, pydb):
     filename = frame.f_code.co_filename
     file_basename = os.path.basename(filename)
     if file_basename.startswith("<ipython-input"):
-        return pydb.jupyter_cell_to_file[frame.f_code.co_filename]
+        return pydb.jupyter_cell_to_hash[frame.f_code.co_filename]
     else:
         return filename
 

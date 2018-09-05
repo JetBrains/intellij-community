@@ -46,17 +46,16 @@ class IpnbDebugProcess(session: XDebugSession,
     connectionManager.executeCode(codePanel, connectionId, createPydevConnectionCommand(portToConnect))
   }
 
-  private fun updateBpFilenames(): String {
+  private fun setLatestHash(hash: String): String {
     val command = StringBuilder()
     command.append("from pydev_jupyter import pydev_debug_jupyter\n")
-    command.append("pydev_debug_jupyter.update_bp_filenames()\n")
-
+    command.append("pydev_debug_jupyter.set_latest_hash('$hash')\n")
     return command.toString()
   }
 
-  fun updateFilenames(connectionId: String, codePanel: IpnbCodePanel) {
+  fun updateLatestHash(connectionId: String, codePanel: IpnbCodePanel, hash: String) {
     val connectionManager = IpnbConnectionManager.getInstance(project)
-    connectionManager.executeCode(codePanel, connectionId, updateBpFilenames())
+    connectionManager.executeCode(codePanel, connectionId, setLatestHash(hash))
   }
 
 }
