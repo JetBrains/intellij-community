@@ -11,7 +11,7 @@ import org.jetbrains.annotations.CalledInBackground
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.api.GithubApiRequests
-import org.jetbrains.plugins.github.api.data.GithubPullRequest
+import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailed
 import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
 import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestsListComponent
 import java.util.concurrent.Future
@@ -25,7 +25,7 @@ class GithubPullRequestsDetailsLoader(progressManager: ProgressManager,
                                 "GitHub PR info loading breaker"), GithubPullRequestsListComponent.PullRequestSelectionListener {
 
   @set:CalledInAwt
-  var detailsFuture: Future<GithubPullRequest>? = null
+  var detailsFuture: Future<GithubPullRequestDetailed>? = null
     private set
 
   override fun selectionChanged(selection: GithubSearchedIssue?) {
@@ -42,7 +42,7 @@ class GithubPullRequestsDetailsLoader(progressManager: ProgressManager,
   @CalledInBackground
   private fun loadInformationAndFetchBranch(indicator: ProgressIndicator,
                                             requestExecutor: GithubApiRequestExecutor,
-                                            searchedIssue: GithubSearchedIssue): GithubPullRequest {
+                                            searchedIssue: GithubSearchedIssue): GithubPullRequestDetailed {
 
     val links = searchedIssue.pullRequestLinks ?: throw IllegalStateException("Missing pull request links")
     val pullRequest = requestExecutor.execute(indicator, GithubApiRequests.Repos.PullRequests.get(links.url))

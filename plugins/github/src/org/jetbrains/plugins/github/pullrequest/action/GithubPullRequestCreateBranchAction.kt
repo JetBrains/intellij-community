@@ -13,7 +13,7 @@ import git4idea.branch.GitBranchUiHandlerImpl
 import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitBranchWorker
 import git4idea.commands.Git
-import org.jetbrains.plugins.github.api.data.GithubPullRequest
+import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailed
 import java.util.concurrent.Future
 
 class GithubPullRequestCreateBranchAction : DumbAwareAction("Create New Local Branch...",
@@ -81,7 +81,7 @@ class GithubPullRequestCreateBranchAction : DumbAwareAction("Create New Local Br
     }
   }
 
-  private fun getHeadSha(indicator: ProgressIndicator, detailsFuture: Future<GithubPullRequest>): String? {
+  private fun getHeadSha(indicator: ProgressIndicator, detailsFuture: Future<GithubPullRequestDetailed>): String? {
     indicator.text = "Loading pull request details"
     return detailsFuture.get().head.sha
   }
