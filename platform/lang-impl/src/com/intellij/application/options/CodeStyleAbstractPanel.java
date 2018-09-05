@@ -2,6 +2,7 @@
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
+import com.intellij.application.options.codeStyle.NewCodeStyleSettingsPanel;
 import com.intellij.ide.ui.search.ComponentHighligtingListener;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
@@ -31,6 +32,8 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.ui.UserActivityListener;
 import com.intellij.ui.UserActivityWatcher;
+import com.intellij.ui.tabs.JBTabs;
+import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
@@ -604,12 +607,47 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     return false;
   }
 
-  /**
-   * Implement additional actions to Highlight a component if it is found via search.
-   *
-   * @param component The component to highlight.
-   */
   @Override
-  public void hilight(JComponent component) {
+  public final void hilight(JComponent component) {
+    if (isInsideThisPanel(component)) {
+      if (component instanceof TabLabel) {
+        Container parent = component.getParent();
+        if (parent instanceof JBTabs) {
+          ((JBTabs)parent).select(((TabLabel)component).getInfo(), false);
+        }
+      }
+      else {
+        JPanel tabPanel = findTabbedPaneChild(component);
+        if (tabPanel != null) {
+          JTabbedPane tabbedPane = (JTabbedPane)tabPanel.getParent();
+          tabbedPane.setSelectedComponent(tabPanel);
+        }
+      }
+    }
+  }
+
+  @Nullable
+  private static JPanel findTabbedPaneChild(@NotNull JComponent component) {
+    Container parent = component.getParent();
+    while (parent != null && !(parent instanceof NewCodeStyleSettingsPanel)) {
+      Container nextParent = parent.getParent();
+      if (nextParent instanceof JTabbedPane && parent instanceof JPanel) {
+        return (JPanel)parent;
+      }
+      parent = nextParent;
+    }
+    return null;
+  }
+
+  private boolean isInsideThisPanel(@NotNull JComponent rootComponent) {
+    Container parent = rootComponent.getParent();
+    JComponent thisPanel = getPanel();
+    while (parent != null && !(parent instanceof NewCodeStyleSettingsPanel)) {
+      if (parent == thisPanel) {
+        return true;
+      }
+      parent = parent.getParent();
+    }
+    return false;
   }
 }
