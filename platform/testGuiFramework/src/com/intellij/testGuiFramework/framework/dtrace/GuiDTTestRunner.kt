@@ -13,15 +13,17 @@ import org.junit.runners.model.FrameworkMethod
 
 class GuiDTTestRunner internal constructor(runner: GuiTestRunnerInterface) : GuiTestRunner(runner) {
 
-  private val LOGGER = org.apache.log4j.Logger.getLogger("#com.intellij.testGuiFramework.framework.dtrace.GuiDTTestRunner")!!
-
   private val testClassNames: List<String> = runner.getTestClassesNames()
-  private var currentClass = 0
-  private var additionalJvmOptions: Array<Pair<String, String>>? = null
+
+  companion object {
+    private val LOGGER = org.apache.log4j.Logger.getLogger("#com.intellij.testGuiFramework.framework.dtrace.GuiDTTestRunner")!!
+    private var currentClass = 0
+    var additionalJvmOptions: Array<Pair<String, String>>? = null
+  }
 
   override fun runIde(port: Int, ide: Ide, additionalJvmOptions: Array<Pair<String, String>>) {
-    if (this.additionalJvmOptions == null)
-      this.additionalJvmOptions = additionalJvmOptions
+    if (GuiDTTestRunner.additionalJvmOptions == null)
+      GuiDTTestRunner.additionalJvmOptions = additionalJvmOptions
 
     if (currentClass < testClassNames.size) {
       LOGGER.info("" + currentClass + ". running test " + testClassNames[currentClass])
@@ -36,18 +38,19 @@ class GuiDTTestRunner internal constructor(runner: GuiTestRunnerInterface) : Gui
 
     val server = JUnitServerHolder.getServer()
 
-    if (++currentClass < testClassNames.size) {
+    ++currentClass
+    if (currentClass < testClassNames.size) {
       IdeProcessControlManager.killIdeProcess()
       server.stopServer()
 
-      runIde(port = server.getPort(), ide = getIdeFromMethod(method), additionalJvmOptions = additionalJvmOptions!!)
+      runIde(port = server.getPort(), ide = getIdeFromMethod(method), additionalJvmOptions = GuiDTTestRunner.additionalJvmOptions!!)
       server.start()
     } else
       stopServerAndKillIde(server)
   }
 
   override fun processTestFinished(eachNotifier: EachTestNotifier,
-                                   testIsRunning: Boolean): Boolean {
+                                   testIsRunning1: Boolean): Boolean {
     val inputStream = IdeProcessControlManager.getInputStream()
 
     val server = JUnitServerHolder.getServer()
@@ -58,9 +61,9 @@ class GuiDTTestRunner internal constructor(runner: GuiTestRunnerInterface) : Gui
       GuiDTTestCase::checkDtraceLog.invoke(testInstance, inputStream)
     }
     catch (e: AssertionError) {
-      eachNotifier.addFailure(e);
+      eachNotifier.addFailure(e)
     }
-    eachNotifier.fireTestFinished();
+    eachNotifier.fireTestFinished()
     return false
   }
 }
