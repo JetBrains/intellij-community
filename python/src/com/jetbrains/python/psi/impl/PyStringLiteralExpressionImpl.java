@@ -31,6 +31,7 @@ import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpLanguage;
@@ -179,13 +180,17 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
 
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
-    final List<ASTNode> nodes = getStringNodes();
-    if (nodes.size() > 0) {
-      String text = getStringNodes().get(0).getText();
+    final ASTNode firstNode = ContainerUtil.getFirstItem(getStringNodes());
+    if (firstNode != null) {
+      if (firstNode.getElementType() == PyElementTypes.FSTRING_NODE) {
+        // f-strings can't have "b" prefix so they are always unicode 
+        return PyBuiltinCache.getInstance(this).getUnicodeType(LanguageLevel.forElement(this));
+      }
 
       PyFile file = PsiTreeUtil.getParentOfType(this, PyFile.class);
       if (file != null) {
-        IElementType type = PythonHighlightingLexer.convertStringType(getStringNodes().get(0).getElementType(), text,
+        IElementType type = PythonHighlightingLexer.convertStringType(firstNode.getElementType(), 
+                                                                      firstNode.getText(),
                                                                       LanguageLevel.forElement(this),
                                                                       file.hasImportFromFuture(FutureFeature.UNICODE_LITERALS));
         if (PyTokenTypes.UNICODE_NODES.contains(type)) {
