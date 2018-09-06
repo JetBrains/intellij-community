@@ -30,12 +30,4 @@ public class AssertWithSideEffects {
     void jdbc(ResultSet rs) throws SQLException {
       assert rs.last();
     }
-
-    void assertMutation(Set<String> set) {
-        assert set.add("foo");
-
-        assert new HashSet<>().add("bar");
-
-        assert (set.isEmpty() ? new TreeSet<>() : new HashSet<>()).add("baz");
-    }
 }
