@@ -38,6 +38,7 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
     new AttributesDescriptor("Parentheses", PyHighlighter.PY_PARENTHS),
     new AttributesDescriptor("Brackets", PyHighlighter.PY_BRACKETS),
     new AttributesDescriptor("Braces", PyHighlighter.PY_BRACES),
+    new AttributesDescriptor("f-string expression braces", PyHighlighter.PY_FSTRING_EXPRESSION_BRACES),
     new AttributesDescriptor("Comma", PyHighlighter.PY_COMMA),
     new AttributesDescriptor("Dot", PyHighlighter.PY_DOT),
     new AttributesDescriptor("Function definition", PyHighlighter.PY_FUNC_DEFINITION),
@@ -116,22 +117,23 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
       "def f(<param>x</param>):\n" +
       "    <docComment>\"\"\" Syntax Highlighting Demo\n" +
       "        <docCommentTag>@param</docCommentTag> x Parameter\n" +
+      "" +
       RainbowHighlighter.generatePaletteExample("\n        ") + "\n" +
       "    \"\"\"</docComment>\n" +
-      "    <localVar>s</localVar> = (\"Test\", 2+3, {'a': 'b'}, <param>x</param>)   # Comment\n" +
-      "    <call>f</call>(<localVar>s</localVar>[0].<mcall>lower()</mcall>)\n"+
-      "\n"+
-      "class <classDef>Foo</classDef>:\n"+
+      "    <localVar>s</localVar> = (\"Test\", 2+3, {'a': 'b'}, f'{<param>x</param>}')   # Comment\n" +
+      "    <call>f</call>(<localVar>s</localVar>[0].<mcall>lower()</mcall>)\n" +
+      "\n" +
+      "class <classDef>Foo</classDef>:\n" +
       "    tags: <annotation>List[<builtin>str</builtin>]</annotation>\n" +
       "    def <predefined>__init__</predefined>(<self>self</self>: <annotation>Foo</annotation>):\n" +
       "        <localVar>byte_string</localVar>: <annotation><builtin>str</builtin></annotation> = 'newline:\\n also newline:\\x0a'\n" +
-      "        <localVar>text_string</localVar> = u\"Cyrillic \u042f is \\u042f. Oops: \\u042g\"\n"+
+      "        <localVar>text_string</localVar> = u\"Cyrillic Я is \\u042f. Oops: \\u042g\"\n" +
       "        <self>self</self>.<mcall>makeSense</mcall>(<kwarg>whatever</kwarg>=1)\n" +
       "    \n" +
-      "    def <funcDef>makeSense</funcDef>(<self>self</self>, <param>whatever</param>):\n"+
-      "        <self>self</self>.sense = <param>whatever</param>\n"+
-      "\n"+
-      "<localVar>x</localVar> = <builtin>len</builtin>('abc')\n"+
+      "    def <funcDef>makeSense</funcDef>(<self>self</self>, <param>whatever</param>):\n" +
+      "        <self>self</self>.sense = <param>whatever</param>\n" +
+      "\n" +
+      "<localVar>x</localVar> = <builtin>len</builtin>('abc')\n" +
       "print(f.<predefinedUsage>__doc__</predefinedUsage>)"
     ;
   }
