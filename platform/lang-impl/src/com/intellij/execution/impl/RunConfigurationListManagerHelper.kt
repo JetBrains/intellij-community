@@ -60,18 +60,18 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
         return@Comparator compareTypesForUi(type1, type2)
       }
 
+      if (o1.folderName != o2.folderName) {
+        val i1 = folderNames.indexOf(o1.folderName)
+        val i2 = folderNames.indexOf(o2.folderName)
+        if (i1 != i2) {
+          return@Comparator i1 - i2
+        }
+      }
+
       val temporary1 = o1.isTemporary
       val temporary2 = o2.isTemporary
       when {
         temporary1 == temporary2 -> {
-          if (o1.folderName != o2.folderName) {
-            val i1 = folderNames.indexOf(o1.folderName)
-            val i2 = folderNames.indexOf(o2.folderName)
-            if (i1 != i2) {
-              return@Comparator i1 - i2
-            }
-          }
-
           comparator.compare(o1, o2)
         }
         temporary1 -> 1
