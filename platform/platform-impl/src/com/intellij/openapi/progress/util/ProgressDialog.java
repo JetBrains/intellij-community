@@ -20,6 +20,7 @@ import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.SingleAlarm;
+import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -205,12 +206,12 @@ class ProgressDialog implements Disposable {
     if (myRepaintedFlag) {
       if (System.currentTimeMillis() > myLastTimeDrawn + UPDATE_INTERVAL) {
         myRepaintedFlag = false;
-        SwingUtilities.invokeLater(myRepaintRunnable);
+        EdtExecutorService.getInstance().submit(myRepaintRunnable);
       }
       else {
         // later to avoid concurrent dispose/addRequest
         if (!myUpdateAlarm.isDisposed() && myUpdateAlarm.getActiveRequestCount() == 0) {
-          SwingUtilities.invokeLater(() -> {
+          EdtExecutorService.getInstance().submit(() -> {
             if (!myUpdateAlarm.isDisposed() && myUpdateAlarm.getActiveRequestCount() == 0) {
               myUpdateAlarm.addRequest(myUpdateRequest, 500, myProgressWindow.getModalityState());
             }
