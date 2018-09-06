@@ -18,6 +18,7 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.api.GithubFullPath
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
+import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBranchesFetcher
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsChangesLoader
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDetailsLoader
@@ -30,6 +31,7 @@ class GithubPullRequestsComponentFactory(private val project: Project,
                                          private val progressManager: ProgressManager,
                                          private val requestExecutorManager: GithubApiRequestExecutorManager,
                                          private val git: Git,
+                                         private val uiSettings: GithubPullRequestsUISettings,
                                          private val actionManager: ActionManager,
                                          private val autoPopupController: AutoPopupController,
                                          private val popupFactory: JBPopupFactory) {
@@ -47,7 +49,7 @@ class GithubPullRequestsComponentFactory(private val project: Project,
     val branchFetcher = GithubPullRequestsBranchesFetcher(progressManager, git, detailsLoader, repository, remote)
     val changesLoader = GithubPullRequestsChangesLoader(project, progressManager, branchFetcher, repository)
 
-    val preview = GithubPullRequestPreviewComponent(project, detailsLoader, changesLoader)
+    val preview = GithubPullRequestPreviewComponent(project, detailsLoader, changesLoader, actionManager, uiSettings)
     list.setToolbarHeightReferent(preview.toolbarComponent)
 
     val splitter = OnePixelSplitter("Github.PullRequests.Component", 0.7f)
