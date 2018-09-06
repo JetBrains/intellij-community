@@ -39,7 +39,7 @@ public class AATextInfo {
     if (SystemInfo.IS_AT_LEAST_JAVA9) {
       return new AATextInfo(aaHint, lcdContrastHint);
     }
-    return new UIUtilities.AATextInfo(aaHint, lcdContrastHint);
+    return UIUtilities.createAATextInfo(aaHint, lcdContrastHint);
   }
 
   public static void putClientProperty(@Nullable Object aaTextInfo, @NotNull JComponent comp) {
