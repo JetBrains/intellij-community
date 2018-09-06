@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public interface PyFormattedStringNode extends PyRichStringNode {
+public interface PyFormattedStringNode extends PyRichStringNode, PyElement {
   @NotNull
   List<PyFStringFragment> getFragments();
 

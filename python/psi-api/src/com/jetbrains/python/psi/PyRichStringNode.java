@@ -2,6 +2,7 @@ package com.jetbrains.python.psi;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -10,7 +11,7 @@ import java.util.Set;
 /**
  * @author Mikhail Golubev
  */
-public interface PyRichStringNode extends PyElement {
+public interface PyRichStringNode extends PsiElement {
 
   enum Modifier {
     UNICODE,
