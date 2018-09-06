@@ -56,7 +56,7 @@ final class StatusMessageParser extends AbstractMessageParser {
 
 	// Fields =================================================================
 
-	private final List fileObjects = new ArrayList();
+	private final List<AbstractFileObject> fileObjects = new ArrayList<>();
 	private final ICvsFileSystem cvsFileSystem;
 	private final IEventSender eventSender;
 
@@ -67,7 +67,7 @@ final class StatusMessageParser extends AbstractMessageParser {
 
 	// Setup ==================================================================
 
-	StatusMessageParser(IEventSender eventSender, List fileObjects, ICvsFileSystem cvsFileSystem) {
+	StatusMessageParser(IEventSender eventSender, List<AbstractFileObject> fileObjects, ICvsFileSystem cvsFileSystem) {
 		BugLog.getInstance().assertNotNull(eventSender);
 
 		this.eventSender = eventSender;
@@ -146,7 +146,6 @@ final class StatusMessageParser extends AbstractMessageParser {
 				statusInformation.setFile(createFile(fileName));
 				statusInformation.setStatus(status);
 				beginning = false;
-				return;
 			}
 
 //			int index = line.indexOf(NOTHING_KNOWN_ABOUT);
@@ -212,8 +211,8 @@ final class StatusMessageParser extends AbstractMessageParser {
 			}
 		}
 		else {
-			for (Iterator it = fileObjects.iterator(); it.hasNext();) {
-				final AbstractFileObject abstractFileObject = (AbstractFileObject)it.next();
+			for (Iterator<AbstractFileObject> it = fileObjects.iterator(); it.hasNext();) {
+				final AbstractFileObject abstractFileObject = it.next();
 				if (abstractFileObject instanceof FileObject) {
 					final FileObject fileObject = (FileObject)abstractFileObject;
 
