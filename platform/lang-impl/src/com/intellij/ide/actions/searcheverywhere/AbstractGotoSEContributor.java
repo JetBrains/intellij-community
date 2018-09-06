@@ -65,8 +65,8 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
   private static final Logger LOG = Logger.getInstance(AbstractGotoSEContributor.class);
 
   @Override
-  public void fetchElements(String pattern, boolean everywhere, SearchEverywhereContributorFilter<F> filter,
-                            ProgressIndicator progressIndicator, Function<Object, Boolean> consumer) {
+  public void fetchElements(@NotNull String pattern, boolean everywhere, @Nullable SearchEverywhereContributorFilter<F> filter,
+                            @NotNull ProgressIndicator progressIndicator, @NotNull Function<Object, Boolean> consumer) {
     if (!isDumbModeSupported() && DumbService.getInstance(myProject).isDumb()) {
       return;
     }
@@ -74,7 +74,9 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
     String suffix = pattern.endsWith(fullMatchSearchSuffix) ? fullMatchSearchSuffix : "";
     String searchString = filterControlSymbols(pattern) + suffix;
     FilteringGotoByModel<F> model = createModel(myProject);
-    model.setFilterItems(filter.getSelectedElements());
+    if (filter != null) {
+      model.setFilterItems(filter.getSelectedElements());
+    }
     ChooseByNamePopup popup = ChooseByNamePopup.createPopup(myProject, model, (PsiElement)null);
     try {
       ApplicationManager.getApplication().runReadAction(() -> {
@@ -95,8 +97,9 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
   //todo param is unnecessary #UX-1
   protected abstract FilteringGotoByModel<F> createModel(Project project);
 
+  @NotNull
   @Override
-  public String filterControlSymbols(String pattern) {
+  public String filterControlSymbols(@NotNull String pattern) {
     if (StringUtil.containsAnyChar(pattern, ":,;@[( #") || pattern.contains(" line ") || pattern.contains("?l=")) { // quick test if reg exp should be used
       return applyPatternFilter(pattern, patternToDetectLinesAndColumns);
     }
@@ -119,7 +122,7 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
   }
 
   @Override
-  public boolean processSelectedItem(Object selected, int modifiers, String searchText) {
+  public boolean processSelectedItem(@NotNull Object selected, int modifiers, @NotNull String searchText) {
     if (selected instanceof PsiElement) {
       if (!((PsiElement)selected).isValid()) {
         LOG.warn("Cannot navigate to invalid PsiElement");
@@ -143,7 +146,7 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
   }
 
   @Override
-  public Object getDataForItem(Object element, String dataId) {
+  public Object getDataForItem(@NotNull Object element, @NotNull String dataId) {
     if (CommonDataKeys.PSI_ELEMENT.is(dataId) && element instanceof PsiElement) {
       return element;
     }
@@ -156,8 +159,9 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
     return true;
   }
 
+  @NotNull
   @Override
-  public ListCellRenderer getElementsRenderer(JList<?> list) {
+  public ListCellRenderer getElementsRenderer(@NotNull JList<?> list) {
     return new SearchEverywherePsiRenderer(list) {
       @Override
       public String getElementText(PsiElement element) {
@@ -172,7 +176,7 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
   }
 
   @Override
-  public int getElementPriority(Object element, String searchPattern) {
+  public int getElementPriority(@NotNull Object element, @NotNull String searchPattern) {
     return 50;
   }
 
