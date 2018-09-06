@@ -83,9 +83,9 @@ FSTRING_FRAGMENT_TYPE_CONVERSION = "!" [^=:'\"} \t\r\n]*
 
 %state PENDING_DOCSTRING
 %state IN_DOCSTRING_OWNER
-%state FSTRING
+%xstate FSTRING
 %state FSTRING_FRAGMENT
-%state FSTRING_FRAGMENT_FORMAT
+%xstate FSTRING_FRAGMENT_FORMAT
 %{
 private final PyLexerFStringHelper fStringHelper = new PyLexerFStringHelper(this);
 
@@ -107,6 +107,7 @@ return yylength()-s.length();
   {BACKSLASH_ESCAPED_BRACES} { yypushback(1); return PyTokenTypes.FSTRING_TEXT; }
   {FSTRING_QUOTES} { return fStringHelper.handleFStringEnd(); }
   "{" { return fStringHelper.handleFragmentStart(); }
+  [^]  { return PyTokenTypes.BAD_CHARACTER; }
 }
 
 <FSTRING_FRAGMENT> {
@@ -141,6 +142,7 @@ return yylength()-s.length();
 
   // format part of a fragment can contain opening quotes
   {FSTRING_QUOTES} { return fStringHelper.handleFStringEnd(); }
+  [^] { return PyTokenTypes.BAD_CHARACTER; }
 }
 
 [\ ]                        { return PyTokenTypes.SPACE; }
