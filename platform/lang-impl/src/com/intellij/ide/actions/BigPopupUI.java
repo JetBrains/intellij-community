@@ -68,7 +68,6 @@ public abstract class BigPopupUI<T extends AbstractListModel<Object>> extends Bo
   @NotNull
   protected abstract JTextField createSearchField();
 
-
   public void init() {
     withBackground(JBUI.CurrentTheme.SearchEverywhere.dialogBackground());
     JPanel contributorsPanel = createTopLeftPanel();
@@ -174,5 +173,27 @@ public abstract class BigPopupUI<T extends AbstractListModel<Object>> extends Bo
   @NotNull
   public JTextField getSearchField() {
     return mySearchField;
+  }
+
+  @Override
+  public Dimension getMinimumSize() {
+    return calcPrefSize(SearchEverywhereUI.ViewType.SHORT);
+  }
+
+  @Override
+  public Dimension getPreferredSize() {
+    return calcPrefSize(myViewType);
+  }
+
+  private Dimension calcPrefSize(SearchEverywhereUI.ViewType viewType) {
+    Dimension size = super.getPreferredSize();
+    if (viewType == SearchEverywhereUI.ViewType.SHORT) {
+      size.height -= suggestionsPanel.getPreferredSize().height;
+    }
+    return size;
+  }
+
+  public void setSearchFinishedHandler(@NotNull Runnable searchFinishedHandler) {
+    this.searchFinishedHandler = searchFinishedHandler;
   }
 }

@@ -127,24 +127,6 @@ public class SearchEverywhereUI extends BigPopupUI<SearchEverywhereUI.SearchList
     return new SearchListModel();
   }
 
-  @Override
-  public Dimension getMinimumSize() {
-    return calcPrefSize(ViewType.SHORT);
-  }
-
-  @Override
-  public Dimension getPreferredSize() {
-    return calcPrefSize(myViewType);
-  }
-
-  private Dimension calcPrefSize(ViewType viewType) {
-    Dimension size = super.getPreferredSize();
-    if (viewType == ViewType.SHORT) {
-      size.height -= suggestionsPanel.getPreferredSize().height;
-    }
-    return size;
-  }
-
   private SESearcher createSearcher() {
     SESearcher.Listener listener = new SESearcher.Listener() {
       @Override
@@ -176,17 +158,6 @@ public class SearchEverywhereUI extends BigPopupUI<SearchEverywhereUI.SearchList
            ? new SingleThreadSearcher(listener, run -> ApplicationManager.getApplication().invokeLater(run))
            : new MultithreadSearcher(throttlingListener, run -> ApplicationManager.getApplication().invokeLater(run));
   }
-
-  //private void updateViewType(@NotNull ViewType viewType) {
-  //  if (myViewType != viewType) {
-  //    myViewType = viewType;
-  //    myViewTypeListeners.forEach(listener -> listener.suggestionsShown(viewType));
-  //  }
-  //}
-
-  //public JTextField getSearchField() {
-  //  return mySearchField;
-  //}
 
   public void setUseNonProjectItems(boolean use) {
     doSetUseNonProjectItems(use, false);
@@ -242,10 +213,6 @@ public class SearchEverywhereUI extends BigPopupUI<SearchEverywhereUI.SearchList
 
     repaint();
     rebuildList();
-  }
-
-  public void setSearchFinishedHandler(@NotNull Runnable searchFinishedHandler) {
-    this.searchFinishedHandler = searchFinishedHandler;
   }
 
   public String getSelectedContributorID() {
