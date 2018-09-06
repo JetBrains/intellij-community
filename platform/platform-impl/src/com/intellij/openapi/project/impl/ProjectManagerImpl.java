@@ -333,6 +333,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     return filePath;
   }
 
+  @Override
   @TestOnly
   public synchronized boolean isDefaultProjectInitialized() {
     return myDefaultProject != null;
@@ -469,6 +470,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
   }
 
+  @Override
   @Nullable
   public Project findOpenProjectByHash(@Nullable String locationHash) {
     return myOpenProjectByHash.get(locationHash);
@@ -621,12 +623,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     return closeProject(project, true, true, false, true);
   }
 
+  @Override
   @TestOnly
   public boolean forceCloseProject(@NotNull Project project, boolean dispose) {
     return closeProject(project, false, false, dispose, false);
   }
 
   // return true if successful
+  @Override
   public boolean closeAndDisposeAllProjects(boolean checkCanClose) {
     for (Project project : getOpenProjects()) {
       if (!closeProject(project, true, false, true, checkCanClose)) {
