@@ -121,22 +121,14 @@ public final class TreeUtil {
     return null;
   }
 
+  /**
+   * @param tree a tree, which selection is processed
+   * @param type a {@code Class} object to filter selected user objects
+   * @return a list of user objects of the specified type retrieved from all selected paths
+   */
   @NotNull
-  public static <T> List<T> collectSelectedObjectsOfType(@NotNull JTree tree, @NotNull Class<T> clazz) {
-    final TreePath[] selections = tree.getSelectionPaths();
-    if (selections != null) {
-      final ArrayList<T> result = new ArrayList<>();
-      for (TreePath selection : selections) {
-        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selection.getLastPathComponent();
-        final Object userObject = node.getUserObject();
-        if (clazz.isInstance(userObject)) {
-          //noinspection unchecked
-          result.add((T)userObject);
-        }
-      }
-      return result;
-    }
-    return Collections.emptyList();
+  public static <T> List<T> collectSelectedObjectsOfType(@NotNull JTree tree, @NotNull Class<T> type) {
+    return collectSelectedObjects(tree, path -> getLastUserObject(type, path));
   }
 
   /**
@@ -933,8 +925,7 @@ public final class TreeUtil {
   }
 
   /**
-   * @param tree   a tree, which selection is processed
-   * @param mapper a function to convert a selected tree path to a corresponding object
+   * @param tree a tree, which selection is processed
    * @return a list of all selected paths
    */
   @NotNull
@@ -943,8 +934,7 @@ public final class TreeUtil {
   }
 
   /**
-   * @param tree   a tree, which selection is processed
-   * @param mapper a function to convert a selected tree path to a corresponding object
+   * @param tree a tree, which selection is processed
    * @return a list of user objects which correspond to all selected paths
    */
   @NotNull
