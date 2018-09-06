@@ -4,13 +4,13 @@ import java.util.*;
 public class AssertWithSideEffects {
     void assertMutation() {
         Matcher m = Pattern.compile("foobar").matcher("foo");
-        assert m.matches();
+        <warning descr="'assert' has side effects">assert</warning> m.matches();
 
         assert Pattern.compile("foobar").matcher("foo").matches();
     }
 
     void assertMutation(Set<String> set) {
-        assert set.add("foo");
+        <warning descr="'assert' has side effects">assert</warning> set.add("foo");
 
         assert new HashSet<>().add("bar");
 

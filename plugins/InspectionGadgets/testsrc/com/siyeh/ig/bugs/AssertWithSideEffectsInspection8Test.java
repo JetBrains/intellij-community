@@ -1,20 +1,28 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs;
 
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.PsiTestUtil;
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
-public class AssertWithSideEffectsInspection8Test extends IGInspectionTestCase {
+public class AssertWithSideEffectsInspection8Test extends LightCodeInsightFixtureTestCase {
   @Override
-  protected Sdk getTestProjectSdk() {
-    // uses Regex
-    return PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk18());
+  protected String getBasePath() {
+    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/bugs/assert_with_side_effects8";
   }
 
-  public void test() {
-    doTest("com/siyeh/igtest/bugs/assert_with_side_effects8",
-           new AssertWithSideEffectsInspection());
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8_ANNOTATED;
+  }
+
+  private void doTest() {
+    myFixture.enableInspections(new AssertWithSideEffectsInspection());
+    myFixture.testHighlighting(getTestName(false) + ".java");
+  }
+
+  public void testAssertWithSideEffects() {
+    doTest();
   }
 }
