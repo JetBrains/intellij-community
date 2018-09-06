@@ -66,7 +66,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
   @NonNls private static final String TEST_CLASS_ATT_NAME = "testClass";
   @NonNls private static final String PATTERNS_EL_NAME = "patterns";
   private final Data myData;
-  private final InputRedirectAware.InputRedirectOptions myInputRedirectOptions = new InputRedirectOptions();
+  private final InputRedirectAware.InputRedirectOptionsImpl myInputRedirectOptions = new InputRedirectOptionsImpl();
 
   final RefactoringListeners.Accessor<PsiPackage> myPackage = new RefactoringListeners.Accessor<PsiPackage>() {
     @Override

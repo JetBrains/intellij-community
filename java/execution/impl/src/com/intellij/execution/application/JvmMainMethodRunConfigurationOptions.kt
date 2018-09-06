@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.application
 
+import com.intellij.execution.InputRedirectAware
 import com.intellij.execution.JvmConfigurationOptions
 import com.intellij.execution.ShortenCommandLine
 import com.intellij.util.xmlb.annotations.OptionTag
@@ -15,7 +16,7 @@ open class JvmMainMethodRunConfigurationOptions : JvmConfigurationOptions() {
   open var workingDirectory by string()
 
   @get:OptionTag("INCLUDE_PROVIDED_SCOPE")
-  var includeProvidedScope by property(false)
+  var isIncludeProvidedScope by property(false)
 
   @get:OptionTag("ENABLE_SWING_INSPECTOR")
   var isSwingInspectorEnabled by property(false)
@@ -30,4 +31,24 @@ open class JvmMainMethodRunConfigurationOptions : JvmConfigurationOptions() {
   // so, we cannot use NONE as default value
   @get:OptionTag(nameAttribute = "", valueAttribute = "name")
   var shortenClasspath by enum<ShortenCommandLine>()
+
+  @get:OptionTag(InputRedirectAware.InputRedirectOptionsImpl.REDIRECT_INPUT)
+  var isRedirectInput by property(false)
+  @get:OptionTag(InputRedirectAware.InputRedirectOptionsImpl.INPUT_FILE)
+  var redirectInputPath by string()
+
+  @Transient
+  val redirectOptions = object : InputRedirectAware.InputRedirectOptions {
+    override fun isRedirectInput() = this@JvmMainMethodRunConfigurationOptions.isRedirectInput
+
+    override fun setRedirectInput(value: Boolean) {
+      this@JvmMainMethodRunConfigurationOptions.isRedirectInput = value
+    }
+
+    override fun getRedirectInputPath() = this@JvmMainMethodRunConfigurationOptions.redirectInputPath
+
+    override fun setRedirectInputPath(value: String?) {
+      this@JvmMainMethodRunConfigurationOptions.redirectInputPath = value
+    }
+  }
 }

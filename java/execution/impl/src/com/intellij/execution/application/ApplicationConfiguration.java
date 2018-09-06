@@ -48,8 +48,6 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   @Deprecated public String ALTERNATIVE_JRE_PATH;
   /* */
 
-  private final InputRedirectAware.InputRedirectOptions myInputRedirectOptions = new InputRedirectOptions();
-
   public ApplicationConfiguration(String name, @NotNull Project project, @NotNull ApplicationConfigurationType configurationType) {
     this(name, project, configurationType.getConfigurationFactories()[0]);
   }
@@ -268,7 +266,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   }
 
   public boolean isProvidedScopeIncluded() {
-    return getOptions().getIncludeProvidedScope();
+    return getOptions().isIncludeProvidedScope();
   }
 
   public void setIncludeProvidedScope(boolean value) {
@@ -287,7 +285,6 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     syncOldStateFields();
 
     JavaRunConfigurationExtensionManager.getInstance().readExternal(this, element);
-    myInputRedirectOptions.readExternal(element);
   }
 
   @SuppressWarnings("deprecation")
@@ -320,7 +317,6 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     super.writeExternal(element);
 
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
-    myInputRedirectOptions.writeExternal(element);
   }
 
   @Nullable
@@ -337,7 +333,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   @NotNull
   @Override
   public InputRedirectOptions getInputRedirectOptions() {
-    return myInputRedirectOptions;
+    return getOptions().getRedirectOptions();
   }
 
   public boolean isSwingInspectorEnabled() {
