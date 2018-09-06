@@ -44,6 +44,7 @@ public final class PythonTestConfigurationType extends ConfigurationTypeBase {
       addFactory(LEGACY_NOSETEST_FACTORY);
       addFactory(LEGACY_PYTEST_FACTORY);
     }
+    addFactory(PY_DOCTEST_FACTORY);
     return super.getConfigurationFactories();
   });
 
