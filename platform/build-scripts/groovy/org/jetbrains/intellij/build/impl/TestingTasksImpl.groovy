@@ -165,7 +165,7 @@ class TestingTasksImpl extends TestingTasks {
         .getLibraries(JpsJavaSdkType.INSTANCE)
         .each { excludeRoots.add(it.getProperties().getHomePath()) }
       excludeRoots.add(context.paths.buildOutputRoot)
-      excludeRoots.add("$context.paths.projectHome/out")
+      excludeRoots.add("$context.paths.projectHome/out".toString())
 
       additionalSystemProperties.putAll(
         [
