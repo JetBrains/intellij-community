@@ -115,6 +115,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
       .createPopupChooserBuilder(model)
       .setTitle(CodeInsightBundle.message("unwrap.popup.title"))
       .setMovable(false)
+      .setNamerForFiltering(item -> item.name)
       .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
       .setResizable(false)
       .setRequestFocus(true)
