@@ -238,7 +238,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
     }
 
     @Override
-    public void setShortenCommandLine(ShortenCommandLine mode) {
+    public void setShortenCommandLine(@Nullable ShortenCommandLine mode) {
       myConfiguration.setShortenCommandLine(mode);
     }
 

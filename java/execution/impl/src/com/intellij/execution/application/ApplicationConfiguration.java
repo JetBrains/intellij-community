@@ -9,6 +9,7 @@ import com.intellij.execution.junit.RefactoringListeners;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
+import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
@@ -35,14 +36,18 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
              RefactoringListenerProvider, InputRedirectAware {
 
   /* deprecated, but 3rd-party used variables */
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated public String MAIN_CLASS_NAME;
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated public String PROGRAM_PARAMETERS;
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated public String WORKING_DIRECTORY;
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated public boolean ALTERNATIVE_JRE_PATH_ENABLED;
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated public String ALTERNATIVE_JRE_PATH;
   /* */
 
-  private ShortenCommandLine myShortenCommandLine = null;
   private final InputRedirectAware.InputRedirectOptions myInputRedirectOptions = new InputRedirectOptions();
 
   public ApplicationConfiguration(String name, @NotNull Project project, @NotNull ApplicationConfigurationType configurationType) {
@@ -275,11 +280,19 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     return JavaRunConfigurationModule.getModulesForClass(getProject(), getMainClassName());
   }
 
-  @SuppressWarnings("deprecation")
   @Override
   public void readExternal(@NotNull final Element element) {
     super.readExternal(element);
 
+    syncOldStateFields();
+
+    JavaRunConfigurationExtensionManager.getInstance().readExternal(this, element);
+    setShortenCommandLine(ShortenCommandLine.readShortenClasspathMethod(element));
+    myInputRedirectOptions.readExternal(element);
+  }
+
+  @SuppressWarnings("deprecation")
+  private void syncOldStateFields() {
     JvmMainMethodRunConfigurationOptions options = getOptions();
 
     String workingDirectory = options.getWorkingDirectory();
@@ -295,10 +308,12 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     WORKING_DIRECTORY = workingDirectory;
     ALTERNATIVE_JRE_PATH = options.getAlternativeJrePath();
     ALTERNATIVE_JRE_PATH_ENABLED = options.isAlternativeJrePathEnabled();
+  }
 
-    JavaRunConfigurationExtensionManager.getInstance().readExternal(this, element);
-    setShortenCommandLine(ShortenCommandLine.readShortenClasspathMethod(element));
-    myInputRedirectOptions.readExternal(element);
+  @Override
+  public void setState(@NotNull BaseState state) {
+    super.setState(state);
+    syncOldStateFields();
   }
 
   @Override
@@ -306,19 +321,18 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     super.writeExternal(element);
 
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
-    ShortenCommandLine.writeShortenClasspathMethod(element, myShortenCommandLine);
     myInputRedirectOptions.writeExternal(element);
   }
 
   @Nullable
   @Override
   public ShortenCommandLine getShortenCommandLine() {
-    return myShortenCommandLine;
+    return getOptions().getShortenClasspath();
   }
 
   @Override
-  public void setShortenCommandLine(ShortenCommandLine mode) {
-    myShortenCommandLine = mode;
+  public void setShortenCommandLine(@Nullable ShortenCommandLine mode) {
+    getOptions().setShortenClasspath(mode);
   }
 
   @NotNull
