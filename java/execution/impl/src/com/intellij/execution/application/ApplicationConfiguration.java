@@ -287,7 +287,6 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     syncOldStateFields();
 
     JavaRunConfigurationExtensionManager.getInstance().readExternal(this, element);
-    setShortenCommandLine(ShortenCommandLine.readShortenClasspathMethod(element));
     myInputRedirectOptions.readExternal(element);
   }
 

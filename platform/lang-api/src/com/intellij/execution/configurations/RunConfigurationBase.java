@@ -12,7 +12,6 @@ import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -250,7 +249,13 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
 
   @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
-    JDOMExternalizerUtil.addChildren(element, PREDEFINED_LOG_FILE_ELEMENT, myPredefinedLogFiles);
+    for (PredefinedLogFile child : myPredefinedLogFiles) {
+      if (child != null) {
+        Element element1 = new Element(PREDEFINED_LOG_FILE_ELEMENT);
+        child.writeExternal(element1);
+        element.addContent(element1);
+      }
+    }
     XmlSerializer.serializeObjectInto(myOptions, element);
   }
 

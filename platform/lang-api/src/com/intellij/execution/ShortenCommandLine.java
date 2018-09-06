@@ -54,6 +54,7 @@ public enum ShortenCommandLine {
     return CLASSPATH_FILE;
   }
 
+  @Deprecated
   public static ShortenCommandLine readShortenClasspathMethod(@NotNull Element element) {
     Element mode = element.getChild("shortenClasspath");
     if (mode != null) {
