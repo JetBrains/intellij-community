@@ -61,7 +61,7 @@ public abstract class JavaTestConfigurationBase extends ModuleBasedConfiguration
   }
 
   @Override
-  public void setShortenCommandLine(ShortenCommandLine shortenCommandLine) {
+  public void setShortenCommandLine(@Nullable ShortenCommandLine shortenCommandLine) {
     myShortenCommandLine = shortenCommandLine;
   }
 

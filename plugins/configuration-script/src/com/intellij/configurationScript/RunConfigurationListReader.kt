@@ -107,7 +107,7 @@ internal class RunConfigurationListReader(private val processor: (factory: Confi
 
   private fun readRc(optionsClass: Class<out BaseState>, node: MappingNode, factory: ConfigurationFactory) {
     val state = ReflectionUtil.newInstance(optionsClass)
-    val properties = state.getProperties()
+    val properties = state.__getProperties()
     for (tuple in node.value) {
       val valueNode = tuple.valueNode
       val key = (tuple.keyNode as ScalarNode).value

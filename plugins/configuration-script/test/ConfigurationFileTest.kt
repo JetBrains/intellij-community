@@ -119,7 +119,7 @@ class ConfigurationFileTest {
   }
 }
 
-private fun parse(@Language("YAML") data: String, isTemplatesOnly: Boolean = false): List<Any> {
+internal fun parse(@Language("YAML") data: String, isTemplatesOnly: Boolean = false): List<Any> {
   val list = SmartList<Any>()
   parseConfigurationFile(data.trimIndent().reader(), isTemplatesOnly) { _, state ->
     list.add(state)

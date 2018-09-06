@@ -60,8 +60,9 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor<
     return new GotoClassModel2(project);
   }
 
+  @NotNull
   @Override
-  public String filterControlSymbols(String pattern) {
+  public String filterControlSymbols(@NotNull String pattern) {
     if (pattern.indexOf('#') != -1) {
       pattern = applyPatternFilter(pattern, patternToDetectMembers);
     }
@@ -74,7 +75,7 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor<
   }
 
   @Override
-  public int getElementPriority(Object element, String searchPattern) {
+  public int getElementPriority(@NotNull Object element, @NotNull String searchPattern) {
     return super.getElementPriority(element, searchPattern) + 5;
   }
 

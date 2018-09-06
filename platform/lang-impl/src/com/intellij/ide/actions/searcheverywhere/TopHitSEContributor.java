@@ -28,6 +28,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
@@ -80,18 +81,18 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
   }
 
   @Override
-  public void fetchElements(String pattern, boolean everywhere, SearchEverywhereContributorFilter<Void> filter,
-                            ProgressIndicator progressIndicator, Function<Object, Boolean> consumer) {
+  public void fetchElements(@NotNull String pattern, boolean everywhere, @Nullable SearchEverywhereContributorFilter<Void> filter,
+                            @NotNull ProgressIndicator progressIndicator, @NotNull Function<Object, Boolean> consumer) {
     fill(pattern, consumer);
   }
 
   @Override
-  public Object getDataForItem(Object element, String dataId) {
+  public Object getDataForItem(@NotNull Object element, @NotNull String dataId) {
     return null;
   }
 
   @Override
-  public boolean processSelectedItem(Object selected, int modifiers, String text) {
+  public boolean processSelectedItem(@NotNull Object selected, int modifiers, @NotNull String text) {
     if (selected instanceof BooleanOptionDescription) {
       final BooleanOptionDescription option = (BooleanOptionDescription) selected;
       option.setOptionState(!option.isOptionEnabled());
@@ -111,8 +112,9 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
     return false;
   }
 
+  @NotNull
   @Override
-  public ListCellRenderer getElementsRenderer(JList<?> list) {
+  public ListCellRenderer getElementsRenderer(@NotNull JList<?> list) {
     return new TopHitRenderer(myProject);
   }
 

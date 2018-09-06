@@ -7,6 +7,7 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCa
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import javax.swing.*;
@@ -30,7 +31,7 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
     MultithreadSearcher searcher = new MultithreadSearcher(collector, command -> alarm.addRequest(command, 0));
 
     scenarios.forEach(scenario -> {
-      searcher.search(scenario.contributorsAndLimits, null, false, ignrd -> null);
+      searcher.search(scenario.contributorsAndLimits, "", false, ignrd -> null);
       collector.awaitFinish();
       scenario.results.forEach((contributorId, results) -> {
         List<String> values = collector.getContributorValues(contributorId);
@@ -47,7 +48,7 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
     SESearcher searcher = new SingleThreadSearcher(collector, command -> alarm.addRequest(command, 0));
 
     scenarios.forEach(scenario -> {
-      searcher.search(scenario.contributorsAndLimits, null, false, ignrd -> null);
+      searcher.search(scenario.contributorsAndLimits, "", false, ignrd -> null);
       collector.awaitFinish();
       scenario.results.forEach((contributorId, results) -> {
         List<String> values = collector.getContributorValues(contributorId);
@@ -344,16 +345,16 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
       }
 
       @Override
-      public int getElementPriority(Object element, String searchPattern) {
+      public int getElementPriority(@NotNull Object element, @NotNull String searchPattern) {
         return fixedPriority;
       }
 
       @Override
-      public void fetchElements(String pattern,
+      public void fetchElements(@NotNull String pattern,
                                 boolean everywhere,
-                                SearchEverywhereContributorFilter<Object> filter,
-                                ProgressIndicator progressIndicator,
-                                Function<Object, Boolean> consumer) {
+                                @Nullable SearchEverywhereContributorFilter<Object> filter,
+                                @NotNull ProgressIndicator progressIndicator,
+                                @NotNull Function<Object, Boolean> consumer) {
         boolean flag = true;
         Iterator<String> iterator = Arrays.asList(items).iterator();
         while (flag && iterator.hasNext()) {
@@ -363,17 +364,18 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
       }
 
       @Override
-      public boolean processSelectedItem(Object selected, int modifiers, String searchText) {
+      public boolean processSelectedItem(@NotNull Object selected, int modifiers, @NotNull String searchText) {
         return false;
       }
 
+      @NotNull
       @Override
-      public ListCellRenderer getElementsRenderer(JList<?> list) {
+      public ListCellRenderer getElementsRenderer(@NotNull JList<?> list) {
         return null;
       }
 
       @Override
-      public Object getDataForItem(Object element, String dataId) {
+      public Object getDataForItem(@NotNull Object element, @NotNull String dataId) {
         return null;
       }
     };

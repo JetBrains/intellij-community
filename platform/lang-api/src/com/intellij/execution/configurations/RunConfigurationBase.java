@@ -21,6 +21,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -215,7 +216,8 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
     myOptions = XmlSerializer.deserialize(element, getOptionsClass());
   }
 
-  public final void setState(@NotNull BaseState state) {
+  @ApiStatus.Experimental
+  public void setState(@NotNull BaseState state) {
     myOptions = (RunConfigurationOptions)state;
   }
 
