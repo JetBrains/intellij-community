@@ -6,14 +6,14 @@ import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.style.StyleMana
 import javax.swing.Action
 import javax.swing.JButton
 
-class ResizableDarculaTitleButtons(private val myCloseAction: Action,
-                                          private val myRestoreAction: Action,
-                                          private val myIconifyAction: Action,
-                                          private val myMaximizeAction: Action
-) : DarculaTitleButtons(myCloseAction) {
+class ResizableCustomFrameTitleButtons(private val myCloseAction: Action,
+                                       private val myRestoreAction: Action,
+                                       private val myIconifyAction: Action,
+                                       private val myMaximizeAction: Action
+) : CustomFrameTitleButtons(myCloseAction) {
   companion object{
-    fun create(myCloseAction: Action, myRestoreAction: Action, myIconifyAction: Action, myMaximizeAction: Action) : ResizableDarculaTitleButtons {
-      val darculaTitleButtons = ResizableDarculaTitleButtons(myCloseAction, myRestoreAction, myIconifyAction, myMaximizeAction)
+    fun create(myCloseAction: Action, myRestoreAction: Action, myIconifyAction: Action, myMaximizeAction: Action) : ResizableCustomFrameTitleButtons {
+      val darculaTitleButtons = ResizableCustomFrameTitleButtons(myCloseAction, myRestoreAction, myIconifyAction, myMaximizeAction)
       darculaTitleButtons.createChildren()
       return darculaTitleButtons
     }

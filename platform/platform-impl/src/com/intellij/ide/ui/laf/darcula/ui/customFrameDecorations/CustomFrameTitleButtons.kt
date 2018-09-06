@@ -14,10 +14,10 @@ import javax.security.auth.Destroyable
 import javax.swing.*
 import javax.swing.plaf.basic.BasicButtonUI
 
-open class DarculaTitleButtons constructor(myCloseAction: Action) : Destroyable {
+open class CustomFrameTitleButtons constructor(myCloseAction: Action) : Destroyable {
   companion object {
-    fun create(myCloseAction: Action): DarculaTitleButtons {
-      val darculaTitleButtons = DarculaTitleButtons(myCloseAction)
+    fun create(myCloseAction: Action): CustomFrameTitleButtons {
+      val darculaTitleButtons = CustomFrameTitleButtons(myCloseAction)
       darculaTitleButtons.createChildren()
       return darculaTitleButtons
     }

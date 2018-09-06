@@ -3,8 +3,9 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.DarculaTitleButtons;
-import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.ResizableDarculaTitleButtons;
+import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.CustomFrameRootPaneUI;
+import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.CustomFrameTitleButtons;
+import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.ResizableCustomFrameTitleButtons;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.openapi.wm.impl.IdeRootPane;
@@ -25,7 +26,7 @@ import java.beans.PropertyChangeListener;
 /**
  * @author Konstantin Bulenkov
  */
-public class DarculaTitlePane extends JPanel {
+public class CustomFrameTitlePane extends JPanel {
   private static final Icon mySystemIcon = AllIcons.Icon_small;
 
   private PropertyChangeListener myPropertyChangeListener;
@@ -39,15 +40,15 @@ public class DarculaTitlePane extends JPanel {
   private Window myWindow;
   private final JRootPane myRootPane;
   private int myState;
-  private final DarculaRootPaneUI rootPaneUI;
+  private final CustomFrameRootPaneUI rootPaneUI;
 
-  private DarculaTitleButtons buttonPanes;
+  private CustomFrameTitleButtons buttonPanes;
   private final JLabel titleLabel = new JLabel();
 
   private final Color myInactiveForeground = UIManager.getColor("inactiveCaptionText");
   private Color myActiveForeground = null;
 
-  public DarculaTitlePane(JRootPane root, DarculaRootPaneUI ui) {
+  public CustomFrameTitlePane(JRootPane root, CustomFrameRootPaneUI ui) {
     this.myRootPane = root;
     rootPaneUI = ui;
 
@@ -134,9 +135,9 @@ public class DarculaTitlePane extends JPanel {
       setLayout(new MigLayout("debug, novisualpadding, fillx, ins 0, gap 0", "[pref!][pref!]push[pref!]"));
 
       createActions();
-      buttonPanes = ResizableDarculaTitleButtons.Companion.create(myCloseAction,
-                                                                  myRestoreAction, myIconifyAction,
-                                                                  myMaximizeAction);
+      buttonPanes = ResizableCustomFrameTitleButtons.Companion.create(myCloseAction,
+                                                                      myRestoreAction, myIconifyAction,
+                                                                      myMaximizeAction);
       myMenuBar = createMenuBar();
       add(myMenuBar, "gapbefore "+JBUI.scale(7)+", gapafter "+JBUI.scale(9));
       if (myRootPane instanceof IdeRootPane) {
@@ -159,7 +160,7 @@ public class DarculaTitlePane extends JPanel {
       createActions();
       // titleLabel.setIcon(mySystemIcon);
       add(titleLabel, "growx");
-      buttonPanes = DarculaTitleButtons.Companion.create(myCloseAction);
+      buttonPanes = CustomFrameTitleButtons.Companion.create(myCloseAction);
       add(buttonPanes.getView());
     }
   }
