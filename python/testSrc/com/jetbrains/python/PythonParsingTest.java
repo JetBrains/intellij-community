@@ -773,6 +773,22 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
+  public void testFStringContainsHashSignInFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringContainsHashInLiteralPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testUnterminatedFStringWithTrailingBackslashInLiteralPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testUnterminatedFStringWithTrailingBackslashInFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
   public void testMultilineFStringContainsCommentInsideExpression() {
     doTest(LanguageLevel.PYTHON36);
   }
