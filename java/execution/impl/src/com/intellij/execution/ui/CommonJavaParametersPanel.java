@@ -118,7 +118,7 @@ public class CommonJavaParametersPanel extends CommonProgramParametersPanel {
     private final JBCheckBox myCheckBox = new JBCheckBox("Redirect input from:");
     private final TextFieldWithBrowseButton myInputFile = new TextFieldWithBrowseButton();
 
-    public RedirectInputPanel() {
+    RedirectInputPanel() {
       super(new BorderLayout(JBUI.scale(10), JBUI.scale(2)));
        myInputFile.addBrowseFolderListener(null, null, null,
                                            FileChooserDescriptorFactory.createSingleFileDescriptor(),

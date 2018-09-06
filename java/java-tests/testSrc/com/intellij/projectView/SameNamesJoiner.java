@@ -92,7 +92,7 @@ class SameNamesJoiner implements TreeStructureProvider {
     private final String myName;
     private final PsiFile myFile;
 
-    public Joined(PsiFile file) {
+    Joined(PsiFile file) {
       myFile = file;
       myName = file.getName();
     }
@@ -121,7 +121,7 @@ class SameNamesJoiner implements TreeStructureProvider {
       return myChildren;
     }
 
-    public JoinedNode(Collection<AbstractTreeNode> children, Joined formFile) {
+    JoinedNode(Collection<AbstractTreeNode> children, Joined formFile) {
       super(null, formFile, null);
       myChildren = children;
     }

@@ -184,7 +184,7 @@ public class DefinitionResolver extends CommonElement.Visitor implements
     private Define myResult;
     private final Set<PsiFile> myVisitedPsiFiles = new HashSet<>();
 
-    public BackwardDefinitionResolver(String value) {
+    BackwardDefinitionResolver(String value) {
       myValue = value;
     }
 

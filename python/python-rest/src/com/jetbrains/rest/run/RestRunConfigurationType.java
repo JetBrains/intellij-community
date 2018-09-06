@@ -62,7 +62,7 @@ public final class RestRunConfigurationType implements ConfigurationType {
   private static abstract class RestConfigurationFactory extends PythonConfigurationFactoryBase {
     private final String myName;
 
-    public RestConfigurationFactory(@NotNull final ConfigurationType type, @NotNull String name) {
+    RestConfigurationFactory(@NotNull final ConfigurationType type, @NotNull String name) {
       super(type);
       myName = name;
     }

@@ -293,7 +293,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
     String myName;
     List<NodeWrapper> myChildren = new ArrayList<>();
 
-    public NodeWrapper(final Project project, final String value) {
+    NodeWrapper(final Project project, final String value) {
       super(project, new Object());
       myName = value;
     }

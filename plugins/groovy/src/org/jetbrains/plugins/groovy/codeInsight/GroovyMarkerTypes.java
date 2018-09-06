@@ -309,7 +309,7 @@ public class GroovyMarkerTypes {
   private static class OverridingMethodsUpdater extends BackgroundUpdaterTask {
     private final GrMethod myMethod;
 
-    public OverridingMethodsUpdater(GrMethod method, PsiElementListCellRenderer renderer) {
+    OverridingMethodsUpdater(GrMethod method, PsiElementListCellRenderer renderer) {
       super(method.getProject(), MarkerType.SEARCHING_FOR_OVERRIDING_METHODS, createComparatorWrapper(renderer.getComparator()));
       myMethod = method;
     }

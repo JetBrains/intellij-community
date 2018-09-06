@@ -353,7 +353,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor
   }
 
   private static abstract class IconPsiReferenceBase extends PsiReferenceBase<PsiElement> implements EmptyResolveMessageProvider {
-    public IconPsiReferenceBase(@NotNull PsiElement element) {
+    IconPsiReferenceBase(@NotNull PsiElement element) {
       super(element, true);
     }
 

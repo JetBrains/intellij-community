@@ -290,7 +290,7 @@ public class GenericCompilerRunner {
   private class SourceItemHashingStrategy<S> implements TObjectHashingStrategy<S> {
     private final KeyDescriptor<S> myKeyDescriptor;
 
-    public SourceItemHashingStrategy(GenericCompiler<S, ?, ?> compiler) {
+    SourceItemHashingStrategy(GenericCompiler<S, ?, ?> compiler) {
       myKeyDescriptor = compiler.getItemKeyDescriptor();
     }
 

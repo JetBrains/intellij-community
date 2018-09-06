@@ -335,7 +335,7 @@ public class MigrationPanel extends JPanel implements Disposable {
   }
 
   private class ExcludeAction extends ExcludeIncludeActionBase {
-    public ExcludeAction() {
+    ExcludeAction() {
       super(RefactoringBundle.message("type.migration.exclude.action.text"));
       registerCustomShortcutSet(CommonShortcuts.getDelete(), myRootsTree);
     }
@@ -347,7 +347,7 @@ public class MigrationPanel extends JPanel implements Disposable {
   }
 
   private class IncludeAction extends ExcludeIncludeActionBase {
-    public IncludeAction() {
+    IncludeAction() {
       super(RefactoringBundle.message("type.migration.include.action.text"));
       registerCustomShortcutSet(CommonShortcuts.INSERT, myRootsTree);
     }

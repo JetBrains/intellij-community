@@ -29,7 +29,7 @@ import java.util.Collection;
 class SelectedFiles extends AnyProcessedFiles {
   private final Collection<VirtualFile> myFiles = new ArrayList<>();
 
-  public SelectedFiles(FilePath[] files) {
+  SelectedFiles(FilePath[] files) {
     for (FilePath file : files) {
       VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile != null) {
@@ -41,7 +41,7 @@ class SelectedFiles extends AnyProcessedFiles {
     }
   }
 
-  public SelectedFiles(VirtualFile[] files) {
+  SelectedFiles(VirtualFile[] files) {
     ContainerUtil.addAll(myFiles, files);
   }
 

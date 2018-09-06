@@ -1634,7 +1634,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     final PsiLocalVariable[] parmVars;
     final PsiLocalVariable resultVar;
 
-    public BlockData(PsiCodeBlock block, PsiLocalVariable thisVar, PsiLocalVariable[] parmVars, PsiLocalVariable resultVar) {
+    BlockData(PsiCodeBlock block, PsiLocalVariable thisVar, PsiLocalVariable[] parmVars, PsiLocalVariable resultVar) {
       this.block = block;
       this.thisVar = thisVar;
       this.parmVars = parmVars;

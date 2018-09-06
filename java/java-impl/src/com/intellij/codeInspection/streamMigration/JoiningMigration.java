@@ -654,7 +654,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
       private final @NotNull List<PsiExpression> myPrefixJoinParts;
       private final @NotNull List<PsiExpression> mySuffixJoinParts;
 
-      public PrefixSuffixContext(@Nullable PsiMethodCallExpression beforeLoopStatement,
+      PrefixSuffixContext(@Nullable PsiMethodCallExpression beforeLoopStatement,
                                  @Nullable PsiMethodCallExpression afterLoopStatement,
                                  @NotNull List<PsiExpression> prefixJoinParts,
                                  @NotNull List<PsiExpression> suffixJoinParts) {
@@ -1260,7 +1260,7 @@ List<PsiExpression> builderStrInitializers = null;
       private final @NotNull List<PsiExpression> myMainJoinParts;
       private final @NotNull List<PsiExpression> myDelimiterJoinParts;
 
-      public JoinData(@Nullable String delimiter,
+      JoinData(@Nullable String delimiter,
                       @NotNull List<PsiExpression> mainJoinParts,
                       @NotNull List<PsiExpression> delimiterJoinParts) {
         myDelimiter = delimiter;

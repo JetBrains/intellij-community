@@ -223,7 +223,7 @@ final class ImagesOptionsComponent {
   private final class TextDocumentOptionsListener extends DocumentAdapter {
     private final String name;
 
-    public TextDocumentOptionsListener(String name) {
+    TextDocumentOptionsListener(String name) {
       this.name = name;
     }
 

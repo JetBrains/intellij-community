@@ -536,7 +536,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
   private static class CorrectUntilBuildAttributeFix implements LocalQuickFix {
     private final String myCorrectValue;
 
-    public CorrectUntilBuildAttributeFix(String correctValue) {
+    CorrectUntilBuildAttributeFix(String correctValue) {
       myCorrectValue = correctValue;
     }
 

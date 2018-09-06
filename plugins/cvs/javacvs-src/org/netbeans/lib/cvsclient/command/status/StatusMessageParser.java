@@ -67,7 +67,7 @@ final class StatusMessageParser extends AbstractMessageParser {
 
 	// Setup ==================================================================
 
-	public StatusMessageParser(IEventSender eventSender, List fileObjects, ICvsFileSystem cvsFileSystem) {
+	StatusMessageParser(IEventSender eventSender, List fileObjects, ICvsFileSystem cvsFileSystem) {
 		BugLog.getInstance().assertNotNull(eventSender);
 
 		this.eventSender = eventSender;

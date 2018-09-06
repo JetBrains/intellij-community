@@ -362,7 +362,7 @@ public class CustomAntElementsRegistry {
     private final Set<String> processedAntlibs = new HashSet<>();
     private final AntDomProject myAntProject;
 
-    public CustomTagDefinitionFinder(AntDomProject antProject) {
+    CustomTagDefinitionFinder(AntDomProject antProject) {
       myAntProject = antProject;
     }
 

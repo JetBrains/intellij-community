@@ -39,7 +39,7 @@ class GroupSurrounder implements Surrounder {
     private final String myTitle;
     private final String myGroupStart;
 
-    public GroupSurrounder(String title, String groupStart) {
+    GroupSurrounder(String title, String groupStart) {
         myTitle = title;
         myGroupStart = groupStart;
     }

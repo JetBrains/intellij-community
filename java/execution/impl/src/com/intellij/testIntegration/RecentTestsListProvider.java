@@ -22,7 +22,7 @@ class RunConfigurationByRecordProvider implements ConfigurationByRecordProvider 
   private final Project myProject;
   private final TIntObjectHashMap<RunnerAndConfigurationSettings> myConfigurationsMap = new TIntObjectHashMap<>();
 
-  public RunConfigurationByRecordProvider(Project project) {
+  RunConfigurationByRecordProvider(Project project) {
     myProject = project;
     initRunConfigurationsMap();
   }

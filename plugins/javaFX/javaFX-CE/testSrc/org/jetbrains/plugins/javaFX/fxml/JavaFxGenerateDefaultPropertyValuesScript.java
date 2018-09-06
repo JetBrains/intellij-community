@@ -560,7 +560,7 @@ public class JavaFxGenerateDefaultPropertyValuesScript extends Application {
     private final String myValueText;
     private final String myDeclaringClass;
 
-    public DefaultValue(@NotNull Object value, @NotNull String declaringClass) {
+    DefaultValue(@NotNull Object value, @NotNull String declaringClass) {
       myValueText = String.valueOf(value);
       myDeclaringClass = declaringClass;
     }

@@ -105,7 +105,7 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
     private final boolean myUseIsEmpty;
     private final boolean myAddNullCheck;
 
-    public StringEqualsEmptyStringFix(boolean useIsEmpty, boolean addNullCheck) {
+    StringEqualsEmptyStringFix(boolean useIsEmpty, boolean addNullCheck) {
       myUseIsEmpty = useIsEmpty;
       myAddNullCheck = addNullCheck;
     }

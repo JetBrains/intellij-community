@@ -316,7 +316,7 @@ abstract class FunctionHelper {
     private PsiMethodReferenceExpression myMethodRef;
     private PsiExpression myExpression;
 
-    public MethodReferenceFunctionHelper(PsiType returnType, PsiType functionalInterfaceType, PsiMethodReferenceExpression methodRef) {
+    MethodReferenceFunctionHelper(PsiType returnType, PsiType functionalInterfaceType, PsiMethodReferenceExpression methodRef) {
       super(returnType);
       myMethodRef = methodRef;
       myType = functionalInterfaceType;
@@ -481,7 +481,7 @@ abstract class FunctionHelper {
     private final String myName;
     private PsiExpression myExpression;
 
-    public SimpleReferenceFunctionHelper(PsiType returnType, PsiExpression reference, String methodName) {
+    SimpleReferenceFunctionHelper(PsiType returnType, PsiExpression reference, String methodName) {
       super(returnType);
       myReference = reference;
       myName = methodName;
@@ -514,7 +514,7 @@ abstract class FunctionHelper {
     private final String myTemplate;
     private PsiExpression myExpression;
 
-    public InlinedFunctionHelper(PsiType type, int argCount, String template) {
+    InlinedFunctionHelper(PsiType type, int argCount, String template) {
       super(type);
       myArgCount = argCount;
       myTemplate = template;

@@ -19,7 +19,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_TS
 class GroovyWordsScanner extends VersionedWordsScanner
 {
   private final Lexer myLexer;
-  public GroovyWordsScanner()
+  GroovyWordsScanner()
   {
     myLexer = new GroovyLexer();
   }

@@ -51,7 +51,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements SemEle
   private final DomManagerImpl myDomManager;
   private final DomService myDomService;
 
-  public FileDescriptionCachedValueProvider(final DomManagerImpl domManager, final XmlFile xmlFile) {
+  FileDescriptionCachedValueProvider(final DomManagerImpl domManager, final XmlFile xmlFile) {
     myDomManager = domManager;
     myXmlFile = xmlFile;
     myDomService = DomService.getInstance();

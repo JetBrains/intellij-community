@@ -34,7 +34,7 @@ class ClassNameConvertor implements TreeStructureProvider {
 
   private final Project myProject;
 
-  public ClassNameConvertor(Project project) {
+  ClassNameConvertor(Project project) {
     myProject = project;
   }
 

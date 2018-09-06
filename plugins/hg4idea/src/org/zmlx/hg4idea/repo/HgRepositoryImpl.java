@@ -254,7 +254,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
   private static class MyIgnoredHolderAsyncListener implements AsyncFilesManagerListener {
     @NotNull private final ChangesViewI myChangesViewI;
 
-    public MyIgnoredHolderAsyncListener(@NotNull Project project) {
+    MyIgnoredHolderAsyncListener(@NotNull Project project) {
       myChangesViewI = ChangesViewManager.getInstance(project);
     }
 

@@ -45,7 +45,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
   private static final Logger LOG = Logger.getInstance(TypeMigrationStatementProcessor.class);
   private final TypeEvaluator myTypeEvaluator;
 
-  public TypeMigrationStatementProcessor(final PsiElement expression, TypeMigrationLabeler labeler) {
+  TypeMigrationStatementProcessor(final PsiElement expression, TypeMigrationLabeler labeler) {
     myStatement = expression;
     myLabeler = labeler;
     myTypeEvaluator = myLabeler.getTypeEvaluator();
@@ -643,7 +643,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
     final PsiType myType;
     final boolean myChanged;
 
-    public TypeView(@NotNull PsiExpression expr) {
+    TypeView(@NotNull PsiExpression expr) {
       PsiType exprType = expr.getType();
       myOriginType = GenericsUtil.getVariableTypeByExpressionType(exprType);
       PsiType type = myTypeEvaluator.evaluateType(expr);
@@ -651,7 +651,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
       myChanged = !(myOriginType == null || myType == null) && !myType.equals(myOriginType);
     }
 
-    public TypeView(PsiVariable var, PsiSubstitutor varSubstitutor, PsiSubstitutor evalSubstitutor) {
+    TypeView(PsiVariable var, PsiSubstitutor varSubstitutor, PsiSubstitutor evalSubstitutor) {
       myOriginType = varSubstitutor != null ? varSubstitutor.substitute(var.getType()) : var.getType();
 
       Map<PsiTypeParameter, PsiType> realMap = new HashMap<>();

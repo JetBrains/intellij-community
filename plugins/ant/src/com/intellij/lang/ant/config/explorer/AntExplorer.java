@@ -577,7 +577,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   }
 
   private final class AddAction extends AnAction {
-    public AddAction() {
+    AddAction() {
       super(AntBundle.message("add.ant.file.action.name"), AntBundle.message("add.ant.file.action.description"), IconUtil.getAddIcon());
     }
 
@@ -588,7 +588,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   }
 
   private final class RemoveAction extends AnAction {
-    public RemoveAction() {
+    RemoveAction() {
       super(AntBundle.message("remove.ant.file.action.name"), AntBundle.message("remove.ant.file.action.description"),
             IconUtil.getRemoveIcon());
     }
@@ -605,7 +605,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   }
 
   private final class RunAction extends AnAction {
-    public RunAction() {
+    RunAction() {
       super(AntBundle.message("run.ant.file.or.target.action.name"), AntBundle.message("run.ant.file.or.target.action.description"),
             AllIcons.Actions.Execute);
     }
@@ -642,7 +642,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     }
   }
   private final class MakeAntRunConfigurationAction extends AnAction {
-    public MakeAntRunConfigurationAction() {
+    MakeAntRunConfigurationAction() {
       super(AntBundle.message("make.ant.runconfiguration.name"), null, AntIcons.Build);
     }
 
@@ -692,7 +692,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   }
 
   private final class ShowAllTargetsAction extends ToggleAction {
-    public ShowAllTargetsAction() {
+    ShowAllTargetsAction() {
       super(AntBundle.message("filter.ant.targets.action.name"), AntBundle.message("filter.ant.targets.action.description"),
             AllIcons.General.Filter);
     }
@@ -718,7 +718,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     private final AntBuildTargetBase myTarget;
     private final ExecutionEvent myExecutionEvent;
 
-    public ExecuteOnEventAction(final AntBuildTargetBase target, final ExecutionEvent executionEvent) {
+    ExecuteOnEventAction(final AntBuildTargetBase target, final ExecutionEvent executionEvent) {
       super(executionEvent.getPresentableName());
       myTarget = target;
       myExecutionEvent = executionEvent;
@@ -754,7 +754,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   private final class ExecuteBeforeRunAction extends AnAction {
     private final AntBuildTarget myTarget;
 
-    public ExecuteBeforeRunAction(final AntBuildTarget target) {
+    ExecuteBeforeRunAction(final AntBuildTarget target) {
       super(AntBundle.message("executes.before.run.debug.acton.name"));
       myTarget = target;
     }
@@ -773,7 +773,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
   private final class CreateMetaTargetAction extends AnAction {
 
-    public CreateMetaTargetAction() {
+    CreateMetaTargetAction() {
       super(AntBundle.message("ant.create.meta.target.action.name"), AntBundle.message("ant.create.meta.target.action.description"), null
 /*IconLoader.getIcon("/actions/execute.png")*/);
     }
@@ -800,7 +800,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
   private final class RemoveMetaTargetsOrBuildFileAction extends AnAction {
 
-    public RemoveMetaTargetsOrBuildFileAction() {
+    RemoveMetaTargetsOrBuildFileAction() {
       super(AntBundle.message("remove.meta.targets.action.name"), AntBundle.message("remove.meta.targets.action.description"), null);
       registerCustomShortcutSet(CommonShortcuts.getDelete(), myTree);
       Disposer.register(AntExplorer.this, new Disposable() {
@@ -908,7 +908,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   private final class AssignShortcutAction extends AnAction {
     private final String myActionId;
 
-    public AssignShortcutAction(String actionId) {
+    AssignShortcutAction(String actionId) {
       super(AntBundle.message("ant.explorer.assign.shortcut.action.name"));
       myActionId = actionId;
     }

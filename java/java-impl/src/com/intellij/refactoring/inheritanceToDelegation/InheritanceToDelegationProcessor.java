@@ -753,7 +753,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     // find overriding/implementing method
     {
       class InnerClassOverridingMethod extends InnerClassMethod {
-        public InnerClassOverridingMethod(PsiMethod method) {
+        InnerClassOverridingMethod(PsiMethod method) {
           super(method);
         }
 
@@ -782,7 +782,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       class InnerClassAbstractMethod extends InnerClassMethod {
         private final boolean myImplicitImplementation;
 
-        public InnerClassAbstractMethod(PsiMethod method, final boolean implicitImplementation) {
+        InnerClassAbstractMethod(PsiMethod method, final boolean implicitImplementation) {
           super(method);
           myImplicitImplementation = implicitImplementation;
         }
@@ -1057,7 +1057,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       private final PsiReferenceExpression myReference;
       private final String myReferencedName;
 
-      public QualifyWithField(final PsiReferenceExpression reference, final String name) {
+      QualifyWithField(final PsiReferenceExpression reference, final String name) {
         myReference = reference;
         myReferencedName = name;
       }
@@ -1149,7 +1149,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     private final List<UsageInfo> myUsageInfoStorage;
     private final Set<PsiClass> myImplementedInterfaces;
 
-    public MyClassInstanceReferenceVisitor(PsiClass aClass, List<UsageInfo> usageInfoStorage) {
+    MyClassInstanceReferenceVisitor(PsiClass aClass, List<UsageInfo> usageInfoStorage) {
       myClass = aClass;
       myUsageInfoStorage = usageInfoStorage;
       myImplementedInterfaces = getImplementedInterfaces();

@@ -81,7 +81,7 @@ public class PyStringFormatInspection extends PyInspection {
 
       private final Map<String, String> myFormatSpec = new HashMap<>();
 
-      public Inspection(Visitor visitor, TypeEvalContext typeEvalContext) {
+      Inspection(Visitor visitor, TypeEvalContext typeEvalContext) {
         myVisitor = visitor;
         myTypeEvalContext = typeEvalContext;
       }
@@ -471,7 +471,7 @@ public class PyStringFormatInspection extends PyInspection {
 
       private final Map<String, String> myFormatSpec = new HashMap<>();
 
-      public NewStyleInspection(PyStringLiteralExpression formatExpression, Visitor visitor, TypeEvalContext context) {
+      NewStyleInspection(PyStringLiteralExpression formatExpression, Visitor visitor, TypeEvalContext context) {
         myFormatExpression = formatExpression;
         myVisitor = visitor;
         myTypeEvalContext = context;

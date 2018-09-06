@@ -24,7 +24,7 @@ class NewArrayInstanceEvaluator implements Evaluator {
   /**
    * either dimensionEvaluator or initializerEvaluators must be null!
    */
-  public NewArrayInstanceEvaluator(Evaluator arrayTypeEvaluator, Evaluator dimensionEvaluator, Evaluator initializerEvaluator) {
+  NewArrayInstanceEvaluator(Evaluator arrayTypeEvaluator, Evaluator dimensionEvaluator, Evaluator initializerEvaluator) {
     myArrayTypeEvaluator = arrayTypeEvaluator;
     myDimensionEvaluator = dimensionEvaluator;
     myInitializerEvaluator = initializerEvaluator;

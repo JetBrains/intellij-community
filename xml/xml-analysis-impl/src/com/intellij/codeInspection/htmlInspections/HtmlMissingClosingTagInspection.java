@@ -57,7 +57,7 @@ public class HtmlMissingClosingTagInspection extends HtmlLocalInspectionTool {
 
     private final String myName;
 
-    public MissingClosingTagFix(String name) {
+    MissingClosingTagFix(String name) {
       myName = name;
     }
 

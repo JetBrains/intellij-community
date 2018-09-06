@@ -206,7 +206,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
     private final JavaTestConfigurationBase myConfiguration;
     private final String myConfigurationName;
 
-    public MyRunProfile(Location<PsiMethod>[] testMethods, Module module, JavaTestConfigurationBase configuration, String configurationName) {
+    MyRunProfile(Location<PsiMethod>[] testMethods, Module module, JavaTestConfigurationBase configuration, String configurationName) {
       myTestMethods = testMethods;
       myModule = module;
       myConfiguration = configuration;

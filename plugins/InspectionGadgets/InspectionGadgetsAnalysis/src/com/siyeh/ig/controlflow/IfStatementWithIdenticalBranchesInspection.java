@@ -82,7 +82,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     private final @NotNull LocalQuickFix myFix;
     private final @NotNull String myMessage;
 
-    public IfInspectionResult(@NotNull PsiElement elementToHighlight,
+    IfInspectionResult(@NotNull PsiElement elementToHighlight,
                               boolean isWarning,
                               @NotNull LocalQuickFix fix,
                               @NotNull String message) {

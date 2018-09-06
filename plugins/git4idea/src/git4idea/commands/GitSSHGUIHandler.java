@@ -255,7 +255,7 @@ public class GitSSHGUIHandler {
      */
     private final String myUserName;
 
-    public GitSSHKeyboardInteractiveDialog(String name,
+    GitSSHKeyboardInteractiveDialog(String name,
                                            final int numPrompts,
                                            final String instruction,
                                            final Vector<String> prompt,

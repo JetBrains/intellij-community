@@ -227,7 +227,7 @@ public class AsmCodeGenerator {
     private int myCreateComponentsAccess;
     private final boolean myExplicitSetupCall;
 
-    public FormClassVisitor(final ClassVisitor cv, final boolean explicitSetupCall) {
+    FormClassVisitor(final ClassVisitor cv, final boolean explicitSetupCall) {
       super(ASM_API_VERSION, cv);
       myExplicitSetupCall = explicitSetupCall;
     }
@@ -900,7 +900,7 @@ public class AsmCodeGenerator {
     private boolean mySetupCalled = false;
     private boolean mySuperCalled = false;
 
-    public FormConstructorVisitor(final MethodVisitor mv, final String className, final String superName) {
+    FormConstructorVisitor(final MethodVisitor mv, final String className, final String superName) {
       super(ASM_API_VERSION, mv);
       myClassName = className;
       mySuperName = superName;
@@ -961,7 +961,7 @@ public class AsmCodeGenerator {
   private static class FirstPassClassVisitor extends ClassVisitor {
     private boolean myExplicitSetupCall = false;
 
-    public FirstPassClassVisitor() {
+    FirstPassClassVisitor() {
       super(ASM_API_VERSION, new ClassVisitor(ASM_API_VERSION) {});
     }
 
@@ -978,7 +978,7 @@ public class AsmCodeGenerator {
     }
 
     private class FirstPassConstructorVisitor extends FailSafeMethodVisitor {
-      public FirstPassConstructorVisitor() {
+      FirstPassConstructorVisitor() {
         super(ASM_API_VERSION, new MethodVisitor(ASM_API_VERSION){});
       }
 

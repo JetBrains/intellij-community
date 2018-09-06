@@ -201,7 +201,7 @@ public final class CreateDialogAction extends AbstractCreateFormAction {
     private JCheckBox myChkGenerateMain;
     private JTextField myTfClassName;
 
-    public MyContentPane() {
+    MyContentPane() {
     }
 
     public JPanel getPanel() {

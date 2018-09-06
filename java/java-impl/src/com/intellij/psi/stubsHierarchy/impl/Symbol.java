@@ -18,7 +18,7 @@ abstract class Symbol {
   @ShortName final int myShortName;
   final Symbol myOwner;
 
-  public Symbol(int flags, Symbol owner, int name) {
+  Symbol(int flags, Symbol owner, int name) {
     this.myFlags = flags;
     this.myOwner = owner;
     this.myShortName = name;

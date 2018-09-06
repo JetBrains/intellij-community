@@ -170,7 +170,7 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
     private final ProblemDescriptionsProcessor myProcessor;
     private final String myHint;
 
-    public MyQuickFix(final ProblemDescriptionsProcessor processor, final String hint) {
+    MyQuickFix(final ProblemDescriptionsProcessor processor, final String hint) {
       myProcessor = processor;
       myHint = hint;
     }

@@ -75,7 +75,7 @@ public class GroovyResourceChecker extends TargetBuilder<GroovyResourceRootDescr
 
     private final CheckResourcesTarget myTarget;
 
-    public ResourceCheckingGroovycRunner(CheckResourcesTarget target) {
+    ResourceCheckingGroovycRunner(CheckResourcesTarget target) {
       super(false);
       myTarget = target;
     }

@@ -25,7 +25,7 @@ class InstrumentationItem implements FileProcessingCompiler.ProcessingItem {
   private final VirtualFile myClassFile;
   private final boolean myJDK6;
 
-  public InstrumentationItem(@NotNull VirtualFile classFile, boolean jdk6) {
+  InstrumentationItem(@NotNull VirtualFile classFile, boolean jdk6) {
     myJDK6 = jdk6;
     myClassFile = classFile;
   }

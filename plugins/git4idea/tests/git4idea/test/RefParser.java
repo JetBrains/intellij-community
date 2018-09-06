@@ -35,7 +35,7 @@ class RefParser {
 
   private final VcsLogObjectsFactory myFactory;
 
-  public RefParser(@NotNull VcsLogObjectsFactory factory) {
+  RefParser(@NotNull VcsLogObjectsFactory factory) {
     myFactory = factory;
   }
 

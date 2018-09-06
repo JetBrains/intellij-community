@@ -90,7 +90,7 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
     private final JavadocConfiguration myConfiguration;
     private final ArgumentFileFilter myArgFileFilter = new ArgumentFileFilter();
 
-    public MyJavaCommandLineState(JavadocConfiguration configuration,
+    MyJavaCommandLineState(JavadocConfiguration configuration,
                                   Project project,
                                   AnalysisScope generationOptions,
                                   ExecutionEnvironment env) {
@@ -305,7 +305,7 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
     private final Set<? super Module> myModules;
     private final Set<? super VirtualFile> mySourceFiles;
 
-    public MyContentIterator(Project project, Set<? super Module> modules, Set<? super VirtualFile> sources) {
+    MyContentIterator(Project project, Set<? super Module> modules, Set<? super VirtualFile> sources) {
       myPsiManager = PsiManager.getInstance(project);
       myModules = modules;
       mySourceFiles = sources;

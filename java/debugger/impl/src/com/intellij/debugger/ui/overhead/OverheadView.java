@@ -146,7 +146,7 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
   }
 
   private static class EnabledColumnInfo extends ColumnInfo<OverheadProducer, Boolean> {
-    public EnabledColumnInfo() {
+    EnabledColumnInfo() {
       super("");
     }
 
@@ -173,7 +173,7 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
   }
 
   private static class NameColumnInfo extends ColumnInfo<OverheadProducer, OverheadProducer> {
-    public NameColumnInfo() {
+    NameColumnInfo() {
       super("Name");
     }
 
@@ -215,7 +215,7 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
   private static class TimingColumnInfo extends ColumnInfo<OverheadProducer, OverheadProducer> {
     private final Function<OverheadProducer, Long> myGetter;
 
-    public TimingColumnInfo(@NotNull String name, Function<OverheadProducer, Long> getter) {
+    TimingColumnInfo(@NotNull String name, Function<OverheadProducer, Long> getter) {
       super(name);
       myGetter = getter;
     }

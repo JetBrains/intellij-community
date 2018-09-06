@@ -280,7 +280,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
   private class ExternalChangeListener implements DocumentListener {
     private volatile boolean myRunState;
 
-    public ExternalChangeListener() {
+    ExternalChangeListener() {
       myDocument.addDocumentListener(this);
     }
 

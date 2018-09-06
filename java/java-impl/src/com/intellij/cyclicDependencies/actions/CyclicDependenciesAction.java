@@ -164,7 +164,7 @@ public class CyclicDependenciesAction extends AnAction{
     private JCheckBox myIncludeTestSourcesCb;
 
 
-    public ProjectModuleOrPackageDialog(String moduleName, AnalysisScope selectedScope) {
+    ProjectModuleOrPackageDialog(String moduleName, AnalysisScope selectedScope) {
       super(true);
       myModuleName = moduleName;
       mySelectedScope = selectedScope;

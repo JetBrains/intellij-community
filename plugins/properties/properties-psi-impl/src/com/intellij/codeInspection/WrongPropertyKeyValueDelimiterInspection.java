@@ -54,7 +54,7 @@ public class WrongPropertyKeyValueDelimiterInspection extends PropertiesInspecti
   }
 
   private static final class ReplaceKeyValueDelimiterQuickFix extends LocalQuickFixOnPsiElement implements HighPriorityAction {
-    public ReplaceKeyValueDelimiterQuickFix(@NotNull PsiElement element) {
+    ReplaceKeyValueDelimiterQuickFix(@NotNull PsiElement element) {
       super(element);
     }
 

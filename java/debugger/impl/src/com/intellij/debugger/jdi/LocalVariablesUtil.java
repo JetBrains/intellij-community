@@ -362,7 +362,7 @@ public class LocalVariablesUtil {
     private final Deque<Integer> myIndexStack = new LinkedList<>();
     private boolean myReached = false;
 
-    public LocalVariableNameFinder(int startSlot, MultiMap<Integer, String> names, PsiElement element) {
+    LocalVariableNameFinder(int startSlot, MultiMap<Integer, String> names, PsiElement element) {
       myNames = names;
       myCurrentSlotIndex = startSlot;
       myElement = element;

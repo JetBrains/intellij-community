@@ -336,7 +336,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     @Attribute(value = "target-branch") public String targetBranchName;
 
     @SuppressWarnings("unused")
-    public PushTargetInfo() {
+    PushTargetInfo() {
       this("", "", "", "");
     }
 

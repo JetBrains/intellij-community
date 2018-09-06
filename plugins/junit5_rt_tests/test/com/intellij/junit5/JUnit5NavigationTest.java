@@ -163,7 +163,7 @@ class JUnit5NavigationTest {
   private static class ConfigurableTestDescriptor extends AbstractTestDescriptor {
     private boolean myIsTest;
 
-    public ConfigurableTestDescriptor(TestSource testSource) {
+    ConfigurableTestDescriptor(TestSource testSource) {
       super(JUnit5NavigationTest.anyUniqueId(), JUnit5NavigationTest.anyDisplayName(), testSource);
     }
 

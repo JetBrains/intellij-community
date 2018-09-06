@@ -42,7 +42,7 @@ class NewClassInstanceEvaluator implements Evaluator {
   private final JVMName myConstructorSignature;
   private final Evaluator[] myParamsEvaluators;
 
-  public NewClassInstanceEvaluator(TypeEvaluator classTypeEvaluator, JVMName constructorSignature, Evaluator[] argumentEvaluators) {
+  NewClassInstanceEvaluator(TypeEvaluator classTypeEvaluator, JVMName constructorSignature, Evaluator[] argumentEvaluators) {
     myClassTypeEvaluator = classTypeEvaluator;
     myConstructorSignature = constructorSignature;
     myParamsEvaluators = argumentEvaluators;

@@ -94,7 +94,7 @@ public class InspectionValidatorWrapper implements Validator {
     private final PsiManager myPsiManager;
     private PsiElementsValidityState myValidityState;
 
-    public MyValidatorProcessingItem(@NotNull final PsiFile psiFile) {
+    MyValidatorProcessingItem(@NotNull final PsiFile psiFile) {
       myVirtualFile = psiFile.getVirtualFile();
       myPsiManager = psiFile.getManager();
     }

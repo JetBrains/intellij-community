@@ -253,7 +253,7 @@ public class TracRepository extends BaseRepositoryImpl {
   }
 
   private class Transport extends CommonsXmlRpcTransport {
-    public Transport() throws MalformedURLException {
+    Transport() throws MalformedURLException {
       super(new URL(getUrl()), getHttpClient());
     }
 

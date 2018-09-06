@@ -20,7 +20,7 @@ final class ComponentPtrDescriptor extends NodeDescriptor<ComponentPtr> {
   private String myBinding;
   private String myTitle;
 
-  public ComponentPtrDescriptor(@NotNull final NodeDescriptor parentDescriptor, @NotNull final ComponentPtr ptr) {
+  ComponentPtrDescriptor(@NotNull final NodeDescriptor parentDescriptor, @NotNull final ComponentPtr ptr) {
     super(null,parentDescriptor);
 
     myPtr=ptr;

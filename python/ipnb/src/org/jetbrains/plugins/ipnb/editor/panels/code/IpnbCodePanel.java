@@ -121,7 +121,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
     final JPanel myToggleBar;
     final JPanel myOutputComponent;
 
-    public HideableOutputPanel() {
+    HideableOutputPanel() {
       super(true);
       myToggleBar = createToggleBar(this);
       myOutputComponent = createOutputPanel();

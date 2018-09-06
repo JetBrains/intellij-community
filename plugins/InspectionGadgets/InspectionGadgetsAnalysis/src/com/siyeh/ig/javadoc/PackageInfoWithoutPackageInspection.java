@@ -55,7 +55,7 @@ public class PackageInfoWithoutPackageInspection extends BaseInspection {
 
     private final String myPackageName;
 
-    public PackageInfoWithoutPackageFix(String packageName) {
+    PackageInfoWithoutPackageFix(String packageName) {
       myPackageName = packageName;
     }
 

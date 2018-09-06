@@ -162,7 +162,7 @@ public class PyImportReference extends PyReferenceImpl {
     private final List<Object> myObjects;
     @NotNull private final TypeEvalContext myContext;
 
-    public ImportVariantCollector(@NotNull TypeEvalContext context) {
+    ImportVariantCollector(@NotNull TypeEvalContext context) {
       myContext = context;
       PsiFile currentFile = myElement.getContainingFile();
       currentFile = currentFile.getOriginalFile();

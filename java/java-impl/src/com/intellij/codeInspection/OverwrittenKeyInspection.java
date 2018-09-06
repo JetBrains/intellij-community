@@ -46,7 +46,7 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
   private static class OverwrittenKeyVisitor extends JavaElementVisitor {
     private final ProblemsHolder myHolder;
 
-    public OverwrittenKeyVisitor(ProblemsHolder holder) {
+    OverwrittenKeyVisitor(ProblemsHolder holder) {
       myHolder = holder;
     }
 
@@ -164,7 +164,7 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
   private static class NavigateToDuplicateFix implements LocalQuickFix {
     private final SmartPsiElementPointer<PsiExpression> myPointer;
 
-    public NavigateToDuplicateFix(PsiExpression arg) {
+    NavigateToDuplicateFix(PsiExpression arg) {
       myPointer = SmartPointerManager.getInstance(arg.getProject()).createSmartPsiElementPointer(arg);
     }
 

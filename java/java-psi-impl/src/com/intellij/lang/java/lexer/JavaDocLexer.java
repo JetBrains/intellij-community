@@ -47,7 +47,7 @@ public class JavaDocLexer extends MergingLexerAdapter {
     private boolean myAfterLineBreak;
     private boolean myInLeadingSpace;
 
-    public AsteriskStripperLexer(final _JavaDocLexer flex, final DocCommentTokenTypes tokenTypes) {
+    AsteriskStripperLexer(final _JavaDocLexer flex, final DocCommentTokenTypes tokenTypes) {
       myFlex = flex;
       myTokenTypes = tokenTypes;
     }

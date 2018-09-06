@@ -61,7 +61,7 @@ public final class GroovyScriptRunConfigurationType implements ConfigurationType
   }
 
   private static class GroovyFactory extends ConfigurationFactory {
-    public GroovyFactory(ConfigurationType type) {
+    GroovyFactory(ConfigurationType type) {
       super(type);
     }
 

@@ -1010,7 +1010,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
 
     private final PsiVariable variable;
 
-    public Holder(@NotNull PsiVariable variable) {
+    Holder(@NotNull PsiVariable variable) {
       this.variable = variable;
     }
 

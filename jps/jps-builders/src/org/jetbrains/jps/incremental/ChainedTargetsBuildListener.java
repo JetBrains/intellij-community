@@ -36,7 +36,7 @@ import java.io.IOException;
 class ChainedTargetsBuildListener implements BuildListener {
   private final CompileContextImpl myContext;
 
-  public ChainedTargetsBuildListener(CompileContextImpl context) {
+  ChainedTargetsBuildListener(CompileContextImpl context) {
     myContext = context;
   }
 

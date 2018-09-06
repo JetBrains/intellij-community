@@ -167,11 +167,11 @@ public class ReductionSystem {
       Constraint myConstraint;
       Set<Node> myNeighbours = new HashSet<>();
 
-      public Node() {
+      Node() {
         myConstraint = null;
       }
 
-      public Node(final Constraint c) {
+      Node(final Constraint c) {
         myConstraint = c;
       }
 

@@ -143,7 +143,7 @@ public class MessageViewHelper {
     private NewErrorTreeViewPanel myErrorsView;
     private Content myContent;
 
-    public CloseListener(Content content, String contentName, NewErrorTreeViewPanel errorsView) {
+    CloseListener(Content content, String contentName, NewErrorTreeViewPanel errorsView) {
       myContent = content;
       myContentName = contentName;
       myErrorsView = errorsView;

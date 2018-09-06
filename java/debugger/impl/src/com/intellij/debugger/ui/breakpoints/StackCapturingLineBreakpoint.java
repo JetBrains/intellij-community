@@ -253,7 +253,7 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
     private ExpressionEvaluator myEvaluator;
     private final Map<Location, ExpressionEvaluator> myEvaluatorCache = ContainerUtil.createWeakMap();
 
-    public MyEvaluator(String expression) {
+    MyEvaluator(String expression) {
       myExpression = expression;
       int paramId = DecompiledLocalVariable.getParamId(myExpression);
       boolean paramEvaluator = paramId > -1;

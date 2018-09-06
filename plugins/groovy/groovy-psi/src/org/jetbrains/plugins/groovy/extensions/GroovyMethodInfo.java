@@ -359,12 +359,12 @@ public class GroovyMethodInfo {
 
     private volatile Object myProvider;
 
-    public NamedArgumentReference(String providerClassName) {
+    NamedArgumentReference(String providerClassName) {
       myProviderClassName = providerClassName;
       myValues = null;
     }
 
-    public NamedArgumentReference(String[] values) {
+    NamedArgumentReference(String[] values) {
       myValues = values;
       myProviderClassName = null;
     }

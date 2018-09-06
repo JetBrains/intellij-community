@@ -386,7 +386,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
   private static class CachedData {
     public final List<LineInfo> lines;
 
-    public CachedData(List<LineInfo> lines) {
+    CachedData(List<LineInfo> lines) {
       this.lines = lines;
     }
   }

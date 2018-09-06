@@ -51,7 +51,7 @@ public class EditOperation extends CvsOperationOnFiles {
     private final String myHost;
     private final File myEditLocation;
 
-    public EditedFileInfo(String fileName, String user, String host, String editLocation) {
+    EditedFileInfo(String fileName, String user, String host, String editLocation) {
       myFileName = fileName;
       myUser = user;
       myHost = host;

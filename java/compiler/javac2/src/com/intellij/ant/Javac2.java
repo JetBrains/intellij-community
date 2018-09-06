@@ -604,7 +604,7 @@ public class Javac2 extends Javac {
     private final List<PrefixedPath> myNestedFormPathList;
     private final HashMap<String, LwRootContainer> myFormCache = new HashMap<String, LwRootContainer>();
 
-    public AntNestedFormLoader(final ClassLoader loader, List nestedFormPathList) {
+    AntNestedFormLoader(final ClassLoader loader, List nestedFormPathList) {
       myLoader = loader;
       myNestedFormPathList = nestedFormPathList;
     }

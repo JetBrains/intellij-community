@@ -207,7 +207,7 @@ public class IpnbJfxUtils {
   private static class HyperlinkListener implements EventListener {
     @NotNull private final WebEngine myEngine;
 
-    public HyperlinkListener(@NotNull final WebEngine engine) {
+    HyperlinkListener(@NotNull final WebEngine engine) {
       myEngine = engine;
     }
 
