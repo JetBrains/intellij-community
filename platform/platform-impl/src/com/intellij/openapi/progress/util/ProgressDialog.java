@@ -92,7 +92,7 @@ class ProgressDialog implements Disposable {
   DialogWrapper myPopup;
   private final Window myParentWindow;
 
-  public ProgressDialog(ProgressWindow progressWindow, boolean shouldShowBackground, Project project, String cancelText) {
+  ProgressDialog(ProgressWindow progressWindow, boolean shouldShowBackground, Project project, String cancelText) {
     myProgressWindow = progressWindow;
     Window parentWindow = WindowManager.getInstance().suggestParentWindow(project);
     if (parentWindow == null) {
@@ -103,7 +103,7 @@ class ProgressDialog implements Disposable {
     initDialog(shouldShowBackground, cancelText);
   }
 
-  public ProgressDialog(ProgressWindow progressWindow, boolean shouldShowBackground, Component parent, String cancelText) {
+  ProgressDialog(ProgressWindow progressWindow, boolean shouldShowBackground, Component parent, String cancelText) {
     myProgressWindow = progressWindow;
     myParentWindow = UIUtil.getWindow(parent);
     initDialog(shouldShowBackground, cancelText);
@@ -283,13 +283,13 @@ class ProgressDialog implements Disposable {
   private class MyDialogWrapper extends DialogWrapper {
     private final boolean myIsCancellable;
 
-    public MyDialogWrapper(Project project, final boolean cancellable) {
+    MyDialogWrapper(Project project, final boolean cancellable) {
       super(project, false);
       init();
       myIsCancellable = cancellable;
     }
 
-    public MyDialogWrapper(Component parent, final boolean cancellable) {
+    MyDialogWrapper(Component parent, final boolean cancellable) {
       super(parent, false);
       init();
       myIsCancellable = cancellable;

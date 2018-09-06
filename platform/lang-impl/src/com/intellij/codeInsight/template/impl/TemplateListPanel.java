@@ -956,7 +956,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
   private class TemplateGroupInputValidator implements InputValidator {
     private final String myOldName;
 
-    public TemplateGroupInputValidator(String oldName) {
+    TemplateGroupInputValidator(String oldName) {
       myOldName = oldName;
     }
 

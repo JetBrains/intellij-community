@@ -1541,7 +1541,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   private static final String ACTION_NAME = "Show All in View";
 
   private abstract class ShowFindUsagesAction extends DumbAwareAction {
-    public ShowFindUsagesAction() {
+    ShowFindUsagesAction() {
       super(ACTION_NAME, ACTION_NAME, AllIcons.General.Pin_tab);
     }
 

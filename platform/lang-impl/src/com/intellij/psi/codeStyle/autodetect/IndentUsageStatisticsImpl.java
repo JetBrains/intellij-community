@@ -140,7 +140,7 @@ public class IndentUsageStatisticsImpl implements IndentUsageStatistics {
     public final int indent;
     public final int relativeIndent;
 
-    public IndentData(int indent, int relativeIndent) {
+    IndentData(int indent, int relativeIndent) {
       this.indent = indent;
       this.relativeIndent = relativeIndent;
     }

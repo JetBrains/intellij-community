@@ -246,7 +246,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
     private final ConfigurationType myConfigurationType;
     private final Icon myIcon;
 
-    public ConfigurationTypeDescriptor(ConfigurationType type, Icon icon, boolean isChecked) {
+    ConfigurationTypeDescriptor(ConfigurationType type, Icon icon, boolean isChecked) {
       myConfigurationType = type;
       myIcon = icon;
       setChecked(isChecked);
@@ -264,7 +264,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
   private static final class ConfigurationDescriptor extends Descriptor {
     private final RunConfiguration myConfiguration;
 
-    public ConfigurationDescriptor(RunConfiguration configuration, boolean isChecked) {
+    ConfigurationDescriptor(RunConfiguration configuration, boolean isChecked) {
       myConfiguration = configuration;
       setChecked(isChecked);
     }
@@ -287,7 +287,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
     private final JLabel myLabel;
     public final JCheckBox myCheckbox;
 
-    public MyTreeCellRenderer() {
+    MyTreeCellRenderer() {
       super(new BorderLayout());
       myCheckbox = new JCheckBox();
       myLabel = new JLabel();

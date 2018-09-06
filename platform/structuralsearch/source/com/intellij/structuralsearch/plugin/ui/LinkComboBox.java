@@ -25,7 +25,7 @@ class LinkComboBox extends JBComboBoxLabel {
   private String mySelectedItem;
   private String myDefaultItem;
 
-  public LinkComboBox(String defaultItem) {
+  LinkComboBox(String defaultItem) {
     setDefaultItem(defaultItem);
     setForeground(JBColor.link());
     addMouseListener(new MouseAdapter() {

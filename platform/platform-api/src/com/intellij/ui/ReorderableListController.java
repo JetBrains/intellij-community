@@ -187,7 +187,7 @@ public abstract class ReorderableListController <T> {
     }
 
     private static class ActionWithText<V> extends BaseAction  {
-      public ActionWithText(final CustomActionDescription<? super V> customActionDescription, final String text,
+      ActionWithText(final CustomActionDescription<? super V> customActionDescription, final String text,
                             final String description,
                             final Icon icon,
                             final ActionBehaviour<? extends V> behaviour) {
@@ -394,7 +394,7 @@ public abstract class ReorderableListController <T> {
   private static class FixedActionDescription extends ActionDescription {
     private final AnAction myAction;
 
-    public FixedActionDescription(final AnAction action) {
+    FixedActionDescription(final AnAction action) {
       myAction = action;
     }
 

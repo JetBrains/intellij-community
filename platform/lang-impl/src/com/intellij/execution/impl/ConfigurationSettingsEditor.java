@@ -223,7 +223,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
     private final JLabel myNoRunner = new JLabel(ExecutionBundle.message("run.configuration.norunner.selected.label"));
     private JPanel myRunnersPanel;
 
-    public RunnersEditorComponent() {
+    RunnersEditorComponent() {
       myRunnerPanel.setLayout(myLayout);
       myRunnerPanel.add(myNoRunner, NO_RUNNER_COMPONENT);
       myRunnersList.setModel(myListModel);
@@ -272,7 +272,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
   private class ConfigToSettingsWrapper extends SettingsEditor<RunnerAndConfigurationSettings> {
     private final SettingsEditor<RunConfiguration> myConfigEditor;
 
-    public ConfigToSettingsWrapper(SettingsEditor<RunConfiguration> configEditor) {
+    ConfigToSettingsWrapper(SettingsEditor<RunConfiguration> configEditor) {
       myConfigEditor = configEditor;
       if (configEditor instanceof RunConfigurationSettingsEditor) {
         ((RunConfigurationSettingsEditor)configEditor).setOwner(ConfigurationSettingsEditor.this);

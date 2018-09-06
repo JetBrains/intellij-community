@@ -210,7 +210,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   }
 
   private static class SaveTemporaryAction extends DumbAwareAction {
-    public SaveTemporaryAction() {
+    SaveTemporaryAction() {
       Presentation presentation = getTemplatePresentation();
       presentation.setIcon(AllIcons.Actions.Menu_saveall);
     }
@@ -266,7 +266,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     private final Project myProject;
     private final ExecutionTarget myTarget;
 
-    public SelectTargetAction(final Project project, final ExecutionTarget target, boolean selected) {
+    SelectTargetAction(final Project project, final ExecutionTarget target, boolean selected) {
       myProject = project;
       myTarget = target;
 
@@ -300,7 +300,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     private final RunnerAndConfigurationSettings myConfiguration;
     private final Project myProject;
 
-    public SelectConfigAction(final RunnerAndConfigurationSettings configuration, final Project project) {
+    SelectConfigAction(final RunnerAndConfigurationSettings configuration, final Project project) {
       myConfiguration = configuration;
       myProject = project;
       String name = Executor.shortenNameIfNeed(configuration.getName());

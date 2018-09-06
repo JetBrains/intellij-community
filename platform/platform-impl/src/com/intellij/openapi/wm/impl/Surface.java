@@ -20,7 +20,7 @@ final class Surface extends JComponent {
   private final ToolWindowAnchor myAnchor;
   private int myOffset = 0;
 
-  public Surface(final Image topImage,
+  Surface(final Image topImage,
                  final Image bottomImage,
                  final Point2D bottomImageOffset,
                  final int direction,

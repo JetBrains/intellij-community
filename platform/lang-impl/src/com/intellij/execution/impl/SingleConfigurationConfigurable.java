@@ -320,7 +320,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
     private Runnable myQuickFix = null;
 
-    public MyValidatableComponent() {
+    MyValidatableComponent() {
       myNameLabel.setLabelFor(myNameText);
       myNameText.setDocument(myNameDocument);
 

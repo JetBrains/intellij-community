@@ -204,7 +204,7 @@ public class TextDiffViewerUtil {
     private class MyAction extends AnAction implements DumbAware {
       @NotNull private final T myOption;
 
-      public MyAction(@NotNull T option) {
+      MyAction(@NotNull T option) {
         super(getText(option));
         myOption = option;
       }
@@ -219,7 +219,7 @@ public class TextDiffViewerUtil {
   private static abstract class EnumPolicySettingAction<T extends Enum> extends TextDiffViewerUtil.ComboBoxSettingAction<T> {
     @NotNull private final T[] myPolicies;
 
-    public EnumPolicySettingAction(@NotNull T[] policies) {
+    EnumPolicySettingAction(@NotNull T[] policies) {
       assert policies.length > 0;
       myPolicies = policies;
     }

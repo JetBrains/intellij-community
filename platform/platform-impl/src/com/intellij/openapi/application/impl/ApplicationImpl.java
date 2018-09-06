@@ -1289,7 +1289,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private class WriteAccessToken extends AccessToken {
     @NotNull private final Class clazz;
 
-    public WriteAccessToken(@NotNull Class clazz) {
+    WriteAccessToken(@NotNull Class clazz) {
       this.clazz = clazz;
       startWrite(clazz);
       markThreadNameInStackTrace();

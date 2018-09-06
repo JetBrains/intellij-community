@@ -180,7 +180,7 @@ public class ToolEditorDialog extends DialogWrapper {
   private class InsertMacroActionListener implements ActionListener {
     private final JTextField myTextField;
 
-    public InsertMacroActionListener(JTextField textField) {
+    InsertMacroActionListener(JTextField textField) {
       myTextField = textField;
     }
 

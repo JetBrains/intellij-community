@@ -933,7 +933,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
   public void testEncodingDetectionRequestsRunInOneThreadForEachDocument() throws IOException {
     Set<Thread> detectThreads = ContainerUtil.newConcurrentSet();
     class MyFT extends LanguageFileType implements FileTypeIdentifiableByVirtualFile {
-      public MyFT() {
+      MyFT() {
         super(Language.ANY);
       }
 

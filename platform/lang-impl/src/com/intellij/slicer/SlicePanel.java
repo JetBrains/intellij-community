@@ -166,7 +166,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     @NotNull
     private final Map<SliceLanguageSupportProvider, SliceUsageCellRendererBase> providersToRenderers = new HashMap<>();
 
-    public MultiLanguageTreeCellRenderer(@NotNull SliceUsageCellRendererBase rootRenderer) {
+    MultiLanguageTreeCellRenderer(@NotNull SliceUsageCellRendererBase rootRenderer) {
       this.rootRenderer = rootRenderer;
       rootRenderer.setOpaque(false);
     }

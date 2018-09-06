@@ -202,7 +202,7 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
 
     private static class MyAccessiblePanel extends JPanel {
       private Accessible myAccessible;
-      public MyAccessiblePanel() {
+      MyAccessiblePanel() {
         super(new BorderLayout());
         setOpaque(false);
       }

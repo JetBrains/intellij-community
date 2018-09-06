@@ -204,7 +204,7 @@ public abstract class OldChangesBrowserBase extends JPanel implements TypeSafeDa
   }
 
   private class ToggleChangeAction extends CheckboxAction {
-    public ToggleChangeAction() {
+    ToggleChangeAction() {
       super(VcsBundle.message("commit.dialog.include.action.name"));
     }
 

@@ -119,7 +119,7 @@ public class ConvertUsagesUtil {
     public final String first;
     public final String second;
 
-    public StringPair(String first, String second) {
+    StringPair(String first, String second) {
       this.first = first;
       this.second = second;
     }

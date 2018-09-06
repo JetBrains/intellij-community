@@ -112,7 +112,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
 
   private class CopyToProjectAction extends DumbAwareAction {
 
-    public CopyToProjectAction() {
+    CopyToProjectAction() {
       super(ApplicationBundle.message("settings.editor.scheme.copy.to.project"));
     }
 
@@ -135,7 +135,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
 
   private class CopyToIDEAction extends DumbAwareAction {
 
-    public CopyToIDEAction() {
+    CopyToIDEAction() {
       super(ApplicationBundle.message("settings.editor.scheme.copy.to.ide"));
     }
 
@@ -157,7 +157,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   
   private class ResetAction extends DumbAwareAction {
     
-    public ResetAction() {
+    ResetAction() {
       super(ApplicationBundle.message("settings.editor.scheme.reset"));
     }
 
@@ -186,7 +186,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   
   
   private class CopyAction extends DumbAwareAction {
-    public CopyAction() {
+    CopyAction() {
       super(ApplicationBundle.message("settings.editor.scheme.copy"));
     }
 
@@ -211,7 +211,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   
   
   private class RenameAction extends DumbAwareAction {
-    public RenameAction() {
+    RenameAction() {
       super("Rename...");
     }
 
@@ -230,7 +230,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   }
   
   private class DeleteAction extends DumbAwareAction {
-    public DeleteAction() {
+    DeleteAction() {
       super(ApplicationBundle.message("settings.editor.scheme.delete"));
     }
 
@@ -275,7 +275,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   private abstract static class ImportExportActionGroup extends ActionGroup {
     private final Collection<String> myActionNames;
 
-    public ImportExportActionGroup(@NotNull String groupName, @NotNull Collection<String> actionNames) {
+    ImportExportActionGroup(@NotNull String groupName, @NotNull Collection<String> actionNames) {
       super(groupName, true);
       myActionNames = actionNames;
     }
@@ -298,7 +298,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
 
     private final String myImporterName;
 
-    public ImportAction(@NotNull String importerName, @NotNull String importerText) {
+    ImportAction(@NotNull String importerName, @NotNull String importerText) {
       super(importerText);
       myImporterName = importerName;
     }
@@ -313,7 +313,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   private class ExportAction extends DumbAwareAction {
     private final String myExporterName;
 
-    public ExportAction(@NotNull String exporterName, @NotNull String exporterText) {
+    ExportAction(@NotNull String exporterName, @NotNull String exporterText) {
       super(exporterText);
       myExporterName = exporterName;
     }

@@ -35,7 +35,7 @@ import java.awt.*;
 final class ColoredCommanderRenderer extends ColoredListCellRenderer {
   private final CommanderPanel myCommanderPanel;
 
-  public ColoredCommanderRenderer(@NotNull final CommanderPanel commanderPanel) {
+  ColoredCommanderRenderer(@NotNull final CommanderPanel commanderPanel) {
     myCommanderPanel = commanderPanel;
   }
 

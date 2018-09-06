@@ -406,7 +406,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   }
 
   private class ContentPanel extends JPanel implements DataProvider {
-    public ContentPanel() {
+    ContentPanel() {
       super(new BorderLayout());
     }
 

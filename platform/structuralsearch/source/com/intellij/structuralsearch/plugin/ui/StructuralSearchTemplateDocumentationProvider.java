@@ -41,7 +41,7 @@ public class StructuralSearchTemplateDocumentationProvider extends AbstractDocum
     @NotNull private final PsiManager myPsiManager;
     @NotNull private final DummyHolder myDummyHolder;
 
-    public ConfigurationElement(@NotNull Configuration configuration, @NotNull PsiManager psiManager) {
+    ConfigurationElement(@NotNull Configuration configuration, @NotNull PsiManager psiManager) {
       myConfiguration = configuration;
       myPsiManager = psiManager;
       myDummyHolder = DummyHolderFactory.createHolder(myPsiManager, null);

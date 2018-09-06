@@ -580,7 +580,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   }
 
   private class TreeNodeColumnInfoWrapper<T extends Comparable<T>> extends FileHistoryColumnWrapper<T> {
-    public TreeNodeColumnInfoWrapper(@NotNull ColumnInfo<VcsFileRevision, T> additionalColumn) {
+    TreeNodeColumnInfoWrapper(@NotNull ColumnInfo<VcsFileRevision, T> additionalColumn) {
       super(additionalColumn);
     }
 
@@ -878,7 +878,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     private final TreeCellRenderer myDefaultCellRenderer;
     private final Getter<VcsHistorySession> myHistorySession;
 
-    public MyTreeCellRenderer(final TreeCellRenderer defaultCellRenderer, final Getter<VcsHistorySession> historySession) {
+    MyTreeCellRenderer(final TreeCellRenderer defaultCellRenderer, final Getter<VcsHistorySession> historySession) {
       myDefaultCellRenderer = defaultCellRenderer;
       myHistorySession = historySession;
     }
@@ -920,7 +920,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   private static class MyCellWrapper implements CellWrapper {
     private final Getter<VcsHistorySession> myHistorySession;
 
-    public MyCellWrapper(final Getter<VcsHistorySession> historySession) {
+    MyCellWrapper(final Getter<VcsHistorySession> historySession) {
       myHistorySession = historySession;
     }
 
@@ -941,7 +941,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   }
 
   private class MyShowAsTreeAction extends ToggleAction implements DumbAware {
-    public MyShowAsTreeAction() {
+    MyShowAsTreeAction() {
       super(VcsBundle.message("action.name.show.files.as.tree"), null, PlatformIcons.SMALL_VCS_CONFIGURABLE);
     }
 
@@ -959,7 +959,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
   private class MyShowDetailsAction extends ToggleAction implements DumbAware {
 
-    public MyShowDetailsAction() {
+    MyShowDetailsAction() {
       super("Show Details", "Display details panel", AllIcons.Actions.PreviewDetailsVertically);
     }
 

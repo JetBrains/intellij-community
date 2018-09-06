@@ -209,7 +209,7 @@ public class DependencyConfigurable implements Configurable {
 
 
   private class RightColumn extends MyColumnInfo {
-    public RightColumn(final String name) {
+    RightColumn(final String name) {
       super(name);
     }
 
@@ -225,7 +225,7 @@ public class DependencyConfigurable implements Configurable {
   }
 
   private class LeftColumn extends MyColumnInfo {
-    public LeftColumn(final String name) {
+    LeftColumn(final String name) {
       super(name);
     }
 
@@ -243,7 +243,7 @@ public class DependencyConfigurable implements Configurable {
   private static class MyTableModel extends ListTableModel<DependencyRule> implements EditableModel {
     private final boolean myDenyRule;
 
-    public MyTableModel(final ColumnInfo[] columnInfos, final boolean isDenyRule) {
+    MyTableModel(final ColumnInfo[] columnInfos, final boolean isDenyRule) {
       super(columnInfos);
       myDenyRule = isDenyRule;
     }

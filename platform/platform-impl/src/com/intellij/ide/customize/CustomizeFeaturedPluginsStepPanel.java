@@ -331,7 +331,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
     private final int myNumberOfDownloads;
     private int myDownload;
 
-    public MyIndicator(CardLayout wrapperLayout,
+    MyIndicator(CardLayout wrapperLayout,
                        JPanel buttonWrapper,
                        JButton installButton,
                        JProgressBar progressBar,

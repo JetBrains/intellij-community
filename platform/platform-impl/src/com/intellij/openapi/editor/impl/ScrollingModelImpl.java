@@ -450,7 +450,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     private final double myPow;
     private final Animator myAnimator;
 
-    public AnimatedScrollingRunnable(int startHOffset,
+    AnimatedScrollingRunnable(int startHOffset,
                                      int startVOffset,
                                      int endHOffset,
                                      int endVOffset) throws NoAnimationRequiredException {

@@ -23,7 +23,7 @@ final class TodoCompositeRenderer implements TreeCellRenderer {
   private final HighlightableCellRenderer myColorTreeCellRenderer;
   private final MultiLineTodoRenderer myMultiLineRenderer;
 
-  public TodoCompositeRenderer() {
+  TodoCompositeRenderer() {
     myNodeRenderer = new NodeRenderer();
     myColorTreeCellRenderer = new HighlightableCellRenderer();
     myMultiLineRenderer = new MultiLineTodoRenderer();

@@ -153,7 +153,7 @@ public class CompositeView<T extends ComponentContainer> extends JPanel implemen
   }
 
   private class SwitchViewAction extends ToggleAction implements DumbAware {
-    public SwitchViewAction() {
+    SwitchViewAction() {
       super("Toggle view", null,
             AllIcons.Actions.ChangeView);
     }

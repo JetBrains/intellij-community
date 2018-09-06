@@ -354,7 +354,7 @@ public class Util {
   }
 
   private static class MyChange extends Diff.Change {
-    public MyChange(int line0, int line1, int deleted, int inserted) {
+    MyChange(int line0, int line1, int deleted, int inserted) {
       super(line0, line1, deleted, inserted, null);
     }
 

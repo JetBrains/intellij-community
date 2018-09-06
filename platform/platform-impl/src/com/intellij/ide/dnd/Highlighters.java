@@ -177,7 +177,7 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
   }
 
   private static class ErrorTextHighlighter extends BaseTextHighlighter {
-    public ErrorTextHighlighter() {
+    ErrorTextHighlighter() {
       super(MessageType.ERROR);
     }
 
@@ -188,7 +188,7 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
   }
 
   private static class FilledRectangleHighlighter extends AbstractComponentHighlighter {
-    public FilledRectangleHighlighter() {
+    FilledRectangleHighlighter() {
       super();
       setOpaque(true);
       setBorder(BorderFactory.createLineBorder(JBColor.RED));
@@ -207,7 +207,7 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
   }
 
   private static class RectangleHighlighter extends AbstractComponentHighlighter {
-    public RectangleHighlighter() {
+    RectangleHighlighter() {
       super();
       setOpaque(false);
       setBorder(BorderFactory.createLineBorder(JBColor.RED));

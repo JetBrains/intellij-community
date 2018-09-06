@@ -520,7 +520,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
   private class SETab extends JLabel {
     private final SearchEverywhereContributor myContributor;
 
-    public SETab(SearchEverywhereContributor contributor) {
+    SETab(SearchEverywhereContributor contributor) {
       super(contributor == null ? IdeBundle.message("searcheverywhere.allelements.tab.name") : contributor.getGroupName());
       myContributor = contributor;
       Insets insets = JBUI.CurrentTheme.SearchEverywhere.tabInsets();
@@ -1009,7 +1009,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
 
   private class ShowInFindToolWindowAction extends DumbAwareAction {
 
-    public ShowInFindToolWindowAction() {
+    ShowInFindToolWindowAction() {
       super(IdeBundle.message("searcheverywhere.show.in.find.window.button.name"),
         IdeBundle.message("searcheverywhere.show.in.find.window.button.name"), AllIcons.General.Pin_tab);
     }
@@ -1123,7 +1123,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
   private class ShowFilterAction extends ToggleAction implements DumbAware {
     private JBPopup myFilterPopup;
 
-    public ShowFilterAction() {
+    ShowFilterAction() {
       super("Filter", "Filter files by type", AllIcons.General.Filter);
     }
 

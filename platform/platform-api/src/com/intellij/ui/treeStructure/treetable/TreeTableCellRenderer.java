@@ -129,7 +129,7 @@ public class TreeTableCellRenderer implements TableCellRenderer, ClientPropertyH
     private boolean myExpanded;
     private boolean myLeaf;
 
-    public TableCellRendererComponent() {
+    TableCellRendererComponent() {
       super(new BorderLayout());
     }
 

@@ -123,7 +123,7 @@ public abstract class MoveDirectoryWithClassesHelper {
     private static class MyUsageInfo extends UsageInfo {
       private final @NotNull PsiFileSystemItem myFile;
 
-      public MyUsageInfo(@NotNull PsiReference reference, @NotNull PsiFileSystemItem file) {
+      MyUsageInfo(@NotNull PsiReference reference, @NotNull PsiFileSystemItem file) {
         super(reference);
         myFile = file;
       }

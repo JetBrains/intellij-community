@@ -51,7 +51,7 @@ public class MergeActionGroup extends ActionGroup {
   private static class SelectSuggestionAction extends AnAction {
     private final MergeOperations myOperations;
 
-    public SelectSuggestionAction(MergeOperations operations) {
+    SelectSuggestionAction(MergeOperations operations) {
       super(DiffBundle.message("diff.dialog.select.change.action.name"),
             DiffBundle.message("diff.dialog.select.change.action.description"), null);
       myOperations = operations;

@@ -10,11 +10,11 @@ final class MatrixConverter extends ColorConverter {
   private final Double myWeight;
   private final Matrix myMatrix;
 
-  public MatrixConverter(Matrix matrix) {
+  MatrixConverter(Matrix matrix) {
     this(null, matrix);
   }
 
-  public MatrixConverter(Double weight, Matrix matrix) {
+  MatrixConverter(Double weight, Matrix matrix) {
     if (weight != null && !(0 < weight && weight < 1)) throw new IllegalArgumentException("unsupported weight");
     int rows = matrix.getRows();
     if (rows != 3 && rows != 4) throw new IllegalArgumentException("unsupported rows");

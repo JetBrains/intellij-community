@@ -450,7 +450,7 @@ public class ListPluginComponent extends CellPluginComponent {
   private static class ButtonAnAction extends DumbAwareAction {
     private final JButton[] myButtons;
 
-    public ButtonAnAction(@NotNull JButton... buttons) {
+    ButtonAnAction(@NotNull JButton... buttons) {
       super(buttons[0].getText());
       myButtons = buttons;
       setShortcutSet(CommonShortcuts.ENTER);
@@ -465,7 +465,7 @@ public class ListPluginComponent extends CellPluginComponent {
   }
 
   private abstract static class MyAnAction extends DumbAwareAction {
-    public MyAnAction(@Nullable String text, int keyCode) {
+    MyAnAction(@Nullable String text, int keyCode) {
       super(text);
       setShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(keyCode, 0)));
     }

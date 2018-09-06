@@ -232,7 +232,7 @@ public class GeometryUtil implements SwingConstants {
   private static class OrientedPoint extends Point {
     private final int myOrientation;
 
-    public OrientedPoint(double x, double y, int aOrientation) {
+    OrientedPoint(double x, double y, int aOrientation) {
       super((int) x, (int) y);
       myOrientation = aOrientation;
     }

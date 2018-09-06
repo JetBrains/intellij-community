@@ -384,7 +384,7 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
     private final Map<String, List<String>> results;
     private final String description;
 
-    public Scenario(Map<SearchEverywhereContributor<?>, Integer> contributorsAndLimits,
+    Scenario(Map<SearchEverywhereContributor<?>, Integer> contributorsAndLimits,
                     Map<String, List<String>> results, String description) {
       this.contributorsAndLimits = contributorsAndLimits;
       this.results = results;

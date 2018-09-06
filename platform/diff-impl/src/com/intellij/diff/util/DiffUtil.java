@@ -1662,7 +1662,7 @@ public class DiffUtil {
   private static class SyncHeightComponent extends JPanel {
     @NotNull private final List<JComponent> myComponents;
 
-    public SyncHeightComponent(@NotNull List<JComponent> components, int index) {
+    SyncHeightComponent(@NotNull List<JComponent> components, int index) {
       super(new BorderLayout());
       myComponents = components;
       JComponent delegate = components.get(index);

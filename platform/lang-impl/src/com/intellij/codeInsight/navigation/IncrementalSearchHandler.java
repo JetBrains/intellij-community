@@ -60,7 +60,7 @@ public class IncrementalSearchHandler {
     RangeHighlighter segmentHighlighter;
     boolean ignoreCaretMove = false;
 
-    public PerHintSearchData(Project project, JLabel label) {
+    PerHintSearchData(Project project, JLabel label) {
       this.project = project;
       this.label = label;
     }
@@ -315,7 +315,7 @@ public class IncrementalSearchHandler {
   }
 
   private static class MyLabel extends JLabel {
-    public MyLabel(String text) {
+    MyLabel(String text) {
       super(text);
       this.setBackground(HintUtil.getInformationColor());
       this.setForeground(JBColor.foreground());
@@ -326,7 +326,7 @@ public class IncrementalSearchHandler {
   private static class MyPanel extends JPanel{
     private final Component myLeft;
 
-    public MyPanel(Component left) {
+    MyPanel(Component left) {
       super(new BorderLayout());
       myLeft = left;
     }

@@ -91,7 +91,7 @@ public class JBPopupMenu extends JPopupMenu {
     int myScrollDirection = 0;
     Timer myTimer;
 
-    public MyLayout(final JPopupMenu target) {
+    MyLayout(final JPopupMenu target) {
       super(target, BoxLayout.PAGE_AXIS);
       myTarget = target;
       myTimer = UIUtil.createNamedTimer("PopupTimer", 40, this);

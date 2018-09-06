@@ -535,7 +535,7 @@ public class TestAll implements Test {
   private static class ExplodedBomb extends TestCase {
     private final Bombed myBombed;
 
-    public ExplodedBomb(@NotNull String testName, @NotNull Bombed bombed) {
+    ExplodedBomb(@NotNull String testName, @NotNull Bombed bombed) {
       super(testName);
       myBombed = bombed;
     }

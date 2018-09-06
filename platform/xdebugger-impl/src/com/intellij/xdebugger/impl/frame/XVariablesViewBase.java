@@ -178,7 +178,7 @@ public abstract class XVariablesViewBase extends XDebugView {
     private final Project myProject;
     private final XDebuggerTreePanel myTreePanel;
 
-    public MySelectionListener(Editor editor,
+    MySelectionListener(Editor editor,
                                XStackFrame stackFrame,
                                Project project,
                                XDebuggerTreePanel panel) {

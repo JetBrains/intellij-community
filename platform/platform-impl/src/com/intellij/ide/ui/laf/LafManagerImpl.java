@@ -791,7 +791,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     private final PopupFactory myDelegate;
 
-    public OurPopupFactory(final PopupFactory delegate) {
+    OurPopupFactory(final PopupFactory delegate) {
       myDelegate = delegate;
     }
 

@@ -681,7 +681,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   }
 
   private class RefreshAction extends com.intellij.ide.actions.RefreshAction {
-    public RefreshAction() {
+    RefreshAction() {
       super(IdeBundle.message("action.refresh"), IdeBundle.message("action.refresh"), AllIcons.Actions.Refresh);
     }
 

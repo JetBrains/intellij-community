@@ -350,7 +350,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     @Nullable private Condition<Integer> myCondition;
     @NotNull private VcsLogDataPack myVisiblePack = VisiblePack.EMPTY;
 
-    public RevisionHistoryHighlighter(@NotNull VcsLogStorage storage, @NotNull Hash revision, @NotNull VirtualFile root) {
+    RevisionHistoryHighlighter(@NotNull VcsLogStorage storage, @NotNull Hash revision, @NotNull VirtualFile root) {
       myStorage = storage;
       myRevision = revision;
       myRoot = root;

@@ -403,7 +403,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
   private static class CommitCountRequirements implements VcsLogProvider.Requirements {
     private final int myCommitCount;
 
-    public CommitCountRequirements(int commitCount) {
+    CommitCountRequirements(int commitCount) {
       myCommitCount = commitCount;
     }
 
@@ -425,7 +425,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
     private final Map<VirtualFile, CompressedRefs> myRefs = ContainerUtil.newHashMap();
     private final Map<VirtualFile, List<GraphCommit<Integer>>> myCommits = ContainerUtil.newHashMap();
 
-    public LogInfo(VcsLogStorage storage) {
+    LogInfo(VcsLogStorage storage) {
       myStorage = storage;
     }
 

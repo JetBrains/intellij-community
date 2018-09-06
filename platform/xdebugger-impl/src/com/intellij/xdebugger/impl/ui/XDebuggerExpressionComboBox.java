@@ -154,7 +154,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     private final JComponent myPanel;
     private final EditorComboBoxEditor myDelegate;
 
-    public XDebuggerComboBoxEditor(boolean showMultiline, boolean languageInside) {
+    XDebuggerComboBoxEditor(boolean showMultiline, boolean languageInside) {
       myDelegate = new EditorComboBoxEditor(getProject(), getEditorsProvider().getFileType()) {
         @Override
         protected void onEditorCreate(EditorEx editor) {

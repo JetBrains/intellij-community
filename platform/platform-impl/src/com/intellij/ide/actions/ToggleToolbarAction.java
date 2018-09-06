@@ -175,7 +175,7 @@ public class ToggleToolbarAction extends ToggleAction implements DumbAware {
 
     private final ToolWindow myToolWindow;
 
-    public OptionsGroup(ToolWindow toolWindow) {
+    OptionsGroup(ToolWindow toolWindow) {
       super("View Options", true);
       myToolWindow = toolWindow;
     }

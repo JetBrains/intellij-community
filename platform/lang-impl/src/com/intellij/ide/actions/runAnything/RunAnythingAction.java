@@ -1043,7 +1043,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     private final ActionCallback myDone = new ActionCallback();
     @NotNull private final RunAnythingSearchListModel myListModel;
 
-    public CalcThread(@NotNull Project project, @NotNull String pattern, boolean reuseModel) {
+    CalcThread(@NotNull Project project, @NotNull String pattern, boolean reuseModel) {
       myProject = project;
       myPattern = pattern;
       RunAnythingSearchListModel model = getSearchingModel(myList);
@@ -1423,7 +1423,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   }
 
   static class MySearchTextField extends SearchTextField implements DataProvider, Disposable {
-    public MySearchTextField() {
+    MySearchTextField() {
       super(false, "RunAnythingHistory");
       JTextField editor = getTextEditor();
       editor.setOpaque(false);

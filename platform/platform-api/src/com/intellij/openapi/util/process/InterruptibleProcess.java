@@ -81,7 +81,7 @@ public abstract class InterruptibleProcess extends InterruptibleActivity {
   private class InputStreamWrapper extends InputStream {
     private final InputStream myDelegate;
 
-    public InputStreamWrapper(final InputStream delegate) {
+    InputStreamWrapper(final InputStream delegate) {
       myDelegate = delegate;
     }
 

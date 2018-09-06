@@ -257,7 +257,7 @@ public class ListUtil {
       }
     });
     class MyListSelectionListener extends Updatable implements ListSelectionListener {
-      public MyListSelectionListener(JButton button) {
+      MyListSelectionListener(JButton button) {
         super(button);
       }
 
@@ -287,7 +287,7 @@ public class ListUtil {
 
   public static Updatable disableWhenNoSelection(final JButton button, final JList list) {
     class MyListSelectionListener extends Updatable implements ListSelectionListener {
-      public MyListSelectionListener(JButton button) {
+      MyListSelectionListener(JButton button) {
         super(button);
       }
 

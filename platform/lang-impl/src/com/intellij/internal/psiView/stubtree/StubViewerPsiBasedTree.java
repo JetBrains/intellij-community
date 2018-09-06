@@ -217,7 +217,7 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
 
   private class StubTreeSelectionListener implements TreeSelectionListener {
 
-    public StubTreeSelectionListener() {
+    StubTreeSelectionListener() {
     }
 
     @Override

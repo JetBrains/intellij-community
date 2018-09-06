@@ -34,7 +34,7 @@ final class FiltersTableModel extends AbstractTableModel implements ItemRemovabl
 
   private final List<? extends TodoFilter> myFilters;
 
-  public FiltersTableModel(List<? extends TodoFilter> filters) {
+  FiltersTableModel(List<? extends TodoFilter> filters) {
     myFilters = filters;
   }
 

@@ -1147,7 +1147,7 @@ public class ExternalSystemUtil {
   private static class MyMultiExternalProjectRefreshCallback implements ExternalProjectRefreshCallback {
     private final Project myProject;
 
-    public MyMultiExternalProjectRefreshCallback(Project project) {
+    MyMultiExternalProjectRefreshCallback(Project project) {
       myProject = project;
     }
 

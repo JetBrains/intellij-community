@@ -160,7 +160,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
   private static class TrackReposSynchronouslyAction extends ToggleAction implements DumbAware {
     private final DvcsSyncSettings myVcsSettings;
 
-    public TrackReposSynchronouslyAction(@NotNull DvcsSyncSettings vcsSettings) {
+    TrackReposSynchronouslyAction(@NotNull DvcsSyncSettings vcsSettings) {
       super(DvcsBundle.message("sync.setting"), DvcsBundle.message("sync.setting.description", "repository"), null);
       myVcsSettings = vcsSettings;
     }

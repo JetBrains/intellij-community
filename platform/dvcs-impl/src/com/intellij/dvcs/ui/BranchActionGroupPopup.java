@@ -340,7 +340,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   private static class MyPopupListElementRenderer extends PopupListElementRendererWithIcon {
     private ErrorLabel myInfoLabel;
 
-    public MyPopupListElementRenderer(ListPopupImpl aPopup) {
+    MyPopupListElementRenderer(ListPopupImpl aPopup) {
       super(aPopup);
     }
 
@@ -417,7 +417,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 
   private static class MyTextSeparator extends SeparatorWithText {
 
-    public MyTextSeparator() {
+    MyTextSeparator() {
       super();
       setTextForeground(JBColor.BLACK);
       setCaptionCentered(false);
@@ -441,7 +441,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     @NotNull private final String myToCollapseText;
     @NotNull private final String myToExpandText;
 
-    public MoreAction(@NotNull Project project,
+    MoreAction(@NotNull Project project,
                       int numberOfHiddenNodes,
                       @Nullable String settingName,
                       boolean defaultExpandValue,
@@ -547,7 +547,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       setUI(new BasicButtonUI());
     }
 
-    public MyToolbarButton(@Nullable String text,
+    MyToolbarButton(@Nullable String text,
                            @Nullable Icon icon,
                            @Nullable Icon rolloverIcon,
                            @NotNull ActionListener buttonListener) {
@@ -555,7 +555,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       addActionListener(buttonListener);
     }
 
-    public MyToolbarButton(AnAction action) {
+    MyToolbarButton(AnAction action) {
       this(action.getTemplatePresentation().getText(), action.getTemplatePresentation().getIcon(),
            action.getTemplatePresentation().getHoveredIcon());
       addActionListener(ActionUtil.createActionListener(action, this, BRANCH_POPUP));

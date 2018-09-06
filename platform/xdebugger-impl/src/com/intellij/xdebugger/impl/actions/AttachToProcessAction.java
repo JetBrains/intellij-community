@@ -444,7 +444,7 @@ public class AttachToProcessAction extends AnAction {
 
   private static class AttachHostItem extends AttachItem<XAttachHost> {
 
-    public AttachHostItem(@NotNull XAttachPresentationGroup<XAttachHost> group,
+    AttachHostItem(@NotNull XAttachPresentationGroup<XAttachHost> group,
                           boolean isFirstInGroup,
                           @NotNull XAttachHost host,
                           @NotNull Project project,
@@ -586,7 +586,7 @@ public class AttachToProcessAction extends AnAction {
   private static class MyBasePopupStep<T extends AttachItem> extends BaseListPopupStep<T> {
     @NotNull final Project myProject;
 
-    public MyBasePopupStep(@NotNull Project project,
+    MyBasePopupStep(@NotNull Project project,
                            @Nullable String title,
                            List<T> values) {
       super(title, values);
@@ -615,7 +615,7 @@ public class AttachToProcessAction extends AnAction {
   }
 
   private static class AttachListStep extends MyBasePopupStep<AttachItem> implements ListPopupStepEx<AttachItem> {
-    public AttachListStep(@NotNull List<AttachItem> items, @Nullable String title, @NotNull Project project) {
+    AttachListStep(@NotNull List<AttachItem> items, @Nullable String title, @NotNull Project project) {
       super(project, title, items);
     }
 
@@ -687,7 +687,7 @@ public class AttachToProcessAction extends AnAction {
     }
 
     private class DebuggerListStep extends MyBasePopupStep<AttachToProcessItem> {
-      public DebuggerListStep(List<AttachToProcessItem> items, int selectedItem) {
+      DebuggerListStep(List<AttachToProcessItem> items, int selectedItem) {
         super(AttachListStep.this.myProject, XDebuggerBundle.message("xdebugger.attach.popup.selectDebugger.title"), items);
         setDefaultOptionIndex(selectedItem);
       }

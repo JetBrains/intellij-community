@@ -30,7 +30,7 @@ class MergedCompositeConfigurable implements SearchableConfigurable {
   private final String displayName;
   private final String helpTopic;
 
-  public MergedCompositeConfigurable(@NotNull String id,
+  MergedCompositeConfigurable(@NotNull String id,
                                      @NotNull String displayName,
                                      @Nullable String helpTopic,
                                      @NotNull Configurable[] children) {

@@ -210,7 +210,7 @@ public class ProcessPopup  {
 
     private final JLabel myLabel = new JLabel("XXX");
 
-    public ActiveContent() {
+    ActiveContent() {
       super(new BorderLayout());
       setBorder(DialogWrapper.ourDefaultBorder);
       setFocusable(true);

@@ -290,7 +290,7 @@ public final class WindowWatcher implements PropertyChangeListener{
     public final WeakReference<FocusWatcher> myFocusWatcherRef;
     public boolean mySuggestAsParent;
 
-    public WindowInfo(final Window window,final boolean suggestAsParent){
+    WindowInfo(final Window window,final boolean suggestAsParent){
       final FocusWatcher focusWatcher=new FocusWatcher();
       focusWatcher.install(window);
       myFocusWatcherRef= new WeakReference<>(focusWatcher);

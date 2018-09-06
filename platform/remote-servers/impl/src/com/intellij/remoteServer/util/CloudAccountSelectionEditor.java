@@ -217,7 +217,7 @@ public class CloudAccountSelectionEditor {
 
     private final RemoteServer<?> myAccount;
 
-    public AccountItem(RemoteServer<?> account) {
+    AccountItem(RemoteServer<?> account) {
       myAccount = account;
     }
 

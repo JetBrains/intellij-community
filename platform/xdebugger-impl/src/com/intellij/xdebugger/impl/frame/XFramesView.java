@@ -166,7 +166,7 @@ public class XFramesView extends XDebugView {
   private class ThreadsBuilder implements XSuspendContext.XExecutionStackContainer {
     private volatile boolean myObsolete;
 
-    public ThreadsBuilder() {
+    ThreadsBuilder() {
       myThreadComboBox.addItem(null); // rendered as "Loading..."
     }
 

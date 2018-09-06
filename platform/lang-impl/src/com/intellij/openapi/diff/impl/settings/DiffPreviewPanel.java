@@ -55,7 +55,7 @@ class DiffPreviewPanel implements PreviewPanel {
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
-  public DiffPreviewPanel() {
+  DiffPreviewPanel() {
     myViewer = new MyViewer();
     myViewer.init();
 
@@ -96,7 +96,7 @@ class DiffPreviewPanel implements PreviewPanel {
   private static class SampleRequest extends ContentDiffRequest {
     private final List<DiffContent> myContents;
 
-    public SampleRequest() {
+    SampleRequest() {
       myContents = Arrays.asList(DiffPreviewProvider.getContents());
     }
 
@@ -120,7 +120,7 @@ class DiffPreviewPanel implements PreviewPanel {
   }
 
   private static class SampleContext extends DiffContext {
-    public SampleContext() {
+    SampleContext() {
       TextDiffSettings settings = new TextDiffSettings();
       settings.setHighlightPolicy(HighlightPolicy.BY_WORD);
       settings.setIgnorePolicy(IgnorePolicy.IGNORE_WHITESPACES);
@@ -251,7 +251,7 @@ class DiffPreviewPanel implements PreviewPanel {
   }
 
   private static class MyViewer extends SimpleThreesideDiffViewer {
-    public MyViewer() {super(new SampleContext(), new SampleRequest());}
+    MyViewer() {super(new SampleContext(), new SampleRequest());}
 
     @Override
     protected boolean forceRediffSynchronously() {

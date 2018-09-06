@@ -306,7 +306,7 @@ public class HighlightManagerImpl extends HighlightManager {
     final Editor editor;
     @HideFlags final int flags;
 
-    public HighlightInfo(Editor editor, @HideFlags int flags) {
+    HighlightInfo(Editor editor, @HideFlags int flags) {
       this.editor = editor;
       this.flags = flags;
     }

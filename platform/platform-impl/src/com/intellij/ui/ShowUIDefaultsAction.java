@@ -429,7 +429,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
   private static class IconWrap implements Icon {
     private final Icon myIcon;
 
-    public IconWrap(Icon icon) {
+    IconWrap(Icon icon) {
       myIcon = icon;
     }
 

@@ -461,7 +461,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   }
 
   private class MyTreeExpander extends DefaultTreeExpander {
-    public MyTreeExpander() {
+    MyTreeExpander() {
       super(myView);
     }
 
@@ -474,7 +474,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
 
   private class ToggleShowIgnoredAction extends ToggleAction implements DumbAware {
-    public ToggleShowIgnoredAction() {
+    ToggleShowIgnoredAction() {
       super(VcsBundle.message("changes.action.show.ignored.text"),
             VcsBundle.message("changes.action.show.ignored.description"),
             AllIcons.Actions.ShowHiddens);
@@ -506,7 +506,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   }
 
   private class MyChangeProcessor extends ChangeViewDiffRequestProcessor {
-    public MyChangeProcessor(@NotNull Project project) {
+    MyChangeProcessor(@NotNull Project project) {
       super(project, DiffPlaces.CHANGES_VIEW);
       Disposer.register(project, this);
     }

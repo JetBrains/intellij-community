@@ -218,7 +218,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     public Computable<Point> myEventLocation;
     private boolean inDnd;
 
-    public FlatWelcomeScreen() {
+    FlatWelcomeScreen() {
       super(new BorderLayout());
       mySlidingPanel.add("root", this);
       setBackground(getMainBackground());
@@ -741,7 +741,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     private class IconsFreeActionGroup extends ActionGroup {
       private final ActionGroup myGroup;
 
-      public IconsFreeActionGroup(ActionGroup group) {
+      IconsFreeActionGroup(ActionGroup group) {
         super(group.getTemplatePresentation().getText(), group.getTemplatePresentation().getDescription(), null);
         myGroup = group;
       }

@@ -128,14 +128,14 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   class BaseTreeBuilder extends AbstractTreeBuilder {
     volatile boolean myWasCleanedUp;
 
-    public BaseTreeBuilder(JTree tree,
+    BaseTreeBuilder(JTree tree,
                            DefaultTreeModel treeModel,
                            AbstractTreeStructure treeStructure,
                            @Nullable Comparator<NodeDescriptor> comparator) {
       super(tree, treeModel, treeStructure, comparator);
     }
 
-    public BaseTreeBuilder(JTree tree,
+    BaseTreeBuilder(JTree tree,
                            DefaultTreeModel treeModel,
                            AbstractTreeStructure treeStructure,
                            @Nullable Comparator<NodeDescriptor> comparator,

@@ -274,7 +274,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
       private final String searchText;
       private final String contributorID;
 
-      public HistoryItem(String searchText, String contributorID) {
+      HistoryItem(String searchText, String contributorID) {
         this.searchText = searchText;
         this.contributorID = contributorID;
       }
@@ -354,7 +354,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
     private final List<String> list;
     private int index;
 
-    public HistoryIterator(String id, List<String> list) {
+    HistoryIterator(String id, List<String> list) {
       contributorID = id;
       this.list = list;
       index = -1;

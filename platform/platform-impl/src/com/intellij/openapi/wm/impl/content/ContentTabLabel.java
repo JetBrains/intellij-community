@@ -172,7 +172,7 @@ class ContentTabLabel extends BaseLabel {
     return icon.contains(point);
   }
 
-  public ContentTabLabel(@NotNull Content content, @NotNull TabContentLayout layout) {
+  ContentTabLabel(@NotNull Content content, @NotNull TabContentLayout layout) {
     super(layout.myUi, false);
     myLayout = layout;
     myContent = content;
@@ -355,7 +355,7 @@ class ContentTabLabel extends BaseLabel {
     final IdeTooltip currentTooltip;
     final AdditionalIcon icon;
 
-    public CurrentTooltip(IdeTooltip currentTooltip, AdditionalIcon icon) {
+    CurrentTooltip(IdeTooltip currentTooltip, AdditionalIcon icon) {
       this.currentTooltip = currentTooltip;
       this.icon = icon;
     }

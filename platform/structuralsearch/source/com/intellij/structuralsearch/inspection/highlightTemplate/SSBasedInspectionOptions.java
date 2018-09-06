@@ -196,7 +196,7 @@ public class SSBasedInspectionOptions {
 
     private final boolean myReplace;
 
-    public AddTemplateAction(boolean replace) {
+    AddTemplateAction(boolean replace) {
       super(replace
             ? SSRBundle.message("SSRInspection.add.replace.template.button")
             : SSRBundle.message("SSRInspection.add.search.template.button"));

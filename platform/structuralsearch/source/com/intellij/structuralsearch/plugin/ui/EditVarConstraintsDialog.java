@@ -650,7 +650,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     private final Project myProject;
     private final TextAccessor myTextField;
 
-    public SelectTemplateListener(Project project, TextAccessor textField) {
+    SelectTemplateListener(Project project, TextAccessor textField) {
       myProject = project;
       myTextField = textField;
     }

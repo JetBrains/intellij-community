@@ -222,7 +222,7 @@ public class AnsiEscapeDecoderTest extends PlatformTestCase {
     private final List<Pair<String, String>> myExpectedColoredChunks = new ArrayList<>();
     private final Key myOutputType;
 
-    public ColoredText(@NotNull String rawText, @NotNull Key outputType) {
+    ColoredText(@NotNull String rawText, @NotNull Key outputType) {
       myRawText = rawText;
       myOutputType = outputType;
     }

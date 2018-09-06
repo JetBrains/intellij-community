@@ -247,7 +247,7 @@ class FileLoader extends Loader {
     private final URL myUrl;
     private final File myFile;
 
-    public MyResource(URL url, File file) {
+    MyResource(URL url, File file) {
       myUrl = url;
       myFile = file;
     }
