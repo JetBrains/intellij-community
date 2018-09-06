@@ -1484,6 +1484,21 @@ public final class TreeUtil {
   }
 
   /**
+   * Processes visible nodes in the specified tree.
+   *
+   * @param tree     a tree, which nodes should be processed
+   * @param mapper   a function to convert a visible tree path to a corresponding object
+   * @param consumer a visible path processor
+   */
+  public static <T> void visitVisibleRows(@NotNull JTree tree, @NotNull Function<TreePath, T> mapper, @NotNull Consumer<T> consumer) {
+    visitVisibleRows(tree, path -> {
+      T object = mapper.apply(path);
+      if (object != null) consumer.accept(object);
+      return TreeVisitor.Action.CONTINUE;
+    });
+  }
+
+  /**
    * @param tree   a tree, which visible paths are processed
    * @param filter a predicate to filter visible tree paths
    * @param mapper a function to convert a visible tree path to a corresponding object
@@ -1496,13 +1511,7 @@ public final class TreeUtil {
     int count = tree.getRowCount();
     if (count == 0) return Collections.emptyList();
     List<T> list = new ArrayList<>(count);
-    visitVisibleRows(tree, path -> {
-      if (filter.test(path)) {
-        T object = mapper.apply(path);
-        if (object != null) list.add(object);
-      }
-      return TreeVisitor.Action.CONTINUE;
-    });
+    visitVisibleRows(tree, path -> filter.test(path) ? mapper.apply(path) : null, list::add);
     return list;
   }
 }

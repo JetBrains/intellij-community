@@ -797,10 +797,7 @@ public final class TreeUtilVisitTest {
       -> TreeUtil.expandAll(test.getTree(), ()
       -> test.assertTree("-true\n 101\n 1.1\n", ()
       -> {
-      TreeUtil.visitVisibleRows(test.getTree(), path -> {
-        test.getTree().addSelectionPath(path);
-        return TreeVisitor.Action.CONTINUE;
-      });
+      TreeUtil.visitVisibleRows(test.getTree(), path -> path, path -> test.getTree().addSelectionPath(path));
       test.assertTree("-[true]\n [101]\n [1.1]\n", true, () -> {
         Assert.assertEquals(3, TreeUtil.collectSelectedObjectsOfType(test.getTree(), Object.class).size());
         Assert.assertEquals(2, TreeUtil.collectSelectedObjectsOfType(test.getTree(), Number.class).size());
