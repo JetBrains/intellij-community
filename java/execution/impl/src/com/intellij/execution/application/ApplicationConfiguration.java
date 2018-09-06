@@ -40,7 +40,6 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   @Deprecated public String WORKING_DIRECTORY;
   @Deprecated public boolean ALTERNATIVE_JRE_PATH_ENABLED;
   @Deprecated public String ALTERNATIVE_JRE_PATH;
-  @Deprecated public boolean ENABLE_SWING_INSPECTOR;
   /* */
 
   private ShortenCommandLine myShortenCommandLine = null;
@@ -296,7 +295,6 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     WORKING_DIRECTORY = workingDirectory;
     ALTERNATIVE_JRE_PATH = options.getAlternativeJrePath();
     ALTERNATIVE_JRE_PATH_ENABLED = options.isAlternativeJrePathEnabled();
-    ENABLE_SWING_INSPECTOR = options.isSwingInspectorEnabled();
 
     JavaRunConfigurationExtensionManager.getInstance().readExternal(this, element);
     setShortenCommandLine(ShortenCommandLine.readShortenClasspathMethod(element));
@@ -330,13 +328,10 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   }
 
   public boolean isSwingInspectorEnabled() {
-    //noinspection deprecation
-    return ENABLE_SWING_INSPECTOR;
+    return getOptions().isSwingInspectorEnabled();
   }
 
   public void setSwingInspectorEnabled(boolean value) {
-    //noinspection deprecation
-    ENABLE_SWING_INSPECTOR = value;
     getOptions().setSwingInspectorEnabled(value);
   }
 
