@@ -1,7 +1,7 @@
 package com.intellij.configurationScript
 
 import com.google.gson.Gson
-import com.intellij.execution.application.ApplicationConfigurationOptions
+import com.intellij.execution.application.JvmMainMethodRunConfigurationOptions
 import com.intellij.execution.configurations.ConfigurationTypeBase
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -79,7 +79,7 @@ class ConfigurationFileTest {
       jvmMainMethod:
         isAlternativeJrePathEnabled: true
     """)
-    val options = ApplicationConfigurationOptions()
+    val options = JvmMainMethodRunConfigurationOptions()
     options.isAlternativeJrePathEnabled = true
     assertThat(result).containsExactly(options)
   }
@@ -91,7 +91,7 @@ class ConfigurationFileTest {
       jvmMainMethod:
         - isAlternativeJrePathEnabled: true
     """)
-    val options = ApplicationConfigurationOptions()
+    val options = JvmMainMethodRunConfigurationOptions()
     options.isAlternativeJrePathEnabled = true
     assertThat(result).containsExactly(options)
   }
@@ -104,7 +104,7 @@ class ConfigurationFileTest {
         jvmMainMethod:
           - isAlternativeJrePathEnabled: true
     """, isTemplatesOnly = true)
-    val options = ApplicationConfigurationOptions()
+    val options = JvmMainMethodRunConfigurationOptions()
     options.isAlternativeJrePathEnabled = true
     assertThat(result).containsExactly(options)
   }

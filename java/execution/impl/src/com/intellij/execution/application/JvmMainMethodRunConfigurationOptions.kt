@@ -6,7 +6,7 @@ import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.XMap
 import java.util.*
 
-open class ApplicationConfigurationOptions : JvmConfigurationOptions() {
+open class JvmMainMethodRunConfigurationOptions : JvmConfigurationOptions() {
   @get:OptionTag("PROGRAM_PARAMETERS")
   open var programParameters: String? by string()
 

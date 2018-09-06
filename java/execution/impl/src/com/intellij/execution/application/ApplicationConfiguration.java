@@ -61,16 +61,16 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   // backward compatibility (if 3rd-party plugin extends ApplicationConfigurationType but uses own factory without options class)
   @Override
   @NotNull
-  protected final Class<? extends ApplicationConfigurationOptions> getDefaultOptionsClass() {
-    return ApplicationConfigurationOptions.class;
+  protected final Class<? extends JvmMainMethodRunConfigurationOptions> getDefaultOptionsClass() {
+    return JvmMainMethodRunConfigurationOptions.class;
   }
 
   /**
    * Because we have to keep backward compatibility, never use `getOptions()` to get or set values - use only designated getters/setters.
    */
   @Override
-  protected ApplicationConfigurationOptions getOptions() {
-    return (ApplicationConfigurationOptions)super.getOptions();
+  protected JvmMainMethodRunConfigurationOptions getOptions() {
+    return (JvmMainMethodRunConfigurationOptions)super.getOptions();
   }
 
   @Override
@@ -281,7 +281,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   public void readExternal(@NotNull final Element element) {
     super.readExternal(element);
 
-    ApplicationConfigurationOptions options = getOptions();
+    JvmMainMethodRunConfigurationOptions options = getOptions();
 
     String workingDirectory = options.getWorkingDirectory();
     if (workingDirectory == null) {
