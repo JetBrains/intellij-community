@@ -112,7 +112,8 @@ public class ShowAffectedTestsAction extends AnAction {
       if (DumbService.isDumb(project)) return;
       String className = ReadAction.compute(() -> getClassName(psiClass));
       if (className == null) return;
-      processTestDiscovery(project, createTreeProcessor(tree), className, null);
+      List<Couple<String>> classesAndMethods = ContainerUtil.newSmartList(Couple.of(className, null));
+      processTestDiscovery(project, createTreeProcessor(tree), classesAndMethods);
       EdtInvocationManager.getInstance().invokeLater(() -> tree.setPaintBusy(false));
     });
   }
@@ -320,25 +321,20 @@ public class ShowAffectedTestsAction extends AnAction {
                                           @NotNull PsiMethod[] methods,
                                           @NotNull TestDiscoveryProducer.PsiTestProcessor processor) {
     if (DumbService.isDumb(project)) return;
-    for (PsiMethod method : methods) {
-      Couple<String> methodFqnName = ReadAction.compute(() -> getMethodKey(method));
-      if (methodFqnName == null) continue;
-      String fqn = methodFqnName.first;
-      String methodName = methodFqnName.second;
-      processTestDiscovery(project, processor, fqn, methodName);
-    }
+    List<Couple<String>> classesAndMethods =
+      Arrays.stream(methods).map(method -> ReadAction.compute(() -> getMethodKey(method))).filter(Objects::nonNull).collect(Collectors.toList());
+    processTestDiscovery(project, processor, classesAndMethods);
   }
 
   private static void processTestDiscovery(@NotNull Project project,
                                            @NotNull TestDiscoveryProducer.PsiTestProcessor processor,
-                                           @NotNull String classFqn,
-                                           @Nullable String methodName) {
+                                           @NotNull List<Couple<String>> classesAndMethods) {
     GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
     for (TestDiscoveryConfigurationProducer producer : getRunConfigurationProducers(project)) {
       byte frameworkId =
         ((JavaTestConfigurationWithDiscoverySupport)producer.getConfigurationFactory().createTemplateConfiguration(project))
           .getTestFrameworkId();
-      TestDiscoveryProducer.consumeDiscoveredTests(project, classFqn, methodName, frameworkId, (testClass, testMethod, parameter) -> {
+      TestDiscoveryProducer.consumeDiscoveredTests(project, classesAndMethods, frameworkId, (testClass, testMethod, parameter) -> {
         PsiClass[] testClassPsi = {null};
         PsiMethod[] testMethodPsi = {null};
         ReadAction.run(() -> DumbService.getInstance(project).runWithAlternativeResolveEnabled(() -> {
