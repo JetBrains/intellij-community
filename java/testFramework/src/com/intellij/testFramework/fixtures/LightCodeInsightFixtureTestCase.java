@@ -13,10 +13,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,14 +25,21 @@ import java.io.File;
 public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase {
   protected static class ProjectDescriptor extends DefaultLightProjectDescriptor {
     private final LanguageLevel myLanguageLevel;
+    private final boolean myWithAnnotations;
 
     public ProjectDescriptor(@NotNull LanguageLevel languageLevel) {
+      this(languageLevel, false);
+    }
+
+    public ProjectDescriptor(@NotNull LanguageLevel languageLevel, boolean withAnnotations) {
       myLanguageLevel = languageLevel;
+      myWithAnnotations = withAnnotations;
     }
 
     @Override
     public Sdk getSdk() {
-      return IdeaTestUtil.getMockJdk(myLanguageLevel.toJavaVersion());
+      Sdk jdk = IdeaTestUtil.getMockJdk(myLanguageLevel.toJavaVersion());
+      return myWithAnnotations ? PsiTestUtil.addJdkAnnotations(jdk) : jdk;
     }
 
     @Override
@@ -48,8 +52,11 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase {
   @NotNull public static final LightProjectDescriptor JAVA_1_5 = new ProjectDescriptor(LanguageLevel.JDK_1_5);
   @NotNull public static final LightProjectDescriptor JAVA_1_6 = new ProjectDescriptor(LanguageLevel.JDK_1_6);
   @NotNull public static final LightProjectDescriptor JAVA_1_7 = new ProjectDescriptor(LanguageLevel.JDK_1_7);
+  @NotNull public static final LightProjectDescriptor JAVA_1_7_ANNOTATED = new ProjectDescriptor(LanguageLevel.JDK_1_7, true);
   @NotNull public static final LightProjectDescriptor JAVA_8 = new ProjectDescriptor(LanguageLevel.JDK_1_8);
+  @NotNull public static final LightProjectDescriptor JAVA_8_ANNOTATED = new ProjectDescriptor(LanguageLevel.JDK_1_8, true);
   @NotNull public static final LightProjectDescriptor JAVA_9 = new ProjectDescriptor(LanguageLevel.JDK_1_9);
+  @NotNull public static final LightProjectDescriptor JAVA_9_ANNOTATED = new ProjectDescriptor(LanguageLevel.JDK_1_9, true);
   @NotNull public static final LightProjectDescriptor JAVA_10 = new ProjectDescriptor(LanguageLevel.JDK_10);
   @NotNull public static final LightProjectDescriptor JAVA_11 = new ProjectDescriptor(LanguageLevel.JDK_11);
   @NotNull public static final LightProjectDescriptor JAVA_X = new ProjectDescriptor(LanguageLevel.JDK_X);
