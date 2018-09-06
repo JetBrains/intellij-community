@@ -118,6 +118,10 @@ open class GuiTestCase {
     if (!needToKeepDialog) pluginDialog.waitTillGone()
   }
 
+  fun pluginDialog(timeout: Timeout = Timeouts.defaultTimeout) : PluginDialogFixture{
+    return PluginDialogFixture(robot(), findDialog("Plugins", false, timeout))
+  }
+
   /**
    * Waits for a native file chooser, types the path in a textfield and closes it by clicking OK button. Or runs AppleScript if the file chooser
    * is a Mac native.
