@@ -620,7 +620,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
         manager.config.recentsLimit = recentLimit
         manager.checkRecentsLimit()
       }
-      recentsLimit.text = "" + recentLimit
+      recentsLimit.text = recentLimit.toString()
       recentsLimit.putClientProperty(INITIAL_VALUE_KEY, recentsLimit.text)
       manager.config.isRestartRequiresConfirmation = confirmation.isSelected
       confirmation.putClientProperty(INITIAL_VALUE_KEY, confirmation.isSelected)
@@ -635,7 +635,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
 
       additionalSettings.forEach { it.first.apply() }
 
-      manager.setOrder(Comparator.comparingInt(ToIntFunction { settingsToOrder.get(it) }))
+      manager.setOrder(Comparator.comparingInt(ToIntFunction { settingsToOrder.get(it) }), isApplyAdditionalSortByTypeAndGroup = false)
     }
     finally {
       manager.fireEndUpdate()

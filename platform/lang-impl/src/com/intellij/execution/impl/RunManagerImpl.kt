@@ -408,9 +408,10 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
     removed?.let { removeConfigurations(it) }
   }
 
-  fun setOrder(comparator: Comparator<RunnerAndConfigurationSettings>) {
+  @JvmOverloads
+  fun setOrder(comparator: Comparator<RunnerAndConfigurationSettings>, isApplyAdditionalSortByTypeAndGroup: Boolean = true) {
     lock.write {
-      listManager.setOrder(comparator)
+      listManager.setOrder(comparator, isApplyAdditionalSortByTypeAndGroup)
     }
   }
 
@@ -428,7 +429,6 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
   fun requestSort() {
     lock.write {
       listManager.requestSort()
-      allSettings
     }
   }
 

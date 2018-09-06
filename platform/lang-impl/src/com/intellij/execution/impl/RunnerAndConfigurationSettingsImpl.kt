@@ -56,7 +56,8 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
   companion object {
     @JvmStatic
     fun getUniqueIdFor(configuration: RunConfiguration): String {
-      if (!configuration.type.isManaged) {
+      val type = configuration.type
+      if (!type.isManaged) {
         configuration.id?.let {
           return it
         }
