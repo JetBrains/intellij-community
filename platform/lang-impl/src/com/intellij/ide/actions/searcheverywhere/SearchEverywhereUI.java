@@ -357,6 +357,10 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
                                     .filter(i -> !myListModel.isMoreElement(i));
 
     //common data section---------------------
+    if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) {
+      return getSearchPattern();
+    }
+
     if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       List<PsiElement> elements = indicesStream.mapToObj(i -> {
                                                   SearchEverywhereContributor contributor = myListModel.getContributorForIndex(i);
