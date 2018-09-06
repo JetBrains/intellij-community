@@ -192,15 +192,11 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
       }
     }
 
-    val configuration = when {
-      isTemplate -> manager.getConfigurationTemplate(factory).configuration
-      else -> {
-        // shouldn't call createConfiguration since it calls StepBeforeRunProviders that
-        // may not be loaded yet. This creates initialization order issue.
-        val configuration = factory.createTemplateConfiguration(manager.project, manager)
-        configuration.name = element.getAttributeValue(NAME_ATTR) ?: return
-        configuration
-      }
+    val configuration = factory.createTemplateConfiguration(manager.project, manager)
+    if (!isTemplate) {
+      // shouldn't call createConfiguration since it calls StepBeforeRunProviders that
+      // may not be loaded yet. This creates initialization order issue.
+      configuration.name = element.getAttributeValue(NAME_ATTR) ?: return
     }
 
     _configuration = configuration

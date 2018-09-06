@@ -215,6 +215,10 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
     myOptions = XmlSerializer.deserialize(element, getOptionsClass());
   }
 
+  public final void setState(@NotNull BaseState state) {
+    myOptions = (RunConfigurationOptions)state;
+  }
+
   // we can break compatibility and make this method final (API is new and used only by our plugins), but let's avoid any inconvenience and mark as "final" after/prior to 2018.3 release.
   /**
    * Do not override this method, use {@link ConfigurationFactory#getOptionsClass()}.

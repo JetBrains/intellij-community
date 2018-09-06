@@ -640,7 +640,7 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
 
   private fun runConfigurationFirstLoaded() {
     if (selectedConfiguration == null) {
-      selectedConfiguration = allSettings.firstOrNull { it.type !is UnknownRunConfiguration }
+      selectedConfiguration = allSettings.firstOrNull { it.type !== UnknownConfigurationType.getInstance() }
     }
   }
 
@@ -730,8 +730,15 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
   internal fun addConfiguration(element: Element, settings: RunnerAndConfigurationSettingsImpl, isCheckRecentsLimit: Boolean = true) {
     if (settings.isTemplate) {
       val factory = settings.factory
-      lock.write {
-        templateIdToConfiguration.put(getFactoryKey(factory), settings)
+      // do not register unknown RC type templates (it is saved in any case in the scheme manager, so, not lost on save)
+      if (factory !== UnknownConfigurationType.getInstance()) {
+        val key = getFactoryKey(factory)
+        lock.write {
+          val old = templateIdToConfiguration.put(key, settings)
+          if (old != null) {
+            LOG.error("Template $key already registered, old: $old, new: $settings")
+          }
+        }
       }
     }
     else {

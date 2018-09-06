@@ -34,7 +34,7 @@ private val ORDER = arrayOf(CONFIGURATION_TYPE, //Application
 )
 
 @RunsInEdt
-class RunConfigurableTest {
+internal class RunConfigurableTest {
   companion object {
     @JvmField
     @ClassRule

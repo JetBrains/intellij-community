@@ -1,15 +1,14 @@
 package com.intellij.configurationScript
 
-import com.intellij.execution.RunManager
-import com.intellij.execution.RunManagerListener
 import com.intellij.execution.configurations.ConfigurationFactory
-import com.intellij.execution.impl.RUN_CONFIGURATION_TEMPLATE_PROVIDER_EP
+import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.impl.RunConfigurationTemplateProvider
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
-import com.intellij.ide.ApplicationInitializedListener
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.AtomicClearableLazyValue
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.io.exists
 import com.intellij.util.io.inputStreamIfExists
@@ -22,61 +21,55 @@ import java.io.Reader
 import java.nio.file.Path
 import java.nio.file.Paths
 
-internal class IntellijConfigurationAppInitializer : ApplicationInitializedListener {
-  override fun componentsInitialized() {
-    ApplicationManager.getApplication().messageBus.connect().subscribe(RunManagerListener.TOPIC, object: RunManagerListener {
-      override fun stateLoaded(runManager: RunManager, isFirstLoadState: Boolean) {
-        if (!isFirstLoadState || !Registry.`is`("run.manager.use.intellij.config.file", false)) {
-          return
-        }
-
-        val project = (runManager as? RunManagerImpl)?.project ?: return
-        // todo listen file changes
-        val file = findConfigurationFile(project) ?: return
-        val inputStream = file.inputStreamIfExists() ?: return
-        val map = THashMap<ConfigurationFactory, FactoryEntry>()
-        inputStream.use {
-          parseConfigurationFile(it.bufferedReader()) { factory, state ->
-            map.put(factory, FactoryEntry(state))
-          }
-        }
-        RUN_CONFIGURATION_TEMPLATE_PROVIDER_EP.findExtension(MyRunConfigurationTemplateProvider::class.java, project)!!.setTemplates(map)
-      }
-    })
-  }
-}
-
 private class FactoryEntry(state: Any) {
   var state: Any? = state
   var settings: RunnerAndConfigurationSettingsImpl? = null
 }
 
-private class MyRunConfigurationTemplateProvider : RunConfigurationTemplateProvider {
-  @Volatile
-  private var map: Map<ConfigurationFactory, FactoryEntry>? = null
+private class MyRunConfigurationTemplateProvider(private val project: Project) : RunConfigurationTemplateProvider {
+  private val map = object : AtomicClearableLazyValue<Map<ConfigurationFactory, FactoryEntry>>() {
+    override fun compute(): Map<ConfigurationFactory, FactoryEntry> {
+      val file = findConfigurationFile(project) ?: return emptyMap()
+      val inputStream = file.inputStreamIfExists() ?: return emptyMap()
+      val map = THashMap<ConfigurationFactory, FactoryEntry>()
+      inputStream.use {
+        parseConfigurationFile(it.bufferedReader(), isTemplatesOnly = true) { factory, state ->
+          map.put(factory, FactoryEntry(state))
+        }
+      }
+      return map
+    }
+  }
+
+  init {
+    project.service<ConfigurationFileManager>().registerClearableLazyValue(map)
+  }
 
   override fun getRunConfigurationTemplate(factory: ConfigurationFactory, runManager: RunManagerImpl): RunnerAndConfigurationSettingsImpl? {
-    val item = map?.get(factory) ?: return null
+    if (!Registry.`is`("run.manager.use.intellij.config.file", false)) {
+      return null
+    }
+
+    val item = map.value.get(factory) ?: return null
     synchronized(item) {
       var settings = item.settings
       if (settings != null) {
         return settings
       }
 
-      settings = RunnerAndConfigurationSettingsImpl(runManager, isTemplate = true)
+      val configuration = factory.createTemplateConfiguration(runManager.project, runManager)
+      (configuration as RunConfigurationBase).setState(item.state as BaseState)
+      settings = RunnerAndConfigurationSettingsImpl(runManager, configuration, isTemplate = true, isSingleton = factory.singletonPolicy.isSingleton)
+      item.state = null
       item.settings = settings
       return settings
     }
-  }
-
-  internal fun setTemplates(value: Map<ConfigurationFactory, FactoryEntry>) {
-    map = value
   }
 }
 
 // we cannot use the same approach as we generate JSON scheme because we should load option classes only in a lazy manner
 // that's why we don't use snakeyaml TypeDescription approach to load
-internal fun parseConfigurationFile(reader: Reader, processor: (factory: ConfigurationFactory, state: Any) -> Unit) {
+internal fun parseConfigurationFile(reader: Reader, isTemplatesOnly: Boolean, processor: (factory: ConfigurationFactory, state: Any) -> Unit) {
   val yaml = Yaml(SafeConstructor())
   // later we can avoid full node graph building, but for now just use simple implementation (problem is that Yaml supports references and merge - proper support of it can be tricky)
   // "load" under the hood uses "compose" - i.e. Yaml itself doesn't use stream API to build object model.
@@ -86,7 +79,7 @@ internal fun parseConfigurationFile(reader: Reader, processor: (factory: Configu
     val keyNode = tuple.keyNode
     if (keyNode is ScalarNode && keyNode.value == Keys.runConfigurations) {
       val rcTypeGroupNode = tuple.valueNode as? MappingNode ?: continue
-      dataReader.read(rcTypeGroupNode)
+      dataReader.read(rcTypeGroupNode, isTemplatesOnly)
     }
   }
 }
@@ -103,6 +96,3 @@ private fun findConfigurationFile(project: Project): Path? {
   }
   return file
 }
-
-internal const val IDE_FILE = "intellij.yaml"
-internal const val IDE_FILE_VARIANT_2 = "intellij.yml"

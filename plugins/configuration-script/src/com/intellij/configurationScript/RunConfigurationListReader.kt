@@ -15,7 +15,7 @@ import org.yaml.snakeyaml.nodes.SequenceNode
 
 internal class RunConfigurationListReader(private val processor: (factory: ConfigurationFactory, state: Any) -> Unit) {
   // rc grouped by type
-  fun read(parentNode: MappingNode) {
+  fun read(parentNode: MappingNode, isTemplatesOnly: Boolean) {
     val keyToType = THashMap<String, ConfigurationType>()
     processConfigurationTypes { configurationType, propertyName, _ ->
       keyToType.put(propertyName.toString(), configurationType)
@@ -25,6 +25,13 @@ internal class RunConfigurationListReader(private val processor: (factory: Confi
       val keyNode = tuple.keyNode
       if (keyNode !is ScalarNode) {
         LOG.warn("Unexpected keyNode type: ${keyNode.nodeId}")
+        continue
+      }
+
+      if (keyNode.value == Keys.templates) {
+        if (isTemplatesOnly) {
+          read(tuple.valueNode as? MappingNode ?: continue, false)
+        }
         continue
       }
 

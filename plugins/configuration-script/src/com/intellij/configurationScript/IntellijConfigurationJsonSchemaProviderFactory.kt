@@ -59,10 +59,7 @@ internal class IntellijConfigurationJsonSchemaProviderFactory : JsonSchemaProvid
 
       override fun isUserVisible() = false
 
-      override fun isAvailable(file: VirtualFile): Boolean {
-        val nameSequence = file.nameSequence
-        return StringUtil.equals(nameSequence, IDE_FILE) || StringUtil.equals(nameSequence, IDE_FILE_VARIANT_2)
-      }
+      override fun isAvailable(file: VirtualFile) = isConfigurationFile(file)
     })
     return (project as UserDataHolderBase).putUserDataIfAbsent(PROVIDER_KEY, result)
   }

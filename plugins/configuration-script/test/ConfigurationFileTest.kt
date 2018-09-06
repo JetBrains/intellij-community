@@ -95,11 +95,33 @@ class ConfigurationFileTest {
     options.isAlternativeJrePathEnabled = true
     assertThat(result).containsExactly(options)
   }
+
+  @Test
+  fun `one jvmMainMethod as list - template`() {
+    val result = parse("""
+    runConfigurations:
+      templates:
+        jvmMainMethod:
+          - isAlternativeJrePathEnabled: true
+    """, isTemplatesOnly = true)
+    val options = ApplicationConfigurationOptions()
+    options.isAlternativeJrePathEnabled = true
+    assertThat(result).containsExactly(options)
+  }
+
+  @Test
+  fun `templates as invalid node type`() {
+    val result = parse("""
+    runConfigurations:
+      templates: foo
+    """, isTemplatesOnly = true)
+    assertThat(result).isEmpty()
+  }
 }
 
-private fun parse(@Language("YAML") data: String): List<Any> {
+private fun parse(@Language("YAML") data: String, isTemplatesOnly: Boolean = false): List<Any> {
   val list = SmartList<Any>()
-  parseConfigurationFile(data.trimIndent().reader()) { _, state ->
+  parseConfigurationFile(data.trimIndent().reader(), isTemplatesOnly) { _, state ->
     list.add(state)
   }
   return list

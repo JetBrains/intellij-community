@@ -12,7 +12,8 @@
     <ProviderFactory implementation="com.intellij.configurationScript.IntellijConfigurationJsonSchemaProviderFactory"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
-    <applicationInitializedListener implementation="com.intellij.configurationScript.IntellijConfigurationAppInitializer"/>
+    <projectService serviceImplementation="com.intellij.configurationScript.ConfigurationFileManager"/>
+
     <runConfigurationTemplateProvider implementation="com.intellij.configurationScript.MyRunConfigurationTemplateProvider"/>
   </extensions>
 </idea-plugin>
