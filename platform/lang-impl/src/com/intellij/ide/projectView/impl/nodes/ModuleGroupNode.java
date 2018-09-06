@@ -16,6 +16,7 @@ import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
@@ -79,6 +80,10 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
   @Override
   public boolean contains(@NotNull VirtualFile file) {
     List<Module> modules = getModulesByFile(file);
+    if (modules.isEmpty() && file.getFileSystem() instanceof ArchiveFileSystem) {
+      VirtualFile archiveFile = ((ArchiveFileSystem)file.getFileSystem()).getLocalByEntry(file);
+      if (archiveFile != null) modules = getModulesByFile(archiveFile);
+    }
     List<String> thisGroupPath = getValue().getGroupPathList();
     ModuleGrouper grouper = ModuleGrouper.instanceFor(getProject());
     for (Module module : modules) {
