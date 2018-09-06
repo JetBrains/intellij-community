@@ -130,19 +130,43 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
           myTitleMouseInputListener = new WindowMoveListener(myTitlePane) {
             @Override
             public void mousePressed(MouseEvent event) {
-              if(JBUI.isCustomFrameDecoration()) {
+              if (JBUI.isCustomFrameDecoration()) {
                 Component view = getView(getContent(event));
                 if (view instanceof Frame) {
                   Frame frame = (Frame)view;
                   int state = frame.getExtendedState();
-
                   if (FrameState.isMaximized(state)) {
                     frame.setExtendedState((state & ~Frame.MAXIMIZED_BOTH));
+                    updateFrameBounds(frame, event);
                   }
                 }
               }
-
               super.mousePressed(event);
+            }
+
+            private void updateFrameBounds(Frame frame, MouseEvent event) {
+              Point mouse = event.getLocationOnScreen();
+
+              Rectangle screenBounds = getScreenBounds(myRootPane.getTopLevelAncestor());
+              Rectangle frameBounds = frame.getBounds();
+
+              int x = mouse.x - (frameBounds.width / 2);
+
+              if (x < screenBounds.x) {
+                x = screenBounds.x;
+              }
+              else {
+                int rightPoint = screenBounds.x + screenBounds.width;
+                if (x + frameBounds.width > rightPoint) {
+                  x = rightPoint - frameBounds.width;
+                }
+              }
+              int y = mouse.y - (myTitlePane.getHeight() / 2);
+
+              frameBounds.x = x;
+              frameBounds.y = y;
+
+              frame.setBounds(frameBounds);
             }
 
             @Override
@@ -390,18 +414,27 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
         !JBUI.isCustomFrameDecoration()) return;
 
     Component tla = myRootPane.getTopLevelAncestor();
-    GraphicsConfiguration gc = (currentRootPaneGC != null) ? currentRootPaneGC : tla.getGraphicsConfiguration();
-    Rectangle screenBounds = gc.getBounds();
-    screenBounds.x = 0;
-    screenBounds.y = 0;
-    Insets screenInsets = ScreenUtil.getScreenInsets(gc);
-    Rectangle maxBounds = new Rectangle(screenBounds.x + screenInsets.left,
-                                        screenBounds.y + screenInsets.top,
-                                        screenBounds.width - (screenInsets.left + screenInsets.right),
-                                        screenBounds.height - (screenInsets.top + screenInsets.bottom));
     if (tla instanceof JFrame) {
-      ((JFrame)tla).setMaximizedBounds(maxBounds);
+      ((JFrame)tla).setMaximizedBounds(getScreenBounds(tla, true));
     }
+  }
+
+  private Rectangle getScreenBounds(Component component) {
+    return getScreenBounds(component, false);
+  }
+
+  private Rectangle getScreenBounds(Component component, boolean normalize) {
+    GraphicsConfiguration gc = (currentRootPaneGC != null) ? currentRootPaneGC : component.getGraphicsConfiguration();
+    Rectangle screenBounds = gc.getBounds();
+    if (normalize) {
+      screenBounds.x = 0;
+      screenBounds.y = 0;
+    }
+    Insets screenInsets = ScreenUtil.getScreenInsets(gc);
+    return new Rectangle(screenBounds.x + screenInsets.left,
+                         screenBounds.y + screenInsets.top,
+                         screenBounds.width - (screenInsets.left + screenInsets.right),
+                         screenBounds.height - (screenInsets.top + screenInsets.bottom));
   }
 
   public JComponent getTitlePane() {
