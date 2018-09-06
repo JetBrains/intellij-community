@@ -91,11 +91,15 @@ public class PyEditingTest extends PyTestCase {
   }
 
   // PY-18972
-  public void testFString() {
+  public void testFStringQuotes() {
     assertEquals("f''", doTestTyping("f", 1, '\''));
     assertEquals("rf''", doTestTyping("rf", 2, '\''));
     assertEquals("fr''", doTestTyping("fr", 2, '\''));
     assertEquals("fr''''''", doTestTyping("fr''", 4, '\''));
+  }
+
+  public void testFStringFragmentBraces() {
+    assertEquals("f'{}'", doTestTyping("f''", 2, '{'));
   }
 
   public void testOvertypeFromInside() {
