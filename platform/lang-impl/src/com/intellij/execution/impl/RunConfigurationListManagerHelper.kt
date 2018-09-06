@@ -3,6 +3,7 @@ package com.intellij.execution.impl
 
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.compound.CompoundRunConfiguration
+import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.util.containers.ContainerUtil
@@ -94,7 +95,7 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
       val type1 = o1.type
       val type2 = o2.type
       if (type1 !== type2) {
-        return@Comparator NaturalComparator.INSTANCE.compare(type1.displayName, type2.displayName)
+        return@Comparator compareTypesForUi(type1, type2)
       }
 
       val temporary1 = o1.isTemporary
@@ -243,4 +244,8 @@ internal inline fun Collection<RunnerAndConfigurationSettings>.forEachManaged(ha
       handler(settings)
     }
   }
+}
+
+internal fun compareTypesForUi(type1: ConfigurationType, type2: ConfigurationType): Int {
+  return NaturalComparator.INSTANCE.compare(type1.displayName, type2.displayName)
 }

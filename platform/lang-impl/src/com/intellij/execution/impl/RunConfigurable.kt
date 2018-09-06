@@ -1000,7 +1000,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
     private fun showAddPopup(showApplicableTypesOnly: Boolean) {
       val allTypes = ConfigurationType.CONFIGURATION_TYPE_EP.extensionList
       val configurationTypes: MutableList<ConfigurationType?> = getTypesToShow(showApplicableTypesOnly, allTypes).toMutableList()
-      configurationTypes.sortWith(kotlin.Comparator { type1, type2 -> type1!!.displayName.compareTo(type2!!.displayName, ignoreCase = true) })
+      configurationTypes.sortWith(kotlin.Comparator { type1, type2 -> compareTypesForUi(type1!!, type2!!) })
       val hiddenCount = allTypes.size - configurationTypes.size
       if (hiddenCount > 0) {
         configurationTypes.add(null)
