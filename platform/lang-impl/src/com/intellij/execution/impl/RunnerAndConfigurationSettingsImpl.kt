@@ -81,17 +81,17 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
 
   private var uniqueId: String? = null
 
-  override fun getFactory(): ConfigurationFactory = _configuration?.factory ?: UnknownConfigurationType.getInstance()
+  override fun getFactory() = _configuration?.factory ?: UnknownConfigurationType.getInstance()
 
-  override fun isTemplate(): Boolean = isTemplate
+  override fun isTemplate() = isTemplate
 
-  override fun isTemporary(): Boolean = level == RunConfigurationLevel.TEMPORARY
+  override fun isTemporary() = level == RunConfigurationLevel.TEMPORARY
 
   override fun setTemporary(value: Boolean) {
     level = if (value) RunConfigurationLevel.TEMPORARY else RunConfigurationLevel.WORKSPACE
   }
 
-  override fun isShared(): Boolean = level == RunConfigurationLevel.PROJECT
+  override fun isShared() = level == RunConfigurationLevel.PROJECT
 
   override fun setShared(value: Boolean) {
     if (value) {
@@ -102,7 +102,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
     }
   }
 
-  override fun getConfiguration(): RunConfiguration = _configuration ?: UnknownConfigurationType.getInstance().createTemplateConfiguration(manager.project)
+  override fun getConfiguration() = _configuration ?: UnknownConfigurationType.getInstance().createTemplateConfiguration(manager.project)
 
   override fun createFactory(): Factory<RunnerAndConfigurationSettings> {
     return Factory {
@@ -192,15 +192,15 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
       }
     }
 
-    val configuration = if (isTemplate) {
-      manager.getConfigurationTemplate(factory).configuration
-    }
-    else {
-      // shouldn't call createConfiguration since it calls StepBeforeRunProviders that
-      // may not be loaded yet. This creates initialization order issue.
-      val configuration = factory.createTemplateConfiguration(manager.project, manager)
-      configuration.name = element.getAttributeValue(NAME_ATTR) ?: return
-      configuration
+    val configuration = when {
+      isTemplate -> manager.getConfigurationTemplate(factory).configuration
+      else -> {
+        // shouldn't call createConfiguration since it calls StepBeforeRunProviders that
+        // may not be loaded yet. This creates initialization order issue.
+        val configuration = factory.createTemplateConfiguration(manager.project, manager)
+        configuration.name = element.getAttributeValue(NAME_ATTR) ?: return
+        configuration
+      }
     }
 
     _configuration = configuration
@@ -331,8 +331,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
     runners.addAll(configurationPerRunnerSettings.settings.keys)
     for (runner in runners) {
       if (executor == null || runner.canRun(executor.id, configuration)) {
-        configuration.checkRunnerSettings(runner, runnerSettings.settings[runner],
-          configurationPerRunnerSettings.settings[runner])
+        configuration.checkRunnerSettings(runner, runnerSettings.settings.get(runner), configurationPerRunnerSettings.settings.get(runner))
       }
     }
     if (executor != null) {
@@ -340,11 +339,11 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
     }
   }
 
-  override fun getRunnerSettings(runner: ProgramRunner<*>): RunnerSettings? = runnerSettings.getOrCreateSettings(runner)
+  override fun getRunnerSettings(runner: ProgramRunner<*>) = runnerSettings.getOrCreateSettings(runner)
 
-  override fun getConfigurationSettings(runner: ProgramRunner<*>): ConfigurationPerRunnerSettings? = configurationPerRunnerSettings.getOrCreateSettings(runner)
+  override fun getConfigurationSettings(runner: ProgramRunner<*>) = configurationPerRunnerSettings.getOrCreateSettings(runner)
 
-  override fun getType(): ConfigurationType = factory.type
+  override fun getType() = factory.type
 
   public override fun clone(): RunnerAndConfigurationSettingsImpl {
     val copy = RunnerAndConfigurationSettingsImpl(manager, _configuration!!.clone())
@@ -387,9 +386,9 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
     }
   }
 
-  override fun compareTo(other: Any): Int = if (other is RunnerAndConfigurationSettings) name.compareTo(other.name) else 0
+  override fun compareTo(other: Any) = if (other is RunnerAndConfigurationSettings) name.compareTo(other.name) else 0
 
-  override fun toString(): String = "${type.displayName}: ${if (isTemplate) "<template>" else name} (level: $level)"
+  override fun toString() = "${type.displayName}: ${if (isTemplate) "<template>" else name} (level: $level)"
 
   private inner class InfoProvider(override val runner: ProgramRunner<*>) : ConfigurationInfoProvider {
     override val configuration: RunConfiguration
@@ -432,12 +431,13 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
         if (runner == null) {
           iterator.remove()
         }
+        @Suppress("IfThenToSafeAccess")
         add(state, runner, if (runner == null) null else createSettings(runner))
       }
     }
 
     private fun findRunner(runnerId: String): ProgramRunner<*>? {
-      val runnersById = ProgramRunner.PROGRAM_RUNNER_EP.extensions.filter { runnerId == it.runnerId }
+      val runnersById = ProgramRunner.PROGRAM_RUNNER_EP.extensionList.filter { runnerId == it.runnerId }
       return when {
         runnersById.isEmpty() -> null
         runnersById.size == 1 -> runnersById.firstOrNull()
