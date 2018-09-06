@@ -16,8 +16,8 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
@@ -130,8 +130,8 @@ public final class StoreUtil {
   }
 
   public static void saveProject(@NotNull Project project, boolean isForce) {
-    if (isForce && project instanceof ProjectImpl) {
-      ((ProjectImpl)project).save(true);
+    if (isForce && project instanceof ProjectEx) {
+      ((ProjectEx)project).save(true);
     }
     else {
       project.save();
