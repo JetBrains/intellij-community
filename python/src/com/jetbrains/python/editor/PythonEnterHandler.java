@@ -211,6 +211,10 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
   }
 
   public static boolean needInsertBackslash(ASTNode nodeAtCaret, boolean autoWrapInProgress) {
+    if (PsiTreeUtil.getParentOfType(nodeAtCaret.getPsi(), PyFStringFragment.class) != null) {
+      return false;
+    }
+    
     PsiElement statementBefore = findStatementBeforeCaret(nodeAtCaret);
     PsiElement statementAfter = findStatementAfterCaret(nodeAtCaret);
     if (statementBefore != statementAfter) {  // Enter pressed at statement break
