@@ -689,6 +689,82 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
                    "  IsDev: !Equals [!Ref AccountType, dev]");
   }
 
+  @Language("JSON")
+  private static final String SCHEMA_FOR_REFS  = "{\n" +
+                                                 "  \"type\": \"object\",\n" +
+                                                 "\n" +
+                                                 "  \"properties\": {\n" +
+                                                 "    \"name\": { \"type\": \"string\", \"enum\": [\"aa\", \"bb\"] },\n" +
+                                                 "    \"bar\": {\n" +
+                                                 "      \"required\": [\n" +
+                                                 "        \"a\"\n" +
+                                                 "      ],\n" +
+                                                 "      \"properties\": {\n" +
+                                                 "        \"a\": {\n" +
+                                                 "          \"type\": [\"array\"]\n" +
+                                                 "        },\n" +
+                                                 "       \"b\": {" +
+                                                 "          \"type\": [\"number\"]" +
+                                                 "        }\n" +
+                                                 "      },\n" +
+                                                 "      \"additionalProperties\": false\n" +
+                                                 "    }\n" +
+                                                 "  }\n" +
+                                                 "}\n";
+
+  public void testRefExtends() throws Exception {
+    // no warning about missing required property - it should be discovered in referenced object
+    // no warning about extra 'property' with name '<<' with additionalProperties=false
+    doTest(SCHEMA_FOR_REFS, "a: &a\n" +
+                            "  a: <warning descr=\"Schema validation: Type is not allowed. Expected: array.\">7</warning>\n" +
+                            "\n" +
+                            "bar:\n" +
+                            "  <<: *a\n" +
+                            "  b: 5\n");
+  }
+
+  public void testRefRefValid() throws Exception {
+    // no warnings - &a references &b, which is an array - validation passes
+    doTest(SCHEMA_FOR_REFS, "x: &b\n" +
+                            "  - x\n" +
+                            "  - y\n" +
+                            "\n" +
+                            "a: &a\n" +
+                            "  a: *b\n" +
+                            "\n" +
+                            "bar:\n" +
+                            "  <<: *a\n" +
+                            "  b: 5");
+  }
+
+  public void testRefRefInvalid() throws Exception {
+    doTest(SCHEMA_FOR_REFS, "x: &b <warning descr=\"Schema validation: Type is not allowed. Expected: array.\">7</warning>\n" +
+                            "\n" +
+                            "a: &a\n" +
+                            "  a: *b\n" +
+                            "\n" +
+                            "bar:\n" +
+                            "  <<: *a\n" +
+                            "  b: 5");
+  }
+  public void testRefRefScalarValid() throws Exception {
+    doTest(SCHEMA_FOR_REFS, "x: &b 7\n" +
+                            "\n" +
+                            "a: &a\n" +
+                            "  b: *b\n" +
+                            "\n" +
+                            "bar:\n" +
+                            "  <<: *a\n" +
+                            "  a: <warning descr=\"Schema validation: Type is not allowed. Expected: array.\">5</warning>");
+  }
+
+  public void testInlineRef() throws Exception {
+    doTest(SCHEMA_FOR_REFS, "bar:\n" +
+                            "  <<: &q\n" +
+                            "    a: <warning descr=\"Schema validation: Type is not allowed. Expected: array.\">5</warning>\n" +
+                            "  b: 5");
+  }
+
   static String schema(final String s) {
     return "{\"type\": \"object\", \"properties\": {\"prop\": " + s + "}}";
   }
