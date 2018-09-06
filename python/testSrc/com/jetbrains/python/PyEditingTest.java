@@ -102,6 +102,12 @@ public class PyEditingTest extends PyTestCase {
     assertEquals("f'{}'", doTestTyping("f''", 2, '{'));
   }
 
+  public void testEnterInFStringFragment() {
+    doTestEnter("f'''{1 +<caret> 2}'''",
+                "f'''{1 +\n" +
+                "     2}'''");
+  }
+
   public void testOvertypeFromInside() {
     assertEquals("''", doTestTyping("''", 1, '\''));
   }
