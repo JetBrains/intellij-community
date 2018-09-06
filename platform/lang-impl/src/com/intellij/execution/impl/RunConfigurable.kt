@@ -73,9 +73,9 @@ private fun getName(userObject: Any): String {
 
 open class RunConfigurable @JvmOverloads constructor(private val project: Project, var runDialog: RunDialogBase? = null) : Configurable, Disposable {
   @Volatile private var isDisposed: Boolean = false
-  val root: DefaultMutableTreeNode = DefaultMutableTreeNode("Root")
-  val treeModel: MyTreeModel = MyTreeModel(root)
-  val tree: Tree = Tree(treeModel)
+  val root = DefaultMutableTreeNode("Root")
+  val treeModel = MyTreeModel(root)
+  val tree = Tree(treeModel)
   private val rightPanel = JPanel(BorderLayout())
   private val splitter = JBSplitter("RunConfigurable.dividerProportion", 0.3f)
   private var wholePanel: JPanel? = null
@@ -85,7 +85,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
   private val additionalSettings = ArrayList<Pair<UnnamedConfigurable, JComponent>>()
   private val storedComponents = THashMap<ConfigurationFactory, Configurable>()
   private var toolbarDecorator: ToolbarDecorator? = null
-  private var isFolderCreating: Boolean = false
+  private var isFolderCreating = false
   private val toolbarAddAction = MyToolbarAddAction()
   private val runDashboardTypesPanel = RunDashboardTypesPanel(project)
 
