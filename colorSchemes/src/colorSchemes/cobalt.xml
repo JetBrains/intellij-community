@@ -680,7 +680,7 @@
     </option>
     <option name="DJANGO_TAG_NAME">
       <value>
-        <option name="FOREGROUND" value="9EFFFF" />
+        <option name="FOREGROUND" value="FFDD00" />
       </value>
     </option>
     <option name="DJANGO_TAG_START_END">
@@ -877,7 +877,7 @@
     </option>
     <option name="HTML_TAG_NAME">
       <value>
-        <option name="FOREGROUND" value="9EFFFF" />
+        <option name="FOREGROUND" value="FFDD00" />
       </value>
     </option>
     <option name="HYPERLINK_ATTRIBUTES">
@@ -1939,7 +1939,7 @@
     </option>
     <option name="XML_TAG_NAME">
       <value>
-        <option name="FOREGROUND" value="9EFFFF" />
+        <option name="FOREGROUND" value="FFDD00" />
       </value>
     </option>
     <option name="YAML_COMMENT">

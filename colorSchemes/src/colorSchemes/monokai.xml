@@ -584,8 +584,7 @@
     </option>
     <option name="DJANGO_TAG_NAME">
       <value>
-        <option name="FOREGROUND" value="E3E3FF" />
-        <option name="FONT_TYPE" value="1" />
+        <option name="FOREGROUND" value="F92672" />
       </value>
     </option>
     <option baseAttributes="DEFAULT_BRACES" name="DJANGO_TAG_START_END" />
@@ -756,8 +755,7 @@
     <option baseAttributes="XML_TAG" name="HTML_TAG" />
     <option name="HTML_TAG_NAME">
       <value>
-        <option name="FOREGROUND" value="E3E3FF" />
-        <option name="FONT_TYPE" value="1" />
+        <option name="FOREGROUND" value="F92672" />
       </value>
     </option>
     <option name="HYPERLINK_ATTRIBUTES">
@@ -1694,8 +1692,7 @@
     </option>
     <option name="XML_TAG_NAME">
       <value>
-        <option name="FOREGROUND" value="E3E3FF" />
-        <option name="FONT_TYPE" value="1" />
+        <option name="FOREGROUND" value="F92672" />
       </value>
     </option>
     <option name="YAML_COMMENT">
