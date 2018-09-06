@@ -634,9 +634,6 @@
     <applicationService serviceInterface="com.jetbrains.python.PythonFoldingSettings"
                         serviceImplementation="com.jetbrains.python.PythonFoldingSettings"/>
 
-    <!-- f-strings -->
-    <multiHostInjector implementation="com.jetbrains.python.codeInsight.fstrings.PyFStringsInjector" id="f-strings"/>
-
     <!-- postfix templates!-->
     <codeInsight.template.postfixTemplateProvider language="Python"
                                                   implementationClass="com.jetbrains.python.codeInsight.postfix.PyPostfixTemplateProvider"/>
