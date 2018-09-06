@@ -5,11 +5,9 @@ PyFile:UnterminatedFStringWithTrailingBackslashInLiteralPart.py
     PsiWhiteSpace(' ')
     PsiElement(Py:EQ)('=')
     PsiWhiteSpace(' ')
-    PyStringLiteralExpression: 
+    PyStringLiteralExpression: \
       PyFormattedStringNode
         PsiElement(Py:FSTRING_START)('f'')
-        PsiErrorElement:unexpected f-string token
+        PsiElement(Py:FSTRING_TEXT)('\')
+        PsiErrorElement:' expected
           <empty list>
-  PsiElement(BAD_CHARACTER)('\')
-  PsiErrorElement:Statement expected, found BAD_CHARACTER
-    <empty list>

@@ -73,7 +73,6 @@ FSTRING_START = {FSTRING_PREFIX} (\"\"\"|'''|\"|')
 FSTRING_QUOTES = (\"{1,3}|'{1,3})
 FSTRING_ESCAPED_LBRACE = "{{"
 FSTRING_ESCAPE_SEQUENCE = \\[^{}\r\n]
-BACKSLASH_ESCAPED_BRACES = "\\{" | "\\}"
 // TODO report it in annotation
 //FSTRING_ESCAPED_RBRACE = "}}"
 NAMED_UNICODE_ESCAPE = \\N\{[\w ]*\}?
@@ -103,10 +102,11 @@ return yylength()-s.length();
 
 <FSTRING> {
   {FSTRING_TEXT_NO_QUOTES} { return PyTokenTypes.FSTRING_TEXT; }
+  "\\" { return PyTokenTypes.FSTRING_TEXT; }
   [\n] { return fStringHelper.handleLineBreakInLiteralText(); }
-  {BACKSLASH_ESCAPED_BRACES} { yypushback(1); return PyTokenTypes.FSTRING_TEXT; }
   {FSTRING_QUOTES} { return fStringHelper.handleFStringEnd(); }
   "{" { return fStringHelper.handleFragmentStart(); }
+  
   [^]  { return PyTokenTypes.BAD_CHARACTER; }
 }
 
@@ -135,13 +135,12 @@ return yylength()-s.length();
 
 <FSTRING_FRAGMENT_FORMAT> {
   {FSTRING_FORMAT_TEXT_NO_QUOTES} { return PyTokenTypes.FSTRING_TEXT; }
+  "\\" { return PyTokenTypes.FSTRING_TEXT; }
   [\n] { return fStringHelper.handleLineBreakInLiteralText(); }
-  {BACKSLASH_ESCAPED_BRACES} { yypushback(1); return PyTokenTypes.FSTRING_TEXT; }
+  {FSTRING_QUOTES} { return fStringHelper.handleFStringEnd(); }
   "{" { return fStringHelper.handleFragmentStart(); }
   "}" { return fStringHelper.handleFragmentEnd(); }
 
-  // format part of a fragment can contain opening quotes
-  {FSTRING_QUOTES} { return fStringHelper.handleFStringEnd(); }
   [^] { return PyTokenTypes.BAD_CHARACTER; }
 }
 
