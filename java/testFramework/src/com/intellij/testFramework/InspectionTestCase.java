@@ -126,7 +126,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
     InspectionTestUtil.compareToolResults(context, checkRange, testDir, ContainerUtil.append(Collections.singletonList(toolWrapper), additional));
 
     if (MIGRATE_TEST) {
-      myMigration = new LightTestMigration(getClass(), testDir, tools, getTestProjectSdk());
+      myMigration = new LightTestMigration(getTestName(false), getClass(), testDir, tools, getTestProjectSdk());
     }
   }
 

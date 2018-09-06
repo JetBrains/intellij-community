@@ -29,6 +29,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.time.Year;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,21 +40,27 @@ import java.util.stream.Collectors;
  */
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 class LightTestMigration {
+  private final String myName;
   private final Class<? extends InspectionTestCase> myTestClass;
   private final Path myDir;
   private final List<InspectionToolWrapper<?, ?>> myTools;
   private final Sdk mySdk;
+  private static final List<String> ourTestNames = new ArrayList<>();
 
   private static final Map<String, String> JDK_MAP = EntryStream.of(
     "java 1.7", "JAVA_1_7",
     "java 1.8", "JAVA_8",
     "java 9", "JAVA_9"
   ).toMap();
+  private Path myBaseDir;
+  private Path myBasePath;
 
-  LightTestMigration(Class<? extends InspectionTestCase> testClass,
+  LightTestMigration(String name,
+                     Class<? extends InspectionTestCase> testClass,
                      String dir,
                      List<InspectionToolWrapper<?, ?>> tools,
                      Sdk sdk) {
+    myName = name;
     myTestClass = testClass;
     myDir = Paths.get(dir);
     myTools = tools;
@@ -61,9 +68,12 @@ class LightTestMigration {
   }
 
   void tryMigrate() throws Exception {
+    myBasePath = Paths.get(JavaTestUtil.getJavaTestDataPath());
     Path javaFile = getSoleJavaFile(myDir);
     String fileText = new String(Files.readAllBytes(javaFile), StandardCharsets.UTF_8);
-    Path targetFile = myDir.resolve(javaFile.getFileName());
+    String testName = myName.isEmpty() ? javaFile.getFileName().toString().replaceFirst(".java$", "") : myName;
+    myBaseDir = myName.isEmpty() ? myDir : myDir.getParent();
+    Path targetFile = myBaseDir.resolve(testName + ".java");
     IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
     LightProjectDescriptor descriptor = new LightProjectDescriptor() {
       @Nullable
@@ -92,36 +102,38 @@ class LightTestMigration {
     Files.createDirectories(myDir);
     Files.write(targetFile, expectedText.getBytes(StandardCharsets.UTF_8));
     System.out.println("Written: " + targetFile);
-    generateClassTemplate(javaFile);
+    if (ourTestNames.isEmpty()) {
+      Runtime.getRuntime().addShutdownHook(new Thread(this::generateClassTemplate));
+    }
+    ourTestNames.add(testName);
     javaFixture.tearDown();
   }
 
-  private void generateClassTemplate(Path javaFile) {
+  private void generateClassTemplate() {
     String pathSpec;
-    Path basePath = Paths.get(JavaTestUtil.getJavaTestDataPath());
     Set<Class<?>> importedClasses =
       StreamEx.of(myTools.stream().<Class<?>>map(wrapper -> wrapper.getTool().getClass()))
         .append(LightCodeInsightFixtureTestCase.class, LightProjectDescriptor.class, NotNull.class)
         .toSet();
-    if (myDir.startsWith(basePath)) {
-      Path relativePath = basePath.relativize(myDir);
+    if (myBaseDir.startsWith(myBasePath)) {
+      Path relativePath = myBasePath.relativize(myBaseDir);
       importedClasses.add(JavaTestUtil.class);
       pathSpec = "JavaTestUtil.getRelativeJavaTestDataPath() + \"/" +
                  StringUtil.escapeStringCharacters(relativePath.toString().replace('\\', '/')) +
                  '"';
     }
     else {
-      basePath = Paths.get(PathManagerEx.getCommunityHomePath());
-      if (myDir.startsWith(basePath)) {
-        Path relativePath = basePath.relativize(myDir);
+      Path basePath = Paths.get(PathManagerEx.getCommunityHomePath());
+      if (myBaseDir.startsWith(basePath)) {
+        Path relativePath = basePath.relativize(myBaseDir);
         pathSpec = "\"/" + StringUtil.escapeStringCharacters(relativePath.toString().replace('\\', '/')) + '"';
       }
       else {
-        pathSpec = '"' + StringUtil.escapeStringCharacters(myDir.toString()) + '"';
+        pathSpec = "\"!!! Unable to convert path!!! " + StringUtil.escapeStringCharacters(myBaseDir.toString()) + '"';
       }
     }
     String imports = generateImports(importedClasses);
-    String testMethodName = "test" + javaFile.getFileName().toString().replaceFirst(".java$", "");
+    String testMethods = ourTestNames.stream().map(name -> "  public void test"+name+"() {\n    doTest();\n  }\n\n").collect(Collectors.joining());
     String inspections =
       myTools.stream().map(InspectionToolWrapper::getTool).map(InspectionProfileEntry::getClass).map(Class::getSimpleName)
         .map(name -> "new " + name + "()").collect(Collectors.joining(", "));
@@ -150,11 +162,9 @@ class LightTestMigration {
       "    myFixture.testHighlighting(getTestName(false) + \".java\");\n" +
       "  '}'\n" +
       "\n" +
-      "  public void {5}() '{'\n" +
-      "    doTest();\n" +
-      "  '}'\n" +
+      "{5}" +
       "'}'\n",
-      myTestClass.getPackage().getName(), imports, myTestClass.getSimpleName(), pathSpec, inspections, testMethodName, guessedJdk, year);
+      myTestClass.getPackage().getName(), imports, myTestClass.getSimpleName(), pathSpec, inspections, testMethods, guessedJdk, year);
     System.out.println("Class template: (" + myTestClass.getSimpleName() + ".java)");
     System.out.println("==============================");
     System.out.println(classTemplate);
