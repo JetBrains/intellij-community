@@ -1298,13 +1298,11 @@ public class AllIcons {
   public static class Javaee {
     public static final Icon Application_xml = IconLoader.getIcon("/javaee/application_xml.png"); // 16x16
     public static final Icon BuildOnFrameDeactivation = IconLoader.getIcon("/javaee/buildOnFrameDeactivation.png"); // 16x16
-    public static final Icon DbSchemaImportBig = IconLoader.getIcon("/javaee/dbSchemaImportBig.png"); // 32x32
     public static final Icon Ejb_jar_xml = IconLoader.getIcon("/javaee/ejb-jar_xml.png"); // 16x16
     public static final Icon EjbClass = IconLoader.getIcon("/javaee/ejbClass.png"); // 16x16
     public static final Icon EjbModule = IconLoader.getIcon("/javaee/ejbModule.png"); // 16x16
     public static final Icon EmbeddedAttributeOverlay = IconLoader.getIcon("/javaee/embeddedAttributeOverlay.png"); // 16x16
     public static final Icon EntityBean = IconLoader.getIcon("/javaee/entityBean.png"); // 16x16
-    public static final Icon EntityBeanBig = IconLoader.getIcon("/javaee/entityBeanBig.png"); // 24x24
     public static final Icon Home = IconLoader.getIcon("/javaee/home.png"); // 16x16
     public static final Icon InheritedAttributeOverlay = IconLoader.getIcon("/javaee/inheritedAttributeOverlay.png"); // 16x16
     public static final Icon InterceptorClass = IconLoader.getIcon("/javaee/interceptorClass.png"); // 16x16
@@ -1338,6 +1336,16 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon DataSourceImport = IconLoader.getIcon("/javaee/dataSourceImport.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon DbSchemaImportBig = IconLoader.getIcon("/javaee/dbSchemaImportBig.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon EntityBeanBig = IconLoader.getIcon("/javaee/entityBeanBig.png");
 
   }
 
