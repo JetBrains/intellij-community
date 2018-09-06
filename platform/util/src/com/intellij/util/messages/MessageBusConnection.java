@@ -25,8 +25,7 @@ public interface MessageBusConnection extends Disposable {
    * @throws IllegalStateException    if there is already registered handler for the target endpoint within the current connection.
    *                                  Note that that previously registered handler is not replaced by the given one then
    * @see MessageBus#syncPublisher(Topic)
-   *
-   * @see Topics#subscribe()
+   * @see com.intellij.application.Topics#subscribe
    */
   <L> void subscribe(@NotNull Topic<L> topic, @NotNull L handler) throws IllegalStateException;
 

@@ -3,6 +3,7 @@ package com.intellij.psi.impl.file.impl;
 
 import com.intellij.AppTopics;
 import com.intellij.ProjectTopics;
+import com.intellij.application.Topics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -79,7 +80,7 @@ public class PsiVFSListener implements BulkFileListener {
    */
   private static void installGlobalListener() {
     if (ourGlobalListenerInstalled.compareAndSet(false, true)) {
-      ApplicationManager.getApplication().getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      Topics.subscribe(VirtualFileManager.VFS_CHANGES, null, new BulkFileListener() {
         @Override
         public void before(@NotNull List<? extends VFileEvent> events) {
           for (Project project : ProjectManager.getInstance().getOpenProjects()) {
@@ -112,7 +113,6 @@ public class PsiVFSListener implements BulkFileListener {
   private PsiDirectory getCachedDirectory(VirtualFile parent) {
     return parent == null ? null : myFileManager.getCachedDirectory(parent);
   }
-
 
   private void fileCreated(@NotNull VirtualFile vFile) {
     ApplicationManager.getApplication().runWriteAction(
@@ -706,7 +706,7 @@ public class PsiVFSListener implements BulkFileListener {
             propertyChanged((VFilePropertyChangeEvent)event);
           }
         }
-      
+
         prev = null;
         prevI = i+1;
         continue;

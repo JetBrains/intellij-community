@@ -2,13 +2,13 @@
 
 package com.intellij.testGuiFramework.recorder
 
+import com.intellij.application.subscribe
 import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.AnActionListener
-import com.intellij.openapi.application.subscribe
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.testGuiFramework.recorder.ui.GuiScriptEditorPanel
