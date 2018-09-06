@@ -183,15 +183,16 @@ public class GitSSHGUIHandler {
     CredentialAttributes oldAttributes = oldCredentialAttributes("PASSWORD:" + username);
     CredentialAttributes newAttributes = passwordCredentialAttributes(username);
     Credentials credentials = getAndMigrateCredentials(oldAttributes, newAttributes);
-    if (credentials != null) {
-      return credentials.getPasswordAsString();
+    if (credentials != null && !resetPassword) {
+      String password = credentials.getPasswordAsString();
+      if (password != null) return password;
     }
     if (myIgnoreAuthenticationRequest) return null;
     return CredentialPromptDialog.askPassword(myProject,
                                               GitBundle.getString("ssh.password.title"),
                                               GitBundle.message("ssh.password.message", username),
                                               newAttributes,
-                                              resetPassword,
+                                              true,
                                               error);
   }
 
