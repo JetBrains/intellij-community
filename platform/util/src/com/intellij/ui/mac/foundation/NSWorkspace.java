@@ -18,10 +18,7 @@ package com.intellij.ui.mac.foundation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
-
 import static com.intellij.ui.mac.foundation.Foundation.*;
-import static com.intellij.ui.mac.foundation.FoundationLibrary.NSBitmapImageFileTypePNG;
 
 public class NSWorkspace {
   @Nullable
@@ -38,24 +35,7 @@ public class NSWorkspace {
   }
 
   @NotNull
-  private static ID getInstance() {
+  public static ID getInstance() {
     return invoke(getObjcClass("NSWorkspace"), "sharedWorkspace");
-  }
-
-  @Nullable
-  public static Image imageForFileType(@NotNull String fileType) {
-    NSAutoreleasePool pool = new NSAutoreleasePool();
-    try {
-      ID workspace = getInstance();
-      ID image = invoke(workspace, "iconForFileType:", nsString(fileType));
-      ID cgImage = invoke(image, "CGImageForProposedRect:context:hints:", ID.NIL, ID.NIL, ID.NIL);
-      ID bitmapRepresentation = invoke(invoke(getObjcClass("NSBitmapImageRep"), "alloc"),
-                                       "initWithCGImage:", cgImage);
-      ID nsData = invoke(bitmapRepresentation, "representationUsingType:properties:", NSBitmapImageFileTypePNG, ID.NIL);
-      return isNil(nsData) ? null : new NSData(nsData).createImageFromBytes();
-    }
-    finally {
-      pool.drain();
-    }
   }
 }
