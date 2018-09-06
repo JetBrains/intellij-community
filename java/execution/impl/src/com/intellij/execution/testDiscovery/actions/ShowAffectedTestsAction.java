@@ -156,10 +156,9 @@ public class ShowAffectedTestsAction extends AnAction {
     UastMetaLanguage jvmLanguage = Language.findInstance(UastMetaLanguage.class);
 
     List<PsiElement> methods = FormatChangedTextUtil.getInstance().getChangedElements(project, changes, file -> {
+      if (DumbService.isDumb(project)) return null;
       PsiFile psiFile = PsiUtilCore.getPsiFile(project, file);
-      if (!jvmLanguage.matchesLanguage(psiFile.getLanguage())) {
-        return null;
-      }
+      if (!jvmLanguage.matchesLanguage(psiFile.getLanguage())) return null;
       Document document = FileDocumentManager.getInstance().getDocument(file);
       if (document == null) return null;
       UFile uFile = UastContextKt.toUElement(psiFile, UFile.class);
