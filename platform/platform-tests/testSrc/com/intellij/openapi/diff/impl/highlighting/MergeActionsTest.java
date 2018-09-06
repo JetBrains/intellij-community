@@ -53,7 +53,7 @@ public class MergeActionsTest extends TestSuite {
 
     @Override
     protected String process(Editor editor) {
-      StringBuffer buffer = new StringBuffer();
+      StringBuilder buffer = new StringBuilder();
       RangeHighlighter[] allHighlighters = editor.getMarkupModel().getAllHighlighters();
       for (RangeHighlighter highlighter : allHighlighters) {
         GutterMark iconRenderer = highlighter.getGutterIconRenderer();
