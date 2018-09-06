@@ -88,7 +88,7 @@ class PyStubPackagesAdvertiser : PyInspection() {
         val plural = reqs.size > 1
         val reqsToString = PyPackageUtil.requirementsToString(reqs)
 
-        val installQuickFix = PyInstallRequirementsFix("Install stub package" + if (plural) "s" else "", module, sdk, reqs)
+        val installQuickFix = PyInstallRequirementsFix("Install stub package" + if (plural) "s" else "", module, sdk, reqs, args)
         val ignoreQuickFix = createIgnorePackagesQuickFix(reqs, ignoredPackages)
 
         registerProblem(file,
@@ -267,7 +267,7 @@ class PyStubPackagesAdvertiser : PyInspection() {
     private fun toRequirementsAndExtraArgs(loaded: Map<String, Set<RepoPackage>>,
                                            cached: Set<RepoPackage>): Pair<List<PyRequirement>, List<String>> {
       val reqs = mutableListOf<PyRequirement>()
-      val args = mutableListOf<String>()
+      val args = mutableListOf("--no-deps")
 
       (cached + loaded.values.flatten())
         .forEach {
