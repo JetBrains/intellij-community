@@ -870,6 +870,7 @@ return yylength()-s.length();
     zzAtEOF  = false;
     zzAtBOL = true;
     zzEndRead = end;
+    fStringHelper.reset();
     yybegin(initialState);
   }
 
