@@ -4,6 +4,7 @@ package com.jetbrains.python.lexer
 import com.intellij.psi.tree.IElementType
 import com.intellij.util.containers.Stack
 import com.jetbrains.python.PyTokenTypes
+import com.jetbrains.python.psi.PyElementType
 import com.jetbrains.python.psi.PyStringLiteralUtil
 
 
@@ -11,16 +12,24 @@ import com.jetbrains.python.psi.PyStringLiteralUtil
 class PyLexerFStringHelper(private val myLexer: FlexLexerEx) {
   private val myFStringStates: Stack<FStringState> = Stack()
 
-  fun handleFStringStart(): IElementType {
+  fun handleFStringStartInFragment(): IElementType {
     val prefixAndQuotes = myLexer.yytext().toString()
     val (_, offset) = findFStringTerminator(prefixAndQuotes)
     if (offset == prefixAndQuotes.length) {
-      val openingQuotes = prefixAndQuotes.substring(PyStringLiteralUtil.getPrefixLength(prefixAndQuotes))
-      myFStringStates.push(FStringState(myLexer.yystate(), openingQuotes))
-      myLexer.yybegin(_PythonLexer.FSTRING)
-      return PyTokenTypes.FSTRING_START
+      return pushFString(prefixAndQuotes)
     }
     return PyTokenTypes.IDENTIFIER
+  }
+
+  fun handleFStringStart(): IElementType {
+    return pushFString(myLexer.yytext().toString())
+  }
+
+  private fun pushFString(prefixAndQuotes: String): PyElementType {
+    val openingQuotes = prefixAndQuotes.substring(PyStringLiteralUtil.getPrefixLength(prefixAndQuotes))
+    myFStringStates.push(FStringState(myLexer.yystate(), myLexer.tokenStart, openingQuotes))
+    myLexer.yybegin(_PythonLexer.FSTRING)
+    return PyTokenTypes.FSTRING_START
   }
 
   fun handleFStringEnd(): IElementType {
@@ -29,7 +38,7 @@ class PyLexerFStringHelper(private val myLexer: FlexLexerEx) {
   }
 
   fun handleFragmentStart(): IElementType {
-    myFStringStates.peek().fragmentStates.push(FragmentState(myLexer.yystate()))
+    myFStringStates.peek().fragmentStates.push(FragmentState(myLexer.yystate(), myLexer.tokenStart))
     myLexer.yybegin(_PythonLexer.FSTRING_FRAGMENT)
     return PyTokenTypes.FSTRING_FRAGMENT_START
   }
@@ -144,12 +153,27 @@ class PyLexerFStringHelper(private val myLexer: FlexLexerEx) {
     }
   }
 
+  fun reset(offset: Int) {
+    if (offset == 0) {
+      myFStringStates.clear()
+      return
+    }
+    while (!myFStringStates.isEmpty() && offset < myFStringStates.peek().offset) {
+      myFStringStates.pop()
+    }
+    if (!myFStringStates.isEmpty()) {
+      val fragmentStates = myFStringStates.peek().fragmentStates
+      while (!fragmentStates.isEmpty() && offset < fragmentStates.peek().offset) {
+        fragmentStates.pop()
+      }
+    }
+  }
 
-  private data class FStringState(val oldState: Int, val openingQuotes: String) {
+  private data class FStringState(val oldState: Int, val offset: Int, val openingQuotes: String) {
     val fragmentStates = Stack<FragmentState>()
   }
 
-  private data class FragmentState(val oldState: Int) {
+  private data class FragmentState(val oldState: Int, val offset: Int) {
     var braceBalance: Int = 0
   }
 }

@@ -15,8 +15,7 @@
  */
 package com.jetbrains.python.lexer;
 
-import com.intellij.lexer.FlexAdapter;
-import com.intellij.lexer.FlexLexer;
+import com.intellij.lexer.LexerBase;
 import com.intellij.lexer.MergingLexerAdapter;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -48,8 +47,8 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
   private static final boolean DUMP_TOKENS = false;
   private final TokenSet RECOVERY_TOKENS = PythonDialectsTokenSetProvider.INSTANCE.getUnbalancedBracesRecoveryTokens();
 
-  public PythonIndentingProcessor(FlexLexer lexer, TokenSet tokens) {
-    super(new FlexAdapter(lexer), tokens);
+  public PythonIndentingProcessor(LexerBase lexer, TokenSet tokens) {
+    super(lexer, tokens);
   }
 
   protected static class PendingToken {
