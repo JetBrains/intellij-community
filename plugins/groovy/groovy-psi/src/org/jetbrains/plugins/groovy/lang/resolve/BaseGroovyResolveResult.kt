@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.PsiSubstitutor
+import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStaticChecker
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
@@ -13,7 +14,8 @@ open class BaseGroovyResolveResult<out T : PsiElement>(
   element: T,
   private val place: PsiElement?,
   private val resolveContext: PsiElement? = null,
-  private val substitutor: PsiSubstitutor = PsiSubstitutor.EMPTY
+  private val substitutor: PsiSubstitutor = PsiSubstitutor.EMPTY,
+  private val spreadState: SpreadState? = null
 ) : ElementResolveResult<T>(element) {
 
   private val accessible by lazy(LazyThreadSafetyMode.PUBLICATION) {
@@ -34,4 +36,6 @@ open class BaseGroovyResolveResult<out T : PsiElement>(
   override fun getCurrentFileResolveContext(): PsiElement? = resolveContext
 
   override fun getSubstitutor(): PsiSubstitutor = substitutor
+
+  override fun getSpreadState(): SpreadState? = spreadState
 }
