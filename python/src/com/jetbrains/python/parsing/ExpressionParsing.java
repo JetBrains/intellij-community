@@ -422,7 +422,8 @@ public class ExpressionParsing extends Parsing {
         while (!myBuilder.eof() &&
                myBuilder.getTokenType() != PyTokenTypes.RPAR &&
                myBuilder.getTokenType() != PyTokenTypes.LINE_BREAK &&
-               myBuilder.getTokenType() != PyTokenTypes.STATEMENT_BREAK) {
+               myBuilder.getTokenType() != PyTokenTypes.STATEMENT_BREAK &&
+               myBuilder.getTokenType() != PyTokenTypes.FSTRING_END) {
           myBuilder.advanceLexer();
           empty = false;
         }
