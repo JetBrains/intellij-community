@@ -41,7 +41,6 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -53,7 +52,6 @@ import java.io.File;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implements OccurenceNavigator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.HierarchyBrowserBaseEx");
@@ -385,17 +383,13 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     selectLater(tree, Collections.singletonList(descriptor));
   }
   private void selectLater(@NotNull JTree tree, @NotNull List<? extends HierarchyNodeDescriptor> descriptors) {
-    Promise<List<TreePath>> selections = Promises.collectResults(
-      descriptors.stream()
-        .map(descriptor -> TreeUtil.promiseVisit(tree, visitor(descriptor)))
-        .collect(Collectors.toList()), true);
-
+    Promise<List<TreePath>> selections = TreeUtil.promiseSelect(tree, descriptors.stream().map(descriptor -> visitor(descriptor)));
     selections.onProcessed(paths -> TreeUtil.selectPaths(tree, paths));
   }
   
   private void expandLater(@NotNull JTree tree, @NotNull HierarchyNodeDescriptor descriptor) {
     TreeVisitor visitor = visitor(descriptor);
-    TreeUtil.visit(tree, visitor, path -> {
+    TreeUtil.promiseExpand(tree, visitor).onProcessed(path -> {
       if (path != null) {
         tree.expandPath(path);
       }
