@@ -15,6 +15,9 @@ class GroovyVersionAnnotator : Annotator {
     val config = GroovyConfigUtils.getInstance()
     val version = config.getSDKVersion(element)
     if (version == NO_VERSION) return
+    if (version < GROOVY1_7) {
+      element.accept(GroovyAnnotatorPre17(holder, version))
+    }
     if (version < GROOVY1_8) {
       element.accept(GroovyAnnotatorPre18(holder, version))
     }
