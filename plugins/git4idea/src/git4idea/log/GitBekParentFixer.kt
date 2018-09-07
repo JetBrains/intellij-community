@@ -15,6 +15,7 @@
  */
 package git4idea.log
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsException
@@ -44,11 +45,19 @@ internal class GitBekParentFixer private constructor(private val incorrectCommit
   }
 
   companion object {
+    private val LOG = Logger.getInstance(GitBekParentFixer::class.java)
+
     @JvmStatic
-    @Throws(VcsException::class)
     fun prepare(project: Project, root: VirtualFile): GitBekParentFixer {
-      return if (isEnabled()) GitBekParentFixer(getIncorrectCommits(project, root))
-      else GitBekParentFixer(emptySet())
+      if (isEnabled()) {
+        try {
+          return GitBekParentFixer(getIncorrectCommits(project, root))
+        }
+        catch (e: VcsException) {
+          LOG.warn("Could not find incorrect merges ", e)
+        }
+      }
+      return GitBekParentFixer(emptySet())
     }
 
     @JvmStatic
