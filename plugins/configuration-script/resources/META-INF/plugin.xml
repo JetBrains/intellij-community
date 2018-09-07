@@ -15,5 +15,6 @@
     <projectService serviceImplementation="com.intellij.configurationScript.ConfigurationFileManager"/>
 
     <runConfigurationTemplateProvider implementation="com.intellij.configurationScript.MyRunConfigurationTemplateProvider"/>
+    <updateSettingsProvider implementation="com.intellij.configurationScript.MyUpdateSettingsProvider"/>
   </extensions>
 </idea-plugin>

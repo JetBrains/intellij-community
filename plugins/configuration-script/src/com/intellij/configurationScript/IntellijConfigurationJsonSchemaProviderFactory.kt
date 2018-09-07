@@ -82,6 +82,12 @@ internal fun generateConfigurationSchema(): CharSequence {
       map(Keys.runConfigurations) {
         definitionReference(runConfigurationGenerator.definitionPointerPrefix, Keys.runConfigurations)
       }
+      map(Keys.plugins) {
+        "type" to "object"
+        map("properties") {
+          buildJsonSchema(PluginsConfiguration(), this)
+        }
+      }
     }
     "additionalProperties" to false
   }
@@ -92,4 +98,6 @@ internal fun generateConfigurationSchema(): CharSequence {
 internal object Keys {
   const val runConfigurations = "runConfigurations"
   const val templates = "templates"
+
+  const val plugins = "plugins"
 }
