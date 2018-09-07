@@ -75,6 +75,9 @@ class MapStoredProperty<K: Any, V>(private val value: MutableMap<K, V>) : Stored
     return true
   }
 
+  @Suppress("FunctionName")
+  fun __getValue() = value
+
   override fun equals(other: Any?) = this === other || (other is MapStoredProperty<*, *> && value == other.value)
 
   override fun hashCode() = value.hashCode()

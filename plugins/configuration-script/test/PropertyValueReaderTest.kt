@@ -25,4 +25,18 @@ class PropertyValueReaderTest {
     options.shortenClasspath = ShortenCommandLine.MANIFEST
     assertThat(result).containsExactly(options)
   }
+
+  @Test
+  fun map() {
+    val result = parse("""
+    runConfigurations:
+      jvmMainMethod:
+        env:
+          foo: bar
+          answer: 42
+    """)
+    val options = JvmMainMethodRunConfigurationOptions()
+    options.env = linkedMapOf("foo" to "bar", "answer" to "42")
+    assertThat(result).containsExactly(options)
+  }
 }
