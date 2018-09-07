@@ -96,6 +96,7 @@ public class PyEditingTest extends PyTestCase {
     assertEquals("rf''", doTestTyping("rf", 2, '\''));
     assertEquals("fr''", doTestTyping("fr", 2, '\''));
     assertEquals("fr''''''", doTestTyping("fr''", 4, '\''));
+    assertEquals("fr''''''", doTestTyping("fr''", 3, "''"));
   }
 
   public void testFStringFragmentBraces() {
@@ -502,6 +503,13 @@ public class PyEditingTest extends PyTestCase {
     final PsiFile file = myFixture.configureByText(PythonFileType.INSTANCE, text);
     myFixture.getEditor().getCaretModel().moveToOffset(offset);
     myFixture.type(character);
+    return myFixture.getDocument(file).getText();
+  }
+
+  private String doTestTyping(final String text, final int offset, final String characters) {
+    final PsiFile file = myFixture.configureByText(PythonFileType.INSTANCE, text);
+    myFixture.getEditor().getCaretModel().moveToOffset(offset);
+    myFixture.type(characters);
     return myFixture.getDocument(file).getText();
   }
 
