@@ -61,5 +61,5 @@ public abstract class BareTestFixtureTestCase extends Assert {
   }
 
   @Rule
-  public TestRule watcher = TestLoggerFactory.createTestWatcher();
+  public TestRule testLoggerWatcher = TestLoggerFactory.createTestWatcher();
 }
