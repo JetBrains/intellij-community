@@ -215,11 +215,16 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
    * Checks if the given historyPanel shows the history for given path and revision number.
    */
   static boolean sameHistories(@NotNull FileHistoryPanelImpl historyPanel,
-                               @NotNull FilePath path,
-                               @Nullable VcsRevisionNumber startingRevisionNumber) {
-    String existingRevision = historyPanel.myStartingRevision == null ? null : historyPanel.myStartingRevision.asString();
-    String newRevision = startingRevisionNumber == null ? null : startingRevisionNumber.asString();
-    return historyPanel.myFilePath.equals(path) && Comparing.equal(existingRevision, newRevision);
+                               @NotNull FilePath filePath2,
+                               @Nullable VcsRevisionNumber startingRevision2) {
+    return sameHistories(historyPanel.myFilePath, historyPanel.myStartingRevision, filePath2, startingRevision2);
+  }
+
+  public static boolean sameHistories(@NotNull FilePath filePath1, @Nullable VcsRevisionNumber startingRevision1,
+                                      @NotNull FilePath filePath2, @Nullable VcsRevisionNumber startingRevision2) {
+    String existingRevision = startingRevision1 == null ? null : startingRevision1.asString();
+    String newRevision = startingRevision2 == null ? null : startingRevision2.asString();
+    return filePath1.equals(filePath2) && Comparing.equal(existingRevision, newRevision);
   }
 
   @NotNull
