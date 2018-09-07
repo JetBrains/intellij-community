@@ -172,13 +172,16 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
 
     if (currentBlockNode != null) {
       myIgnoreBlockTreeSelectionMarker++;
+      try {
+        DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(getRoot(), currentBlockNode);
+        if (node == null) return;
 
-      DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(getRoot(), currentBlockNode);
-      if (node == null) return;
-
-      TreePath path = TreePathUtil.pathToTreeNode(node);
-      myBlockTree.setSelectionPath(path);
-      myIgnoreBlockTreeSelectionMarker--;
+        TreePath path = TreePathUtil.pathToTreeNode(node);
+        myBlockTree.setSelectionPath(path);
+      }
+      finally {
+        myIgnoreBlockTreeSelectionMarker--;
+      }
     }
     else {
       myIgnoreBlockTreeSelectionMarker++;
