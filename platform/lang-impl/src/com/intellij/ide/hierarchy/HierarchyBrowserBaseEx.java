@@ -378,7 +378,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   }
 
   private void selectLater(@NotNull JTree tree, @NotNull HierarchyNodeDescriptor descriptor) {
-    selectLater(tree, Collections.singletonList(descriptor));
+    TreeUtil.promiseSelect(tree, visitor(descriptor));
   }
   private void selectLater(@NotNull JTree tree, @NotNull List<? extends HierarchyNodeDescriptor> descriptors) {
     TreeUtil.promiseSelect(tree, descriptors.stream().map(descriptor -> visitor(descriptor)));
