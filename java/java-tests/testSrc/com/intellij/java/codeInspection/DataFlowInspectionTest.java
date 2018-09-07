@@ -640,4 +640,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testStringEquality() { doTest(); }
   public void testAssignmentFieldAliasing() { doTest(); }
   public void testNewBoxedNumberEquality() { doTest(); }
+  public void testBoxingIncorrectLiteral() { doTest(); }
 }
