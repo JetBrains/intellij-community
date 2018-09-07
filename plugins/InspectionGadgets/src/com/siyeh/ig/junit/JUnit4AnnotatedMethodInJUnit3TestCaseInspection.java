@@ -65,7 +65,7 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspect
     final PsiClass aClass = (PsiClass)infos[0];
     final String className = aClass.getName();
     fixes.add(new ConvertToJUnit4Fix(className));
-    return fixes.toArray(new InspectionGadgetsFix[0]);
+    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
   }
 
   @Override
