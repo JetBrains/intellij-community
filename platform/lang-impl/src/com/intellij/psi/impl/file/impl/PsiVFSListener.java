@@ -434,15 +434,15 @@ public class PsiVFSListener implements BulkFileListener {
         boolean isExcluded = vFile.isDirectory() &&
                              Registry.is("ide.hide.excluded.files") && myProjectRootManager.getFileIndex().isExcluded(vFile);
         if (oldParentDir != null && !isExcluded) {
+          PsiElement eventChild = vFile.isDirectory() ? myFileManager.findDirectory(vFile) : myFileManager.findFile(vFile);
+          treeEvent.setChild(eventChild);
           if (newParentDir != null) {
             treeEvent.setOldParent(oldParentDir);
             treeEvent.setNewParent(newParentDir);
-            findEventChild(vFile, treeEvent);
             myManager.beforeChildMovement(treeEvent);
           }
           else {
             treeEvent.setParent(oldParentDir);
-            findEventChild(vFile, treeEvent);
             myManager.beforeChildRemoval(treeEvent);
           }
         }
@@ -453,17 +453,6 @@ public class PsiVFSListener implements BulkFileListener {
         }
       }
     );
-  }
-
-  private void findEventChild(@NotNull VirtualFile vFile, @NotNull PsiTreeChangeEventImpl treeEvent) {
-    if (vFile.isDirectory()) {
-      PsiDirectory psiDir = myFileManager.findDirectory(vFile);
-      treeEvent.setChild(psiDir);
-    }
-    else {
-      PsiFile psiFile = myFileManager.findFile(vFile);
-      treeEvent.setChild(psiFile);
-    }
   }
 
   private void filesMoved(@NotNull List<? extends VFileEvent> events) {
