@@ -68,6 +68,7 @@
 
     <runLineMarkerContributor language="Groovy" id="gradleGroovyRunLineMarkerProvider"
                               implementationClass="org.jetbrains.plugins.gradle.execution.GradleGroovyRunLineMarkerProvider"/>
+    <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.ExternalAnnotationsDataService"/>
   </extensions>
   <actions>
     <action id="Gradle.ImportExternalProject" class = "org.jetbrains.plugins.gradle.action.ImportProjectFromScriptAction"
