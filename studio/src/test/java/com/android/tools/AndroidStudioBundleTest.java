@@ -16,8 +16,9 @@
 package com.android.tools;
 
 import com.android.testutils.TestUtils;
-import com.android.tools.perflogger.Metric;
 import com.android.tools.perflogger.Benchmark;
+import com.android.tools.perflogger.MedianWindowDeviationAnalyzer;
+import com.android.tools.perflogger.Metric;
 import org.junit.Test;
 
 import java.io.File;
@@ -37,7 +38,17 @@ public class AndroidStudioBundleTest {
       // getWorkspaceFile asserts the file exists.
       File binary = TestUtils.getWorkspaceFile("tools/idea/" + file);
 
-      benchmark.log(file, binary.length());
+      benchmark.log(
+        file,
+        binary.length(),
+        // we don't expect this to deviate so tighten parameters
+        // to detect slightest regression.
+        new MedianWindowDeviationAnalyzer.Builder()
+          .setRunInfoQueryLimit(5)
+          .setRecentWindowSize(1)
+          .setMedianCoeff(0.01)
+          .setMadCoeff(0.0)
+          .build());
     }
 
     // TODO handle failure cases
