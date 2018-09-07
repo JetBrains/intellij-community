@@ -8,13 +8,13 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
+import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException
 import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsLoader
 import org.jetbrains.plugins.github.pullrequest.data.SingleWorkerProcessExecutor
@@ -29,7 +29,6 @@ import javax.swing.event.ListSelectionEvent
 class GithubPullRequestsListComponent(project: Project,
                                       actionManager: ActionManager,
                                       autoPopupController: AutoPopupController,
-                                      popupFactory: JBPopupFactory,
                                       private val selectionModel: GithubPullRequestsListSelectionModel,
                                       private val loader: GithubPullRequestsLoader)
   : BorderLayoutPanel(), Disposable,
@@ -49,7 +48,7 @@ class GithubPullRequestsListComponent(project: Project,
   private val errorPanel = HtmlErrorPanel()
   private val progressStripe = ProgressStripe(scrollPane, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
   private val searchModel = GithubPullRequestSearchModel()
-  private val search = GithubPullRequestSearchComponent(project, autoPopupController, popupFactory, searchModel)
+  private val search = GithubPullRequestSearchComponent(project, autoPopupController, searchModel)
   private val tableToolbarWrapper: Wrapper
 
   init {
@@ -178,21 +177,32 @@ class GithubPullRequestsListComponent(project: Project,
     val prefix = if (table.isEmpty) "Cannot load pull requests." else "Cannot load full pull requests list."
     table.emptyText.clear().appendText(prefix, SimpleTextAttributes.ERROR_ATTRIBUTES)
       .appendSecondaryText(getLoadingErrorText(error), SimpleTextAttributes.ERROR_ATTRIBUTES, null)
+      .appendSecondaryText("  ", SimpleTextAttributes.ERROR_ATTRIBUTES, null)
       .appendSecondaryText("Retry", SimpleTextAttributes.LINK_ATTRIBUTES) { loadMore() }
     if (!table.isEmpty) {
       //language=HTML
-      val errorText = "<html><body>$prefix ${getLoadingErrorText(error)}<a href=''>Retry</a></body></html>"
+      val errorText = "<html><body>$prefix<br/>${getLoadingErrorText(error, "<br/>")}<a href=''>Retry</a></body></html>"
       errorPanel.setError(errorText, linkActivationListener = { loadMore() })
     }
   }
 
-  private fun getLoadingErrorText(error: Throwable): String {
-    return error.message?.let { addDotIfNeeded(it) }?.let { addSpaceIfNeeded(it) }
-           ?: "Unknown loading error. "
+  private fun getLoadingErrorText(error: Throwable, newLineSeparator: String = "\n"): String {
+    if (error is GithubStatusCodeException && error.error != null) {
+      val githubError = error.error!!
+      val builder = StringBuilder(githubError.message)
+      if (githubError.errors.isNotEmpty()) {
+        builder.append(": ").append(newLineSeparator)
+        for (e in githubError.errors) {
+          builder.append(e.message ?: "${e.code} error in ${e.resource} field ${e.field}").append(newLineSeparator)
+        }
+      }
+      return builder.toString()
+    }
+
+    return error.message?.let { addDotIfNeeded(it) } ?: "Unknown loading error."
   }
 
   private fun addDotIfNeeded(line: String) = if (line.endsWith('.')) line else "$line."
-  private fun addSpaceIfNeeded(line: String) = if (line.endsWith(' ')) line else "$line "
 
   override fun dispose() {
     isDisposed = true

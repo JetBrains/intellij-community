@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.components.panels.Wrapper
@@ -33,8 +32,7 @@ class GithubPullRequestsComponentFactory(private val project: Project,
                                          private val git: Git,
                                          private val uiSettings: GithubPullRequestsUISettings,
                                          private val actionManager: ActionManager,
-                                         private val autoPopupController: AutoPopupController,
-                                         private val popupFactory: JBPopupFactory) {
+                                         private val autoPopupController: AutoPopupController) {
 
   fun createComponent(repository: GitRepository, remote: GitRemote, remoteUrl: String, account: GithubAccount): JComponent? {
 
@@ -43,7 +41,7 @@ class GithubPullRequestsComponentFactory(private val project: Project,
     val listLoader = GithubPullRequestsLoader(progressManager, requestExecutorHolder,
                                               account.server, repoPath)
     val selectionModel = GithubPullRequestsListSelectionModel()
-    val list = GithubPullRequestsListComponent(project, actionManager, autoPopupController, popupFactory, selectionModel, listLoader)
+    val list = GithubPullRequestsListComponent(project, actionManager, autoPopupController, selectionModel, listLoader)
 
     val detailsLoader = GithubPullRequestsDetailsLoader(progressManager, requestExecutorHolder, selectionModel)
     val branchFetcher = GithubPullRequestsBranchesFetcher(progressManager, git, detailsLoader, repository, remote)
