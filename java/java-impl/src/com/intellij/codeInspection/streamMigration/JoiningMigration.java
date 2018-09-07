@@ -233,7 +233,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
         if (element.isValid() && element instanceof PsiExpression) {
           PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier((PsiExpression)element);
           if (call != null && "toString".equals(call.getMethodExpression().getReferenceName())) {
-            call.replace(element);
+            new CommentTracker().replaceAndRestoreComments(call, element);
           }
         }
       }
