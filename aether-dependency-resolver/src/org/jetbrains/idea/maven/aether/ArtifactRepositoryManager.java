@@ -1,6 +1,5 @@
 package org.jetbrains.idea.maven.aether;
 
-import org.apache.log4j.Logger;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.RepositorySystem;
@@ -34,6 +33,8 @@ import org.eclipse.aether.util.version.GenericVersionScheme;
 import org.eclipse.aether.version.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.lang.reflect.InvocationHandler;
@@ -53,7 +54,7 @@ import java.util.*;
 public class ArtifactRepositoryManager {
   private static final VersionScheme ourVersioning = new GenericVersionScheme();
   private static final JreProxySelector ourProxySelector = new JreProxySelector();
-  private static final Logger LOG = Logger.getLogger(ArtifactRepositoryManager.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ArtifactRepositoryManager.class);
   private final DefaultRepositorySystemSession mySession;
 
   private static final RemoteRepository MAVEN_CENTRAL_REPOSITORY = createRemoteRepository(
