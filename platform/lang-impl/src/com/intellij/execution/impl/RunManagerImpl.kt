@@ -628,7 +628,6 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
   private fun loadSharedRunConfigurations() {
     if (schemeManagerIprProvider == null) {
       projectSchemeManager.loadSchemes()
-      return
     }
     else {
       project.service<IprRunManagerImpl>().lastLoadedState.getAndSet(null)?.let { data ->
@@ -659,7 +658,7 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
     eventPublisher.runConfigurationSelected()
   }
 
-  override fun hasSettings(settings: RunnerAndConfigurationSettings): Boolean = lock.read { idToSettings.get(settings.uniqueID) == settings }
+  override fun hasSettings(settings: RunnerAndConfigurationSettings) = lock.read { idToSettings.get(settings.uniqueID) == settings }
 
   private fun findExistingConfigurationId(settings: RunnerAndConfigurationSettings): String? {
     for ((key, value) in idToSettings) {
