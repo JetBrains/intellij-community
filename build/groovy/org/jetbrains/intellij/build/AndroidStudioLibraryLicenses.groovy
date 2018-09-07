@@ -122,6 +122,8 @@ class AndroidStudioLibraryLicenses {
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "Instant run protos", libraryName: "libdeploy_java_proto.jar",
                        license: "Apache 2.0", url: "http://source.android.com/"),
+    new LibraryLicense(name: "Instant run version", libraryName: "libjava_version.jar",
+                       license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "D8", libraryName: "d8-master.jar", license: "BSD"),
   ] as List<LibraryLicense>) + (("true" == System.getProperty("bundle.ui.tests") ? [
     new LibraryLicense(name: "truth", libraryName: "truth", version: "0.28", license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
