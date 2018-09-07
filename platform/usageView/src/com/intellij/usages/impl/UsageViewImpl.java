@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
+import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.find.FindManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
@@ -11,6 +12,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
@@ -43,11 +45,12 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.Queue;
 import com.intellij.util.enumeration.EmptyEnumeration;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.DialogUtil;
@@ -61,6 +64,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -69,8 +73,8 @@ import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -80,6 +84,7 @@ import java.util.stream.Stream;
  * @author max
  */
 public class UsageViewImpl implements UsageViewEx {
+  private static final Logger LOG = Logger.getInstance(UsageViewImpl.class);
   @NonNls public static final String SHOW_RECENT_FIND_USAGES_ACTION_ID = "UsageView.ShowRecentFindUsages";
 
   private final UsageNodeTreeBuilder myBuilder;
@@ -152,7 +157,7 @@ public class UsageViewImpl implements UsageViewEx {
   private Usage myOriginUsage;
   @Nullable private Runnable myRerunActivity;
   private boolean myDisposeSmartPointersOnClose = true;
-  private final Queue<Future<?>> updateRequests = new Queue<>(10); // guarded by insertionRequests
+  private final ExecutorService updateRequests = AppExecutorUtil.createBoundedApplicationPoolExecutor("usage view update requests", PooledThreadExecutor.INSTANCE, JobSchedulerImpl.getJobPoolParallelism(), this);
 
   public UsageViewImpl(@NotNull final Project project,
                        @NotNull UsageViewPresentation presentation,
@@ -1111,37 +1116,25 @@ public class UsageViewImpl implements UsageViewEx {
   @Override
   public void appendUsage(@NotNull Usage usage) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      addUpdateRequest(ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.run(() -> doAppendUsage(usage))));
+      addUpdateRequest(() -> ReadAction.run(() -> doAppendUsage(usage)));
     }
     else {
       doAppendUsage(usage);
     }
   }
 
-  private void addUpdateRequest(@NotNull Future<?> request) {
-    synchronized (updateRequests) {
-      while (!updateRequests.isEmpty() && updateRequests.peekFirst().isDone()) {
-        updateRequests.pullFirst();
-      }
-      updateRequests.addLast(request);
-    }
+  private void addUpdateRequest(@NotNull Runnable request) {
+    updateRequests.execute(request);
   }
 
   @Override
   public void waitForUpdateRequestsCompletion() {
     assert !ApplicationManager.getApplication().isDispatchThread();
-    while (true) {
-      Future<?> request;
-      synchronized (updateRequests) {
-        request = updateRequests.isEmpty() ? null : updateRequests.pullFirst();
-      }
-      if (request == null) break;
-      try {
-        request.get();
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
+    try {
+      ((BoundedTaskExecutor)updateRequests).waitAllTasksExecuted(10, TimeUnit.MINUTES);
+    }
+    catch (Exception e) {
+      LOG.error(e);
     }
   }
 
@@ -1149,7 +1142,7 @@ public class UsageViewImpl implements UsageViewEx {
   @Override
   public CompletableFuture<?> appendUsagesInBulk(@NotNull Collection<? extends Usage> usages) {
     CompletableFuture<Object> result = new CompletableFuture<>();
-    addUpdateRequest(ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.run(() -> {
+    addUpdateRequest(() -> ReadAction.run(() -> {
       try {
         for (Usage usage : usages) {
           doAppendUsage(usage);
@@ -1160,7 +1153,7 @@ public class UsageViewImpl implements UsageViewEx {
         result.completeExceptionally(e);
         throw e;
       }
-    })));
+    }));
     return result;
   }
 
@@ -1281,7 +1274,7 @@ public class UsageViewImpl implements UsageViewEx {
 
   private void queueUpdateBulk(@NotNull List<? extends Node> toUpdate, @NotNull Runnable onCompletedInEdt) {
     if (toUpdate.isEmpty()) return;
-    addUpdateRequest(ApplicationManager.getApplication().executeOnPooledThread(() -> {
+    addUpdateRequest(() -> {
       for (Node node : toUpdate) {
         try {
           if (isDisposed()) break;
@@ -1294,7 +1287,7 @@ public class UsageViewImpl implements UsageViewEx {
         }
       }
       ApplicationManager.getApplication().invokeLater(onCompletedInEdt);
-    }));
+    });
   }
 
   private boolean runReadActionWithRetries(@NotNull Runnable r) {
