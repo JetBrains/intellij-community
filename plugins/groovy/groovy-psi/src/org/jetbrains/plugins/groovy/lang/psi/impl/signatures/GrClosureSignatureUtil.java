@@ -601,7 +601,7 @@ public class GrClosureSignatureUtil {
     final PsiElement element = resolveResult.getElement();
     PsiSubstitutor substitutor;
     if (resolveResult instanceof GroovyMethodResult) {
-      substitutor = ((GroovyMethodResult)resolveResult).getSubstitutor(false);
+      substitutor = ((GroovyMethodResult)resolveResult).getPartialSubstitutor();
     }
     else {
       substitutor = resolveResult.getSubstitutor();
