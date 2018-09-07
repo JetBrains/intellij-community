@@ -754,8 +754,6 @@ public class AllIcons {
     public static final Icon Custom = IconLoader.getIcon("/fileTypes/custom.svg"); // 16x16
     public static final Icon Diagram = IconLoader.getIcon("/fileTypes/diagram.svg"); // 16x16
     public static final Icon Dtd = IconLoader.getIcon("/fileTypes/dtd.svg"); // 16x16
-    public static final Icon Facelets = IconLoader.getIcon("/fileTypes/facelets.svg"); // 16x16
-    public static final Icon FacesConfig = IconLoader.getIcon("/fileTypes/facesConfig.svg"); // 16x16
     public static final Icon Htaccess = IconLoader.getIcon("/fileTypes/htaccess.svg"); // 16x16
     public static final Icon Html = IconLoader.getIcon("/fileTypes/html.svg"); // 16x16
     public static final Icon Idl = IconLoader.getIcon("/fileTypes/idl.svg"); // 16x16
@@ -777,6 +775,16 @@ public class AllIcons {
     public static final Icon Xhtml = IconLoader.getIcon("/fileTypes/xhtml.svg"); // 16x16
     public static final Icon Xml = IconLoader.getIcon("/fileTypes/xml.svg"); // 16x16
     public static final Icon XsdFile = IconLoader.getIcon("/fileTypes/xsdFile.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use JsfIcons.Facelets */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Facelets = IconLoader.getIcon("/fileTypes/facelets.svg");
+
+    /** @deprecated to be removed in IDEA 2020 - use JsfIcons.FacesConfig */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon FacesConfig = IconLoader.getIcon("/fileTypes/facesConfig.svg");
 
   }
 
