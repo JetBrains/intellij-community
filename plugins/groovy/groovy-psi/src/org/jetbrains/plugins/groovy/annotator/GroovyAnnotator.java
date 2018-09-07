@@ -122,9 +122,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
       return;
     }
 
-    if (parent instanceof GrCodeReferenceElement) {
-      if (!checkDiamonds((GrCodeReferenceElement)parent, myHolder)) return;
-    }
+    if (typeArgumentList.isDiamond()) return;
 
     final PsiTypeParameter[] parameters = ((PsiTypeParameterListOwner)resolved).getTypeParameters();
     final GrTypeElement[] arguments = typeArgumentList.getTypeArgumentElements();
@@ -158,15 +156,6 @@ public class GroovyAnnotator extends GroovyElementVisitor {
       if (pparent instanceof GrIndexProperty) {
         myHolder.createErrorAnnotation(argument, GroovyBundle.message("named.arguments.are.not.allowed.inside.index.operations"));
       }
-    }
-  }
-
-  @Override
-  public void visitMethodCall(@NotNull GrMethodCall call) {
-    super.visitMethodCall(call);
-    final GroovyConfigUtils groovyConfig = GroovyConfigUtils.getInstance();
-    if (call.isCommandExpression() && !groovyConfig.isVersionAtLeast(call, GroovyConfigUtils.GROOVY1_8)) {
-      myHolder.createErrorAnnotation(call, GroovyBundle.message("is.not.supported.in.version", groovyConfig.getSDKVersion(call)));
     }
   }
 
@@ -1221,20 +1210,6 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     }
   }
 
-  private static boolean checkDiamonds(GrCodeReferenceElement refElement, AnnotationHolder holder) {
-    GrTypeArgumentList typeArgumentList = refElement.getTypeArgumentList();
-    if (typeArgumentList == null) return true;
-
-    if (!typeArgumentList.isDiamond()) return true;
-
-    final GroovyConfigUtils configUtils = GroovyConfigUtils.getInstance();
-    if (!configUtils.isVersionAtLeast(refElement, GroovyConfigUtils.GROOVY1_8)) {
-      final String message = GroovyBundle.message("diamonds.are.not.allowed.in.groovy.0", configUtils.getSDKVersion(refElement));
-      holder.createErrorAnnotation(typeArgumentList, message);
-    }
-    return false;
-  }
-
   @Override
   public void visitArgumentList(@NotNull GrArgumentList list) {
     checkNamedArgs(list.getNamedArguments(), true);
@@ -1367,19 +1342,6 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   private void checkRegexLiteral(PsiElement regex) {
-    String text = regex.getText();
-    String quote = GrStringUtil.getStartQuote(text);
-
-    final GroovyConfigUtils config = GroovyConfigUtils.getInstance();
-
-    if ("$/".equals(quote)) {
-      if (!config.isVersionAtLeast(regex, GroovyConfigUtils.GROOVY1_8)) {
-        myHolder
-          .createErrorAnnotation(regex, GroovyBundle.message("dollar.slash.strings.are.not.allowed.in.0", config.getSDKVersion(regex)));
-      }
-    }
-
-
     String[] parts;
     if (regex instanceof GrRegex) {
       parts = ((GrRegex)regex).getTextParts();
@@ -1393,16 +1355,6 @@ public class GroovyAnnotator extends GroovyElementVisitor {
       if (!GrStringUtil.parseRegexCharacters(part, new StringBuilder(part.length()), null, regex.getText().startsWith("/"))) {
         myHolder.createErrorAnnotation(regex, GroovyBundle.message("illegal.escape.character.in.string.literal"));
         return;
-      }
-    }
-
-    if ("/".equals(quote)) {
-      if (!config.isVersionAtLeast(regex, GroovyConfigUtils.GROOVY1_8)) {
-        if (text.contains("\n") || text.contains("\r")) {
-          myHolder.createErrorAnnotation(regex, GroovyBundle
-            .message("multiline.slashy.strings.are.not.allowed.in.groovy.0", config.getSDKVersion(regex)));
-          return;
-        }
       }
     }
   }
@@ -1935,12 +1887,6 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     /**** interface ****/
     if (typeDefinition.isInterface()) {
       checkModifierIsNotAllowed(modifiersList, PsiModifier.FINAL, GroovyBundle.message("intarface.cannot.have.modifier.final"), holder);
-    }
-
-    if (GroovyConfigUtils.getInstance().isVersionAtLeast(typeDefinition, GroovyConfigUtils.GROOVY1_8)) {
-      if (typeDefinition.getContainingClass() == null && !(typeDefinition instanceof GrTraitTypeDefinition)) {
-        checkModifierIsNotAllowed(modifiersList, PsiModifier.STATIC, holder);
-      }
     }
   }
 
