@@ -724,7 +724,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
   }
 
   private boolean isHintComponent(Component component) {
-    if (myHint != null && !myHint.isDisposed()) {
+    if (myHint != null && !myHint.isDisposed() && component != null) {
       return SwingUtilities.isDescendingFrom(component, myHint.getContent());
     }
     return false;
