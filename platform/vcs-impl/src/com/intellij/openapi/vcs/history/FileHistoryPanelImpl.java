@@ -34,9 +34,6 @@ import com.intellij.openapi.vcs.vfs.VcsVirtualFolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
-import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.ContentManagerAdapter;
-import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.dualView.CellWrapper;
 import com.intellij.ui.dualView.DualView;
 import com.intellij.ui.dualView.DualViewColumnInfo;
@@ -82,7 +79,6 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
 
   public static final DataKey<VcsFileRevision> PREVIOUS_REVISION_FOR_DIFF = DataKey.create("PREVIOUS_VCS_FILE_REVISION_FOR_DIFF");
 
-  private final ContentManager myContentManager;
   private final String myHelpId;
 
   @NotNull private final AbstractVcs myVcs;
@@ -108,10 +104,9 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
                               @NotNull FilePath filePath,
                               @NotNull VcsHistorySession session,
                               VcsHistoryProvider provider,
-                              ContentManager contentManager,
                               @NotNull FileHistoryRefresherI refresherI,
                               final boolean isStaticEmbedded) {
-    this(vcs, filePath, null, session, provider, contentManager, refresherI, isStaticEmbedded);
+    this(vcs, filePath, null, session, provider, refresherI, isStaticEmbedded);
   }
 
   public FileHistoryPanelImpl(@NotNull AbstractVcs vcs,
@@ -119,24 +114,11 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
                               @Nullable VcsRevisionNumber startingRevision,
                               @NotNull VcsHistorySession session,
                               VcsHistoryProvider provider,
-                              ContentManager contentManager,
                               @NotNull FileHistoryRefresherI refresherI,
                               final boolean isStaticEmbedded) {
     super(new BorderLayout());
-    myContentManager = contentManager;
     myHelpId = provider.getHelpId() != null ? provider.getHelpId() : "reference.versionControl.toolwindow.history";
 
-    if (myContentManager != null) {
-      myContentManager.addContentManagerListener(new ContentManagerAdapter() {
-        @Override
-        public void contentRemoved(@NotNull ContentManagerEvent event) {
-          if (event.getContent().getComponent() == FileHistoryPanelImpl.this) {
-            Disposer.dispose(FileHistoryPanelImpl.this);
-            myContentManager.removeContentManagerListener(this);
-          }
-        }
-      });
-    }
     myIsStaticAndEmbedded = false;
     myVcs = vcs;
     myProvider = provider;

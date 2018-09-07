@@ -71,7 +71,7 @@ public class FileHistorySessionPartner implements VcsHistorySessionConsumer, Dis
       }
     };
 
-    Disposer.register(myFileHistoryPanel, this);
+    Disposer.register(this, myFileHistoryPanel);
   }
 
   @Nullable
@@ -98,7 +98,7 @@ public class FileHistorySessionPartner implements VcsHistorySessionConsumer, Dis
   @NotNull
   private FileHistoryPanelImpl createFileHistoryPanel(@NotNull VcsHistorySession session, @NotNull FileHistoryRefresherI refresher) {
     ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(myVcs.getProject()).getContentManager();
-    return new FileHistoryPanelImpl(myVcs, myPath, myStartingRevisionNumber, session, myVcsHistoryProvider, contentManager, refresher,
+    return new FileHistoryPanelImpl(myVcs, myPath, myStartingRevisionNumber, session, myVcsHistoryProvider, refresher,
                                     false);
   }
 
@@ -148,7 +148,7 @@ public class FileHistorySessionPartner implements VcsHistorySessionConsumer, Dis
       if (myStartingRevisionNumber != null) {
         tabName += " (" + VcsUtil.getShortRevisionString(myStartingRevisionNumber) + ")";
       }
-      ContentUtilEx.addTabbedContent(manager, myFileHistoryPanel, "History", tabName, true);
+      ContentUtilEx.addTabbedContent(manager, myFileHistoryPanel, "History", tabName, true, this);
     }
     toolWindow.activate(null);
   }
