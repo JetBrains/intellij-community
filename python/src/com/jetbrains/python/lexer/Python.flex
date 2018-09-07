@@ -86,7 +86,7 @@ FSTRING_FRAGMENT_TYPE_CONVERSION = "!" [^=:'\"} \t\r\n]*
 %state FSTRING_FRAGMENT
 %xstate FSTRING_FRAGMENT_FORMAT
 %{
-final PyLexerFStringHelper fStringHelper = new PyLexerFStringHelper(this);
+private final PyLexerFStringHelper fStringHelper = new PyLexerFStringHelper(this);
 
 private int getSpaceLength(CharSequence string) {
 String string1 = string.toString();

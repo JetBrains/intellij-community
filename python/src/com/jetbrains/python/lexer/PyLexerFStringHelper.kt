@@ -153,20 +153,10 @@ class PyLexerFStringHelper(private val myLexer: FlexLexerEx) {
     }
   }
 
-  fun reset(offset: Int) {
-    if (offset == 0) {
-      myFStringStates.clear()
-      return
-    }
-    while (!myFStringStates.isEmpty() && offset < myFStringStates.peek().offset) {
-      myFStringStates.pop()
-    }
-    if (!myFStringStates.isEmpty()) {
-      val fragmentStates = myFStringStates.peek().fragmentStates
-      while (!fragmentStates.isEmpty() && offset < fragmentStates.peek().offset) {
-        fragmentStates.pop()
-      }
-    }
+  fun reset() {
+    // There is no need to be smarter about it, since LexerEditorHighlighter always resets 
+    // the lexer state to YYINITIAL where there can't be any f-strings.
+    myFStringStates.clear()
   }
 
   private data class FStringState(val oldState: Int, val offset: Int, val openingQuotes: String) {
