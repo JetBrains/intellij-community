@@ -55,7 +55,7 @@ interface RunConfigurationTemplateProvider {
 
 // open for Upsource (UpsourceRunManager overrides to disable loadState (empty impl))
 @State(name = "RunManager", storages = [(Storage(value = StoragePathMacros.WORKSPACE_FILE, useSaveThreshold = ThreeState.NO))])
-open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStateComponent<Element>, Disposable {
+open class RunManagerImpl @JvmOverloads constructor(val project: Project, sharedStreamProvider: StreamProvider? = null) : RunManagerEx(), PersistentStateComponent<Element>, Disposable {
   companion object {
     const val CONFIGURATION = "configuration"
     const val NAME_ATTR = "name"
@@ -144,7 +144,7 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
     }
   })
 
-  internal val schemeManagerIprProvider = if (project.isDirectoryBased) null else SchemeManagerIprProvider("configuration")
+  internal val schemeManagerIprProvider = if (project.isDirectoryBased || sharedStreamProvider != null) null else SchemeManagerIprProvider("configuration")
 
   @Suppress("LeakingThis")
   private val templateDifferenceHelper = TemplateDifferenceHelper(this)
@@ -163,7 +163,7 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
                                                                                                                     isShared = true,
                                                                                                                     isWrapSchemeIntoComponentElement = schemeManagerIprProvider == null),
                                                                                       schemeNameToFileName = OLD_NAME_CONVERTER,
-                                                                                      streamProvider = schemeManagerIprProvider)
+                                                                                      streamProvider = sharedStreamProvider ?: schemeManagerIprProvider)
 
   private val isFirstLoadState = AtomicBoolean(true)
 
@@ -192,7 +192,6 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
     }
   }
 
-  // separate method needed for tests
   @TestOnly
   fun initializeConfigurationTypes(factories: List<ConfigurationType>) {
     idToType.resolve(buildConfigurationTypeMap(factories))
