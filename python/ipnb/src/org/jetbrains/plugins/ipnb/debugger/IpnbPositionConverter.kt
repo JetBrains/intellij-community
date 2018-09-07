@@ -58,5 +58,10 @@ class IpnbPositionConverter(var project: Project) : PyLocalPositionConverter() {
     return createXSourcePosition(cellPosition.start.file, cellPosition.start.line + position.line)
   }
 
-
 }
+
+// represents position in Jupyter notebook on Python Side: file - cellId, line - line inside cell
+class IpnbSourcePosition(cellId: Int, line: Int) : PySourcePosition(cellId.toString(), line)
+
+// represents cell's start position
+data class CellPosition(val start: XSourcePosition)
