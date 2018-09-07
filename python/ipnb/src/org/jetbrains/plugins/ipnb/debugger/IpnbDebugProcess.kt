@@ -19,6 +19,10 @@ class IpnbDebugProcess(session: XDebugSession,
                                                                                             executionConsole,
                                                                                             myIpnbDebugProcessHandler,
                                                                                             false) {
+  init {
+    myPositionConverter = IpnbPositionConverter(project)
+  }
+
   private val myLocalPort = serverSocket.localPort
 
   private fun createPydevConnectionCommand(portToConnect: Int): String {
@@ -46,14 +50,14 @@ class IpnbDebugProcess(session: XDebugSession,
     connectionManager.executeCode(codePanel, connectionId, createPydevConnectionCommand(portToConnect))
   }
 
-  private fun setLatestCellId(cellId: String): String {
+  private fun setLatestCellId(cellId: Int): String {
     val command = StringBuilder()
     command.append("from pydev_jupyter import pydev_debug_jupyter\n")
     command.append("pydev_debug_jupyter.set_latest_cell_id('$cellId')\n")
     return command.toString()
   }
 
-  fun updateLatestCellId(connectionId: String, codePanel: IpnbCodePanel, cellId: String) {
+  fun updateLatestCellId(connectionId: String, codePanel: IpnbCodePanel, cellId: Int) {
     val connectionManager = IpnbConnectionManager.getInstance(project)
     connectionManager.executeCode(codePanel, connectionId, setLatestCellId(cellId))
   }

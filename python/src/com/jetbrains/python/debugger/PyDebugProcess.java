@@ -94,7 +94,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   private boolean myClosing = false;
 
-  private PyPositionConverter myPositionConverter;
+  protected PyPositionConverter myPositionConverter;
   private final XSmartStepIntoHandler<?> mySmartStepIntoHandler;
   private boolean myWaitingForConnection = false;
   private PyStackFrame myConsoleContextFrame = null;
