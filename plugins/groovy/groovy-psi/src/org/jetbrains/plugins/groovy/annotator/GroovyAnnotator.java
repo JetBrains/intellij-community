@@ -152,8 +152,8 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   public void visitNamedArgument(@NotNull GrNamedArgument argument) {
     PsiElement parent = argument.getParent();
     if (parent instanceof GrArgumentList) {
-      final PsiElement pparent = parent.getParent();
-      if (pparent instanceof GrIndexProperty) {
+      final PsiElement pParent = parent.getParent();
+      if (pParent instanceof GrIndexProperty) {
         myHolder.createErrorAnnotation(argument, GroovyBundle.message("named.arguments.are.not.allowed.inside.index.operations"));
       }
     }
@@ -186,10 +186,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
       if (typeElement instanceof GrDisjunctionTypeElement) {
         final GrTypeElement[] elements = ((GrDisjunctionTypeElement)typeElement).getTypeElements();
-        PsiType[] types = PsiType.createArray(elements.length);
-        for (int i = 0; i < elements.length; i++) {
-          types[i] = elements[i].getType();
-        }
+        final PsiType[] types = ContainerUtil.map2Array(elements, PsiType.class, GrTypeElement::getType);
 
         List<PsiType> usedInsideDisjunction = new ArrayList<>();
         for (int i = 0; i < types.length; i++) {
@@ -620,10 +617,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     }
 
     if (method.getBlock() == null && !method.hasModifierProperty(PsiModifier.NATIVE) && !GrTraitUtil.isMethodAbstract(method)) {
-      final Annotation annotation =
-        myHolder.createErrorAnnotation(nameIdentifier, GroovyBundle.message("not.abstract.method.should.have.body"));
-      //annotation.registerFix(new AddMethodBodyFix(method)); //todo make intentions work
-      //registerFix(annotation, new GrModifierFix(method, ABSTRACT, false, true, GrModifierFix.MODIFIER_LIST_OWNER), method);
+      myHolder.createErrorAnnotation(nameIdentifier, GroovyBundle.message("not.abstract.method.should.have.body"));
     }
 
     checkOverridingMethod(myHolder, method);
@@ -688,6 +682,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
         final String superPresentation = GroovyPresentationUtil.getSignaturePresentation(signature);
         final String superQName = getQNameOfMember(superMethod);
 
+        //noinspection MagicConstant
         final PsiElement modifier = method.getModifierList().getModifier(currentModifier);
         holder.createErrorAnnotation(
           modifier != null? modifier : method.getNameIdentifierGroovy(),
@@ -755,7 +750,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
       if (delimiter.getNode().getElementType() == GroovyTokenTypes.mCOLON) {
         GrTypeElement typeElement = variable.getTypeElementGroovy();
         GrModifierList modifierList = variable.getModifierList();
-        if (typeElement == null && StringUtil.isEmptyOrSpaces(modifierList.getText())) {
+        if (modifierList != null && typeElement == null && StringUtil.isEmptyOrSpaces(modifierList.getText())) {
           Annotation annotation = myHolder.createErrorAnnotation(variable.getNameIdentifierGroovy(), GroovyBundle
             .message("java.style.for.each.statement.requires.a.type.declaration"));
           annotation.registerFix(new ReplaceDelimiterFix());
@@ -1039,6 +1034,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     holder.createErrorAnnotation(element, GroovyBundle.message("unexpected.attribute.type.0", element.getType()));
   }
 
+  @SuppressWarnings("Duplicates")
   static void checkMethodReturnType(PsiMethod method, PsiElement toHighlight, AnnotationHolder holder) {
     final HierarchicalMethodSignature signature = method.getHierarchicalMethodSignature();
     final List<HierarchicalMethodSignature> superSignatures = signature.getSuperSignatures();
@@ -1421,7 +1417,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
       final String modifierText = modifier.getText();
       if (PsiModifier.FINAL.equals(modifierText)) continue;
       if (GrModifier.DEF.equals(modifierText)) continue;
-      myHolder.createErrorAnnotation(modifier, GroovyBundle.message("not.allowed.modifier.in.forin", modifierText));
+      myHolder.createErrorAnnotation(modifier, GroovyBundle.message("not.allowed.modifier.in.for.in", modifierText));
     }
   }
 
@@ -1849,7 +1845,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     try {
       MethodSignatureBackedByPsiMethod superMethod = SuperMethodsSearch.search(method, null, true, false).findFirst();
       if (superMethod == null) {
-        holder.createWarningAnnotation(overrideAnnotation, GroovyBundle.message("method.doesnot.override.super"));
+        holder.createWarningAnnotation(overrideAnnotation, GroovyBundle.message("method.does.not.override.super"));
       }
     }
     catch (IndexNotReadyException ignored) {
@@ -1862,7 +1858,6 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
     if (modifiersList == null) return;
 
-    /**** class ****/
     checkAccessModifiers(holder, modifiersList, typeDefinition);
     checkDuplicateModifiers(holder, modifiersList, typeDefinition);
 
@@ -1884,9 +1879,8 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     checkModifierIsNotAllowed(modifiersList, PsiModifier.TRANSIENT, GroovyBundle.message("modifier.transient.not.allowed.here"), holder);
     checkModifierIsNotAllowed(modifiersList, PsiModifier.VOLATILE, GroovyBundle.message("modifier.volatile.not.allowed.here"), holder);
 
-    /**** interface ****/
     if (typeDefinition.isInterface()) {
-      checkModifierIsNotAllowed(modifiersList, PsiModifier.FINAL, GroovyBundle.message("intarface.cannot.have.modifier.final"), holder);
+      checkModifierIsNotAllowed(modifiersList, PsiModifier.FINAL, GroovyBundle.message("interface.cannot.have.modifier.final"), holder);
     }
   }
 
@@ -1928,8 +1922,8 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     else if (member instanceof PsiClass &&
              member.getContainingClass() == null &&
              GroovyConfigUtils.getInstance().isVersionAtLeast(member, GroovyConfigUtils.GROOVY2_0)) {
-      checkModifierIsNotAllowed(modifierList, PsiModifier.PRIVATE, GroovyBundle.message("top.level.class.maynot.have.private.modifier"), holder);
-      checkModifierIsNotAllowed(modifierList, PsiModifier.PROTECTED, GroovyBundle.message("top.level.class.maynot.have.protected.modifier"), holder);
+      checkModifierIsNotAllowed(modifierList, PsiModifier.PRIVATE, GroovyBundle.message("top.level.class.may.not.have.private.modifier"), holder);
+      checkModifierIsNotAllowed(modifierList, PsiModifier.PROTECTED, GroovyBundle.message("top.level.class.may.not.have.protected.modifier"), holder);
     }
   }
 
