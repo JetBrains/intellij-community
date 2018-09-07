@@ -25,18 +25,8 @@ public interface TestDiscoveryProducer {
 
   @NotNull
   MultiMap<String, String> getDiscoveredTests(@NotNull Project project,
-                                              @NotNull String classFQName,
-                                              @Nullable String methodName,
-                                              byte frameworkId);
-
-  @NotNull
-  default MultiMap<String, String> getDiscoveredTests(@NotNull Project project,
                                                       @NotNull List<Couple<String>> classesAndMethods,
-                                                      byte frameworkId) {
-    MultiMap<String, String> result = new MultiMap<>();
-    classesAndMethods.forEach(couple -> result.putAllValues(getDiscoveredTests(project, couple.first, couple.second, frameworkId)));
-    return result;
-  }
+                                                      byte frameworkId);
 
   boolean isRemote();
 

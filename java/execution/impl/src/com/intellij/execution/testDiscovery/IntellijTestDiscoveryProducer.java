@@ -8,19 +8,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.HttpRequests;
-import com.intellij.util.io.RequestBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static java.net.URLEncoder.encode;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
   private static final String INTELLIJ_TEST_DISCOVERY_HOST = "http://intellij-test-discovery.labs.intellij.net";
@@ -28,28 +28,27 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
   @NotNull
   @Override
   public MultiMap<String, String> getDiscoveredTests(@NotNull Project project,
-                                                     @NotNull String classFQName,
-                                                     @Nullable String methodName,
+                                                     @NotNull List<Couple<String>> classesAndMethods,
                                                      byte frameworkId) {
     if (!ApplicationManager.getApplication().isInternal()) {
-      return MultiMap.emptyInstance();
+      return MultiMap.empty();
     }
     try {
-      String url = url(classFQName, methodName);
-      LOG.debug(url);
+      List<String> bareClasses = ContainerUtil.newSmartList();
+      List<Couple<String>> allTogether = ContainerUtil.newSmartList();
 
-      RequestBuilder r = HttpRequests.request(url)
-        .productNameAsUserAgent()
-        .gzip(true);
-      return r.connect(request -> {
-        MultiMap<String, String> map = new MultiMap<>();
-        TestsSearchResult result = new ObjectMapper().readValue(request.getInputStream(), TestsSearchResult.class);
-        result.getTests().forEach((classFqn, testMethodName) -> map.putValues(classFqn, testMethodName));
-        return map;
+      classesAndMethods.forEach(couple -> {
+        if (couple.second == null) bareClasses.add(couple.first);
+        else allTogether.add(couple);
       });
+
+      MultiMap<String, String> result = new MultiMap<>();
+      result.putAllValues(request(allTogether, couple -> "\"" + couple.first + "." + couple.second + "\"", "methods"));
+      result.putAllValues(request(bareClasses, s -> "\"" + s + "\"", "classes"));
+      return result;
     }
     catch (HttpRequests.HttpStatusException http) {
-      LOG.debug("No tests found for class: '" + classFQName + "', method: '" + methodName + "'", http);
+      LOG.debug("No tests found", http);
     }
     catch (IOException e) {
       LOG.debug(e);
@@ -57,10 +56,18 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
     return MultiMap.empty();
   }
 
-  private static String url(@NotNull String classFQName, @Nullable String methodName) throws UnsupportedEncodingException {
-    return INTELLIJ_TEST_DISCOVERY_HOST + "/search/tests/" + (methodName == null ?
-                                                              "by-class?fqn=" + encode(classFQName, "UTF-8") :
-                                                              "by-method?fqn=" + encode(classFQName + "." + methodName, "UTF-8"));
+  @NotNull
+  private static <T> MultiMap<String, String> request(List<T> collection, Function<T, String> toString, String what) throws IOException {
+    if (collection.isEmpty()) return MultiMap.empty();
+    String url = INTELLIJ_TEST_DISCOVERY_HOST + "/search/tests/by-" + what;
+    LOG.debug(url);
+    return HttpRequests.post(url, "application/json").productNameAsUserAgent().gzip(true).connect(r -> {
+      r.write(collection.stream().map(toString).collect(Collectors.joining(",", "[", "]")));
+      TestsSearchResult search = new ObjectMapper().readValue(r.getInputStream(), TestsSearchResult.class);
+      MultiMap<String, String> result = new MultiMap<>();
+      search.getTests().forEach((classFqn, testMethodName) -> result.putValues(classFqn, testMethodName));
+      return result;
+    });
   }
 
   @Override
