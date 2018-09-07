@@ -56,34 +56,10 @@ public class MismatchedCollectionQueryUpdateInspectionTest extends LightInspecti
     doTest();
   }
 
-  @Override
-  protected String[] getEnvironmentClasses() {
-    return new String[] {
-      "package java.util;" +
-      "public class HashSet<E> implements Set<E> {" +
-      "  public HashSet() {}" +
-      "  public HashSet(Collection<? extends E> collection) {}" +
-      "}",
-      "package java.util.concurrent;" +
-      "public interface BlockingDeque<E> {" +
-      "  E takeFirst() throws InterruptedException;" +
-      "  void putLast(E e) throws InterruptedException;" +
-      "}",
-      "package java.util.concurrent;" +
-      "public class LinkedBlockingDeque<E> implements BlockingDeque {}",
-      "package java.lang;" +
-      "public class InterruptedException extends Exception {}",
-      "package java.util.concurrent;" +
-      "public interface BlockingQueue<E> {" +
-      "  int drainTo(java.util.Collection<? super E> c);" +
-      "}"
-    };
-  }
-
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8_ANNOTATED;
+    return JAVA_9_ANNOTATED;
   }
 
   @Override

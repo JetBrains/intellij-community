@@ -19,7 +19,7 @@ public class WrapWithMutableCollectionFixTest extends LightQuickFixParameterized
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return LightCodeInsightFixtureTestCase.JAVA_9_ANNOTATED;
+    return LightCodeInsightFixtureTestCase.JAVA_10_ANNOTATED;
   }
 
   public void test() {

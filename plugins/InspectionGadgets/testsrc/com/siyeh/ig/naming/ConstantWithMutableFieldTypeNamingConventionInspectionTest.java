@@ -24,6 +24,6 @@ public class ConstantWithMutableFieldTypeNamingConventionInspectionTest extends 
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
+    return JAVA_8_ANNOTATED;
   }
 }
