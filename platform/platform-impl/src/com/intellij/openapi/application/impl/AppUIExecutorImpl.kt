@@ -77,34 +77,31 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
   }
 
   override fun inSmartMode(project: Project): AppUIExecutor {
-    return withConstraint(object : ExpirableContextConstraint {
-      override val expirable = project
-
+    return withConstraint(object : SimpleContextConstraint {
       override val isCorrectContext: Boolean
         get() = !DumbService.getInstance(project).isDumb
 
-      override fun scheduleExpirable(runnable: Runnable) {
-        DumbService.getInstance(project).smartInvokeLater(runnable, myModality)
-      }
+      override fun schedule(runnable: Runnable) = runnable.run()
 
       override fun toString() = "inSmartMode"
-    })
+    }).expireWith(project)
   }
 
   override fun inTransaction(parentDisposable: Disposable): AppUIExecutor {
     val id = TransactionGuard.getInstance().contextTransaction
-    return withConstraint(object : ExpirableContextConstraint {
-      override val expirable = parentDisposable
-
+    return withConstraint(object : SimpleContextConstraint {
       override val isCorrectContext: Boolean
         get() = TransactionGuard.getInstance().contextTransaction != null
 
-      override fun scheduleExpirable(runnable: Runnable) {
-        TransactionGuard.getInstance().submitTransaction(parentDisposable, id, runnable)
+      override fun schedule(runnable: Runnable) {
+        // The Application instance is passed as a disposable here to ensure the runnable is always invoked,
+        // regardless expiration state of the proper parentDisposable. In case the latter is disposed,
+        // a continuation is resumed with a cancellation exception anyway (.expireWith() takes care of that).
+        TransactionGuard.getInstance().submitTransaction(ApplicationManager.getApplication(), id, runnable)
       }
 
       override fun toString() = "inTransaction"
-    })
+    }).expireWith(parentDisposable)
   }
 
   override fun inUndoTransparentAction(): AppUIExecutor {
