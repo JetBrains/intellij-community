@@ -40,13 +40,11 @@ import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.io.File;
 import java.text.MessageFormat;
@@ -383,17 +381,10 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     selectLater(tree, Collections.singletonList(descriptor));
   }
   private void selectLater(@NotNull JTree tree, @NotNull List<? extends HierarchyNodeDescriptor> descriptors) {
-    Promise<List<TreePath>> selections = TreeUtil.promiseSelect(tree, descriptors.stream().map(descriptor -> visitor(descriptor)));
-    selections.onProcessed(paths -> TreeUtil.selectPaths(tree, paths));
+    TreeUtil.promiseSelect(tree, descriptors.stream().map(descriptor -> visitor(descriptor)));
   }
-  
   private void expandLater(@NotNull JTree tree, @NotNull HierarchyNodeDescriptor descriptor) {
-    TreeVisitor visitor = visitor(descriptor);
-    TreeUtil.promiseExpand(tree, visitor).onProcessed(path -> {
-      if (path != null) {
-        tree.expandPath(path);
-      }
-    });
+    TreeUtil.promiseExpand(tree, visitor(descriptor));
   }
 
   @NotNull
