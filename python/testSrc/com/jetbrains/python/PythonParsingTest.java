@@ -721,6 +721,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
+  public void testMultilineFStringTerminatedByQuotesOfStringLiteral() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
   public void testMultilineFStringContainingMultilineExpression() {
     doTest(LanguageLevel.PYTHON36);
   }

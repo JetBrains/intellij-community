@@ -125,7 +125,7 @@ return yylength()-s.length();
   ":" { return fStringHelper.handleColonInFragment(); }
 
   {SINGLE_QUOTED_STRING} { return fStringHelper.handleStringLiteral(PyTokenTypes.SINGLE_QUOTED_STRING); }
-  {TRIPLE_QUOTED_LITERAL} { return fStringHelper.handleStringLiteral(PyTokenTypes.TRIPLE_QUOTED_STRING); }
+  {TRIPLE_QUOTED_STRING} { return fStringHelper.handleStringLiteral(PyTokenTypes.TRIPLE_QUOTED_STRING); }
   {FSTRING_START}       { return fStringHelper.handleFStringStartInFragment(); }
       
   [\n] { return fStringHelper.handleLineBreakInFragment(); }
