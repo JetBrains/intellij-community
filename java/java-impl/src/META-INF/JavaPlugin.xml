@@ -92,6 +92,8 @@
       <with attribute="implementationClass" implements="com.intellij.refactoring.safeDelete.JavaSafeDeleteDelegate"/>
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.debuggerClassFilterProvider" interface="com.intellij.ui.classFilter.DebuggerClassFilterProvider"/>
+    <extensionPoint qualifiedName="com.intellij.externalAnnotationsArtifactsResolver"
+                    interface="com.intellij.codeInsight.ExternalAnnotationsArtifactsResolver"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -1175,5 +1177,6 @@
       <className>com.intellij.codeInsight.intention.impl.ChangeUIDAction</className>
       <category>Serialization</category>
     </intentionAction>
+    <externalAnnotationsArtifactsResolver implementation="com.intellij.jarRepository.ExternalAnnotationsRepositoryResolver"/>
   </extensions>
 </idea-plugin>

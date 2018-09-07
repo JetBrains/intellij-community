@@ -57,8 +57,10 @@ class JarRepositoryManagerTest : UsefulTestCase() {
 
   @Test
   fun `test resolving annotations artifacts`() {
-    addAnnotationsArtifact(version = "1.0")
-    generateMavenMetadata("myGroup", "myArtifact")
+    MavenRepoFixture(myMavenRepo).apply {
+      addAnnotationsArtifact(version = "1.0")
+      generateMavenMetadata("myGroup", "myArtifact")
+    }
 
     val description = JpsMavenRepositoryLibraryDescriptor("myGroup", "myArtifact", "1.0")
     val promise: Promise<MutableList<OrderRoot>> = JarRepositoryManager.loadDependenciesAsync(myProject, description, setOf(ArtifactKind.ANNOTATIONS),
@@ -71,11 +73,13 @@ class JarRepositoryManagerTest : UsefulTestCase() {
   }
 
   @Test fun `test resolving latest annotations artifact`() {
-    addAnnotationsArtifact(version = "1.0")
-    addAnnotationsArtifact(version = "1.0-an1")
-    val expectedName = addAnnotationsArtifact(version = "1.0-an2")
-
-    generateMavenMetadata("myGroup", "myArtifact")
+    val expectedName = MavenRepoFixture(myMavenRepo).run {
+      addAnnotationsArtifact(version = "1.0")
+      addAnnotationsArtifact(version = "1.0-an1")
+      val name = addAnnotationsArtifact(version = "1.0-an2")
+      generateMavenMetadata("myGroup", "myArtifact")
+      name
+    }
 
 
     val description = JpsMavenRepositoryLibraryDescriptor("myGroup", "myArtifact", "1.0")
@@ -90,13 +94,15 @@ class JarRepositoryManagerTest : UsefulTestCase() {
   }
 
   @Test fun `test fallback to previous major annotations version`() {
-    addAnnotationsArtifact(version = "1.0")
-    addAnnotationsArtifact(version = "2.0")
-    addAnnotationsArtifact(version = "2.0-an1")
-    addAnnotationsArtifact(version = "2.0-an2")
-    val expectedName = addAnnotationsArtifact(version = "2.1-an1")
-
-    generateMavenMetadata("myGroup", "myArtifact")
+    val expectedName = MavenRepoFixture(myMavenRepo).run {
+      addAnnotationsArtifact(version = "1.0")
+      addAnnotationsArtifact(version = "2.0")
+      addAnnotationsArtifact(version = "2.0-an1")
+      addAnnotationsArtifact(version = "2.0-an2")
+      val name = addAnnotationsArtifact(version = "2.1-an1")
+      generateMavenMetadata("myGroup", "myArtifact")
+      name
+    }
 
     val description = JpsMavenRepositoryLibraryDescriptor("myGroup", "myArtifact", "2.5")
     val promise: Promise<MutableList<OrderRoot>> = JarRepositoryManager.loadDependenciesAsync(myProject, description, setOf(ArtifactKind.ANNOTATIONS),
@@ -111,13 +117,16 @@ class JarRepositoryManagerTest : UsefulTestCase() {
 
 
   @Test fun `test selection for interval`() {
-    addAnnotationsArtifact(version = "1.0")
-    addAnnotationsArtifact(version = "2.0")
-    addAnnotationsArtifact(version = "2.0-an1")
-    val expectedName = addAnnotationsArtifact(version = "2.0-an2")
-    addAnnotationsArtifact(version = "2.1-an1")
+    val expectedName = MavenRepoFixture(myMavenRepo).run {
+      addAnnotationsArtifact(version = "1.0")
+      addAnnotationsArtifact(version = "2.0")
+      addAnnotationsArtifact(version = "2.0-an1")
+      val name = addAnnotationsArtifact(version = "2.0-an2")
+      addAnnotationsArtifact(version = "2.1-an1")
 
-    generateMavenMetadata("myGroup", "myArtifact")
+      generateMavenMetadata("myGroup", "myArtifact")
+      name
+    }
 
     val description = JpsMavenRepositoryLibraryDescriptor("myGroup", "myArtifact", "[2.0, 2.1)")
     val promise: Promise<MutableList<OrderRoot>> = JarRepositoryManager.loadDependenciesAsync(myProject, description, setOf(ArtifactKind.ANNOTATIONS),
@@ -144,48 +153,5 @@ class JarRepositoryManagerTest : UsefulTestCase() {
       }
     }
     return result
-  }
-
-  private fun addAnnotationsArtifact(group: String = "myGroup",
-                                     artifact: String = "myArtifact",
-                                     version: String)
-    : String = File(myMavenRepo, "$group/$artifact/$version/$artifact-$version-annotations.zip")
-    .apply {
-      parentFile.mkdirs()
-      writeText("Fake annotations artifact")
-    }.name
-
-  private fun generateMavenMetadata(group: String, artifact: String) {
-    val metadata = File(myMavenRepo, "$group/$artifact/maven-metadata.xml")
-      .apply {
-        parentFile.mkdirs()
-      }
-
-    val versionsList = metadata.parentFile
-      .listFiles()
-      .asSequence()
-      .filter { it.isDirectory }
-      .map { it.name }
-      .toList()
-
-    val releaseVersion = versionsList.last()
-
-    metadata.writeText("""
-      |<?xml version="1.0" encoding="UTF-8"?>
-      |<metadata>
-      |  <groupId>$group</groupId>
-      |  <artifactId>$artifact</artifactId>
-      |  <version>$releaseVersion</version>
-      |  <versioning>
-      |    <latest>$releaseVersion</latest>
-      |    <release>$releaseVersion</release>
-      |    <versions>
-      |      ${versionsList.joinToString(separator = "\n") { "<version>$it</version>" } }
-      |    </versions>
-      |    <lastUpdated>20180809190315</lastUpdated>
-      |  </versioning>
-      |</metadata>
-""".trimMargin())
-
   }
 }
