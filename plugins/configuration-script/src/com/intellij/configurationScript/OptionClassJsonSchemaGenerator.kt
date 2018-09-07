@@ -1,24 +1,53 @@
 package com.intellij.configurationScript
 
+import com.intellij.configurationStore.Property
 import com.intellij.configurationStore.properties.EnumStoredProperty
-import com.intellij.execution.configurations.LocatableRunConfigurationOptions
+import com.intellij.configurationStore.properties.MapStoredProperty
 import com.intellij.openapi.components.BaseState
+import gnu.trove.THashMap
+import kotlin.reflect.full.findAnnotation
+import kotlin.reflect.full.memberProperties
 
 internal fun buildJsonSchema(state: BaseState, builder: JsonObjectBuilder) {
   val properties = state.__getProperties()
-  val isLocatableRunConfigurationOptions = state is LocatableRunConfigurationOptions
-  // todo object definition
+  val memberProperties = state::class.memberProperties
+  var propertyToAnnotation: MutableMap<String, Property>? = null
+  for (property in memberProperties) {
+    val annotation = property.findAnnotation<Property>()
+    if (annotation != null) {
+      if (propertyToAnnotation == null) {
+        propertyToAnnotation = THashMap()
+      }
+      propertyToAnnotation.put(property.name, annotation)
+    }
+  }
+
   for (property in properties) {
-    if (isLocatableRunConfigurationOptions && property.name == "isNameGenerated") {
-      // overkill for now to introduce special annotation for this case
+    val name = property.name!!
+    val annotation = propertyToAnnotation?.get(name)
+    if (annotation?.ignore == true) {
       continue
     }
 
-    builder.map(property.name!!) {
+    builder.map(name) {
       "type" to property.jsonType.jsonName
+
+      annotation?.let {
+        if (!it.description.isEmpty()) {
+          "description" toUnescaped it.description
+        }
+      }
+
       if (property is EnumStoredProperty<*>) {
         describeEnum(property)
       }
+      else if (property is MapStoredProperty<*, *>) {
+        map("additionalProperties") {
+          "type" to "string"
+        }
+      }
+
+      // todo object definition
     }
   }
 }

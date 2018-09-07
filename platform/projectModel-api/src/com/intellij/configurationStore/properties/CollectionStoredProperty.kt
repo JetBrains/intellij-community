@@ -51,7 +51,7 @@ internal class ListStoredProperty<T> : CollectionStoredProperty<T, SmartList<T>>
   override fun getModificationCount() = value.modificationCount.toLong()
 }
 
-internal class MapStoredProperty<K: Any, V>(private val value: MutableMap<K, V>) : StoredPropertyBase<MutableMap<K, V>>() {
+class MapStoredProperty<K: Any, V>(private val value: MutableMap<K, V>) : StoredPropertyBase<MutableMap<K, V>>() {
   override val jsonType: JsonSchemaType
     get() = JsonSchemaType.OBJECT
 

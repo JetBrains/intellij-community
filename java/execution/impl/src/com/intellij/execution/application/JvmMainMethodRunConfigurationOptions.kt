@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.application
 
+import com.intellij.configurationStore.Property
 import com.intellij.execution.InputRedirectAware
 import com.intellij.execution.JvmConfigurationOptions
 import com.intellij.execution.ShortenCommandLine
@@ -24,6 +25,7 @@ open class JvmMainMethodRunConfigurationOptions : JvmConfigurationOptions() {
   @get:OptionTag("PASS_PARENT_ENVS")
   var isPassParentEnv by property(true)
 
+  @Property(description = "Environment variables")
   @get:XMap(propertyElementName = "envs", entryTagName = "env", keyAttributeName = "name")
   var env: MutableMap<String, String> by property(LinkedHashMap())
 
