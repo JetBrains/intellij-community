@@ -781,6 +781,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
     extends JavaRecursiveElementWalkingVisitor {
 
     private boolean indexVariableUsedOnlyAsIndex = true;
+    private boolean arrayAccessed = false;
     private final PsiVariable arrayVariable;
     private final PsiVariable indexVariable;
 
@@ -798,8 +799,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
     }
 
     @Override
-    public void visitReferenceExpression(
-      @NotNull PsiReferenceExpression reference) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression reference) {
       if (!indexVariableUsedOnlyAsIndex) {
         return;
       }
@@ -813,20 +813,15 @@ public class ForCanBeForeachInspection extends BaseInspection {
         indexVariableUsedOnlyAsIndex = false;
         return;
       }
-      final PsiArrayAccessExpression arrayAccessExpression =
-        (PsiArrayAccessExpression)parent;
-      final PsiExpression arrayExpression =
-        arrayAccessExpression.getArrayExpression();
+      final PsiArrayAccessExpression arrayAccessExpression = (PsiArrayAccessExpression)parent;
+      final PsiExpression arrayExpression = arrayAccessExpression.getArrayExpression();
       if (!(arrayExpression instanceof PsiReferenceExpression)) {
         indexVariableUsedOnlyAsIndex = false;
         return;
       }
-      final PsiReferenceExpression referenceExpression =
-        (PsiReferenceExpression)arrayExpression;
-      final PsiExpression qualifier =
-        referenceExpression.getQualifierExpression();
-      if (qualifier != null && !(qualifier instanceof PsiThisExpression)
-          && !(qualifier instanceof PsiSuperExpression)) {
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)arrayExpression;
+      final PsiExpression qualifier = referenceExpression.getQualifierExpression();
+      if (qualifier != null && !(qualifier instanceof PsiThisExpression) && !(qualifier instanceof PsiSuperExpression)) {
         indexVariableUsedOnlyAsIndex = false;
         return;
       }
@@ -835,11 +830,10 @@ public class ForCanBeForeachInspection extends BaseInspection {
         indexVariableUsedOnlyAsIndex = false;
         return;
       }
-      final PsiElement arrayExpressionContext =
-        arrayAccessExpression.getParent();
+      arrayAccessed = true;
+      final PsiElement arrayExpressionContext = arrayAccessExpression.getParent();
       if (arrayExpressionContext instanceof PsiAssignmentExpression) {
-        final PsiAssignmentExpression assignment =
-          (PsiAssignmentExpression)arrayExpressionContext;
+        final PsiAssignmentExpression assignment = (PsiAssignmentExpression)arrayExpressionContext;
         final PsiExpression lhs = assignment.getLExpression();
         if (lhs.equals(arrayAccessExpression)) {
           indexVariableUsedOnlyAsIndex = false;
@@ -848,7 +842,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
     }
 
     private boolean isIndexVariableUsedOnlyAsIndex() {
-      return indexVariableUsedOnlyAsIndex;
+      return indexVariableUsedOnlyAsIndex && arrayAccessed;
     }
   }
 
