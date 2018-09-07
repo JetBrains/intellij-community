@@ -46,8 +46,7 @@ internal const val METHOD = "method"
 private const val OPTION = "option"
 private const val RECENT = "recent_temporary"
 
-// project level
-val RUN_CONFIGURATION_TEMPLATE_PROVIDER_EP = ProjectExtensionPointName<RunConfigurationTemplateProvider>("com.intellij.runConfigurationTemplateProvider")
+private val RUN_CONFIGURATION_TEMPLATE_PROVIDER_EP = ProjectExtensionPointName<RunConfigurationTemplateProvider>("com.intellij.runConfigurationTemplateProvider")
 
 interface RunConfigurationTemplateProvider {
   fun getRunConfigurationTemplate(factory: ConfigurationFactory, runManager: RunManagerImpl): RunnerAndConfigurationSettingsImpl?
