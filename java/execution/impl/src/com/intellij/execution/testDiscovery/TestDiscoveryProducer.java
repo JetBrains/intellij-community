@@ -25,8 +25,8 @@ public interface TestDiscoveryProducer {
 
   @NotNull
   MultiMap<String, String> getDiscoveredTests(@NotNull Project project,
-                                                      @NotNull List<Couple<String>> classesAndMethods,
-                                                      byte frameworkId);
+                                              @NotNull List<Couple<String>> classesAndMethods,
+                                              byte frameworkId);
 
   boolean isRemote();
 
