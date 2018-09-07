@@ -32,12 +32,13 @@ class AppUIExecutorTest : LightPlatformTestCase() {
     var countDown = 300
     object : Runnable {
       override fun run() {
-        if (!isCompleted) {
+        if (isCompleted) {
+          getCompleted()
+        }
+        else {
           if (countDown-- <= 0) fail("Too many EDT reschedules")
           SwingUtilities.invokeLater(this)
-          return
         }
-        getCompleted()
       }
     }.run()
   }
@@ -165,7 +166,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
     }.joinNonBlocking()
   }
 
-  fun `test custom expirable constraints disposed before dispatching`() {
+  fun `test custom expirable constraints disposed before suspending`() {
     val queue = LinkedBlockingQueue<String>()
 
     var scheduled = false
@@ -228,14 +229,109 @@ class AppUIExecutorTest : LightPlatformTestCase() {
     }.joinNonBlocking()
   }
 
+  fun `test custom expirable constraints disposed before resuming`() {
+    val queue = LinkedBlockingQueue<String>()
+
+    var scheduled = false
+    var shouldDisposeBeforeSend = false
+
+    val disposable = object : Disposable.Parent {
+      override fun beforeTreeDispose() {
+        queue.add("disposable.beforeTreeDispose()")
+      }
+
+      override fun dispose() {
+        queue.add("disposable.dispose()")
+      }
+    }.also { Disposer.register(testRootDisposable, it) }
+
+    val uiExecutor = AppUIExecutor.onUiThread()
+    val executor = (uiExecutor as AppUIExecutorEx)
+      .withConstraint(object : AsyncExecution.ExpirableContextConstraint {
+        override val expirable = disposable
+
+        override val isCorrectContext: Boolean
+          get() = scheduled
+
+        override fun scheduleExpirable(runnable: Runnable) {
+          if (Disposer.isDisposed(disposable)) {
+            queue.add("refuse to run already disposed")
+            return
+          }
+          scheduled = true
+          runnable.run()
+          scheduled = false
+        }
+
+        override fun toString() = "test"
+      })
+
+    async(Unconfined) {
+      queue.add("start")
+
+      val channel = Channel<Unit>()
+      val job = launch(executor.createJobContext(coroutineContext)) {
+        queue.add("coroutine start")
+        assertTrue(scheduled)
+        channel.receive()
+        assertTrue(scheduled)
+        try {
+          shouldDisposeBeforeSend = true
+          queue.add("before yield")
+          channel.receive()
+          queue.add("after yield disposed")
+        }
+        catch (e: Throwable) {
+          queue.add("coroutine yield caught ${e.javaClass.simpleName} because of ${e.cause?.javaClass?.simpleName}")
+          throw e
+        }
+        queue.add("coroutine end")
+
+        channel.close()
+      }
+      launch(uiExecutor.createJobContext(coroutineContext, parent = job)) {
+        try {
+          while (true) {
+            if (shouldDisposeBeforeSend) {
+              queue.add("disposing")
+              Disposer.dispose(disposable)
+            }
+            channel.send(Unit)
+          }
+        }
+        catch (e: Throwable) {
+          throw e
+        }
+      }
+      job.join()
+      queue.add("end")
+
+      assertOrderedEquals(queue,
+                          "start",
+                          "coroutine start",
+                          "before yield",
+                          "disposing",
+                          "disposable.beforeTreeDispose()",
+                          "coroutine yield caught JobCancellationException because of DisposedException",
+                          "disposable.dispose()",
+                          "end")
+    }.joinNonBlocking()
+  }
+
   fun `test custom expirable constraints disposed during dispatching`() {
     val queue = LinkedBlockingQueue<String>()
 
     var scheduled = false
     var shouldDisposeOnDispatch = false
 
-    val disposable = Disposable {
-      queue.add("disposable.dispose()")
+    val disposable = object : Disposable.Parent {
+      override fun beforeTreeDispose() {
+        queue.add("disposable.beforeTreeDispose()")
+      }
+
+      override fun dispose() {
+        queue.add("disposable.dispose()")
+      }
     }.also { Disposer.register(testRootDisposable, it) }
 
     val uiExecutor = AppUIExecutor.onUiThread()
@@ -274,8 +370,10 @@ class AppUIExecutorTest : LightPlatformTestCase() {
         assertTrue(scheduled)
         try {
           shouldDisposeOnDispatch = true
-          queue.add("before yield")
+          queue.add("before receive")
           channel.receive()
+          queue.add("after receive disposed")
+          yield()
           queue.add("after yield disposed")
         }
         catch (e: Throwable) {
@@ -302,11 +400,13 @@ class AppUIExecutorTest : LightPlatformTestCase() {
       assertOrderedEquals(queue,
                           "start",
                           "coroutine start",
-                          "before yield",
+                          "before receive",
                           "disposing",
+                          "disposable.beforeTreeDispose()",
                           "disposable.dispose()",
                           "refuse to run already disposed",
-                          "coroutine yield caught DisposedException because of null",
+                          "after receive disposed",  // channel.receive() is atomic
+                          "coroutine yield caught JobCancellationException because of DisposedException",
                           "end")
     }.joinNonBlocking()
   }

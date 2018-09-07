@@ -12,7 +12,6 @@ import kotlinx.coroutines.experimental.*
 import java.lang.UnsupportedOperationException
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.coroutines.experimental.Continuation
 import kotlin.coroutines.experimental.ContinuationInterceptor
 import kotlin.coroutines.experimental.CoroutineContext
 
@@ -72,30 +71,6 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
     abstract val isChainFallback: Boolean
 
     open fun initializeJob(job: Job) = Unit
-
-    // This is a hackish workaround to ensure execution throws at the suspension point we resume at.
-    // Otherwise, it is possible that it resumes from, say, channel.receive() running in
-    // the fallback (that is, invalid) execution context.
-    override fun <T> interceptContinuation(continuation: Continuation<T>) =
-      super.interceptContinuation(object : Continuation<T> by continuation {
-        val fallbackDispatchException: FallbackDispatchException?
-          get() {
-            val job = context[Job]?.takeIf { !it.isActive }
-            val cancellationException = job?.getCancellationException() as? JobCancellationException
-            return (cancellationException?.cause as? FallbackDispatchException)
-          }
-
-        override fun resume(value: T) {
-          fallbackDispatchException?.let {
-            // don't let it resume within incomplete execution context without throwing an exception
-            return continuation.resumeWithException(it)
-          }
-          continuation.resume(value)
-        }
-
-        override fun toString() = continuation.toString()
-      })
-
   }
 
   /** A CoroutineDispatcher which dispatches after ensuring its delegate is dispatched. */
