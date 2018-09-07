@@ -112,6 +112,13 @@ open class GuiTestCase {
     if (!needToKeepDialog) dialog.waitTillGone()
   }
 
+  fun settingsDialog(timeout: Timeout = Timeouts.defaultTimeout,
+                      needToKeepDialog: Boolean = false,
+                      func: JDialogFixture.() -> Unit) {
+    if (isMac()) dialog(title = "Preferences", func = func)
+    else dialog(title = "Settings", func = func)
+  }
+
   fun pluginDialog(timeout: Timeout = Timeouts.defaultTimeout, needToKeepDialog: Boolean = false, func: PluginDialogFixture.() -> Unit) {
     val pluginDialog = PluginDialogFixture(robot(), findDialog("Plugins", false, timeout))
     func(pluginDialog)
