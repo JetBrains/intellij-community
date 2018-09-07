@@ -6,10 +6,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ModuleRootManagerComponent;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
-import com.intellij.openapi.roots.impl.libraries.LibraryEx;
-import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
-import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
-import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
+import com.intellij.openapi.roots.impl.libraries.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -97,7 +94,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
 
   public void testFindLibraryByNameAfterRename() {
     final long moduleModificationCount = ((ModuleRootManagerComponent)ModuleRootManager.getInstance(myModule)).getStateModificationCount();
-    ProjectLibraryTable table = (ProjectLibraryTable)getLibraryTable();
+    ProjectLibraryTableImpl table = (ProjectLibraryTableImpl)getLibraryTable();
     final long projectLibraryModificationCount = table.getStateModificationCount();
     Library a = createLibrary("a", null, null);
     LibraryTable.ModifiableModel model = table.getModifiableModel();
