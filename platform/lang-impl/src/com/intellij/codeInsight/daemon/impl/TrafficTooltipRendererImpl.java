@@ -50,7 +50,7 @@ class TrafficTooltipRendererImpl extends ComparableObject.Impl implements Traffi
                                HintManager.HIDE_BY_SCROLLING, 0, false, hintHint);
     hint.addHintListener(new HintListener() {
       @Override
-      public void hintHidden(EventObject event) {
+      public void hintHidden(@NotNull EventObject event) {
         if (myPanel == null) return; //double hide?
         myPanel = null;
         onHide.run();

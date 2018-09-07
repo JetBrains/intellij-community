@@ -26,6 +26,7 @@ public interface ClassesByNameProvider {
       classes.forEach(t -> myCache.putValue(t.signature(), t));
     }
 
+    @Override
     public List<ReferenceType> get(@NotNull String s) {
       String signature = VirtualMachineProxyImpl.JNITypeParserReflect.typeNameToSignature(s);
       if (signature != null) {

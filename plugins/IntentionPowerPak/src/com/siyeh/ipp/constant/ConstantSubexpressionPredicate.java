@@ -88,7 +88,7 @@ class ConstantSubexpressionPredicate implements PsiElementPredicate {
     if (expression.getOperands().length > 2) {
       return true;
     }
-    final PsiElement containingElement = expression.getParent();
+    final PsiElement containingElement = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     if (containingElement instanceof PsiExpression) {
       final PsiExpression containingExpression =
         (PsiExpression)containingElement;

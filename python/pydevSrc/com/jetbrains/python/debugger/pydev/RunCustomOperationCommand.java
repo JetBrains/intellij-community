@@ -16,7 +16,7 @@ import java.net.URLEncoder;
  * <p>
  * Once created, the command should be posted to the target with {@link AbstractDebugTarget#postCommand(AbstractDebuggerCommand)}.
  * Optionally, the function run on the target can return a string for further processing. In this case the command's
- * {@link #setCompletionListener(ICommandResponseListener)} should be set and on completion, {@link #getResponsePayload()}
+ * {@link #setCompletionListener(ICommandResponseListener)} should be set and on completion, {@link #getPayload()}
  * can be used to obtain the returned value.
  * <p>
  * For an example, see {@link PrettyPrintCommandHandler}

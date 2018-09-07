@@ -174,7 +174,7 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     boolean enabled = isEnabled();
     presentation.setVisible(enabled);

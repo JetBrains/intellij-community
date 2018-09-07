@@ -49,26 +49,31 @@ import static com.intellij.util.containers.ContainerUtil.findInstance;
  */
 public class MavenPropertyInParentInspection extends XmlSuppressableInspectionTool {
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return MavenDomBundle.message("inspection.group");
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return MavenDomBundle.message("inspection.property.in.parent.name");
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return "MavenPropertyInParent";
   }
 
+  @Override
   @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.WARNING;
   }
 
+  @Override
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (file instanceof XmlFile && (file.isPhysical() || ApplicationManager.getApplication().isUnitTestMode())) {

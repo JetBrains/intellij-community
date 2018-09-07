@@ -27,7 +27,6 @@ import org.netbeans.lib.cvsclient.util.BugLog;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -38,7 +37,7 @@ public final class DirectoryPruner
 
 	// Fields =================================================================
 
-	private final List directoriesToScan = new ArrayList();
+	private final List<DirectoryObject> directoriesToScan = new ArrayList<>();
 	private final IClientEnvironment clientEnvironment;
 
 	// Setup ==================================================================
@@ -51,7 +50,8 @@ public final class DirectoryPruner
 
 	// Implemented ============================================================
 
-	public void processingDirectory(DirectoryObject directoryObject) {
+	@Override
+        public void processingDirectory(DirectoryObject directoryObject) {
 		if (directoryObject.isRoot()) {
 			return;
 		}
@@ -63,11 +63,13 @@ public final class DirectoryPruner
 		directoriesToScan.add(directoryObject);
 	}
 
-	public void registerListeners(ICvsListenerRegistry listenerRegistry) {
+	@Override
+        public void registerListeners(ICvsListenerRegistry listenerRegistry) {
 		listenerRegistry.addDirectoryListener(this);
 	}
 
-	public void unregisterListeners(ICvsListenerRegistry listenerRegistry) {
+	@Override
+        public void unregisterListeners(ICvsListenerRegistry listenerRegistry) {
 		listenerRegistry.removeDirectoryListener(this);
 	}
 
@@ -77,8 +79,8 @@ public final class DirectoryPruner
 	 * Remove any directories that don't contain any files
 	 */
 	public final void pruneEmptyDirectories() throws IOException {
-		while (directoriesToScan.size() > 0) {
-			final DirectoryObject directoryObject = (DirectoryObject)directoriesToScan.remove(0);
+		while (!directoriesToScan.isEmpty()) {
+			final DirectoryObject directoryObject = directoriesToScan.remove(0);
 			pruneEmptyDirectory(directoryObject);
 		}
 	}
@@ -97,11 +99,11 @@ public final class DirectoryPruner
 			return true;
 		}
 
-		final List fileNames = new ArrayList();
-		final List directoryNames = new ArrayList();
+		final List<String> fileNames = new ArrayList<>();
+		final List<String> directoryNames = new ArrayList<>();
 		localFileReader.listFilesAndDirectories(directoryObject, fileNames, directoryNames, cvsFileSystem);
 
-		if (fileNames.size() > 0) {
+		if (!fileNames.isEmpty()) {
 			return false;
 		}
 
@@ -109,9 +111,7 @@ public final class DirectoryPruner
 			return false;
 		}
 
-		for (Iterator it = directoryNames.iterator(); it.hasNext();) {
-			final String directoryName = (String)it.next();
-
+		for (String directoryName : directoryNames) {
 			if (!pruneEmptyDirectory(DirectoryObject.createInstance(directoryObject, directoryName))) {
 				return false;
 			}
@@ -132,9 +132,8 @@ public final class DirectoryPruner
 		return false;
 	}
 
-	private boolean hasFileEntry(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem, IAdminReader adminReader) throws IOException {
-		for (Iterator it = adminReader.getEntries(directoryObject, cvsFileSystem).iterator(); it.hasNext();) {
-			final Entry entry = (Entry)it.next();
+	private static boolean hasFileEntry(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem, IAdminReader adminReader) throws IOException {
+		for (final Entry entry : adminReader.getEntries(directoryObject, cvsFileSystem)) {
 			if (!entry.isDirectory()) {
 				return true;
 			}

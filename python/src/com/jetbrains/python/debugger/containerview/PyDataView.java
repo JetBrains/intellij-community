@@ -24,7 +24,6 @@ import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyFrameAccessor;
 import icons.PythonIcons;
-import org.apache.xmlrpc.XmlRpcException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -147,12 +146,7 @@ public class PyDataView implements DumbAware {
   }
 
   private static boolean isConnected(PydevConsoleCommunication accessor){
-    try {
-      return accessor.handshake();
-    }
-    catch (XmlRpcException ignored) {
-      return false;
-    }
+    return accessor.handshake();
   }
 
   public static PyDataView getInstance(@NotNull final Project project) {
@@ -225,13 +219,13 @@ public class PyDataView implements DumbAware {
   private class NewViewerAction extends AnAction {
     private final PyFrameAccessor myFrameAccessor;
 
-    public NewViewerAction(PyFrameAccessor frameAccessor) {
+    NewViewerAction(PyFrameAccessor frameAccessor) {
       super("View New Container", "Open new container viewer", AllIcons.General.Add);
       myFrameAccessor = frameAccessor;
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       addTab(myFrameAccessor);
     }
   }
@@ -241,14 +235,14 @@ public class PyDataView implements DumbAware {
     private final TabInfo myInfo;
     private final PyFrameAccessor myFrameAccessor;
 
-    public CloseViewerAction(TabInfo info, PyFrameAccessor frameAccessor) {
+    CloseViewerAction(TabInfo info, PyFrameAccessor frameAccessor) {
       super("Close Viewer", "Close selected viewer", AllIcons.Actions.Close);
       myInfo = info;
       myFrameAccessor = frameAccessor;
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myTabs.removeTab(myInfo);
       if (getVisibleTabs().isEmpty()) {
         addTab(myFrameAccessor);
@@ -257,12 +251,12 @@ public class PyDataView implements DumbAware {
   }
 
   private class ColoredAction extends ToggleAction {
-    public ColoredAction() {
+    ColoredAction() {
       super("Colored");
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       PyDataViewerPanel panel = getPanel();
       if (panel == null) {
         return true;
@@ -280,7 +274,7 @@ public class PyDataView implements DumbAware {
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       PyDataViewerPanel panel = getPanel();
       if (panel != null) {
         panel.setColored(state);

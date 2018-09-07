@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.migration;
 
 import com.intellij.openapi.project.Project;
@@ -22,6 +8,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -46,6 +33,7 @@ public class EditMigrationDialog extends DialogWrapper{
     validateOKButton();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myNameField;
   }
@@ -68,10 +56,12 @@ public class EditMigrationDialog extends DialogWrapper{
     return myDescriptionTextArea.getText();
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     myNameField = new JTextField(myMigrationMap.getName());
     myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(DocumentEvent e) {
+      @Override
+      protected void textChanged(@NotNull DocumentEvent e) {
         validateOKButton();
       }
     });
@@ -95,6 +85,7 @@ public class EditMigrationDialog extends DialogWrapper{
       .addVerticalGap(UIUtil.LARGE_VGAP).getPanel();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return ToolbarDecorator.createDecorator(createTable())
       .setAddAction(new AnActionButtonRunnable() {
@@ -205,14 +196,17 @@ public class EditMigrationDialog extends DialogWrapper{
 
     // Create a model of the data.
     TableModel dataModel = new AbstractTableModel() {
+      @Override
       public int getColumnCount() {
         return 3;
       }
 
+      @Override
       public int getRowCount() {
         return myMigrationMap.getEntryCount();
       }
 
+      @Override
       public Object getValueAt(int row, int col) {
         MigrationMapEntry entry = myMigrationMap.getEntryAt(row);
         if (col == 0){
@@ -236,18 +230,22 @@ public class EditMigrationDialog extends DialogWrapper{
         }
       }
 
+      @Override
       public String getColumnName(int column) {
         return names[column];
       }
 
+      @Override
       public Class getColumnClass(int c) {
         return String.class;
       }
 
+      @Override
       public boolean isCellEditable(int row, int col) {
         return false;
       }
 
+      @Override
       public void setValueAt(Object aValue, int row, int column) {
       }
     };

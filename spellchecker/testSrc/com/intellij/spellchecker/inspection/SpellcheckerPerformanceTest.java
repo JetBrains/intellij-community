@@ -84,7 +84,7 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
     assertEmpty(infos);
     System.out.println("warm-up took " + (System.currentTimeMillis() - start) + " ms");
 
-    PlatformTestUtil.startPerformanceTest("many whitespaces highlighting", 4000, () -> {
+    PlatformTestUtil.startPerformanceTest("many whitespaces highlighting", 4500, () -> {
       DaemonCodeAnalyzer.getInstance(getProject()).restart();
       assertEmpty(runLocalInspections());
     }).assertTiming();

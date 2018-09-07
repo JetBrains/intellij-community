@@ -11,6 +11,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.util.Function;
 import com.intellij.util.LazyInitializer.NotNullValue;
 import com.intellij.util.LazyInitializer.NullableValue;
 import com.intellij.util.ObjectUtils;
@@ -32,6 +33,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.util.ui.JBUI.ScaleType.*;
 
@@ -651,7 +653,7 @@ public class JBUI {
 
     @NotNull
     public static JBFont toolbarSmallComboBoxFont() {
-      return UIUtil.isUnderGTKLookAndFeel() ? label() : label(11);
+      return label(11);
     }
   }
 
@@ -991,6 +993,45 @@ public class JBUI {
     public String toString() {
       return usrScale + ", " + objScale + ", " + pixScale;
     }
+
+    /**
+     * A cache for the last usage of a data object matching a scale context.
+     *
+     * @param <D> the data type
+     * @param <S> the context type
+     */
+    public static class Cache<D, S extends BaseScaleContext> {
+      private final Function<? super S, ? extends D> myDataProvider;
+      private final AtomicReference<Pair<Double, D>> myData = new AtomicReference<Pair<Double, D>>(null);
+
+      /**
+       * @param dataProvider provides a data object matching the passed scale context
+       */
+      public Cache(@NotNull Function<? super S, ? extends D> dataProvider) {
+        this.myDataProvider = dataProvider;
+      }
+
+      /**
+       * Retunrs the data object from the cache if it matches the {@code ctx},
+       * otherwise provides the new data via the provider and caches it.
+       */
+      @Nullable
+      public D getOrProvide(@NotNull S ctx) {
+        Pair<Double, D> data = myData.get();
+        double scale = ctx.getScale(PIX_SCALE);
+        if (data == null || Double.compare(scale, data.first) != 0) {
+          myData.set(data = Pair.create(scale, myDataProvider.fun(ctx)));
+        }
+        return data.second;
+      }
+
+      /**
+       * Clears the cache.
+       */
+      public void clear() {
+        myData.set(null);
+      }
+    }
   }
 
   /**
@@ -1210,6 +1251,12 @@ public class JBUI {
     @Override
     public String toString() {
       return usrScale + ", " + sysScale + ", " + objScale + ", " + pixScale;
+    }
+
+    public static class Cache<D> extends BaseScaleContext.Cache<D, ScaleContext> {
+      public Cache(@NotNull Function<? super ScaleContext, ? extends D> dataProvider) {
+        super(dataProvider);
+      }
     }
   }
 
@@ -1464,6 +1511,45 @@ public class JBUI {
   }
 
   public static class CurrentTheme {
+    public static class ActionButton {
+      @NotNull
+      public static Color pressedBackground() {
+        return JBColor.namedColor("ActionButton.pressedBackground", Gray.xCF);
+      }
+
+      @NotNull
+      public static Color pressedBorder() {
+        return JBColor.namedColor("ActionButton.pressedBorderColor", Gray.xCF);
+      }
+
+      @NotNull
+      public static Color hoverBackground() {
+        return JBColor.namedColor("ActionButton.hoverBackground", Gray.xDF);
+      }
+
+      @NotNull
+      public static Color hoverBorder() {
+        return JBColor.namedColor("ActionButton.hoverBorderColor", Gray.xDF);
+      }
+    }
+
+    public static class CustomFrameDecorations {
+      @NotNull
+      public static Color separatorForeground() {
+        return JBColor.namedColor("Separator.foreground", 0xcdcdcd);
+      }
+
+      @NotNull
+      public static Color titlePaneBackground() {
+        return JBColor.namedColor("TitlePane.background", paneBackground());
+      }
+
+      @NotNull
+      public static Color paneBackground() {
+        return JBColor.namedColor("Panel.background", 0xcdcdcd);
+      }
+    }
+
     public static class ToolWindow {
       @NotNull
       public static Color tabSelectedBackground() {
@@ -1516,7 +1602,12 @@ public class JBUI {
       }
 
       public static int tabVerticalPadding() {
-        return getInt("ToolWindow.tab.verticalPadding", scale(3));
+        return getInt("ToolWindow.tab.verticalPadding", 0);
+      }
+
+      @NotNull
+      public static Border tabBorder() {
+        return getBorder("ToolWindow.tabBorder", JBUI.Borders.empty(1));
       }
 
       @NotNull
@@ -1656,6 +1747,10 @@ public class JBUI {
         return JBColor.namedColor("SearchEverywhere.Tab.selected.background", 0xdedede);
       }
 
+      public static Color selectedTabTextColor() {
+        return JBColor.namedColor("SearchEverywhere.Tab.selected.foreground", 0x000000);
+      }
+
       public static Color searchFieldBackground() {
         return JBColor.namedColor("SearchEverywhere.SearchField.background", 0xffffff);
       }
@@ -1669,11 +1764,29 @@ public class JBUI {
       }
 
       public static int maxListHeight() {
-        return JBUI.scale(600);
+        return scale(600);
       }
 
       public static Color listSeparatorColor() {
         return JBColor.namedColor("SearchEverywhere.List.Separator.Color", 0xdcdcdc);
+      }
+    }
+
+    public static class Validator {
+      public static Color errorBorderColor() {
+        return JBColor.namedColor("ValidationTooltip.errorBorderColor", 0xE0A8A9);
+      }
+
+      public static Color errorBackgroundColor() {
+        return JBColor.namedColor("ValidationTooltip.errorBackgroundColor", 0xF5E6E7);
+      }
+
+      public static Color warningBorderColor() {
+        return JBColor.namedColor("ValidationTooltip.warningBorderColor", 0xE0CEA8);
+      }
+
+      public static Color warningBackgroundColor() {
+        return JBColor.namedColor("ValidationTooltip.warningBackgroundColor", 0xF5F0E6);
       }
     }
   }
@@ -1688,5 +1801,11 @@ public class JBUI {
   private static Icon getIcon(@NotNull String propertyName, @NotNull Icon defaultIcon) {
     Icon icon = UIManager.getIcon(propertyName);
     return icon == null ? defaultIcon : icon;
+  }
+
+  @NotNull
+  private static Border getBorder(@NotNull String propertyName, @NotNull Border defaultBorder) {
+    Border border = UIManager.getBorder(propertyName);
+    return border == null ? defaultBorder : border;
   }
 }

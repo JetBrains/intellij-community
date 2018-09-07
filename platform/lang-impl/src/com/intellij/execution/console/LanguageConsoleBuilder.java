@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
-import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -181,14 +180,14 @@ public final class LanguageConsoleBuilder {
   }
 
   public static class MyHelper extends LanguageConsoleImpl.Helper {
-    private final PairFunction<VirtualFile, Project, PsiFile> psiFileFactory;
+    private final PairFunction<? super VirtualFile, ? super Project, ? extends PsiFile> psiFileFactory;
 
     GutteredLanguageConsole console;
 
     public MyHelper(@NotNull  Project project,
                     @NotNull String title,
                     @NotNull Language language,
-                    @Nullable PairFunction<VirtualFile, Project, PsiFile> psiFileFactory) {
+                    @Nullable PairFunction<? super VirtualFile, ? super Project, ? extends PsiFile> psiFileFactory) {
       super(project, new LightVirtualFile(title, language, ""));
       this.psiFileFactory = psiFileFactory;
     }
@@ -236,13 +235,10 @@ public final class LanguageConsoleBuilder {
       final ConsoleGutterComponent lineEndGutter = new ConsoleGutterComponent(editor, gutterContentProvider, false);
 
       editor.getSoftWrapModel().forceAdditionalColumnsUsage();
-      ((SoftWrapModelImpl)editor.getSoftWrapModel()).getApplianceManager().setWidthProvider(new SoftWrapApplianceManager.VisibleAreaWidthProvider() {
-        @Override
-        public int getVisibleAreaWidth() {
-          int guttersWidth = lineEndGutter.getPreferredWidth() + lineStartGutter.getPreferredWidth();
-          EditorEx editor = getHistoryViewer();
-          return editor.getScrollingModel().getVisibleArea().width - guttersWidth;
-        }
+      ((SoftWrapModelImpl)editor.getSoftWrapModel()).getApplianceManager().setWidthProvider(() -> {
+        int guttersWidth = lineEndGutter.getPreferredWidth() + lineStartGutter.getPreferredWidth();
+        EditorEx editor1 = getHistoryViewer();
+        return editor1.getScrollingModel().getVisibleArea().width - guttersWidth;
       });
       editor.setHorizontalScrollbarVisible(true);
 
@@ -349,7 +345,7 @@ public final class LanguageConsoleBuilder {
         }
       };
 
-      public GutterUpdateScheduler(@NotNull ConsoleGutterComponent lineStartGutter, @NotNull ConsoleGutterComponent lineEndGutter) {
+      GutterUpdateScheduler(@NotNull ConsoleGutterComponent lineStartGutter, @NotNull ConsoleGutterComponent lineEndGutter) {
         this.lineStartGutter = lineStartGutter;
         this.lineEndGutter = lineEndGutter;
 
@@ -380,7 +376,7 @@ public final class LanguageConsoleBuilder {
       }
 
       @Override
-      public void documentChanged(DocumentEvent event) {
+      public void documentChanged(@NotNull DocumentEvent event) {
         DocumentEx document = getDocument();
         if (document.isInBulkUpdate()) {
           return;
@@ -436,7 +432,7 @@ public final class LanguageConsoleBuilder {
         private int start;
         private int end;
 
-        public Task(int start, int end) {
+        Task(int start, int end) {
           this.start = start;
           this.end = end;
         }

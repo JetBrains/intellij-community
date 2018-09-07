@@ -38,7 +38,7 @@ import java.util.concurrent.Callable;
  *
  * @author Dmitry Avdeev
  * @see TaskRepositoryType
- * @see BaseRepository
+ * @see com.intellij.tasks.impl.BaseRepository
  */
 @Tag("server")
 public abstract class TaskRepository {
@@ -208,6 +208,7 @@ public abstract class TaskRepository {
   @Nullable
   public abstract Task findTask(@NotNull String id) throws Exception;
 
+  @Override
   @NotNull
   public abstract TaskRepository clone();
 

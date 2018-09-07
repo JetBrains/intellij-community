@@ -4,6 +4,7 @@ package org.jetbrains.yaml.schema;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.Predicate;
@@ -11,13 +12,14 @@ import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.yaml.YAMLLanguage;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
   @Override
   public String getTestDataPath() {
-    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/schema/data";
+    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/schema/data/highlighting";
   }
 
   @Override
@@ -68,15 +70,13 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
            "}}}", "prop: 14");
   }
 
-  @SuppressWarnings("Duplicates")
   public void testEnum() throws Exception {
     @Language("JSON") final String schema = "{\"properties\": {\"prop\": {\"enum\": [1,2,3,\"18\"]}}}";
     doTest(schema, "prop: 18");
     doTest(schema, "prop: 2");
-    doTest(schema, "prop: <warning descr=\"Schema validation: Value should be one of: [1, 2, 3, \\\"18\\\"]\">6</warning>");
+    doTest(schema, "prop: <warning descr=\"Schema validation: Value should be one of: 1, 2, 3, \\\"18\\\"\">6</warning>");
   }
 
-  @SuppressWarnings("Duplicates")
   public void testSimpleString() throws Exception {
     @Language("JSON") final String schema = "{\"properties\": {\"prop\": {\"type\": \"string\", \"minLength\": 2, \"maxLength\": 3}}}";
     doTest(schema, "prop: <warning descr=\"Schema validation: String is shorter than 2\">s</warning>");
@@ -196,7 +196,6 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTest(schema, "<warning descr=\"Schema validation: Number of properties is greater than 3\">a: 1\nb: 22\nc: 333\nd: 4444</warning>");
   }
 
-  @SuppressWarnings("Duplicates")
   public void testOneOf() throws Exception {
     final List<String> subSchemas = new ArrayList<>();
     subSchemas.add("{\"type\": \"number\"}");
@@ -207,7 +206,6 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTest(schema, "prop: <warning descr=\"Schema validation: Type is not allowed. Expected one of: boolean, number.\">aaa</warning>");
   }
 
-  @SuppressWarnings("Duplicates")
   public void testOneOfForTwoMatches() throws Exception {
     final List<String> subSchemas = new ArrayList<>();
     subSchemas.add("{\"type\": \"string\", \"enum\": [\"a\", \"b\"]}");
@@ -218,7 +216,6 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTest(schema, "prop: <warning descr=\"Schema validation: Validates to more than one variant\">a</warning>");
   }
 
-  @SuppressWarnings("Duplicates")
   public void testOneOfSelectError() throws Exception {
     final List<String> subSchemas = new ArrayList<>();
     subSchemas.add("{\"type\": \"string\",\n" +
@@ -229,10 +226,9 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
     @Language("JSON") final String schema = schema("{\"oneOf\": [" + StringUtil.join(subSchemas, ", ") + "]}");
     doTest(schema, "prop: off");
     doTest(schema, "prop: 12");
-    doTest(schema, "prop: <warning descr=\"Schema validation: Value should be one of: [\\\"off\\\", \\\"warn\\\", \\\"error\\\"]\">wrong</warning>");
+    doTest(schema, "prop: <warning descr=\"Schema validation: Value should be one of: \\\"off\\\", \\\"warn\\\", \\\"error\\\"\">wrong</warning>");
   }
 
-  @SuppressWarnings("Duplicates")
   public void testAnyOf() throws Exception {
     final List<String> subSchemas = new ArrayList<>();
     subSchemas.add("{\"type\": \"string\", \"enum\": [\"a\", \"b\"]}");
@@ -241,17 +237,16 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTest(schema, "prop: b");
     doTest(schema, "prop: c");
     doTest(schema, "prop: a");
-    doTest(schema, "prop: <warning descr=\"Schema validation: Value should be one of: [\\\"a\\\", \\\"b\\\"]\">d</warning>");
+    doTest(schema, "prop: <warning descr=\"Schema validation: Value should be one of: \\\"a\\\", \\\"b\\\", \\\"c\\\"\">d</warning>");
   }
 
-  @SuppressWarnings("Duplicates")
   public void testAllOf() throws Exception {
     final List<String> subSchemas = new ArrayList<>();
     subSchemas.add("{\"type\": \"integer\", \"multipleOf\": 2}");
     subSchemas.add("{\"enum\": [1,2,3]}");
     @Language("JSON") final String schema = schema("{\"allOf\": [" + StringUtil.join(subSchemas, ", ") + "]}");
     doTest(schema, "prop: <warning descr=\"Schema validation: Is not multiple of 2\">1</warning>");
-    doTest(schema, "prop: <warning descr=\"Schema validation: Value should be one of: [1, 2, 3]\">4</warning>");
+    doTest(schema, "prop: <warning descr=\"Schema validation: Value should be one of: 1, 2, 3\">4</warning>");
     doTest(schema, "prop: 2");
   }
 
@@ -280,7 +275,7 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
   public void testInnerObjectPropValueInArray() throws Exception {
     @Language("JSON") final String schema = "{\"properties\": {\"prop\": {\"type\": \"array\", \"items\": {\"enum\": [1,2,3]}}}}";
     doTest(schema, "prop:\n - 1\n - 3");
-    doTest(schema, "prop:\n - <warning descr=\"Schema validation: Value should be one of: [1, 2, 3]\">out</warning>");
+    doTest(schema, "prop:\n - <warning descr=\"Schema validation: Value should be one of: 1, 2, 3\">out</warning>");
   }
 
   public void testAllOfProperties() throws Exception {
@@ -288,7 +283,7 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
                                             " {\"properties\": {\"second\": {\"enum\": [33,44]}}}], \"additionalProperties\": false}";
 //    doTest(schema, "first: true\nsecond: <warning descr=\"Schema validation: Value should be one of: [33, 44]\">null</warning>");
     doTest(schema, "first: true\nsecond: 44\n<warning descr=\"Schema validation: Property 'other' is not allowed\">other: 15</warning>");
-    doTest(schema, "first: true\nsecond: <warning descr=\"Schema validation: Value should be one of: [33, 44]\">12</warning>");
+    doTest(schema, "first: true\nsecond: <warning descr=\"Schema validation: Value should be one of: 33, 44\">12</warning>");
   }
 
   public void testWithWaySelection() throws Exception {
@@ -316,7 +311,7 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
                    "Auto: <warning descr=\"Schema validation: Type is not allowed. Expected: number.\">no</warning>\n" +
                    "BAe: <warning descr=\"Schema validation: Type is not allowed. Expected: boolean.\">22</warning>\n" +
                    "Boloto: <warning descr=\"Schema validation: Type is not allowed. Expected: boolean.\">2</warning>\n" +
-                   "Cyan: <warning descr=\"Schema validation: Value should be one of: [\\\"test\\\", \\\"em\\\"]\">me</warning>\n");
+                   "Cyan: <warning descr=\"Schema validation: Value should be one of: \\\"test\\\", \\\"em\\\"\">me</warning>\n");
   }
 
   public void testPatternPropertiesFromIssue() throws Exception {
@@ -336,7 +331,7 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
                    "p1: 1\n" +
                    "p2: 3\n" +
                    "a2: auto!\n" +
-                   "a1: <warning descr=\"Schema validation: Value should be one of: [\\\"auto!\\\"]\">moto!</warning>\n"
+                   "a1: <warning descr=\"Schema validation: Value should be one of: \\\"auto!\\\"\">moto!</warning>\n"
                    );
   }
 
@@ -393,11 +388,11 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
                                             "}";
     doTest(schema,
                    "size: \n" +
-                   " <warning descr=\"Schema validation: Number of properties is greater than 3\">a: <warning descr=\"Schema validation: Type is not allowed. Expected: boolean.\">1</warning>\n" +
+                   " a: <warning descr=\"Schema validation: Type is not allowed. Expected: boolean.\">1</warning>\n" +
                    " b: 3\n" +
                    " c: 4\n" +
                    " a: <warning descr=\"Schema validation: Type is not allowed. Expected: boolean.\">5</warning>" +
-                   "</warning>\n");
+                   "\n");
   }
 
   public void testManyDuplicatesInArray() throws Exception {
@@ -674,6 +669,93 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
     @Language("JSON") String schema = "{\"properties\": { \"platform\": { \"enum\": [\"x86\", \"x64\"] } }}";
     doTest(schema, "platform:\n  !!str x64");
     doTest(schema, "platform:\n  <warning>a x64</warning>");
+  }
+
+  public void testAmazonElasticSchema() throws Exception {
+    @Language("JSON") String schema = FileUtil.loadFile(new File(getTestDataPath() + "/cloudformation.schema.json"));
+    doTest(schema, "Resources:\n" +
+                   "  ElasticsearchCluster:\n" +
+                   "    Type: \"AWS::Elasticsearch::Domain\"\n" +
+                   "    Properties:\n" +
+                   "      ElasticsearchVersion: !FindInMap [ElasticSearchConfig, !Ref AccountType, Version]\n" +
+                   "Conditions:\n" +
+                   "  IsDev: !Equals [!Ref AccountType, dev]");
+  }
+
+  @Language("JSON")
+  private static final String SCHEMA_FOR_REFS  = "{\n" +
+                                                 "  \"type\": \"object\",\n" +
+                                                 "\n" +
+                                                 "  \"properties\": {\n" +
+                                                 "    \"name\": { \"type\": \"string\", \"enum\": [\"aa\", \"bb\"] },\n" +
+                                                 "    \"bar\": {\n" +
+                                                 "      \"required\": [\n" +
+                                                 "        \"a\"\n" +
+                                                 "      ],\n" +
+                                                 "      \"properties\": {\n" +
+                                                 "        \"a\": {\n" +
+                                                 "          \"type\": [\"array\"]\n" +
+                                                 "        },\n" +
+                                                 "       \"b\": {" +
+                                                 "          \"type\": [\"number\"]" +
+                                                 "        }\n" +
+                                                 "      },\n" +
+                                                 "      \"additionalProperties\": false\n" +
+                                                 "    }\n" +
+                                                 "  }\n" +
+                                                 "}\n";
+
+  public void testRefExtends() throws Exception {
+    // no warning about missing required property - it should be discovered in referenced object
+    // no warning about extra 'property' with name '<<' with additionalProperties=false
+    doTest(SCHEMA_FOR_REFS, "a: &a\n" +
+                            "  a: <warning descr=\"Schema validation: Type is not allowed. Expected: array.\">7</warning>\n" +
+                            "\n" +
+                            "bar:\n" +
+                            "  <<: *a\n" +
+                            "  b: 5\n");
+  }
+
+  public void testRefRefValid() throws Exception {
+    // no warnings - &a references &b, which is an array - validation passes
+    doTest(SCHEMA_FOR_REFS, "x: &b\n" +
+                            "  - x\n" +
+                            "  - y\n" +
+                            "\n" +
+                            "a: &a\n" +
+                            "  a: *b\n" +
+                            "\n" +
+                            "bar:\n" +
+                            "  <<: *a\n" +
+                            "  b: 5");
+  }
+
+  public void testRefRefInvalid() throws Exception {
+    doTest(SCHEMA_FOR_REFS, "x: &b <warning descr=\"Schema validation: Type is not allowed. Expected: array.\">7</warning>\n" +
+                            "\n" +
+                            "a: &a\n" +
+                            "  a: *b\n" +
+                            "\n" +
+                            "bar:\n" +
+                            "  <<: *a\n" +
+                            "  b: 5");
+  }
+  public void testRefRefScalarValid() throws Exception {
+    doTest(SCHEMA_FOR_REFS, "x: &b 7\n" +
+                            "\n" +
+                            "a: &a\n" +
+                            "  b: *b\n" +
+                            "\n" +
+                            "bar:\n" +
+                            "  <<: *a\n" +
+                            "  a: <warning descr=\"Schema validation: Type is not allowed. Expected: array.\">5</warning>");
+  }
+
+  public void testInlineRef() throws Exception {
+    doTest(SCHEMA_FOR_REFS, "bar:\n" +
+                            "  <<: &q\n" +
+                            "    a: <warning descr=\"Schema validation: Type is not allowed. Expected: array.\">5</warning>\n" +
+                            "  b: 5");
   }
 
   static String schema(final String s) {

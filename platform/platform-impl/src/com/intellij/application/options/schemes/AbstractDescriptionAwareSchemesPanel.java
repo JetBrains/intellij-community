@@ -166,7 +166,7 @@ public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> ext
   private static class DescriptionLabel extends JBLabel {
     private String myAllText;
 
-    public DescriptionLabel() {
+    DescriptionLabel() {
       setForeground(JBColor.GRAY);
       setVerticalAlignment(CENTER);
       setHorizontalAlignment(LEFT);

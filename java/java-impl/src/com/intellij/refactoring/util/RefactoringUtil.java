@@ -391,7 +391,7 @@ public class RefactoringUtil {
     PsiType type = RefactoringChangeUtil.getTypeByExpression(expr);
     if (PsiType.NULL.equals(type)) {
       ExpectedTypeInfo[] infos = ExpectedTypesProvider.getExpectedTypes(expr, false);
-      if (infos.length == 1) {
+      if (infos.length > 0) {
         type = infos[0].getType();
         if (type instanceof PsiPrimitiveType) {
           type = ((PsiPrimitiveType)type).getBoxedType(expr);
@@ -859,7 +859,7 @@ public class RefactoringUtil {
     return null;
   }
 
-  public static boolean isInMovedElement(PsiElement element, Set<PsiMember> membersToMove) {
+  public static boolean isInMovedElement(PsiElement element, Set<? extends PsiMember> membersToMove) {
     for (PsiMember member : membersToMove) {
       if (PsiTreeUtil.isAncestor(member, element, false)) return true;
     }
@@ -932,7 +932,7 @@ public class RefactoringUtil {
       if (PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression))) {
         if (replaceBody) {
           lastBodyStatement = null;
-        } else {  
+        } else {
           lastBodyStatement = elementFactory.createStatementFromText("a;", lambdaExpression);
           ((PsiExpressionStatement)lastBodyStatement).getExpression().replace(lambdaExpressionBody);
         }
@@ -1352,14 +1352,15 @@ public class RefactoringUtil {
   }
 
   public static class ConditionCache<T> implements Condition<T> {
-    private final Condition<T> myCondition;
+    private final Condition<? super T> myCondition;
     private final HashSet<T> myProcessedSet = new HashSet<>();
     private final HashSet<T> myTrueSet = new HashSet<>();
 
-    public ConditionCache(Condition<T> condition) {
+    public ConditionCache(Condition<? super T> condition) {
       myCondition = condition;
     }
 
+    @Override
     public boolean value(T object) {
       if (!myProcessedSet.contains(object)) {
         myProcessedSet.add(object);
@@ -1383,6 +1384,7 @@ public class RefactoringUtil {
       myConditionCache = new ConditionCache<>(aClass1 -> InheritanceUtil.isInheritorOrSelf(aClass1, myClass, true));
     }
 
+    @Override
     public boolean value(PsiClass aClass) {
       return myConditionCache.value(aClass);
     }
@@ -1412,7 +1414,7 @@ public class RefactoringUtil {
     }
 
     collectTypeParametersInDependencies(filter, used);
-    
+
     if (fromList != null) {
       used.retainAll(Arrays.asList(fromList.getTypeParameters()));
     }
@@ -1438,7 +1440,7 @@ public class RefactoringUtil {
     }
   }
 
-  private static void collectTypeParametersInDependencies(Condition<PsiTypeParameter> filter, Set<PsiTypeParameter> used) {
+  private static void collectTypeParametersInDependencies(Condition<? super PsiTypeParameter> filter, Set<PsiTypeParameter> used) {
     Stack<PsiTypeParameter> toProcess = new Stack<>();
     toProcess.addAll(used);
     while (!toProcess.isEmpty()) {
@@ -1450,11 +1452,11 @@ public class RefactoringUtil {
     }
   }
 
-  public static void collectTypeParameters(final Set<PsiTypeParameter> used, final PsiElement element) {
+  public static void collectTypeParameters(final Set<? super PsiTypeParameter> used, final PsiElement element) {
     collectTypeParameters(used, element, Conditions.alwaysTrue());
   }
-  public static void collectTypeParameters(final Set<PsiTypeParameter> used, final PsiElement element,
-                                           final Condition<PsiTypeParameter> filter) {
+  public static void collectTypeParameters(final Set<? super PsiTypeParameter> used, final PsiElement element,
+                                           final Condition<? super PsiTypeParameter> filter) {
     element.accept(new JavaRecursiveElementVisitor() {
       @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
         super.visitReferenceElement(reference);

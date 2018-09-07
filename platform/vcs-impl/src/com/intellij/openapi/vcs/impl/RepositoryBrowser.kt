@@ -121,7 +121,7 @@ class RepositoryBrowserPanel(
     add(scrollPane, BorderLayout.CENTER)
   }
 
-  override fun getData(dataId: String?): Any? {
+  override fun getData(dataId: String): Any? {
     return when {
       CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> fileSystemTree.selectedFiles
       CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) ->
@@ -173,7 +173,7 @@ class VcsVirtualFileContentRevision(private val vcsVirtualFile: VcsVirtualFile) 
   }
 
   override fun getContentAsBytes(): ByteArray? {
-    return vcsVirtualFile.fileRevision?.content
+    return vcsVirtualFile.fileRevision?.loadContent()
   }
 
   override fun getFile(): FilePath {

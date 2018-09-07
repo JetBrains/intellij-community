@@ -59,12 +59,12 @@ public class LocalHistoryEventDispatcher implements VirtualFileManagerListener, 
   }
 
   @Override
-  public void commandStarted(CommandEvent e) {
+  public void commandStarted(@NotNull CommandEvent e) {
     beginChangeSet();
   }
 
   @Override
-  public void commandFinished(CommandEvent e) {
+  public void commandFinished(@NotNull CommandEvent e) {
     endChangeSet(e.getCommandName());
   }
 

@@ -35,7 +35,7 @@ public class AddArrangementSectionRuleAction extends AddArrangementRuleAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final ArrangementMatchingRulesControl control = getRulesControl(e);
     if (!(control instanceof ArrangementSectionRulesControl)) {
       e.getPresentation().setEnabledAndVisible(false);

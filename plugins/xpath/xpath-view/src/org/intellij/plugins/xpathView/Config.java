@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2002-2005 Sascha Weinreuter
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,8 +34,8 @@ public class Config {
   public SearchScope SEARCH_SCOPE = new SearchScope();
   public boolean MATCH_RECURSIVELY = false;
 
-  public TextAttributes attributes = new TextAttributes(null, new Color(255, 213, 120), null, null, Font.PLAIN);
-  public TextAttributes contextAttributes = new TextAttributes(null, new Color(194, 255, 212), null, null, Font.PLAIN);
+  private final TextAttributes attributes = new TextAttributes(null, new Color(255, 213, 120), null, null, Font.PLAIN);
+  private final TextAttributes contextAttributes = new TextAttributes(null, new Color(194, 255, 212), null, null, Font.PLAIN);
   public boolean scrollToFirst = true;
   public boolean bUseContextAtCursor = true;
   public boolean bHighlightStartTagOnly = true;
@@ -49,16 +49,8 @@ public class Config {
     return attributes;
   }
 
-  public void setHighlightBackground(Color bg) {
-    attributes.setBackgroundColor(bg);
-  }
-
   public TextAttributes getContextAttributes() {
     return contextAttributes;
-  }
-
-  public void setContextBackground(Color bg) {
-    contextAttributes.setBackgroundColor(bg);
   }
 
   public void setScrollToFirst(boolean b) {

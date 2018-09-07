@@ -114,8 +114,9 @@ object ExecUtil {
   fun sudo(commandLine: GeneralCommandLine, prompt: String): Process =
     sudoCommand(commandLine, prompt).createProcess()
 
+  @JvmStatic
   @Throws(ExecutionException::class, IOException::class)
-  private fun sudoCommand(commandLine: GeneralCommandLine, prompt: String): GeneralCommandLine {
+  fun sudoCommand(commandLine: GeneralCommandLine, prompt: String): GeneralCommandLine {
     if (SystemInfo.isUnix && "root" == System.getenv("USER")) {
       return commandLine
     }

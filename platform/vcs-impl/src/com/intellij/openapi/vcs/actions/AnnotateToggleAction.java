@@ -73,13 +73,13 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     Provider provider = getProvider(e);
     return provider != null && provider.isAnnotated(e);
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean selected) {
+  public void setSelected(@NotNull AnActionEvent e, boolean selected) {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (editor != null) {
       MyEditorNotificationPanel notificationPanel = ObjectUtils.tryCast(editor.getHeaderComponent(), MyEditorNotificationPanel.class);
@@ -331,18 +331,18 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
   public interface Provider {
     boolean isEnabled(AnActionEvent e);
 
-    boolean isSuspended(AnActionEvent e);
+    boolean isSuspended(@NotNull AnActionEvent e);
 
     boolean isAnnotated(AnActionEvent e);
 
-    void perform(AnActionEvent e, boolean selected);
+    void perform(@NotNull AnActionEvent e, boolean selected);
   }
 
   private static class MyEditorNotificationPanel extends EditorNotificationPanel {
     private final Editor myEditor;
     private final Runnable myShowAnnotations;
 
-    public MyEditorNotificationPanel(@NotNull Editor editor, @NotNull AbstractVcs vcs, @NotNull Runnable doShowAnnotations) {
+    MyEditorNotificationPanel(@NotNull Editor editor, @NotNull AbstractVcs vcs, @NotNull Runnable doShowAnnotations) {
       super(LightColors.RED);
       myEditor = editor;
       myShowAnnotations = doShowAnnotations;

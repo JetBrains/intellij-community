@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2008 JetBrains s.r.o.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.groovydoc.lexer;
 
 import com.intellij.lexer.FlexLexer;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 
+import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.*;
 %%
 
 %class _GroovyDocLexer
@@ -29,107 +16,92 @@ import com.intellij.psi.tree.IElementType;
 %function advance
 %type IElementType
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////// User code //////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-%{ // User code
-
-  public _GroovyDocLexer() {
-    this((java.io.Reader)null);
-  }
-
-  public boolean checkAhead(char c) {
-     if (zzMarkedPos >= zzBuffer.length()) return false;
-     return zzBuffer.charAt(zzMarkedPos) == c;
-  }
-
-  public void goTo(int offset) {
-    zzCurrentPos = zzMarkedPos = zzStartRead = offset;
-    zzAtEOF = false;
-  }
-
-
-%}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////// GroovyDoc lexems ////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-%state COMMENT_DATA_START
+%state TOP_LEVEL
+%state ASTERISKS
+%state AFTER_ASTERISKS
 %state COMMENT_DATA
-%state TAG_DOC_SPACE
-%state PARAM_TAG_SPACE
-%state DOC_TAG_VALUE
-%state DOC_TAG_VALUE_IN_PAREN
-%state DOC_TAG_VALUE_IN_LTGT
-%state INLINE_TAG_NAME
+%xstate AFTER_BRACE
+%state AFTER_TAG_NAME
+%state AFTER_PARAM_NAME
+%xstate AFTER_TAG_SPACE
+%state TAG_VALUE
+%state TAG_VALUE_IN_ANGLES
+%state TAG_VALUE_IN_PAREN
 
-WHITE_DOC_SPACE_CHAR=[\ \t\f\n\r]
-WHITE_DOC_SPACE_NO_NL=[\ \t\f]
-DIGIT=[0-9]
-ALPHA=[:jletter:]
-IDENTIFIER={ALPHA}({ALPHA}|{DIGIT}|[":.-"])*
-
+WS_CHARS = [\ \t\f]
+NL_CHARS = [\n\r]
+WS_NL_CHARS = {WS_CHARS} | {NL_CHARS}
+WS_NL = {WS_NL_CHARS}+
+WS = {WS_CHARS}+ 
+DIGIT = [0-9]
+ALPHA = [:jletter:]
+IDENTIFIER = {ALPHA} ({ALPHA} | {DIGIT} | [":.-"])*
+VALUE_IDENTIFIER = ({ALPHA} | {DIGIT} | [_\."$"\[\]])+
 %%
 
-<YYINITIAL> "/**"                                                     { yybegin(COMMENT_DATA_START);
-                                                                        return GroovyDocTokenTypes.mGDOC_COMMENT_START; }
-<COMMENT_DATA_START> {WHITE_DOC_SPACE_CHAR}+                          { return TokenType.WHITE_SPACE; }
-<COMMENT_DATA>  {WHITE_DOC_SPACE_NO_NL}+                              { return GroovyDocTokenTypes.mGDOC_COMMENT_DATA; }
-<COMMENT_DATA>  [\n\r]+{WHITE_DOC_SPACE_CHAR}*                        { return TokenType.WHITE_SPACE; }
+<YYINITIAL> "/**"               { yybegin(AFTER_ASTERISKS); return mGDOC_COMMENT_START; }
 
-<DOC_TAG_VALUE> {WHITE_DOC_SPACE_CHAR}+                               { yybegin(COMMENT_DATA);
-                                                                        return TokenType.WHITE_SPACE; }
-<DOC_TAG_VALUE, DOC_TAG_VALUE_IN_PAREN> ({ALPHA}|[_0-9\."$"\[\]])+    { return GroovyDocTokenTypes.mGDOC_TAG_VALUE_TOKEN; }
-<DOC_TAG_VALUE> [\(]                                                  { yybegin(DOC_TAG_VALUE_IN_PAREN);
-                                                                        return GroovyDocTokenTypes.mGDOC_TAG_VALUE_LPAREN; }
-<DOC_TAG_VALUE_IN_PAREN> [\)]                                         { yybegin(DOC_TAG_VALUE);
-                                                                        return GroovyDocTokenTypes.mGDOC_TAG_VALUE_RPAREN; }
-<DOC_TAG_VALUE> [#]                                                   { return GroovyDocTokenTypes.mGDOC_TAG_VALUE_SHARP_TOKEN; }
-<DOC_TAG_VALUE, DOC_TAG_VALUE_IN_PAREN> [,]                           { return GroovyDocTokenTypes.mGDOC_TAG_VALUE_COMMA; }
-<DOC_TAG_VALUE_IN_PAREN> {WHITE_DOC_SPACE_CHAR}+                      { return TokenType.WHITE_SPACE; }
+<TOP_LEVEL> {
+  {WS_NL}                       { return TokenType.WHITE_SPACE; } 
+  "*"                           { yybegin(ASTERISKS); return mGDOC_ASTERISKS; }
+}
 
-<INLINE_TAG_NAME, COMMENT_DATA_START> "@param"                        { yybegin(PARAM_TAG_SPACE);
-                                                                        return GroovyDocTokenTypes.mGDOC_TAG_NAME; }
-<PARAM_TAG_SPACE>  {WHITE_DOC_SPACE_CHAR}+                            { yybegin(DOC_TAG_VALUE);
-                                                                        return TokenType.WHITE_SPACE;}
-<DOC_TAG_VALUE> [\<]                                                  { yybegin(DOC_TAG_VALUE_IN_LTGT);
-                                                                        return GroovyDocTokenTypes.mGDOC_TAG_VALUE_LT; }
-<DOC_TAG_VALUE_IN_LTGT> {IDENTIFIER}                                  { return GroovyDocTokenTypes.mGDOC_TAG_VALUE_TOKEN; }
-<DOC_TAG_VALUE_IN_LTGT> [\>]                                          { yybegin(COMMENT_DATA);
-                                                                        return GroovyDocTokenTypes.mGDOC_TAG_VALUE_GT; }
+<ASTERISKS> {
+  "*"                           { return mGDOC_ASTERISKS; }
+  [^]                           { yypushback(1); yybegin(AFTER_ASTERISKS); }                                  
+}
 
-<COMMENT_DATA_START, COMMENT_DATA> "{"                                { if (checkAhead('@')){
-                                                                          yybegin(INLINE_TAG_NAME);
-                                                                        }
-                                                                        else{
-                                                                          yybegin(COMMENT_DATA);
-                                                                        }
-                                                                        return GroovyDocTokenTypes.mGDOC_INLINE_TAG_START;
-                                                                      }
+<AFTER_ASTERISKS, COMMENT_DATA> {
+  {WS}                          { return mGDOC_COMMENT_DATA; }
+  {NL_CHARS}+{WS_NL_CHARS}*     { yybegin(TOP_LEVEL); return TokenType.WHITE_SPACE; }
+}
 
-<INLINE_TAG_NAME> "@"{IDENTIFIER}                                     { yybegin(TAG_DOC_SPACE);
-                                                                        return GroovyDocTokenTypes.mGDOC_TAG_NAME; }
-<COMMENT_DATA_START, COMMENT_DATA, TAG_DOC_SPACE, DOC_TAG_VALUE> "}"  { yybegin(COMMENT_DATA);
-                                                                        return GroovyDocTokenTypes.mGDOC_INLINE_TAG_END; }
+<TOP_LEVEL, AFTER_ASTERISKS, COMMENT_DATA> {
+  "{"                           { yybegin(AFTER_BRACE); return mGDOC_INLINE_TAG_START; }
+  "}"                           { yybegin(COMMENT_DATA); return mGDOC_INLINE_TAG_END; }
+  .                             { yybegin(COMMENT_DATA); return mGDOC_COMMENT_DATA; }      
+}
 
+<TOP_LEVEL, AFTER_ASTERISKS, AFTER_BRACE> {
+  "@param"                      { yybegin(AFTER_PARAM_NAME); return mGDOC_TAG_NAME; } 
+  "@"{IDENTIFIER}               { yybegin(AFTER_TAG_NAME); return mGDOC_TAG_NAME; }
+}
 
-<COMMENT_DATA_START, COMMENT_DATA, DOC_TAG_VALUE> .                   { yybegin(COMMENT_DATA);
-                                                                        return GroovyDocTokenTypes.mGDOC_COMMENT_DATA; }
-<COMMENT_DATA_START> "@"{IDENTIFIER}                                  { yybegin(TAG_DOC_SPACE);
-                                                                        return GroovyDocTokenTypes.mGDOC_TAG_NAME;  }
-<TAG_DOC_SPACE>  {WHITE_DOC_SPACE_CHAR}+                              { if (checkAhead('<') || checkAhead('\"')) {
-                                                                          yybegin(COMMENT_DATA);
-                                                                        }
-                                                                        else if (checkAhead('\u007b') ) {
-                                                                          yybegin(COMMENT_DATA); //lbrace -  there's some error in JLex when typing lbrace directly
-                                                                        }
-                                                                        else {
-                                                                          yybegin(DOC_TAG_VALUE);
-                                                                        }
-                                                                        return TokenType.WHITE_SPACE;
-                                                                      }
+<AFTER_BRACE> [^]               { yypushback(1); yybegin(COMMENT_DATA); }
 
-"*"+"/"                                                               { return GroovyDocTokenTypes.mGDOC_COMMENT_END; }
-[^]                                                                   { return GroovyDocTokenTypes.mGDOC_COMMENT_BAD_CHARACTER; }
+<AFTER_PARAM_NAME> {WS_NL}      { yybegin(TAG_VALUE); return TokenType.WHITE_SPACE;}
+
+<AFTER_TAG_NAME> {
+  {WS_NL}                       { yybegin(AFTER_TAG_SPACE); return TokenType.WHITE_SPACE; }
+  "}"                           { yybegin(COMMENT_DATA); return mGDOC_INLINE_TAG_END; }                                                              
+}
+
+<AFTER_TAG_SPACE> {
+  [\"{]                         { yypushback(1); yybegin(COMMENT_DATA); }
+  [^]                           { yypushback(1); yybegin(TAG_VALUE); }
+}
+
+<TAG_VALUE> {
+  {WS}                          { yybegin(COMMENT_DATA); return TokenType.WHITE_SPACE; }
+  {VALUE_IDENTIFIER}            { return mGDOC_TAG_VALUE_TOKEN; }
+  ","                           { return mGDOC_TAG_VALUE_COMMA; }
+  "<"                           { yybegin(TAG_VALUE_IN_ANGLES); return mGDOC_TAG_VALUE_LT; }
+  "("                           { yybegin(TAG_VALUE_IN_PAREN); return mGDOC_TAG_VALUE_LPAREN; }
+  "#"                           { return mGDOC_TAG_VALUE_SHARP_TOKEN; }
+  [^]                           { yypushback(1); yybegin(COMMENT_DATA); }    
+}
+
+<TAG_VALUE_IN_ANGLES>  { 
+  {IDENTIFIER}                  { return mGDOC_TAG_VALUE_TOKEN; }
+  ">"                           { yybegin(COMMENT_DATA); return mGDOC_TAG_VALUE_GT; }
+}
+
+<TAG_VALUE_IN_PAREN> { 
+  {WS_NL}                       { return TokenType.WHITE_SPACE; }
+  {VALUE_IDENTIFIER}            { return mGDOC_TAG_VALUE_TOKEN; }
+  ","                           { return mGDOC_TAG_VALUE_COMMA; }
+  ")"                           { yybegin(TAG_VALUE); return mGDOC_TAG_VALUE_RPAREN; }
+}
+
+"*/"                            { return mGDOC_COMMENT_END; }
+[^]                             { return TokenType.BAD_CHARACTER; }

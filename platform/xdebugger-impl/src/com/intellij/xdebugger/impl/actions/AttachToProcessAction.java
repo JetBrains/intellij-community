@@ -56,7 +56,7 @@ public class AttachToProcessAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
 
     Project project = getEventProject(e);
@@ -67,7 +67,7 @@ public class AttachToProcessAction extends AnAction {
 
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = getEventProject(e);
     if (project == null) return;
 
@@ -444,7 +444,7 @@ public class AttachToProcessAction extends AnAction {
 
   private static class AttachHostItem extends AttachItem<XAttachHost> {
 
-    public AttachHostItem(@NotNull XAttachPresentationGroup<XAttachHost> group,
+    AttachHostItem(@NotNull XAttachPresentationGroup<XAttachHost> group,
                           boolean isFirstInGroup,
                           @NotNull XAttachHost host,
                           @NotNull Project project,
@@ -452,6 +452,7 @@ public class AttachToProcessAction extends AnAction {
       super(group, isFirstInGroup, group.getGroupName(), host, project, dataHolder);
     }
 
+    @Override
     public boolean hasSubStep() {
       return true;
     }
@@ -462,6 +463,7 @@ public class AttachToProcessAction extends AnAction {
       return myGroup.getItemDisplayText(project, myInfo, myDataHolder);
     }
 
+    @Override
     @Nullable
     public String getTooltipText(@NotNull Project project)  {
       return myGroup.getItemDescription(project, myInfo, myDataHolder);
@@ -535,15 +537,18 @@ public class AttachToProcessAction extends AnAction {
       return myHost;
     }
 
+    @Override
     public boolean hasSubStep() {
       return !mySubItems.isEmpty();
     }
 
+    @Override
     @Nullable
     public String getTooltipText(@NotNull Project project)  {
       return myGroup.getItemDescription(project, myInfo, myDataHolder);
     }
 
+    @Override
     @NotNull
     public String getText(@NotNull Project project) {
       String shortenedText = StringUtil.shortenTextWithEllipsis(myGroup.getItemDisplayText(project, myInfo, myDataHolder), 200, 0);
@@ -555,6 +560,7 @@ public class AttachToProcessAction extends AnAction {
       return myDebuggers;
     }
 
+    @Override
     @NotNull
     public List<AttachToProcessItem> getSubItems() {
       return mySubItems;
@@ -580,7 +586,7 @@ public class AttachToProcessAction extends AnAction {
   private static class MyBasePopupStep<T extends AttachItem> extends BaseListPopupStep<T> {
     @NotNull final Project myProject;
 
-    public MyBasePopupStep(@NotNull Project project,
+    MyBasePopupStep(@NotNull Project project,
                            @Nullable String title,
                            List<T> values) {
       super(title, values);
@@ -609,7 +615,7 @@ public class AttachToProcessAction extends AnAction {
   }
 
   private static class AttachListStep extends MyBasePopupStep<AttachItem> implements ListPopupStepEx<AttachItem> {
-    public AttachListStep(@NotNull List<AttachItem> items, @Nullable String title, @NotNull Project project) {
+    AttachListStep(@NotNull List<AttachItem> items, @Nullable String title, @NotNull Project project) {
       super(project, title, items);
     }
 
@@ -681,7 +687,7 @@ public class AttachToProcessAction extends AnAction {
     }
 
     private class DebuggerListStep extends MyBasePopupStep<AttachToProcessItem> {
-      public DebuggerListStep(List<AttachToProcessItem> items, int selectedItem) {
+      DebuggerListStep(List<AttachToProcessItem> items, int selectedItem) {
         super(AttachListStep.this.myProject, XDebuggerBundle.message("xdebugger.attach.popup.selectDebugger.title"), items);
         setDefaultOptionIndex(selectedItem);
       }

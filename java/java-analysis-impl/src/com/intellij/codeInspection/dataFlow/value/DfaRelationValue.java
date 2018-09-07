@@ -17,6 +17,7 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.DfaFactType;
+import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
@@ -207,8 +208,8 @@ public class DfaRelationValue extends DfaValue {
 
     @NotNull
     private DfaRelationValue createConstBasedRelation(DfaFactMapValue dfaLeft, RelationType relationType, DfaConstValue dfaRight) {
-      if (dfaRight.getValue() == null && Boolean.TRUE.equals(dfaLeft.get(DfaFactType.CAN_BE_NULL))) {
-        return createCanonicalRelation(myFactory.getFactValue(DfaFactType.CAN_BE_NULL, Boolean.TRUE), relationType, dfaRight);
+      if (dfaRight.getValue() == null && DfaNullability.isNullable(dfaLeft.getFacts())) {
+        return createCanonicalRelation(myFactory.getFactValue(DfaFactType.NULLABILITY, DfaNullability.NULLABLE), relationType, dfaRight);
       }
       return createCanonicalRelation(DfaUnknownValue.getInstance(), relationType, dfaRight);
     }

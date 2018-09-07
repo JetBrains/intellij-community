@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.CommonBundle;
@@ -29,9 +14,9 @@ import com.intellij.ide.actions.EditSourceAction;
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.util.treeView.TreeState;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
@@ -87,8 +72,8 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.icons.AllIcons.Vcs.Patch_applied;
 import static com.intellij.openapi.actionSystem.Anchor.AFTER;
@@ -97,8 +82,7 @@ import static com.intellij.util.FontUtil.spaceAndThinSpace;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.notNullize;
 
-public class ShelvedChangesViewManager implements ProjectComponent {
-
+public class ShelvedChangesViewManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(ShelvedChangesViewManager.class);
   @NonNls static final String SHELF_CONTEXT_MENU = "Vcs.Shelf.ContextMenu";
   private static final String SHELVE_PREVIEW_SPLITTER_PROPORTION = "ShelvedChangesViewManager.DETAILS_SPLITTER_PROPORTION";
@@ -126,7 +110,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   }
 
   public ShelvedChangesViewManager(Project project, ChangesViewContentManager contentManager, ShelveChangesManager shelveChangesManager,
-                                   final MessageBus bus) {
+                                   final MessageBus bus, StartupManager startupManager) {
     myProject = project;
     myContentManager = contentManager;
     myShelveChangesManager = shelveChangesManager;
@@ -210,22 +194,12 @@ public class ShelvedChangesViewManager implements ProjectComponent {
         mySplitterComponent.updatePreview(false);
       }
     });
-  }
 
-  @Override
-  public void projectOpened() {
-    StartupManager startupManager = StartupManager.getInstance(myProject);
     if (startupManager == null) {
       LOG.error("Couldn't start loading shelved changes");
       return;
     }
     startupManager.registerPostStartupActivity((DumbAwareRunnable)() -> myUpdateQueue.queue(new MyContentUpdater()));
-  }
-
-  @Override
-  @NonNls @NotNull
-  public String getComponentName() {
-    return "ShelvedChangesViewManager";
   }
 
   @CalledInAwt
@@ -330,7 +304,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       myTree.startEditingAtPath(myTree.getLeadSelectionPath());
     });
   }
-  
+
   private static class ChangelistComparator implements Comparator<ShelvedChangeList> {
     private final static ChangelistComparator ourInstance = new ChangelistComparator();
 
@@ -373,7 +347,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   }
 
   @Override
-  public void disposeComponent() {
+  public void dispose() {
     myUpdateQueue.cancelAllUpdates();
   }
 
@@ -395,7 +369,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
 
     @Nullable
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (SHELVED_CHANGELIST_KEY.is(dataId)) {
         final Set<ShelvedChangeList> changeLists = getSelectedLists(false);
 
@@ -572,7 +546,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       };
     private static final Icon DisabledToDeleteIcon = IconUtil.desaturate(AllIcons.Actions.GC);
 
-    public ShelfTreeCellRenderer(Project project, final Map<Couple<String>, String> moveRenameInfo) {
+    ShelfTreeCellRenderer(Project project, final Map<Couple<String>, String> moveRenameInfo) {
       myMoveRenameInfo = moveRenameInfo;
       myIssueLinkRenderer = new IssueLinkRenderer(project, this);
     }
@@ -746,7 +720,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
 
   public class MyShelfContent extends DnDActivateOnHoldTargetContent {
 
-    private MyShelfContent(JPanel panel, String displayName, boolean isLockable) {
+    private MyShelfContent(JPanel panel, @NotNull String displayName, boolean isLockable) {
       super(myProject, panel, displayName, isLockable);
     }
 
@@ -786,13 +760,13 @@ public class ShelvedChangesViewManager implements ProjectComponent {
 
   private class MyToggleDetailsAction extends ShowDiffPreviewAction {
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       mySplitterComponent.setDetailsOn(state);
       myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN = state;
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN;
     }
   }
@@ -802,7 +776,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     @NotNull private final DiffShelvedChangesActionProvider.PatchesPreloader myPreloader;
     @Nullable private ShelvedWrapper myCurrentShelvedElement;
 
-    public MyShelvedPreviewProcessor(@NotNull Project project) {
+    MyShelvedPreviewProcessor(@NotNull Project project) {
       super(project);
       myPreloader = new DiffShelvedChangesActionProvider.PatchesPreloader(project);
       Disposer.register(project, this);
@@ -824,6 +798,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     public void clear() {
       myCurrentShelvedElement = null;
       updateRequest();
+      dropCaches();
     }
 
     @Override
@@ -898,7 +873,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   private static class ShelvedListNode extends DefaultMutableTreeNode {
     @NotNull private final ShelvedChangeList myList;
 
-    public ShelvedListNode(@NotNull ShelvedChangeList list) {
+    ShelvedListNode(@NotNull ShelvedChangeList list) {
       super(list);
       myList = list;
     }
@@ -910,7 +885,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   }
 
   private class MyContentUpdater extends Update {
-    public MyContentUpdater() {
+    MyContentUpdater() {
       super("ShelfContentUpdate");
     }
 

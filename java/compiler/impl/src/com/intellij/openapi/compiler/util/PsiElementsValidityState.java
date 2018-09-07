@@ -39,11 +39,13 @@ public class PsiElementsValidityState implements ValidityState {
     myDependencies.put(key, value);
   }
 
+  @Override
   public boolean equalsTo(ValidityState otherState) {
     return otherState instanceof PsiElementsValidityState &&
            myDependencies.equals(((PsiElementsValidityState)otherState).myDependencies);
   }
 
+  @Override
   public void save(DataOutput out) throws IOException {
     final Set<Map.Entry<String, Long>> entries = myDependencies.entrySet();
     out.writeInt(entries.size());

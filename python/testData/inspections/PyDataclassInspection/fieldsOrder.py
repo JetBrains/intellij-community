@@ -77,3 +77,9 @@ class C3:
     y: int
 
 C3(1, 2)
+
+
+@dataclasses.dataclass
+class D1:
+    x: int = 0
+    y: int = dataclasses.field(init=False)

@@ -34,6 +34,7 @@ public class OpaqueWrapper extends Wrapper {
     setBackground(color);
   }
 
+  @Override
   protected void paintComponent(Graphics g) {
     g.setColor(getBackground());
     Dimension size = getSize();

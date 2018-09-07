@@ -17,5 +17,6 @@
     <orderEntry type="module" module-name="intellij.tools.index" />
     <orderEntry type="module" module-name="intellij.pycharm.community" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.bootstrap" />
+    <orderEntry type="library" name="KotlinScriptRuntime" level="project" />
   </component>
 </module>

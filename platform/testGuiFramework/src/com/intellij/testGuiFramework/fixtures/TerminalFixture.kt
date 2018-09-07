@@ -18,6 +18,7 @@ package com.intellij.testGuiFramework.fixtures
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.terminal.JBTerminalPanel
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
 import com.intellij.ui.content.Content
@@ -25,6 +26,7 @@ import com.jediterm.terminal.model.TerminalTextBuffer
 import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
+import org.fest.swing.timing.Timeout
 
 class TerminalFixture(project: Project, robot: Robot, toolWindowId: String) : ToolWindowFixture(toolWindowId, project, robot) {
 
@@ -54,9 +56,9 @@ class TerminalFixture(project: Project, robot: Robot, toolWindowId: String) : To
     return terminalTextBuffer.getLine(lastLineIndex).text
   }
 
-  fun waitUntilTextAppeared(text: String, timeoutInSeconds: Int = 60) {
+  fun waitUntilTextAppeared(text: String, timeout: Timeout = Timeouts.defaultTimeout) {
     try {
-      waitUntil(condition = "'$text' appeared in terminal", timeoutInSeconds = timeoutInSeconds) {
+      waitUntil(condition = "'$text' appeared in terminal", timeout = timeout) {
         terminalTextBuffer.screenLines.contains(text)
       }
     }
@@ -67,8 +69,8 @@ class TerminalFixture(project: Project, robot: Robot, toolWindowId: String) : To
 
   }
 
-  fun waitUntilRegExAppeared(regex: Regex, timeoutInSeconds: Int = 60) {
-    waitUntil(condition = "'$regex' appeared in terminal", timeoutInSeconds = timeoutInSeconds) {
+  fun waitUntilRegExAppeared(regex: Regex, timeout: Timeout = Timeouts.defaultTimeout) {
+    waitUntil(condition = "'$regex' appeared in terminal", timeout = timeout) {
       terminalTextBuffer.screenLines.contains(regex)
     }
   }

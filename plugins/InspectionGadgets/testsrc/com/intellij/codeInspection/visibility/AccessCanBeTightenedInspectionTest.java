@@ -385,6 +385,62 @@ public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase 
     myFixture.checkHighlighting();
   }
 
+  public void testMinimalVisibilityForNonEntryPOint() {
+    addJavaFile("x/MyTest.java", "package x;\n" +
+                               "public class MyTest {\n" +
+                               "    <warning descr=\"Access can be protected\">public</warning> void foo() {}\n" +
+                               "    {foo();}\n" +
+                               "}");
+    PlatformTestUtil.registerExtension(Extensions.getRootArea(), ExtensionPointName.create(ToolExtensionPoints.DEAD_CODE_TOOL), new EntryPointWithVisibilityLevel() {
+      @Override
+      public void readExternal(Element element) throws InvalidDataException {}
+
+      @Override
+      public void writeExternal(Element element) throws WriteExternalException {}
+
+      @NotNull
+      @Override
+      public String getDisplayName() {
+        return "accepted visibility";
+      }
+
+      @Override
+      public boolean isEntryPoint(@NotNull RefElement refElement, @NotNull PsiElement psiElement) {
+        return false;
+      }
+
+      @Override
+      public boolean isEntryPoint(@NotNull PsiElement psiElement) {
+        return false;
+      }
+
+      @Override
+      public int getMinVisibilityLevel(PsiMember member) {
+        return member instanceof PsiMethod && "foo".equals(((PsiMethod)member).getName()) ? PsiUtil.ACCESS_LEVEL_PROTECTED : ACCESS_LEVEL_INVALID;
+      }
+
+      @Override
+      public boolean isSelected() {
+        return true;
+      }
+
+      @Override
+      public void setSelected(boolean selected) {}
+
+      @Override
+      public String getTitle() {
+        return getDisplayName();
+      }
+
+      @Override
+      public String getId() {
+        return getDisplayName();
+      }
+    }, getTestRootDisposable());
+    myFixture.configureByFiles("x/MyTest.java");
+    myFixture.checkHighlighting();
+  }
+
   public void testSuggestPackagePrivateForImplicitWrittenFields() {
     addJavaFile("x/MyTest.java", "package x;\n" +
                                "public class MyTest {\n" +

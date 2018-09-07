@@ -31,10 +31,10 @@ import java.util.concurrent.ExecutorService;
  * @param <T> the type of elements
  */
 public class MergingBackgroundExecutor<T> {
-  private final Consumer<T> myConsumer;
+  private final Consumer<? super T> myConsumer;
   private final ExecutorService myExecutorService;
 
-  public MergingBackgroundExecutor(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String name, int maxThreads, @NotNull Consumer<T> consumer) {
+  public MergingBackgroundExecutor(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String name, int maxThreads, @NotNull Consumer<? super T> consumer) {
     myConsumer = consumer;
     myExecutorService = AppExecutorUtil.createBoundedApplicationPoolExecutor(name, maxThreads);
   }

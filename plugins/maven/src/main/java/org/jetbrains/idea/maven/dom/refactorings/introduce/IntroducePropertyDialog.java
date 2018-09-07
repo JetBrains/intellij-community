@@ -76,17 +76,20 @@ public class IntroducePropertyDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   protected void dispose() {
     myNameField.removeDataChangedListener(myNameChangedListener);
 
     super.dispose();
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction()};
   }
 
+  @Override
   protected void init() {
     super.init();
     updateOkStatus();
@@ -174,7 +177,7 @@ public class IntroducePropertyDialog extends DialogWrapper {
   }
 
   private static String joinWords(@NotNull List<String> stringList) {
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     for (int i = 0; i < stringList.size(); i++) {
       String word = stringList.get(i);
       if (!StringUtil.isEmptyOrSpaces(word)) {
@@ -184,6 +187,7 @@ public class IntroducePropertyDialog extends DialogWrapper {
     return sb.toString();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     myFieldNamePanel.setLayout(new BorderLayout());
 
@@ -251,6 +255,7 @@ public class IntroducePropertyDialog extends DialogWrapper {
     return false;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myNameField.getFocusableComponent();
   }

@@ -49,6 +49,7 @@ public class StringPropertyCodeGenerator extends PropertyCodeGenerator implement
   private final Set myClassesRequiringLoadButtonText = new HashSet();
   private boolean myHaveSetDisplayedMnemonicIndex = false;
 
+  @Override
   public void generateClassStart(AsmCodeGenerator.FormClassVisitor visitor, final String name, final InstrumentationClassFinder classFinder) {
     myClassesRequiringLoadLabelText.remove(name);
     myClassesRequiringLoadButtonText.remove(name);
@@ -63,6 +64,7 @@ public class StringPropertyCodeGenerator extends PropertyCodeGenerator implement
     }
   }
 
+  @Override
   public boolean generateCustomSetValue(final LwComponent lwComponent,
                                         final InstrumentationClassFinder.PseudoClass componentClass,
                                         final LwIntrospectedProperty property,
@@ -132,6 +134,7 @@ public class StringPropertyCodeGenerator extends PropertyCodeGenerator implement
     return false;
   }
 
+  @Override
   public void generatePushValue(final GeneratorAdapter generator, final Object value) {
     StringDescriptor descriptor = (StringDescriptor) value;
     if (descriptor == null) {
@@ -148,6 +151,7 @@ public class StringPropertyCodeGenerator extends PropertyCodeGenerator implement
     }
   }
 
+  @Override
   public void generateClassEnd(AsmCodeGenerator.FormClassVisitor visitor) {
     if (myClassesRequiringLoadLabelText.contains(visitor.getClassName())) {
       generateLoadTextMethod(visitor, AsmCodeGenerator.LOAD_LABEL_TEXT_METHOD, "javax/swing/JLabel", "setDisplayedMnemonic");

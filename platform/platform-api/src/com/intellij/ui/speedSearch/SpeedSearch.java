@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.speedSearch;
 
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.AllOccurrencesMatcher;
 import com.intellij.psi.codeStyle.FixingLayoutMatcher;
@@ -68,7 +69,15 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
 
     String old = myString;
     if (e.getID() == KeyEvent.KEY_PRESSED) {
-      if (e.getKeyCode() == KeyEvent.VK_BACK_SPACE) {
+      if (KeymapUtil.isEventForAction(e, "EditorDeleteToWordStart")) {
+        if (isHoldingFilter()) {
+          while (!myString.isEmpty() && !Character.isWhitespace(myString.charAt(myString.length() - 1))) {
+            backspace();
+          }
+          e.consume();
+        }
+      }
+      else if (e.getKeyCode() == KeyEvent.VK_BACK_SPACE) {
         backspace();
         e.consume();
       }

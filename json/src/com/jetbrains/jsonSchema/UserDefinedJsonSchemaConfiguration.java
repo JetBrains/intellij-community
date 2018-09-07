@@ -147,7 +147,7 @@ public class UserDefinedJsonSchemaConfiguration {
           final Pattern pattern = pathText.isEmpty()
                                   ? PatternUtil.NOTHING
                                   : pathText.indexOf('/') >= 0
-                                    ? PatternUtil.compileSafe(".*" + PatternUtil.convertToRegex(pathText), PatternUtil.NOTHING)
+                                    ? PatternUtil.compileSafe(".*/" + PatternUtil.convertToRegex(pathText), PatternUtil.NOTHING)
                                     : PatternUtil.fromMask(pathText);
           result.add((project, file) -> JsonSchemaObject.matchPattern(pattern, pathText.indexOf('/') >= 0
                                                         ? file.getPath()

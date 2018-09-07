@@ -3,6 +3,7 @@ package com.intellij.util;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.UnixProcessManager;
+import com.intellij.execution.process.WinProcessManager;
 import com.intellij.ide.actions.CreateDesktopEntryAction;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.PathManager;
@@ -63,8 +64,8 @@ public class Restarter {
         else if (CreateDesktopEntryAction.getLauncherScript() == null) {
           problem = "cannot find launcher script in " + PathManager.getBinPath();
         }
-        else if (PathEnvironmentVariableUtil.findInPath("python") == null) {
-          problem = "cannot find 'python' in PATH";
+        else if (PathEnvironmentVariableUtil.findInPath("python") == null && PathEnvironmentVariableUtil.findInPath("python3") == null) {
+          problem = "cannot find neither 'python' nor 'python3' in PATH";
         }
         else {
           problem = checkRestarter("restart.py");
@@ -89,10 +90,6 @@ public class Restarter {
     return restarter != null && restarter.isFile() && restarter.canExecute() ? null : "not an executable file: " + restarter;
   }
 
-  public static void scheduleRestart(@NotNull String... beforeRestart) throws IOException {
-    scheduleRestart(false, beforeRestart);
-  }
-
   public static void scheduleRestart(boolean elevate, @NotNull String... beforeRestart) throws IOException {
     Logger.getInstance(Restarter.class).info("restart: " + Arrays.toString(beforeRestart));
     if (SystemInfo.isWindows) {
@@ -113,7 +110,7 @@ public class Restarter {
     Kernel32 kernel32 = Native.loadLibrary("kernel32", Kernel32.class);
     Shell32 shell32 = Native.loadLibrary("shell32", Shell32.class);
 
-    int pid = kernel32.GetCurrentProcessId();
+    int pid = WinProcessManager.getCurrentProcessId();
     IntByReference argc = new IntByReference();
     Pointer argvPtr = shell32.CommandLineToArgvW(kernel32.GetCommandLineW(), argc);
     String[] argv = getRestartArgv(argvPtr.getWideStringArray(0, argc.getValue()));
@@ -132,19 +129,18 @@ public class Restarter {
       argv[0] = Native.toString(buffer);
     }
 
-    ArrayList<String> args = new ArrayList<>();
+    List<String> args = new ArrayList<>();
     args.add(String.valueOf(pid));
-    args.add(String.valueOf(beforeRestart.length));
-    Collections.addAll(args, beforeRestart);
-    if (elevate) {
-      File launcher = PathManager.findBinFile("launcher.exe");
-      if (launcher != null) {
-        args.add(launcher.getPath());
-        args.add(String.valueOf(argv.length + 1));
-      }
-      else {
-        args.add(String.valueOf(argv.length));
-      }
+
+    if (beforeRestart.length > 0) {
+      args.add(String.valueOf(beforeRestart.length));
+      Collections.addAll(args, beforeRestart);
+    }
+
+    File launcher;
+    if (elevate && (launcher = PathManager.findBinFile("launcher.exe")) != null) {
+      args.add(String.valueOf(argv.length + 1));
+      args.add(launcher.getPath());
     }
     else {
       args.add(String.valueOf(argv.length));
@@ -152,9 +148,7 @@ public class Restarter {
     Collections.addAll(args, argv);
 
     File restarter = PathManager.findBinFile("restarter.exe");
-    if (restarter == null) {
-      throw new IOException("Can't find restarter.exe; please reinstall the IDE");
-    }
+    if (restarter == null) throw new IOException("Can't find restarter.exe; please reinstall the IDE");
     runRestarter(restarter, args);
 
     // Since the process ID is passed through the command line, we want to make sure that we don't exit before the "restarter"
@@ -204,11 +198,25 @@ public class Restarter {
     int pid = UnixProcessManager.getCurrentProcessId();
     if (pid <= 0) throw new IOException("Invalid process ID: " + pid);
 
+    File python = PathEnvironmentVariableUtil.findInPath("python");
+    if (python == null) python = PathEnvironmentVariableUtil.findInPath("python3");
+    if (python == null) throw new IOException("Cannot find neither 'python' nor 'python3' in PATH");
+    File script = new File(PathManager.getBinPath(), "restart.py");
+
     List<String> args = new ArrayList<>();
-    args.add(String.valueOf(pid));
-    args.add(launcherScript);
-    Collections.addAll(args, beforeRestart);
-    runRestarter(new File(PathManager.getBinPath(), "restart.py"), args);
+    if ("python".equals(python.getName())) {
+      args.add(String.valueOf(pid));
+      args.add(launcherScript);
+      Collections.addAll(args, beforeRestart);
+      runRestarter(script, args);
+    }
+    else {
+      args.add(script.getPath());
+      args.add(String.valueOf(pid));
+      args.add(launcherScript);
+      Collections.addAll(args, beforeRestart);
+      runRestarter(python, args);
+    }
   }
 
   private static void runRestarter(File restarterFile, List<String> restarterArgs) throws IOException {
@@ -241,7 +249,6 @@ public class Restarter {
 
   @SuppressWarnings({"SameParameterValue", "UnusedReturnValue"})
   private interface Kernel32 extends StdCallLibrary {
-    int GetCurrentProcessId();
     WString GetCommandLineW();
     Pointer LocalFree(Pointer pointer);
     WinDef.DWORD GetModuleFileNameW(WinDef.HMODULE hModule, char[] lpFilename, WinDef.DWORD nSize);

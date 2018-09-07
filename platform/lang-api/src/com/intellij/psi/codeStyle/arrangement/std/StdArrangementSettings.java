@@ -53,7 +53,7 @@ public class StdArrangementSettings implements ArrangementSettings {
   }
 
   public static StdArrangementSettings createByMatchRules(@NotNull List<ArrangementGroupingRule> groupingRules,
-                                                          @NotNull List<StdArrangementMatchRule> matchRules) {
+                                                          @NotNull List<? extends StdArrangementMatchRule> matchRules) {
     final List<ArrangementSectionRule> sectionRules = new ArrayList<>();
     for (StdArrangementMatchRule rule : matchRules) {
       sectionRules.add(ArrangementSectionRule.create(rule));

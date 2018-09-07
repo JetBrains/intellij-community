@@ -119,7 +119,7 @@ public class JavaPostfixTemplateEditor extends PostfixTemplateEditorBase<JavaPos
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       String fqn = getFqn();
       if (fqn != null) {
         myExpressionTypesListModel.addElement(new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateExpressionFqnCondition(fqn));

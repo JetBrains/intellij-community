@@ -23,6 +23,7 @@ package com.intellij.openapi.compiler;
 @Deprecated
 public interface CompilerFilter {
   CompilerFilter ALL = new CompilerFilter() {
+    @Override
     public boolean acceptCompiler(Compiler compiler) {
       return true;
     }

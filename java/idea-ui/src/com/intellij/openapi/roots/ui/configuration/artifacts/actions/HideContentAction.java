@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeSelection;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingNodeSource;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
@@ -36,7 +37,7 @@ public class HideContentAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final LayoutTreeSelection selection = myArtifactEditor.getLayoutTreeComponent().getSelection();
     final PackagingElementNode<?> node = selection.getNodeIfSingle();
     if (node != null) {
@@ -58,7 +59,7 @@ public class HideContentAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final LayoutTreeSelection selection = myArtifactEditor.getLayoutTreeComponent().getSelection();
     final PackagingElementNode<?> node = selection.getNodeIfSingle();
     if (node == null) return;

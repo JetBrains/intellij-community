@@ -155,7 +155,7 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     GeneralSettings settings = GeneralSettings.getInstance();
     myComponent.myChkReopenLastProject.setSelected(settings.isReopenLastProject());
     myComponent.myChkSupportScreenReaders.setSelected(settings.isSupportScreenReaders());
-    if (GeneralSettings.isSupportScreenReadersOverriden()) {
+    if (GeneralSettings.isSupportScreenReadersOverridden()) {
       myComponent.myChkSupportScreenReaders.setEnabled(false);
       myComponent.myChkSupportScreenReaders.setToolTipText(
         "The option is overriden by the JVM property: \"" + GeneralSettings.SUPPORT_SCREEN_READERS + "\"");
@@ -226,7 +226,7 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     private TextFieldWithBrowseButton myProjectDirectoryTextField;
     private JPanel myProjectOpeningPanel;
 
-    public MyComponent() {
+    MyComponent() {
       String conceptName = IdeUICustomization.getInstance().getProjectConceptName();
       myChkReopenLastProject.setText(IdeBundle.message("checkbox.reopen.last.project.on.startup", conceptName));
       ((TitledBorder) myProjectOpeningPanel.getBorder()).setTitle(IdeBundle.message("border.title.project.opening",

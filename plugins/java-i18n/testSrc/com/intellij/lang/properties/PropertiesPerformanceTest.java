@@ -73,26 +73,18 @@ public class PropertiesPerformanceTest extends CodeInsightTestCase {
     final String src = sourceRoots[0].getPath();
     String className = "PropRef";
 
-    FileWriter classWriter = new FileWriter(new File(src, className + ".java"));
-    try {
+    try (FileWriter classWriter = new FileWriter(new File(src, className + ".java"))) {
       classWriter.write("class " + className + "{");
       for (int f = 0; f < 100; f++) {
-        FileWriter writer = new FileWriter(new File(src, "prop" + f + ".properties"));
-        try {
+        try (FileWriter writer = new FileWriter(new File(src, "prop" + f + ".properties"))) {
           for (int i = 0; i < 10; i++) {
             String key = "prop." + f + ".number." + i;
             writer.write(key + "=" + key + "\n");
             classWriter.write("String s_" + f + "_" + i + "=\"" + key + "\";\n");
           }
         }
-        finally {
-          writer.close();
-        }
       }
       classWriter.write("}");
-    }
-    finally {
-      classWriter.close();
     }
 
     VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(src);

@@ -16,6 +16,9 @@
 
 package com.intellij.internal.statistic.persistence;
 
+/**
+ * Don't use this class directly, use {@see com.intellij.internal.statistic.utils.StatisticsUploadAssistant} instead
+ */
 public abstract class SentUsagesPersistence {
 
   public abstract boolean isAllowed();

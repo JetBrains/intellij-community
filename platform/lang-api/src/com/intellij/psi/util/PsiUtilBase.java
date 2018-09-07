@@ -101,7 +101,9 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
   public static PsiFile getPsiFileAtOffset(@NotNull PsiFile file, final int offset) {
     PsiElement elt = getElementAtOffset(file, offset);
 
-    assert elt.isValid() : elt + "; file: "+file + "; isValid: "+file.isValid();
+    if (!elt.isValid()) {
+      LOG.error(elt + "; file: " + file + "; isValid: " + file.isValid());
+    }
     return elt.getContainingFile();
   }
 
@@ -144,7 +146,10 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
     while (true) {
       PsiElement parent = elt.getParent();
       TextRange range = elt.getTextRange();
-      assert range != null : "Range is null for " + elt + "; " + elt.getClass();
+      if (range == null) {
+        LOG.error("Range is null for " + elt + "; " + elt.getClass());
+        return file.getLanguage();
+      }
       if (range.contains(selectionRange) || parent == null || elt instanceof PsiFile) {
         return elt.getLanguage();
       }

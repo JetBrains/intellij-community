@@ -19,24 +19,14 @@ import com.intellij.ToolExtensionPoints;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.siyeh.ig.LightInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
 public class MismatchedCollectionQueryUpdateInspectionTest extends LightInspectionTestCase {
-  private static final DefaultLightProjectDescriptor PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
-    @Override
-    public Sdk getSdk() {
-      return PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk18());
-    }
-  };
 
   private static final ImplicitUsageProvider TEST_PROVIDER = new ImplicitUsageProvider() {
     @Override
@@ -51,7 +41,7 @@ public class MismatchedCollectionQueryUpdateInspectionTest extends LightInspecti
 
     @Override
     public boolean isImplicitWrite(PsiElement element) {
-      return element instanceof PsiField && ((PsiField)element).getName().equals("injected");
+      return element instanceof PsiField && "injected".equals(((PsiField)element).getName());
     }
   };
 
@@ -66,34 +56,10 @@ public class MismatchedCollectionQueryUpdateInspectionTest extends LightInspecti
     doTest();
   }
 
-  @Override
-  protected String[] getEnvironmentClasses() {
-    return new String[] {
-      "package java.util;" +
-      "public class HashSet<E> implements Set<E> {" +
-      "  public HashSet() {}" +
-      "  public HashSet(Collection<? extends E> collection) {}" +
-      "}",
-      "package java.util.concurrent;" +
-      "public interface BlockingDeque<E> {" +
-      "  E takeFirst() throws InterruptedException;" +
-      "  void putLast(E e) throws InterruptedException;" +
-      "}",
-      "package java.util.concurrent;" +
-      "public class LinkedBlockingDeque<E> implements BlockingDeque {}",
-      "package java.lang;" +
-      "public class InterruptedException extends Exception {}",
-      "package java.util.concurrent;" +
-      "public interface BlockingQueue<E> {" +
-      "  int drainTo(java.util.Collection<? super E> c);" +
-      "}"
-    };
-  }
-
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return PROJECT_DESCRIPTOR;
+    return JAVA_9_ANNOTATED;
   }
 
   @Override

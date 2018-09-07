@@ -176,7 +176,7 @@ public class JShellHandler {
     actionGroup.addAll(consoleView.createConsoleActions());
     actionGroup.add(new CloseAction(EXECUTOR, descriptor, project) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         jshellHandler.stop();
         if (!processHandler.waitFor(10000)) {
           processHandler.destroyProcess();
@@ -480,7 +480,7 @@ public class JShellHandler {
   }
 
   private static class MyConsoleView extends ConsoleViewImpl {
-    public MyConsoleView(Project project) {
+    MyConsoleView(Project project) {
       super(project, GlobalSearchScope.allScope(project), true, new ConsoleState.NotStartedStated() {
         @NotNull
         @Override
@@ -494,11 +494,11 @@ public class JShellHandler {
   }
 
   private static final class ExecException extends Exception {
-    public ExecException(String message) {
+    ExecException(String message) {
       super(message);
     }
 
-    public ExecException(String message, Throwable cause) {
+    ExecException(String message, Throwable cause) {
       super(message, cause);
     }
 

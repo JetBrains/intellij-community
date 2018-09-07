@@ -268,13 +268,11 @@ public class FileManagerImpl implements FileManager {
   }
 
   /** Left for plugin compatibility */
-  @SuppressWarnings("unused")
   @Deprecated
   public void markInitialized() {
   }
 
   /** Left for plugin compatibility */
-  @SuppressWarnings("unused")
   @Deprecated
   public boolean isInitialized() {
     return true;
@@ -320,7 +318,7 @@ public class FileManagerImpl implements FileManager {
   }
 
   @TestOnly
-  public void checkConsistency() {
+  void checkConsistency() {
     for (VirtualFile file : new ArrayList<>(getVFileToViewProviderMap().keySet())) {
       findCachedViewProvider(file); // complete delayed validity checks
     }
@@ -562,14 +560,16 @@ public class FileManagerImpl implements FileManager {
   }
 
   private void markInvalidations(@NotNull Map<VirtualFile, FileViewProvider> originalFileToPsiFileMap) {
-    DebugUtil.performPsiModification(null, ()->{
-      for (Map.Entry<VirtualFile, FileViewProvider> entry : originalFileToPsiFileMap.entrySet()) {
-        FileViewProvider viewProvider = entry.getValue();
-        if (getVFileToViewProviderMap().get(entry.getKey()) != viewProvider) {
-          markInvalidated(viewProvider);
+    if (!originalFileToPsiFileMap.isEmpty()) {
+      DebugUtil.performPsiModification(null, ()->{
+        for (Map.Entry<VirtualFile, FileViewProvider> entry : originalFileToPsiFileMap.entrySet()) {
+          FileViewProvider viewProvider = entry.getValue();
+          if (getVFileToViewProviderMap().get(entry.getKey()) != viewProvider) {
+            markInvalidated(viewProvider);
+          }
         }
-      }
-    });
+      });
+    }
   }
 
   @Override

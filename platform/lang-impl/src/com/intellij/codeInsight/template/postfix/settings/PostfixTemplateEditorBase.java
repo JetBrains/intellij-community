@@ -60,7 +60,7 @@ public abstract class PostfixTemplateEditorBase<Condition extends PostfixTemplat
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myExpressionTypesListModel.addElement(myCondition);
     }
   }

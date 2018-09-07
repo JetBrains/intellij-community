@@ -185,7 +185,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
 
   @Override
   @Nullable
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (DATA_KEY.is(dataId)) {
       return this;
     }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
 import com.intellij.ide.util.SuperMethodWarningUtil;
@@ -35,9 +21,8 @@ import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParameterListOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
@@ -105,13 +90,13 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
   }
 
   private void chooseScopeAndRun(@NotNull final InitialInfo initialInfo, @NotNull final Editor editor) {
-    final List<GrParametersOwner> scopes = findScopes(initialInfo);
+    final List<GrParameterListOwner> scopes = findScopes(initialInfo);
 
     if (scopes.isEmpty()) {
       throw new GrRefactoringError(GroovyRefactoringBundle.message("there.is.no.method.or.closure"));
     }
     else if (scopes.size() == 1 || ApplicationManager.getApplication().isUnitTestMode()) {
-      final GrParametersOwner owner = scopes.get(0);
+      final GrParameterListOwner owner = scopes.get(0);
       final PsiElement toSearchFor;
       if (owner instanceof GrMethod) {
         toSearchFor = SuperMethodWarningUtil.checkSuperMethod((PsiMethod)owner, RefactoringBundle.message("to.refactor"));
@@ -132,11 +117,11 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
   }
 
   @NotNull
-  private static List<GrParametersOwner> findScopes(@NotNull InitialInfo initialInfo) {
+  private static List<GrParameterListOwner> findScopes(@NotNull InitialInfo initialInfo) {
     PsiElement place = initialInfo.getContext();
-    final List<GrParametersOwner> scopes = new ArrayList<>();
+    final List<GrParameterListOwner> scopes = new ArrayList<>();
     while (true) {
-      final GrParametersOwner parent = PsiTreeUtil.getParentOfType(place, GrMethod.class, GrClosableBlock.class);
+      final GrParameterListOwner parent = PsiTreeUtil.getParentOfType(place, GrParameterListOwner.class);
       if (parent == null) break;
       scopes.add(parent);
       place = parent;

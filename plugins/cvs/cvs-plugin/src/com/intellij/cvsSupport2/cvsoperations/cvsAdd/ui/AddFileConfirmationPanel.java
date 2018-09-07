@@ -75,6 +75,7 @@ public class AddFileConfirmationPanel extends AbstractAddFileConfirmationPanel {
     KeywordSubstitutionWrapper.fillComboBox(mySubstitutionComboBox, defaultSubstitution);
 
     mySubstitutionComboBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final KeywordSubstitutionWrapper selectedItem = (KeywordSubstitutionWrapper)mySubstitutionComboBox.getSelectedItem();
         myAddedFileInfo.setKeywordSubstitution(selectedItem.getSubstitution());
@@ -84,10 +85,12 @@ public class AddFileConfirmationPanel extends AbstractAddFileConfirmationPanel {
     init();
   }
 
+  @Override
   public Component getPanel() {
     return myPanel;
   }
 
+  @Override
   protected FileLabel getFileLabel() {
     return myFileLabel;
   }

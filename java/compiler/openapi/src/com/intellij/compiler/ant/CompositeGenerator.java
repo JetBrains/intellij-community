@@ -92,6 +92,7 @@ public class CompositeGenerator extends Generator {
    * @throws IOException in case of IO propblem
    * @see #setHasLeadingNewline(boolean)
    */
+  @Override
   public void generate(PrintWriter out) throws IOException {
     boolean first = true;
     for (final Pair<Generator, Integer> pair : myGenerators) {

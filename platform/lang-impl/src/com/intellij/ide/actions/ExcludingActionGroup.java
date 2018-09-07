@@ -39,7 +39,7 @@ public class ExcludingActionGroup extends ActionGroup {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     myDelegate.update(e);
   }
 

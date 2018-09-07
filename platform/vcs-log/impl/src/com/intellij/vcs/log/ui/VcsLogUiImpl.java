@@ -4,17 +4,19 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.NamedRunnable;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.PairFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogFilterUi;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
-import com.intellij.vcs.log.impl.CommonUiProperties;
-import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties.VcsLogHighlighterProperty;
-import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.frame.MainFrame;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.GraphTableModel;
@@ -25,10 +27,13 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
+
+import static com.intellij.util.ObjectUtils.notNull;
 
 public class VcsLogUiImpl extends AbstractVcsLogUi {
   private static final String HELP_ID = "reference.changesToolWindow.log";
-  
+
   @NotNull private final MainVcsLogUiProperties myUiProperties;
   @NotNull private final MainFrame myMainFrame;
   @NotNull private final MyVcsLogUiPropertiesListener myPropertiesListener;
@@ -50,6 +55,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
     myUiProperties.addChangeListener(myPropertiesListener);
   }
 
+  @Override
   protected void onVisiblePackUpdated(boolean permGraphChanged) {
     myMainFrame.updateDataPack(myVisiblePack, permGraphChanged);
     myPropertiesListener.onShowLongEdgesChanged();
@@ -94,17 +100,36 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
   }
 
   @Override
-  protected <T> void handleCommitNotFound(@NotNull T commitId, @NotNull PairFunction<GraphTableModel, T, Integer> rowGetter) {
-    if (getFilterUi().getFilters().isEmpty()) {
-      super.handleCommitNotFound(commitId, rowGetter);
+  protected <T> void handleCommitNotFound(@NotNull T commitId,
+                                          boolean commitExists,
+                                          @NotNull PairFunction<GraphTableModel, T, Integer> rowGetter) {
+    if (getFilterUi().getFilters().isEmpty() || !commitExists) {
+      super.handleCommitNotFound(commitId, commitExists, rowGetter);
+      return;
     }
-    else {
-      showWarningWithLink("Commit " + commitId.toString() + " does not exist or does not match active filters",
-                          "Reset filters and search again.", () -> {
-          getFilterUi().setFilter(null);
-          invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create()), pack -> pack.getFilters().isEmpty());
-        });
+
+    List<NamedRunnable> runnables = ContainerUtil.newArrayList();
+    runnables.add(new NamedRunnable("View and Reset Filters") {
+      @Override
+      public void run() {
+        getFilterUi().setFilter(null);
+        invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create()),
+                       pack -> pack.getFilters().isEmpty());
+      }
+    });
+    if (VcsLogProjectTabsProperties.MAIN_LOG_ID.equals(getId())) {
+      runnables.add(new NamedRunnable("View in New Tab") {
+        @Override
+        public void run() {
+          VcsProjectLog projectLog = VcsProjectLog.getInstance(myProject);
+          VcsLogUiImpl ui = projectLog.getTabsManager().openAnotherLogTab(notNull(projectLog.getLogManager()), true);
+          ui.invokeOnChange(() -> ui.jumpTo(commitId, rowGetter, SettableFuture.create()),
+                            pack -> pack.getFilters().isEmpty());
+        }
+      });
     }
+    VcsBalloonProblemNotifier.showOverChangesView(myProject, getCommitNotFoundMessage(commitId, true), MessageType.WARNING,
+                                                  runnables.toArray(new NamedRunnable[0]));
   }
 
   @Override

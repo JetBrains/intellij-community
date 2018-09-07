@@ -91,9 +91,7 @@ public abstract class AbstractFavoritesListProvider<T> implements FavoritesListP
 
   @Override
   public int compareTo(FavoritesListProvider o) {
-    if (getWeight() > o.getWeight()) return 1;
-    if (getWeight() < o.getWeight()) return -1;
-    return 0;
+    return Integer.compare(getWeight(), o.getWeight());
   }
 
   @Override

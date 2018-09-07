@@ -2,3 +2,14 @@ deprecated: configurationWarning.png -> /general/balloonError.svg; to be removed
 deprecated: saveTempConfig.png -> /actions/menu-saveall.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Menu_saveall
 deprecated: unknown.png -> /actions/help.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Help
 deprecated: variables.png -> /actions/listFiles.svg; to be removed in IDEA 2020 - use AllIcons.Actions.ListFiles
+deprecated: testInProgress1.png -> /process/step_1.svg; to be removed in IDEA 2020 - use AllIcons.Process.Step_1
+deprecated: testInProgress2.png -> /process/step_2.svg; to be removed in IDEA 2020 - use AllIcons.Process.Step_2
+deprecated: testInProgress3.png -> /process/step_3.svg; to be removed in IDEA 2020 - use AllIcons.Process.Step_3
+deprecated: testInProgress4.png -> /process/step_4.svg; to be removed in IDEA 2020 - use AllIcons.Process.Step_4
+deprecated: testInProgress5.png -> /process/step_5.svg; to be removed in IDEA 2020 - use AllIcons.Process.Step_5
+deprecated: testInProgress6.png -> /process/step_6.svg; to be removed in IDEA 2020 - use AllIcons.Process.Step_6
+deprecated: testInProgress7.png -> /process/step_7.svg; to be removed in IDEA 2020 - use AllIcons.Process.Step_7
+deprecated: testInProgress8.png -> /process/step_8.svg; to be removed in IDEA 2020 - use AllIcons.Process.Step_8
+deprecated: includeNonStartedTests_Rerun.png; to be removed in IDEA 2020
+deprecated: hideIgnored.png; to be removed in IDEA 2020
+deprecated: loadingTree.png; to be removed in IDEA 2020

@@ -62,5 +62,6 @@ public interface PsiMethodReferenceExpression extends PsiReferenceExpression, Ps
   /**
    * Potentially compatible, and if exact - congruent
    */
+  @Override
   boolean isAcceptable(PsiType left);
 }

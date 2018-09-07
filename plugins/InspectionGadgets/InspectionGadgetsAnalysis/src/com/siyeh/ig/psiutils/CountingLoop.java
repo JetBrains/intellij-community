@@ -121,7 +121,7 @@ public class CountingLoop {
     }
 
     // check that condition is like for(...;i<bound;...) or for(...;i<=bound;...)
-    PsiBinaryExpression condition = tryCast(forStatement.getCondition(), PsiBinaryExpression.class);
+    PsiBinaryExpression condition = tryCast(PsiUtil.skipParenthesizedExprDown(forStatement.getCondition()), PsiBinaryExpression.class);
     if(condition == null) return null;
     IElementType type = condition.getOperationTokenType();
     boolean closed = false;

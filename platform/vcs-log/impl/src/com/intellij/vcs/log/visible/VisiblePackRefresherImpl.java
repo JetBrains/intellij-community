@@ -25,6 +25,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogFilterCollection;
@@ -76,11 +77,11 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
     myLogId = logId;
     myState = new State(filters, sortType);
 
-    myTaskController = new SingleTaskController<Request, State>(project, "visible", state -> {
+    myTaskController = new SingleTaskController<Request, State>(project, "visible " + StringUtil.trimMiddle(logId, 40), state -> {
       boolean hasChanges = myState.getVisiblePack() != state.getVisiblePack();
       myState = state;
       if (hasChanges) {
-        for (VisiblePackChangeListener listener: myVisiblePackChangeListeners) {
+        for (VisiblePackChangeListener listener : myVisiblePackChangeListeners) {
           listener.onVisiblePackChange(state.getVisiblePack());
         }
       }
@@ -145,13 +146,18 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
   }
 
   @Override
+  public String toString() {
+    return "VisiblePackRefresher \'" + myLogId + "\' state = " + myState;
+  }
+
+  @Override
   public void dispose() {
     myLogData.getIndex().removeListener(myIndexingFinishedListener);
   }
 
   private class MyTask extends Task.Backgroundable {
 
-    public MyTask(@Nullable Project project, @NotNull String title) {
+    MyTask(@Nullable Project project, @NotNull String title) {
       super(project, title, false);
     }
 
@@ -291,11 +297,11 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
     @NotNull private final VisiblePack myVisiblePack;
     private final boolean myIsValid;
 
-    public State(@NotNull VcsLogFilterCollection filters, @NotNull PermanentGraph.SortType sortType) {
+    State(@NotNull VcsLogFilterCollection filters, @NotNull PermanentGraph.SortType sortType) {
       this(filters, sortType, CommitCountStage.INITIAL, ContainerUtil.newArrayList(), VisiblePack.EMPTY, true);
     }
 
-    public State(@NotNull VcsLogFilterCollection filters,
+    State(@NotNull VcsLogFilterCollection filters,
                  @NotNull PermanentGraph.SortType sortType,
                  @NotNull CommitCountStage commitCountStage,
                  @NotNull List<MoreCommitsRequest> requests,

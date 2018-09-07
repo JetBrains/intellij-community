@@ -44,10 +44,12 @@ public class LabelRenderer extends TypeRenderer implements ValueLabelRenderer, O
     super();
   }
 
+  @Override
   public String getUniqueId() {
     return UNIQUE_ID;
   }
 
+  @Override
   public LabelRenderer clone() {
     LabelRenderer clone = (LabelRenderer)super.clone();
     clone.myLabelExpression = createCachedEvaluator();
@@ -55,10 +57,12 @@ public class LabelRenderer extends TypeRenderer implements ValueLabelRenderer, O
     return clone;
   }
 
+  @Override
   public Icon calcValueIcon(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
     return null;
   }
 
+  @Override
   public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener)
     throws EvaluateException {
 
@@ -98,6 +102,7 @@ public class LabelRenderer extends TypeRenderer implements ValueLabelRenderer, O
     return "… " + getLabelExpression().getText();
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
     DefaultJDOMExternalizer.readExternal(this, element);
@@ -107,6 +112,7 @@ public class LabelRenderer extends TypeRenderer implements ValueLabelRenderer, O
     }
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
     DefaultJDOMExternalizer.writeExternal(this, element);

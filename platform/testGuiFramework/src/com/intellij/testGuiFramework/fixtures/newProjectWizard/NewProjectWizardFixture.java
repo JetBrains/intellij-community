@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.ui.configuration.JdkComboBox;
 import com.intellij.testGuiFramework.fixtures.FrameworksTreeFixture;
 import com.intellij.testGuiFramework.fixtures.SelectSdkDialogFixture;
 import com.intellij.testGuiFramework.framework.GuiTestUtil;
+import com.intellij.testGuiFramework.framework.Timeouts;
 import com.intellij.ui.components.JBList;
 import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.Robot;
@@ -49,7 +50,7 @@ public class NewProjectWizardFixture extends AbstractWizardFixture<NewProjectWiz
       protected boolean isMatching(@NotNull JDialog dialog) {
         return IdeBundle.message("title.new.project").equals(dialog.getTitle()) && dialog.isShowing();
       }
-    }).withTimeout(GuiTestUtil.INSTANCE.getLONG_TIMEOUT().duration()).using(robot);
+    }).withTimeout(Timeouts.INSTANCE.getMinutes05().duration()).using(robot);
 
 
     return new NewProjectWizardFixture(robot, (JDialog)newProjectDialog.target());
@@ -89,7 +90,7 @@ public class NewProjectWizardFixture extends AbstractWizardFixture<NewProjectWiz
       public boolean test() {
         return target().isFocused();
       }
-    }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
+    }, Timeouts.INSTANCE.getMinutes02());
     return this;
   }
 
@@ -109,7 +110,7 @@ public class NewProjectWizardFixture extends AbstractWizardFixture<NewProjectWiz
         }
         return true;
       }
-    }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
+    }, Timeouts.INSTANCE.getMinutes02());
     final JTextComponentFixture textField = findTextField(labelText);
     robot().click(textField.target());
     textField.setText(projectName);

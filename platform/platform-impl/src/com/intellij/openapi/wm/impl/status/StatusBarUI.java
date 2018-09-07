@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -39,6 +39,7 @@ public class StatusBarUI extends ComponentUI {
 
     private static final Insets INSETS = new Insets(0, 0, 0, 0);
 
+    @Override
     public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
       final Graphics2D g2d = (Graphics2D) g.create();
 
@@ -62,10 +63,12 @@ public class StatusBarUI extends ComponentUI {
       g2d.dispose();
     }
 
+    @Override
     public Insets getBorderInsets(Component c) {
       return (Insets)INSETS.clone();
     }
 
+    @Override
     public boolean isBorderOpaque() {
       return true;
     }

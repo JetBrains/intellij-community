@@ -29,10 +29,12 @@ public abstract class WebProjectTemplate<T> extends WebProjectGenerator<T> imple
     return null;
   }
 
+  @Override
   public Icon getIcon() {
     return WebModuleBuilder.ICON;
   }
 
+  @Override
   public Icon getLogo() {
     return getIcon();
   }

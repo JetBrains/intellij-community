@@ -16,8 +16,8 @@ import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptorNameAdjuster;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
-import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.debugger.ui.tree.render.Renderer;
+import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 
 public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements ValueDescriptor{
   protected final Project myProject;
@@ -197,7 +198,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
             myIsDirty = !(value instanceof FloatValue);
           }
           else {
-            myIsDirty = (value == null) ? myValue != null : !value.equals(myValue);
+            myIsDirty = !Objects.equals(value, myValue);
           }
         }
         catch (ObjectCollectedException ignored) {
@@ -457,7 +458,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   private static class DebuggerTreeNodeMock implements DebuggerTreeNode {
     private final JavaValue value;
 
-    public DebuggerTreeNodeMock(JavaValue value) {
+    DebuggerTreeNodeMock(JavaValue value) {
       this.value = value;
     }
 
@@ -518,7 +519,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     if (objRef instanceof ArrayReference) {
       int idx = buf.indexOf("[");
       if(idx >= 0) {
-        buf.insert(idx + 1, Integer.toString(((ArrayReference)objRef).length()));
+        buf.insert(idx + 1, ((ArrayReference)objRef).length());
       }
     }
 

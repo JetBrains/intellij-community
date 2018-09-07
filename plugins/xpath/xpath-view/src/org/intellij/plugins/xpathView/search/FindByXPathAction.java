@@ -41,12 +41,14 @@ import java.util.Collections;
 
 public class FindByXPathAction extends AnAction {
 
-    public void update(AnActionEvent e) {
+    @Override
+    public void update(@NotNull AnActionEvent e) {
         final Project project = e.getProject();
         e.getPresentation().setEnabled(project != null);
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
         final Project project = e.getProject();
         final Module module = LangDataKeys.MODULE.getData(e.getDataContext());
 
@@ -122,11 +124,12 @@ public class FindByXPathAction extends AnAction {
         private final Project myProject;
         private final Module myModule;
 
-        public MyEditExpressionAction(Project project, Module module) {
+        MyEditExpressionAction(Project project, Module module) {
             myProject = project;
             myModule = module;
         }
 
+        @Override
         protected void execute() {
             executeSearch(myProject, myModule);
         }

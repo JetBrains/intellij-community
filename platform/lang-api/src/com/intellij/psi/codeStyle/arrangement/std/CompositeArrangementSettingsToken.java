@@ -75,7 +75,7 @@ public class CompositeArrangementSettingsToken {
 
   public CompositeArrangementSettingsToken(@NotNull ArrangementSettingsToken token,
                                            @NotNull StdArrangementTokenUiRole role,
-                                           @NotNull List<CompositeArrangementSettingsToken> children)
+                                           @NotNull List<? extends CompositeArrangementSettingsToken> children)
   {
     myToken = token;
     myRole = role;

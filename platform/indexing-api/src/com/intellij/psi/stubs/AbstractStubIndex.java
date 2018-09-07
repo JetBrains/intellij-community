@@ -39,5 +39,6 @@ public abstract class AbstractStubIndex<Key, Psi extends PsiElement> implements 
     return StubIndex.getInstance().get(getKey(), key, project, scope);
   }
 
+  @Override
   public int getCacheSize() { return 2 * 1024; }
 }

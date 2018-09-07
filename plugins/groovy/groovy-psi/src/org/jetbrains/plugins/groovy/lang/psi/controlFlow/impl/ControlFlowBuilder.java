@@ -785,7 +785,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   private void flushForeachLoopVariable(@Nullable GrForClause clause) {
     if (clause instanceof GrForInClause) {
-      GrVariable variable = clause.getDeclaredVariable();
+      GrVariable variable = ((GrForInClause)clause).getDeclaredVariable();
       if (variable != null && myPolicy.isVariableInitialized(variable)) {
         addNodeAndCheckPending(new ReadWriteVariableInstruction(variable.getName(), variable, ReadWriteVariableInstruction.WRITE));
       }

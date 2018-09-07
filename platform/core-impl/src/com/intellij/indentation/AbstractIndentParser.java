@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class AbstractIndentParser implements PsiParser {
   protected IndentPsiBuilder myBuilder;
 
+  @Override
   @NotNull
   public ASTNode parse(@NotNull IElementType root, @NotNull PsiBuilder builder) {
     myBuilder = createPsiBuilder(builder);
@@ -170,7 +171,7 @@ public abstract class AbstractIndentParser implements PsiParser {
     advanceUntilEol();
     errorMarker.error(message);
   }
-  
+
   protected void errorUntilEof() {
     PsiBuilder.Marker errorMarker = mark();
     while (!eof()) {

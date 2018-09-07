@@ -20,7 +20,7 @@ class PopupTableAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<
   private PopupChooserBuilder myBuilder;
   private final JTable myTable;
 
-  public PopupTableAdapter(PopupChooserBuilder builder, JTable table) {
+  PopupTableAdapter(PopupChooserBuilder builder, JTable table) {
     myBuilder = builder;
     myTable = table;
   }
@@ -31,12 +31,12 @@ class PopupTableAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<
   }
 
   @Override
-  public void setItemChosenCallback(Consumer<T> callback) {
+  public void setItemChosenCallback(Consumer<? super T> callback) {
     throw new UnsupportedOperationException("setItemChosenCallback with element callback is not implemented for tables yet");
   }
 
   @Override
-  public void setItemsChosenCallback(Consumer<Set<T>> callback) {
+  public void setItemsChosenCallback(Consumer<? super Set<T>> callback) {
     throw new UnsupportedOperationException("setItemsChosenCallback with element callback is not implemented for tables yet");
   }
 
@@ -65,6 +65,7 @@ class PopupTableAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<
       myTable.addMouseMotionListener(new MouseMotionAdapter() {
         boolean myIsEngaged = false;
 
+        @Override
         public void mouseMoved(MouseEvent e) {
           if (myIsEngaged) {
             int index = myTable.rowAtPoint(e.getPoint());

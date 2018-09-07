@@ -32,11 +32,11 @@ public class ThrownCaughtLocallyInspectionTest extends LightInspectionTestCase {
            "            Runnable runnable = () -> {\n" +
            "                throw new RuntimeException();\n" +
            "            };\n" +
-           "            Runnable runnableLambda = new Runnable() {\n" +
-           "                @Override\n" +
-           "                public void run() {\n" +
+           "" +
+           "            Runnable runnableLambda = ()-> {\n" +
+           "" +
            "                    throw new RuntimeException();\n" +
-           "                }\n" +
+           "    " +
            "            };\n" +
            "        }\n" +
            "        catch (RuntimeException e){\n" +

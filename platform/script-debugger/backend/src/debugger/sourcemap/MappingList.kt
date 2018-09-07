@@ -48,7 +48,7 @@ abstract class MappingList(private val mappings: List<MappingEntry>) : Mappings 
   override fun indexOf(line: Int, column: Int): Int {
     var low = 0
     var high = mappings.size - 1
-    if (getLine(mappings[low]) > line || getLine(mappings[high]) < line) {
+    if (mappings.isEmpty() || getLine(mappings[low]) > line || getLine(mappings[high]) < line) {
       return -1
     }
 

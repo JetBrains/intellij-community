@@ -35,13 +35,13 @@ import javax.swing.*;
 class ChangeLibraryLevelInClasspathAction extends ChangeLibraryLevelActionBase {
   private final ClasspathPanel myPanel;
 
-  public ChangeLibraryLevelInClasspathAction(@NotNull ClasspathPanel panel, final @NotNull String targetTableName, @NotNull String targetTableLevel) {
+  ChangeLibraryLevelInClasspathAction(@NotNull ClasspathPanel panel, final @NotNull String targetTableName, @NotNull String targetTableLevel) {
     super(panel.getProject(), targetTableName, targetTableLevel, targetTableLevel.equals(LibraryTableImplUtil.MODULE_LEVEL));
     myPanel = panel;
   }
 
   @Override
-  public void actionPerformed(AnActionEvent event) {
+  public void actionPerformed(@NotNull AnActionEvent event) {
     final OrderEntry entry = myPanel.getSelectedEntry();
     if (!(entry instanceof LibraryOrderEntry)) return;
     LibraryOrderEntry libraryEntry = (LibraryOrderEntry)entry;

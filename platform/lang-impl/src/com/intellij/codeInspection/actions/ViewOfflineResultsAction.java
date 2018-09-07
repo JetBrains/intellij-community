@@ -67,7 +67,7 @@ public class ViewOfflineResultsAction extends AnAction {
   @NonNls private static final String XML_EXTENSION = "xml";
 
   @Override
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
     final Project project = event.getData(CommonDataKeys.PROJECT);
     presentation.setEnabled(project != null);
@@ -75,7 +75,7 @@ public class ViewOfflineResultsAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent event) {
+  public void actionPerformed(@NotNull AnActionEvent event) {
     final Project project = event.getData(CommonDataKeys.PROJECT);
 
     LOG.assertTrue(project != null);

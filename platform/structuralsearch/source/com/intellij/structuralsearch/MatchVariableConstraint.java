@@ -459,10 +459,14 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
 
     if (!regExp.isEmpty()) element.setAttribute(REGEXP, regExp);
     if (!nameOfExprType.isEmpty()) element.setAttribute(NAME_OF_EXPRTYPE, nameOfExprType);
-    if (!Registry.is("ssr.use.regexp.to.specify.type") && !expressionTypes.isEmpty()) element.setAttribute(EXPRESSION_TYPES, expressionTypes);
+    if (!Registry.is("ssr.use.regexp.to.specify.type") && !expressionTypes.isEmpty() && !expressionTypes.equals(nameOfExprType)) {
+      element.setAttribute(EXPRESSION_TYPES, expressionTypes);
+    }
     if (!referenceConstraint.isEmpty()) element.setAttribute(REFERENCE_CONDITION, referenceConstraint);
     if (!nameOfFormalArgType.isEmpty()) element.setAttribute(NAME_OF_FORMALTYPE, nameOfFormalArgType);
-    if (!Registry.is("ssr.use.regexp.to.specify.type") && !expectedTypes.isEmpty()) element.setAttribute(EXPECTED_TYPES, expectedTypes);
+    if (!Registry.is("ssr.use.regexp.to.specify.type") && !expectedTypes.isEmpty() && !expectedTypes.equals(nameOfFormalArgType)) {
+      element.setAttribute(EXPECTED_TYPES, expectedTypes);
+    }
 
     if (withinHierarchy) element.setAttribute(WITHIN_HIERARCHY, TRUE);
     if (exprTypeWithinHierarchy) element.setAttribute(EXPRTYPE_WITHIN_HIERARCHY, TRUE);

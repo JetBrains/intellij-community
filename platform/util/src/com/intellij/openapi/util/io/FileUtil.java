@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.FixedFuture;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.io.URLUtil;
@@ -106,7 +105,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static boolean isAbsolute(@NotNull String path) {
-    return new File(path).isAbsolute();
+    return !path.isEmpty() && new File(path).isAbsolute();
   }
 
   public static boolean exists(@Nullable String path) {
@@ -184,43 +183,6 @@ public class FileUtil extends FileUtilRt {
     else {
       return ThreeState.NO;
     }
-  }
-
-  /**
-   * @param removeProcessor parent, child
-   */
-  public static <T> Collection<T> removeAncestors(final Collection<T> files,
-                                                  final Convertor<T, String> convertor,
-                                                  final PairProcessor<T, T> removeProcessor) {
-    if (files.isEmpty()) return files;
-    final TreeMap<String, T> paths = new TreeMap<String, T>();
-    for (T file : files) {
-      final String path = convertor.convert(file);
-      assert path != null;
-      final String canonicalPath = toCanonicalPath(path);
-      paths.put(canonicalPath, file);
-    }
-    final List<Map.Entry<String, T>> ordered = new ArrayList<Map.Entry<String, T>>(paths.entrySet());
-    final List<T> result = new ArrayList<T>(ordered.size());
-    result.add(ordered.get(0).getValue());
-    for (int i = 1; i < ordered.size(); i++) {
-      final Map.Entry<String, T> entry = ordered.get(i);
-      final String child = entry.getKey();
-      boolean parentNotFound = true;
-      for (int j = i - 1; j >= 0; j--) {
-        // possible parents
-        final String parent = ordered.get(j).getKey();
-        if (parent == null) continue;
-        if (startsWith(child, parent) && removeProcessor.process(ordered.get(j).getValue(), entry.getValue())) {
-          parentNotFound = false;
-          break;
-        }
-      }
-      if (parentNotFound) {
-        result.add(entry.getValue());
-      }
-    }
-    return result;
   }
 
   @Nullable
@@ -485,7 +447,6 @@ public class FileUtil extends FileUtilRt {
     performCopy(fromFile, toFile, false);
   }
 
-  @SuppressWarnings("Duplicates")
   private static void performCopy(@NotNull File fromFile, @NotNull File toFile, final boolean syncTimestamp) throws IOException {
     if (filesEqual(fromFile, toFile)) return;
     final FileOutputStream fos = openOutputStream(toFile);
@@ -641,7 +602,7 @@ public class FileUtil extends FileUtilRt {
     File candidate = new File(parentFolder, filePrefix + ext);
     while (candidate.exists()) {
       postfix++;
-      candidate = new File(parentFolder, filePrefix + Integer.toString(postfix) + ext);
+      candidate = new File(parentFolder, filePrefix + postfix + ext);
     }
     return candidate;
   }
@@ -1066,7 +1027,7 @@ public class FileUtil extends FileUtilRt {
   private static void collectMatchedFiles(@NotNull File absoluteRoot,
                                           @NotNull File root,
                                           @NotNull Pattern pattern,
-                                          @NotNull List<File> files) {
+                                          @NotNull List<? super File> files) {
     final File[] dirs = root.listFiles();
     if (dirs == null) return;
     for (File dir : dirs) {
@@ -1430,8 +1391,13 @@ public class FileUtil extends FileUtilRt {
     return path.startsWith("/");
   }
 
-  public static boolean isWindowsAbsolutePath(@NotNull String pathString) {
-    return pathString.length() >= 2 && Character.isLetter(pathString.charAt(0)) && pathString.charAt(1) == ':';
+  public static boolean isWindowsAbsolutePath(@NotNull String path) {
+    boolean ok = path.length() >= 2 && Character.isLetter(path.charAt(0)) && path.charAt(1) == ':';
+    if (ok && path.length() > 2) {
+      char separatorChar = path.charAt(2);
+      ok = separatorChar == '/' || separatorChar == '\\';
+    }
+    return ok;
   }
 
   @Contract("null -> null; !null -> !null")
@@ -1660,7 +1626,7 @@ public class FileUtil extends FileUtilRt {
     return StringUtil.endsWithIgnoreCase(name, ".jar") || StringUtil.endsWithIgnoreCase(name, ".zip");
   }
 
-  public static boolean visitFiles(@NotNull File root, @NotNull Processor<File> processor) {
+  public static boolean visitFiles(@NotNull File root, @NotNull Processor<? super File> processor) {
     if (!processor.process(root)) {
       return false;
     }

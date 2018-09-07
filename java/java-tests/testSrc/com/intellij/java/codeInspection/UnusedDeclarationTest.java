@@ -206,4 +206,8 @@ public class UnusedDeclarationTest extends AbstractUnusedDeclarationTest {
   public void testReferenceFromGroovy() {
     doTest();
   }
+
+  public void testStaticImport() {
+    doTest();
+  }
 }

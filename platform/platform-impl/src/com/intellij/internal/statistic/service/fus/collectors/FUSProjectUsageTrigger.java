@@ -5,7 +5,10 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-@State(name = "FUSProjectUsageTrigger", storages = @Storage(value = StoragePathMacros.WORKSPACE_FILE, roamingType = RoamingType.DISABLED))
+@State(name = "FUSProjectUsageTrigger", storages = {
+  @Storage(value = StoragePathMacros.CACHE_FILE),
+  @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true),
+})
 final public class FUSProjectUsageTrigger extends AbstractUsageTrigger<ProjectUsageTriggerCollector> implements PersistentStateComponent<AbstractUsageTrigger.State> {
   private final Project myProject;
 

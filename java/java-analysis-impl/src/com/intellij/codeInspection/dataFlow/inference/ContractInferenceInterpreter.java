@@ -35,7 +35,7 @@ class ContractInferenceInterpreter {
   private final LighterASTNode myMethod;
   private final LighterASTNode myBody;
 
-  public ContractInferenceInterpreter(LighterAST tree, LighterASTNode method, LighterASTNode body) {
+  ContractInferenceInterpreter(LighterAST tree, LighterASTNode method, LighterASTNode body) {
     myTree = tree;
     myMethod = method;
     myBody = body;

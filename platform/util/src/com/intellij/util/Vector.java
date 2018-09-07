@@ -120,6 +120,7 @@ public class Vector {
       super(vector.array);
     }
 
+    @Override
     double[] toArray() {
       int size = getSize();
       double[] result = new double[size];

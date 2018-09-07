@@ -148,7 +148,7 @@ public class EmmetUpdateTagAction extends BaseCodeInsightAction implements DumbA
 
   private static void processTags(@NotNull Project project,
                                   @Nullable String templateText,
-                                  @NotNull PairProcessor<XmlTag, Boolean> processor) {
+                                  @NotNull PairProcessor<? super XmlTag, ? super Boolean> processor) {
     if (StringUtil.isNotEmpty(templateText)) {
       final PsiFileFactory psiFileFactory = PsiFileFactory.getInstance(project);
       XmlFile xmlFile = (XmlFile)psiFileFactory.createFileFromText("dummy.xml", StdFileTypes.HTML, templateText);
@@ -206,7 +206,7 @@ public class EmmetUpdateTagAction extends BaseCodeInsightAction implements DumbA
 
 
   @Override
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     super.update(event);
     event.getPresentation().setVisible(event.getPresentation().isEnabled());
   }

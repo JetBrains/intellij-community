@@ -92,18 +92,14 @@ public class ZipUtil {
                            @Nullable ContentProcessor contentProcessor,
                            boolean unwrapSingleTopLevelFolder) throws IOException {
     File unzipToDir = getUnzipToDir(progress, targetDir, unwrapSingleTopLevelFolder);
-    ZipFile zipFile = new ZipFile(zipArchive, ZipFile.OPEN_READ);
-    try {
+    try (ZipFile zipFile = new ZipFile(zipArchive, ZipFile.OPEN_READ)) {
       Enumeration<? extends ZipEntry> entries = zipFile.entries();
       while (entries.hasMoreElements()) {
         ZipEntry entry = entries.nextElement();
-        InputStream entryContentStream = zipFile.getInputStream(entry);
-        unzipEntryToDir(progress, entry, entryContentStream, unzipToDir, pathConvertor, contentProcessor);
-        entryContentStream.close();
+        try (InputStream entryContentStream = zipFile.getInputStream(entry)) {
+          unzipEntryToDir(progress, entry, entryContentStream, unzipToDir, pathConvertor, contentProcessor);
+        }
       }
-    }
-    finally {
-      zipFile.close();
     }
     doUnwrapSingleTopLevelFolder(unwrapSingleTopLevelFolder, unzipToDir, targetDir);
   }

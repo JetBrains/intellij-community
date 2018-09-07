@@ -132,6 +132,22 @@ class Car {}
     assert suggestions == ["car", "optionalCar", "carOptional", "optional", "o"]
   }
 
+  void "test long qualified name"() {
+    def suggestions = getNameSuggestions("""
+class Foo {
+  Inner inner;
+  class Inner {
+    String getCat() {}
+  }
+  
+  void m(Foo f){
+    String <caret>s = f.inner.getCat(); 
+  }
+}
+""")
+    assert suggestions == ["cat", "innerCat", "s"]
+  }
+
   private doTestSuggestionAvailable(String text, String... expectedSuggestions) {
     def suggestions = getNameSuggestions(text)
     for (String suggestion : expectedSuggestions) {

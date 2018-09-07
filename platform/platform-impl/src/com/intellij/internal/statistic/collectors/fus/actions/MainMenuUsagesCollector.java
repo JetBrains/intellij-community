@@ -4,28 +4,32 @@ package com.intellij.internal.statistic.collectors.fus.actions;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.MainMenuCollector;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
+import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.internal.statistic.service.fus.collectors.FUStatisticsDifferenceSender;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-import static com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator.ensureProperKey;
-
 public final class MainMenuUsagesCollector extends ApplicationUsagesCollector implements FUStatisticsDifferenceSender {
+  public static final String GROUP_ID = "statistics.actions.main.menu";
 
+  @Override
   @NotNull
   public Set<UsageDescriptor> getUsages() {
     MainMenuCollector.State state = MainMenuCollector.getInstance().getState();
     assert state != null;
-    return ContainerUtil.map2Set(state.myValues.entrySet(), e -> {
-      String key = e.getKey().replaceAll(" -> ", "-");
-      return new UsageDescriptor(ensureProperKey(key), e.getValue());
-    });
+    return ContainerUtil.map2Set(state.myValues.entrySet(), e -> new UsageDescriptor(e.getKey(), e.getValue()));
   }
 
+  @Override
   @NotNull
   public String getGroupId() {
-    return "statistics.actions.main.menu";
+    return GROUP_ID;
+  }
+
+  @Override
+  public FUSUsageContext getContext() {
+    return FUSUsageContext.OS_CONTEXT;
   }
 }

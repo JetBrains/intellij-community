@@ -72,14 +72,14 @@ public class RunIdeConsoleAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(RunIdeConsoleAction.class);
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     IdeScriptEngineManager manager = IdeScriptEngineManager.getInstance();
     e.getPresentation().setVisible(e.getProject() != null);
     e.getPresentation().setEnabled(manager.isInitialized() && !manager.getLanguages().isEmpty());
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     List<String> languages = IdeScriptEngineManager.getInstance().getLanguages();
     if (languages.size() == 1) {
       runConsole(e, languages.iterator().next());
@@ -250,7 +250,7 @@ public class RunIdeConsoleAction extends DumbAwareAction {
     private IdeScriptEngine engine;
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
       VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
@@ -258,7 +258,7 @@ public class RunIdeConsoleAction extends DumbAwareAction {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
       VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());

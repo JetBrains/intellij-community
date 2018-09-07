@@ -155,13 +155,13 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     });
     myContentManager.addContentManagerListener(new ContentManagerAdapter() {
       @Override
-      public void selectionChanged(ContentManagerEvent event) {
+      public void selectionChanged(@NotNull ContentManagerEvent event) {
         updateToolWindowContent();
         updateDashboard(true);
       }
 
       @Override
-      public void contentRemoved(ContentManagerEvent event) {
+      public void contentRemoved(@NotNull ContentManagerEvent event) {
         if (myContentManager.getContentCount() == 0 && !isShowConfigurations()) {
           setShowConfigurations(true);
         }
@@ -432,9 +432,16 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
           for (Content dashboardContent : myContentManager.getContents()) {
             addToolWindowContent(dashboardContent);
           }
-          Content contentToSelect = myDashboardToToolWindowContents.get(myContentManager.getSelectedContent());
+          Content dashboardSelectedContent = myContentManager.getSelectedContent();
+          if (dashboardSelectedContent == null && myContentManager.getContentCount() > 0) {
+            dashboardSelectedContent = myContentManager.getContent(0);
+            if (dashboardSelectedContent != null) {
+              myContentManager.setSelectedContent(dashboardSelectedContent);
+            }
+          }
+          Content contentToSelect = myDashboardToToolWindowContents.get(dashboardSelectedContent);
           if (contentToSelect != null) {
-            myToolWindowContentManager.setSelectedContent(contentToSelect);
+            myToolWindowContentManager.setSelectedContent(contentToSelect, true);
           }
           myToolWindowContentManager.addContentManagerListener(myToolWindowContentManagerListener);
         }
@@ -546,7 +553,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
 
   private class DashboardContentManagerListener extends ContentManagerAdapter {
     @Override
-    public void contentAdded(ContentManagerEvent event) {
+    public void contentAdded(@NotNull ContentManagerEvent event) {
       if (myShowConfigurations || myToolWindowContentManager == null) return;
 
       Content toolWindowContent = myDashboardToToolWindowContents.get(event.getContent());
@@ -561,7 +568,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     }
 
     @Override
-    public void contentRemoved(ContentManagerEvent event) {
+    public void contentRemoved(@NotNull ContentManagerEvent event) {
       if (myShowConfigurations || myToolWindowContentManager == null) return;
 
       Content toolWindowContent = myDashboardToToolWindowContents.remove(event.getContent());
@@ -573,7 +580,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     }
 
     @Override
-    public void selectionChanged(ContentManagerEvent event) {
+    public void selectionChanged(@NotNull ContentManagerEvent event) {
       if (event.getOperation() == ContentManagerEvent.ContentOperation.add) {
         contentAdded(event);
       }
@@ -587,7 +594,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
 
   private class ToolWindowContentManagerListener extends ContentManagerAdapter {
     @Override
-    public void contentRemoveQuery(ContentManagerEvent event) {
+    public void contentRemoveQuery(@NotNull ContentManagerEvent event) {
       if (event.getContent().equals(myToolWindowContent)) {
         Content content = myContentManager.getSelectedContent();
         if (content != null) {
@@ -608,7 +615,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     }
 
     @Override
-    public void selectionChanged(ContentManagerEvent event) {
+    public void selectionChanged(@NotNull ContentManagerEvent event) {
       if (event.getContent().equals(myToolWindowContent)) return;
 
       if (event.getOperation() != ContentManagerEvent.ContentOperation.add) return;

@@ -38,4 +38,7 @@ public class SystemInfoRt {
   public static final boolean isFileSystemCaseSensitive =
     isUnix && !isMac || "true".equalsIgnoreCase(System.getProperty("idea.case.sensitive.fs"));
 
+  private static final String ARCH_DATA_MODEL = System.getProperty("sun.arch.data.model");
+  public static final boolean is32Bit = ARCH_DATA_MODEL == null || ARCH_DATA_MODEL.equals("32");
+  public static final boolean is64Bit = !is32Bit;
 }

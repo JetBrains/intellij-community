@@ -23,6 +23,7 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -171,7 +172,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
       myTextToReformat = myEditor.getDocument().getText();
     }
     else if (useDefaultSample || myTextToReformat == null) {
-      myTextToReformat = getPreviewText();
+      myTextToReformat = StringUtil.convertLineSeparators(getPreviewText());
     }
 
     int currOffs = myEditor.getScrollingModel().getVerticalScrollOffset();
@@ -400,22 +401,14 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   }
 
   public static String readFromFile(final Class resourceContainerClass, @NonNls final String fileName) {
-    try {
-      final InputStream stream = resourceContainerClass.getClassLoader().getResourceAsStream("codeStyle/preview/" + fileName);
+    try (InputStream stream = resourceContainerClass.getClassLoader().getResourceAsStream("codeStyle/preview/" + fileName);
+         LineNumberReader lineNumberReader = stream == null ? null : new LineNumberReader(new InputStreamReader(stream))) {
       if (stream == null) throw new IOException("Resource not found: " + "codeStyle/preview/" + fileName);
-      final InputStreamReader reader = new InputStreamReader(stream);
-      final StringBuffer result;
-      final LineNumberReader lineNumberReader = new LineNumberReader(reader);
-      try {
-        result = new StringBuffer();
-        String line;
-        while ((line = lineNumberReader.readLine()) != null) {
-          result.append(line);
-          result.append("\n");
-        }
-      }
-      finally {
-        lineNumberReader.close();
+      final StringBuilder result = new StringBuilder();
+      String line;
+      while ((line = lineNumberReader.readLine()) != null) {
+        result.append(line);
+        result.append("\n");
       }
 
       return result.toString();

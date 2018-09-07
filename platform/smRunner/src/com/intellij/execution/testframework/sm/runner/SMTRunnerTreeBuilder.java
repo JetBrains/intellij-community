@@ -33,6 +33,7 @@ public class SMTRunnerTreeBuilder extends AbstractTestTreeBuilder {
   }
 
 
+  @Override
   protected boolean isAutoExpandNode(final NodeDescriptor nodeDescriptor) {
     final AbstractTreeStructure treeStructure = getTreeStructure();
     final Object rootElement = treeStructure.getRootElement();

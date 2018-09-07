@@ -21,7 +21,7 @@ class MethodPattern{
   public final int parameterCount;
   public final int parameterIndex; // -1 for return type
 
-  public MethodPattern(String methodName, int parameterCount, int parameterIndex) {
+  MethodPattern(String methodName, int parameterCount, int parameterIndex) {
     this.methodName = methodName;
     this.parameterCount = parameterCount;
     this.parameterIndex = parameterIndex;

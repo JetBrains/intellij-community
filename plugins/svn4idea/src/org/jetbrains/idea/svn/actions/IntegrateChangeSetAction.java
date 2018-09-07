@@ -14,11 +14,13 @@ public class IntegrateChangeSetAction extends AbstractIntegrateChangesAction<Sel
     super(true);
   }
 
+  @Override
   @NotNull
   protected MergerFactory createMergerFactory(SelectedChangeSetChecker checker) {
     return new ChangeSetMergerFactory(checker.getSelectedLists().get(0), checker.getSelectedChanges());
   }
 
+  @Override
   @NotNull
   protected SelectedChangeSetChecker createChecker() {
     return new SelectedChangeSetChecker();
@@ -30,10 +32,12 @@ public class IntegrateChangeSetAction extends AbstractIntegrateChangesAction<Sel
     return null;
   }
 
+  @Override
   protected String getSelectedBranchLocalPath(SelectedCommittedStuffChecker checker) {
     return null;
   }
 
+  @Override
   protected String getDialogTitle() {
     return null;
   }

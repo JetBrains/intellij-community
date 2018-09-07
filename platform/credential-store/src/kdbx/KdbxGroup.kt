@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore.kdbx
 
 import com.intellij.util.containers.ContainerUtil
@@ -10,7 +11,7 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 
-class KdbxGroup(private val element: Element, private val database: KeePassDatabase, private @Volatile var parent: KdbxGroup?) {
+internal class KdbxGroup(private val element: Element, private val database: KeePassDatabase, private @Volatile var parent: KdbxGroup?) {
   @Volatile var name: String = element.getChildText(NAME_ELEMENT_NAME) ?: "Unnamed"
     set(value) {
       if (field != value) {

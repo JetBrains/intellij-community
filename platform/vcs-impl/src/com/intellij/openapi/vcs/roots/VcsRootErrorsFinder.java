@@ -57,7 +57,7 @@ public class VcsRootErrorsFinder {
         continue;
       }
       String vcsPath = virtualFileFromRoot.getPath();
-      if (!mappedPaths.contains(vcsPath) && root.getVcs() != null) {
+      if (root.getVcs() != null && !mappedPaths.contains(vcsPath)) {
         errors.add(new VcsRootErrorImpl(VcsRootError.Type.UNREGISTERED_ROOT, vcsPath, root.getVcs().getName()));
       }
     }

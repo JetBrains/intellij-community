@@ -22,8 +22,8 @@ import com.intellij.lang.Language;
 import com.intellij.navigation.ChooseByNameRegistry;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,15 +31,15 @@ public class GotoSymbolAction extends GotoActionBase {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    if (Experiments.isFeatureEnabled("new.search.everywhere")) {
-      showInSearchEverywherePopup(SymbolSearchEverywhereContributor.class.getSimpleName(), e);
+    if (Registry.is("new.search.everywhere")) {
+      showInSearchEverywherePopup(SymbolSearchEverywhereContributor.class.getSimpleName(), e, true);
     } else {
       super.actionPerformed(e);
     }
   }
 
   @Override
-  public void gotoActionPerformed(AnActionEvent e) {
+  public void gotoActionPerformed(@NotNull AnActionEvent e) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.symbol");
 
     Project project = e.getProject();
@@ -61,7 +61,7 @@ public class GotoSymbolAction extends GotoActionBase {
   }
 
   @Override
-  protected boolean hasContributors(DataContext dataContext) {
+  protected boolean hasContributors(@NotNull DataContext dataContext) {
     return ChooseByNameRegistry.getInstance().getSymbolModelContributors().length > 0;
   }
 }

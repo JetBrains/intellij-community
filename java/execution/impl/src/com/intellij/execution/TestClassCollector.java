@@ -21,7 +21,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -138,12 +137,14 @@ public class TestClassCollector {
   @Nullable
   public static Path getRootPath(Module module, final boolean chooseSingleModule) {
     if (chooseSingleModule) {
-      CompilerModuleExtension moduleExtension = CompilerModuleExtension.getInstance(module);
-      if (moduleExtension != null) {
-        VirtualFile tests = moduleExtension.getCompilerOutputPathForTests();
-        if (tests != null) {
-          return Paths.get(VfsUtilCore.virtualToIoFile(tests).toURI());
-        }
+      VirtualFile[] roots = OrderEnumerator.orderEntries(module)
+        .withoutSdk()
+        .withoutLibraries()
+        .withoutDepModules()
+        .classes()
+        .getRoots();
+      if (roots.length > 0) {
+        return Paths.get(VfsUtilCore.virtualToIoFile(roots[0]).toURI());
       }
     }
     return null;

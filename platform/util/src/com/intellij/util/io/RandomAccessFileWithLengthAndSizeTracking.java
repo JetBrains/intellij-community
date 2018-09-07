@@ -33,7 +33,7 @@ class RandomAccessFileWithLengthAndSizeTracking extends RandomAccessFile {
   private volatile long mySize;
   private volatile long myPointer;
 
-  public RandomAccessFileWithLengthAndSizeTracking(String name) throws IOException {
+  RandomAccessFileWithLengthAndSizeTracking(String name) throws IOException {
     super(name, "rw");
     mySize = super.length();
     myPath = name;
@@ -72,12 +72,8 @@ class RandomAccessFileWithLengthAndSizeTracking extends RandomAccessFile {
   }
 
   private void checkSizeAndPointerAssertions() throws IOException {
-    if (myPointer != super.getFilePointer()) {
-      assert false;
-    }
-    if (mySize != super.length()) {
-      assert false;
-    }
+    assert myPointer == super.getFilePointer();
+    assert mySize == super.length();
   }
 
   @Override

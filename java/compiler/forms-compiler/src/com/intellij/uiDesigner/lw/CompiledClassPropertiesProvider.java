@@ -24,6 +24,7 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Anton Katilin
@@ -31,16 +32,17 @@ import java.util.HashMap;
  */
 public final class CompiledClassPropertiesProvider implements PropertiesProvider {
   private final ClassLoader myLoader;
-  private final HashMap myCache;
+  private final HashMap<String, Map<String, LwIntrospectedProperty>> myCache;
 
   public CompiledClassPropertiesProvider(final ClassLoader loader) {
     if (loader == null) {
       throw new IllegalArgumentException("loader cannot be null");
     }
     myLoader = loader;
-    myCache = new HashMap();
+    myCache = new HashMap<String, Map<String, LwIntrospectedProperty>>();
   }
 
+  @Override
   public HashMap getLwProperties(final String className) {
     if (myCache.containsKey(className)) {
       return (HashMap)myCache.get(className);
@@ -66,11 +68,9 @@ public final class CompiledClassPropertiesProvider implements PropertiesProvider
       return null;
     }
 
-    final HashMap result = new HashMap();
+    final HashMap<String, LwIntrospectedProperty> result = new HashMap<String, LwIntrospectedProperty>();
     final PropertyDescriptor[] descriptors = beanInfo.getPropertyDescriptors();
-    for (int i = 0; i < descriptors.length; i++) {
-      final PropertyDescriptor descriptor = descriptors[i];
-
+    for (final PropertyDescriptor descriptor : descriptors) {
       final Method readMethod = descriptor.getReadMethod();
       final Method writeMethod = descriptor.getWriteMethod();
       final Class propertyType = descriptor.getPropertyType();

@@ -19,6 +19,7 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -84,7 +85,11 @@ public class UnnecessaryConstantArrayCreationExpressionInspection extends BaseIn
       if (arrayInitializer == null) {
         return;
       }
-      new CommentTracker().replaceAndRestoreComments(newExpression, arrayInitializer);
+      PsiExpression target = newExpression;
+      while(target.getParent() instanceof PsiParenthesizedExpression) {
+        target = (PsiExpression)target.getParent();
+      }
+      new CommentTracker().replaceAndRestoreComments(target, arrayInitializer);
     }
   }
 
@@ -102,7 +107,7 @@ public class UnnecessaryConstantArrayCreationExpressionInspection extends BaseIn
       if (!(parent instanceof PsiNewExpression)) {
         return;
       }
-      final PsiElement grandParent = parent.getParent();
+      final PsiElement grandParent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
       if (!(grandParent instanceof PsiVariable)) {
         return;
       }

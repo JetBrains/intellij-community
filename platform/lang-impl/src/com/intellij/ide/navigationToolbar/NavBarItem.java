@@ -94,6 +94,7 @@ public class NavBarItem extends SimpleColoredComponent implements DataProvider, 
     return myAttributes;
   }
 
+  @NotNull
   public String getText() {
     return myText;
   }
@@ -196,11 +197,6 @@ public class NavBarItem extends SimpleColoredComponent implements DataProvider, 
   }
 
   @Override
-  protected boolean shouldDrawMacShadow() {
-    return myUI.isDrawMacShadow(isSelected(), isFocused());
-  }
-
-  @Override
   public boolean isIconOpaque() {
     return false;
   }
@@ -214,7 +210,7 @@ public class NavBarItem extends SimpleColoredComponent implements DataProvider, 
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     return myPanel.getDataImpl(dataId, this, () -> JBIterable.of(myObject));
   }
 

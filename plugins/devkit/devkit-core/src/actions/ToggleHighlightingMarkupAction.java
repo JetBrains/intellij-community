@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -30,14 +31,14 @@ import java.util.regex.Pattern;
  */
 public class ToggleHighlightingMarkupAction extends AnAction {
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
     PsiFile file = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
     e.getPresentation().setEnabled(editor != null && file != null);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
     PsiFile file = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
     if (editor == null || file == null) return;

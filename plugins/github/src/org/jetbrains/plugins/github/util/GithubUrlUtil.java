@@ -15,11 +15,10 @@
  */
 package org.jetbrains.plugins.github.util;
 
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.GithubFullPath;
+import org.jetbrains.plugins.github.api.GithubServerPath;
 
 /**
  * @author Aleksey Pivovarov
@@ -65,40 +64,10 @@ public class GithubUrlUtil {
     return s;
   }
 
+  @Deprecated
   @NotNull
   public static String getApiUrl(@NotNull String urlFromSettings) {
-    return getApiProtocolFromUrl(urlFromSettings) + getApiUrlWithoutProtocol(urlFromSettings);
-  }
-
-  @NotNull
-  public static String getApiProtocolFromUrl(@NotNull String urlFromSettings) {
-    if (StringUtil.startsWithIgnoreCase(urlFromSettings.trim(), "http://")) return "http://";
-    return "https://";
-  }
-
-  /*
-     All API access is over HTTPS, and accessed from the api.github.com domain
-     (or through yourdomain.com/api/v3/ for enterprise).
-     http://developer.github.com/api/v3/
-    */
-  @NotNull
-  public static String getApiUrlWithoutProtocol(@NotNull String urlFromSettings) {
-    String url = removeTrailingSlash(removeProtocolPrefix(urlFromSettings.toLowerCase()));
-    final String API_PREFIX = "api.";
-    final String ENTERPRISE_API_SUFFIX = "/api/v3";
-
-    if (url.equals(GithubApiUtil.DEFAULT_GITHUB_HOST)) {
-      return API_PREFIX + url;
-    }
-    else if (url.equals(API_PREFIX + GithubApiUtil.DEFAULT_GITHUB_HOST)) {
-      return url;
-    }
-    else if (url.endsWith(ENTERPRISE_API_SUFFIX)) {
-      return url;
-    }
-    else {
-      return url + ENTERPRISE_API_SUFFIX;
-    }
+    return GithubServerPath.from(urlFromSettings).toApiUrl();
   }
 
   /**
@@ -137,6 +106,7 @@ public class GithubUrlUtil {
   }
 
   //region Deprecated
+
   /**
    * E.g.: https://github.com/suffix/ -> github.com
    * github.com:8080/ -> github.com

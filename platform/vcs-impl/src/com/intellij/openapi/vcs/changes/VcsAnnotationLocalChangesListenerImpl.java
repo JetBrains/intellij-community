@@ -138,7 +138,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
         if (number == null) continue;
         final Collection<FileAnnotation> fileAnnotations = entry.getValue();
         List<FileAnnotation> copy = ContainerUtil.filter(fileAnnotations, it -> it.isBaseRevisionChanged(number));
-        invalidateAnnotations(copy);
+        invalidateAnnotations(copy, false);
       }
     }
   }
@@ -166,7 +166,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
 
       VcsRevisionNumber finalNumber = number;
       List<FileAnnotation> copy = ContainerUtil.filter(annotations, it -> it.isBaseRevisionChanged(finalNumber));
-      invalidateAnnotations(copy);
+      invalidateAnnotations(copy, false);
     }
   }
 
@@ -185,15 +185,20 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
       List<FileAnnotation> copy = ContainerUtil.filter(myFileAnnotationMap.values(), it -> {
         return it.getVcsKey() != null && refresh.contains(it.getVcsKey());
       });
-      invalidateAnnotations(copy);
+      invalidateAnnotations(copy, false);
     }
   }
 
-  private static void invalidateAnnotations(@NotNull Collection<FileAnnotation> annotations) {
+  private static void invalidateAnnotations(@NotNull Collection<FileAnnotation> annotations, boolean reload) {
     ApplicationManager.getApplication().invokeLater(() -> {
       for (FileAnnotation annotation: annotations) {
         try {
-          annotation.reload(null);
+          if (reload) {
+            annotation.reload(null);
+          }
+          else {
+            annotation.close();
+          }
         }
         catch (Exception e) {
           LOG.error(e);
@@ -220,6 +225,16 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
       if (annotations.isEmpty()) {
         myFileAnnotationMap.remove(file);
       }
+    }
+  }
+
+  @Override
+  public void reloadAnnotationsForVcs(@NotNull VcsKey key) {
+    synchronized (myLock) {
+      List<FileAnnotation> copy = ContainerUtil.filter(myFileAnnotationMap.values(), it -> {
+        return key.equals(it.getVcsKey());
+      });
+      invalidateAnnotations(copy, true);
     }
   }
 

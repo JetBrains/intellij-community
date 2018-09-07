@@ -190,7 +190,7 @@ public class GrTypeComboBox extends ComboBox {
   public static void registerUpDownHint(JComponent component, final GrTypeComboBox combo) {
     final AnAction arrow = new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         if (e.getInputEvent() instanceof KeyEvent) {
           final int code = ((KeyEvent)e.getInputEvent()).getKeyCode();
           scrollBy(code == KeyEvent.VK_DOWN ? 1 : code == KeyEvent.VK_UP ? -1 : 0, combo);

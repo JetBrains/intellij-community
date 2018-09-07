@@ -53,7 +53,7 @@ public class MessageBusTest extends TestCase {
   private class T1Handler implements T1Listener {
     private final String id;
 
-    public T1Handler(final String id) {
+    T1Handler(final String id) {
       this.id = id;
     }
 
@@ -70,7 +70,7 @@ public class MessageBusTest extends TestCase {
   private class T2Handler implements T2Listener {
     private final String id;
 
-    public T2Handler(final String id) {
+    T2Handler(final String id) {
       this.id = id;
     }
 

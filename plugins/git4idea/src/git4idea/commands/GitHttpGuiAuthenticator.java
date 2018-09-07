@@ -226,7 +226,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
     private AuthData myData = null;
 
-    public ExtensionAdapterProvider(@NotNull Project project, @NotNull GitHttpAuthDataProvider provider) {
+    ExtensionAdapterProvider(@NotNull Project project, @NotNull GitHttpAuthDataProvider provider) {
       myProject = project;
       myDelegate = provider;
     }
@@ -252,7 +252,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
     @Override
     public void onAuthFailure(@NotNull String url) {
-      if (myData != null) myDelegate.forgetPassword(url, myData);
+      if (myData != null) myDelegate.forgetPassword(myProject, url, myData);
     }
   }
 
@@ -262,7 +262,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     private boolean myCancelled;
     private boolean myDataForSession = false;
 
-    public DialogProvider(@NotNull Project project, @NotNull PasswordSafeProvider passwordSafeDelegate) {
+    DialogProvider(@NotNull Project project, @NotNull PasswordSafeProvider passwordSafeDelegate) {
       myProject = project;
       myPasswordSafeDelegate = passwordSafeDelegate;
     }
@@ -355,7 +355,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
     private boolean mySavePassword = false;
 
-    public PasswordSafeProvider(@NotNull DvcsRememberedInputs gitRememberedInputs, @NotNull PasswordSafe passwordSafe) {
+    PasswordSafeProvider(@NotNull DvcsRememberedInputs gitRememberedInputs, @NotNull PasswordSafe passwordSafe) {
       myRememberedInputs = gitRememberedInputs;
       myPasswordSafe = passwordSafe;
     }
@@ -385,7 +385,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
       String key = makeKey(url, login);
       Credentials credentials = CredentialAttributesKt.getAndMigrateCredentials(oldCredentialAttributes(key), credentialAttributes(key));
       String password = StringUtil.nullize(credentials == null ? null : credentials.getPasswordAsString());
-      return new AuthData(login, password);
+      return (myData = new AuthData(login, password));
     }
 
     @Override

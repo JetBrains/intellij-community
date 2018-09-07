@@ -329,6 +329,20 @@ public class FTManager {
   private static void saveTemplate(File parentDir, FileTemplateBase template, final String lineSeparator) throws IOException {
     final File templateFile = new File(parentDir, encodeFileName(template.getName(), template.getExtension()));
 
+    try (FileOutputStream fileOutputStream = startWriteOrCreate(templateFile);
+         OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream, CharsetToolkit.UTF8_CHARSET)) {
+      String content = template.getText();
+
+      if (!lineSeparator.equals("\n")) {
+        content = StringUtil.convertLineSeparators(content, lineSeparator);
+      }
+
+      outputStreamWriter.write(content);
+    }
+  }
+
+  @NotNull
+  private static FileOutputStream startWriteOrCreate(@NotNull File templateFile) throws FileNotFoundException {
     FileOutputStream fileOutputStream;
     try {
       fileOutputStream = new FileOutputStream(templateFile);
@@ -338,16 +352,7 @@ public class FTManager {
       FileUtil.delete(templateFile);
       fileOutputStream = new FileOutputStream(templateFile);
     }
-    OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream, CharsetToolkit.UTF8_CHARSET);
-    String content = template.getText();
-
-    if (!lineSeparator.equals("\n")){
-      content = StringUtil.convertLineSeparators(content, lineSeparator);
-    }
-
-    outputStreamWriter.write(content);
-    outputStreamWriter.close();
-    fileOutputStream.close();
+    return fileOutputStream;
   }
 
   @NotNull

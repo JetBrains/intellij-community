@@ -319,7 +319,7 @@ public class DocStringUtil {
   }
 
   /**
-   * Checks that docstring format is set either via element module's {@link com.jetbrains.python.PyNames.DOCFORMAT} attribute or
+   * Checks that docstring format is set either via element module's {@link com.jetbrains.python.PyNames#DOCFORMAT} attribute or
    * in module settings. If none of them applies, show standard choose dialog, asking user to pick one and updates module settings
    * accordingly.
    *

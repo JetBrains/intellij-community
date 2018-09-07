@@ -28,6 +28,7 @@ import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.*;
@@ -407,7 +408,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         getPicoContainer().getComponentInstance(ServiceManagerImpl.class);
 
         String effectiveConfigPath = FileUtilRt.toSystemIndependentName(configPath == null ? PathManager.getConfigPath() : configPath);
-        ApplicationLoadListener[] applicationLoadListeners = ApplicationLoadListener.EP_NAME.getExtensions();
+        List<ApplicationLoadListener> applicationLoadListeners = ApplicationLoadListener.EP_NAME.getExtensionList();
         for (ApplicationLoadListener listener : applicationLoadListeners) {
           try {
             listener.beforeApplicationLoaded(this, effectiveConfigPath);
@@ -443,7 +444,25 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   protected void createComponents(@Nullable ProgressIndicator indicator) {
     // we cannot wrap "init()" call because ProgressManager instance could be created only after component registration (our "componentsRegistered" callback)
-    Runnable task = () -> super.createComponents(indicator);
+    Runnable task = () -> {
+      super.createComponents(indicator);
+      ExtensionPoint<ApplicationInitializedListener> initializedExtensionPoint = ApplicationInitializedListener.EP_NAME.getPoint(null);
+      for (ApplicationInitializedListener listener : initializedExtensionPoint.getExtensionList()) {
+        try {
+          listener.componentsInitialized();
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
+
+        try {
+          initializedExtensionPoint.reset();
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
+      }
+    };
 
     if (indicator == null) {
       // no splash, no need to to use progress manager
@@ -975,7 +994,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   public boolean runWriteActionWithNonCancellableProgressInDispatchThread(@NotNull String title,
                                                                           @Nullable Project project,
                                                                           @Nullable JComponent parentComponent,
-                                                                          @NotNull Consumer<ProgressIndicator> action) {
+                                                                          @NotNull Consumer<? super ProgressIndicator> action) {
     return runEdtProgressWriteAction(title, project, parentComponent, null, action);
   }
 
@@ -983,7 +1002,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   public boolean runWriteActionWithCancellableProgressInDispatchThread(@NotNull String title,
                                                                        @Nullable Project project,
                                                                        @Nullable JComponent parentComponent,
-                                                                       @NotNull Consumer<ProgressIndicator> action) {
+                                                                       @NotNull Consumer<? super ProgressIndicator> action) {
     return runEdtProgressWriteAction(title, project, parentComponent, IdeBundle.message("action.stop"), action);
   }
 
@@ -991,7 +1010,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
                                             @Nullable Project project,
                                             @Nullable JComponent parentComponent,
                                             @Nullable String cancelText,
-                                            @NotNull Consumer<ProgressIndicator> action) {
+                                            @NotNull Consumer<? super ProgressIndicator> action) {
     Class<?> clazz = action.getClass();
     startWrite(clazz);
     try {
@@ -1009,7 +1028,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
                                                               @Nullable Project project,
                                                               @Nullable JComponent parentComponent,
                                                               @Nullable String cancelText,
-                                                              @NotNull Consumer<ProgressIndicator> action) {
+                                                              @NotNull Consumer<? super ProgressIndicator> action) {
     Class<?> clazz = action.getClass();
     startWrite(clazz);
     try {
@@ -1270,7 +1289,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private class WriteAccessToken extends AccessToken {
     @NotNull private final Class clazz;
 
-    public WriteAccessToken(@NotNull Class clazz) {
+    WriteAccessToken(@NotNull Class clazz) {
       this.clazz = clazz;
       startWrite(clazz);
       markThreadNameInStackTrace();

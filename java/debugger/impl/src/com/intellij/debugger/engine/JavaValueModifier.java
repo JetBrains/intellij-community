@@ -201,10 +201,12 @@ public abstract class JavaValueModifier extends XValueModifier {
     final EvaluationContextImpl evaluationContext = myJavaValue.getEvaluationContext();
 
     SuspendContextCommandImpl askSetAction = new DebuggerContextCommandImpl(debuggerContext) {
+      @Override
       public Priority getPriority() {
         return Priority.HIGH;
       }
 
+      @Override
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
         ExpressionEvaluator evaluator;
         try {
@@ -215,6 +217,7 @@ public abstract class JavaValueModifier extends XValueModifier {
             SourcePosition position = ContextUtil.getSourcePosition(evaluationContext);
             PsiElement context = ContextUtil.getContextElement(evaluationContext, position);
             evaluator = DebuggerInvocationUtil.commitAndRunReadAction(project, new EvaluatingComputable<ExpressionEvaluator>() {
+              @Override
               public ExpressionEvaluator compute() throws EvaluateException {
                 return EvaluatorBuilderImpl
                   .build(TextWithImportsImpl.fromXExpression(expression), context, position, project);
@@ -223,6 +226,7 @@ public abstract class JavaValueModifier extends XValueModifier {
           }
 
           setValue(evaluator, evaluationContext, new SetValueRunnable() {
+            @Override
             public void setValue(EvaluationContextImpl evaluationContext, Value newValue) throws ClassNotLoadedException,
                                                                                                  InvalidTypeException,
                                                                                                  EvaluateException,

@@ -22,9 +22,9 @@ YAML file
         PsiWhiteSpace(' ')
         YAML plain scalar text
           PsiElement(text)('Ken Griffey')
-  PsiElement(Eol)('\n')
-  PsiElement(Eol)('\n')
-  PsiComment(comment)('# Team ranking')
+      PsiElement(Eol)('\n')
+      PsiElement(Eol)('\n')
+      PsiComment(comment)('# Team ranking')
   PsiElement(Eol)('\n')
   YAML document
     PsiElement(---)('---')

@@ -168,7 +168,7 @@ public class ActionCallback implements Disposable {
   }
 
   private static class ExecutedExecutionCallback extends ExecutionCallback {
-    public ExecutedExecutionCallback() {
+    ExecutedExecutionCallback() {
       super(0);
     }
 

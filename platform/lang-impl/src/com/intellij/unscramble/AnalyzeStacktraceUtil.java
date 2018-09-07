@@ -116,7 +116,7 @@ public class AnalyzeStacktraceUtil {
   }
 
   private static final class MyConsolePanel extends JPanel {
-    public MyConsolePanel(ExecutionConsole consoleView, ActionGroup toolbarActions) {
+    MyConsolePanel(ExecutionConsole consoleView, ActionGroup toolbarActions) {
       super(new BorderLayout());
       JPanel toolbarPanel = new JPanel(new BorderLayout());
       toolbarPanel.add(ActionManager.getInstance()
@@ -156,7 +156,7 @@ public class AnalyzeStacktraceUtil {
     }
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       if (CommonDataKeys.EDITOR.is(dataId)) {
         return myEditor;
       }

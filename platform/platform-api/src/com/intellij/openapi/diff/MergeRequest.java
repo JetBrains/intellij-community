@@ -61,13 +61,5 @@ public abstract class MergeRequest extends DiffRequest {
    */
   public abstract int getResult();
 
-  /**
-   * After the merge operation is completed, returns the merged text.
-   *
-   * @return the merged text.
-   */
-  @Nullable
-  public abstract DiffContent getResultContent();
-
   public abstract void restoreOriginalContent();
 }

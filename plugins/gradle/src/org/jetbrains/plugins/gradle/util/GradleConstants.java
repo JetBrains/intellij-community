@@ -13,6 +13,7 @@ public class GradleConstants {
   @NotNull @NonNls public static final String KOTLIN_DSL_SCRIPT_NAME = "build.gradle.kts";
   @NotNull @NonNls public static final String KOTLIN_DSL_SCRIPT_EXTENSION = "gradle.kts";
   @NotNull @NonNls public static final String SETTINGS_FILE_NAME  = "settings.gradle";
+  @NotNull @NonNls public static final String KOTLIN_DSL_SETTINGS_FILE_NAME  = "settings.gradle.kts";
 
   @NotNull @NonNls public static final String SYSTEM_DIRECTORY_PATH_KEY = "GRADLE_USER_HOME";
 

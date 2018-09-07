@@ -24,7 +24,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.dom.model.MavenDomProfilesModel;
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReference;
 
 public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDomTestCase {
@@ -158,12 +158,21 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
     assertResolved(f, findTag(parent, "project.properties.parentProp"));
   }
 
-  public void testResolvingToProfilesXmlProperties() throws Exception {
+  public void testResolvingToProfileProperties() throws Exception {
     createProjectSubDir("res");
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>one</id>" +
+                     "    <properties>" +
+                     "      <profileProp>value</profileProp>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "</profiles>" +
 
                      "<build>" +
                      "  <resources>" +
@@ -174,18 +183,12 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
                      "  </resources>" +
                      "</build>");
 
-    VirtualFile profiles = createProfilesXml("<profile>" +
-                                             "  <id>one</id>" +
-                                             "  <properties>" +
-                                             "    <profileProp>value</profileProp>" +
-                                             "  </properties>" +
-                                             "</profile>");
     importProjectWithProfiles("one");
 
     VirtualFile f = createProjectSubFile("res/foo.properties",
                                          "foo=@profileProp<caret>@");
 
-    assertResolved(f, findTag(profiles, "profilesXml.profiles[0].properties.profileProp", MavenDomProfilesModel.class));
+    assertResolved(f, findTag(myProjectPom, "project.profiles[0].properties.profileProp", MavenDomProjectModel.class));
   }
 
   public void testDoNotResolveOutsideResources() throws Exception {

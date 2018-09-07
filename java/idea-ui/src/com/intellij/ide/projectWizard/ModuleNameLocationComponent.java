@@ -86,7 +86,8 @@ public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
 
   public void bindModuleSettings(final NamePathComponent namePathComponent) {
     namePathComponent.getNameComponent().getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
+      @Override
+      protected void textChanged(@NotNull final DocumentEvent e) {
         if (!myModuleNameChangedByUser) {
           setModuleName(namePathComponent.getNameValue());
         }
@@ -98,14 +99,16 @@ public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
                                                 myWizardContext.getProject(), BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
 
     namePathComponent.getPathComponent().getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
+      @Override
+      protected void textChanged(@NotNull final DocumentEvent e) {
         if (!myContentRootChangedByUser) {
           setModuleContentRoot(namePathComponent.getPath(), true);
         }
       }
     });
     myModuleName.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
+      @Override
+      protected void textChanged(@NotNull final DocumentEvent e) {
         if (!myUpdatePathsWhenNameIsChanged) {
           return;
         }
@@ -127,7 +130,8 @@ public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
       }
     });
     myModuleContentRoot.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
+      @Override
+      protected void textChanged(@NotNull final DocumentEvent e) {
         if (myContentRootDocListenerEnabled) {
           myContentRootChangedByUser = true;
         }
@@ -150,14 +154,16 @@ public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
                                                  ProjectBundle.message("project.new.wizard.module.file.description"),
                                                  myWizardContext.getProject(), BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
     myModuleFileLocation.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
+      @Override
+      protected void textChanged(@NotNull final DocumentEvent e) {
         if (myImlLocationDocListenerEnabled) {
           myImlLocationChangedByUser = true;
         }
       }
     });
     namePathComponent.getPathComponent().getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
+      @Override
+      protected void textChanged(@NotNull final DocumentEvent e) {
         if (!myImlLocationChangedByUser) {
           setImlFileLocation(namePathComponent.getPath());
         }
@@ -242,6 +248,7 @@ public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
     return true;
   }
 
+  @Override
   @NotNull
   public String getModuleContentRoot() {
     return myModuleContentRoot.getText();
@@ -268,6 +275,7 @@ public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
     myImlLocationDocListenerEnabled = true;
   }
 
+  @Override
   public void setModuleContentRoot(@NotNull final String path) {
     setModuleContentRoot(path, false);
   }
@@ -280,6 +288,7 @@ public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
     myUpdateNameWhenPathIsChanged = true;
   }
 
+  @Override
   public void setModuleName(@NotNull String moduleName) {
     myModuleNameDocListenerEnabled = false;
     myModuleName.setText(moduleName);
@@ -290,6 +299,7 @@ public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
     return myModuleName;
   }
 
+  @Override
   @NotNull
   public String getModuleName() {
     return myModuleName.getText().trim();

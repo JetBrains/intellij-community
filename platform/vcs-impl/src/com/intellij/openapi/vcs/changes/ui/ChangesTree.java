@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DefaultTreeExpander;
+import com.intellij.ide.TreeExpander;
 import com.intellij.ide.projectView.impl.ProjectViewTree;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.TreeState;
@@ -26,7 +27,6 @@ import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SmartExpander;
 import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -49,8 +49,8 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.DIRECTORY_GROUPING;
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.MODULE_GROUPING;
@@ -82,6 +82,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   @Nullable private Runnable myInclusionListener;
   @NotNull private final CopyProvider myTreeCopyProvider;
+  @NotNull private TreeExpander myTreeExpander = new MyTreeExpander();
 
   private boolean myModelUpdateInProgress;
 
@@ -495,6 +496,10 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
 
+  public void setTreeExpander(@NotNull TreeExpander expander) {
+    myTreeExpander = expander;
+  }
+
   /**
    * @deprecated See {@link ChangesTree#GROUP_BY_ACTION_GROUP}, {@link TreeActionsToolbarPanel}
    */
@@ -510,30 +515,30 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   @NotNull
   public AnAction createExpandAllAction(boolean headerAction) {
     if (headerAction) {
-      return CommonActionsManager.getInstance().createExpandAllHeaderAction(new MyTreeExpander(), this);
+      return CommonActionsManager.getInstance().createExpandAllHeaderAction(myTreeExpander, this);
     }
     else {
-      return CommonActionsManager.getInstance().createExpandAllAction(new MyTreeExpander(), this);
+      return CommonActionsManager.getInstance().createExpandAllAction(myTreeExpander, this);
     }
   }
 
   @NotNull
   public AnAction createCollapseAllAction(boolean headerAction) {
     if (headerAction) {
-      return CommonActionsManager.getInstance().createCollapseAllHeaderAction(new MyTreeExpander(), this);
+      return CommonActionsManager.getInstance().createCollapseAllHeaderAction(myTreeExpander, this);
     }
     else {
-      return CommonActionsManager.getInstance().createCollapseAllAction(new MyTreeExpander(), this);
+      return CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, this);
     }
   }
 
   private class MyTreeExpander extends DefaultTreeExpander {
-    public MyTreeExpander() {
+    MyTreeExpander() {
       super(ChangesTree.this);
     }
 
     @Override
-    public boolean isVisible(AnActionEvent event) {
+    public boolean isVisible(@NotNull AnActionEvent event) {
       return !myGroupingSupport.isNone() || !myIsModelFlat;
     }
   }
@@ -548,7 +553,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     private final ThreeStateCheckBox myCheckBox;
 
 
-    public MyTreeCellRenderer(@NotNull ChangesBrowserNodeRenderer textRenderer) {
+    MyTreeCellRenderer(@NotNull ChangesBrowserNodeRenderer textRenderer) {
       super(new BorderLayout());
       myCheckBox = new ThreeStateCheckBox();
       myTextRenderer = textRenderer;
@@ -570,14 +575,9 @@ public abstract class ChangesTree extends Tree implements DataProvider {
                                                   int row,
                                                   boolean hasFocus) {
 
-      if (UIUtil.isUnderGTKLookAndFeel()) {
-        NonOpaquePanel.setTransparent(this);
-        NonOpaquePanel.setTransparent(myCheckBox);
-      } else {
-        setBackground(null);
-        myCheckBox.setBackground(null);
-        myCheckBox.setOpaque(false);
-      }
+      setBackground(null);
+      myCheckBox.setBackground(null);
+      myCheckBox.setOpaque(false);
 
       myTextRenderer.setOpaque(false);
       myTextRenderer.setTransparentIconBackground(true);
@@ -629,7 +629,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   private class MyToggleSelectionAction extends AnAction implements DumbAware {
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       List<Object> changes = getSelectedUserObjects();
       if (changes.isEmpty()) changes = getAllUserObjects();
       toggleChanges(changes);
@@ -657,12 +657,15 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
       return myTreeCopyProvider;
     }
     if (ChangesGroupingSupport.KEY.is(dataId)) {
       return myGroupingSupport;
+    }
+    if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
+      return myTreeExpander;
     }
     return null;
   }

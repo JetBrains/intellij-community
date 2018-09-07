@@ -177,7 +177,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     return false;
   }
 
-  protected static void checkAccessStaticLevels(@NotNull List<CandidateInfo> conflicts, boolean checkAccessible) {
+  protected static void checkAccessStaticLevels(@NotNull List<? extends CandidateInfo> conflicts, boolean checkAccessible) {
     int conflictsCount = conflicts.size();
 
     int maxCheckLevel = -1;
@@ -199,11 +199,11 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     }
   }
 
-  protected void checkSameSignatures(@NotNull List<CandidateInfo> conflicts) {
+  protected void checkSameSignatures(@NotNull List<? extends CandidateInfo> conflicts) {
     checkSameSignatures(conflicts, null);
   }
 
-  protected void checkSameSignatures(@NotNull List<CandidateInfo> conflicts, Map<MethodCandidateInfo, PsiSubstitutor> map) {
+  protected void checkSameSignatures(@NotNull List<? extends CandidateInfo> conflicts, Map<MethodCandidateInfo, PsiSubstitutor> map) {
     // candidates should go in order of class hierarchy traversal
     // in order for this to work
     Map<MethodSignature, CandidateInfo> signatures = new THashMap<>(conflicts.size());
@@ -266,7 +266,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   private static void collectCorrectedSuperMethods(HierarchicalMethodSignature methodSignature,
                                                    GlobalSearchScope resolveScope,
                                                    boolean isInterface,
-                                                   Set<PsiMethod> superMethods) {
+                                                   Set<? super PsiMethod> superMethods) {
     PsiMethod methodCandidate = methodSignature.getMethod();
 
     PsiMethod superMethod = PsiSuperMethodUtil.correctMethodByScope(methodCandidate, resolveScope).orElse(null);
@@ -349,7 +349,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     return null;
   }
 
-  public boolean checkParametersNumber(@NotNull List<CandidateInfo> conflicts,
+  public boolean checkParametersNumber(@NotNull List<? extends CandidateInfo> conflicts,
                                        final int argumentsCount,
                                        Map<MethodCandidateInfo, PsiSubstitutor> map,
                                        boolean ignoreIfStaticsProblem) {
@@ -643,17 +643,14 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         return InferenceSession.isMoreSpecific(method2, method1, siteSubstitutor1,  ((PsiExpressionList)myArgumentsList).getExpressions(), myArgumentsList, varargsPosition);
       }
     }
-    final PsiUtil.ApplicabilityChecker applicabilityChecker = new PsiUtil.ApplicabilityChecker() {
-      @Override
-      public boolean isApplicable(PsiType left, PsiType right, boolean allowUncheckedConversion, int argId) {
-        if (right instanceof PsiClassType) {
-          final PsiClass rightClass = ((PsiClassType)right).resolve();
-          if (rightClass instanceof PsiTypeParameter) {
-            right = new PsiImmediateClassType(rightClass, siteSubstitutor1);
-          }
+    final PsiUtil.ApplicabilityChecker applicabilityChecker = (left, right, allowUncheckedConversion, argId) -> {
+      if (right instanceof PsiClassType) {
+        final PsiClass rightClass = ((PsiClassType)right).resolve();
+        if (rightClass instanceof PsiTypeParameter) {
+          right = new PsiImmediateClassType(rightClass, siteSubstitutor1);
         }
-        return languageLevel.isAtLeast(LanguageLevel.JDK_1_8) ? isTypeMoreSpecific(left, right, argId) : TypeConversionUtil.isAssignable(left, right, allowUncheckedConversion);
       }
+      return languageLevel.isAtLeast(LanguageLevel.JDK_1_8) ? isTypeMoreSpecific(left, right, argId) : TypeConversionUtil.isAssignable(left, right, allowUncheckedConversion);
     };
     final int applicabilityLevel = PsiUtil.getApplicabilityLevel(method1, methodSubstitutor1, types2AtSite, languageLevel, false, varargsPosition, applicabilityChecker);
     return applicabilityLevel > MethodCandidateInfo.ApplicabilityLevel.NOT_APPLICABLE;
@@ -719,7 +716,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     return substitutor;
   }
 
-  public void checkPrimitiveVarargs(@NotNull List<CandidateInfo> conflicts,
+  public void checkPrimitiveVarargs(@NotNull List<? extends CandidateInfo> conflicts,
                                     final int argumentsCount) {
     if (JavaVersionService.getInstance().isAtLeast(myArgumentsList, JavaSdkVersion.JDK_1_7)) return;
     CandidateInfo objectVararg = null;

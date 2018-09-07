@@ -36,7 +36,7 @@ public class UnexpectedAnchorInspection extends LocalInspectionTool {
 
     private final ProblemsHolder myHolder;
 
-    public UnexpectedAnchorVisitor(ProblemsHolder holder) {
+    UnexpectedAnchorVisitor(ProblemsHolder holder) {
       myHolder = holder;
     }
 

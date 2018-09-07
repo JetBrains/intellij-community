@@ -24,7 +24,8 @@ public class CaptureStorage {
     }
   };
 
-  private static boolean DEBUG = false;
+  @SuppressWarnings("StaticNonFinalField")
+  public static boolean DEBUG; // set from debugger
   private static boolean ENABLED = true;
 
   //// METHODS CALLED FROM THE USER PROCESS
@@ -101,7 +102,7 @@ public class CaptureStorage {
     private final Object myKey;
     private final int myHash;
 
-    public HardKey(Object key) {
+    HardKey(Object key) {
       myKey = key;
       myHash = System.identityHashCode(key);
     }
@@ -120,7 +121,7 @@ public class CaptureStorage {
     private final int myHash;
     private final CapturedStack myValue;
 
-    public WeakKey(Object key, CapturedStack value, ReferenceQueue q) {
+    WeakKey(Object key, CapturedStack value, ReferenceQueue q) {
       //noinspection unchecked
       super(key, q);
       myHash = System.identityHashCode(key);
@@ -164,7 +165,7 @@ public class CaptureStorage {
   private static class UnwindCapturedStack implements CapturedStack {
     final List<StackTraceElement> myStackTraceElements;
 
-    public UnwindCapturedStack(List<StackTraceElement> elements) {
+    UnwindCapturedStack(List<StackTraceElement> elements) {
       myStackTraceElements = elements;
     }
 
@@ -202,7 +203,7 @@ public class CaptureStorage {
     final CapturedStack myInsertMatch;
     final int myRecursionDepth;
 
-    public DeepCapturedStack(Throwable exception, CapturedStack insertMatch) {
+    DeepCapturedStack(Throwable exception, CapturedStack insertMatch) {
       super(exception);
       myInsertMatch = insertMatch;
       myRecursionDepth = insertMatch.getRecursionDepth() + 1;
@@ -216,9 +217,18 @@ public class CaptureStorage {
 
   // to be run from the debugger
   @SuppressWarnings("unused")
+  public static Object[][] getCurrentCapturedStack(int limit) {
+    return wrapInArray(CURRENT_STACKS.get().peekLast(), limit);
+  }
+
+  // to be run from the debugger
+  @SuppressWarnings("unused")
   public static Object[][] getRelatedStack(Object key, int limit) {
     //noinspection SuspiciousMethodCalls
-    CapturedStack stack = STORAGE.get(new HardKey(key));
+    return wrapInArray(STORAGE.get(new HardKey(key)), limit);
+  }
+
+  private static Object[][] wrapInArray(CapturedStack stack, int limit) {
     if (stack == null) {
       return null;
     }
@@ -259,10 +269,6 @@ public class CaptureStorage {
       }
     }
     return res;
-  }
-
-  public static void setDebug(boolean debug) {
-    DEBUG = debug;
   }
 
   public static void setEnabled(boolean enabled) {

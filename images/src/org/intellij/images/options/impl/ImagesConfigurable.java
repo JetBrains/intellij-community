@@ -38,6 +38,7 @@ public final class ImagesConfigurable extends BaseConfigurableWithChangeSupport 
   private static final String DISPLAY_NAME = ImagesBundle.message("settings.page.name");
   private ImagesOptionsComponent myComponent;
 
+  @Override
   public String getDisplayName() {
     return DISPLAY_NAME;
   }
@@ -47,6 +48,7 @@ public final class ImagesConfigurable extends BaseConfigurableWithChangeSupport 
     return "preferences.images";
   }
 
+  @Override
   public JComponent createComponent() {
     if (myComponent == null) {
       myComponent = new ImagesOptionsComponent();
@@ -60,6 +62,7 @@ public final class ImagesConfigurable extends BaseConfigurableWithChangeSupport 
     return myComponent.getContentPane();
   }
 
+  @Override
   public void apply() {
     if (myComponent != null) {
       Options options = OptionsManager.getInstance().getOptions();
@@ -67,6 +70,7 @@ public final class ImagesConfigurable extends BaseConfigurableWithChangeSupport 
     }
   }
 
+  @Override
   public void reset() {
     if (myComponent != null) {
       Options options = OptionsManager.getInstance().getOptions();
@@ -75,6 +79,7 @@ public final class ImagesConfigurable extends BaseConfigurableWithChangeSupport 
     }
   }
 
+  @Override
   public void disposeUIResources() {
     if (myComponent != null) {
       Options options = OptionsManager.getInstance().getOptions();
@@ -84,6 +89,7 @@ public final class ImagesConfigurable extends BaseConfigurableWithChangeSupport 
     }
   }
 
+  @Override
   public void propertyChange(PropertyChangeEvent evt) {
     Options options = OptionsManager.getInstance().getOptions();
     Options uiOptions = myComponent.getOptions();
@@ -95,6 +101,7 @@ public final class ImagesConfigurable extends BaseConfigurableWithChangeSupport 
     ShowSettingsUtil.getInstance().editConfigurable(project, new ImagesConfigurable());
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getId() {

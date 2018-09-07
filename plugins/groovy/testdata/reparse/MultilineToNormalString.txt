@@ -19,10 +19,9 @@ Groovy script
           PsiElement(def)('def')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('foo')
-        PsiElement(()('(')
         Parameter list
-          <empty list>
-        PsiElement())(')')
+          PsiElement(()('(')
+          PsiElement())(')')
         Throw clause
           <empty list>
         PsiWhiteSpace(' ')
@@ -35,7 +34,7 @@ Groovy script
             Arguments
               PsiElement(()('(')
               Literal
-                PsiElement(Gstring)('""')
+                PsiElement(double quoted string)('""')
               PsiErrorElement:')' or ',' expected, got 'aaa'
                 <empty list>
               Reference expression
@@ -46,11 +45,9 @@ Groovy script
                 PsiElement(Gstring begin)('"')
                 GrStringContentImpl(STRING_CONTENT)
                   PsiElement(Gstring content)(')')
-                PsiErrorElement:Gstring end expected
+                PsiErrorElement:Gstring end expected, got '}'
                   <empty list>
-              PsiElement(new line)('\n  ')
-              PsiErrorElement:')', ',' or <expression> expected, got '}'
-                <empty list>
+          PsiWhiteSpace('\n  ')
           PsiElement(})('}')
       PsiElement(new line)('\n\n  ')
       Method
@@ -58,10 +55,9 @@ Groovy script
           PsiElement(def)('def')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('bar')
-        PsiElement(()('(')
         Parameter list
-          <empty list>
-        PsiElement())(')')
+          PsiElement(()('(')
+          PsiElement())(')')
         Throw clause
           <empty list>
         PsiWhiteSpace(' ')
@@ -101,10 +97,9 @@ Groovy script
           PsiElement(def)('def')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('foo')
-        PsiElement(()('(')
         Parameter list
-          <empty list>
-        PsiElement())(')')
+          PsiElement(()('(')
+          PsiElement())(')')
         Throw clause
           <empty list>
         PsiWhiteSpace(' ')
@@ -117,7 +112,7 @@ Groovy script
             Arguments
               PsiElement(()('(')
               Literal
-                PsiElement(Gstring)('"aaa"')
+                PsiElement(double quoted string)('"aaa"')
               PsiElement())(')')
           PsiElement(new line)('\n  ')
           PsiElement(})('}')
@@ -127,10 +122,9 @@ Groovy script
           PsiElement(def)('def')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('bar')
-        PsiElement(()('(')
         Parameter list
-          <empty list>
-        PsiElement())(')')
+          PsiElement(()('(')
+          PsiElement())(')')
         Throw clause
           <empty list>
         PsiWhiteSpace(' ')

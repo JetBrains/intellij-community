@@ -30,6 +30,7 @@ public class MakeMethodDelegate extends FixableUsageInfo {
         this.delegate = delegate;
     }
 
+    @Override
     public void fixUsage() throws IncorrectOperationException {
         final PsiCodeBlock body = method.getBody();
         assert body != null;
@@ -37,7 +38,7 @@ public class MakeMethodDelegate extends FixableUsageInfo {
         for(PsiStatement statement : statements){
             statement.delete();
         }
-        @NonNls final StringBuffer delegation = new StringBuffer();
+        @NonNls final StringBuilder delegation = new StringBuilder();
         final PsiType returnType = method.getReturnType();
         if(!PsiType.VOID.equals(returnType))
         {

@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.vcs;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.EventListener;
 
 public interface ProcessEventListener extends EventListener {
@@ -23,12 +25,14 @@ public interface ProcessEventListener extends EventListener {
    *
    * @param exitCode a exit code
    */
-  void processTerminated(int exitCode);
+  default void processTerminated(int exitCode) {
+  }
 
   /**
    * This method is invoked if starting git process failed with exception
    *
    * @param exception an exception
    */
-  void startFailed(Throwable exception);
+  default void startFailed(@NotNull Throwable exception) {
+  }
 }

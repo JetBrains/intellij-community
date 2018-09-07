@@ -59,6 +59,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
     mySettings = settings;
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     return new MakeMethodOrClassStaticViewDescriptor(myMember);
@@ -86,6 +87,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
     return data;
   }
 
+  @Override
   protected final boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
     if (myPrepareSuccessfulSwingThreadCallback != null) {
@@ -212,6 +214,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
     }
   }
 
+  @Override
   @NotNull
   protected UsageInfo[] findUsages() {
     ArrayList<UsageInfo> result = new ArrayList<>();
@@ -296,6 +299,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
     return false;
   }
 
+  @Override
   @NotNull
   protected String getCommandName() {
     return RefactoringBundle.message("make.static.command", DescriptiveNameUtil.getDescriptiveName(myMember));
@@ -309,6 +313,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
     return mySettings;
   }
 
+  @Override
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
     PsiManager manager = myMember.getManager();
     PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();

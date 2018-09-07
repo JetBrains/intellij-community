@@ -13,7 +13,7 @@ fun GuiTestCase.logInfo(message: String) {
   logger.info(message)
 }
 
-private val currentTimeInHumanString get() = SimpleDateFormat("yyyy.MM.dd_HH.mm.ss.SSS").format(System.currentTimeMillis())!!
+val currentTimeInHumanString get() = SimpleDateFormat("yyyy.MM.dd_HH.mm.ss.SSS").format(System.currentTimeMillis())!!
 
 fun GuiTestCase.logStartTest(testName: String) {
   logInfo("----------------->>> ${currentTimeInHumanString}: Test `$testName` started")

@@ -15,30 +15,32 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static java.net.URLEncoder.encode;
+
 public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
-  private static final String INTELLIJ_TEST_DISCOVERY_HOST = "http://intellij-test-discovery";
+  private static final String INTELLIJ_TEST_DISCOVERY_HOST = "http://intellij-test-discovery.labs.intellij.net";
 
   @NotNull
   @Override
   public MultiMap<String, String> getDiscoveredTests(@NotNull Project project,
                                                      @NotNull String classFQName,
-                                                     @NotNull String methodName,
+                                                     @Nullable String methodName,
                                                      byte frameworkId) {
     if (!ApplicationManager.getApplication().isInternal()) {
       return MultiMap.emptyInstance();
     }
-    String methodFqn = classFQName + "." + methodName;
-    String url = INTELLIJ_TEST_DISCOVERY_HOST + "/search/tests/by-method?fqn=" + methodFqn;
-    LOG.debug(url);
-
-    RequestBuilder r = HttpRequests.request(url)
-                                   .productNameAsUserAgent()
-                                   .gzip(true);
     try {
+      String url = url(classFQName, methodName);
+      LOG.debug(url);
+
+      RequestBuilder r = HttpRequests.request(url)
+        .productNameAsUserAgent()
+        .gzip(true);
       return r.connect(request -> {
         MultiMap<String, String> map = new MultiMap<>();
         TestsSearchResult result = new ObjectMapper().readValue(request.getInputStream(), TestsSearchResult.class);
@@ -47,12 +49,18 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
       });
     }
     catch (HttpRequests.HttpStatusException http) {
-      LOG.debug("No tests found for " + methodFqn);
+      LOG.debug("No tests found for class: '" + classFQName + "', method: '" + methodName + "'", http);
     }
     catch (IOException e) {
       LOG.debug(e);
     }
     return MultiMap.empty();
+  }
+
+  private static String url(@NotNull String classFQName, @Nullable String methodName) throws UnsupportedEncodingException {
+    return INTELLIJ_TEST_DISCOVERY_HOST + "/search/tests/" + (methodName == null ?
+                                                              "by-class?fqn=" + encode(classFQName, "UTF-8") :
+                                                              "by-method?fqn=" + encode(classFQName + "." + methodName, "UTF-8"));
   }
 
   @Override

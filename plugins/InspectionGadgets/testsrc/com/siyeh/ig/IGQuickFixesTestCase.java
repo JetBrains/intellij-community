@@ -147,4 +147,5 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
     assertNotNull(myRelativePath);
     return myRelativePath;
   }
+
 }

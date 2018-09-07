@@ -1037,6 +1037,121 @@ class Test {
 """)
   }
 
+  fun `test unclear expression type setting true`() {
+    JavaInlayParameterHintsProvider.getInstance().isShowHintWhenExpressionTypeIsClear.set(true)
+    check("""
+class Test {
+  void main() {
+        String data = "asdad";
+        foo(<hint text="info:"/>data);
+  }
+
+  void foo(String info) {}
+}
+""")
+  }
+
+
+  fun `test unclear expression type setting false`() {
+    JavaInlayParameterHintsProvider.getInstance().isShowHintWhenExpressionTypeIsClear.set(false)
+    check("""
+class Test {
+  void main() {
+        String data = "asdad";
+        foo(data);
+  }
+
+  void foo(String info) {}
+}
+""")
+  }
+
+
+  fun `test enum parameter names`() {
+    check("""
+public enum Thingy {
+    ONE(<hint text="green:"/>false, <hint text="striped:"/>true),
+    TWO(<hint text="green:"/>false, <hint text="striped:"/>false),
+    THREE(<hint text="...x:"/>12,32,3,2,32,3,2,3,23);
+    private boolean green;
+    private boolean striped;
+
+    Thingy(final boolean green, final boolean striped) {
+        this.green = green;
+        this.striped = striped;
+    }
+
+    Thingy(int... x) {
+    }
+}""")
+  }
+
+
+  fun `test enum parameter names disabled`() {
+    JavaInlayParameterHintsProvider.getInstance().isShowHintsForEnumConstants.set(false)
+    check("""
+public enum Thingy {
+    ONE(false, true),
+    TWO(false, false),
+    THREE(12,32,3,2,32,3,2,3,23);
+    private boolean green;
+    private boolean striped;
+
+    Thingy(final boolean green, final boolean striped) {
+        this.green = green;
+        this.striped = striped;
+    }
+
+    Thingy(int... x) {
+    }
+}""")
+  }
+
+
+  fun `test constructor call`() {
+    JavaInlayParameterHintsProvider.getInstance().isShowHintsForNewExpressions.set(true)
+    check("""
+public class Test {
+    static class A {
+      A(boolean hardName){}
+    }
+
+    void foo() {
+      new A(<hint text="hardName:"/>true);
+    }
+}""")
+  }
+
+
+  fun `test constructor call disabled`() {
+    JavaInlayParameterHintsProvider.getInstance().isShowHintsForNewExpressions.set(false)
+    check("""
+public class Test {
+    static class A {
+      A(boolean hardName){}
+    }
+
+    void foo() {
+      new A(true);
+    }
+}""")
+  }
+
+  fun `test constructor call with other features`() {
+    JavaInlayParameterHintsProvider.getInstance().isShowHintsForNewExpressions.set(true)
+    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(true)
+    check("""
+public class Test {
+    static class A {
+      A(boolean a1, boolean a2){}
+    }
+
+    void foo() {
+      new A(true, false);
+    }
+}""")
+  }
+
   fun getHints(): List<String> {
     val document = myFixture.getDocument(myFixture.file)
     val manager = ParameterHintsPresentationManager.getInstance()
@@ -1045,7 +1160,7 @@ class Test {
       .getInlineElementsInRange(0, document.textLength)
       .mapNotNull { manager.getHintText(it) }
   }
-  
+
   
   fun assertSingleInlayWithText(expectedText: String) {
     val inlays = myFixture.editor.inlayModel.getInlineElementsInRange(0, editor.document.textLength)

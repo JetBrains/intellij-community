@@ -50,9 +50,17 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
     new RunAll()
-      .append(() -> myCodeStyleSettingsTracker.checkForSettingsDamage())
+      .append(() -> {
+        if (myCodeStyleSettingsTracker != null) {
+          myCodeStyleSettingsTracker.checkForSettingsDamage();
+        }
+      })
       .append(() -> super.tearDown()) // call all disposables' dispose() while the project is still open
-      .append(() -> LightPlatformTestCase.doTearDown(project, LightPlatformTestCase.getApplication()))
+      .append(() -> {
+        if (project != null) {
+          LightPlatformTestCase.doTearDown(project, LightPlatformTestCase.getApplication());
+        }
+      })
       .append(() -> LightPlatformTestCase.checkEditorsReleased())
       .append(() -> {
         SdkLeakTracker oldSdks = myOldSdks;

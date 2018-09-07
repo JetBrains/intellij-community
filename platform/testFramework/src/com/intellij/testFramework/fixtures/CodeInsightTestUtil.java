@@ -77,7 +77,7 @@ public class CodeInsightTestUtil {
   private CodeInsightTestUtil() { }
 
   @Nullable
-  public static IntentionAction findIntentionByText(@NotNull List<IntentionAction> actions, @NonNls @NotNull String text) {
+  public static IntentionAction findIntentionByText(@NotNull List<? extends IntentionAction> actions, @NonNls @NotNull String text) {
     for (IntentionAction action : actions) {
       final String s = action.getText();
       if (s.equals(text)) {
@@ -102,7 +102,8 @@ public class CodeInsightTestUtil {
     List<IntentionAction> availableIntentions = fixture.getAvailableIntentions();
     final IntentionAction intentionAction = findIntentionByText(availableIntentions, action);
     if (intentionAction == null) {
-      Assert.fail("Action not found: " + action + " in place: " + fixture.getElementAtCaret() + " among " + availableIntentions);
+      PsiElement element = fixture.getFile().findElementAt(fixture.getCaretOffset());
+      Assert.fail("Action not found: " + action + " in place: " + element + " among " + availableIntentions);
     }
     fixture.launchAction(intentionAction);
     fixture.checkResultByFile(after, false);

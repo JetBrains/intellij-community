@@ -28,6 +28,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
@@ -45,7 +46,8 @@ public final class UnscrambleAction extends AnAction implements DumbAware {
     }
 
     Registry.get(key).addListener(new RegistryValueListener.Adapter() {
-      public void afterValueChanged(RegistryValue value) {
+      @Override
+      public void afterValueChanged(@NotNull RegistryValue value) {
         if (value.asBoolean()) {
           ourConnection = app.getMessageBus().connect();
           ourConnection.subscribe(ApplicationActivationListener.TOPIC, LISTENER);
@@ -55,13 +57,15 @@ public final class UnscrambleAction extends AnAction implements DumbAware {
       }
     }, app);
   }
-  
-  public void actionPerformed(AnActionEvent e) {
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     new UnscrambleDialog(project).show();
   }
 
-  public void update(AnActionEvent event) {
+  @Override
+  public void update(@NotNull AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
     final Project project = event.getProject();
     presentation.setEnabled(project != null);

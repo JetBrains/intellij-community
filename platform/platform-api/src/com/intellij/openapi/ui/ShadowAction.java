@@ -15,11 +15,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 
 public final class ShadowAction {
   private final AnAction myAction;
   private AnAction myCopyFromAction;
-  private final JComponent myComponent;
+  private final Reference<JComponent> myComponent;
 
   private String myActionId;
 
@@ -41,12 +43,12 @@ public final class ShadowAction {
     this.parentDisposable = parentDisposable;
 
     myCopyFromAction = copyFromAction;
-    myComponent = component;
+    myComponent = new WeakReference<>(component);
     myActionId = ActionManager.getInstance().getId(myCopyFromAction);
 
     myAction.getTemplatePresentation().copyFrom(copyFromAction.getTemplatePresentation());
 
-    UiNotifyConnector uiNotify = new UiNotifyConnector(myComponent, new Activatable() {
+    UiNotifyConnector uiNotify = new UiNotifyConnector(component, new Activatable() {
       @Override
       public void showNotify() {
         _connect();
@@ -126,7 +128,7 @@ public final class ShadowAction {
     ShortcutSet shortcutSet = new CustomShortcutSet(keymap.getShortcuts(myActionId));
     shortcutSetDisposable = Disposer.newDisposable();
     Disposer.register(parentDisposable, shortcutSetDisposable);
-    myAction.registerCustomShortcutSet(shortcutSet, myComponent, shortcutSetDisposable);
+    myAction.registerCustomShortcutSet(shortcutSet, myComponent.get(), shortcutSetDisposable);
   }
 
   private void disposeShortcutSetListener() {

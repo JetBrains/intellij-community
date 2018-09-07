@@ -52,7 +52,7 @@ public class EscapedMetaCharacterInspection extends LocalInspectionTool {
 
     private final ProblemsHolder myHolder;
 
-    public EscapedMetaCharacterVisitor(ProblemsHolder holder) {
+    EscapedMetaCharacterVisitor(ProblemsHolder holder) {
       myHolder = holder;
     }
 

@@ -1,22 +1,23 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.impl
 
+import com.intellij.testGuiFramework.cellReader.ExtendedJTreeCellReader
+import com.intellij.testGuiFramework.driver.ExtendedJTreePathFinder
+import com.intellij.testGuiFramework.fixtures.ActionButtonFixture
 import com.intellij.testGuiFramework.fixtures.GutterFixture
-import com.intellij.testGuiFramework.fixtures.JDialogFixture
-import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture
+import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.util.*
-import org.fest.swing.exception.ComponentLookupException
+import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
 import org.hamcrest.Matcher
 import org.junit.After
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.rules.ErrorCollector
 import org.junit.rules.TemporaryFolder
 import org.junit.rules.TestName
-import java.io.File
-import java.nio.file.Files
-import java.nio.file.Paths
 
 open class GuiTestCaseExt : GuiTestCase() {
 
@@ -92,6 +93,7 @@ fun GuiTestCase.waitAMoment(extraTimeOut: Long = 2000L) {
   ideFrame {
     this.waitForBackgroundTasksToFinish()
   }
+  robot().waitForIdle()
   Pause.pause(extraTimeOut)
 }
 
@@ -109,8 +111,29 @@ fun GuiTestCase.testTreeItemExist(name: String, vararg expectedItem: String) {
   }
 }
 
+/**
+ * Performs test whether the specified item exists in a list
+ * Note: the dialog with the investigated list must be open
+ * before using this test
+ * @param expectedItem - expected exact item
+ * @param name - name of item kind, such as "Library" or "Facet". Used for understandable error message
+ * */
+fun GuiTestCase.testListItemExist(name: String, expectedItem: String) {
+  ideFrame {
+    logInfo("Check that $name -> $expectedItem exists in a list element")
+    kotlin.assert(exists { jList(expectedItem, timeout = Timeouts.noTimeout) }) { "$name '$expectedItem' not found" }
+  }
+}
 
-fun ExtendedTreeFixture.selectWithKeyboard(testCase: GuiTestCase, vararg path: String) {
+/**
+ * Selects specified [path] in the tree by keyboard searching
+ * @param path in string form
+ * @param testCase - test case is required only because of keyboard related functions
+ *
+ * TODO: remove [testCase] parameter (so move [shortcut] and [typeText] functions
+ * out of GuiTestCase)
+ * */
+fun ExtendedJTreePathFixture.selectWithKeyboard(testCase: GuiTestCase, vararg path: String) {
   fun currentValue(): String {
     val selectedRow = target().selectionRows.first()
     return valueAt(selectedRow) ?: throw IllegalStateException("Nothing is selected in the tree")
@@ -127,14 +150,81 @@ fun ExtendedTreeFixture.selectWithKeyboard(testCase: GuiTestCase, vararg path: S
   }
 }
 
+/**
+ *  Wait for Gradle reimport finishing
+ *  I detect end of reimport by following signs:
+ *  - action button "Refresh all external projects" becomes enable. But sometimes it becomes
+ *  enable only for a couple of moments and becomes disable again.
+ *  - the gradle tool window contains the project tree. But if reimporting fails the tree is empty.
+ *
+ *  @param waitForProject true if we expect reimporting successful
+ *  @param waitForProject false if we expect reimporting failing and the tree window is expected empty
+ *  @param rootPath root name expected to be shown in the tree. Checked only if [waitForProject] is true
+ * */
+fun GuiTestCase.waitForGradleReimport(rootPath: String, waitForProject: Boolean){
+  GuiTestUtilKt.waitUntil("for gradle reimport finishing", timeout = Timeouts.minutes05){
+    var result = false
+    try {
+      ideFrame {
+        toolwindow(id = "Gradle") {
+          content(tabName = "") {
+            // first, check whether the action button "Refresh all external projects" is enabled
+            val text = "Refresh all external projects"
+            val isReimportButtonEnabled = try {
+              val fixtureByTextAnyState = ActionButtonFixture.fixtureByTextAnyState(this.target(), robot(), text)
+              assertTrue("Gradle refresh button should be visible and showing", this.target().isShowing && this.target().isVisible)
+              fixtureByTextAnyState.isEnabled
+            }
+            catch (e: Exception) {
+              logInfo("$currentTimeInHumanString: waitForGradleReimport.actionButton: ${e::class.simpleName} - ${e.message}")
+              false
+            }
+            // second, check that Gradle tool window contains a tree with the specified [rootPath]
+            val gradleWindowHasPath = if(waitForProject){
+              try {
+                jTree(rootPath, timeout = Timeouts.noTimeout).hasPath()
+              }
+              catch (e: Exception) {
+                logInfo("$currentTimeInHumanString: waitForGradleReimport.jTree: ${e::class.simpleName} - ${e.message}")
+                false
+              }
+            }
+            else true
+            // calculate result whether to continue waiting
+            logInfo("$currentTimeInHumanString: waitForGradleReimport: jtree = $gradleWindowHasPath, button enabled = $isReimportButtonEnabled")
+            result = gradleWindowHasPath && isReimportButtonEnabled
+          }
+        }
+        // check status in the Build tool window
+        var syncState = !waitForProject
+        if(waitForProject) {
+          toolwindow(id = "Build") {
+            content(tabName = "Sync") {
+              val tree = treeTable().target.tree
+              val treePath = ExtendedJTreePathFinder(tree).findMatchingPath(listOf(this@ideFrame.project.name + ":"))
+              val state = ExtendedJTreeCellReader().valueAtExtended(tree, treePath) ?: ""
+              logInfo("$currentTimeInHumanString: state of Build toolwindow: $state")
+              syncState = state.contains("sync finished")
+            }
+          }
+        }
+        // final calculating of result
+        result = result && syncState
+      }
+    }
+    catch (ignore: Exception) {}
+    result
+  }
+
+}
 
 fun GuiTestCase.gradleReimport() {
   logTestStep("Reimport gradle project")
   ideFrame {
     toolwindow(id = "Gradle") {
-      content(tabName = "projects") {
-        //        waitAMoment()
-        actionButton("Refresh all external projects").click()
+      content(tabName = "") {
+        waitAMoment()
+        actionButton("Refresh all external projects", timeout = Timeouts.minutes05).click()
       }
     }
   }
@@ -143,9 +233,17 @@ fun GuiTestCase.gradleReimport() {
 fun GuiTestCase.mavenReimport() {
   logTestStep("Reimport maven project")
   ideFrame {
-    toolwindow(id = "Maven Projects") {
+    toolwindow(id = "Maven") {
       content(tabName = "") {
-        actionButton("Reimport All Maven Projects").click()
+        val button = actionButton("Reimport All Maven Projects")
+        Pause.pause(object : Condition("Wait for button Reimport All Maven Projects to be enabled.") {
+          override fun test(): Boolean {
+            return button.isEnabled
+          }
+        }, Timeouts.minutes02)
+        robot().waitForIdle()
+        button.click()
+        robot().waitForIdle()
       }
     }
   }
@@ -156,54 +254,18 @@ fun GuiTestCase.checkProjectIsCompiled(expectedStatus: String) {
   ideFrame {
     logTestStep("Going to check how the project compiles")
     invokeMainMenu("CompileProject")
-    shortcut(Modifier.CONTROL + Modifier.SHIFT + Key.A)
     waitAMoment()
-    typeText(textEventLog)
-    waitAMoment()
-    shortcut(Key.ENTER)
     toolwindow(id = textEventLog) {
       content(tabName = "") {
         editor{
-          val lastLine = this.getCurrentFileContents(false)?.lines()?.last { it.trim().isNotEmpty() } ?: ""
-          assert(lastLine.contains(expectedStatus)) {
-            "Line `$lastLine` doesn't contain expected status `$expectedStatus`"
+          GuiTestUtilKt.waitUntil("Wait for '$expectedStatus' appears") {
+            val output = this.getCurrentFileContents(false)?.lines() ?: emptyList()
+            val lastLine = output.lastOrNull { it.trim().isNotEmpty() } ?: ""
+            lastLine.contains(expectedStatus)
           }
         }
       }
     }
-  }
-}
-
-fun GuiTestCase.checkRunConfiguration(expectedValues: Map<String, String>, vararg configuration: String) {
-  val cfgName = configuration.last()
-  val runDebugConfigurations = "Run/Debug Configurations"
-  ideFrame {
-    logTestStep("Going to check presence of Run/Debug configuration `$cfgName`")
-    navigationBar {
-      assert(exists { button(cfgName) }) { "Button `$cfgName` not found on Navigation bar" }
-      button(cfgName).click()
-      popupClick("Edit Configurations...")
-    }
-    dialog(runDebugConfigurations) {
-      assert(exists { jTree(*configuration) })
-      jTree(*configuration).clickPath(*configuration)
-      for ((field, expectedValue) in expectedValues) {
-        logTestStep("Field `$field`has a value = `$expectedValue`")
-        checkOneValue(this@checkRunConfiguration, field, expectedValue)
-      }
-      button("Cancel").click()
-    }
-  }
-}
-
-fun JDialogFixture.checkOneValue(guiTestCase: GuiTestCase, expectedField: String, expectedValue: String){
-  val actualValue = when {
-    guiTestCase.exists {textfield(expectedField)} -> textfield(expectedField).text()
-    guiTestCase.exists { combobox(expectedField) } -> combobox(expectedField).selectedItem()
-    else -> throw ComponentLookupException("Cannot find component with label `$expectedField`")
-  }
-  assert(actualValue == expectedValue) {
-    "Field `$expectedField`: actual value = `$actualValue`, expected value = `$expectedValue`"
   }
 }
 
@@ -230,34 +292,25 @@ fun GuiTestCase.checkProjectIsRun(configuration: String, message: String) {
   }
 }
 
-fun GuiTestCase.checkRunGutterIcons(expectedNumberOfRunIcons: Int, expectedRunLines: List<String>) {
+fun GuiTestCase.checkGutterIcons(gutterIcon: GutterFixture.GutterIcon,
+                                 expectedNumberOfIcons: Int,
+                                 expectedLines: List<String>) {
   ideFrame {
-    logTestStep("Going to check whether $expectedNumberOfRunIcons `Run` gutter icons are present")
+    logTestStep("Going to check whether $expectedNumberOfIcons $gutterIcon gutter icons are present")
     editor {
       waitUntilFileIsLoaded()
       waitUntilErrorAnalysisFinishes()
-      gutter.waitUntilIconsShown(mapOf(GutterFixture.GutterIcon.RUN_SCRIPT to expectedNumberOfRunIcons))
-      val gutterRunLines = gutter.linesWithGutterIcon(GutterFixture.GutterIcon.RUN_SCRIPT)
+      gutter.waitUntilIconsShown(mapOf(gutterIcon to expectedNumberOfIcons))
+      val gutterLinesWithIcon = gutter.linesWithGutterIcon(gutterIcon)
       val contents = this@editor.getCurrentFileContents(false)?.lines() ?: listOf()
-      for ((index, line) in gutterRunLines.withIndex()) {
+      for ((index, line) in gutterLinesWithIcon.withIndex()) {
         // line numbers start with 1, but index in the contents list starts with 0
         val currentLine = contents[line - 1]
-        val expectedLine = expectedRunLines[index]
+        val expectedLine = expectedLines[index]
         assert(currentLine.contains(expectedLine)) {
           "At line #$line the actual text is `$currentLine`, but it was expected `$expectedLine`"
         }
       }
     }
   }
-}
-
-fun GuiTestCase.checkFileExists(filePath: String){
-  logTestStep("Going to check whether file `$filePath` created")
-  assert(File(filePath).exists()) { "Can't find a file `$filePath`" }
-}
-
-fun GuiTestCase.checkFileContainsLine(filePath: String, line: String){
-  val inputFile = Paths.get(filePath)
-  logTestStep("Going to check whether ${inputFile.fileName} contains line `$line`")
-  assert(Files.readAllLines(inputFile).contains(line)) { "Line `$line` not found" }
 }

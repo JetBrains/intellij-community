@@ -44,7 +44,7 @@ public class RunAnythingScrollingUtil {
                                             final boolean isCycleScrolling) {
     new ScrollingUtil.ListScrollAction(CommonShortcuts.getMoveDown(), focusParent) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         moveDown(list, handleFocusParent, isCycleScrolling);
       }
     };
@@ -56,7 +56,7 @@ public class RunAnythingScrollingUtil {
                                           final boolean isCycleScrolling) {
     new ScrollingUtil.ListScrollAction(CommonShortcuts.getMoveUp(), focusParent) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         moveUp(list, handleFocusParent, isCycleScrolling);
       }
     };
@@ -102,7 +102,7 @@ public class RunAnythingScrollingUtil {
     @NotNull private final Runnable myHandleFocusParent;
     private final boolean myIsCycleScrolling;
 
-    public MoveAction(@NotNull String id, @NotNull JList component, @NotNull Runnable handleFocusParent, boolean isCycleScrolling) {
+    MoveAction(@NotNull String id, @NotNull JList component, @NotNull Runnable handleFocusParent, boolean isCycleScrolling) {
       myId = id;
       myComponent = component;
       myHandleFocusParent = handleFocusParent;

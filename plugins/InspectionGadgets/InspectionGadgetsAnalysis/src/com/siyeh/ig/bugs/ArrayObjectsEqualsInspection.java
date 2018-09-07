@@ -53,7 +53,7 @@ public class ArrayObjectsEqualsInspection extends BaseInspection {
 
     private final boolean myDeep;
 
-    public ArrayObjectsEqualsFix(boolean deep) {
+    ArrayObjectsEqualsFix(boolean deep) {
       myDeep = deep;
     }
 

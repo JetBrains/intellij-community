@@ -16,6 +16,8 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ArrayUtil;
 import one.util.streamex.IntStreamEx;
@@ -29,7 +31,7 @@ import static org.junit.Assert.*;
 public class ContainerUtilTest {
   @Test
   public void testFindInstanceOf() {
-    Iterator<Object> iterator = Arrays.<Object>asList(new Integer(1), new ArrayList(), "1").iterator();
+    Iterator<Object> iterator = Arrays.<Object>asList(1, new ArrayList(), "1").iterator();
     String string = (String)ContainerUtil.find(iterator, FilteringIterator.instanceOf(String.class));
     assertEquals("1", string);
   }
@@ -84,7 +86,7 @@ public class ContainerUtilTest {
     assertIterating(Collections.singletonList(4), cond, 4);
   }
 
-  private static void assertIterating(List<Integer> collection, Condition<Integer> condition, Integer... expected) {
+  private static void assertIterating(List<Integer> collection, Condition<? super Integer> condition, Integer... expected) {
     List<Integer> actual = ContainerUtil.newArrayList(ContainerUtil.iterate(collection, condition));
     assertEquals(Arrays.asList(expected), actual);
   }
@@ -240,5 +242,82 @@ public class ContainerUtilTest {
     List<String> expected = ContainerUtil.immutableList(value);
     List<String> actual = ContainerUtil.newArrayList(value);
     assertEquals(expected, actual);
+  }
+
+  @Test
+  public void testMergeSortedLists() {
+    List<Segment> target = new ArrayList<>(Arrays.asList(
+      range(0, 0),
+      range(2, 2),
+      range(4, 4),
+      range(6, 6)
+    ));
+    List<Segment> source = Arrays.asList(
+      range(1, 1),
+      range(2, 2),
+      range(2, 3)
+    );
+    target = mergeSegmentLists(target, source);
+    assertEquals(Arrays.asList(
+      range(0, 0),
+      range(1, 1),
+      range(2, 2),
+      range(2, 3),
+      range(4, 4),
+      range(6, 6)
+    ), target);
+    target = mergeSegmentLists(target, source);
+    assertEquals(Arrays.asList(
+      range(0, 0),
+      range(1, 1),
+      range(2, 2),
+      range(2, 3),
+      range(4, 4),
+      range(6, 6)
+    ), target);
+    target = mergeSegmentLists(target, Arrays.asList(
+      range(-1, -1),
+      range(-1, -2),
+      range(-2, -3)
+    ));
+    assertEquals(Arrays.asList(
+      range(-1, -1),
+      range(-1, -2),
+      range(-2, -3),
+      range(0, 0),
+      range(1, 1),
+      range(2, 2),
+      range(2, 3),
+      range(4, 4),
+      range(6, 6)
+    ), target);
+  }
+
+  private static Segment range(int start, int end) {
+    return new UnfairTextRange(start, end);
+  }
+
+  private static List<Segment> mergeSegmentLists(List<Segment> list1, List<Segment> list2) {
+    return ContainerUtil.mergeSortedLists(list1, list2, Segment.BY_START_OFFSET_THEN_END_OFFSET, true);
+  }
+
+  @Test
+  public void testMergeSortedArrays() {
+    List<Integer> list1 = Collections.singletonList(0);
+    List<Integer> list2 = Collections.singletonList(4);
+    List<Integer> m = ContainerUtil.mergeSortedLists(list1, list2, Comparator.naturalOrder(), true);
+    assertEquals(Arrays.asList(0,4), m);
+    m = ContainerUtil.mergeSortedLists(list2, list1, Comparator.naturalOrder(), true);
+    assertEquals(Arrays.asList(0,4), m);
+  }
+  
+  @Test
+  public void testMergeSortedArrays2() {
+    int[] a1 = {0,4};
+    int[] a2 = {4};
+    int[] m = ArrayUtil.mergeSortedArrays(a1, a2, true);
+    assertArrayEquals(new int[]{0,4}, m);
+    m = ArrayUtil.mergeSortedArrays(a2, a1, true);
+    assertArrayEquals(new int[]{0,4}, m);
   }
 }

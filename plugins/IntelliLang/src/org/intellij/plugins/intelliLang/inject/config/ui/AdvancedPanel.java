@@ -36,22 +36,26 @@ public class AdvancedPanel extends AbstractInjectionPanel<BaseInjection> {
     $$$setupUI$$$(); // see IDEA-9987
   }
 
+  @Override
   protected void apply(BaseInjection other) {
     other.setValuePattern(myValuePattern.getText());
     other.setSingleFile(mySingleFileCheckBox.isSelected());
   }
 
+  @Override
   protected void resetImpl() {
     myValuePattern.setText(myOrigInjection.getValuePattern());
     mySingleFileCheckBox.setSelected(myOrigInjection.isSingleFile());
   }
 
+  @Override
   public JPanel getComponent() {
     return myRoot;
   }
 
   private void createUIComponents() {
     myValuePattern = new LanguageTextField(RegExpLanguage.INSTANCE, myProject, myOrigInjection.getValuePattern(), new LanguageTextField.SimpleDocumentCreator() {
+      @Override
       public void customizePsiFile(PsiFile psiFile) {
         psiFile.putCopyableUserData(ValueRegExpAnnotator.KEY, Boolean.TRUE);
       }

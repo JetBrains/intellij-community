@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.ScrollingUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -33,7 +34,7 @@ import java.util.List;
  */
 public class EditProjectGroupAction extends RecentProjectsWelcomeScreenActionBase {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final ProjectGroup group = ((ProjectGroupActionGroup)getSelectedElements(e).get(0)).getGroup();
     JList list = getList(e);
     assert list != null;
@@ -86,7 +87,7 @@ public class EditProjectGroupAction extends RecentProjectsWelcomeScreenActionBas
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final List<AnAction> selected = getSelectedElements(e);
     boolean enabled = !selected.isEmpty() && selected.get(0) instanceof ProjectGroupActionGroup;
     e.getPresentation().setEnabledAndVisible(enabled);

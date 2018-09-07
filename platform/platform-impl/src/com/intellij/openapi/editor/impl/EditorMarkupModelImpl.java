@@ -17,7 +17,6 @@ import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
@@ -181,7 +180,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     myLastVisualLine = visualLine;
     Rectangle area = myEditor.getScrollingModel().getVisibleArea();
     int visualY = myEditor.getLineHeight() * visualLine;
-    boolean isVisible = area.contains(area.x, visualY) && myWheelAccumulator == 0;
+    boolean isVisible = myWheelAccumulator == 0 && area.contains(area.x, visualY);
 
     if (UIUtil.uiParents(myEditor.getComponent(), false).filter(EditorWindowHolder.class).isEmpty() || isVisible || !UISettings.getInstance().getShowEditorToolTip()) {
       final Set<RangeHighlighter> highlighters = new THashSet<>();
@@ -240,7 +239,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     return myEditor.logicalPositionToOffset(pos);
   }
 
-  private void collectRangeHighlighters(@NotNull MarkupModelEx markupModel, final int visualLine, @NotNull final Collection<RangeHighlighterEx> highlighters) {
+  private void collectRangeHighlighters(@NotNull MarkupModelEx markupModel, final int visualLine, @NotNull final Collection<? super RangeHighlighterEx> highlighters) {
     final int startOffset = getOffset(fitLineToEditor(visualLine - myPreviewLines), true);
     final int endOffset = getOffset(fitLineToEditor(visualLine + myPreviewLines), false);
     markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, highlighter -> {
@@ -273,7 +272,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
   private void getNearestHighlighters(@NotNull MarkupModelEx markupModel,
                                       final int scrollBarY,
-                                      @NotNull final Collection<RangeHighlighter> nearest) {
+                                      @NotNull final Collection<? super RangeHighlighter> nearest) {
     int startOffset = yPositionToOffset(scrollBarY - getMinMarkHeight(), true);
     int endOffset = yPositionToOffset(scrollBarY + getMinMarkHeight(), false);
     markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, highlighter -> {
@@ -490,11 +489,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     @Override
-    protected boolean isMacScrollbarHiddenAndXcodeLikeScrollbar() {
-      return super.isMacScrollbarHiddenAndXcodeLikeScrollbar() && EditorUtil.isRealFileEditor(myEditor);
-    }
-
-    @Override
     public boolean alwaysShowTrack() {
       if (scrollbar.getOrientation() == Adjustable.VERTICAL) return !transparent();
       return super.alwaysShowTrack();
@@ -581,8 +575,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     protected boolean alwaysPaintThumb() {
-      if (scrollbar.getOrientation() == Adjustable.VERTICAL) return !(xcodeLikeScrollbar() && EditorUtil.isRealFileEditor(myEditor));
-      return super.alwaysPaintThumb();
+      return true;
     }
 
     @Override
@@ -613,10 +606,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     protected void doPaintTrack(@NotNull Graphics g, @NotNull JComponent c, @NotNull Rectangle bounds) {
-      if (isMacScrollbarHiddenAndXcodeLikeScrollbar()) {
-        paintTrackBasement(g, bounds);
-        return;
-      }
       Rectangle clip = g.getClipBounds().intersection(bounds);
       if (clip.height == 0) return;
 
@@ -765,7 +754,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     private int drawStripesEndingBefore(int ys,
-                                        @NotNull Queue<PositionedStripe> ends,
+                                        @NotNull Queue<? extends PositionedStripe> ends,
                                         @NotNull List<PositionedStripe> stripes,
                                         @NotNull Graphics g, int yStart) {
       while (!ends.isEmpty()) {
@@ -840,7 +829,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     public void mouseMoved(@NotNull MouseEvent e) {
-      if (isMacScrollbarHiddenAndXcodeLikeScrollbar()) return;
       EditorImpl.MyScrollBar scrollBar = myEditor.getVerticalScrollBar();
       int buttonHeight = scrollBar.getDecScrollButtonHeight();
       int lineCount = getDocument().getLineCount() + myEditor.getSettings().getAdditionalLinesCount();
@@ -987,7 +975,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
   private static class BasicTooltipRendererProvider implements ErrorStripTooltipRendererProvider {
     @Override
-    public TooltipRenderer calcTooltipRenderer(@NotNull final Collection<RangeHighlighter> highlighters) {
+    public TooltipRenderer calcTooltipRenderer(@NotNull final Collection<? extends RangeHighlighter> highlighters) {
       LineTooltipRenderer bigRenderer = null;
       //do not show same tooltip twice
       Set<String> tooltips = null;
@@ -1141,7 +1129,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       update(-1, Collections.emptyList(), false);
     }
 
-    void update(int visualLine, @NotNull Collection<RangeHighlighterEx> rangeHighlighters, boolean showInstantly) {
+    void update(int visualLine, @NotNull Collection<? extends RangeHighlighterEx> rangeHighlighters, boolean showInstantly) {
       myVisualLine = visualLine;
       myShowInstantly = showInstantly;
       myHighlighters.clear();

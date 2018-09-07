@@ -153,6 +153,9 @@ public class DfaExpressionFactory {
       PsiType type = refExpr.getType();
       return myFactory.createTypeValue(type, DfaPsiUtil.getElementNullability(type, psiElement));
     }
+    if (psiElement instanceof PsiVariable && ((PsiVariable)psiElement).getType().equalsToText(CommonClassNames.JAVA_LANG_VOID)) {
+      return myFactory.getConstFactory().getNull();
+    }
     if (psiElement instanceof PsiVariable && psiElement.hasModifierProperty(PsiModifier.FINAL) && !PsiUtil.isAccessedForWriting(refExpr)) {
       DfaValue constValue = myFactory.getConstFactory().create((PsiVariable)psiElement);
       if (constValue != null && !maybeUninitializedConstant(constValue, refExpr, psiElement)) return constValue;
@@ -283,19 +286,19 @@ public class DfaExpressionFactory {
   }
 
   @NotNull
-  private DfaValue getAdvancedExpressionDfaValue(@Nullable PsiExpression expression) {
+  private DfaValue getAdvancedExpressionDfaValue(@Nullable PsiExpression expression, @Nullable PsiType targetType) {
     if (expression == null) return DfaUnknownValue.getInstance();
     DfaValue value = getExpressionDfaValue(expression);
     if (value != null) {
-      return value;
+      return DfaUtil.boxUnbox(value, targetType);
     }
     if (expression instanceof PsiConditionalExpression) {
-      return getAdvancedExpressionDfaValue(((PsiConditionalExpression)expression).getThenExpression()).union(
-        getAdvancedExpressionDfaValue(((PsiConditionalExpression)expression).getElseExpression()));
+      return getAdvancedExpressionDfaValue(((PsiConditionalExpression)expression).getThenExpression(), targetType).union(
+        getAdvancedExpressionDfaValue(((PsiConditionalExpression)expression).getElseExpression(), targetType));
     }
     PsiType type = expression.getType();
     if (type instanceof PsiPrimitiveType) return DfaUnknownValue.getInstance();
-    return myFactory.createTypeValue(type, NullabilityUtil.getExpressionNullability(expression));
+    return DfaUtil.boxUnbox(myFactory.createTypeValue(type, NullabilityUtil.getExpressionNullability(expression)), targetType);
   }
 
   @NotNull
@@ -311,12 +314,14 @@ public class DfaExpressionFactory {
     DfaVariableValue arrayDfaVar = (DfaVariableValue)array;
     PsiModifierListOwner arrayPsiVar = arrayDfaVar.getPsiVariable();
     if (!(arrayPsiVar instanceof PsiVariable)) return DfaUnknownValue.getInstance();
+    PsiType arrayType = ((PsiVariable)arrayPsiVar).getType();
+    PsiType targetType = arrayType instanceof PsiArrayType ? ((PsiArrayType)arrayType).getComponentType() : null;
     PsiExpression[] elements = ExpressionUtils.getConstantArrayElements((PsiVariable)arrayPsiVar);
     if (elements == null || elements.length == 0) return DfaUnknownValue.getInstance();
     indexSet = indexSet.intersect(LongRangeSet.range(0, elements.length - 1));
     if (indexSet.isEmpty() || indexSet.max() - indexSet.min() > 100) return DfaUnknownValue.getInstance();
     return LongStreamEx.of(indexSet.stream())
-                .mapToObj(idx -> getAdvancedExpressionDfaValue(elements[(int)idx]))
+                .mapToObj(idx -> getAdvancedExpressionDfaValue(elements[(int)idx], targetType))
                 .prefix(DfaValue::union)
                 .takeWhileInclusive(value -> value != DfaUnknownValue.getInstance())
                 .reduce((a, b) -> b)
@@ -335,7 +340,7 @@ public class DfaExpressionFactory {
     if (arrayPsiVar instanceof PsiVariable) {
       PsiExpression constantArrayElement = ExpressionUtils.getConstantArrayElement((PsiVariable)arrayPsiVar, index);
       if (constantArrayElement != null) {
-        return getAdvancedExpressionDfaValue(constantArrayElement);
+        return getAdvancedExpressionDfaValue(constantArrayElement, componentType);
       }
     }
     ArrayElementSource indexVariable = getArrayIndexVariable(index);

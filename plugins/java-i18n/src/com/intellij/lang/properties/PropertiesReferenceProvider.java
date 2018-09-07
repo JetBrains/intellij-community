@@ -15,7 +15,6 @@
  */
 package com.intellij.lang.properties;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
 import com.intellij.lang.properties.references.PropertyReference;
 import com.intellij.openapi.util.Ref;
@@ -31,8 +30,6 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author cdr
@@ -55,6 +52,7 @@ public class PropertiesReferenceProvider extends PsiReferenceProvider {
     return target instanceof IProperty;
   }
 
+  @Override
   @NotNull
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
     Object value = null;
@@ -62,7 +60,7 @@ public class PropertiesReferenceProvider extends PsiReferenceProvider {
     boolean propertyRefWithPrefix = false;
     boolean soft = myDefaultSoft;
 
-    if (element instanceof PsiLiteralExpression && canBePropertyKeyRef(element)) {
+    if (element instanceof PsiLiteralExpression && canBePropertyKeyRef((PsiExpression)element)) {
       PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
       value = literalExpression.getValue();
 
@@ -72,7 +70,8 @@ public class PropertiesReferenceProvider extends PsiReferenceProvider {
         PsiAnnotationMemberValue resourceBundleName = resourceBundleValue.get();
         if (resourceBundleName instanceof PsiExpression) {
           PsiExpression expr = (PsiExpression)resourceBundleName;
-          final Object bundleValue = JavaPsiFacade.getInstance(expr.getProject()).getConstantEvaluationHelper().computeConstantExpression(expr);
+          final Object bundleValue =
+            JavaPsiFacade.getInstance(expr.getProject()).getConstantEvaluationHelper().computeConstantExpression(expr);
           bundleName = bundleValue == null ? null : bundleValue.toString();
         }
       }
@@ -102,23 +101,23 @@ public class PropertiesReferenceProvider extends PsiReferenceProvider {
   }
 
   static boolean isNonDynamicAttribute(final PsiElement element) {
-    return PsiTreeUtil.getChildOfAnyType(element, OuterLanguageElement.class,JspXmlTagBase.class) == null;
+    return PsiTreeUtil.getChildOfAnyType(element, OuterLanguageElement.class, JspXmlTagBase.class) == null;
   }
 
-  private static boolean canBePropertyKeyRef(PsiElement element) {
+  private static boolean canBePropertyKeyRef(@NotNull PsiExpression element) {
     PsiElement parent = element.getParent();
     if (parent instanceof PsiExpression) {
-      if ((parent instanceof PsiConditionalExpression)) {
+      if (parent instanceof PsiConditionalExpression) {
         PsiExpression elseExpr = ((PsiConditionalExpression)parent).getElseExpression();
         PsiExpression thenExpr = ((PsiConditionalExpression)parent).getThenExpression();
-        return (element == thenExpr || element == elseExpr) && canBePropertyKeyRef(parent);
+        return (element == thenExpr || element == elseExpr) && canBePropertyKeyRef((PsiExpression)parent);
       }
       else {
         return false;
       }
-    } else {
+    }
+    else {
       return true;
     }
-
   }
 }

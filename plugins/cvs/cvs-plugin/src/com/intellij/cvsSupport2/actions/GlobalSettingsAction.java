@@ -17,13 +17,15 @@ package com.intellij.cvsSupport2.actions;
 
 import com.intellij.cvsSupport2.config.ui.ConfigureCvsGlobalSettingsDialog;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * author: lesya
  */
 public class GlobalSettingsAction extends CvsGlobalAction {
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     new ConfigureCvsGlobalSettingsDialog(e.getProject()).show();
   }
 }

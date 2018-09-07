@@ -62,10 +62,6 @@ public interface Action extends ActionOrGroup {
 
 
   @NotNull
-  @Convert(ActionOrGroupResolveConverter.OnlyActions.class)
-  GenericAttributeValue<ActionOrGroup> getUseShortcutOf();
-
-  @NotNull
   GenericAttributeValue<String> getKeymap();
 
   @NotNull

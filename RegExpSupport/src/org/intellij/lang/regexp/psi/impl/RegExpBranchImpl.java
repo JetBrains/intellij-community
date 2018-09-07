@@ -16,19 +16,18 @@
 package org.intellij.lang.regexp.psi.impl;
 
 import com.intellij.lang.ASTNode;
-
-import org.jetbrains.annotations.NotNull;
-
 import org.intellij.lang.regexp.RegExpElementTypes;
 import org.intellij.lang.regexp.psi.RegExpAtom;
-import org.intellij.lang.regexp.psi.RegExpElementVisitor;
 import org.intellij.lang.regexp.psi.RegExpBranch;
+import org.intellij.lang.regexp.psi.RegExpElementVisitor;
+import org.jetbrains.annotations.NotNull;
 
 public class RegExpBranchImpl extends RegExpElementImpl implements RegExpBranch {
     public RegExpBranchImpl(ASTNode astNode) {
         super(astNode);
     }
 
+    @Override
     @NotNull
     public RegExpAtom[] getAtoms() {
         final ASTNode[] nodes = getNode().getChildren(RegExpElementTypes.ATOMS);
@@ -39,6 +38,7 @@ public class RegExpBranchImpl extends RegExpElementImpl implements RegExpBranch 
         return atoms;
     }
 
+    @Override
     public void accept(RegExpElementVisitor visitor) {
         visitor.visitRegExpBranch(this);
     }

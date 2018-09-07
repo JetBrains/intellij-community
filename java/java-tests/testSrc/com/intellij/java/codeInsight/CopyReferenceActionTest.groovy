@@ -64,9 +64,9 @@ class CopyReferenceActionTest extends LightCodeInsightFixtureTestCase {
     myFixture.addClass("package p; public class Foo {}")
     myFixture.configureByText("Foo.java", "package p1; public class Fo<caret>o {}")
     performCopy()
-    myFixture.configureByText("a.java", "import p.Foo; class Bar { <caret>}")
+    myFixture.configureByText("a.java", "import p.Foo; class Bar extends Foo { <caret>}")
     performPaste()
-    myFixture.checkResult """import p.Foo; class Bar { p1.Foo}"""
+    myFixture.checkResult """import p.Foo; class Bar extends Foo { p1.Foo}"""
   }
 
   void testAddImport() {

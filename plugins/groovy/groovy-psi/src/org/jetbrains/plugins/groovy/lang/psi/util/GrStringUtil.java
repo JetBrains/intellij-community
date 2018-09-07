@@ -15,6 +15,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -596,7 +597,7 @@ public class GrStringUtil {
   public static TextRange getStringContentRange(@Nullable PsiElement element) {
     if (element == null) return null;
     IElementType elementType = element.getNode().getElementType();
-    if (elementType != GroovyTokenTypes.mSTRING_LITERAL && elementType != GroovyTokenTypes.mGSTRING_LITERAL) return null;
+    if (!GroovyTokenSets.STRING_LITERALS.contains(elementType)) return null;
 
     String text = element.getText();
     String startQuote = getStartQuote(text);

@@ -137,7 +137,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (VcsDataKeys.CHANGES.is(dataId) || VcsDataKeys.SELECTED_CHANGES.is(dataId)) {
       List<VcsFullCommitDetails> details = myUi.getVcsLog().getSelectedDetails();
       if (details.isEmpty() || details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;

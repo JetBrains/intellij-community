@@ -152,7 +152,7 @@ public class MavenRunnerPanel {
   }
 
   protected void getData(MavenRunnerSettings data) {
-    myDelegateToMavenCheckbox.setSelected(data.isDelegateToMaven());
+    myDelegateToMavenCheckbox.setSelected(data.isDelegateBuildToMaven());
     myRunInBackgroundCheckbox.setSelected(data.isRunMavenInBackground());
     myVMParametersEditor.setText(data.getVmOptions());
     mySkipTestsCheckBox.setSelected(data.isSkipTests());

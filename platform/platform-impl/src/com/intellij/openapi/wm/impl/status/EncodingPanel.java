@@ -38,8 +38,8 @@ public class EncodingPanel extends EditorBasedStatusBarPopup {
     }
 
     Pair<Charset, String> check = EncodingUtil.getCharsetAndTheReasonTooltip(file);
-    String failReason = check == null ? null : check.second;
-    Charset charset = ObjectUtils.notNull(check == null ? null : check.first, file.getCharset());
+    String failReason = Pair.getSecond(check);
+    Charset charset = ObjectUtils.notNull(Pair.getFirst(check), file.getCharset());
     String charsetName = ObjectUtils.notNull(charset.displayName(), "n/a");
     String toolTipText = failReason == null ? "File Encoding: " + charsetName : StringUtil.capitalize(failReason) + ".";
     return new WidgetState(toolTipText, charsetName, failReason == null);

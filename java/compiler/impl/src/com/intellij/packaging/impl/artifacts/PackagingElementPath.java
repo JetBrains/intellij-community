@@ -115,7 +115,7 @@ public class PackagingElementPath {
     return null;
   }
 
-  public static PackagingElementPath createPath(@NotNull List<PackagingElement<?>> elements) {
+  public static PackagingElementPath createPath(@NotNull List<? extends PackagingElement<?>> elements) {
     PackagingElementPath path = EMPTY;
     for (PackagingElement<?> element : elements) {
       path = new PackagingElementPath(path, element);

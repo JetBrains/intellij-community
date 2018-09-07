@@ -575,12 +575,12 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   }
 
   private class ModuleEditorPanel extends JPanel implements DataProvider{
-    public ModuleEditorPanel() {
+    ModuleEditorPanel() {
       super(new BorderLayout());
     }
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       if (LangDataKeys.MODULE_CONTEXT.is(dataId)) {
         return getModule();
       }

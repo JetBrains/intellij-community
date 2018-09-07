@@ -32,15 +32,11 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
@@ -125,6 +121,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
     return javaChangeInfo;
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     return new ChangeSignatureViewDescriptor(getChangeInfo().getMethod());
@@ -142,6 +139,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
     getChangeInfo().updateMethod((PsiMethod) elements[0]);
   }
 
+  @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     for (ChangeSignatureUsageProcessor processor : ChangeSignatureUsageProcessor.EP_NAME.getExtensions()) {
       if (!processor.setupDefaultValues(myChangeInfo, refUsages, myProject)) return false;

@@ -44,7 +44,6 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.concurrency.FutureResult;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
 import com.intellij.util.textCompletion.TextCompletionProvider;
 import com.intellij.util.textCompletion.TextFieldWithCompletion;
@@ -83,19 +82,18 @@ import java.awt.event.*;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
-import static com.intellij.openapi.ui.DialogWrapper.BALLOON_WARNING_BACKGROUND;
-import static com.intellij.openapi.ui.DialogWrapper.BALLOON_WARNING_BORDER;
 import static com.intellij.openapi.util.text.StringUtil.escapeXml;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.*;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static com.intellij.vcs.log.util.VcsUserUtil.isSamePerson;
 import static git4idea.GitUtil.*;
+import static git4idea.repo.GitSubmoduleKt.isSubmodule;
 import static java.util.Arrays.asList;
 import static one.util.streamex.StreamEx.of;
 
@@ -125,21 +123,19 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     mySettings = settings;
   }
 
-  public boolean keepChangeListAfterCommit(ChangeList changeList) {
-    return false;
-  }
-
   @Override
   public boolean isRefreshAfterCommitNeeded() {
     return true;
   }
 
+  @Override
   @Nullable
   public RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel,
                                                              PairConsumer<Object, Object> additionalDataConsumer) {
     return new GitCheckinOptions(myProject, panel);
   }
 
+  @Override
   @Nullable
   public String getDefaultMessageFor(FilePath[] filesToCheckin) {
     LinkedHashSet<String> messages = newLinkedHashSet();
@@ -177,14 +173,17 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return FileUtil.loadFile(messageFile, encoding);
   }
 
+  @Override
   public String getHelpId() {
     return null;
   }
 
+  @Override
   public String getCheckinOperationName() {
     return GitBundle.getString("commit.action.name");
   }
 
+  @Override
   public List<VcsException> commit(@NotNull List<Change> changes,
                                    @NotNull String message,
                                    @NotNull NullableFunction<Object, Object> parametersHolder, Set<String> feedback) {
@@ -245,7 +244,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
       if (!changedWithIndex.isEmpty() || Registry.is("git.force.commit.using.staging.area")) {
         runWithMessageFile(myProject, root, message, messageFile -> {
-          exceptions.addAll(commitUsingIndex(myProject, root, changes, changedWithIndex, messageFile));
+          exceptions.addAll(commitUsingIndex(repository, changes, changedWithIndex, messageFile));
         });
         if (!exceptions.isEmpty()) return exceptions;
 
@@ -272,6 +271,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
 
       getRepositoryManager(myProject).updateRepository(root);
+      if (isSubmodule(repository)) {
+        VcsDirtyScopeManager.getInstance(myProject).dirDirtyRecursively(repository.getRoot().getParent());
+      }
     }
     catch (VcsException e) {
       exceptions.add(e);
@@ -280,8 +282,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   }
 
   @NotNull
-  private List<VcsException> commitUsingIndex(@NotNull Project project,
-                                              @NotNull VirtualFile root,
+  private List<VcsException> commitUsingIndex(@NotNull GitRepository repository,
                                               @NotNull Collection<CommitChange> rootChanges,
                                               @NotNull Set<CommitChange> changedWithIndex,
                                               @NotNull File messageFile) {
@@ -290,10 +291,16 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       Set<FilePath> added = map2SetNotNull(rootChanges, it -> it.afterPath);
       Set<FilePath> removed = map2SetNotNull(rootChanges, it -> it.beforePath);
 
+      VirtualFile root = repository.getRoot();
       String rootPath = root.getPath();
 
+      List<File> unmergedFiles = GitChangeUtils.getUnmergedFiles(repository);
+      if (!unmergedFiles.isEmpty()) {
+        throw new VcsException("Committing is not possible because you have unmerged files.");
+      }
+
       // Check what is staged besides our changes
-      Collection<Change> stagedChanges = GitChangeUtils.getStagedChanges(project, root);
+      Collection<Change> stagedChanges = GitChangeUtils.getStagedChanges(myProject, root);
       LOG.debug("Found staged changes: " + GitUtil.getLogString(rootPath, stagedChanges));
 
       // Reset staged changes which are not selected for commit
@@ -307,7 +314,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
       if (!excludedStagedChanges.isEmpty()) {
         LOG.info("Staged changes excluded for commit: " + getLogString(rootPath, excludedStagedChanges));
-        resetExcluded(project, root, excludedStagedChanges);
+        resetExcluded(myProject, root, excludedStagedChanges);
       }
       try {
         List<FilePath> alreadyHandledPaths = getPaths(changedWithIndex);
@@ -320,18 +327,18 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         toRemove.removeAll(alreadyHandledPaths);
 
         LOG.debug(String.format("Updating index: added: %s, removed: %s", toAdd, toRemove));
-        updateIndex(project, root, toAdd, toRemove, exceptions);
+        updateIndex(myProject, root, toAdd, toRemove, exceptions);
         if (!exceptions.isEmpty()) return exceptions;
 
 
         // Commit the staging area
         LOG.debug("Performing commit...");
-        commitWithoutPaths(project, root, messageFile);
+        commitWithoutPaths(myProject, root, messageFile);
       }
       finally {
         // Stage back the changes unstaged before commit
         if (!excludedStagedChanges.isEmpty()) {
-          restoreExcluded(project, root, excludedStagedChanges, exceptions);
+          restoreExcluded(myProject, root, excludedStagedChanges);
         }
       }
     }
@@ -515,14 +522,17 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   private Pair<Collection<CommitChange>, List<VcsException>> commitExplicitRenames(@NotNull GitRepository repository,
                                                                                    @NotNull Collection<CommitChange> changes,
                                                                                    @NotNull String message) {
+    List<GitCheckinExplicitMovementProvider> providers =
+      filter(GitCheckinExplicitMovementProvider.EP_NAME.getExtensions(), it -> it.isEnabled(myProject));
+
     List<VcsException> exceptions = new ArrayList<>();
     VirtualFile root = repository.getRoot();
 
-    List<FilePath> beforePaths = ContainerUtil.mapNotNull(changes, it -> it.beforePath);
-    List<FilePath> afterPaths = ContainerUtil.mapNotNull(changes, it -> it.afterPath);
+    List<FilePath> beforePaths = mapNotNull(changes, it -> it.beforePath);
+    List<FilePath> afterPaths = mapNotNull(changes, it -> it.afterPath);
 
     Set<Movement> movedPaths = new HashSet<>();
-    for (GitCheckinExplicitMovementProvider provider : GitCheckinExplicitMovementProvider.EP_NAME.getExtensions()) {
+    for (GitCheckinExplicitMovementProvider provider : providers) {
       Collection<Movement> providerMovements = provider.collectExplicitMovements(myProject, beforePaths, afterPaths);
       if (!providerMovements.isEmpty()) {
         message = provider.getCommitMessage(message);
@@ -538,8 +548,13 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       Collection<CommitChange> newRootChanges = committedAndNewChanges.second;
 
       runWithMessageFile(myProject, root, message, moveMessageFile -> {
-        exceptions.addAll(commitUsingIndex(myProject, root, movedChanges, new HashSet<>(movedChanges), moveMessageFile));
+        exceptions.addAll(commitUsingIndex(repository, movedChanges, new HashSet<>(movedChanges), moveMessageFile));
       });
+
+      List<Couple<FilePath>> committedMovements = mapNotNull(movedChanges, it -> Couple.of(it.beforePath, it.afterPath));
+      for (GitCheckinExplicitMovementProvider provider : providers) {
+        provider.afterMovementsCommitted(myProject, committedMovements);
+      }
 
       return Pair.create(newRootChanges, exceptions);
     }
@@ -673,19 +688,20 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       GitLineHandler handler = new GitLineHandler(project, root, GitCommand.RESET);
       handler.endOptions();
       handler.addParameters(paths);
-      Git.getInstance().runCommand(handler).getOutputOrThrow();
+      Git.getInstance().runCommand(handler).throwOnError();
     }
   }
 
   private static void restoreExcluded(@NotNull Project project,
                                       @NotNull VirtualFile root,
-                                      @NotNull Collection<CommitChange> changes,
-                                      @NotNull List<VcsException> exceptions) throws VcsException {
+                                      @NotNull Collection<CommitChange> changes) {
+    List<VcsException> restoreExceptions = new ArrayList<>();
+
     Set<FilePath> toAdd = new HashSet<>();
     Set<FilePath> toRemove = new HashSet<>();
 
     for (CommitChange change : changes) {
-      if (addAsCaseOnlyRename(project, root, change)) continue;
+      if (addAsCaseOnlyRename(project, root, change, restoreExceptions)) continue;
 
       addIfNotNull(toAdd, change.afterPath);
       addIfNotNull(toRemove, change.beforePath);
@@ -693,10 +709,15 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     toRemove.removeAll(toAdd);
 
     LOG.debug(String.format("Restoring staged changes after commit: added: %s, removed: %s", toAdd, toRemove));
-    updateIndex(project, root, toAdd, toRemove, exceptions);
+    updateIndex(project, root, toAdd, toRemove, restoreExceptions);
+
+    for (VcsException e : restoreExceptions) {
+      LOG.warn(e);
+    }
   }
 
-  private static boolean addAsCaseOnlyRename(@NotNull Project project, @NotNull VirtualFile root, @NotNull CommitChange change) {
+  private static boolean addAsCaseOnlyRename(@NotNull Project project, @NotNull VirtualFile root, @NotNull CommitChange change,
+                                             @NotNull List<VcsException> exceptions) {
     try {
       if (!isCaseOnlyRename(change)) return false;
 
@@ -706,16 +727,17 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       LOG.debug(String.format("Restoring staged case-only rename after commit: %s", change));
       GitLineHandler h = new GitLineHandler(project, root, GitCommand.MV);
       h.addParameters("-f", beforePath.getPath(), afterPath.getPath());
-      Git.getInstance().runCommandWithoutCollectingOutput(h).getOutputOrThrow();
+      Git.getInstance().runCommandWithoutCollectingOutput(h).throwOnError();
       return true;
     }
     catch (VcsException e) {
-      LOG.warn(e);
+      exceptions.add(e);
       return false;
     }
   }
 
 
+  @Override
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
     return commit(changes, preparedComment, FunctionUtil.nullConstant(), null);
   }
@@ -789,8 +811,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       try {
         ApplicationManager.getApplication().invokeAndWait(() -> {
           String message = GitBundle.message("commit.partial.merge.message", partialOperation.getName());
-          SelectFilePathsDialog dialog = new SelectFilePathsDialog(project, files, message,
-                                                                   null, "Commit All Files", CommonBundle.getCancelButtonText(), false);
+          SelectFilePathsDialog dialog = new SelectFilePathsDialog(project, files, message, null, "Commit All Files",
+                                                                   CommonBundle.getCancelButtonText(), false);
           dialog.setTitle(GitBundle.getString("commit.partial.merge.title"));
           dialog.show();
           mergeAll.set(dialog.isOK());
@@ -849,7 +871,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       handler.addParameters("--no-verify");
     }
     handler.endOptions();
-    Git.getInstance().runCommand(handler).getOutputOrThrow();
+    Git.getInstance().runCommand(handler).throwOnError();
   }
 
   /**
@@ -952,6 +974,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
   }
 
+  @Override
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {
     ArrayList<VcsException> rc = new ArrayList<>();
     Map<VirtualFile, List<FilePath>> sortedFiles;
@@ -1002,10 +1025,11 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
       handler.endOptions();
       handler.addParameters(paths);
-      Git.getInstance().runCommand(handler).getOutputOrThrow();
+      Git.getInstance().runCommand(handler).throwOnError();
     }
   }
 
+  @Override
   public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
     ArrayList<VcsException> rc = new ArrayList<>();
     Map<VirtualFile, List<VirtualFile>> sortedFiles;
@@ -1100,7 +1124,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
 
     GitCheckinOptions(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
-      myExplicitMovementProviders = filter(GitCheckinExplicitMovementProvider.EP_NAME.getExtensions(), it -> it.isEnabled(myProject));
+      myExplicitMovementProviders = collectActiveMovementProviders(myProject);
 
       myCheckinProjectPanel = panel;
       myAuthorField = createTextField(project, getAuthors(project));
@@ -1113,8 +1137,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       myAuthorNotificationBuilder = JBPopupFactory.getInstance().
         createBalloonBuilder(new JLabel(GitBundle.getString("commit.author.diffs"))).
         setBorderInsets(UIManager.getInsets("Balloon.error.textInsets")).
-        setBorderColor(BALLOON_WARNING_BORDER).
-        setFillColor(BALLOON_WARNING_BACKGROUND).
+        setBorderColor(JBUI.CurrentTheme.Validator.warningBorderColor()).
+        setFillColor(JBUI.CurrentTheme.Validator.warningBackgroundColor()).
         setHideOnClickOutside(true).
         setHideOnFrameResize(false);
       myAuthorField.addHierarchyListener(new HierarchyListener() {
@@ -1194,7 +1218,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
 
     private class MyAmendComponent extends AmendComponent {
-      public MyAmendComponent(@NotNull Project project, @NotNull GitRepositoryManager manager, @NotNull CheckinProjectPanel panel) {
+      MyAmendComponent(@NotNull Project project, @NotNull GitRepositoryManager manager, @NotNull CheckinProjectPanel panel) {
         super(project, manager, panel);
         myAmend.addActionListener(new ActionListener() {
           @Override
@@ -1331,6 +1355,24 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       GitUserRegistry gitUserRegistry = GitUserRegistry.getInstance(myProject);
       return of(affectedGitRoots).map(vf -> gitUserRegistry.getUser(vf)).allMatch(user -> user != null && isSamePerson(author, user));
     }
+
+    @NotNull
+    private List<GitCheckinExplicitMovementProvider> collectActiveMovementProviders(@NotNull Project project) {
+      GitCheckinExplicitMovementProvider[] allProviders = GitCheckinExplicitMovementProvider.EP_NAME.getExtensions();
+      List<GitCheckinExplicitMovementProvider> enabledProviders = filter(allProviders, it -> it.isEnabled(project));
+      if (enabledProviders.isEmpty()) return Collections.emptyList();
+      if (Registry.is("git.explicit.commit.renames.prohibit.multiple.calls")) return enabledProviders;
+
+      List<CommitChange> changes = map(ChangeListManager.getInstance(project).getAllChanges(), CommitChange::new);
+      List<FilePath> beforePaths = mapNotNull(changes, it -> it.beforePath);
+      List<FilePath> afterPaths = mapNotNull(changes, it -> it.afterPath);
+
+      return filter(enabledProviders, it -> {
+        Collection<Movement> movements = it.collectExplicitMovements(project, beforePaths, afterPaths);
+        List<Movement> filteredMovements = filterExcludedChanges(movements, changes);
+        return !filteredMovements.isEmpty();
+      });
+    }
   }
 
   public void setNextCommitIsPushed(Boolean nextCommitIsPushed) {
@@ -1356,7 +1398,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     @Nullable public final String changelistId;
     @Nullable public final VirtualFile virtualFile;
 
-    public CommitChange(@NotNull Change change) {
+    CommitChange(@NotNull Change change) {
       this.beforePath = getBeforePath(change);
       this.afterPath = getAfterPath(change);
 
@@ -1380,12 +1422,12 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
     }
 
-    public CommitChange(@Nullable FilePath beforePath,
+    CommitChange(@Nullable FilePath beforePath,
                         @Nullable FilePath afterPath) {
       this(beforePath, afterPath, null, null, null, null);
     }
 
-    public CommitChange(@Nullable FilePath beforePath,
+    CommitChange(@Nullable FilePath beforePath,
                         @Nullable FilePath afterPath,
                         @Nullable VcsRevisionNumber beforeRevision,
                         @Nullable VcsRevisionNumber afterRevision,

@@ -50,11 +50,11 @@ public class Utils{
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(false);
       super.update(e);
     }
@@ -306,14 +306,6 @@ public class Utils{
         if (!StringUtil.isEmpty(text) || (i > 0 && i < size - 1)) {
           component.add(new JPopupMenu.Separator() {
             private final JMenuItem myMenu = !StringUtil.isEmpty(text) ? new JMenuItem(text) : null;
-            @Override
-            public Insets getInsets() {
-              final Insets insets = super.getInsets();
-              final boolean fix = UIUtil.isUnderGTKLookAndFeel() &&
-                                  getBorder() != null &&
-                                  insets.top + insets.bottom == 0;
-              return fix ? new Insets(2, insets.left, 3, insets.right) : insets;  // workaround for Sun bug #6636964
-            }
 
             @Override
             public void doLayout() {
@@ -325,8 +317,7 @@ public class Utils{
 
             @Override
             protected void paintComponent(Graphics g) {
-              if (UIUtil.isUnderWindowsClassicLookAndFeel() || UIUtil.isUnderDarcula() || UIUtil.isUnderWindowsLookAndFeel()
-                  || UIUtil.isUnderWin10LookAndFeel()) {
+              if (UIUtil.isUnderDarcula() || UIUtil.isUnderWin10LookAndFeel()) {
                 g.setColor(component.getBackground());
                 g.fillRect(0, 0, getWidth(), getHeight());
               }
@@ -355,7 +346,7 @@ public class Utils{
       else if (action instanceof ActionGroup &&
                !(((ActionGroup)action).canBePerformed(context) &&
                  !hasVisibleChildren((ActionGroup)action, presentationFactory, context, place))) {
-        ActionMenu menu = new ActionMenu(context, place, (ActionGroup)action, presentationFactory, enableMnemonics, false, useDarkIcons);
+        ActionMenu menu = new ActionMenu(context, place, (ActionGroup)action, presentationFactory, enableMnemonics, useDarkIcons);
         component.add(menu);
         children.add(menu);
       }

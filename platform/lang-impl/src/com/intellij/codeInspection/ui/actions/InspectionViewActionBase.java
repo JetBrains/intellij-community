@@ -27,7 +27,7 @@ public abstract class InspectionViewActionBase extends AnAction {
   }
 
   @Override
-  public final void update(AnActionEvent e) {
+  public final void update(@NotNull AnActionEvent e) {
     final InspectionResultsView view = getView(e);
     final boolean enabled = view != null && isEnabled(view, e);
     final Presentation presentation = e.getPresentation();

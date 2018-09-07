@@ -66,15 +66,10 @@ public class FileAttribute {
 
   @Nullable
   public byte[] readAttributeBytes(VirtualFile file) throws IOException {
-    final DataInputStream stream = readAttribute(file);
-    if (stream == null) return null;
-
-    try {
+    try (DataInputStream stream = readAttribute(file)) {
+      if (stream == null) return null;
       int len = stream.readInt();
       return FileUtil.loadBytes(stream, len);
-    }
-    finally {
-      stream.close();
     }
   }
 

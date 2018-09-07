@@ -149,6 +149,7 @@
     <applicationService serviceImplementation="com.intellij.debugger.settings.NodeRendererSettings"/>
     <applicationService serviceImplementation="com.intellij.debugger.settings.ViewsGeneralSettings"/>
     <applicationService serviceImplementation="com.intellij.debugger.settings.DebuggerSettings"/>
+    <projectService serviceImplementation="com.intellij.debugger.settings.DebuggerProjectSettings"/>
     <applicationService serviceImplementation="com.intellij.debugger.settings.ThreadsViewSettings"/>
 
     <applicationService serviceInterface="com.intellij.packaging.elements.PackagingElementFactory"

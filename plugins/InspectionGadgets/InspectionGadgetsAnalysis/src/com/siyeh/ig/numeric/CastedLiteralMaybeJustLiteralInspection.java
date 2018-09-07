@@ -70,7 +70,7 @@ abstract class CastedLiteralMaybeJustLiteralInspection extends BaseInspection {
 
     private final String replacementString;
 
-    public ReplaceCastedLiteralWithJustLiteralFix(String replacementString) {
+    ReplaceCastedLiteralWithJustLiteralFix(String replacementString) {
       this.replacementString = replacementString;
     }
 

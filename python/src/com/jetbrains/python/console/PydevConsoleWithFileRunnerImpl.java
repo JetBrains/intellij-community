@@ -16,13 +16,14 @@ public class PydevConsoleWithFileRunnerImpl extends PydevConsoleRunnerImpl {
   public PydevConsoleWithFileRunnerImpl(@NotNull Project project,
                                         @NotNull Sdk sdk,
                                         @NotNull PyConsoleType consoleType,
+                                        @NotNull String title,
                                         @Nullable String workingDir,
                                         @NotNull Map<String, String> environmentVariables,
                                         @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider,
                                         @NotNull Consumer<String> rerunAction,
                                         @NotNull PythonRunConfiguration config,
                                         String... statementsToExecute) {
-    super(project, sdk, consoleType, workingDir, environmentVariables, settingsProvider, rerunAction, statementsToExecute);
+    super(project, sdk, consoleType, title, workingDir, environmentVariables, settingsProvider, rerunAction, statementsToExecute);
     myConfig = config;
   }
 

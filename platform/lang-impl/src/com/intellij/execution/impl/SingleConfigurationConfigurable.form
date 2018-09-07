@@ -95,7 +95,7 @@
               <text resource-bundle="messages/ExecutionBundle" key="run.configuration.store.place.option"/>
             </properties>
           </component>
-          <component id="d7b04" class="com.intellij.ui.components.JBCheckBox" binding="myCbSingleton">
+          <component id="d7b04" class="com.intellij.ui.components.JBCheckBox" binding="myIsAllowMultipleInstances">
             <constraints>
               <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>

@@ -214,7 +214,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
     }
   }
 
-  private static void replaceDuplicate(final Project project, final Map<PsiMember, List<Match>> duplicates, final Set<PsiMember> methods) {
+  public static void replaceDuplicate(final Project project, final Map<PsiMember, List<Match>> duplicates, final Set<PsiMember> methods) {
     final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     if (progressIndicator != null && progressIndicator.isCanceled()) return;
 
@@ -244,7 +244,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
     ApplicationManager.getApplication().invokeLater(replaceRunnable, project.getDisposed());
   }
 
-  public static List<Match> hasDuplicates(final PsiFile file, final PsiMember member) {
+  public static List<Match> hasDuplicates(final PsiElement file, final PsiMember member) {
     final DuplicatesFinder duplicatesFinder = createDuplicatesFinder(member);
     if (duplicatesFinder == null) {
       return Collections.emptyList();

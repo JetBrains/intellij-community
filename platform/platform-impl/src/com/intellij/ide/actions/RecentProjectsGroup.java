@@ -40,7 +40,7 @@ public class RecentProjectsGroup extends ActionGroup implements DumbAware {
   }
 
   @Override
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     presentation.setEnabled(RecentProjectsManager.getInstance().getRecentProjectsActions(true).length > 0);
   }

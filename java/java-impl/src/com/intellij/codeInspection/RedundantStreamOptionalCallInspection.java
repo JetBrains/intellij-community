@@ -331,7 +331,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
   private static class RemoveCallFix implements LocalQuickFix {
     private final String myMethodName;
 
-    public RemoveCallFix(String methodName) {myMethodName = methodName;}
+    RemoveCallFix(String methodName) {myMethodName = methodName;}
 
     @Nls
     @NotNull
@@ -353,8 +353,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
       if (call == null) return;
       PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
       if (qualifier == null) return;
-      CommentTracker ct = new CommentTracker();
-      ct.replaceAndRestoreComments(call, ct.markUnchanged(qualifier));
+      new CommentTracker().replaceAndRestoreComments(call, qualifier);
     }
   }
 

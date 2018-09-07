@@ -524,7 +524,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     private final StringBuilder myResult = new StringBuilder();
     private final boolean myPreserveFormatting;
 
-    public InitializerTextBuilder(@NotNull PyExpression expression) {
+    InitializerTextBuilder(@NotNull PyExpression expression) {
       myPreserveFormatting = shouldPreserveFormatting(expression);
       if (PsiTreeUtil.findChildOfType(expression, PsiComment.class) != null) {
         myResult.append(expression.getText());
@@ -695,7 +695,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   private static class PyInplaceVariableIntroducer extends InplaceVariableIntroducer<PsiElement> {
     private final PyTargetExpression myTarget;
 
-    public PyInplaceVariableIntroducer(PyTargetExpression target,
+    PyInplaceVariableIntroducer(PyTargetExpression target,
                                        IntroduceOperation operation,
                                        List<PsiElement> occurrences) {
       super(target, operation.getEditor(), operation.getProject(), "Introduce Variable",

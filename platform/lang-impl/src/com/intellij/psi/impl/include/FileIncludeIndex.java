@@ -207,7 +207,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
   private static class IncludeKey implements Key {
     private final String myFileName;
 
-    public IncludeKey(String fileName) {
+    IncludeKey(String fileName) {
       myFileName = fileName;
     }
 

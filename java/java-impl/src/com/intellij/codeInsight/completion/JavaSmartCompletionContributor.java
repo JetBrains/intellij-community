@@ -124,7 +124,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
     extend(CompletionType.SMART, psiElement(), new CompletionProvider<CompletionParameters>() {
       @Override
-      protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
+      protected void addCompletions(@NotNull final CompletionParameters parameters, @NotNull final ProcessingContext context, @NotNull final CompletionResultSet result) {
         if (SmartCastProvider.shouldSuggestCast(parameters)) return;
         
         final PsiElement element = parameters.getPosition();

@@ -39,8 +39,7 @@ public class CommandTestHelper {
       System.exit(1);
     }
 
-    OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(out), ENC);
-    try {
+    try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(out), ENC)) {
       if (mode == ENV) {
         for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
           writer.write(format(entry));
@@ -53,9 +52,6 @@ public class CommandTestHelper {
           writer.write('\n');
         }
       }
-    }
-    finally {
-      writer.close();
     }
   }
 

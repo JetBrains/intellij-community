@@ -18,8 +18,10 @@ package com.intellij.openapi.editor.richcopy;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.richcopy.settings.RichCopySettings;
+import com.intellij.openapi.project.DumbAwareAction;
+import org.jetbrains.annotations.NotNull;
 
-public abstract class ForcedCopyModeAction extends AnAction {
+public abstract class ForcedCopyModeAction extends DumbAwareAction {
   private final boolean myRichCopyEnabled;
   
   protected ForcedCopyModeAction(boolean richCopyEnabled) {
@@ -27,7 +29,7 @@ public abstract class ForcedCopyModeAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Presentation p = e.getPresentation();
     Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
     p.setVisible(RichCopySettings.getInstance().isEnabled() != myRichCopyEnabled &&
@@ -36,7 +38,7 @@ public abstract class ForcedCopyModeAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     RichCopySettings settings = RichCopySettings.getInstance();
     boolean savedValue = settings.isEnabled();
     try {

@@ -33,7 +33,7 @@ public class ExtensionOrderKeywordCompletionContributor extends CompletionContri
     extend(CompletionType.BASIC, getCapture(), new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
-                                    ProcessingContext context,
+                                    @NotNull ProcessingContext context,
                                     @NotNull CompletionResultSet result) {
         String prefix = getCompletionPrefix(parameters);
         if (!shouldProposeKeywordsAfterPrefix(prefix)) {

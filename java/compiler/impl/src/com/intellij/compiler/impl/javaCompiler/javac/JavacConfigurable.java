@@ -52,6 +52,7 @@ public class JavacConfigurable implements Configurable{
     myOptionsOverride = new CompilerModuleOptionsComponent(myProject);
   }
 
+  @Override
   public String getDisplayName() {
     return null;
   }
@@ -61,10 +62,12 @@ public class JavacConfigurable implements Configurable{
     return null;
   }
 
+  @Override
   public JComponent createComponent() {
     return myPanel;
   }
 
+  @Override
   public boolean isModified() {
     boolean isModified = false;
     isModified |= ComparingUtils.isModified(myCbPreferTargetJdkCompiler, myJavacSettings.PREFER_TARGET_JDK_COMPILER);
@@ -77,6 +80,7 @@ public class JavacConfigurable implements Configurable{
     return isModified;
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     myJavacSettings.PREFER_TARGET_JDK_COMPILER =  myCbPreferTargetJdkCompiler.isSelected();
     myJavacSettings.DEPRECATION =  myCbDeprecation.isSelected();
@@ -87,6 +91,7 @@ public class JavacConfigurable implements Configurable{
     myJavacSettings.ADDITIONAL_OPTIONS_OVERRIDE.putAll(myOptionsOverride.getModuleOptionsMap());
   }
 
+  @Override
   public void reset() {
     myCbPreferTargetJdkCompiler.setSelected(myJavacSettings.PREFER_TARGET_JDK_COMPILER);
     myCbDeprecation.setSelected(myJavacSettings.DEPRECATION);

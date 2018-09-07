@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex
 
 import com.intellij.openapi.components.BaseState
@@ -17,10 +15,10 @@ import javax.swing.tree.TreePath
 @Tag("profile-state")
 internal class VisibleTreeState : BaseState() {
   @get:XCollection(elementName = "expanded", valueAttributeName = "path", propertyElementName = "expanded-state")
-  private var expandedNodes by property(TreeSet<State>())
+  var expandedNodes by property(TreeSet<State>())
 
   @get:XCollection(elementName = "selected", valueAttributeName = "path", propertyElementName = "selected-state")
-  private var selectedNodes by property(TreeSet<State>())
+  var selectedNodes by property(TreeSet<State>())
 
   fun expandNode(node: InspectionConfigTreeNode) {
     expandedNodes.add(getState(node))
@@ -99,7 +97,11 @@ internal class VisibleTreeState : BaseState() {
 
   internal class State @JvmOverloads constructor(key: String? = null): Comparable<State>, BaseState() {
     @get:Tag("id")
-    var key by string(key)
+    var key by string()
+
+    init {
+      this.key = key
+    }
 
     override fun compareTo(other: State) = StringUtil.compare(key, other.key, false)
   }

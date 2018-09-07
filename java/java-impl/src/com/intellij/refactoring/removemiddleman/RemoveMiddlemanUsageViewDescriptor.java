@@ -30,20 +30,24 @@ class RemoveMiddlemanUsageViewDescriptor implements UsageViewDescriptor {
     this.field = field;
   }
 
+  @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactorJBundle
       .message("references.to.expose.usage.view", MyUsageViewUtil.getUsageCountInfo(usagesCount, filesCount, "reference"));
   }
 
+  @Override
   public String getProcessedElementsHeader() {
     return RefactorJBundle.message("remove.middleman.field.header");
   }
 
+  @Override
   @NotNull
   public PsiElement[] getElements() {
     return new PsiElement[]{field};
   }
 
+  @Override
   public String getCommentReferencesText(int usagesCount, int filesCount) {
     return null;
   }

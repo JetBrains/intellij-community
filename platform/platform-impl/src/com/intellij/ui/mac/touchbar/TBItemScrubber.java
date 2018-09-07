@@ -52,7 +52,7 @@ class TBItemScrubber extends TBItem {
     final String myText;
     final NSTLibrary.Action myAction;
 
-    public ItemData(Icon icon, String text, NSTLibrary.Action action) {
+    ItemData(Icon icon, String text, NSTLibrary.Action action) {
       this.myIcon = icon;
       this.myText = text;
       this.myAction = action;

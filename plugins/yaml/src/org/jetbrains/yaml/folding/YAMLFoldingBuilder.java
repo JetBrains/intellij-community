@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.folding;
 
 import com.intellij.lang.ASTNode;
@@ -64,6 +65,7 @@ public class YAMLFoldingBuilder extends CustomFoldingBuilder {
     }
   }
 
+  @Override
   @Nullable
   protected String getLanguagePlaceholderText(@NotNull ASTNode node, @NotNull TextRange range) {
     return getPlaceholderText(SourceTreeToPsiMap.treeElementToPsi(node));
@@ -110,6 +112,7 @@ public class YAMLFoldingBuilder extends CustomFoldingBuilder {
     return "...";
   }
 
+  @Override
   protected boolean isRegionCollapsedByDefault(@NotNull ASTNode node) {
     return false;
   }

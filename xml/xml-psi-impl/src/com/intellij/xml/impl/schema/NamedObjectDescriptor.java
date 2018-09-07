@@ -71,7 +71,7 @@ public class NamedObjectDescriptor implements PsiWritableMetaData, PsiMetaData {
 
   @NotNull
   @Override
-  public Object[] getDependences() {
+  public Object[] getDependencies() {
     return new Object[] { myDcl };
   }
 

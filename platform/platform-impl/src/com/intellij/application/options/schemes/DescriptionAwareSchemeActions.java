@@ -34,11 +34,11 @@ public abstract class DescriptionAwareSchemeActions<T extends Scheme> extends Ab
   protected abstract void setDescription(@NotNull T scheme, @NotNull String newDescription);
 
   @Override
-  protected void addAdditionalActions(@NotNull List<AnAction> defaultActions) {
+  protected void addAdditionalActions(@NotNull List<? super AnAction> defaultActions) {
     defaultActions.add(new AnAction("Edit description") {
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         T scheme = getSchemesPanel().getSelectedScheme();
         if (scheme == null) {
           e.getPresentation().setEnabledAndVisible(false);
@@ -50,7 +50,7 @@ public abstract class DescriptionAwareSchemeActions<T extends Scheme> extends Ab
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         ((AbstractDescriptionAwareSchemesPanel<T>) mySchemesPanel).editDescription(getDescription(getSchemesPanel().getSelectedScheme()));
       }
     });

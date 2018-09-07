@@ -5,6 +5,7 @@ package com.intellij.java.psi
 
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.PsiJavaFile
+import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.ThrowableRunnable
 import groovy.transform.CompileStatic
@@ -67,6 +68,13 @@ class JavaPsiTest extends LightCodeInsightFixtureTestCase {
     assert expr != null
     runCommand { expr.firstChild.delete() }
     assert expr.text == "expr"
+  }
+
+  void "test add package statement into file with broken package"() {
+    def file = configureFile("package ;")
+    runCommand { file.setPackageName('foo') }
+    PsiTestUtil.checkFileStructure(file)
+    assert myFixture.editor.document.text.startsWith('package foo;')
   }
 
   private PsiJavaFile configureFile(String text) {

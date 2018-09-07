@@ -3,6 +3,7 @@ package com.intellij.testGuiFramework.tests.community.focus
 
 import com.intellij.openapi.keymap.impl.ui.ShortcutTextField
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.launcher.system.SystemInfo
 import com.intellij.testGuiFramework.tests.community.CommunityProjectCreator
@@ -34,16 +35,21 @@ class KeyMapSettingsTestFocusTest : GuiTestCase() {
     val settingsTitle = if (SystemInfo.isMac()) "Preferences" else "Settings"
     dialog(settingsTitle){
       jTree("Keymap").clickPath("Keymap")
-      actionButton("Find Actions by Shortcut").click()
-      val keyboardShortcutPanel = checkbox("Second stroke").target().parent
-      val keyMapTextField = shortcutTextField(keyboardShortcutPanel)
-      keyMapTextField.click()
-      shortcut(CONTROL + N)
-      Pause.pause(500)
-      shortcut(B)
-      Assert.assertEquals("B", keyMapTextField.target().text)
-      shortcut(ESCAPE)
-      shortcut(ESCAPE) //close keymap popup
+      val actionButton = actionButton("Find Actions by Shortcut", Timeouts.seconds10)
+      try {
+        actionButton.click()
+      } catch (e: IllegalStateException) {
+        actionButton("Find Actions by Shortcut").click() // in case of ActionToolBar was reinitialised
+      }
+        val keyboardShortcutPanel = checkbox("Second stroke").target().parent
+        val keyMapTextField = shortcutTextField(keyboardShortcutPanel)
+        keyMapTextField.click()
+        shortcut(CONTROL + N)
+        Pause.pause(500)
+        shortcut(B)
+        Assert.assertEquals("B", keyMapTextField.target().text)
+        shortcut(ESCAPE)
+        shortcut(ESCAPE) //close keymap popup
       Pause.pause(500)
       button("Cancel").click()
     }

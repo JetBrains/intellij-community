@@ -116,7 +116,7 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
     final JPanel panel = new JPanel(new BorderLayout());
     DataManager.registerDataProvider(panel, new DataProvider() {
       @Override
-      public Object getData(@NonNls String dataId) {
+      public Object getData(@NotNull @NonNls String dataId) {
         final TreePath path = myTree.getSelectionPath();
         if (path != null) {
           Object component = path.getLastPathComponent();
@@ -189,7 +189,7 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
     new AnAction() {
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         VirtualFile file = getFileFromSelection();
         if (file != null) {
           final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
@@ -277,7 +277,7 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
 
   private static class MyDuplicatesNode extends DefaultMutableTreeNode {
 
-    public MyDuplicatesNode(DefaultMutableTreeNode node, Set<VirtualFile> files) {
+    MyDuplicatesNode(DefaultMutableTreeNode node, Set<VirtualFile> files) {
       super(files);
       setParent(node);
       children = files.stream().map(file -> new MyFileNode(this, file)).collect(Collectors.toCollection(Vector::new));
@@ -290,7 +290,7 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
   }
 
   private static class MyFileNode extends DefaultMutableTreeNode {
-    public MyFileNode(DefaultMutableTreeNode node, VirtualFile file) {
+    MyFileNode(DefaultMutableTreeNode node, VirtualFile file) {
       super(file);
       setParent(node);
     }

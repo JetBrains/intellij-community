@@ -1,12 +1,17 @@
 import os
 import sys
 import traceback
-from _pydev_bundle.pydev_imports import xmlrpclib, _queue, Exec
-from  _pydev_bundle._pydev_calltip_util import get_description
+
+from _pydev_bundle import _pydev_imports_tipper
+from _pydev_bundle.pydev_code_executor import BaseCodeExecutor
+from _pydev_bundle.pydev_console_types import CodeFragment
+from _pydev_bundle.pydev_imports import Exec
+from _pydev_bundle.pydev_stdin import StdIn, DebugConsoleStdIn
 from _pydev_imps._pydev_saved_modules import thread
+from _pydevd_bundle import pydevd_thrift
 from _pydevd_bundle import pydevd_vars
-from _pydevd_bundle import pydevd_xml
-from _pydevd_bundle.pydevd_constants import IS_JYTHON, dict_iter_items, NEXT_VALUE_SEPARATOR
+from _pydevd_bundle.pydevd_constants import IS_JYTHON, dict_iter_items
+from pydev_console.protocol import CompletionOption, CompletionOptionType
 
 try:
     import cStringIO as StringIO #may not always be available @UnusedImport
@@ -15,6 +20,25 @@ except:
         import StringIO #@Reimport
     except:
         import io as StringIO
+
+# translation to Thrift `CompletionOptionType` enumeration
+COMPLETION_OPTION_TYPES = {
+    _pydev_imports_tipper.TYPE_IMPORT: CompletionOptionType.IMPORT,
+    _pydev_imports_tipper.TYPE_CLASS: CompletionOptionType.CLASS,
+    _pydev_imports_tipper.TYPE_FUNCTION: CompletionOptionType.FUNCTION,
+    _pydev_imports_tipper.TYPE_ATTR: CompletionOptionType.ATTR,
+    _pydev_imports_tipper.TYPE_BUILTIN: CompletionOptionType.BUILTIN,
+    _pydev_imports_tipper.TYPE_PARAM: CompletionOptionType.PARAM,
+    _pydev_imports_tipper.TYPE_IPYTHON: CompletionOptionType.IPYTHON,
+    _pydev_imports_tipper.TYPE_IPYTHON_MAGIC: CompletionOptionType.IPYTHON_MAGIC,
+}
+
+
+def _to_completion_option(word):
+    name, documentation, args, ret_type = word
+    completion_option_type = COMPLETION_OPTION_TYPES[ret_type]
+    return CompletionOption(name, documentation, args.split(), completion_option_type)
+
 
 # =======================================================================================================================
 # Null
@@ -62,306 +86,26 @@ class Null:
 
 
 # =======================================================================================================================
-# BaseStdIn
-# =======================================================================================================================
-class BaseStdIn:
-    def __init__(self, original_stdin=sys.stdin, *args, **kwargs):
-        try:
-            self.encoding = sys.stdin.encoding
-        except:
-            # Not sure if it's available in all Python versions...
-            pass
-        self.original_stdin = original_stdin
-
-    def readline(self, *args, **kwargs):
-        # sys.stderr.write('Cannot readline out of the console evaluation\n') -- don't show anything
-        # This could happen if the user had done input('enter number).<-- upon entering this, that message would appear,
-        # which is not something we want.
-        return '\n'
-
-    def write(self, *args, **kwargs):
-        pass  # not available StdIn (but it can be expected to be in the stream interface)
-
-    def flush(self, *args, **kwargs):
-        pass  # not available StdIn (but it can be expected to be in the stream interface)
-
-    def read(self, *args, **kwargs):
-        # in the interactive interpreter, a read and a readline are the same.
-        return self.readline()
-
-    def close(self, *args, **kwargs):
-        pass  # expected in StdIn
-
-    def __iter__(self):
-        # BaseStdIn would not be considered as Iterable in Python 3 without explicit `__iter__` implementation
-        return self.original_stdin.__iter__()
-
-    def __getattr__(self, item):
-        # it's called if the attribute wasn't found
-        if hasattr(self.original_stdin, item):
-            return getattr(self.original_stdin, item)
-        raise AttributeError("%s has no attribute %s" % (self.original_stdin, item))
-
-
-# =======================================================================================================================
-# StdIn
-# =======================================================================================================================
-class StdIn(BaseStdIn):
-    '''
-        Object to be added to stdin (to emulate it as non-blocking while the next line arrives)
-    '''
-
-    def __init__(self, interpreter, host, client_port, original_stdin=sys.stdin):
-        BaseStdIn.__init__(self, original_stdin)
-        self.interpreter = interpreter
-        self.client_port = client_port
-        self.host = host
-
-    def readline(self, *args, **kwargs):
-        # Ok, callback into the client to get the new input
-        try:
-            server = xmlrpclib.Server('http://%s:%s' % (self.host, self.client_port))
-            requested_input = server.RequestInput()
-            if not requested_input:
-                return '\n'  # Yes, a readline must return something (otherwise we can get an EOFError on the input() call).
-            return requested_input
-        except KeyboardInterrupt:
-            raise  # Let KeyboardInterrupt go through -- #PyDev-816: Interrupting infinite loop in the Interactive Console
-        except:
-            return '\n'
-
-    def close(self, *args, **kwargs):
-        pass  # expected in StdIn
-
-#=======================================================================================================================
-# DebugConsoleStdIn
-#=======================================================================================================================
-class DebugConsoleStdIn(BaseStdIn):
-    '''
-        Object to be added to stdin (to emulate it as non-blocking while the next line arrives)
-    '''
-
-    def __init__(self, dbg, original_stdin):
-        BaseStdIn.__init__(self, original_stdin)
-        self.debugger = dbg
-
-    def __pydev_run_command(self, is_started):
-        try:
-            cmd = self.debugger.cmd_factory.make_input_requested_message(is_started)
-            self.debugger.writer.add_command(cmd)
-        except Exception:
-            import traceback
-            traceback.print_exc()
-            return '\n'
-
-    def readline(self, *args, **kwargs):
-        # Notify Java side about input and call original function
-        self.__pydev_run_command(True)
-        result = self.original_stdin.readline(*args, **kwargs)
-        self.__pydev_run_command(False)
-        return result
-
-
-class CodeFragment:
-    def __init__(self, text, is_single_line=True):
-        self.text = text
-        self.is_single_line = is_single_line
-
-    def append(self, code_fragment):
-        self.text = self.text + "\n" + code_fragment.text
-        if not code_fragment.is_single_line:
-            self.is_single_line = False
-
-
-# =======================================================================================================================
 # BaseInterpreterInterface
 # =======================================================================================================================
-class BaseInterpreterInterface:
-    def __init__(self, mainThread, connect_status_queue=None):
+class BaseInterpreterInterface(BaseCodeExecutor):
+    def __init__(self, mainThread, connect_status_queue=None, rpc_client=None):
+        super(BaseInterpreterInterface, self).__init__()
+
         self.mainThread = mainThread
-        self.interruptable = False
-        self.exec_queue = _queue.Queue(0)
-        self.buffer = None
         self.banner_shown = False
         self.connect_status_queue = connect_status_queue
-        self.mpl_modules_for_patching = {}
-        self.init_mpl_modules_for_patching()
+
+        self.rpc_client = rpc_client
 
     def build_banner(self):
         return 'print({0})\n'.format(repr(self.get_greeting_msg()))
 
-    def get_greeting_msg(self):
-        return 'PyDev console: starting.\n'
-
-    def init_mpl_modules_for_patching(self):
-        from pydev_ipython.matplotlibtools import activate_matplotlib, activate_pylab, activate_pyplot
-        self.mpl_modules_for_patching = {
-            "matplotlib": lambda: activate_matplotlib(self.enableGui),
-            "matplotlib.pyplot": activate_pyplot,
-            "pylab": activate_pylab
-        }
-
-    def need_more_for_code(self, source):
-        # PyDev-502: PyDev 3.9 F2 doesn't support backslash continuations
-
-        # Strangely even the IPython console is_complete said it was complete
-        # even with a continuation char at the end.
-        if source.endswith('\\'):
-            return True
-
-        if hasattr(self.interpreter, 'is_complete'):
-            return not self.interpreter.is_complete(source)
-        try:
-            code = self.interpreter.compile(source, '<input>', 'exec')
-        except (OverflowError, SyntaxError, ValueError):
-            # Case 1
-            return False
-        if code is None:
-            # Case 2
-            return True
-
-        # Case 3
-        return False
-
-    def need_more(self, code_fragment):
-        if self.buffer is None:
-            self.buffer = code_fragment
-        else:
-            self.buffer.append(code_fragment)
-
-        return self.need_more_for_code(self.buffer.text)
-
     def create_std_in(self, debugger=None, original_std_in=None):
         if debugger is None:
-            return StdIn(self, self.host, self.client_port, original_stdin=original_std_in)
+            return StdIn(self, self.rpc_client, original_stdin=original_std_in)
         else:
             return DebugConsoleStdIn(dbg=debugger, original_stdin=original_std_in)
-
-    def add_exec(self, code_fragment, debugger=None):
-        original_in = sys.stdin
-        try:
-            help = None
-            if 'pydoc' in sys.modules:
-                pydoc = sys.modules['pydoc']  # Don't import it if it still is not there.
-
-                if hasattr(pydoc, 'help'):
-                    # You never know how will the API be changed, so, let's code defensively here
-                    help = pydoc.help
-                    if not hasattr(help, 'input'):
-                        help = None
-        except:
-            # Just ignore any error here
-            pass
-
-        more = False
-        try:
-            sys.stdin = self.create_std_in(debugger, original_in)
-            try:
-                if help is not None:
-                    # This will enable the help() function to work.
-                    try:
-                        try:
-                            help.input = sys.stdin
-                        except AttributeError:
-                            help._input = sys.stdin
-                    except:
-                        help = None
-                        if not self._input_error_printed:
-                            self._input_error_printed = True
-                            sys.stderr.write('\nError when trying to update pydoc.help.input\n')
-                            sys.stderr.write('(help() may not work -- please report this as a bug in the pydev bugtracker).\n\n')
-                            traceback.print_exc()
-
-                try:
-                    self.start_exec()
-                    if hasattr(self, 'debugger'):
-                        from _pydevd_bundle import pydevd_tracing
-                        pydevd_tracing.SetTrace(self.debugger.trace_dispatch)
-
-                    more = self.do_add_exec(code_fragment)
-
-                    if hasattr(self, 'debugger'):
-                        from _pydevd_bundle import pydevd_tracing
-                        pydevd_tracing.SetTrace(None)
-
-                    self.finish_exec(more)
-                finally:
-                    if help is not None:
-                        try:
-                            try:
-                                help.input = original_in
-                            except AttributeError:
-                                help._input = original_in
-                        except:
-                            pass
-
-            finally:
-                sys.stdin = original_in
-        except SystemExit:
-            raise
-        except:
-            traceback.print_exc()
-
-        return more
-
-    def do_add_exec(self, codeFragment):
-        '''
-        Subclasses should override.
-
-        @return: more (True if more input is needed to complete the statement and False if the statement is complete).
-        '''
-        raise NotImplementedError()
-
-    def get_namespace(self):
-        '''
-        Subclasses should override.
-
-        @return: dict with namespace.
-        '''
-        raise NotImplementedError()
-
-    def __resolve_reference__(self, text):
-        """
-
-        :type text: str
-        """
-        obj = None
-        if '.' not in text:
-            try:
-                obj = self.get_namespace()[text]
-            except KeyError:
-                pass
-
-            if obj is None:
-                try:
-                    obj = self.get_namespace()['__builtins__'][text]
-                except:
-                    pass
-
-            if obj is None:
-                try:
-                    obj = getattr(self.get_namespace()['__builtins__'], text, None)
-                except:
-                    pass
-
-        else:
-            try:
-                last_dot = text.rindex('.')
-                parent_context = text[0:last_dot]
-                res = pydevd_vars.eval_in_context(parent_context, self.get_namespace(), self.get_namespace())
-                obj = getattr(res, text[last_dot + 1:])
-            except:
-                pass
-        return obj
-
-    def getDescription(self, text):
-        try:
-            obj = self.__resolve_reference__(text)
-            if obj is None:
-                return ''
-            return get_description(obj)
-        except:
-            return ''
 
     def do_exec_code(self, code, is_single_line):
         try:
@@ -445,12 +189,9 @@ class BaseInterpreterInterface:
     def close(self):
         sys.exit(0)
 
-    def start_exec(self):
-        self.interruptable = True
-
     def get_server(self):
-        if getattr(self, 'host', None) is not None:
-            return xmlrpclib.Server('http://%s:%s' % (self.host, self.client_port))
+        if getattr(self, 'rpc_client', None) is not None:
+            return self.rpc_client
         else:
             return None
 
@@ -459,7 +200,7 @@ class BaseInterpreterInterface:
     def ShowConsole(self):
         server = self.get_server()
         if server is not None:
-            server.ShowConsole()
+            server.showConsole()
 
     def finish_exec(self, more):
         self.interruptable = False
@@ -467,22 +208,16 @@ class BaseInterpreterInterface:
         server = self.get_server()
 
         if server is not None:
-            return server.NotifyFinished(more)
+            return server.notifyFinished(more)
         else:
             return True
 
     def getFrame(self):
-        xml = StringIO.StringIO()
         hidden_ns = self.get_ipython_hidden_vars_dict()
-        xml.write("<xml>")
-        xml.write(pydevd_xml.frame_vars_to_xml(self.get_namespace(), hidden_ns))
-        xml.write("</xml>")
-
-        return xml.getvalue()
+        return pydevd_thrift.frame_vars_to_struct(self.get_namespace(), hidden_ns)
 
     def getVariable(self, attributes):
-        xml = StringIO.StringIO()
-        xml.write("<xml>")
+        debug_values = []
         val_dict = pydevd_vars.resolve_compound_var_object_fields(self.get_namespace(), attributes)
         if val_dict is None:
             val_dict = {}
@@ -490,25 +225,55 @@ class BaseInterpreterInterface:
         keys = val_dict.keys()
         for k in keys:
             val = val_dict[k]
-            evaluate_full_value = pydevd_xml.should_evaluate_full_value(val)
-            xml.write(pydevd_vars.var_to_xml(val, k, evaluate_full_value=evaluate_full_value))
+            evaluate_full_value = pydevd_thrift.should_evaluate_full_value(val)
+            debug_values.append(pydevd_thrift.var_to_struct(val, k, evaluate_full_value=evaluate_full_value))
 
-        xml.write("</xml>")
-
-        return xml.getvalue()
+        return debug_values
 
     def getArray(self, attr, roffset, coffset, rows, cols, format):
         name = attr.split("\t")[-1]
         array = pydevd_vars.eval_in_context(name, self.get_namespace(), self.get_namespace())
-        return pydevd_vars.table_like_struct_to_xml(array, name, roffset, coffset, rows, cols, format)
+        return pydevd_thrift.table_like_struct_to_thrift_struct(array, name, roffset, coffset, rows, cols, format)
 
     def evaluate(self, expression):
-        xml = StringIO.StringIO()
-        xml.write("<xml>")
+        # returns `DebugValue` of evaluated expression
+
         result = pydevd_vars.eval_in_context(expression, self.get_namespace(), self.get_namespace())
-        xml.write(pydevd_vars.var_to_xml(result, expression))
-        xml.write("</xml>")
-        return xml.getvalue()
+        return [pydevd_thrift.var_to_struct(result, expression)]
+
+    def do_get_completions(self, text, act_tok):
+        """Retrieves completion options.
+
+        Returns the array with completion options tuples.
+
+        :param text: the full text of the expression to complete
+        :param act_tok: resolved part of the expression
+        :return: the array of tuples `(name, documentation, args, ret_type)`
+
+        :Example:
+
+            Let us execute ``import time`` line in the Python console. Then try
+            to complete ``time.sle`` expression. At this point the method would
+            receive ``time.sle`` as ``text`` parameter and ``time.`` as
+            ``act_tok`` parameter. The result would contain the array with the
+            following tuple among others: ``[..., ('sleep',
+            'sleep(seconds)\\n\\nDelay execution ...', '(seconds)', '2'),
+            ...]``.
+        """
+        try:
+            from _pydev_bundle._pydev_completer import Completer
+
+            completer = Completer(self.get_namespace(), None)
+            return completer.complete(act_tok)
+        except:
+            import traceback
+
+            traceback.print_exc()
+            return []
+
+    def getCompletions(self, text, act_tok):
+        words = self.do_get_completions(text, act_tok)
+        return [_to_completion_option(word) for word in words]
 
     def loadFullValue(self, seq, scope_attrs):
         """
@@ -520,7 +285,8 @@ class BaseInterpreterInterface:
         """
         frame_variables = self.get_namespace()
         var_objects = []
-        vars = scope_attrs.split(NEXT_VALUE_SEPARATOR)
+        # vars = scope_attrs.split(NEXT_VALUE_SEPARATOR)
+        vars = scope_attrs
         for var_attrs in vars:
             if '\t' in var_attrs:
                 name, attrs = var_attrs.split('\t', 1)
@@ -535,8 +301,8 @@ class BaseInterpreterInterface:
                 var_object = pydevd_vars.eval_in_context(name, frame_variables, frame_variables)
                 var_objects.append((var_object, name))
 
-        from _pydevd_bundle.pydevd_comm import GetValueAsyncThreadConsole
-        t = GetValueAsyncThreadConsole(self.get_server(), seq, var_objects)
+        from _pydev_bundle.pydev_console_commands import ThriftGetValueAsyncThreadConsole
+        t = ThriftGetValueAsyncThreadConsole(self.get_server(), seq, var_objects)
         t.start()
 
     def changeVariable(self, attr, value):
@@ -562,7 +328,7 @@ class BaseInterpreterInterface:
         else:
             return self.orig_find_frame(thread_id, frame_id)
 
-    def connectToDebugger(self, debuggerPort, debugger_options=None):
+    def connectToDebugger(self, debuggerPort, debugger_options=None, extra_envs=None):
         '''
         Used to show console with variables connection.
         Mainly, monkey-patches things in the debugger structure so that the debugger protocol works.
@@ -570,18 +336,15 @@ class BaseInterpreterInterface:
 
         if debugger_options is None:
             debugger_options = {}
-        env_key = "PYDEVD_EXTRA_ENVS"
-        if env_key in debugger_options:
-            for (env_name, value) in dict_iter_items(debugger_options[env_key]):
-                existing_value = os.environ.get(env_name, None)
-                if existing_value:
-                    os.environ[env_name] = "%s%c%s" % (existing_value, os.path.pathsep, value)
-                else:
-                    os.environ[env_name] = value
-                if env_name == "PYTHONPATH":
-                    sys.path.append(value)
 
-            del debugger_options[env_key]
+        for (env_name, value) in dict_iter_items(extra_envs):
+            existing_value = os.environ.get(env_name, None)
+            if existing_value:
+                os.environ[env_name] = "%s%c%s" % (existing_value, os.path.pathsep, value)
+            else:
+                os.environ[env_name] = value
+            if env_name == "PYTHONPATH":
+                sys.path.append(value)
 
         def do_connect_to_debugger():
             try:
@@ -637,33 +400,6 @@ class BaseInterpreterInterface:
     def hello(self, input_str):
         # Don't care what the input string is
         return ("Hello eclipse",)
-
-    def enableGui(self, guiname):
-        ''' Enable the GUI specified in guiname (see inputhook for list).
-            As with IPython, enabling multiple GUIs isn't an error, but
-            only the last one's main loop runs and it may not work
-        '''
-        def do_enable_gui():
-            from _pydev_bundle.pydev_versioncheck import versionok_for_gui
-            if versionok_for_gui():
-                try:
-                    from pydev_ipython.inputhook import enable_gui
-                    enable_gui(guiname)
-                except:
-                    sys.stderr.write("Failed to enable GUI event loop integration for '%s'\n" % guiname)
-                    traceback.print_exc()
-            elif guiname not in ['none', '', None]:
-                # Only print a warning if the guiname was going to do something
-                sys.stderr.write("PyDev console: Python version does not support GUI event loop integration for '%s'\n" % guiname)
-            # Return value does not matter, so return back what was sent
-            return guiname
-
-        # Important: it has to be really enabled in the main thread, so, schedule
-        # it to run in the main thread.
-        self.exec_queue.put(do_enable_gui)
-
-    def get_ipython_hidden_vars_dict(self):
-        return None
 
 
 # =======================================================================================================================

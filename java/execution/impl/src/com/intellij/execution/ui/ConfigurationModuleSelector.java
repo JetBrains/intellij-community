@@ -83,6 +83,7 @@ public class ConfigurationModuleSelector {
     myModulesList = modulesList;
     myModulesDescriptionsComboBox = null;
     new ComboboxSpeedSearch(modulesList){
+      @Override
       protected String getElementText(Object element) {
         if (element instanceof Module){
           return ((Module)element).getName();

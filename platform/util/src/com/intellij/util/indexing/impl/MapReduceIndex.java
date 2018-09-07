@@ -62,12 +62,14 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
         getReadLock().lock();
         try {
           myStorage.clearCaches();
-        } finally {
+        }
+        finally {
           getReadLock().unlock();
         }
 
         flush();
-      } catch (Throwable e) {
+      }
+      catch (Throwable e) {
         requestRebuild(e);
       }
     }
@@ -75,7 +77,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
 
   protected MapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
                            @NotNull IndexStorage<Key, Value> storage,
-                           ForwardIndex<Key, Value> forwardIndex) {
+                           @Nullable ForwardIndex<Key, Value> forwardIndex) {
     myIndexId = extension.getName();
     myExtension = extension;
     myIndexer = myExtension.getIndexer();
@@ -94,6 +96,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     return new ReentrantReadWriteLock();
   }
 
+  @NotNull
   public final ReentrantReadWriteLock getLock() {
     return myLock;
   }
@@ -259,27 +262,26 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   }
 
   @NotNull
-  protected UpdateData<Key, Value> createUpdateData(Map<Key, Value> data,
-                                                    ThrowableComputable<InputDataDiffBuilder<Key, Value>, IOException> keys,
-                                                    ThrowableRunnable<IOException> forwardIndexUpdate) {
+  protected UpdateData<Key, Value> createUpdateData(@NotNull Map<Key, Value> data,
+                                                    @NotNull ThrowableComputable<InputDataDiffBuilder<Key, Value>, IOException> keys,
+                                                    @NotNull ThrowableRunnable<IOException> forwardIndexUpdate) {
     return new UpdateData<Key, Value>(data, keys, myIndexId, forwardIndexUpdate);
   }
 
-  protected Map<Key, Value> mapInput(Input content) {
+  @NotNull
+  protected Map<Key, Value> mapInput(@Nullable Input content) {
     if (content == null) {
       return Collections.emptyMap();
     }
-    else {
-      Map<Key, Value> data = myIndexer.map(content);
-      checkValuesHaveProperEqualsAndHashCode(data, myIndexId, myValueExternalizer);
-      checkCanceled();
-      return data;
-    }
+    Map<Key, Value> data = myIndexer.map(content);
+    checkValuesHaveProperEqualsAndHashCode(data, myIndexId, myValueExternalizer);
+    checkCanceled();
+    return data;
   }
 
   public abstract void checkCanceled();
 
-  protected abstract void requestRebuild(Throwable e);
+  protected abstract void requestRebuild(@NotNull Throwable e);
 
   public long getModificationStamp() {
     return myModificationStamp.get();

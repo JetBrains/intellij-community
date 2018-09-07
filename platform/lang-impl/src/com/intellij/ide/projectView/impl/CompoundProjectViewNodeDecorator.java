@@ -54,7 +54,7 @@ public final class CompoundProjectViewNodeDecorator implements ProjectViewNodeDe
     forEach(decorator -> decorator.decorate(node, cellRenderer));
   }
 
-  private void forEach(@NotNull Consumer<ProjectViewNodeDecorator> consumer) {
+  private void forEach(@NotNull Consumer<? super ProjectViewNodeDecorator> consumer) {
     for (ProjectViewNodeDecorator decorator : decorators) {
       try {
         consumer.accept(decorator);

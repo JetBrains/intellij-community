@@ -5,20 +5,13 @@ import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.inference.InferenceFromSourceUtil;
 import com.intellij.codeInspection.dataFlow.instructions.*;
-import com.intellij.codeInspection.dataFlow.value.DfaExpressionFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.ui.treeStructure.NullNode;
+import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
@@ -28,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
 /**
@@ -147,57 +139,59 @@ public class DfaUtil {
 
   @NotNull
   public static Nullability inferMethodNullability(PsiMethod method) {
-    final PsiCodeBlock body = method.getBody();
-    if (body == null || PsiUtil.resolveClassInType(method.getReturnType()) == null) {
+    if (PsiUtil.resolveClassInType(method.getReturnType()) == null) {
       return Nullability.UNKNOWN;
     }
 
-    return inferBlockNullability(body, InferenceFromSourceUtil.suppressNullable(method));
+    return inferBlockNullability(method, InferenceFromSourceUtil.suppressNullable(method));
   }
 
   @NotNull
   public static Nullability inferLambdaNullability(PsiLambdaExpression lambda) {
-    final PsiElement body = lambda.getBody();
-    if (body == null || LambdaUtil.getFunctionalInterfaceReturnType(lambda) == null) {
+    if (LambdaUtil.getFunctionalInterfaceReturnType(lambda) == null) {
       return Nullability.UNKNOWN;
     }
 
-    return inferBlockNullability(body, false);
+    return inferBlockNullability(lambda, false);
   }
 
   @NotNull
-  private static Nullability inferBlockNullability(PsiElement body, boolean suppressNullable) {
-    final AtomicBoolean hasNulls = new AtomicBoolean();
-    final AtomicBoolean hasNotNulls = new AtomicBoolean();
-    final AtomicBoolean hasUnknowns = new AtomicBoolean();
+  private static Nullability inferBlockNullability(PsiParameterListOwner owner, boolean suppressNullable) {
+    PsiElement body = owner.getBody();
+    if (body == null) return Nullability.UNKNOWN;
 
     final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner();
-    final RunnerResult rc = dfaRunner.analyzeMethod(body, new StandardInstructionVisitor() {
+    class BlockNullabilityVisitor extends StandardInstructionVisitor {
+      boolean hasNulls = false;
+      boolean hasNotNulls = false;
+      boolean hasUnknowns = false;
+
       @Override
-      public DfaInstructionState[] visitCheckReturnValue(CheckReturnValueInstruction instruction,
-                                                         DataFlowRunner runner,
-                                                         DfaMemoryState memState) {
-        if(PsiTreeUtil.isAncestor(body, instruction.getReturn(), false)) {
-          DfaValue returned = memState.peek();
-          if (memState.isNull(returned)) {
-            hasNulls.set(true);
+      protected void checkReturnValue(@NotNull DfaValue value,
+                                      @NotNull PsiExpression expression,
+                                      @NotNull PsiParameterListOwner context,
+                                      @NotNull DfaMemoryState state) {
+        if (context == owner) {
+          if (TypeConversionUtil.isPrimitiveAndNotNull(expression.getType()) || state.isNotNull(value)) {
+            hasNotNulls = true;
           }
-          else if (memState.isNotNull(returned)) {
-            hasNotNulls.set(true);
+          else if (state.isNull(value)) {
+            hasNulls = true;
           }
           else {
-            hasUnknowns.set(true);
+            hasUnknowns = true;
           }
         }
-        return super.visitCheckReturnValue(instruction, runner, memState);
       }
-    });
+    }
+    BlockNullabilityVisitor visitor = new BlockNullabilityVisitor();
+    final RunnerResult rc = dfaRunner.analyzeMethod(body, visitor);
 
     if (rc == RunnerResult.OK) {
-      if (hasNulls.get()) {
+      if (visitor.hasNulls) {
         return suppressNullable ? Nullability.UNKNOWN : Nullability.NULLABLE;
       }
-      if (hasNotNulls.get() && !hasUnknowns.get()) {
+      if (visitor.hasNotNulls && !visitor.hasUnknowns) {
         return Nullability.NOT_NULL;
       }
     }
@@ -370,6 +364,23 @@ public class DfaUtil {
     return null;
   }
 
+  public static DfaValue boxUnbox(DfaValue value, PsiType type) {
+    if (TypeConversionUtil.isPrimitiveWrapper(type)) {
+      if (value instanceof DfaConstValue || value instanceof DfaUnboxedValue ||
+          (value instanceof DfaVariableValue && TypeConversionUtil.isPrimitiveAndNotNull(((DfaVariableValue)value).getVariableType()))) {
+        DfaValue boxed = value.getFactory().getBoxedFactory().createBoxed(value);
+        return boxed == null ? DfaUnknownValue.getInstance() : boxed;
+      }
+    }
+    if (TypeConversionUtil.isPrimitiveAndNotNull(type)) {
+      if (value instanceof DfaBoxedValue ||
+          (value instanceof DfaVariableValue && TypeConversionUtil.isPrimitiveWrapper(((DfaVariableValue)value).getVariableType()))) {
+        return value.getFactory().getBoxedFactory().createUnboxed(value);
+      }
+    }
+    return value;
+  }
+
   private static class ValuableInstructionVisitor extends StandardInstructionVisitor {
     final Map<PsiElement, PlaceResult> myResults = ContainerUtil.newHashMap();
 
@@ -381,7 +392,7 @@ public class DfaUtil {
 
     @Override
     public DfaInstructionState[] visitPush(PushInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-      PsiExpression place = instruction.getPlace();
+      PsiExpression place = instruction.getExpression();
       if (place != null) {
         PlaceResult result = myResults.computeIfAbsent(place, __ -> new PlaceResult());
         ((ValuableDataFlowRunner.MyDfaMemoryState)memState).forVariableStates((variableValue, value) -> {

@@ -8,9 +8,9 @@ class Test {
   }
 
   void n(@org.jetbrains.annotations.Nullable Integer i) {
-    Unbx f  = () -> <warning descr="Unboxing of 'i' may produce 'java.lang.NullPointerException'">i</warning>;
+    Unbx f  = () -> <warning descr="Unboxing of 'i' may produce 'NullPointerException'">i</warning>;
     Unbx f1 = () -> {
-      return <warning descr="Unboxing of 'i' may produce 'java.lang.NullPointerException'">i</warning>;
+      return <warning descr="Unboxing of 'i' may produce 'NullPointerException'">i</warning>;
     };
   }
 

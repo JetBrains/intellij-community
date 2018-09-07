@@ -1,0 +1,4 @@
+/.idea/
+/cmake-build-*/
+/build32/
+/build64/

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images.sync
 
+import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.intellij.build.images.imageSize
 import org.jetbrains.intellij.build.images.isImage
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -10,6 +11,9 @@ import java.io.File
 import java.io.IOException
 import java.io.OutputStream
 import java.io.PrintStream
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.function.Consumer
 import java.util.stream.Collectors
 
@@ -17,15 +21,26 @@ private const val repoArg = "repos"
 private const val patternArg = "skip.dirs.pattern"
 private const val syncIcons = "sync.icons"
 private const val syncDevIcons = "sync.dev.icons"
+private const val syncRemovedIconsInDev = "sync.dev.icons.removed"
 
 fun main(args: Array<String>) {
   if (args.isEmpty()) printUsageAndExit()
   val repos = args.find(repoArg)?.split(",") ?: emptyList()
   if (repos.size < 2) printUsageAndExit()
   val skipPattern = args.find(patternArg)
-  checkIcons(repos[0], repos[1], skipPattern,
+  checkIcons(ignoreCaseInDirName(repos[0]), ignoreCaseInDirName(repos[1]), skipPattern,
              args.find(syncIcons)?.toBoolean() ?: false,
-             args.find(syncDevIcons)?.toBoolean() ?: false)
+             args.find(syncDevIcons)?.toBoolean() ?: false,
+             args.find(syncRemovedIconsInDev)?.toBoolean() ?: true)
+}
+
+private fun ignoreCaseInDirName(path: String): String {
+  return Files.list(Paths.get(path).parent)
+    .filter { it.toAbsolutePath().toString().equals(FileUtil.toSystemDependentName(path), ignoreCase = true) }
+    .findFirst()
+    .get()
+    .toAbsolutePath()
+    .toString()
 }
 
 private fun Array<String>.find(arg: String) = this.find {
@@ -40,6 +55,7 @@ private fun printUsageAndExit() {
     |* `$patternArg` - test data folders regular expression
     |* `$syncDevIcons` - update icons in developers' repo. Switch off to run check only
     |* `$syncIcons` - update icons in designers' repo. Switch off to run check only
+    |* `$syncRemovedIconsInDev` - remove icons in developers' repo removed by designers
   """.trimMargin())
   System.exit(1)
 }
@@ -51,7 +67,7 @@ private fun printUsageAndExit() {
  */
 fun checkIcons(
   devRepoDir: String, iconsRepoDir: String, skipDirsPattern: String?,
-  doSyncIconsRepo: Boolean = false, doSyncDevRepo: Boolean = false,
+  doSyncIconsRepo: Boolean = false, doSyncDevRepo: Boolean = false, doSyncRemovedIconsInDev: Boolean = true,
   loggerImpl: Consumer<String> = Consumer { println(it) },
   errorHandler: Consumer<String> = Consumer { throw IllegalStateException(it) }
 ) {
@@ -93,14 +109,15 @@ fun checkIcons(
       }
     )
   }
-  if (doSyncIconsRepo) callSafely {
+  if (doSyncIconsRepo) {
     syncAdded(addedByDev, devIconsBackup, File(iconsRepoDir)) { iconsRepo }
     syncModified(modifiedByDev, icons, devIconsBackup)
     syncRemoved(removedByDev, icons)
   }
-  if (doSyncDevRepo) callSafely {
+  if (doSyncDevRepo) {
     syncAdded(addedByDesigners, icons, File(devRepoDir)) { findGitRepoRoot(it.absolutePath, true) }
     syncModified(modifiedByDesigners, devIconsBackup, icons)
+    if (doSyncRemovedIconsInDev) syncRemoved(removedByDesigners, devIconsBackup)
   }
   report(
     devIconsBackup.size, icons.size, skippedDirs.size,
@@ -113,7 +130,7 @@ fun checkIcons(
 private fun readIconsRepo(iconsRepo: File, iconsRepoDir: String) =
   listGitObjects(iconsRepo, iconsRepoDir) {
     // read icon hashes
-    isIcon(it)
+    isValidIcon(it.toPath())
   }.also {
     if (it.isEmpty()) throw IllegalStateException("Icons repo doesn't contain icons")
   }
@@ -129,7 +146,7 @@ private fun readDevRepo(devRepoRoot: File,
   val skipDirsRegex = skipDirsPattern?.toRegex()
   val devRepoIconFilter = { file: File ->
     // read icon hashes skipping test roots
-    !inTestRoot(file, testRoots, skipDirsRegex) && isIcon(file)
+    !inTestRoot(file, testRoots, skipDirsRegex) && isValidIcon(file.toPath())
   }
   val devIcons = if (devRepoVcsRoots.size == 1
                      && devRepoVcsRoots.contains(devRepoRoot)) {
@@ -165,13 +182,13 @@ private val mutedStream = PrintStream(object : OutputStream() {
   override fun write(b: Int) {}
 })
 
-private fun isIcon(file: File): Boolean {
+private fun isValidIcon(file: Path): Boolean {
   val err = System.err
   System.setErr(mutedStream)
   return try {
     // image
     isImage(file) && imageSize(file)?.let { size ->
-      val pixels = if (file.name.contains("@2x")) 64 else 32
+      val pixels = if (file.fileName.toString().contains("@2x")) 64 else 32
       // small
       size.height <= pixels && size.width <= pixels
     } ?: false

@@ -15,6 +15,8 @@
  */
 package com.intellij.util.graph;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -23,11 +25,14 @@ import java.util.Iterator;
  */
 public interface Graph<Node> extends InboundSemiGraph<Node>, OutboundSemiGraph<Node> {
   @Override
+  @NotNull
   Collection<Node> getNodes();
 
   @Override
+  @NotNull
   Iterator<Node> getIn(Node n);
 
   @Override
+  @NotNull
   Iterator<Node> getOut(Node n);
 }

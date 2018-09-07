@@ -74,8 +74,9 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField> {
     return processor.getMembersToImport(applicableOnly);
   }
 
+  @Override
   @NotNull
-  protected StaticImportMethodQuestionAction<PsiField> createQuestionAction(List<PsiField> methodsToImport, @NotNull Project project, Editor editor) {
+  protected StaticImportMethodQuestionAction<PsiField> createQuestionAction(List<? extends PsiField> methodsToImport, @NotNull Project project, Editor editor) {
     return new StaticImportMethodQuestionAction<PsiField>(project, editor, methodsToImport, myRef) {
       @NotNull
       @Override

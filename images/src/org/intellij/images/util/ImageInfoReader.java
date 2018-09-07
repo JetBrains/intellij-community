@@ -26,7 +26,6 @@ import javax.imageio.ImageReader;
 import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.stream.ImageInputStream;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.util.Iterator;
 
 /**
@@ -39,12 +38,12 @@ public class ImageInfoReader {
   }
 
   @Nullable
-  public static Info getInfo(@NotNull String file) {
-    return read(new File(file));
+  public static Info getInfo(@NotNull byte[] data) {
+    return getInfo(data, null);
   }
 
   @Nullable
-  public static Info getInfo(@NotNull byte[] data) {
+  public static Info getInfo(@NotNull byte[] data, @Nullable String inputName) {
     for (int i = 0; i < Math.min(data.length, 100); i++) {
       byte b = data[i];
       if (b == '<') {
@@ -57,20 +56,21 @@ public class ImageInfoReader {
         break;
       }
     }
-    return read(new ByteArrayInputStream(data));
+    return read(new ByteArrayInputStream(data), inputName);
   }
 
   private static Info tryReadSvg(byte[] data) {
     try {
       Couple<Integer> couple = SVGLoader.loadInfo(null, new ByteArrayInputStream(data), 1.0f);
       return new Info(couple.first, couple.second, 32);
-    } catch (Throwable e) {
+    }
+    catch (Throwable e) {
       return null;
     }
   }
 
   @Nullable
-  private static Info read(@NotNull Object input) {
+  private static Info read(@NotNull Object input, @Nullable String inputName) {
     try (ImageInputStream iis = ImageIO.createImageInputStream(input)) {
       Iterator<ImageReader> it = ImageIO.getImageReaders(iis);
       ImageReader reader = it.hasNext() ? it.next() : null;
@@ -84,7 +84,7 @@ public class ImageInfoReader {
       }
     }
     catch (Throwable e) {
-      LOG.warn(e);
+      LOG.warn(inputName, e);
     }
     return null;
   }

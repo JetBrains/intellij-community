@@ -52,9 +52,9 @@ class PatternDialog extends DialogWrapper {
   private final ColorAndFontDescription myColorAndFontDescription;
   private final JBCheckBox myUsedDefaultColorsCheckBox;
   private final int myPatternIndex;
-  private final List<TodoPattern> myExistingPatterns;
+  private final List<? extends TodoPattern> myExistingPatterns;
 
-  public PatternDialog(Component parent, TodoPattern pattern, int patternIndex, List<TodoPattern> existingPatterns) {
+  PatternDialog(Component parent, TodoPattern pattern, int patternIndex, List<? extends TodoPattern> existingPatterns) {
     super(parent, true);
     myPatternIndex = patternIndex;
     myExistingPatterns = existingPatterns;

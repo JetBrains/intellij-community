@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -34,7 +35,7 @@ public class ToggleColumnModeAction extends ToggleAction implements DumbAware {
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     final EditorEx editor = getEditor(e);
     final SelectionModel selectionModel = editor.getSelectionModel();
     final CaretModel caretModel = editor.getCaretModel();
@@ -98,17 +99,17 @@ public class ToggleColumnModeAction extends ToggleAction implements DumbAware {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     final EditorEx ex = getEditor(e);
     return ex != null && ex.isColumnMode();
   }
 
-  private static EditorEx getEditor(AnActionEvent e) {
+  private static EditorEx getEditor(@NotNull AnActionEvent e) {
     return (EditorEx) CommonDataKeys.EDITOR.getData(e.getDataContext());
   }
 
   @Override
-  public void update(AnActionEvent e){
+  public void update(@NotNull AnActionEvent e){
     EditorEx editor = getEditor(e);
     if (editor == null || editor.isOneLineMode()) {
       e.getPresentation().setEnabled(false);

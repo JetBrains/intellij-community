@@ -23,6 +23,15 @@ public class UnnecessaryThisInspectionTest extends LightInspectionTestCase {
            "}");
   }
 
+  public void testParenthesesMethod() {
+    doTest("class A {" +
+           "  void x() {}" +
+           "  void m() {" +
+           "    (/*'this' is unnecessary in this context*/this/**/).x();" +
+           "  }" +
+           "}");
+  }
+
   public void testQualifiedThisNeeded() {
     doTest("class A {" +
            "    public void foo(String s) {}" +

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.compiler;
 
 import com.intellij.execution.configurations.RunConfiguration;
@@ -53,21 +39,21 @@ public abstract class CompilerManager {
   public static CompilerManager getInstance(Project project) {
     return ServiceManager.getService(project, CompilerManager.class);
   }
-  
+
   public abstract boolean isCompilationActive();
-  
+
   /**
    * Registers a custom compiler.
    *
    * @param compiler the compiler to register.
    */
   public abstract void addCompiler(@NotNull Compiler compiler);
-  
+
   /**
    * Registers a custom translating compiler. Input and output filetype sets allow compiler manager
    * to sort translating compilers so that output of one compiler will be used as input for another one
-   * 
-   * @param compiler compiler implementation 
+   *
+   * @param compiler compiler implementation
    * @param inputTypes a set of filetypes that compiler accepts as input
    * @param outputTypes a set of filetypes that compiler can generate
    *
@@ -218,7 +204,7 @@ public abstract class CompilerManager {
   /**
    * Checks if compile scope given is up-to-date
    * @param scope
-   * @return true if make on the scope specified wouldn't do anything or false if something is to be compiled or deleted 
+   * @return true if make on the scope specified wouldn't do anything or false if something is to be compiled or deleted
    */
   public abstract boolean isUpToDate(@NotNull CompileScope scope);
   /**
@@ -266,7 +252,7 @@ public abstract class CompilerManager {
   public abstract boolean isExcludedFromCompilation(@NotNull VirtualFile file);
 
   /*
-   * Convetience methods for creating frequently-used compile scopes
+   * Convenience methods for creating frequently-used compile scopes
    */
   @NotNull
   public abstract CompileScope createFilesCompileScope(@NotNull VirtualFile[] files);
@@ -288,6 +274,7 @@ public abstract class CompilerManager {
   public abstract Collection<ClassObject> compileJavaCode(List<String> options,
                                                           Collection<File> platformCp,
                                                           Collection<File> classpath,
+                                                          Collection<File> upgradeModulePath,
                                                           Collection<File> modulePath,
                                                           Collection<File> sourcePath,
                                                           Collection<File> files,

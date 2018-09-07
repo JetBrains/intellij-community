@@ -21,7 +21,8 @@ import gnu.trove.TObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 
 public class BiDirectionalEnumerator<T> extends Enumerator<T> {
-  @NotNull private final TIntObjectHashMap<T> myIntToObjectMap;
+  @NotNull
+  private final TIntObjectHashMap<T> myIntToObjectMap;
 
   public BiDirectionalEnumerator(int expectNumber, @NotNull TObjectHashingStrategy<T> strategy) {
     super(expectNumber, strategy);

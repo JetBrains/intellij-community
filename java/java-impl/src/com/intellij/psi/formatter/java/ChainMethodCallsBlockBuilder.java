@@ -40,7 +40,7 @@ class ChainMethodCallsBlockBuilder {
 
   private final FormattingMode myFormattingMode;
 
-  public ChainMethodCallsBlockBuilder(Alignment alignment,
+  ChainMethodCallsBlockBuilder(Alignment alignment,
                                       Wrap wrap,
                                       Indent indent,
                                       CommonCodeStyleSettings settings,
@@ -56,14 +56,14 @@ class ChainMethodCallsBlockBuilder {
     myFormattingMode = formattingMode;
   }
 
-  public Block build(List<ASTNode> nodes)  {
+  public Block build(List<? extends ASTNode> nodes)  {
     List<Block> blocks = buildBlocksFrom(nodes);
 
     Indent indent = myBlockIndent != null ? myBlockIndent : Indent.getContinuationWithoutFirstIndent(myIndentSettings.USE_RELATIVE_INDENTS);
     return new SyntheticCodeBlock(blocks, myBlockAlignment, mySettings, myJavaSettings, indent, myBlockWrap);
   }
 
-  private List<Block> buildBlocksFrom(List<ASTNode> nodes) {
+  private List<Block> buildBlocksFrom(List<? extends ASTNode> nodes) {
     List<ChainedCallChunk> methodCall = splitMethodCallOnChunksByDots(nodes);
 
     Wrap wrap = null;
@@ -101,7 +101,7 @@ class ChainMethodCallsBlockBuilder {
     return false;
   }
 
-  private Wrap createCallChunkWrap(int chunkIndex, @NotNull List<ChainedCallChunk> methodCall) {
+  private Wrap createCallChunkWrap(int chunkIndex, @NotNull List<? extends ChainedCallChunk> methodCall) {
     if (mySettings.WRAP_FIRST_METHOD_IN_CALL_CHAIN) {
       ChainedCallChunk next = chunkIndex + 1 < methodCall.size() ? methodCall.get(chunkIndex + 1) : null;
       if (next != null && isMethodCall(next)) {
@@ -123,7 +123,7 @@ class ChainMethodCallsBlockBuilder {
   }
 
   @NotNull
-  private static List<ChainedCallChunk> splitMethodCallOnChunksByDots(@NotNull List<ASTNode> nodes) {
+  private static List<ChainedCallChunk> splitMethodCallOnChunksByDots(@NotNull List<? extends ASTNode> nodes) {
     List<ChainedCallChunk> result = new ArrayList<>();
 
     List<ASTNode> current = new ArrayList<>();

@@ -13,10 +13,10 @@ Groovy script
             PsiElement(()('(')
             Additive expression
               Literal
-                PsiElement(string)(''a'')
+                PsiElement(single quoted string)(''a'')
               PsiElement(+)('+')
               Literal
-                PsiElement(string)(''b'')
+                PsiElement(single quoted string)(''b'')
             PsiElement())(')')
         PsiElement(:)(':')
         Literal
@@ -24,7 +24,7 @@ Groovy script
       PsiElement(,)(',')
       Named argument
         Argument label
-          PsiElement(string)(''c'')
+          PsiElement(single quoted string)(''c'')
         PsiElement(:)(':')
         Literal
           PsiElement(Integer)('4')

@@ -47,7 +47,7 @@ public class NavigateAction<T extends PsiElement> extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     if (myInfo.getNavigationHandler() != null) {
       MouseEvent mouseEvent = (MouseEvent)e.getInputEvent();
       T element = myInfo.getElement();

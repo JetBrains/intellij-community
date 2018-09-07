@@ -61,8 +61,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
@@ -180,7 +180,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     myPatchFile.addBrowseFolderListener(VcsBundle.message("patch.apply.select.title"), "", project, descriptor);
     myPatchFile.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         setPathFileChangeDefault();
         queueRequest();
       }
@@ -467,7 +467,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       myVf = null; // don't try to find vf for each typing; only when requested
     }
 
-    public FilePresentationModel(@NotNull VirtualFile file) {
+    FilePresentationModel(@NotNull VirtualFile file) {
       myPath = file.getPath();
       myVf = file;
     }
@@ -521,7 +521,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       if (myCanChangePatchFile) {
         group.add(new DumbAwareAction("Refresh", "Refresh", AllIcons.Actions.Refresh) {
           @Override
-          public void actionPerformed(AnActionEvent e) {
+          public void actionPerformed(@NotNull AnActionEvent e) {
             syncUpdatePatchFileAndScheduleReloadIfNeeded(null);
           }
         });
@@ -632,7 +632,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final List<AbstractFilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
       if ((selectedChanges.size() >= 1) && (sameBase(selectedChanges))) {
         final AbstractFilePatchInProgress.PatchChange patchChange = selectedChanges.get(0);
@@ -650,7 +650,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       final List<AbstractFilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
       e.getPresentation().setEnabled((selectedChanges.size() >= 1) && (sameBase(selectedChanges)));
     }
@@ -763,11 +763,11 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private class NewBaseSelector implements Runnable {
     final boolean myDirectorySelector;
 
-    public NewBaseSelector() {
+    NewBaseSelector() {
       this(true);
     }
 
-    public NewBaseSelector(boolean directorySelector) {
+    NewBaseSelector(boolean directorySelector) {
       myDirectorySelector = directorySelector;
     }
 
@@ -849,7 +849,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     private int myDeleted;
     private int myInapplicable;
 
-    public NamedLegendStatuses() {
+    NamedLegendStatuses() {
       myAdded = 0;
       myModified = 0;
       myDeleted = 0;
@@ -1021,7 +1021,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final List<AbstractFilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
       for (AbstractFilePatchInProgress.PatchChange change : selectedChanges) {
         change.getPatchInProgress().setZero();
@@ -1036,12 +1036,12 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(isEnabled());
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       if (!isEnabled()) return;
       final List<AbstractFilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
       for (AbstractFilePatchInProgress.PatchChange change : selectedChanges) {
@@ -1066,12 +1066,12 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(isEnabled());
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       if (!isEnabled()) return;
       final List<AbstractFilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
       for (AbstractFilePatchInProgress.PatchChange change : selectedChanges) {
@@ -1096,7 +1096,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final List<AbstractFilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
       for (AbstractFilePatchInProgress.PatchChange change : selectedChanges) {
         change.getPatchInProgress().reset();
@@ -1114,12 +1114,12 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled((!myPatches.isEmpty()) && myContainBasedChanges);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       showDiff();
     }
 
@@ -1177,7 +1177,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     private final List<DiffRequestProducer> myRequests;
     private final List<? extends Change> myChanges;
 
-    public MyDiffRequestChain(@NotNull List<DiffRequestProducer> requests, @NotNull List<? extends Change> changes, int index) {
+    MyDiffRequestChain(@NotNull List<DiffRequestProducer> requests, @NotNull List<? extends Change> changes, int index) {
       super(index);
       assert requests.size() == changes.size();
       myRequests = requests;

@@ -64,4 +64,8 @@ def test(MavenArtifactRepository m) {
 }
 '''
   }
+
+  void 'test parameter with single-character string initializer'() {
+    testHighlighting "@groovy.transform.CompileStatic def ff(char c = '\\n') {}"
+  }
 }

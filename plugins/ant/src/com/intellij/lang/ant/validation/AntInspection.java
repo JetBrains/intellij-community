@@ -27,6 +27,7 @@ public abstract class AntInspection extends BasicDomElementsInspection<AntDomPro
     super(AntDomProject.class);
   }
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {

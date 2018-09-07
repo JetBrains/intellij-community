@@ -12,12 +12,13 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.PositionTracker;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class PositionTrackerTestAction extends AnAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
     if (editor == null) return;
     for (Balloon.Position position : Balloon.Position.values()) {

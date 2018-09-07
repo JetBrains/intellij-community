@@ -38,7 +38,7 @@ public class GrDocFieldReferenceImpl extends GrDocMemberReferenceImpl implements
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     final PsiElement resolved = resolve();
     if (resolved instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod) resolved;

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.openapi.application.ReadAction;
@@ -24,7 +22,7 @@ import java.util.*;
  * to determine the run classpath.
  */
 public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunConfigurationModule> extends LocatableConfigurationBase implements Cloneable, ModuleRunConfiguration {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.ModuleBasedConfiguration");
+  private static final Logger LOG = Logger.getInstance(ModuleBasedConfiguration.class);
 
   protected static final String TO_CLONE_ELEMENT_NAME = "toClone";
 
@@ -38,7 +36,7 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
   }
 
   public ModuleBasedConfiguration(@NotNull ConfigurationModule configurationModule, @NotNull ConfigurationFactory factory) {
-    super(configurationModule.getProject(), factory, "");
+    super(configurationModule.getProject(), factory);
 
     myModule = configurationModule;
     setInitialModuleName();
@@ -57,8 +55,9 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     return (ModuleBasedConfigurationOptions)super.getOptions();
   }
 
+  @NotNull
   @Override
-  protected Class<? extends ModuleBasedConfigurationOptions> getOptionsClass() {
+  protected Class<? extends ModuleBasedConfigurationOptions> getDefaultOptionsClass() {
     return ModuleBasedConfigurationOptions.class;
   }
 
@@ -182,6 +181,7 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     return false;
   }
 
+  @Override
   public void onNewConfigurationCreated() {
     final RunConfigurationModule configurationModule = getConfigurationModule();
     if (configurationModule.getModule() == null) {

@@ -53,6 +53,7 @@ public class JvmPsiTypeConverterImpl extends JvmPsiTypeConverter implements Cust
     ourPrimitiveTypes.put(PsiType.BOOLEAN, 'Z');
   }
 
+  @Override
   public PsiType fromString(final String s, final ConvertContext context) {
     return convertFromString(s, context);
   }
@@ -107,6 +108,7 @@ public class JvmPsiTypeConverterImpl extends JvmPsiTypeConverter implements Cust
     return dimensions == 0 ? type : makeArray(dimensions - 1, new PsiArrayType(type));
   }
 
+  @Override
   public String toString(final PsiType psiType, final ConvertContext context) {
     return convertToString(psiType);
   }
@@ -136,6 +138,7 @@ public class JvmPsiTypeConverterImpl extends JvmPsiTypeConverter implements Cust
     return null;
   }
 
+  @Override
   @NotNull
   public PsiReference[] createReferences(GenericDomValue<PsiType> value, PsiElement element, ConvertContext context) {
     final PsiType psiType = value.getValue();

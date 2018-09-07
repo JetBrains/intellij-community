@@ -25,7 +25,7 @@ import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 
 /**
- * Py.test runner
+ * Pytest runner
  */
 
 class PyTestSettingsEditor(configuration: PyAbstractTestConfiguration) :
@@ -71,4 +71,6 @@ object PyTestFactory : PyAbstractTestFactory<PyTestConfiguration>() {
   override fun createTemplateConfiguration(project: Project): PyTestConfiguration = PyTestConfiguration(project, this)
 
   override fun getName(): String = PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.PY_TEST)
+
+  override fun getId() = "py.test" //Do not rename: used as ID for run configurations
 }

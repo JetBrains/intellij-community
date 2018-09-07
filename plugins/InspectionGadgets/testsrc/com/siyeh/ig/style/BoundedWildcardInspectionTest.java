@@ -2,6 +2,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +14,7 @@ public class BoundedWildcardInspectionTest extends LightInspectionTestCase {
   protected LightProjectDescriptor getProjectDescriptor() {
     return JAVA_8;
   }
-  
+
   @Override
   protected String getBasePath() {
     return "/plugins/InspectionGadgets/test/com/siyeh/igtest/style/bounded_wildcard";
@@ -21,22 +22,10 @@ public class BoundedWildcardInspectionTest extends LightInspectionTestCase {
 
   @Override
   protected String[] getEnvironmentClasses() {
-    return new String[] {
+    return new String[]{
       "package my;" +
       "public interface Processor<T> {" +
       "    boolean process(T t);" +
-      "}",
-
-      "package java.util.function;" +
-      "public interface Function<T, R> {" +
-      "    R apply(T t);\n" +
-      "    default <V> Function<T, V> andThen(Function<? super R, ? extends V> after) { return null;    }\n" +
-      "    <V> Function<V, R> compose(Function<? super V, ? extends T> before) { return null;    }\n" +
-      "}",
-
-      "package java.util.function;\n" +
-      "public interface Supplier<T> {\n" +
-      "    T get();\n" +
       "}",
     };
   }
@@ -54,11 +43,18 @@ public class BoundedWildcardInspectionTest extends LightInspectionTestCase {
     return inspection;
   }
 
-  public void testSimple() { doTest(); }
+  public void testSimple() {
+    doTest();
+    assertEmpty(myFixture.doHighlighting(HighlightSeverity.ERROR));
+  }
+
   public void testInvariantSwitchedOff() {
     doTest();
+    assertEmpty(myFixture.doHighlighting(HighlightSeverity.ERROR));
   }
+
   public void testPrivateMethodsSwitchedOff() {
     doTest();
+    assertEmpty(myFixture.doHighlighting(HighlightSeverity.ERROR));
   }
 }

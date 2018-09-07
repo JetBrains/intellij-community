@@ -16,6 +16,8 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.IconLoader.DarkIconProvider;
+import com.intellij.openapi.util.IconLoader.MenuBarIconProvider;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +32,7 @@ import static java.lang.Math.floor;
 /**
  * @author peter
  */
-public class SizedIcon extends JBUI.CachingScalableJBIcon implements IconLoader.MenuBarIconProvider, RetrievableIcon {
+public class SizedIcon extends JBUI.CachingScalableJBIcon implements MenuBarIconProvider, DarkIconProvider, RetrievableIcon {
   private final int myWidth;
   private final int myHeight;
   private final Icon myDelegate;
@@ -74,6 +76,11 @@ public class SizedIcon extends JBUI.CachingScalableJBIcon implements IconLoader.
     return new SizedIcon(IconLoader.getMenuBarIcon(myDelegate, isDark), myWidth, myHeight);
   }
 
+  @Override
+  public Icon getDarkIcon(boolean isDark) {
+    return new SizedIcon(IconLoader.getDarkIcon(myDelegate, isDark), myWidth, myHeight);
+  }
+
   @Nullable
   @Override
   public Icon retrieveIcon() { return myDelegate; }
@@ -91,10 +98,12 @@ public class SizedIcon extends JBUI.CachingScalableJBIcon implements IconLoader.
     }
   }
 
+  @Override
   public int getIconWidth() {
     return (int)ceil(scaleVal(myWidth));
   }
 
+  @Override
   public int getIconHeight() {
     return (int)ceil(scaleVal(myHeight));
   }

@@ -62,7 +62,7 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
 
   private class MyTestRunProfile extends MyRunProfile {
 
-    public MyTestRunProfile(RunConfigurationBase configuration) {
+    MyTestRunProfile(RunConfigurationBase configuration) {
       super(configuration);
     }
 
@@ -98,7 +98,7 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
     private final PythonTestCommandLineStateBase<?> myState;
     private final Project myProject;
 
-    public FailedPythonTestCommandLineStateBase(AbstractPythonTestRunConfiguration<?> configuration,
+    FailedPythonTestCommandLineStateBase(AbstractPythonTestRunConfiguration<?> configuration,
                                                 ExecutionEnvironment env,
                                                 PythonTestCommandLineStateBase<?> state) {
       super(configuration, env);

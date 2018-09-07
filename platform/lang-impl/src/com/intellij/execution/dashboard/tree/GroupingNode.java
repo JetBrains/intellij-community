@@ -53,7 +53,7 @@ public class GroupingNode extends AbstractTreeNode<Pair<Object, RunDashboardGrou
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
     presentation.setPresentableText(getGroup().getName());
     presentation.setIcon(getGroup().getIcon());
   }

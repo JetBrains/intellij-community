@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.projectView;
 
@@ -21,9 +7,7 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -45,6 +29,7 @@ import java.util.*;
  * @author yole
  */
 public class UIDesignerFavoriteNodeProvider extends FavoriteNodeProvider {
+  @Override
   @Nullable
   public Collection<AbstractTreeNode> getFavoriteNodes(DataContext context, final ViewSettings viewSettings) {
     Project project = CommonDataKeys.PROJECT.getData(context);
@@ -93,6 +78,7 @@ public class UIDesignerFavoriteNodeProvider extends FavoriteNodeProvider {
     return null;
   }
 
+  @Override
   public boolean elementContainsFile(final Object element, final VirtualFile vFile) {
     if (element instanceof Form){
       Form form = (Form) element;
@@ -101,11 +87,13 @@ public class UIDesignerFavoriteNodeProvider extends FavoriteNodeProvider {
     return false;
   }
 
+  @Override
   public int getElementWeight(final Object element, final boolean isSortByType) {
     if (element instanceof Form) return 9;
     return -1;
   }
 
+  @Override
   @Nullable
   public String getElementLocation(final Object element) {
     if (element instanceof Form) {
@@ -121,6 +109,7 @@ public class UIDesignerFavoriteNodeProvider extends FavoriteNodeProvider {
     return null;
   }
 
+  @Override
   public boolean isInvalidElement(Object element) {
     if (element instanceof Form) {
       return !((Form) element).isValid();
@@ -128,11 +117,13 @@ public class UIDesignerFavoriteNodeProvider extends FavoriteNodeProvider {
     return false;
   }
 
+  @Override
   @NotNull @NonNls
   public String getFavoriteTypeId() {
     return "form";
   }
 
+  @Override
   @Nullable @NonNls
   public String getElementUrl(Object element) {
     if (element instanceof Form) {
@@ -142,6 +133,7 @@ public class UIDesignerFavoriteNodeProvider extends FavoriteNodeProvider {
     return null;
   }
 
+  @Override
   public String getElementModuleName(final Object element) {
     if (element instanceof Form) {
       Form form = (Form)element;
@@ -151,6 +143,7 @@ public class UIDesignerFavoriteNodeProvider extends FavoriteNodeProvider {
     return null;
   }
 
+  @Override
   public Object[] createPathFromUrl(final Project project, final String url, final String moduleName) {
     final PsiManager psiManager = PsiManager.getInstance(project);
     final PsiClass classToBind = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(url, GlobalSearchScope.allScope(project));

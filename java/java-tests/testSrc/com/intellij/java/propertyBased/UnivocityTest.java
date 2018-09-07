@@ -15,6 +15,7 @@
  */
 package com.intellij.java.propertyBased;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiManager;
@@ -22,16 +23,15 @@ import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.propertyBased.*;
-import com.intellij.util.SystemProperties;
 import org.jetbrains.jetCheck.Generator;
 import org.jetbrains.jetCheck.IntDistribution;
 import org.jetbrains.jetCheck.PropertyChecker;
 
+import java.io.File;
 import java.util.concurrent.atomic.AtomicLong;
 
 @SkipSlowTestLocally
 public class UnivocityTest extends AbstractApplyAndRevertTestCase {
-
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -87,7 +87,11 @@ public class UnivocityTest extends AbstractApplyAndRevertTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return SystemProperties.getUserHome() + "/IdeaProjects/univocity-parsers";
+    File file = new File(PathManager.getHomePath(), "univocity-parsers");
+    if (!file.exists()) {
+      fail("Cannot find univocity project, execute this in project home: git clone https://github.com/JetBrains/univocity-parsers.git");
+    }
+    return file.getAbsolutePath();
   }
 
 }

@@ -27,12 +27,11 @@
   <whatsnew url="https://www.jetbrains.com/idea/whatsnew/index.html"/>
   <keymap win="https://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard.pdf"
           mac="https://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard_Mac.pdf"/>
-  <third-party url="http://www.jetbrains.org/"/>
   <jetbrains-tv url="https://www.youtube.com/user/intellijideavideo"/>
 
   <statistics settings="https://www.jetbrains.com/idea/statistics/stat-assistant.xml"
               service="https://www.jetbrains.com/idea/statistics/index.jsp"
               fus-settings="https://www.jetbrains.com/idea/statistics/fus-assistant.xml"
-              event-log-settings="https://www.jetbrains.com/idea/statistics/fus-lion-assistant.xml"
+              event-log-settings="https://www.jetbrains.com/idea/statistics/fus-lion-v2-assistant.xml"
   />
 </component>

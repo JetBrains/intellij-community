@@ -77,7 +77,7 @@ public class CompileScopeImpl extends CompileScope {
 
   @Override
   public boolean isBuildForced(@NotNull BuildTarget<?> target) {
-    return myTypesToForceBuild.contains(target.getTargetType()) && myFiles.isEmpty() && isWholeTargetAffected(target);
+    return myFiles.isEmpty() && myTypesToForceBuild.contains(target.getTargetType()) && isWholeTargetAffected(target);
   }
 
   @Override

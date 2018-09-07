@@ -6,7 +6,7 @@ import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
 import com.intellij.testGuiFramework.framework.GuiTestUtil.textfield
 import com.intellij.testGuiFramework.impl.GuiTestCase
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
-import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
+import com.intellij.testGuiFramework.framework.Timeouts.defaultTimeout
 import com.intellij.testGuiFramework.tests.community.CommunityProjectCreator
 import com.intellij.testGuiFramework.util.Key.ESCAPE
 import org.fest.swing.core.SmartWaitRobot

@@ -271,7 +271,7 @@ public class UsageViewImpl implements UsageViewEx {
           });
           myModel.addTreeModelListener(new TreeModelAdapter() {
             @Override
-            protected void process(TreeModelEvent event, EventType type) {
+            protected void process(@NotNull TreeModelEvent event, @NotNull EventType type) {
               myNeedUpdateButtons = true;
             }
           });
@@ -322,7 +322,7 @@ public class UsageViewImpl implements UsageViewEx {
         }
       }
 
-      private void setExcludeNodes(@NotNull Set<Node> nodes, boolean excluded) {
+      private void setExcludeNodes(@NotNull Set<? extends Node> nodes, boolean excluded) {
         for (Node node : nodes) {
           node.setExcluded(excluded, edtNodeChangedQueue);
         }
@@ -703,7 +703,7 @@ public class UsageViewImpl implements UsageViewEx {
 
     DefaultActionGroup group = new DefaultActionGroup() {
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         super.update(e);
         myButtonPanel.update();
       }
@@ -861,12 +861,12 @@ public class UsageViewImpl implements UsageViewEx {
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(e.getData(CommonDataKeys.EDITOR) == null);
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         FindManager.getInstance(getProject()).showSettingsAndFindUsages(myTargets);
       }
     };
@@ -965,7 +965,7 @@ public class UsageViewImpl implements UsageViewEx {
     }
   }
 
-  private void restoreUsageExpandState(@NotNull Collection<UsageState> states) {
+  private void restoreUsageExpandState(@NotNull Collection<? extends UsageState> states) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     //always expand the last level group
     final DefaultMutableTreeNode root = (DefaultMutableTreeNode)myTree.getModel().getRoot();
@@ -1147,7 +1147,7 @@ public class UsageViewImpl implements UsageViewEx {
 
   @NotNull
   @Override
-  public CompletableFuture<?> appendUsagesInBulk(@NotNull Collection<Usage> usages) {
+  public CompletableFuture<?> appendUsagesInBulk(@NotNull Collection<? extends Usage> usages) {
     CompletableFuture<Object> result = new CompletableFuture<>();
     addUpdateRequest(ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.run(() -> {
       try {
@@ -1279,7 +1279,7 @@ public class UsageViewImpl implements UsageViewEx {
     updateOnSelectionChanged();
   }
 
-  private void queueUpdateBulk(@NotNull List<Node> toUpdate, @NotNull Runnable onCompletedInEdt) {
+  private void queueUpdateBulk(@NotNull List<? extends Node> toUpdate, @NotNull Runnable onCompletedInEdt) {
     if (toUpdate.isEmpty()) return;
     addUpdateRequest(ApplicationManager.getApplication().executeOnPooledThread(() -> {
       for (Node node : toUpdate) {
@@ -1317,7 +1317,7 @@ public class UsageViewImpl implements UsageViewEx {
     return false;
   }
 
-  private void updateImmediatelyNodesUpToRoot(@NotNull Collection<Node> nodes) {
+  private void updateImmediatelyNodesUpToRoot(@NotNull Collection<? extends Node> nodes) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myProject.isDisposed()) return;
     TreeNode root = (TreeNode)myTree.getModel().getRoot();
@@ -1787,17 +1787,19 @@ public class UsageViewImpl implements UsageViewEx {
     private MyPanel(@NotNull JTree tree) {
       mySupport = new OccurenceNavigatorSupport(tree) {
         @Override
-        protected Navigatable createDescriptorForNode(DefaultMutableTreeNode node) {
+        protected Navigatable createDescriptorForNode(@NotNull DefaultMutableTreeNode node) {
           if (node.getChildCount() > 0) return null;
           if (node instanceof Node && ((Node)node).isExcluded()) return null;
           return getNavigatableForNode(node, !myPresentation.isReplaceMode());
         }
 
+        @NotNull
         @Override
         public String getNextOccurenceActionName() {
           return UsageViewBundle.message("action.next.occurrence");
         }
 
+        @NotNull
         @Override
         public String getPreviousOccurenceActionName() {
           return UsageViewBundle.message("action.previous.occurrence");
@@ -1854,11 +1856,13 @@ public class UsageViewImpl implements UsageViewEx {
       return mySupport != null ? mySupport.goPreviousOccurence() : null;
     }
 
+    @NotNull
     @Override
     public String getNextOccurenceActionName() {
       return mySupport != null ? mySupport.getNextOccurenceActionName() : "";
     }
 
+    @NotNull
     @Override
     public String getPreviousOccurenceActionName() {
       return mySupport != null ? mySupport.getPreviousOccurenceActionName() : "";
@@ -2147,13 +2151,13 @@ public class UsageViewImpl implements UsageViewEx {
     UsageNode usageNode = myUsageNodes.get(toDelete);
     if (usageNode == null) return null;
 
-    DefaultMutableTreeNode node = myRootPanel.mySupport.findNode(myTree, usageNode, true, null);
-    if (node == null) node = myRootPanel.mySupport.findNode(myTree, usageNode, false, null); // last node
+    DefaultMutableTreeNode node = myRootPanel.mySupport.findNextNodeAfter(myTree, usageNode, true);
+    if (node == null) node = myRootPanel.mySupport.findNextNodeAfter(myTree, usageNode, false); // last node
 
     return node == null ? null : node.getUserObject() instanceof Usage ? (Usage)node.getUserObject() : null;
   }
 
-  public Usage getNextToSelect(@NotNull Collection<Usage> toDelete) {
+  public Usage getNextToSelect(@NotNull Collection<? extends Usage> toDelete) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     Usage toSelect = null;
     for (Usage usage : toDelete) {

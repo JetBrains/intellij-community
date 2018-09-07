@@ -127,12 +127,10 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
                                                          boolean showExpanded,
                                                          @NotNull CachedIntentions cachedIntentions) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    final Point position = getHintPosition(editor);
-    ApplicationManager.getApplication().assertIsDispatchThread();
     final IntentionHintComponent component = new IntentionHintComponent(project, file, editor, cachedIntentions);
 
     if (editor.getSettings().isShowIntentionBulb()) {
-      component.showIntentionHintImpl(!showExpanded, position);
+      component.showIntentionHintImpl(!showExpanded);
     }
     Disposer.register(project, component);
     if (showExpanded) {
@@ -214,7 +212,7 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
     return values.get(index).getAction();
   }
 
-  private void showIntentionHintImpl(final boolean delay, @NotNull Point position) {
+  private void showIntentionHintImpl(final boolean delay) {
     final int offset = myEditor.getCaretModel().getOffset();
 
     myComponentHint.setShouldDelay(delay);
@@ -234,11 +232,14 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
       }
     };
     if (hintManager.canShowQuestionAction(action)) {
-      hintManager.showQuestionHint(myEditor, position, offset, offset, myComponentHint, action, HintManager.ABOVE);
+      Point position = getHintPosition(myEditor);
+      if (position != null) {
+        hintManager.showQuestionHint(myEditor, position, offset, offset, myComponentHint, action, HintManager.ABOVE);
+      }
     }
   }
 
-  @NotNull
+  @Nullable
   private static Point getHintPosition(Editor editor) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return new Point();
     final int offset = editor.getCaretModel().getOffset();
@@ -269,19 +270,20 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
       realPoint = new Point(- (AllIcons.Actions.RealIntentionBulb.getIconWidth() / 2) - 4, - (AllIcons.Actions.RealIntentionBulb
                                                                                                 .getIconHeight() / 2));
     } else {
-      // try to place bulb on the same line
+      Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
+      if (position.y < visibleArea.y || position.y >= visibleArea.y + visibleArea.height) return null;
 
+      // try to place bulb on the same line
       int yShift = -(NORMAL_BORDER_SIZE + AllIcons.Actions.RealIntentionBulb.getIconHeight());
       if (canPlaceBulbOnTheSameLine(editor)) {
         yShift = -(NORMAL_BORDER_SIZE + (AllIcons.Actions.RealIntentionBulb.getIconHeight() - editor.getLineHeight()) / 2 + 3);
       }
-      else if (position.y < editor.getScrollingModel().getVisibleArea().y + editor.getLineHeight()) {
+      else if (position.y < visibleArea.y + editor.getLineHeight()) {
         yShift = editor.getLineHeight() - NORMAL_BORDER_SIZE;
       }
 
       final int xShift = AllIcons.Actions.RealIntentionBulb.getIconWidth();
 
-      Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
       realPoint = new Point(Math.max(0,visibleArea.x - xShift), position.y + yShift);
     }
 
@@ -391,7 +393,7 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
 
   private void showPopup(boolean mouseClick) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (myPopup == null || myPopup.isDisposed()) return;
+    if (myPopup == null || myPopup.isDisposed() || myPopupShown) return;
 
     if (mouseClick && myPanel.isShowing()) {
       final RelativePoint swCorner = RelativePoint.getSouthWestOf(myPanel);
@@ -437,7 +439,7 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
     
     myPopup.addListener(new JBPopupListener() {
       @Override
-      public void onClosed(LightweightWindowEvent event) {
+      public void onClosed(@NotNull LightweightWindowEvent event) {
         highlighter.dropHighlight();
         injectionHighlighter.dropHighlight();
         myPopupShown = false;

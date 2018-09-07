@@ -24,13 +24,14 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.sdk.PythonSdkType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class PythonSpellcheckerGenerateDictionariesAction extends AnAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Module module = e.getData(LangDataKeys.MODULE);
     if (module == null) {
       return;

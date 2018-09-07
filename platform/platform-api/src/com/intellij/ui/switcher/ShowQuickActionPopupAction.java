@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,7 +32,7 @@ import static com.intellij.openapi.ui.popup.JBPopupFactory.ActionSelectionAid.AL
 
 public class ShowQuickActionPopupAction extends AnAction {
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     QuickActionProvider quickActionProvider = e.getData(QuickActionProvider.KEY);
     if (quickActionProvider == null) {
       e.getPresentation().setEnabled(false);
@@ -44,7 +45,7 @@ public class ShowQuickActionPopupAction extends AnAction {
 
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     QuickActionProvider provider = e.getRequiredData(QuickActionProvider.KEY);
     List<AnAction> actions = provider.getActions(true);
 

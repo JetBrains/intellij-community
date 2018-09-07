@@ -92,6 +92,7 @@ fun getContainingAnnotationEntry(uElement: UElement?): Pair<PsiAnnotation, Strin
           retrievePsiAnnotationEntry(parent, null)
         else
           tryConvertToEntry(uElement, parent, name)
+      is UPolyadicExpression -> retrievePsiAnnotationEntry(parent, null)
       is UNamedExpression -> retrievePsiAnnotationEntry(parent, parent.name)
       else -> null
     }

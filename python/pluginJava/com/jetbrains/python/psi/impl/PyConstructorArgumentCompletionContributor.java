@@ -38,7 +38,7 @@ public class PyConstructorArgumentCompletionContributor extends CompletionContri
            new CompletionProvider<CompletionParameters>() {
              @Override
              protected void addCompletions(@NotNull CompletionParameters parameters,
-                                           ProcessingContext context,
+                                           @NotNull ProcessingContext context,
                                            @NotNull CompletionResultSet result) {
                final PyCallExpression call = PsiTreeUtil.getParentOfType(parameters.getOriginalPosition(), PyCallExpression.class);
                if (call == null) return;

@@ -40,6 +40,7 @@ public class PropertiesReferenceContributor extends PsiReferenceContributor{
   private static final Logger LOG = Logger.getInstance(PropertiesReferenceContributor.class);
 
   private static final JavaClassReferenceProvider CLASS_REFERENCE_PROVIDER = new JavaClassReferenceProvider() {
+    @Override
     public boolean isSoft() {
       return true;
     }
@@ -72,6 +73,7 @@ public class PropertiesReferenceContributor extends PsiReferenceContributor{
         final PsiClass propertyKeyAnnotation =
           JavaPsiFacade.getInstance(element.getProject()).findClass(AnnotationUtil.PROPERTY_KEY, element.getResolveScope());
         if (propertyKeyAnnotation != null) {
+          LOG.assertTrue(propertyKeyAnnotation.isAnnotationType());
           AnnotatedElementsSearch.searchPsiParameters(propertyKeyAnnotation, new LocalSearchScope(element.getContainingFile()))
             .forEach(parameter -> {
               final PsiModifierList list = parameter.getModifierList();

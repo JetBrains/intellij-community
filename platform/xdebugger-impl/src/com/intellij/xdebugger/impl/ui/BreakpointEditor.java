@@ -27,6 +27,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -76,7 +77,7 @@ public class BreakpointEditor {
 
     final AnAction doneAction = new DumbAwareAction() {
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         super.update(e);
         Project project = getEventProject(e);
         Editor editor = e.getData(CommonDataKeys.EDITOR);
@@ -93,7 +94,8 @@ public class BreakpointEditor {
         e.getPresentation().setEnabled(!disabled && (editor == null || StringUtil.isEmpty(editor.getSelectionModel().getSelectedText())) );
       }
 
-      public void actionPerformed(AnActionEvent e) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
         done();
       }
     };

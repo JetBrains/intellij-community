@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.openapi.application.Application;
@@ -66,10 +66,15 @@ public final class ParametersList implements Cloneable {
 
   @NotNull
   public Map<String, String> getProperties() {
+    return getProperties("");
+  }
+
+  @NotNull
+  public Map<String, String> getProperties(String valueIfMissing) {
     Map<String, String> result = new LinkedHashMap<>();
     JBIterable<Matcher> matchers = JBIterable.from(myParameters).map(PROPERTY_PATTERN::matcher).filter(Matcher::matches);
     for (Matcher matcher : matchers) {
-      result.put(matcher.group(1), StringUtil.notNullize(matcher.group(2), ""));
+      result.put(matcher.group(1), StringUtil.notNullize(matcher.group(2), valueIfMissing));
     }
     return result;
   }
@@ -301,12 +306,16 @@ public final class ParametersList implements Cloneable {
   /** @noinspection MethodDoesntCallSuperMethod*/
   @Override
   public ParametersList clone() {
-    ParametersList clone = new ParametersList();
-    clone.myParameters.addAll(myParameters);
+    return copyTo(new ParametersList());
+  }
+
+  @NotNull
+  ParametersList copyTo(@NotNull ParametersList target) {
+    target.myParameters.addAll(myParameters);
     for (ParamsGroup group : myGroups) {
-      clone.myGroups.add(group.clone());
+      target.myGroups.add(group.clone());
     }
-    return clone;
+    return target;
   }
 
   /**
@@ -371,10 +380,10 @@ public final class ParametersList implements Cloneable {
       return ObjectUtils.notNull(ourTestMacros, Collections.emptyMap());
     }
     Map<String, String> map = ContainerUtil.newTroveMap(CaseInsensitiveStringHashingStrategy.INSTANCE);
-    PathMacros pathMacros = PathMacros.getInstance();
-    if (pathMacros != null) {
-      for (String name : pathMacros.getUserMacroNames()) {
-        ContainerUtil.putIfNotNull(name, pathMacros.getValue(name), map);
+    Map<String, String> pathMacros = PathMacros.getInstance().getUserMacros();
+    if (!pathMacros.isEmpty()) {
+      for (String name : pathMacros.keySet()) {
+        ContainerUtil.putIfNotNull(name, pathMacros.get(name), map);
       }
     }
     Map<String, String> env = EnvironmentUtil.getEnvironmentMap();

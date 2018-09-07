@@ -22,6 +22,7 @@ import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -45,6 +46,21 @@ import java.util.Map;
 
 public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHandler {
 
+  private static final Key<Boolean> INJECTION_FORBIDS_LINE_COMMENTS = Key.create("INJECTION_FORBIDS_LINE_COMMENTS");
+
+  /**
+   * Disable line commenting in an injected file making this action operate on its host file instead.
+   *
+   * @param file injected file where line comment action shouldn't be available
+   */
+  public static void markInjectedFileUnsuitableForLineComment(@NotNull PsiFile file) {
+    if (!InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) {
+      throw new IllegalArgumentException("This method should be called only on injected files");
+    }
+
+    file.putUserData(INJECTION_FORBIDS_LINE_COMMENTS, true);
+  }
+
   private final List<Block> myBlocks = new ArrayList<>();
 
   @Override
@@ -54,13 +70,10 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
 
     PsiElement context = InjectedLanguageManager.getInstance(file.getProject()).getInjectionHost(file);
 
-    if (context != null && (context.textContains('\'') || context.textContains('\"') || context.textContains('/'))) {
-      String s = context.getText();
-      if (StringUtil.startsWith(s, "\"") || StringUtil.startsWith(s, "\'") || StringUtil.startsWith(s, "/")) {
-        file = context.getContainingFile();
-        editor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
-        caret = caret instanceof InjectedCaret ? ((InjectedCaret)caret).getDelegate() : caret;
-      }
+    if (context != null && shouldCommentInHostFile(file, context)) {
+      file = context.getContainingFile();
+      editor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
+      caret = caret instanceof InjectedCaret ? ((InjectedCaret)caret).getDelegate() : caret;
     }
 
     Document document = editor.getDocument();
@@ -119,13 +132,24 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
                                  startOffset == document.getLineStartOffset(document.getLineNumber(startOffset)) &&
                                  endOffset == document.getLineEndOffset(document.getLineNumber(endOffset - 1)) + 1;
     boolean startingNewLineComment = !hasSelection
-                                     && isLineEmpty(document, document.getLineNumber(startOffset))
+                                     && DocumentUtil.isLineEmpty(document, document.getLineNumber(startOffset))
                                      && !Comparing.equal(IdeActions.ACTION_COMMENT_LINE,
                                                          ActionManagerEx.getInstanceEx().getPrevPreformedActionId());
     currentBlock.caretUpdate = startingNewLineComment ? CaretUpdate.PUT_AT_COMMENT_START :
                                !hasSelection ? CaretUpdate.SHIFT_DOWN :
                                wholeLinesSelected ? CaretUpdate.RESTORE_SELECTION : null;
     }
+
+  private static boolean shouldCommentInHostFile(@NotNull PsiFile file, @NotNull PsiElement context) {
+    if (file.getUserData(INJECTION_FORBIDS_LINE_COMMENTS) != null) {
+      return true;
+    }
+    if (context.textContains('\'') || context.textContains('\"') || context.textContains('/')) {
+      final String s = context.getText();
+      return StringUtil.startsWith(s, "\"") || StringUtil.startsWith(s, "\'") || StringUtil.startsWith(s, "/");
+    }
+    return false;
+  }
 
   @Override
   public void postInvoke() {
@@ -172,7 +196,7 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
         }
 
         block.commenters[line - startLine] = commenter;
-        if (!isLineCommented(block, line, commenter) && (singleline || !isLineEmpty(document, line))) {
+        if (!isLineCommented(block, line, commenter) && (singleline || !DocumentUtil.isLineEmpty(document, line))) {
           allLinesCommented = false;
           if (commenter instanceof IndentedCommenter) {
             final Boolean value = ((IndentedCommenter)commenter).forceIndentedLineComment();
@@ -304,16 +328,6 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
     }
 
     return blockSuitableCommenter;
-  }
-
-  private static boolean isLineEmpty(Document document, final int line) {
-    final CharSequence chars = document.getCharsSequence();
-    int start = document.getLineStartOffset(line);
-    int end = Math.min(document.getLineEndOffset(line), document.getTextLength() - 1);
-    for (int i = start; i <= end; i++) {
-      if (!Character.isWhitespace(chars.charAt(i))) return false;
-    }
-    return true;
   }
 
   private static boolean isLineCommented(Block block, final int line, final Commenter commenter) {

@@ -60,3 +60,9 @@ class D1:
 class D2:
     x: int = attr.ib(default=attr.NOTHING)
     y: int
+
+
+@attr.dataclass
+class E1:
+    x: int = 0
+    y: int = attr.ib(init=False)

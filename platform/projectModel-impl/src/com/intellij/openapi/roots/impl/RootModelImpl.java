@@ -239,12 +239,12 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   public void removeContentEntry(@NotNull ContentEntry entry) {
     assertWritable();
     LOG.assertTrue(myContent.contains(entry));
+    myContent.remove(entry);
     if (entry instanceof RootModelComponentBase) {
       Disposer.dispose((Disposable)entry);
       RootModelImpl entryModel = ((RootModelComponentBase)entry).getRootModel();
       LOG.assertTrue(entryModel == this, "Removing from " + this + " content entry obtained from " + entryModel);
     }
-    myContent.remove(entry);
   }
 
   @Override

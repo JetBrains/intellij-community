@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NonNls;
 
 class ConvertIntegerToDecimalPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof PsiLiteralExpression)) {
       return false;

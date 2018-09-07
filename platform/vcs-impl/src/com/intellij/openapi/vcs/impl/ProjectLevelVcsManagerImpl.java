@@ -137,7 +137,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     Disposer.register(project, myInitialization); // wait for the thread spawned in VcsInitialization to terminate
     projectManager.addProjectManagerListener(project, new ProjectManagerListener() {
       @Override
-      public void projectClosing(Project project) {
+      public void projectClosing(@NotNull Project project) {
         Disposer.dispose(myInitialization);
       }
     });
@@ -673,11 +673,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       }
     }
     return vcsRoots.toArray(new VcsRoot[0]);
-  }
-
-  @Override
-  public void updateActiveVcss() {
-    // not needed
   }
 
   @Override

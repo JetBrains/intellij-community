@@ -21,7 +21,7 @@ import com.intellij.util.text.DateFormatUtil;
 import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
 import git4idea.test.TestDialogHandler;
-import org.jetbrains.plugins.github.api.GithubApiUtil;
+import org.jetbrains.plugins.github.api.GithubApiRequests;
 import org.jetbrains.plugins.github.test.GithubTest;
 import org.jetbrains.plugins.github.ui.GithubShareDialog;
 
@@ -50,11 +50,7 @@ public abstract class GithubShareProjectTestBase extends GithubTest {
   }
 
   protected void deleteGithubRepo() throws IOException {
-    myApiTaskExecutor.execute(myAccount, c -> {
-      String username = GithubApiUtil.getCurrentUser(c).getLogin();
-      GithubApiUtil.deleteGithubRepository(c, username, PROJECT_NAME);
-      return null;
-    });
+    myExecutor.execute(GithubApiRequests.Repos.delete(myAccount.getServer(), myUsername, PROJECT_NAME));
   }
 
   protected void registerDefaultShareDialogHandler() {

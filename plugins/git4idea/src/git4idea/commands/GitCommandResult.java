@@ -141,8 +141,18 @@ public class GitCommandResult {
    */
   @NotNull
   public String getOutputOrThrow(int... ignoredErrorCodes) throws VcsException {
-    if (!success(ignoredErrorCodes)) throw new VcsException(getErrorOutputAsJoinedString());
+    throwOnError(ignoredErrorCodes);
     return getOutputAsJoinedString();
+  }
+
+  /**
+   * Check if execution was successful and do nothing or throw exception
+   *
+   * @param ignoredErrorCodes list of non-zero exit codes the are considered success exit codes
+   * @throws VcsException with message from {@link #getErrorOutputAsJoinedString()}
+   */
+  public void throwOnError(int... ignoredErrorCodes) throws VcsException {
+    if (!success(ignoredErrorCodes)) throw new VcsException(getErrorOutputAsJoinedString());
   }
 
   /**

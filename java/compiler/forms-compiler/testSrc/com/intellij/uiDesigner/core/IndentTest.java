@@ -34,6 +34,8 @@ public class IndentTest extends TestCase {
 
     panel.add(field1, new GridConstraints(0,0,1,1,GridConstraints.ANCHOR_CENTER,GridConstraints.FILL_BOTH,
       GridConstraints.SIZEPOLICY_WANT_GROW | GridConstraints.SIZEPOLICY_CAN_SHRINK, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 1));
+    panel.doLayout();
+
     assertEquals(15, panel.getMinimumSize().width);
     assertEquals(20, panel.getPreferredSize().width);
 

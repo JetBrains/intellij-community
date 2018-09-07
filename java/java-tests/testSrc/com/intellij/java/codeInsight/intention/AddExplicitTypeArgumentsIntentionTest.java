@@ -89,6 +89,20 @@ public class AddExplicitTypeArgumentsIntentionTest extends JavaCodeInsightFixtur
     assertNull(intentionAction);
   }
 
+  public void testNotAvailableWhenWildcardInferred() {
+    myFixture.configureByText("a.java", "import java.util.stream.*;\n" +
+                                        "\n" +
+                                        "public class JDbQueryElement {\n" +
+                                        "\n" +
+                                        "    void m(final Stream<String> stringStream) {\n" +
+                                        "        stringStream.c<caret>ollect(Collectors.joining(\", \"));\n" +
+                                        "    }\n" +
+                                        "\n" +
+                                        "}");
+    final IntentionAction intentionAction = myFixture.getAvailableIntention(CodeInsightBundle.message("intention.add.explicit.type.arguments.family"));
+    assertNull(intentionAction);
+  }
+
   private void doTest(String beforeText, String afterText) {
     myFixture.configureByText("a.java", beforeText);
     final IntentionAction intentionAction = myFixture.findSingleIntention(CodeInsightBundle.message("intention.add.explicit.type.arguments.family"));

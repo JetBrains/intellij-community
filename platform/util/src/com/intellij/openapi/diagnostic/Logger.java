@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.util.ArrayUtil;
@@ -50,6 +48,19 @@ public abstract class Logger {
       e.printStackTrace();
       throw new RuntimeException(e);
     }
+  }
+
+  public static void setFactory(Factory factory) {
+    if (isInitialized()) {
+      //noinspection UseOfSystemOutOrSystemErr
+      System.out.println("Changing log factory\n" + ExceptionUtil.getThrowableText(new Throwable()));
+    }
+
+    ourFactory = factory;
+  }
+
+  public static Factory getFactory() {
+    return ourFactory;
   }
 
   public static boolean isInitialized() {

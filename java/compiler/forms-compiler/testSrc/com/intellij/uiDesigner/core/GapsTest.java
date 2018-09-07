@@ -20,13 +20,17 @@ import junit.framework.TestCase;
 import javax.swing.*;
 import java.awt.*;
 
+import static com.intellij.uiDesigner.core.SpansTest.setDefaults;
+
 public final class GapsTest extends TestCase {
   public void test1() {
     final JPanel panel = new JPanel(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), 10, 0));
 
     final JTextField field1 = new JTextField();
+    setDefaults(field1);
     field1.setPreferredSize(new Dimension(100, 20));
     final JTextField field2 = new JTextField();
+    setDefaults(field2);
     field2.setPreferredSize(new Dimension(100, 20));
 
     panel.add(field1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
@@ -34,6 +38,8 @@ public final class GapsTest extends TestCase {
 
     panel.add(field2, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                           GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0));
+
+    panel.doLayout();
 
     final Dimension preferredSize = panel.getPreferredSize();
     assertEquals(210, preferredSize.width);
@@ -46,8 +52,10 @@ public final class GapsTest extends TestCase {
     final JPanel panel = new JPanel(new GridLayoutManager(1, 3, new Insets(0, 0, 0, 0), 7, 0));
 
     final JTextField field1 = new JTextField();
+    setDefaults(field1);
     field1.setPreferredSize(new Dimension(100, 40));
     final JTextField field2 = new JTextField();
+    setDefaults(field2);
     field2.setPreferredSize(new Dimension(100, 40));
 
     panel.add(field1, new GridConstraints(0, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
@@ -55,6 +63,8 @@ public final class GapsTest extends TestCase {
 
     panel.add(field2, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                           GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0));
+
+    panel.doLayout();
 
     final Dimension preferredSize = panel.getPreferredSize();
     assertEquals(207, preferredSize.width);
@@ -75,12 +85,16 @@ public final class GapsTest extends TestCase {
     final JPanel panel = new JPanel(new GridLayoutManager(2, 3, new Insets(0, 0, 0, 0), 7, 0));
 
     final JButton btn1 = new JButton();
+    setDefaults(btn1);
     btn1.setPreferredSize(new Dimension(100, 20));
     final JButton btn2 = new JButton();
+    setDefaults(btn2);
     btn2.setPreferredSize(new Dimension(100, 20));
     final JButton btn3 = new JButton();
+    setDefaults(btn3);
     btn3.setPreferredSize(new Dimension(100, 20));
     final JButton btn4 = new JButton();
+    setDefaults(btn4);
     btn4.setPreferredSize(new Dimension(100, 20));
 
     panel.add(btn1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
@@ -110,12 +124,16 @@ public final class GapsTest extends TestCase {
     final JPanel panel = new JPanel(new GridLayoutManager(2, 3, new Insets(0, 0, 0, 0), 1000, 0));
 
     final JButton btn1 = new JButton();
+    setDefaults(btn1);
     btn1.setPreferredSize(new Dimension(100, 20));
     final JButton btn2 = new JButton();
+    setDefaults(btn2);
     btn2.setPreferredSize(new Dimension(100, 20));
     final JButton btn3 = new JButton();
+    setDefaults(btn3);
     btn3.setPreferredSize(new Dimension(100, 20));
     final JButton btn4 = new JButton();
+    setDefaults(btn4);
     btn4.setPreferredSize(new Dimension(100, 20));
 
     panel.add(btn1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
@@ -145,10 +163,13 @@ public final class GapsTest extends TestCase {
     final JPanel panel = new JPanel(new GridLayoutManager(2, 3, new Insets(0, 0, 0, 0), 1000, 0));
 
     final JButton btn1 = new JButton();
+    setDefaults(btn1);
     btn1.setPreferredSize(new Dimension(100, 20));
     final JButton btn2 = new JButton();
+    setDefaults(btn2);
     btn2.setPreferredSize(new Dimension(100, 20));
     final JButton btn3 = new JButton();
+    setDefaults(btn3);
     btn3.setPreferredSize(new Dimension(100, 20));
 
     panel.add(btn1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
@@ -178,8 +199,10 @@ public final class GapsTest extends TestCase {
     final JPanel panel = new JPanel(new GridLayoutManager(3, 1, new Insets(0, 0, 0, 0), 0, 7));
 
     final JButton btn1 = new JButton();
+    setDefaults(btn1);
     btn1.setPreferredSize(new Dimension(100, 40));
     final JButton btn2 = new JButton();
+    setDefaults(btn2);
     btn2.setPreferredSize(new Dimension(100, 40));
 
     panel.add(btn1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
@@ -205,8 +228,10 @@ public final class GapsTest extends TestCase {
     final JPanel panel = new JPanel(new GridLayoutManager(3, 1, new Insets(0, 0, 0, 0), 0, 7));
 
     final JButton btn1 = new JButton();
+    setDefaults(btn1);
     btn1.setPreferredSize(new Dimension(100, 40));
     final JButton btn2 = new JButton();
+    setDefaults(btn2);
     btn2.setPreferredSize(new Dimension(100, 40));
 
     panel.add(btn1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
@@ -234,8 +259,10 @@ public final class GapsTest extends TestCase {
     final JPanel panel = new JPanel(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), 0, 500));
 
     final JButton btn1 = new JButton();
+    setDefaults(btn1);
     btn1.setPreferredSize(new Dimension(100, 40));
     final JButton btn2 = new JButton();
+    setDefaults(btn2);
     btn2.setPreferredSize(new Dimension(100, 40));
 
     panel.add(btn1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,

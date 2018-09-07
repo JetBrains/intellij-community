@@ -110,6 +110,22 @@ public class HintUtil {
     return createLabel(text, icon, bg, hintHint);
   }
 
+  @Nullable
+  public static String getHintLabel(JComponent hintComponent) {
+    if (hintComponent instanceof HintLabel) {
+      return ((HintLabel) hintComponent).getText();
+    }
+    return null;
+  }
+
+  @Nullable
+  public static Icon getHintIcon(JComponent hintComponent) {
+    if (hintComponent instanceof HintLabel) {
+      return ((HintLabel) hintComponent).getIcon();
+    }
+    return null;
+  }
+
   @NotNull
   public static SimpleColoredComponent createInformationComponent() {
     SimpleColoredComponent component = new SimpleColoredComponent();
@@ -296,7 +312,16 @@ public class HintUtil {
 
     @Override
     public String toString() {
-      return "Hint: text='" + (myPane != null ? myPane.getText() : "") + "'";
+      return "Hint: text='" + getText() + "'";
+    }
+
+    public String getText() {
+      return myPane != null ? myPane.getText() : "";
+    }
+
+    @Nullable
+    public Icon getIcon() {
+      return myIcon != null ? myIcon.getIcon() : null;
     }
   }
 }

@@ -1,14 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.formatter;
 
-import com.intellij.formatting.Alignment;
-import com.intellij.formatting.Block;
-import com.intellij.formatting.Indent;
-import com.intellij.formatting.Spacing;
+import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
-import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
@@ -17,8 +13,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLElementTypes;
 import org.jetbrains.yaml.YAMLFileType;
+import org.jetbrains.yaml.YAMLLanguage;
 import org.jetbrains.yaml.YAMLTokenTypes;
-import org.jetbrains.yaml.psi.*;
+import org.jetbrains.yaml.psi.YAMLKeyValue;
+import org.jetbrains.yaml.psi.YAMLSequenceItem;
+import org.jetbrains.yaml.psi.YAMLValue;
 
 import java.util.Map;
 import java.util.function.Predicate;
@@ -30,6 +29,8 @@ class YAMLFormattingContext {
 
   @NotNull
   public final CodeStyleSettings mySettings;
+  @NotNull
+  private final SpacingBuilder mySpaceBuilder;
 
   /** This alignments increase partial reformatting stability in case of initially incorrect indents */
   @NotNull
@@ -45,6 +46,9 @@ class YAMLFormattingContext {
 
   YAMLFormattingContext(@NotNull CodeStyleSettings settings) {
     mySettings = settings;
+    mySpaceBuilder = new SpacingBuilder(mySettings, YAMLLanguage.INSTANCE)
+      .before(YAMLTokenTypes.COLON).spaces(0)
+    ;
     shouldIndentSequenceValue = mySettings.getCustomSettings(YAMLCodeStyleSettings.class).INDENT_SEQUENCE_VALUE;
     shouldInlineSequenceIntoSequence = !mySettings.getCustomSettings(YAMLCodeStyleSettings.class).SEQUENCE_ON_NEW_LINE;
     shouldInlineBlockMappingIntoSequence = !mySettings.getCustomSettings(YAMLCodeStyleSettings.class).BLOCK_MAPPING_ON_NEW_LINE;
@@ -52,18 +56,25 @@ class YAMLFormattingContext {
   }
 
   @Nullable
-  Spacing computeSpacing(@Nullable Block child1, @NotNull Block child2) {
-    if (!(child1 instanceof AbstractBlock && child2 instanceof AbstractBlock)) {
+  Spacing computeSpacing(@NotNull Block parent, @Nullable Block child1, @NotNull Block child2) {
+    Spacing simpleSpacing = mySpaceBuilder.getSpacing(parent, child1, child2);
+    if (simpleSpacing != null) {
+      return simpleSpacing;
+    }
+
+    if (!(child1 instanceof ASTBlock && child2 instanceof ASTBlock)) {
       return null;
     }
-    ASTNode node1 = ((AbstractBlock)child1).getNode();
-    ASTNode node2 = ((AbstractBlock)child2).getNode();
+    ASTNode node1 = ((ASTBlock)child1).getNode();
+    ASTNode node2 = ((ASTBlock)child2).getNode();
     if (PsiUtilCore.getElementType(node1) != YAMLTokenTypes.SEQUENCE_MARKER) {
       return null;
     }
     IElementType node2Type = PsiUtilCore.getElementType(node2);
     int indentSize = mySettings.getIndentSize(YAMLFileType.YML);
-    if (indentSize < 2) indentSize = 2;
+    if (indentSize < 2) {
+      indentSize = 2;
+    }
 
     int spaces = 1;
     int minLineFeeds = 0;
@@ -151,6 +162,14 @@ class YAMLFormattingContext {
       return computeKeyValuePairIndent(node);
     }
     else {
+      if (nodeType == YAMLTokenTypes.COMMENT) {
+        if (parentType == YAMLElementTypes.SEQUENCE) {
+          return computeSequenceItemIndent(node);
+        }
+        if (parentType == YAMLElementTypes.MAPPING) {
+          return computeKeyValuePairIndent(node);
+        }
+      }
       return YAMLElementTypes.TOP_LEVEL.contains(parentType) ? SAME_AS_PARENT_INDENT : null;
     }
   }
@@ -165,9 +184,8 @@ class YAMLFormattingContext {
 
   public boolean isIncomplete(@NotNull ASTNode node) {
     Predicate<YAMLValue> possiblyIncompleteValue = value ->
-      value == null ||
-      value instanceof YAMLCompoundValue ||
-      value instanceof YAMLBlockScalar;
+      value == null || YAMLElementTypes.INCOMPLETE_BLOCKS.contains(PsiUtilCore.getElementType(value));
+
     if (PsiUtilCore.getElementType(node) == YAMLElementTypes.KEY_VALUE_PAIR) {
       YAMLValue value = ((YAMLKeyValue)node.getPsi()).getValue();
       if (possiblyIncompleteValue.test(value)) {

@@ -29,7 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.testGuiFramework.framework.GuiTestUtil;
+import com.intellij.testGuiFramework.framework.Timeouts;
 import com.intellij.util.CommonProcessors;
 import org.fest.swing.edt.GuiQuery;
 import org.fest.swing.timing.Condition;
@@ -73,7 +73,7 @@ public class FileFixture {
           }
         });
       }
-    }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
+    }, Timeouts.INSTANCE.getMinutes02());
     return this;
   }
 
@@ -111,7 +111,7 @@ public class FileFixture {
           }
         });
       }
-    }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
+    }, Timeouts.INSTANCE.getMinutes02());
     return this;
   }
 
@@ -168,7 +168,7 @@ public class FileFixture {
         assertNotNull(highlightInfos);
         return highlightInfos.size() == expected;
       }
-    }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
+    }, Timeouts.INSTANCE.getMinutes02());
 
     return this;
   }

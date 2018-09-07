@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -42,7 +43,7 @@ public abstract class DirDiffAction extends ToggleAction implements ShortcutProv
   protected abstract void updateState(boolean state);
 
   @Override
-  public final void setSelected(AnActionEvent e, boolean state) {
+  public final void setSelected(@NotNull AnActionEvent e, boolean state) {
     updateState(state);
     if (isReloadNeeded()) {
       if (isFullReload()) {
@@ -67,7 +68,7 @@ public abstract class DirDiffAction extends ToggleAction implements ShortcutProv
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     e.getPresentation().setEnabled(!getModel().isUpdating());
   }

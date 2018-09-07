@@ -170,7 +170,7 @@ public class ExternalAnnotationsLineMarkerProvider extends LineMarkerProviderDes
         if (intention.isAvailable(project, file, parameter)) {
           actions.add(new AnAction(intention.getText() + " on parameter '" + parameter.getName() + "'") {
             @Override
-            public void actionPerformed(AnActionEvent e) {
+            public void actionPerformed(@NotNull AnActionEvent e) {
               PsiDocumentManager.getInstance(project).commitAllDocuments();
               intention.makeAnnotationsExplicit(project, file, parameter);
             }

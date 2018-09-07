@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.packaging;
 
+import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -25,7 +26,10 @@ import com.jetbrains.python.psi.PyFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class PyPackageUtilTest extends PyTestCase {
 
@@ -37,19 +41,23 @@ public class PyPackageUtilTest extends PyTestCase {
   }
 
   public void testAbsentSetupPyReading() {
-    doTestSetupPyReading(false, false, false);
+    doTestSetupPyReading(false, false, false, false);
   }
 
   public void testAbsentSetupCallReading() {
-    doTestSetupPyReading(true, false, false);
+    doTestSetupPyReading(true, false, false, false);
   }
 
   public void testAbsentSetupPyRequiresReading() {
-    doTestSetupPyReading(true, true, false);
+    doTestSetupPyReading(true, true, false, false);
   }
 
   public void testSetupPyReading() {
-    doTestSetupPyReading(true, true, true);
+    doTestSetupPyReading(true, true, true, false);
+  }
+
+  public void testSetupPyExtrasReading() {
+    doTestSetupPyReading(true, true, true, true);
   }
 
   // PY-18966
@@ -81,12 +89,20 @@ public class PyPackageUtilTest extends PyTestCase {
     doTestUselessRequirementsTxtOrSetupPyUpdating(false);
   }
 
-  public void testDistutilsSetupPyUpdating() {
-    doTestSetupPyUpdating("requires");
+  public void testDistutilsSetupPyRequiresIntroduction() {
+    doTestSetupPyRequiresIntroduction("requires");
   }
 
-  public void testSetuptoolsSetupPyUpdating() {
-    doTestSetupPyUpdating("install_requires");
+  public void testSetuptoolsSetupPyRequiresIntroduction() {
+    doTestSetupPyRequiresIntroduction("install_requires");
+  }
+
+  public void testSetuptoolsSetupPyTupleRequiresAppending() {
+    doTestSetupPyRequiresAppending("('NewDjango==1.3.1',)", "('NewDjango==1.3.1', 'Markdown')");
+  }
+
+  public void testSetuptoolsSetupPyStringRequiresAppending() {
+    doTestSetupPyRequiresAppending("'NewDjango==1.3.1'", "['NewDjango==1.3.1', 'Markdown']");
   }
 
   public void testAbsentRequirementsTxtUpdating() {
@@ -104,7 +120,7 @@ public class PyPackageUtilTest extends PyTestCase {
     checkRequirements(PyPackageUtil.getRequirementsFromTxt(module));
   }
 
-  private void doTestSetupPyReading(boolean hasFile, boolean hasCall, boolean requires) {
+  private void doTestSetupPyReading(boolean hasFile, boolean hasCall, boolean requires, boolean extrasRequire) {
     final Module module = myFixture.getModule();
 
     if (hasFile) {
@@ -114,12 +130,7 @@ public class PyPackageUtilTest extends PyTestCase {
       assertNotNull(setupPy);
 
       if (hasCall) {
-        final PyCallExpression callByModule = PyPackageUtil.findSetupCall(module);
-        final PyCallExpression callByFile = PyPackageUtil.findSetupCall(setupPy);
-
-        assertNotNull(callByModule);
-        assertNotNull(callByFile);
-        assertSame(callByFile, callByModule);
+        assertNotNull(PyPackageUtil.findSetupCall(module));
 
         if (requires) {
           checkRequirements(PyPackageUtil.findSetupPyRequires(module));
@@ -129,10 +140,24 @@ public class PyPackageUtilTest extends PyTestCase {
           assertNotNull(requirements);
           assertEmpty(requirements);
         }
+
+        if (extrasRequire) {
+          final Map<String, List<PyRequirement>> extrasRequirements = PyPackageUtil.findSetupPyExtrasRequire(module);
+
+          final ImmutableMap<String, List<PyRequirement>> expected = ImmutableMap.of(
+            "e1", Collections.singletonList(PyRequirementsKt.pyRequirement("r1")),
+            "e2", Collections.singletonList(PyRequirementsKt.pyRequirement("r2")),
+            "e3", Arrays.asList(PyRequirementsKt.pyRequirement("r3"), PyRequirementsKt.pyRequirement("r4"))
+          );
+
+          assertEquals(expected, extrasRequirements);
+        }
+        else {
+          assertNull(PyPackageUtil.findSetupPyExtrasRequire(module));
+        }
       }
       else {
         assertNull(PyPackageUtil.findSetupCall(module));
-        assertNull(PyPackageUtil.findSetupCall(setupPy));
         assertNull(PyPackageUtil.findSetupPyRequires(module));
       }
     }
@@ -187,7 +212,7 @@ public class PyPackageUtilTest extends PyTestCase {
     assertEquals(expected.subList(fromIndex, expected.size()), actual);
   }
 
-  private void doTestSetupPyUpdating(@NotNull String keyword) {
+  private void doTestSetupPyRequiresIntroduction(@NotNull String keyword) {
     final Module module = myFixture.getModule();
 
     checkSetupArgumentText(module, keyword, null);
@@ -203,6 +228,22 @@ public class PyPackageUtilTest extends PyTestCase {
     WriteCommandAction.runWriteCommandAction(myFixture.getProject(), updateRequires);
 
     checkSetupArgumentText(module, keyword, "['NewDjango==1.3.1', 'Markdown']");
+
+    final List<PyRequirement> actual = PyPackageUtil.findSetupPyRequires(module);
+    final List<PyRequirement> expected = PyRequirementParser.fromText("NewDjango==1.3.1\nMarkdown\nnumpy\nmynose");
+    assertEquals(expected, actual);
+  }
+
+  private void doTestSetupPyRequiresAppending(@NotNull String argumentBefore, @NotNull String argumentAfter) {
+    final Module module = myFixture.getModule();
+
+    checkSetupArgumentText(module, "install_requires", argumentBefore);
+    checkRequirements(PyPackageUtil.findSetupPyRequires(module), 1);
+
+    final Runnable appendToRequires = () -> PyPackageUtil.addRequirementToTxtOrSetupPy(module, "Markdown", LanguageLevel.PYTHON34);
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), appendToRequires);
+
+    checkSetupArgumentText(module, "install_requires", argumentAfter);
 
     final List<PyRequirement> actual = PyPackageUtil.findSetupPyRequires(module);
     final List<PyRequirement> expected = PyRequirementParser.fromText("NewDjango==1.3.1\nMarkdown\nnumpy\nmynose");

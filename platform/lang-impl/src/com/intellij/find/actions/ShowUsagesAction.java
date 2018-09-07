@@ -49,6 +49,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.HintUpdateSupply;
+import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
@@ -481,7 +482,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       shortcutText = "(" + KeymapUtil.getShortcutText(shortcut) + ")";
     }
     return new InplaceButton("Settings..." + shortcutText, AllIcons.General.Settings, e -> {
-      ApplicationManager.getApplication().invokeLater(() -> showDialogAndFindUsages(handler, popupPosition, editor, maxUsages));
+      TransactionGuard.getInstance().submitTransactionLater(handler.getProject(), () -> showDialogAndFindUsages(handler, popupPosition, editor, maxUsages));
       cancelAction.run();
     });
   }
@@ -683,7 +684,13 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     final JComponent toolBar = actionToolbar.getComponent();
     toolBar.setOpaque(false);
     builder.setSettingButton(toolBar);
-    builder.setCancelKeyEnabled(false); 
+    builder.setCancelKeyEnabled(false);
+
+    PopupUpdateProcessor processor = new PopupUpdateProcessor(usageView.getProject()) {
+      @Override
+      public void updatePopup(Object lookupItemObject) {/*not used*/}
+    };
+    builder.addListener(processor);
 
     popup[0] = builder.createPopup();
     JComponent content = popup[0].getContent();
@@ -805,7 +812,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     return ActionManager.getInstance().getKeyboardShortcut(ID);
   }
 
-  private static int filtered(@NotNull List<Usage> usages, @NotNull UsageViewImpl usageView) {
+  private static int filtered(@NotNull List<? extends Usage> usages, @NotNull UsageViewImpl usageView) {
     return (int)usages.stream().filter(usage -> !usageView.isVisible(usage)).count();
   }
 
@@ -816,7 +823,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     return element.getTextRange().getStartOffset();
   }
 
-  private static boolean areAllUsagesInOneLine(@NotNull Usage visibleUsage, @NotNull List<Usage> usages) {
+  private static boolean areAllUsagesInOneLine(@NotNull Usage visibleUsage, @NotNull List<? extends Usage> usages) {
     Editor editor = getEditorFor(visibleUsage);
     if (editor == null) return false;
     int offset = getUsageOffset(visibleUsage);
@@ -861,8 +868,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   }
 
   @NotNull
-  private static List<UsageNode> collectData(@NotNull List<Usage> usages,
-                                             @NotNull Collection<UsageNode> visibleNodes,
+  private static List<UsageNode> collectData(@NotNull List<? extends Usage> usages,
+                                             @NotNull Collection<? extends UsageNode> visibleNodes,
                                              @NotNull UsageViewImpl usageView,
                                              @NotNull UsageViewPresentation presentation) {
     @NotNull List<UsageNode> data = new ArrayList<>();
@@ -1133,7 +1140,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   private static class MyTable extends JBTable implements DataProvider {
     private static final int MARGIN = 2;
 
-    public MyTable() {
+    MyTable() {
       ScrollingUtil.installActions(this);
       HintUpdateSupply.installDataContextHintUpdateSupply(this);
     }
@@ -1144,7 +1151,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     }
 
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
         final int[] selected = getSelectedRows();
         if (selected.length == 1) {

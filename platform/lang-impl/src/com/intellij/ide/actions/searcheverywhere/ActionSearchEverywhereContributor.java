@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.Function;
 
 public class ActionSearchEverywhereContributor implements SearchEverywhereContributor<Void> {
   private static final Logger LOG = Logger.getInstance(ActionSearchEverywhereContributor.class);
@@ -56,16 +57,12 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
   }
 
   @Override
-  public ContributorSearchResult<Object> search(String pattern,
-                                                boolean everywhere,
-                                                SearchEverywhereContributorFilter<Void> filter,
-                                                ProgressIndicator progressIndicator,
-                                                int elementsLimit) {
+  public void fetchElements(@NotNull String pattern, boolean everywhere, @Nullable SearchEverywhereContributorFilter<Void> filter,
+                            @NotNull ProgressIndicator progressIndicator, @NotNull Function<Object, Boolean> consumer) {
     if (StringUtil.isEmptyOrSpaces(pattern)) {
-      return ContributorSearchResult.empty();
+      return;
     }
 
-    ContributorSearchResult.Builder<Object> builder = ContributorSearchResult.builder();
     myProvider.filterElements(pattern, element -> {
       if (progressIndicator.isCanceled()) return false;
 
@@ -78,22 +75,15 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
         return true;
       }
 
-      if (builder.itemsCount() < elementsLimit) {
-        builder.addItem(element);
-        return true;
-      }
-      else {
-        builder.setHasMore(true);
-        return false;
-      }
+      return consumer.apply(element);
     });
 
-    return builder.build();
   }
 
+  @NotNull
   @Override
-  public ListCellRenderer getElementsRenderer(JList<?> list) {
-    return myModel.getListCellRenderer();
+  public ListCellRenderer getElementsRenderer(@NotNull JList<?> list) {
+    return new GotoActionModel.GotoActionListCellRenderer(myModel::getGroupName, true);
   }
 
   @Override
@@ -108,7 +98,7 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
   }
 
   @Override
-  public Object getDataForItem(Object element, String dataId) {
+  public Object getDataForItem(@NotNull Object element, @NotNull String dataId) {
     if (SetShortcutAction.SELECTED_ACTION.is(dataId)) {
       Object value = ((GotoActionModel.MatchedValue)element).value;
       if (value instanceof GotoActionModel.ActionWrapper) {
@@ -124,7 +114,7 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
   }
 
   @Override
-  public boolean processSelectedItem(Object selected, int modifiers, String text) {
+  public boolean processSelectedItem(@NotNull Object selected, int modifiers, @NotNull String text) {
     selected = ((GotoActionModel.MatchedValue) selected).value;
 
     if (selected instanceof BooleanOptionDescription) {
@@ -152,7 +142,7 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
 
     @Nullable
     @Override
-    public SearchEverywhereContributorFilter<Void> createFilter() {
+    public SearchEverywhereContributorFilter<Void> createFilter(AnActionEvent initEvent) {
       return null;
     }
   }

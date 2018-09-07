@@ -43,14 +43,16 @@ public class GitMergeUpdater extends GitUpdater {
   private static final Logger LOG = Logger.getInstance(GitMergeUpdater.class);
 
   @NotNull private final ChangeListManager myChangeListManager;
+  @NotNull private final GitBranchPair myBranchPair;
 
   public GitMergeUpdater(@NotNull Project project,
                          @NotNull Git git,
                          @NotNull GitRepository repository,
-                         @NotNull GitBranchPair branchAndTracked,
+                         @NotNull GitBranchPair branchPair,
                          @NotNull ProgressIndicator progressIndicator,
                          @NotNull UpdatedFiles updatedFiles) {
-    super(project, git, repository, branchAndTracked, progressIndicator, updatedFiles);
+    super(project, git, repository, progressIndicator, updatedFiles);
+    myBranchPair = branchPair;
     myChangeListManager = ChangeListManager.getInstance(myProject);
   }
 
@@ -219,7 +221,7 @@ public class GitMergeUpdater extends GitUpdater {
     OTHER
   }
 
-  private static class MergeLineListener extends GitLineHandlerAdapter {
+  private static class MergeLineListener implements GitLineHandlerListener {
     private MergeError myMergeError;
     private final List<String> myOutput = new ArrayList<>();
     private boolean myLocalChangesError = false;
@@ -249,7 +251,7 @@ public class GitMergeUpdater extends GitUpdater {
     private final GitMerger myMerger;
     private final VirtualFile myRoot;
 
-    public MyConflictResolver(Project project, @NotNull Git git, GitMerger merger, VirtualFile root) {
+    MyConflictResolver(Project project, @NotNull Git git, GitMerger merger, VirtualFile root) {
       super(project, git, Collections.singleton(root), makeParams(project));
       myMerger = merger;
       myRoot = root;

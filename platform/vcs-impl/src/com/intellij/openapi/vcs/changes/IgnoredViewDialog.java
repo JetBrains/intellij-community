@@ -1,10 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.EmptyAction;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -20,8 +20,8 @@ public class IgnoredViewDialog extends SpecificFilesViewDialog {
 
   @Override
   protected void addCustomActions(@NotNull DefaultActionGroup group) {
-    AnAction deleteAction =
-      EmptyAction.registerWithShortcutSet("ChangesView.DeleteUnversioned", CommonShortcuts.getDelete(), myView);
+    AnAction deleteAction = ActionManager.getInstance().getAction(IdeActions.ACTION_DELETE);
+    deleteAction.registerCustomShortcutSet(myView, null);
     group.add(deleteAction);
     myView.installPopupHandler(new DefaultActionGroup(deleteAction));
   }

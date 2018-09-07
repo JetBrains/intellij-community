@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -12,8 +13,14 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
+import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
+import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -36,12 +43,16 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.ByteArrayCharSequence;
 import com.intellij.util.text.XmlCharsetDetector;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,10 +60,13 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static com.intellij.testFramework.utils.EncodingManagerUtilKt.doEncodingTest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertNotEquals;
 
 @SuppressWarnings("HardCodedStringLiteral")
 public class FileEncodingTest extends PlatformTestCase implements TestDialog {
@@ -327,7 +341,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     final boolean[] changed = {false};
     document.addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(final DocumentEvent event) {
+      public void documentChanged(@NotNull final DocumentEvent event) {
         changed[0] = true;
       }
     });
@@ -900,5 +914,94 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
 
     assertNull(file.getBOM());
     assertEquals(CharsetToolkit.UTF8_CHARSET, file.getCharset());
+  }
+
+  public void testEncodingRedetectionRequestsOnDocumentChangeAreBatchedToImprovePerformance() throws IOException {
+    VirtualFile file = createTempFile("txt", null, "xxx", US_ASCII);
+    Document document = ObjectUtils.notNull(getDocument(file));
+    WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, " "));
+    EncodingManagerImpl encodingManager = (EncodingManagerImpl)EncodingManager.getInstance();
+    encodingManager.waitAllTasksExecuted(10, TimeUnit.SECONDS);
+    PlatformTestUtil.startPerformanceTest("encoding re-detect requests", 10_000, ()->{
+      for (int i=0; i<100_000_000;i++) {
+        encodingManager.queueUpdateEncodingFromContent(document);
+      }
+      encodingManager.waitAllTasksExecuted(10, TimeUnit.SECONDS);
+      UIUtil.dispatchAllInvocationEvents();
+    }).assertTiming();
+  }
+
+  public void testEncodingDetectionRequestsRunInOneThreadForEachDocument() throws IOException {
+    Set<Thread> detectThreads = ContainerUtil.newConcurrentSet();
+    class MyFT extends LanguageFileType implements FileTypeIdentifiableByVirtualFile {
+      MyFT() {
+        super(Language.ANY);
+      }
+
+      @Override
+      public boolean isMyFileType(@NotNull VirtualFile file) {
+        return getDefaultExtension().equals(file.getExtension());
+      }
+
+      @NotNull
+      @Override
+      public String getName() {
+        return "my";
+      }
+
+      @NotNull
+      @Override
+      public String getDescription() {
+        return getName();
+      }
+
+      @NotNull
+      @Override
+      public String getDefaultExtension() {
+        return "my";
+      }
+
+      @Nullable
+      @Override
+      public Icon getIcon() {
+        return null;
+      }
+
+      @Override
+      public Charset extractCharsetFromFileContent(@Nullable Project project, @Nullable VirtualFile file, @NotNull CharSequence content) {
+        detectThreads.add(Thread.currentThread());
+        TimeoutUtil.sleep(1000);
+        return US_ASCII;
+      }
+    }
+
+    FileType foo = new MyFT();
+    FileTypeManagerImpl fileTypeManager = (FileTypeManagerImpl)FileTypeManagerEx.getInstanceEx();
+    try {
+      fileTypeManager.registerFileType(foo);
+
+      VirtualFile file = createTempFile("my", null, "cccccccccccccccccc", US_ASCII);
+      FileEditorManager.getInstance(getProject()).openFile(file, false);
+
+      Document document = getDocument(file);
+      assertEquals(foo, file.getFileType());
+      file.setCharset(null);
+      detectThreads.clear();
+
+      for (int i=0; i<1000; i++) {
+        WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0, " "));
+      }
+
+      EncodingManagerImpl encodingManager = (EncodingManagerImpl)EncodingManager.getInstance();
+      encodingManager.waitAllTasksExecuted(2, TimeUnit.SECONDS);
+      UIUtil.dispatchAllInvocationEvents();
+
+      Thread thread = assertOneElement(detectThreads);
+      ApplicationManager.getApplication().assertIsDispatchThread();
+      assertNotEquals(Thread.currentThread(), thread);
+    }
+    finally {
+      fileTypeManager.unregisterFileType(foo);
+    }
   }
 }

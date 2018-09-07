@@ -34,7 +34,7 @@ import java.awt.image.BufferedImage;
 public class ImageComponentUI extends ComponentUI {
     private BufferedImage pattern;
 
-    private ImageComponentUI(JComponent c) {
+    public ImageComponentUI(JComponent c) {
         c.addPropertyChangeListener(evt -> {
             String name = evt.getPropertyName();
             if (ImageComponent.TRANSPARENCY_CHESSBOARD_BLACK_COLOR_PROP.equals(name) ||

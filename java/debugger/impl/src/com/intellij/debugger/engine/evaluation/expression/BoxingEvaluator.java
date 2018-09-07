@@ -22,6 +22,7 @@ public class BoxingEvaluator implements Evaluator{
     myOperand = DisableGC.create(operand);
   }
 
+  @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     final Object result = myOperand.evaluate(context);
     if (result == null || result instanceof ObjectReference) {

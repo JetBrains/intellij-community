@@ -17,13 +17,13 @@ package org.zmlx.hg4idea.branch;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.repo.Repository;
+import com.intellij.dvcs.ui.LightActionGroup;
 import com.intellij.dvcs.ui.NewBranchAction;
 import com.intellij.dvcs.ui.PopupElementWithAdditionalInfo;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -79,8 +79,8 @@ public class HgBranchPopupActions {
     return createActions(null, "", false);
   }
 
-  ActionGroup createActions(@Nullable DefaultActionGroup toInsert, @NotNull String repoInfo, boolean firstLevelGroup) {
-    DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
+  ActionGroup createActions(@Nullable LightActionGroup toInsert, @NotNull String repoInfo, boolean firstLevelGroup) {
+    LightActionGroup popupGroup = new LightActionGroup(false);
     popupGroup.addAction(new HgNewBranchAction(myProject, Collections.singletonList(myRepository), myRepository));
     popupGroup.addAction(new HgNewBookmarkAction(Collections.singletonList(myRepository), myRepository));
     popupGroup.addAction(new HgBranchPopupActions.HgCloseBranchAction(Collections.singletonList(myRepository), myRepository));
@@ -127,7 +127,7 @@ public class HgBranchPopupActions {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final String name = getNewBranchNameFromUser(myPreselectedRepo, "Create New Branch");
       if (name == null) {
         return;
@@ -169,7 +169,7 @@ public class HgBranchPopupActions {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final Project project = myPreselectedRepo.getProject();
       ApplicationManager.getApplication().saveAll();
       ChangeListManager.getInstance(project)
@@ -193,7 +193,7 @@ public class HgBranchPopupActions {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(ContainerUtil.and(myRepositories,
                                                                  repository -> repository.getOpenedBranches()
                                                                    .contains(repository.getCurrentBranch())));
@@ -211,7 +211,7 @@ public class HgBranchPopupActions {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       if (DvcsUtil.anyRepositoryIsFresh(myRepositories)) {
         e.getPresentation().setEnabled(false);
         e.getPresentation().setDescription("Bookmark creation is not possible before the first commit.");
@@ -219,7 +219,7 @@ public class HgBranchPopupActions {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
 
       final HgBookmarkDialog bookmarkDialog = new HgBookmarkDialog(myPreselectedRepo);
       if (bookmarkDialog.showAndGet()) {
@@ -272,7 +272,7 @@ public class HgBranchPopupActions {
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       if (myRepository.isFresh() || myHeads.isEmpty()) {
         e.getPresentation().setEnabledAndVisible(false);
       }
@@ -291,8 +291,8 @@ public class HgBranchPopupActions {
   public static class CurrentBranch extends BranchActions implements PopupElementWithAdditionalInfo {
     public CurrentBranch(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull String branchName) {
       super(project, repositories, branchName);
-      setIcons(DvcsImplIcons.CurrentBranchFavoriteLabel, DvcsImplIcons.CurrentBranchLabel, AllIcons.Vcs.FavoriteOnHover,
-               AllIcons.Vcs.NotFavoriteOnHover);
+      setIcons(DvcsImplIcons.CurrentBranchFavoriteLabel, DvcsImplIcons.CurrentBranchLabel, AllIcons.Nodes.FavoriteOnHover,
+               AllIcons.Nodes.NotFavoriteOnHover);
     }
 
     @NotNull
@@ -324,7 +324,7 @@ public class HgBranchPopupActions {
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         BackgroundTaskUtil.executeOnPooledThread(myProject, () -> {
           for (HgRepository repository : myRepositories) {
             HgBookmarkCommand.deleteBookmarkSynchronously(myProject, repository.getRoot(), myBranchName);
@@ -338,8 +338,8 @@ public class HgBranchPopupActions {
 
     public CurrentActiveBookmark(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull String branchName) {
       super(project, repositories, branchName);
-      setIcons(DvcsImplIcons.CurrentBranchFavoriteLabel, DvcsImplIcons.CurrentBranchLabel, AllIcons.Vcs.FavoriteOnHover,
-               AllIcons.Vcs.NotFavoriteOnHover);
+      setIcons(DvcsImplIcons.CurrentBranchFavoriteLabel, DvcsImplIcons.CurrentBranchLabel, AllIcons.Nodes.FavoriteOnHover,
+               AllIcons.Nodes.NotFavoriteOnHover);
     }
 
     @NotNull

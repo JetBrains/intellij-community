@@ -41,7 +41,7 @@ public class ShowRecentTests extends AnAction {
   }
   
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) return;
 

@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoFileAction;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
+import com.intellij.ide.util.gotoByName.GotoFileConfiguration;
 import com.intellij.ide.util.gotoByName.GotoFileModel;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -58,7 +59,7 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor<F
   }
 
   @Override
-  public boolean processSelectedItem(Object selected, int modifiers, String searchText) {
+  public boolean processSelectedItem(@NotNull Object selected, int modifiers, @NotNull String searchText) {
     if (selected instanceof PsiFile) {
       VirtualFile file = ((PsiFile)selected).getVirtualFile();
       if (file != null) {
@@ -76,17 +77,12 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor<F
   }
 
   @Override
-  public Object getDataForItem(Object element, String dataId) {
+  public Object getDataForItem(@NotNull Object element, @NotNull String dataId) {
     if (CommonDataKeys.PSI_FILE.is(dataId) && element instanceof PsiFile) {
       return element;
     }
 
     return super.getDataForItem(element, dataId);
-  }
-
-  @Override
-  protected boolean isDumbModeSupported() {
-    return true;
   }
 
   public static class Factory implements SearchEverywhereContributorFactory<FileType> {
@@ -98,11 +94,16 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor<F
 
     @Nullable
     @Override
-    public SearchEverywhereContributorFilter<FileType> createFilter() {
+    public SearchEverywhereContributorFilter<FileType> createFilter(AnActionEvent initEvent) {
+      Project project = initEvent.getProject();
+      if (project == null) {
+        return null;
+      }
+
       List<FileType> items = Stream.of(FileTypeManager.getInstance().getRegisteredFileTypes())
                                    .sorted(GotoFileAction.FileTypeComparator.INSTANCE)
                                    .collect(Collectors.toList());
-      return new SearchEverywhereContributorFilterImpl<>(items, FileType::getName, FileType::getIcon);
+      return new PersistentSearchEverywhereContributorFilter<>(items, GotoFileConfiguration.getInstance(project), FileType::getName, FileType::getIcon);
     }
   }
 }

@@ -45,14 +45,14 @@ import java.util.List;
  */
 public class ShowRecentFindUsagesAction extends AnAction {
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     UsageView usageView = e.getData(UsageView.USAGE_VIEW_KEY);
     Project project = e.getData(CommonDataKeys.PROJECT);
     e.getPresentation().setEnabled(usageView != null && project != null);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     UsageView usageView = e.getData(UsageView.USAGE_VIEW_KEY);
     Project project = e.getData(CommonDataKeys.PROJECT);
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();

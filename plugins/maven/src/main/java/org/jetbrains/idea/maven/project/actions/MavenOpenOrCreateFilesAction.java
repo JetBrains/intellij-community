@@ -36,7 +36,7 @@ import java.util.List;
 
 public abstract class MavenOpenOrCreateFilesAction extends MavenAction {
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
 
     Presentation p = e.getPresentation();

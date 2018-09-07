@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.impl.welcomeScreen.NewRecentProjectPanel;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,7 +24,7 @@ import java.awt.*;
  */
 public class ManageRecentProjectsAction extends DumbAwareAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Disposable disposable = Disposer.newDisposable();
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     NewRecentProjectPanel panel = new NewRecentProjectPanel(disposable) {
@@ -46,7 +47,7 @@ public class ManageRecentProjectsAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     boolean enable = false;
     if (project != null) {

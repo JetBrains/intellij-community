@@ -22,7 +22,7 @@ import org.jdom.Element
 
 private const val VALUE_ELEMENT_NAME = "Value"
 
-class KdbxEntry(private val element: Element, private val database: KeePassDatabase, internal @Volatile var group: KdbxGroup?) {
+internal class KdbxEntry(private val element: Element, private val database: KeePassDatabase, internal @Volatile var group: KdbxGroup?) {
   @Volatile var title: String? = element.removeProperty("Title")
     set(value) {
       if (field != value) {

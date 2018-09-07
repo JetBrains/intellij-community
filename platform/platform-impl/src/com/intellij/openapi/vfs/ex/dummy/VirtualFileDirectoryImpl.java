@@ -28,7 +28,7 @@ import java.util.ArrayList;
 class VirtualFileDirectoryImpl extends VirtualFileImpl {
   private final ArrayList<VirtualFileImpl> myChildren = new ArrayList<>();
 
-  public VirtualFileDirectoryImpl(DummyFileSystem fileSystem, VirtualFileDirectoryImpl parent, String name) {
+  VirtualFileDirectoryImpl(DummyFileSystem fileSystem, VirtualFileDirectoryImpl parent, String name) {
     super(fileSystem, parent, name);
   }
 

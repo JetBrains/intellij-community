@@ -2,10 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +39,7 @@ public final class AnalysisUastUtil {
 
   @Nullable
   public static PsiClass getTypePsiClass(@Nullable PsiType type) {
+    type = GenericsUtil.eliminateWildcards(type);
     if (!(type instanceof PsiClassType)) return null;
     return ((PsiClassType)type).rawType().resolve();
   }
@@ -53,9 +51,35 @@ public final class AnalysisUastUtil {
 
   @Nullable
   public static String getTypeClassFqn(@Nullable PsiType type) {
-    PsiClass psiClass = getTypePsiClass(type);
-    if (psiClass == null) return null;
-    return psiClass.getQualifiedName();
+    if (type == null) return null;
+    return type.getCanonicalText().replaceAll("<.*?>", ""); // workaround
+    //TODO https://youtrack.jetbrains.com/issue/KT-25024
+    //PsiClass psiClass = getTypePsiClass(type);
+    //if (psiClass == null) return null;
+    //return psiClass.getQualifiedName();
+  }
+
+  @Nullable
+  public static String getCallableReferenceClassFqn(@NotNull UCallableReferenceExpression expression) {
+    //TODO why getQualifierType() -> null for Java?
+    String classFqn = getTypeClassFqn(expression.getQualifierType());
+    if (classFqn != null) return classFqn;
+
+    UExpression qualifierExpression = expression.getQualifierExpression();
+    if (qualifierExpression == null) return null;
+    if (qualifierExpression instanceof UReferenceExpression) {
+      PsiElement resolved = ((UReferenceExpression)qualifierExpression).resolve();
+      if (resolved instanceof PsiClass) {
+        return ((PsiClass)resolved).getQualifiedName();
+      }
+      else if (resolved instanceof PsiVariable) {
+        return getTypeClassFqn(((PsiVariable)resolved).getType());
+      }
+    }
+    else if (qualifierExpression instanceof UThisExpression) {
+      return getTypeClassFqn(qualifierExpression.getExpressionType());
+    }
+    return null;
   }
 
   //TODO use UastContext#isExpressionValueUsed ?
@@ -94,4 +118,38 @@ public final class AnalysisUastUtil {
 
     return false;
   }
+
+  public static PsiType getContainingMethodOrLambdaReturnType(UCallExpression expression) {
+    UElement parent = expression.getUastParent();
+    while (parent != null) {
+      if (parent instanceof UMethod) {
+        return ((UMethod)parent).getReturnType();
+      }
+      if (parent instanceof ULambdaExpression) {
+        PsiType lambdaType = ((ULambdaExpression)parent).getBody().getExpressionType();
+        if (lambdaType != null) return lambdaType;
+
+        PsiType functionalInterfaceType = ((ULambdaExpression)parent).getFunctionalInterfaceType();
+        if (functionalInterfaceType != null) {
+          return LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
+        }
+
+        // if `functionalInterfaceType` will return proper type for Kotlin (after KT-25297 is fixed) then this part could be dropped
+        UElement lambdaParent = parent.getUastParent();
+        if (lambdaParent instanceof UCallExpression) {
+          PsiParameter lambdaParameter = UastUtils.getParameterForArgument(((UCallExpression)lambdaParent), ((ULambdaExpression)parent));
+          if (lambdaParameter == null) return null;
+          return LambdaUtil.getFunctionalInterfaceReturnType(lambdaParameter.getType());
+        }
+
+        return null;
+      }
+      if (parent instanceof UClass) {
+        return null;
+      }
+      parent = parent.getUastParent();
+    }
+    return null;
+  }
+
 }

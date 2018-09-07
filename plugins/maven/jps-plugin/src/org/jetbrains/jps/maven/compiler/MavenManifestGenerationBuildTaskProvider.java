@@ -76,7 +76,7 @@ public class MavenManifestGenerationBuildTaskProvider extends ArtifactBuildTaskP
     private static final Logger LOG = Logger.getInstance(MavenManifestGenerationBuildTask.class);
     private final JpsArtifact myArtifact;
 
-    public MavenManifestGenerationBuildTask(JpsArtifact artifact) {
+    MavenManifestGenerationBuildTask(JpsArtifact artifact) {
       myArtifact = artifact;
     }
 

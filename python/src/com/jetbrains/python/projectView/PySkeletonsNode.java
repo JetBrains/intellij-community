@@ -37,7 +37,7 @@ public class PySkeletonsNode extends PsiDirectoryNode {
   }
 
   @Override
-  protected void updateImpl(PresentationData data) {
+  protected void updateImpl(@NotNull PresentationData data) {
     data.setPresentableText("Binary Skeletons");
     data.setIcon(PlatformIcons.LIBRARY_ICON);
   }

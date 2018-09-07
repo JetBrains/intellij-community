@@ -26,7 +26,7 @@ public class RunAnythingRecentGroup extends RunAnythingGroupBase {
 
   @NotNull
   @Override
-  public Collection<RunAnythingItem> getGroupItems(@NotNull DataContext dataContext) {
+  public Collection<RunAnythingItem> getGroupItems(@NotNull DataContext dataContext, @NotNull String pattern) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     assert project != null;
 

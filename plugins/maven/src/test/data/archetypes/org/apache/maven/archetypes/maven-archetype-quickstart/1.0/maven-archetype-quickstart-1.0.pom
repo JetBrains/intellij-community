@@ -8,6 +8,7 @@
   <artifactId>maven-archetype-quickstart</artifactId>
   <name>Maven Quickstart Archetype</name>
   <version>1.0</version>
+  <packaging>maven-archetype</packaging>
   <description>An archetype which contains a sample Maven project.</description>
   <dependencies>
     <dependency>

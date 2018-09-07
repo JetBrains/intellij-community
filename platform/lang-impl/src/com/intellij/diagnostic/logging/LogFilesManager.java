@@ -93,7 +93,7 @@ public class LogFilesManager {
     runConfiguration.createAdditionalTabComponents(myManager, startedProcess);
   }
 
-  private void addConfigurationConsoles(@NotNull LogFileOptions logFile, @NotNull Condition<String> shouldInclude, @NotNull Set<String> paths, @NotNull RunConfigurationBase runConfiguration) {
+  private void addConfigurationConsoles(@NotNull LogFileOptions logFile, @NotNull Condition<? super String> shouldInclude, @NotNull Set<String> paths, @NotNull RunConfigurationBase runConfiguration) {
     if (paths.isEmpty()) {
       return;
     }
@@ -131,7 +131,7 @@ public class LogFilesManager {
     private final ProcessHandler myProcess;
     private Set<String> myPaths = new HashSet<>();
 
-    public LogFile(LogFileOptions options, RunConfigurationBase configuration, ProcessHandler process) {
+    LogFile(LogFileOptions options, RunConfigurationBase configuration, ProcessHandler process) {
       myOptions = options;
       myConfiguration = configuration;
       myProcess = process;

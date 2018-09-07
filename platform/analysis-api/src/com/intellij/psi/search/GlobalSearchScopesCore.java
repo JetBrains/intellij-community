@@ -18,14 +18,10 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.Icon;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Objects;
-import java.util.Set;
+import javax.swing.*;
+import java.util.*;
 
 public class GlobalSearchScopesCore {
   @NotNull
@@ -109,12 +105,6 @@ public class GlobalSearchScopesCore {
     }
 
     @Override
-    public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-      return 0;
-
-    }
-
-    @Override
     public boolean isSearchInModuleContent(@NotNull Module aModule) {
       return true; //TODO (optimization?)
     }
@@ -139,11 +129,6 @@ public class GlobalSearchScopesCore {
     }
 
     @Override
-    public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-      return 0;
-    }
-
-    @Override
     public boolean isSearchInModuleContent(@NotNull Module aModule) {
       return true;
     }
@@ -158,6 +143,7 @@ public class GlobalSearchScopesCore {
       return false;
     }
 
+    @NotNull
     @Override
     public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
       return ModuleManager.getInstance(ObjectUtils.assertNotNull(getProject())).getUnloadedModuleDescriptions();
@@ -178,11 +164,6 @@ public class GlobalSearchScopesCore {
     @Override
     public boolean contains(@NotNull VirtualFile file) {
       return TestSourcesFilter.isTestSources(file, ObjectUtils.assertNotNull(getProject()));
-    }
-
-    @Override
-    public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-      return 0;
     }
 
     @Override
@@ -240,11 +221,6 @@ public class GlobalSearchScopesCore {
 
     private boolean in(@NotNull VirtualFile parent) {
       return myWithSubdirectories ? VfsUtilCore.isAncestor(myDirectory, parent, false) : myDirectory.equals(parent);
-    }
-
-    @Override
-    public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-      return 0;
     }
 
     @Override
@@ -338,11 +314,6 @@ public class GlobalSearchScopesCore {
         return true;
       }
       return VfsUtilCore.isUnder(parent, myDirectoriesWithSubdirectories);
-    }
-
-    @Override
-    public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-      return 0;
     }
 
     @Override

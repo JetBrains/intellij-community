@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.ui;
 
@@ -131,6 +117,7 @@ public class CommitHelper {
   @SuppressWarnings("UnusedReturnValue")
   public boolean doCommit() {
     Task.Backgroundable task = new Task.Backgroundable(myProject, myActionName, true, myConfiguration.getCommitOption()) {
+      @Override
       public void run(@NotNull ProgressIndicator indicator) {
         ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
         vcsManager.startBackgroundVcsOperation();
@@ -224,6 +211,7 @@ public class CommitHelper {
       ChangesUtil.processItemsByVcs(myIncludedChanges, change -> myVcs, this::process);
     }
 
+    @Override
     protected void process(@NotNull AbstractVcs vcs, @NotNull List<Change> items) {
       if (!myVcs.getName().equals(vcs.getName())) return;
       super.process(vcs, items);

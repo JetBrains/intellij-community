@@ -33,7 +33,6 @@ public abstract class DataManager {
    * @deprecated Use {@link #getDataContextFromFocusAsync()}
    */
   @NotNull
-  @SuppressWarnings("deprecation")
   @Deprecated
   public final AsyncResult<DataContext> getDataContextFromFocus() {
     AsyncResult<DataContext> result = new AsyncResult<>();
@@ -52,6 +51,7 @@ public abstract class DataManager {
   /**
    * @return {@link DataContext} constructed by the specified {@code component}
    */
+  @NotNull
   public abstract DataContext getDataContext(Component component);
 
   /**
@@ -62,6 +62,7 @@ public abstract class DataManager {
    * @exception IllegalArgumentException if point {@code (x, y)} is not inside
    * component's bounds
    */
+  @NotNull
   public abstract DataContext getDataContext(@NotNull Component component, int x, int y);
 
   /**

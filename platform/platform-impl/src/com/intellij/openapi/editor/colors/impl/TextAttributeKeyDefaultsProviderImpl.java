@@ -18,13 +18,14 @@ package com.intellij.openapi.editor.colors.impl;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dennis.Ushakov
  */
 public class TextAttributeKeyDefaultsProviderImpl implements TextAttributesKey.TextAttributeKeyDefaultsProvider {
   @Override
-  public TextAttributes getDefaultAttributes(TextAttributesKey key) {
+  public TextAttributes getDefaultAttributes(@NotNull TextAttributesKey key) {
     return ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).getDefaultAttributes(key);
   }
 }

@@ -27,6 +27,7 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
+import org.jetbrains.annotations.NotNull;
 
 public class SearchAgainAction extends AnAction implements DumbAware {
   public SearchAgainAction() {
@@ -34,7 +35,7 @@ public class SearchAgainAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     final FileEditor editor = e.getData(PlatformDataKeys.FILE_EDITOR);
     if (editor == null || project == null) return;
@@ -56,7 +57,7 @@ public class SearchAgainAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(AnActionEvent event){
+  public void update(@NotNull AnActionEvent event){
     Presentation presentation = event.getPresentation();
     Project project = event.getData(CommonDataKeys.PROJECT);
     if (project == null) {

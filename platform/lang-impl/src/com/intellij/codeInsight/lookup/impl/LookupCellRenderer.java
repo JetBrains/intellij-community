@@ -23,6 +23,7 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.ui.EmptyIcon;
@@ -275,18 +276,12 @@ public class LookupCellRenderer implements ListCellRenderer {
       return "";
     }
 
-    int i = 0;
-    int j = text.length();
-    while (i + 1 < j) {
-      int mid = (i + j) / 2;
+    int insIndex = ObjectUtils.binarySearch(0, text.length(), mid ->{
       final String candidate = text.substring(0, mid) + ELLIPSIS;
       final int width = RealLookupElementPresentation.getStringWidth(candidate, metrics);
-      if (width <= maxWidth) {
-        i = mid;
-      } else {
-        j = mid;
-      }
-    }
+      return width <= maxWidth ? -1 : 1;
+    });
+    int i = Math.max(0,-insIndex-2);
 
     return text.substring(0, i) + ELLIPSIS;
   }
@@ -496,7 +491,7 @@ public class LookupCellRenderer implements ListCellRenderer {
 
   private class LookupPanel extends JPanel {
     boolean myUpdateExtender;
-    public LookupPanel() {
+    LookupPanel() {
       super(new BorderLayout());
     }
 

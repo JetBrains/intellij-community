@@ -1,11 +1,13 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.diagnostic.MessagePool;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.MacOSApplicationProvider;
 import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
@@ -20,6 +22,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
+import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
@@ -32,6 +35,7 @@ import com.intellij.ui.components.JBSlidingPanel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.Function;
@@ -54,6 +58,7 @@ import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.dnd.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.InputStream;
@@ -109,7 +114,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       size.height
     );
 
-    if (Registry.is("suppress.focus.stealing")) {
+    if (Registry.is("suppress.focus.stealing") && Registry.is("suppress.focus.stealing.auto.request.focus")) {
       setAutoRequestFocus(false);
     }
 
@@ -119,7 +124,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void projectOpened(Project project) {
+      public void projectOpened(@NotNull Project project) {
         Disposer.dispose(FlatWelcomeFrame.this);
       }
     });
@@ -206,12 +211,14 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     return pair.second;
   }
 
-  private class FlatWelcomeScreen extends JPanel implements WelcomeScreen {
+  private class FlatWelcomeScreen extends JPanel implements WelcomeScreen, DataProvider {
     private final JBSlidingPanel mySlidingPanel = new JBSlidingPanel();
+    private final DefaultActionGroup myTouchbarActions = new DefaultActionGroup();
     public Consumer<List<NotificationType>> myEventListener;
     public Computable<Point> myEventLocation;
+    private boolean inDnd;
 
-    public FlatWelcomeScreen() {
+    FlatWelcomeScreen() {
       super(new BorderLayout());
       mySlidingPanel.add("root", this);
       setBackground(getMainBackground());
@@ -257,11 +264,74 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         }
       }
       add(createBody(), BorderLayout.CENTER);
+      setTransferHandler(new TransferHandler(null) {
+        @Override
+        public boolean canImport(TransferSupport support) {
+          return true;
+        }
+
+        @Override
+        public boolean importData(TransferSupport support) {
+          List<File> list = FileCopyPasteUtil.getFileList(support.getTransferable());
+          if (list != null && list.size() > 0) {
+            return MacOSApplicationProvider.tryOpenFileList(null, list, "WelcomeFrame");
+          }
+          return false;
+        }
+      });
+      setDropTarget(new DropTarget(this, new DropTargetAdapter() {
+        @Override
+        public void dragEnter(DropTargetDragEvent e) {
+          setDnd(true);
+        }
+
+        @Override
+        public void dragExit(DropTargetEvent e) {
+          setDnd(false);
+        }
+
+        @Override
+        public void drop(DropTargetDropEvent e) {
+          setDnd(false);
+        }
+
+        private void setDnd(boolean dnd) {
+          inDnd = dnd;
+          repaint();
+        }
+      }));
+
+      TouchbarDataKeys.putActionDescriptor(myTouchbarActions).setShowText(true);
     }
 
     @Override
     public JComponent getWelcomePanel() {
       return mySlidingPanel;
+    }
+
+    @SuppressWarnings("UseJBColor")
+    @Override
+    public void paint(Graphics g) {
+      super.paint(g);
+      if (inDnd) {
+        Rectangle bounds = getBounds();
+        Color background = UIManager.getColor("DragAndDrop.backgroundColor");
+        g.setColor(new Color(background.getRed(), background.getGreen(), background.getBlue(), 206));
+        g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+
+        g.setColor(UIManager.getColor("DragAndDrop.backgroundBorderColor"));
+        g.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);
+        g.drawRect(bounds.x + 1 , bounds.y + 1, bounds.width - 2, bounds.height - 2);
+        g.setColor(UIManager.getColor("DragAndDrop.foregroundColor"));
+
+        Font labelFont = UIUtil.getLabelFont();
+        Font font = labelFont.deriveFont(labelFont.getSize() + 5.0f);
+        String drop = "Drop files here to open";
+        g.setFont(font);
+        int dropWidth = g.getFontMetrics().stringWidth(drop);
+        int dropHeight = g.getFontMetrics().getHeight();
+        g.drawString(drop, bounds.x + (bounds.width - dropWidth) / 2, (int)(bounds.y + (bounds.height - dropHeight) * 0.45));
+      }
     }
 
     private JComponent createBody() {
@@ -382,7 +452,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       link.setPaintUnderline(false);
       link.setNormalColor(getLinkNormalColor());
       JActionLinkPanel panel = new JActionLinkPanel(link);
-      panel.setBorder(JBUI.Borders.empty(4, 6, 4, 6));
+      panel.setBorder(JBUI.Borders.empty(4, 6));
       panel.add(createArrow(link), BorderLayout.EAST);
       return panel;
     }
@@ -396,6 +466,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       DefaultActionGroup group = new DefaultActionGroup();
       collectAllActions(group, quickStart);
 
+      myTouchbarActions.removeAll();
       for (AnAction action : group.getChildren(null)) {
         AnActionEvent e =
           AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, DataManager.getInstance().getDataContext(this));
@@ -420,15 +491,25 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           button.setBorder(JBUI.Borders.empty(8, 20));
           if (action instanceof WelcomePopupAction) {
             button.add(createArrow(link), BorderLayout.EAST);
+            TouchbarDataKeys.putActionDescriptor(action).setContextComponent(link);
           }
           installFocusable(button, action, KeyEvent.VK_UP, KeyEvent.VK_DOWN, true);
           actions.add(button);
+          myTouchbarActions.add(action);
         }
       }
 
       WelcomeScreenActionsPanel panel = new WelcomeScreenActionsPanel();
       panel.actions.add(actions);
       return panel.root;
+    }
+
+    @Nullable
+    @Override
+    public Object getData(@NotNull String dataId) {
+      if (TouchbarDataKeys.ACTIONS_KEY.is(dataId))
+        return myTouchbarActions;
+      return null;
     }
 
     /**
@@ -560,14 +641,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         Logger.getInstance(AppUIUtil.class).warn("Resource missing: " + name);
       } else {
 
-        try {
-          InputStream is = url.openStream();
-          try {
-            return Font.createFont(Font.TRUETYPE_FONT, is);
-          }
-          finally {
-            is.close();
-          }
+        try (InputStream is = url.openStream()) {
+          return Font.createFont(Font.TRUETYPE_FONT, is);
         }
         catch (Throwable t) {
           Logger.getInstance(AppUIUtil.class).warn("Cannot load font: " + url, t);
@@ -666,7 +741,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     private class IconsFreeActionGroup extends ActionGroup {
       private final ActionGroup myGroup;
 
-      public IconsFreeActionGroup(ActionGroup group) {
+      IconsFreeActionGroup(ActionGroup group) {
         super(group.getTemplatePresentation().getText(), group.getTemplatePresentation().getDescription(), null);
         myGroup = group;
       }
@@ -904,12 +979,17 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     };
     list.addListSelectionListener(selectionListener);
     if (backAction != null) {
-      new AnAction() {
+      new DumbAwareAction() {
+        @Override
+        public void update(@NotNull AnActionEvent e) {
+          e.getPresentation().setEnabled(!StackingPopupDispatcher.getInstance().isPopupFocused());
+        }
+
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           backAction.run();
         }
-      }.registerCustomShortcutSet(KeyEvent.VK_ESCAPE, 0, main);
+      }.registerCustomShortcutSet(CommonShortcuts.ESCAPE, main, parentDisposable);
     }
     installQuickSearch(list);
 

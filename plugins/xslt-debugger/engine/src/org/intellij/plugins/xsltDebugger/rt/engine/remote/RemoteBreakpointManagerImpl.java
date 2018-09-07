@@ -26,7 +26,7 @@ import java.util.List;
 class RemoteBreakpointManagerImpl extends PortableRemoteObject implements RemoteBreakpointManager {
   private final BreakpointManager myManager;
 
-  public RemoteBreakpointManagerImpl(BreakpointManager manager) throws RemoteException {
+  RemoteBreakpointManagerImpl(BreakpointManager manager) throws RemoteException {
     super();
     myManager = manager;
   }

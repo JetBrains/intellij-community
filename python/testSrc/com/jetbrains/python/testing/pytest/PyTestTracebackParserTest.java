@@ -88,7 +88,6 @@ public final class PyTestTracebackParserTest {
     requiredStrings.add("file:///c:/windows/system32/file.txt - 42");
     requiredStrings.add("file:///c:/windows/system32/file_spam.txt - 42");
     requiredStrings.add("c:\\documents and settings\\foo.txt - 43");
-    requiredStrings.add("file:///c:/windows/system32/file.txt - 42");
     requiredStrings.add("/file.py - 42");
     requiredStrings.add("c:\\folder55\\file.py - 12");
     requiredStrings.add("C:\\temp\\untitled55\\test_sample.py - 5");

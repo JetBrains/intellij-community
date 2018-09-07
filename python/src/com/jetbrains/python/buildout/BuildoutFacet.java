@@ -139,8 +139,6 @@ public class BuildoutFacet extends LibraryContributingFacet<BuildoutFacetConfigu
   /**
    * Generates a {@code sys.path[0:0] = [...]} with paths that buildout script wants.
    *
-   * @param additionalPythonPath
-   * @param module to get a buildout facet from
    * @return the statement, or null if there's no buildout facet.
    */
   @Nullable

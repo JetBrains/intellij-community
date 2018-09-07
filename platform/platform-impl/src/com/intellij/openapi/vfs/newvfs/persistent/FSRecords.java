@@ -188,10 +188,10 @@ public class FSRecords {
     }
 
     private static void scanFreeRecords() {
-      final int filelength = (int)myRecords.length();
-      LOG.assertTrue(filelength % RECORD_SIZE == 0, "invalid file size: " + filelength);
+      final int fileLength = (int)myRecords.length();
+      LOG.assertTrue(fileLength % RECORD_SIZE == 0, "invalid file size: " + fileLength);
 
-      int count = filelength / RECORD_SIZE;
+      int count = fileLength / RECORD_SIZE;
       for (int n = 2; n < count; n++) {
         if (BitUtil.isSet(getFlags(n), FREE_RECORD_FLAG)) {
           myFreeRecords.add(n);
@@ -294,6 +294,7 @@ public class FSRecords {
           markDirty();
         }
         scanFreeRecords();
+        getAttributeId(ourChildrenAttr.getId()); // trigger writing / loading of vfs attribute ids in top level write action 
       }
       catch (Exception e) { // IOException, IllegalArgumentException
         LOG.info("Filesystem storage is corrupted or does not exist. [Re]Building. Reason: " + e.getMessage());
@@ -557,7 +558,7 @@ public class FSRecords {
     return DbConnection.myAttributes;
   }
 
-  public static PersistentStringEnumerator getNames() {
+  private static PersistentStringEnumerator getNames() {
     return DbConnection.getNames();
   }
 
@@ -603,8 +604,8 @@ public class FSRecords {
   }
 
   private static void markAsDeletedRecursively(final int id) {
-    for (int subrecord : list(id)) {
-      markAsDeletedRecursively(subrecord);
+    for (int subRecord : list(id)) {
+      markAsDeletedRecursively(subRecord);
     }
 
     markAsDeleted(id);
@@ -618,8 +619,8 @@ public class FSRecords {
   }
 
   private static void doDeleteRecursively(final int id) {
-    for (int subrecord : list(id)) {
-      doDeleteRecursively(subrecord);
+    for (int subRecord : list(id)) {
+      doDeleteRecursively(subRecord);
     }
 
     deleteRecord(id);
@@ -1021,7 +1022,7 @@ public class FSRecords {
   }
 
   @Nullable
-  static VirtualFileSystemEntry findFileById(int id, @NotNull ConcurrentIntObjectMap<VirtualFileSystemEntry> idCache) {
+  static VirtualFileSystemEntry findFileById(int id, @NotNull ConcurrentIntObjectMap<VirtualFileSystemEntry> idToDirCache) {
     class ParentFinder implements ThrowableComputable<Void, Throwable> {
       @Nullable private TIntArrayList path;
       private VirtualFileSystemEntry foundParent;
@@ -1032,21 +1033,22 @@ public class FSRecords {
         while (true) {
           int parentId = getRecordInt(currentId, PARENT_OFFSET);
           if (parentId == 0) {
-            return null;
+            break;
           }
           if (parentId == currentId || path != null && path.size() % 128 == 0 && path.contains(parentId)) {
             LOG.error("Cyclic parent child relations in the database. id = " + parentId);
-            return null;
+            break;
           }
-          foundParent = idCache.get(parentId);
+          foundParent = idToDirCache.get(parentId);
           if (foundParent != null) {
-            return null;
+            break;
           }
 
           currentId = parentId;
           if (path == null) path = new TIntArrayList();
           path.add(currentId);
         }
+        return null;
       }
 
       private VirtualFileSystemEntry findDescendantByIdPath() {
@@ -1066,7 +1068,7 @@ public class FSRecords {
         }
         VirtualFileSystemEntry child = ((VirtualDirectoryImpl)parent).findChildById(childId);
         if (child instanceof VirtualDirectoryImpl) {
-          VirtualFileSystemEntry old = idCache.putIfAbsent(childId, child);
+          VirtualFileSystemEntry old = idToDirCache.putIfAbsent(childId, child);
           if (old != null) child = old;
         }
         return child;
@@ -1833,7 +1835,7 @@ public class FSRecords {
   }
 
   @Contract("_->fail")
-  static void handleError(Throwable e) throws RuntimeException, Error {
+  public static void handleError(Throwable e) throws RuntimeException, Error {
     DbConnection.handleError(e);
   }
 }

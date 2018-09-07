@@ -7,6 +7,7 @@ import com.intellij.ide.favoritesTreeView.FavoritesViewTreeBuilder;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
@@ -19,7 +20,7 @@ public class FavoritesCompactEmptyMiddlePackagesAction extends FavoritesToolbarB
   }
 
   @Override
-  public void updateButton(AnActionEvent e) {
+  public void updateButton(@NotNull AnActionEvent e) {
     super.updateButton(e);
     Presentation presentation = e.getPresentation();
     // see com.intellij.ide.projectView.impl.ProjectViewImpl.HideEmptyMiddlePackagesAction.update

@@ -303,7 +303,7 @@ class DocumentFoldingInfo implements CodeFoldingState {
     private final String signature;
     private final boolean expanded;
 
-    public Info(@NotNull String signature, boolean expanded) {
+    Info(@NotNull String signature, boolean expanded) {
       this.signature = signature;
       this.expanded = expanded;
     }

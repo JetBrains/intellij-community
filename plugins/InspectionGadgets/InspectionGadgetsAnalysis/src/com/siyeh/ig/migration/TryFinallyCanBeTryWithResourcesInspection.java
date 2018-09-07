@@ -369,7 +369,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
     return visitor.variableIsUsed();
   }
 
-  private static boolean findAutoClosableVariableWithoutTry(PsiStatement statement, Set<PsiVariable> variables) {
+  private static boolean findAutoClosableVariableWithoutTry(PsiStatement statement, Set<? super PsiVariable> variables) {
     if (statement instanceof PsiIfStatement) {
       final PsiIfStatement ifStatement = (PsiIfStatement)statement;
       if (ifStatement.getElseBranch() != null) return false;
@@ -438,7 +438,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
   @Nullable
   private static PsiVariable findAutoCloseableVariable(PsiStatement statement) {
     Set<PsiVariable> variables = new HashSet<>(1);
-    findAutoCloseableVariables(statement, variables);
+    if (!findAutoCloseableVariables(statement, variables)) return null;
     if (variables.isEmpty()) {
       return null;
     }
@@ -447,7 +447,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
     }
   }
 
-  private static boolean findAutoCloseableVariables(PsiStatement statement, Set<PsiVariable> variables) {
+  private static boolean findAutoCloseableVariables(PsiStatement statement, Set<? super PsiVariable> variables) {
     if (findAutoClosableVariableWithoutTry(statement, variables)) return true;
     if (statement instanceof PsiTryStatement) {
       PsiTryStatement tryStatement = (PsiTryStatement)statement;
@@ -459,13 +459,12 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
       PsiCodeBlock tryBlock = tryStatement.getTryBlock();
       if (tryBlock == null) return true;
       PsiStatement[] tryStatements = tryBlock.getStatements();
-      boolean containsClosedVariables = false;
       for (PsiStatement tryStmt : tryStatements) {
-        if (findAutoClosableVariableWithoutTry(tryStmt, variables)) {
-          containsClosedVariables = true;
+        if (!findAutoClosableVariableWithoutTry(tryStmt, variables)) {
+          return false;
         }
       }
-      return containsClosedVariables;
+      return true;
     }
     return false;
   }
@@ -508,7 +507,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
     @NotNull private final PsiVariable variable;
     private final PsiElement skipContext;
 
-    public VariableUsedOutsideContextVisitor(@NotNull PsiVariable variable, PsiElement skipContext) {
+    VariableUsedOutsideContextVisitor(@NotNull PsiVariable variable, PsiElement skipContext) {
       this.variable = variable;
       this.skipContext = skipContext;
     }

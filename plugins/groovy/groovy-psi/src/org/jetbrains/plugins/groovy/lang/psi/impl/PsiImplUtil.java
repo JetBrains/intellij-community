@@ -306,7 +306,7 @@ public class PsiImplUtil {
     return results[0];
   }
 
-  public static PsiMethod[] mapToMethods(@Nullable List<CandidateInfo> list) {
+  public static PsiMethod[] mapToMethods(@Nullable List<? extends CandidateInfo> list) {
     if (list == null) return PsiMethod.EMPTY_ARRAY;
     PsiMethod[] result = new PsiMethod[list.size()];
     for (int i = 0; i < list.size(); i++) {
@@ -326,7 +326,7 @@ public class PsiImplUtil {
       return nameElement.getText();
     }
 
-    if (node.getElementType() == GroovyTokenTypes.mSTRING_LITERAL || node.getElementType() == GroovyTokenTypes.mGSTRING_LITERAL) {
+    if (GroovyTokenSets.STRING_LITERALS.contains(node.getElementType())) {
       final Object value = GrLiteralImpl.getLiteralValue(nameElement);
       if (value instanceof String) {
         return (String)value;
@@ -402,7 +402,7 @@ public class PsiImplUtil {
     }
   }
 
-  public static <T extends PsiElement> void setQualifier(@NotNull GrQualifiedReference<T> ref, @Nullable T newQualifier) {
+  public static <T extends PsiElement> void setQualifier(@NotNull GrQualifiedReference<? extends T> ref, @Nullable T newQualifier) {
     final T oldQualifier = ref.getQualifier();
     final ASTNode node = ref.getNode();
     final PsiElement refNameElement = ref.getReferenceNameElement();

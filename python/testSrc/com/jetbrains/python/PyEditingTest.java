@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
@@ -656,5 +657,25 @@ public class PyEditingTest extends PyTestCase {
   // PY-10972
   public void testEnterInIncompleteNestedGluedStringInParentheses() {
     doTypingTest("\n'baz'");
+  }
+
+  public void testTabOutFromStringLiteral() {
+    boolean savedValue = CodeInsightSettings.getInstance().TAB_EXITS_BRACKETS_AND_QUOTES;
+    CodeInsightSettings.getInstance().TAB_EXITS_BRACKETS_AND_QUOTES = true;
+    try {
+      myFixture.configureByText(getTestName(true) + ".py",
+                                "def some():\n" +
+                                "    print<caret>");
+      myFixture.type("(\"");
+      myFixture.performEditorAction(IdeActions.ACTION_BRACE_OR_QUOTE_OUT);
+      myFixture.checkResult("def some():\n" +
+                            "    print(\"\"<caret>)");
+      myFixture.performEditorAction(IdeActions.ACTION_BRACE_OR_QUOTE_OUT);
+      myFixture.checkResult("def some():\n" +
+                            "    print(\"\")<caret>");
+    }
+    finally {
+      CodeInsightSettings.getInstance().TAB_EXITS_BRACKETS_AND_QUOTES = savedValue;
+    }
   }
 }

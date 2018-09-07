@@ -106,6 +106,7 @@ public class RevisionOrDateImpl implements RevisionOrDate {
     }
   }
 
+  @Override
   public void setForCommand(Command command) {
     command.setUpdateByRevisionOrDate(myStickyTag, myStickyDate == null ? null : Entry.getLastModifiedDateFormatter().format(myStickyDate));
   }
@@ -127,6 +128,7 @@ public class RevisionOrDateImpl implements RevisionOrDate {
     }
   }
 
+  @Override
   public String getRevision() {
     if (myStickyTag == null) {
       return "HEAD";
@@ -134,6 +136,7 @@ public class RevisionOrDateImpl implements RevisionOrDate {
     return myStickyTag;
   }
 
+  @Override
   public CvsRevisionNumber getCvsRevisionNumber() {
     if (myStickyTag == null) return null;
     try {

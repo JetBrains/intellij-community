@@ -61,7 +61,7 @@ public class GrNumberConverter extends GrTypeConverter {
       return TypesUtil.isIntegralNumberType(actualType) || PsiType.NULL.equals(actualType) ? OK : ERROR;
 
     if (TypesUtil.isClassType(actualType, JAVA_MATH_BIG_INTEGER))
-      return TypesUtil.isClassType(targetType, JAVA_MATH_BIG_INTEGER) || TypesUtil.isClassType(targetType, JAVA_MATH_BIG_DECIMAL) ? OK : null;
+      return TypesUtil.isClassType(targetType, JAVA_MATH_BIG_INTEGER, JAVA_MATH_BIG_DECIMAL) ? OK : null;
 
     if (TypesUtil.isNumericType(targetType) && TypesUtil.isNumericType(actualType)) {
       return OK;

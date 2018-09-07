@@ -53,11 +53,13 @@ public abstract class LoadContextUndoableAction extends GlobalUndoableAction {
     myClear = clear;
   }
 
+  @Override
   public void undo() throws UnexpectedUndoException {
     myManager.clearContext();
     myManager.loadContext(SNAPSHOT);
   }
 
+  @Override
   public void redo() {
     myManager.saveContext(SNAPSHOT, null);
     if (myClear) {

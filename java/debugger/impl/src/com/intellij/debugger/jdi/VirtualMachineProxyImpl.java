@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author Eugene Zhuravlev
@@ -18,12 +16,9 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThreeState;
-import java.util.HashMap;
 import com.sun.jdi.*;
 import com.sun.jdi.event.EventQueue;
 import com.sun.jdi.request.EventRequestManager;
-import com.sun.tools.jdi.JNITypeParser;
-import com.sun.tools.jdi.TargetVM;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -96,7 +91,14 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     static final Method typeNameToSignatureMethod;
 
     static {
-      typeNameToSignatureMethod = ReflectionUtil.getDeclaredMethod(JNITypeParser.class, "typeNameToSignature", String.class);
+      Method method = null;
+      try {
+        method = ReflectionUtil.getDeclaredMethod(Class.forName("com.sun.tools.jdi.JNITypeParser"), "typeNameToSignature", String.class);
+      }
+      catch (ClassNotFoundException e) {
+        LOG.warn(e);
+      }
+      typeNameToSignatureMethod = method;
       if (typeNameToSignatureMethod == null) {
         LOG.warn("Unable to find JNITypeParser.typeNameToSignature method");
       }
@@ -119,10 +121,12 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return this::classesByName;
   }
 
+  @Override
   public List<ReferenceType> classesByName(@NotNull String s) {
     return myVirtualMachine.classesByName(s);
   }
 
+  @Override
   public List<ReferenceType> nestedTypes(ReferenceType refType) {
     List<ReferenceType> nestedTypes = myNestedClassesCache.get(refType);
     if (nestedTypes == null) {
@@ -161,7 +165,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
           }
           candidates.removeAll(nested2);
         }
-        
+
         nestedTypes = candidates.isEmpty() ? Collections.emptyList() : new ArrayList<>(candidates);
       }
       else {
@@ -172,6 +176,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return nestedTypes;
   }
 
+  @Override
   public List<ReferenceType> allClasses() {
     List<ReferenceType> allClasses = myAllClasses;
     if (allClasses == null) {
@@ -221,6 +226,9 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   public void suspend() {
+    if (!canBeModified()) {
+      return;
+    }
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myPausePressedCount++;
     myVirtualMachine.suspend();
@@ -228,6 +236,9 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   public void resume() {
+    if (!canBeModified()) {
+      return;
+    }
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if (myPausePressedCount > 0) {
       myPausePressedCount--;
@@ -355,7 +366,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     finally {
       if (Patches.JDK_BUG_EVENT_CONTROLLER_LEAK) {
         // Memory leak workaround, see IDEA-163334
-        TargetVM target = ReflectionUtil.getField(myVirtualMachine.getClass(), myVirtualMachine, TargetVM.class, "target");
+        Object target = ReflectionUtil.getField(myVirtualMachine.getClass(), myVirtualMachine, null, "target");
         if (target != null) {
           Thread controller = ReflectionUtil.getField(target.getClass(), target, Thread.class, "eventController");
           if (controller != null) {
@@ -371,42 +382,61 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   private final Capability myWatchFielsModification = new Capability() {
+    @Override
     protected boolean calcValue() {
       return myVirtualMachine.canWatchFieldModification();
     }
   };
+  @Override
   public boolean canWatchFieldModification() {
     return myWatchFielsModification.isAvailable();
   }
 
   private final Capability myWatchFieldAccess = new Capability() {
+    @Override
     protected boolean calcValue() {
       return myVirtualMachine.canWatchFieldAccess();
     }
   };
+  @Override
   public boolean canWatchFieldAccess() {
     return myWatchFieldAccess.isAvailable();
   }
 
   private final Capability myIsJ2ME = new Capability() {
+    @Override
     protected boolean calcValue() {
       return isJ2ME();
     }
   };
+  @Override
   public boolean canInvokeMethods() {
     return !myIsJ2ME.isAvailable();
   }
 
   private final Capability myGetBytecodes = new Capability() {
+    @Override
     protected boolean calcValue() {
       return myVirtualMachine.canGetBytecodes();
     }
   };
+  @Override
   public boolean canGetBytecodes() {
     return myGetBytecodes.isAvailable();
   }
 
+  private final Capability myGetConstantPool = new Capability() {
+    @Override
+    protected boolean calcValue() {
+      return myVirtualMachine.canGetConstantPool();
+    }
+  };
+  public boolean canGetConstantPool() {
+    return myGetConstantPool.isAvailable();
+  }
+
   private final Capability myGetSyntheticAttribute = new Capability() {
+    @Override
     protected boolean calcValue() {
       return myVirtualMachine.canGetSyntheticAttribute();
     }
@@ -416,6 +446,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   private final Capability myGetOwnedMonitorInfo = new Capability() {
+    @Override
     protected boolean calcValue() {
       return myVirtualMachine.canGetOwnedMonitorInfo();
     }
@@ -425,6 +456,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   private final Capability myGetMonitorFrameInfo = new Capability() {
+    @Override
     protected boolean calcValue() {
       return myVirtualMachine.canGetMonitorFrameInfo();
     }
@@ -432,8 +464,9 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   public boolean canGetMonitorFrameInfo() {
       return myGetMonitorFrameInfo.isAvailable();
   }
-  
+
   private final Capability myGetCurrentContendedMonitor = new Capability() {
+    @Override
     protected boolean calcValue() {
       return myVirtualMachine.canGetCurrentContendedMonitor();
     }
@@ -443,6 +476,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   private final Capability myGetMonitorInfo = new Capability() {
+    @Override
     protected boolean calcValue() {
       return myVirtualMachine.canGetMonitorInfo();
     }
@@ -452,6 +486,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   private final Capability myUseInstanceFilters = new Capability() {
+    @Override
     protected boolean calcValue() {
       return myVersionHigher_14 && myVirtualMachine.canUseInstanceFilters();
     }
@@ -461,6 +496,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   private final Capability myRedefineClasses = new Capability() {
+    @Override
     protected boolean calcValue() {
       return myVersionHigher_14 && myVirtualMachine.canRedefineClasses();
     }
@@ -470,6 +506,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   private final Capability myAddMethod = new Capability() {
+    @Override
     protected boolean calcValue() {
       return myVersionHigher_14 && myVirtualMachine.canAddMethod();
     }
@@ -479,6 +516,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   private final Capability myUnrestrictedlyRedefineClasses = new Capability() {
+    @Override
     protected boolean calcValue() {
       return myVersionHigher_14 && myVirtualMachine.canUnrestrictedlyRedefineClasses();
     }
@@ -488,6 +526,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   private final Capability myPopFrames = new Capability() {
+    @Override
     protected boolean calcValue() {
       return myVersionHigher_14 && myVirtualMachine.canPopFrames();
     }
@@ -497,6 +536,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   private final Capability myForceEarlyReturn = new Capability() {
+    @Override
     protected boolean calcValue() {
       return myVirtualMachine.canForceEarlyReturn();
     }
@@ -506,6 +546,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   private final Capability myCanGetInstanceInfo = new Capability() {
+    @Override
     protected boolean calcValue() {
       if (!myVersionHigher_15) {
         return false;
@@ -526,11 +567,17 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return myCanGetInstanceInfo.isAvailable();
   }
 
+  public boolean canBeModified() {
+    return myVirtualMachine.canBeModified();
+  }
+
+  @Override
   public final boolean versionHigher(String version) {
     return myVirtualMachine.version().compareTo(version) >= 0;
   }
 
   private final Capability myGetSourceDebugExtension = new Capability() {
+    @Override
     protected boolean calcValue() {
       return myVersionHigher_14 && myVirtualMachine.canGetSourceDebugExtension();
     }
@@ -540,6 +587,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   private final Capability myRequestVMDeathEvent = new Capability() {
+    @Override
     protected boolean calcValue() {
       return myVersionHigher_14 && myVirtualMachine.canRequestVMDeathEvent();
     }
@@ -549,6 +597,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   private final Capability myGetMethodReturnValues = new Capability() {
+    @Override
     protected boolean calcValue() {
       if (myVersionHigher_15) {
         //return myVirtualMachine.canGetMethodReturnValues();
@@ -662,10 +711,12 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     myTimeStamp++;
   }
 
+  @Override
   public int getCurrentTime() {
     return myTimeStamp;
   }
 
+  @Override
   public DebugProcess getDebugProcess() {
     return myDebugProcess;
   }

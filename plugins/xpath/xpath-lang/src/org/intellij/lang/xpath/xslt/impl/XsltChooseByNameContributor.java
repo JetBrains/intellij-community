@@ -24,12 +24,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 class XsltChooseByNameContributor implements ChooseByNameContributor {
+    @Override
     @NotNull
     public String[] getNames(Project project, boolean includeNonProjectItems) {
         final Collection<String> symbols = XsltSymbolIndex.getSymbolNames(project);
       return ArrayUtil.toStringArray(symbols);
     }
 
+    @Override
     @NotNull
     public NavigationItem[] getItemsByName(String name, String pattern, Project project, boolean includeNonProjectItems) {
         return XsltSymbolIndex.getSymbolsByName(name, project, includeNonProjectItems);

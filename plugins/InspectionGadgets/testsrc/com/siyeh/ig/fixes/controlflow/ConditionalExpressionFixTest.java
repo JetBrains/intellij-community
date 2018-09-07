@@ -36,6 +36,13 @@ public class ConditionalExpressionFixTest extends IGQuickFixesTestCase {
   public void testNestedConditional() { doTest(); }
   public void testNestedConditionalChangesSemantics() { doTest(InspectionGadgetsBundle.message("conditional.expression.semantics.quickfix")); }
 
+  public void testSimpleOption() {
+    final ConditionalExpressionInspection inspection = new ConditionalExpressionInspection();
+    inspection.ignoreSimpleAssignmentsAndReturns = true;
+    myFixture.enableInspections(inspection);
+    doTest();
+  }
+
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {
     builder.setLanguageLevel(LanguageLevel.JDK_10);

@@ -48,7 +48,6 @@ import java.util.List;
  */
 public class GroovyCompilerConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private final Project myProject;
-  private JTextField myHeapSize;
   private JPanel myMainPanel;
   private JPanel myExcludesPanel;
   private JBCheckBox myInvokeDynamicSupportCB;
@@ -111,8 +110,7 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Confi
 
   @Override
   public boolean isModified() {
-    return !Comparing.equal(myConfig.getHeapSize(), myHeapSize.getText()) ||
-           !Comparing.equal(myConfig.getConfigScript(), getExternalizableConfigScript()) ||
+    return !Comparing.equal(myConfig.getConfigScript(), getExternalizableConfigScript()) ||
            myInvokeDynamicSupportCB.isSelected() != myConfig.isInvokeDynamic() ||
            myExcludes.isModified();
   }
@@ -120,7 +118,6 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Confi
   @Override
   public void apply() throws ConfigurationException {
     myExcludes.apply();
-    myConfig.setHeapSize(myHeapSize.getText());
     myConfig.setInvokeDynamic(myInvokeDynamicSupportCB.isSelected());
     myConfig.setConfigScript(getExternalizableConfigScript());
     BuildManager.getInstance().clearState(myProject);
@@ -128,7 +125,6 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Confi
 
   @Override
   public void reset() {
-    myHeapSize.setText(myConfig.getHeapSize());
     myConfigScriptPath.setText(FileUtil.toSystemDependentName(myConfig.getConfigScript()));
     myInvokeDynamicSupportCB.setSelected(myConfig.isInvokeDynamic());
     myExcludes.reset();

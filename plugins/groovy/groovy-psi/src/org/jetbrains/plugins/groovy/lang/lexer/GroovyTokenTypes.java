@@ -53,8 +53,8 @@ public interface GroovyTokenTypes {
  *  Strings & regular expressions
  * ****************************************************************************************************/
 
-  IElementType mSTRING_LITERAL = STR_SQ;
-  IElementType mGSTRING_LITERAL = STR_DQ;
+  @Deprecated IElementType mSTRING_LITERAL = STRING_SQ;
+  @Deprecated IElementType mGSTRING_LITERAL = STRING_DQ;
 
   IElementType mGSTRING_BEGIN = GSTRING_BEGIN;
   IElementType mGSTRING_CONTENT = GSTRING_CONTENT;

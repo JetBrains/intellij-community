@@ -32,14 +32,17 @@ public final class LwSplitPane extends LwContainer{
     super(className);
   }
 
+  @Override
   protected LayoutManager createInitialLayout(){
     return null;
   }
 
+  @Override
   public void read(final Element element, final PropertiesProvider provider) throws Exception {
     readNoLayout(element, provider);
   }
 
+  @Override
   protected void readConstraintsForChild(final Element element, final LwComponent component) {
     final Element constraintsElement = LwXmlReader.getRequiredChild(element, "constraints");
     final Element splitterChild = LwXmlReader.getRequiredChild(constraintsElement, "splitpane");

@@ -43,6 +43,7 @@ class OperatorAssignmentPredicate implements PsiElementPredicate {
     OPERATOR_ASSIGNMENT_TOKENS.add(JavaTokenType.GTGTGTEQ);
   }
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof PsiAssignmentExpression)) {
       return false;

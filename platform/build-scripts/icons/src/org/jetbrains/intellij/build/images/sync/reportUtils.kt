@@ -19,44 +19,34 @@ internal fun report(
   consistent: Collection<String>, errorHandler: Consumer<String>, doNotify: Boolean
 ) {
   log("Skipped $skipped dirs")
-  fun Collection<String>.logIcons() = if (size < 100) joinToString() else size.toString()
-  log("""
-    |dev repo:
-    | added: ${addedByDev.logIcons()}
-    | removed: ${removedByDev.logIcons()}
-    | modified: ${modifiedByDev.logIcons()}
-    |icons repo:
-    | added: ${addedByDesigners.logIcons()}
-    | removed: ${removedByDesigners.logIcons()}
-    | modified: ${modifiedByDesigners.logIcons()}
-  """.trimMargin())
+  fun Collection<String>.logIcons(description: String) = "$size $description${if (size in 1..10) ": ${joinToString()}" else ""}"
   val report = """
     |$devIcons icons are found in dev repo:
-    | ${addedByDev.size} added
-    | ${removedByDev.size} removed
-    | ${modifiedByDev.size} modified
+    | ${addedByDev.logIcons("added")}
+    | ${removedByDev.logIcons("removed")}
+    | ${modifiedByDev.logIcons("modified")}
     |$icons icons are found in icons repo:
-    | ${addedByDesigners.size} added
-    | ${removedByDesigners.size} removed
-    | ${modifiedByDesigners.size} modified
+    | ${addedByDesigners.logIcons("added")}
+    | ${removedByDesigners.logIcons("removed")}
+    | ${modifiedByDesigners.logIcons("modified")}
     |${consistent.size} consistent icons in both repos
   """.trimMargin()
   log(report)
   if (doNotify) {
     val success = addedByDev.isEmpty() && removedByDev.isEmpty() && modifiedByDev.isEmpty()
-    sendNotification(success, report)
+    sendNotification(success)
     if (!success) errorHandler.accept(report)
   }
 }
 
-private fun sendNotification(isSuccess: Boolean, report: String) {
+private fun sendNotification(isSuccess: Boolean) {
   if (BUILD_SERVER == null) {
     log("TeamCity url is unknown: unable to query last build status and send Slack channel notification")
   }
   else {
     callSafely {
       if (isNotificationRequired(isSuccess)) {
-        notifySlackChannel(isSuccess, report)
+        notifySlackChannel(isSuccess)
       }
     }
   }
@@ -89,11 +79,13 @@ private fun isNotificationRequired(isSuccess: Boolean) =
 
 private val CHANNEL_WEB_HOOK = System.getProperty("intellij.icons.slack.channel")
 private val BUILD_ID = System.getProperty("teamcity.build.id")
+private val INTELLIJ_ICONS_SYNC_RUN_CONF = System.getProperty("intellij.icons.sync.run.conf")
 
-private fun notifySlackChannel(isSuccess: Boolean, report: String) {
+private fun notifySlackChannel(isSuccess: Boolean) {
   HttpClients.createDefault().use {
-    val text = (if (isSuccess) ":white_check_mark:" else ":scream:") + "\n$report\n" +
-               (if (!isSuccess) "Use 'Icons processing/Sync icons in IntelliJIcons from IDEA' IDEA Ultimate run configuration\n" else "") +
+    val text = "*${System.getProperty("teamcity.buildConfName")}* " +
+               (if (isSuccess) ":white_check_mark:" else ":scream:") + "\n" +
+               (if (!isSuccess) "Use 'Icons processing/*$INTELLIJ_ICONS_SYNC_RUN_CONF*' IDEA Ultimate run configuration\n" else "") +
                "<$BUILD_SERVER/viewLog.html?buildId=$BUILD_ID&buildTypeId=$BUILD_CONF|See build log>"
     val post = HttpPost(CHANNEL_WEB_HOOK)
     post.entity = StringEntity("""{ "text": "$text" }""", Charsets.UTF_8)

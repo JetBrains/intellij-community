@@ -182,24 +182,24 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
   }
 
   private class SelectAllButton extends AnActionButton {
-    public SelectAllButton() {
+    SelectAllButton() {
       super("Select All", AllIcons.Actions.Selectall);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       walkTree(node -> node.setChecked(true));
       ((DefaultTreeModel)myTree.getModel()).reload();
     }
   }
 
   private class UnselectAllButton extends AnActionButton {
-    public UnselectAllButton() {
+    UnselectAllButton() {
       super("Unselect All", AllIcons.Actions.Unselectall);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       walkTree(node -> node.setChecked(false));
       ((DefaultTreeModel)myTree.getModel()).reload();
     }

@@ -3,14 +3,11 @@ package org.jetbrains.plugins.groovy.lang.psi.impl
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiPolyVariantReferenceBase
-import com.intellij.util.ArrayUtil
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference
 
 abstract class GroovyReferenceBase<T : PsiElement>(
   element: T
 ) : PsiPolyVariantReferenceBase<T>(element), GroovyReference {
-
-  override fun getVariants(): Array<out Any> = ArrayUtil.EMPTY_OBJECT_ARRAY
 
   override fun resolve(): PsiElement? = super<GroovyReference>.resolve()
 }

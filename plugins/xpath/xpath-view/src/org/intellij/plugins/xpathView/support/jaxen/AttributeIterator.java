@@ -27,7 +27,7 @@ class AttributeIterator implements Iterator {
 
     private final Iterator<XmlAttribute> theIterator;
 
-    public AttributeIterator(XmlElement parent) {
+    AttributeIterator(XmlElement parent) {
         this.theIterator = filterNamespaceAttrs(((XmlTag)parent).getAttributes());
     }
 
@@ -45,14 +45,17 @@ class AttributeIterator implements Iterator {
     /**
      * @see Iterator#remove
      */
+    @Override
     public void remove() {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public boolean hasNext() {
         return theIterator.hasNext();
     }
 
+    @Override
     public Object next() {
         return theIterator.next();
     }

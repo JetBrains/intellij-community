@@ -60,7 +60,9 @@ public abstract class FileAttributesReadingTest {
     @Override public void linkToDirectory() { }
     @Override public void missingLink() { }
     @Override public void selfLink() { }
+    @Override public void innerSymlinkResolve() { }
     @Override public void junction() { }
+    @Override public void innerJunctionResolve() { }
     @Override public void permissionsCloning() { }
   }
 
@@ -293,12 +295,21 @@ public abstract class FileAttributesReadingTest {
   }
 
   @Test
+  public void innerSymlinkResolve() throws IOException {
+    File file = tempDir.newFile("dir/file.txt");
+    File link = new File(tempDir.getRoot(), "link");
+    Files.createSymbolicLink(link.toPath(), file.getParentFile().toPath());
+
+    String target = FileSystemUtil.resolveSymLink(link.getPath() + '/' + file.getName());
+    assertEquals(file.getPath(), target);
+  }
+
+  @Test
   public void junction() throws IOException {
     assumeTrue(SystemInfo.isWinVistaOrNewer);
 
     File target = tempDir.newFolder("dir");
-    File path = new File(tempDir.getRoot(), "junction.dir");
-    File junction = IoTestUtil.createJunction(target.getPath(), path.getAbsolutePath());
+    File junction = IoTestUtil.createJunction(target.getPath(), tempDir.getRoot() + "/junction.dir");
 
     try {
       FileAttributes attributes = getAttributes(junction);
@@ -322,6 +333,18 @@ public abstract class FileAttributesReadingTest {
     finally {
       IoTestUtil.deleteJunction(junction.getPath());
     }
+  }
+
+  @Test
+  public void innerJunctionResolve() throws IOException {
+    assumeTrue(SystemInfo.isWinVistaOrNewer);
+
+    File file = tempDir.newFile("dir/file.txt");
+    File junction = new File(tempDir.getRoot(), "junction");
+    IoTestUtil.createJunction(file.getParent(), junction.getPath());
+
+    String target = FileSystemUtil.resolveSymLink(junction.getPath() + '/' + file.getName());
+    assertEquals(file.getPath(), target);
   }
 
   @Test
@@ -535,7 +558,7 @@ public abstract class FileAttributesReadingTest {
   }
 
   @Test
-  public void testUnicodeName() throws IOException {
+  public void unicodeName() throws IOException {
     String name = IoTestUtil.getUnicodeName();
     assumeTrue(name != null);
     File file = tempDir.newFile(name + ".txt");
@@ -560,9 +583,9 @@ public abstract class FileAttributesReadingTest {
     if (SystemInfo.isWindows && checkList) {
       String parent = file.getParent();
       if (parent != null) {
-        FileInfo[] infos = IdeaWin32.getInstance().listChildren(parent);
-        assertNotNull(infos);
-        for (FileInfo info : infos) {
+        FileInfo[] children = IdeaWin32.getInstance().listChildren(parent);
+        assertNotNull(children);
+        for (FileInfo info : children) {
           if (file.getName().equals(info.getName())) {
             assertEquals(attributes, info.toFileAttributes());
             return attributes;

@@ -82,16 +82,15 @@ public class DupIconsFinder {
   }
 
   private static void processFile(String path) throws Exception {
-    InputStream stream = new BufferedInputStream(new FileInputStream(path));
+    try (InputStream stream = new BufferedInputStream(new FileInputStream(path))) {
+      int hc = 0;
+      while (true) {
+        int b = stream.read();
+        if (b == -1) break;
+        hc = hc * 31 + b;
+      }
 
-    int hc = 0;
-    while (true) {
-      int b = stream.read();
-      if (b == -1) break;
-      hc = hc * 31 + b;
+      hashes.putValue(hc, path);
     }
-
-    hashes.putValue(hc, path);
-    stream.close();
   }
 }

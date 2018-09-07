@@ -48,7 +48,6 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
-import java.util.HashSet;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -56,6 +55,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -126,20 +126,23 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     myParameterInitializer = parameterInitializer;
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     return new IntroduceParameterViewDescriptor(myMethodToSearchFor);
   }
 
+  @Override
   @NotNull
   public PsiType getForcedType() {
     return myForcedType;
   }
 
-  public void setForcedType(PsiType forcedType) {
+  private void setForcedType(PsiType forcedType) {
     myForcedType = forcedType;
   }
 
+  @Override
   public int getReplaceFieldsWithGetters() {
     return myReplaceFieldsWithGetters;
   }
@@ -148,6 +151,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     myReplaceFieldsWithGetters = replaceFieldsWithGetters;
   }
 
+  @Override
   @NotNull
   protected UsageInfo[] findUsages() {
     ArrayList<UsageInfo> result = new ArrayList<>();
@@ -227,6 +231,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     }
   }
 
+  @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
     MultiMap<PsiElement, String> conflicts = new MultiMap<>();
@@ -247,8 +252,9 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
       myParameterInitializer.accept(anySupers);
       if (anySupers.isResult()) {
         for (UsageInfo usageInfo : usagesIn) {
-          if (!(usageInfo.getElement() instanceof PsiMethod) && !(usageInfo instanceof InternalUsageInfo)) {
-            if (!PsiTreeUtil.isAncestor(myMethodToReplaceIn.getContainingClass(), usageInfo.getElement(), false)) {
+          PsiElement element = usageInfo.getElement();
+          if (!(element instanceof PsiMethod) && !(usageInfo instanceof InternalUsageInfo)) {
+            if (!PsiTreeUtil.isAncestor(myMethodToReplaceIn.getContainingClass(), element, false)) {
               String message = RefactoringBundle.message("parameter.initializer.contains.0.but.not.all.calls.to.method.are.in.its.class",
                                                          CommonRefactoringUtil.htmlEmphasize(PsiKeyword.SUPER));
               conflicts.putValue(myParameterInitializer, message);
@@ -371,6 +377,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     return afterData;
   }
 
+  @Override
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
     try {
       PsiElementFactory factory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
@@ -472,7 +479,8 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
       MethodDuplicatesHandler.invokeOnScope(myProject, Collections.singleton(myMethodToReplaceIn),
                                             new AnalysisScope(myMethodToReplaceIn.getContainingFile()), true);
     };
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(runnable), "Search method duplicates...", true, myProject);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(runnable),
+                                                                      "Search Method Duplicates...", true, myProject);
   }
 
   private PsiMethod generateDelegate(final PsiMethod methodToReplaceIn) throws IncorrectOperationException {
@@ -511,20 +519,24 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     final PsiType initializerType;
     if (forcedType == null) {
       if (parameterInitializer == null) {
-        if (localVariable != null) {
-          initializerType = localVariable.getType();
-        } else {
-          LOG.assertTrue(false);
+        if (localVariable == null) {
+          LOG.error("all null");
           initializerType = null;
         }
-      } else {
-        if (localVariable == null) {
-          initializerType = RefactoringUtil.getTypeByExpressionWithExpectedType(parameterInitializer);
-        } else {
+        else {
           initializerType = localVariable.getType();
         }
       }
-    } else {
+      else {
+        if (localVariable == null) {
+          initializerType = RefactoringUtil.getTypeByExpressionWithExpectedType(parameterInitializer);
+        }
+        else {
+          initializerType = localVariable.getType();
+        }
+      }
+    }
+    else {
       initializerType = forcedType;
     }
     return initializerType;
@@ -593,6 +605,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     });
   }
 
+  @Override
   @NotNull
   protected String getCommandName() {
     return RefactoringBundle.message("introduce.parameter.command", DescriptiveNameUtil.getDescriptiveName(myMethodToReplaceIn));
@@ -615,37 +628,45 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     return anchorParameter;
   }
 
+  @Override
   public PsiMethod getMethodToReplaceIn() {
     return myMethodToReplaceIn;
   }
 
+  @Override
   @NotNull
   public PsiMethod getMethodToSearchFor() {
     return myMethodToSearchFor;
   }
 
+  @Override
   public JavaExpressionWrapper getParameterInitializer() {
     return myInitializerWrapper;
   }
 
+  @Override
   @NotNull
   public String getParameterName() {
     return myParameterName;
   }
 
+  @Override
   public boolean isDeclareFinal() {
     return myDeclareFinal;
   }
 
+  @Override
   public boolean isGenerateDelegate() {
     return myGenerateDelegate;
   }
 
+  @Override
   @NotNull
   public TIntArrayList getParametersToRemove() {
     return myParametersToRemove;
   }
 
+  @Override
   @NotNull
   public Project getProject() {
     return myProject;

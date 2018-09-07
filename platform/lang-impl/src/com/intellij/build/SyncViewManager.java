@@ -16,6 +16,7 @@
 package com.intellij.build;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
@@ -25,6 +26,7 @@ public class SyncViewManager extends AbstractViewManager {
     super(project, buildContentManager);
   }
 
+  @NotNull
   @Override
   public String getViewName() {
     return "Sync";

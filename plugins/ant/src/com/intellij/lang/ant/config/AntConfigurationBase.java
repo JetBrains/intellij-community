@@ -80,5 +80,6 @@ public abstract class AntConfigurationBase extends AntConfiguration {
   @Nullable
   public abstract AntBuildFileBase getAntBuildFile(@NotNull PsiFile file);
 
+  @Override
   public abstract AntBuildFile[] getBuildFiles();
 }

@@ -17,20 +17,46 @@ package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
 import com.intellij.util.ui.CheckBox;
 import com.intellij.util.ui.FormBuilder;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
+import com.siyeh.ig.psiutils.LibraryUtil;
+import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.ui.UiUtils;
+import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
-public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends NonBooleanMethodNameMayNotStartWithQuestionInspectionBase {
+public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends
+                                                                   BaseInspection {
+
+  @SuppressWarnings("PublicField")
+  @NonNls public String questionString = BooleanMethodNameMustStartWithQuestionInspection.DEFAULT_QUESTION_WORDS;
+  @SuppressWarnings("PublicField")
+  public boolean ignoreBooleanMethods = false;
+  @SuppressWarnings("PublicField")
+  public boolean onlyWarnOnBaseMethods = true;
+  List<String> questionList = new ArrayList<>(32);
+
+  public NonBooleanMethodNameMayNotStartWithQuestionInspection() {
+    parseString(questionString, questionList);
+  }
 
   @Override
   public JComponent createOptionsPanel() {
@@ -58,5 +84,82 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends NonBo
       return new InspectionGadgetsFix[] {new RenameFix()};
     }
     return new InspectionGadgetsFix[] {new RenameFix(), suppressFix};
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("non.boolean.method.name.must.not.start.with.question.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message("non.boolean.method.name.must.not.start.with.question.problem.descriptor");
+  }
+
+  @Override
+  public void readSettings(@NotNull Element element) throws InvalidDataException {
+    super.readSettings(element);
+    parseString(questionString, questionList);
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element element) throws WriteExternalException {
+    questionString = formatString(questionList);
+    super.writeSettings(element);
+  }
+
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new NonBooleanMethodNameMayNotStartWithQuestionVisitor();
+  }
+
+  private class NonBooleanMethodNameMayNotStartWithQuestionVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      super.visitMethod(method);
+      final PsiType returnType = method.getReturnType();
+      if (returnType == null || returnType.equals(PsiType.BOOLEAN)) {
+        return;
+      }
+      if (ignoreBooleanMethods && returnType.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)) {
+        return;
+      }
+      final String name = method.getName();
+      boolean startsWithQuestionWord = false;
+      for (String question : questionList) {
+        if (name.startsWith(question)) {
+          if (name.length() == question.length()) {
+            startsWithQuestionWord = true;
+            break;
+          }
+          final char nextChar = name.charAt(question.length());
+          if (Character.isUpperCase(nextChar) || nextChar == '_') {
+            startsWithQuestionWord = true;
+            break;
+          }
+        }
+      }
+      if (!startsWithQuestionWord) {
+        return;
+      }
+      if (onlyWarnOnBaseMethods) {
+        if (MethodUtils.hasSuper(method)) {
+          return;
+        }
+      }
+      else if (LibraryUtil.isOverrideOfLibraryMethod(method)) {
+        return;
+      }
+      registerMethodError(method, method);
+    }
   }
 }

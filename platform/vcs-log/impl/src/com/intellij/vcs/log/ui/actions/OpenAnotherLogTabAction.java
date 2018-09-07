@@ -25,6 +25,7 @@ import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.util.VcsLogUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class OpenAnotherLogTabAction extends DumbAwareAction {
   protected OpenAnotherLogTabAction() {
@@ -32,7 +33,7 @@ public class OpenAnotherLogTabAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null || !Registry.is("vcs.log.open.another.log.visible")) {
       e.getPresentation().setEnabledAndVisible(false);
@@ -45,7 +46,7 @@ public class OpenAnotherLogTabAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     VcsLogUtil.triggerUsage(e);
 
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);

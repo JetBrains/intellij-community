@@ -28,6 +28,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.SortedMap;
@@ -49,7 +50,8 @@ public class AddFacetToModuleAction extends AnAction implements DumbAware {
     myType = type;
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     FacetInfo parent = myEditor.getSelectedFacetInfo();
     final FacetTypeId<?> underlyingFacetType = myType.getUnderlyingFacetType();
     Facet facet;
@@ -66,7 +68,8 @@ public class AddFacetToModuleAction extends AnAction implements DumbAware {
     ProjectStructureConfigurable.getInstance(myProject).select(facet, true);
   }
 
-  public void update(AnActionEvent e) {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setVisible(isVisible(myEditor, myType));
   }
 

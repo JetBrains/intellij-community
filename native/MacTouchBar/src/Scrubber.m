@@ -113,7 +113,6 @@ id createScrubber(const char* uid, int itemWidth, ScrubberItemData * items, int 
 
     [scrubber registerClass:[ScrubberItemView class] forItemIdentifier:g_scrubberItemIdentifier];
 
-    scrubber.showsAdditionalContentIndicators = NO;// For the image scrubber, we want the control to draw a fade effect to indicate that there is additional unscrolled content.
     scrubber.selectedIndex = -1;
 
     NSScrubberFlowLayout *scrubberLayout = [[[NSScrubberFlowLayout alloc] init] autorelease];
@@ -123,6 +122,7 @@ id createScrubber(const char* uid, int itemWidth, ScrubberItemData * items, int 
 
     scrubber.mode = NSScrubberModeFree;
     scrubber.showsArrowButtons = NO;
+    scrubber.showsAdditionalContentIndicators = YES;
     scrubber.selectionOverlayStyle = nil;
     [scrubber.widthAnchor constraintGreaterThanOrEqualToConstant:itemWidth].active = YES;
 

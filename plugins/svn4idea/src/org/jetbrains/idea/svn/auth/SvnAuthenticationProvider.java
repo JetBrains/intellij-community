@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.auth;
 
 import com.intellij.openapi.project.Project;
@@ -25,6 +25,7 @@ public class SvnAuthenticationProvider implements AuthenticationProvider {
     mySvnInteractiveAuthenticationProvider = provider;
   }
 
+  @Override
   public AuthenticationData requestClientAuthentication(final String kind,
                                                         final Url url,
                                                         final String realm,
@@ -42,15 +43,16 @@ public class SvnAuthenticationProvider implements AuthenticationProvider {
     }
     return null;
   }
-  
+
   public static void forceInteractive() {
     ourForceInteractive.add(Thread.currentThread());
   }
-  
+
   public static void clearInteractive() {
     ourForceInteractive.remove(Thread.currentThread());
   }
 
+  @Override
   public AcceptResult acceptServerAuthentication(Url url, String realm, final Object certificate, final boolean canCache) {
     return mySvnInteractiveAuthenticationProvider.acceptServerAuthentication(url, realm, certificate, canCache);
   }

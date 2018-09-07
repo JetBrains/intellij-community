@@ -37,12 +37,6 @@ import java.io.IOException;
 public abstract class BaseDiffTestCase extends PlatformTestCase {
   private File myFile1;
   private File myFile2;
-  public static final DiffContent.Listener SHOULD_NOT_INVALIDATE = new DiffContent.Listener() {
-    @Override
-    public void contentInvalid() {
-      fail();
-    }
-  };
 
   public static String readFile(File file) throws IOException {
     FileInputStream stream = new FileInputStream(file);

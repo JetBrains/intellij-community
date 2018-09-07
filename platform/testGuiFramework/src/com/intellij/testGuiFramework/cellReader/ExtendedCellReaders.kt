@@ -15,8 +15,10 @@
  */
 package com.intellij.testGuiFramework.cellReader
 
+import com.intellij.ide.util.treeView.NodeRenderer
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.findAllWithBFS
+import com.intellij.ui.MultilineTreeCellRenderer
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.components.JBList
 import org.fest.swing.cell.JComboBoxCellReader
@@ -45,11 +47,13 @@ import javax.swing.tree.DefaultMutableTreeNode
  */
 class ExtendedJTreeCellReader : BasicJTreeCellReader(), JTreeCellReader {
 
-  override fun valueAt(tree: JTree, modelValue: Any?): String? {
+  override fun valueAt(tree: JTree, modelValue: Any?): String? = valueAtExtended(tree, modelValue, false)
+
+  fun valueAtExtended(tree: JTree, modelValue: Any?, isExtended: Boolean = true): String? {
     if (modelValue == null) return null
     val isLeaf: Boolean = try { modelValue is DefaultMutableTreeNode && modelValue.isLeaf } catch (e: Error) { false }
     val cellRendererComponent = tree.cellRenderer.getTreeCellRendererComponent(tree, modelValue, false, false, isLeaf, 0, false)
-    return getValueWithCellRenderer(cellRendererComponent)
+    return getValueWithCellRenderer(cellRendererComponent, isExtended)
   }
 }
 
@@ -59,6 +63,7 @@ class ExtendedJListCellReader : BasicJListCellReader(), JListCellReader {
   override fun valueAt(@Nonnull list: JList<*>, index: Int): String? {
 
     val element = list.model.getElementAt(index)
+    if(element == null) return null
     val cellRendererComponent = GuiTestUtil.getListCellRendererComponent(list, element, index)
     return getValueWithCellRenderer(cellRendererComponent)
   }
@@ -77,7 +82,7 @@ class ExtendedJComboboxCellReader : BasicJComboBoxCellReader(), JComboBoxCellRea
   private val REFERENCE_JLIST = newJList()
 
   override fun valueAt(comboBox: JComboBox<*>, index: Int): String? {
-    val item: Any = comboBox.getItemAt(index)
+    val item: Any? = comboBox.getItemAt(index)
     val listCellRenderer: ListCellRenderer<Any?> = comboBox.renderer as ListCellRenderer<Any?>
     val cellRendererComponent = listCellRenderer.getListCellRendererComponent(REFERENCE_JLIST, item, index, true, true)
     return getValueWithCellRenderer(cellRendererComponent)
@@ -91,18 +96,27 @@ class ExtendedJComboboxCellReader : BasicJComboBoxCellReader(), JComboBoxCellRea
   }
 }
 
-private fun getValueWithCellRenderer(cellRendererComponent: Component): String? {
+private fun getValueWithCellRenderer(cellRendererComponent: Component, isExtended: Boolean = true): String? {
   val result = when (cellRendererComponent) {
     is JLabel -> cellRendererComponent.text
-    is SimpleColoredComponent -> cellRendererComponent.getText()
+    is NodeRenderer -> {
+      if (isExtended) cellRendererComponent.getFullText()
+      else cellRendererComponent.getFirstText()
+    } //should stands before SimpleColoredComponent because it is more specific
+    is SimpleColoredComponent -> cellRendererComponent.getFullText()
+    is MultilineTreeCellRenderer -> cellRendererComponent.text
     else -> cellRendererComponent.findText()
   }
   return result?.trimEnd()
 }
 
 
-private fun SimpleColoredComponent.getText(): String?
+private fun SimpleColoredComponent.getFullText(): String?
   = this.iterator().asSequence().joinToString()
+
+private fun SimpleColoredComponent.getFirstText(): String?
+  = this.iterator().next()
+
 
 private fun Component.findText(): String? {
   try {
@@ -116,8 +130,8 @@ private fun Component.findText(): String? {
     )
     resultList.addAll(
       findAllWithBFS(container, SimpleColoredComponent::class.java)
-        .filter { !it.getText().isNullOrEmpty() }
-        .map { it.getText()!! }
+        .filter { !it.getFullText().isNullOrEmpty() }
+        .map { it.getFullText()!! }
     )
     return resultList.firstOrNull { !it.isEmpty() }
   }

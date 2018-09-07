@@ -29,7 +29,7 @@ import java.util.List;
  */
 public abstract class JpsCompositePackagingElementBase<Self extends JpsCompositePackagingElementBase<Self>> extends JpsCompositeElementBase<Self>
   implements JpsCompositePackagingElement {
-  private static final JpsElementCollectionRole<JpsPackagingElement> CHILDREN_ROLE = JpsElementCollectionRole.create(JpsElementChildRoleBase.<JpsPackagingElement>create("child"));
+  private static final JpsElementCollectionRole<JpsPackagingElement> CHILDREN_ROLE = JpsElementCollectionRole.create(JpsElementChildRoleBase.create("child"));
 
   protected JpsCompositePackagingElementBase() {
     myContainer.setChild(CHILDREN_ROLE);

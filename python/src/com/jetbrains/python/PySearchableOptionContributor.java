@@ -69,7 +69,7 @@ public class PySearchableOptionContributor extends SearchableOptionContributor {
                          configurableId, displayName, false);
     processor.addOptions("Unittests", displayName, "Default test runner",
                          configurableId, displayName, false);
-    processor.addOptions("py.test", displayName, "Default test runner",
+    processor.addOptions("pytest", displayName, "Default test runner",
                          configurableId, displayName, false);
     processor.addOptions("Nosetests", displayName, "Default test runner",
                          configurableId, displayName, false);

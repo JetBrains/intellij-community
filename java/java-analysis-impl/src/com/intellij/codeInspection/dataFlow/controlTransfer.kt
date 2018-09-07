@@ -86,6 +86,17 @@ sealed class Trap(val anchor: PsiElement) {
     override fun getPossibleTargets() = clauses.values.map { it.instructionOffset }
     override fun toString(): String = "${super.toString()} -> ${clauses.values}"
   }
+  class TryCatchAll(anchor: PsiElement, val target : ControlFlow.ControlFlowOffset)
+    : Trap(anchor) {
+    override fun dispatch(handler: ControlTransferHandler): List<DfaInstructionState> {
+      return if (handler.target is ExceptionTransfer)
+        listOf(DfaInstructionState(handler.runner.getInstruction(target.instructionOffset), handler.state))
+      else handler.dispatch()
+    }
+
+    override fun getPossibleTargets() = listOf(target.instructionOffset)
+    override fun toString(): String = "${super.toString()} -> ${target}"
+  }
   abstract class EnterFinally(anchor: PsiElement, val jumpOffset: ControlFlow.ControlFlowOffset): Trap(anchor) {
     internal val backLinks = ArrayList<ControlTransferInstruction>()
 
@@ -139,7 +150,7 @@ internal class ControlTransferHandler(val state: DfaMemoryState, val runner: Dat
     for ((catchSection, jumpOffset) in catches) {
       val param = catchSection.parameter ?: continue
       if (throwableType == null) {
-        throwableType = thrownValue?.asConstraint() ?: TypeConstraint.EMPTY
+        throwableType = thrownValue?.asConstraint() ?: TypeConstraint.empty()
       }
 
       for (caughtType in allCaughtTypes(param)) {
@@ -162,7 +173,7 @@ internal class ControlTransferHandler(val state: DfaMemoryState, val runner: Dat
     val catchingCopy = state.createCopy()
     val value = runner.factory.varFactory.createVariableValue(param)
     catchingCopy.applyFact(value, DfaFactType.TYPE_CONSTRAINT, constraint)
-    catchingCopy.applyFact(value, DfaFactType.CAN_BE_NULL, false)
+    catchingCopy.applyFact(value, DfaFactType.NULLABILITY, DfaNullability.NOT_NULL)
     return catchingCopy
   }
 

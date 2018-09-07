@@ -16,8 +16,8 @@
 package com.intellij.compiler.ant;
 
 import com.intellij.compiler.ant.taskdefs.Dirname;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.project.Project;
 
 /**
  * @author Eugene Zhuravlev
@@ -27,6 +27,7 @@ public class SingleFileProjectBuild extends ProjectBuild {
     super(project, genOptions);
   }
 
+  @Override
   protected Generator createModuleBuildGenerator(ModuleChunk chunk, GenerationOptions genOptions) {
     final CompositeGenerator gen = new CompositeGenerator();
     gen.add(new Comment(CompilerBundle.message("generated.ant.build.building.concrete.module.section.title", chunk.getName())));

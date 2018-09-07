@@ -45,7 +45,7 @@ public class FilteredController extends CascadeController {
     UnsignedBitSet initVisibility = new UnsignedBitSet();
     if (visibleHeadsIds != null) {
       ReachableNodes getter = new ReachableNodes(LinearGraphUtils.asLiteLinearGraph(myPermanentGraphInfo.getLinearGraph()));
-      getter.walk(visibleHeadsIds, node -> {
+      getter.walkDown(visibleHeadsIds, node -> {
         if (matchedIds.contains(node)) initVisibility.set(node, true);
       });
     }

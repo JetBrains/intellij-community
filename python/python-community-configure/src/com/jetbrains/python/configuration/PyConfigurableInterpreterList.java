@@ -83,7 +83,7 @@ public class PyConfigurableInterpreterList {
   private static class PyInterpreterComparator implements Comparator<Sdk> {
     @Nullable private final Project myProject;
 
-    public PyInterpreterComparator(@Nullable final Project project) {
+    PyInterpreterComparator(@Nullable final Project project) {
       myProject = project;
     }
 

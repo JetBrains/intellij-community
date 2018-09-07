@@ -335,6 +335,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   @Override
   public void dispose() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     stopSystemActivity();
     if (isRunning()) {
       cancel();

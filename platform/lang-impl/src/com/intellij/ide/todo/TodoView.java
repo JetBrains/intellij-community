@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.todo;
 
-import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.Disposable;
@@ -20,6 +19,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -35,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultTreeModel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -114,8 +113,8 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     toolWindow.setHelpId("find.todoList");
     myAllTodos = new TodoPanel(myProject, state.all, false, allTodosContent) {
       @Override
-      protected TodoTreeBuilder createTreeBuilder(JTree tree, DefaultTreeModel treeModel, Project project) {
-        AllTodosTreeBuilder builder = createAllTodoBuilder(tree, treeModel, project);
+      protected TodoTreeBuilder createTreeBuilder(JTree tree, Project project) {
+        AllTodosTreeBuilder builder = createAllTodoBuilder(tree, project);
         builder.init();
         return builder;
       }
@@ -138,8 +137,8 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     Content currentFileTodosContent = contentFactory.createContent(null, IdeBundle.message("title.todo.current.file"), false);
     CurrentFileTodosPanel currentFileTodos = new CurrentFileTodosPanel(myProject, state.current, currentFileTodosContent) {
       @Override
-      protected TodoTreeBuilder createTreeBuilder(JTree tree, DefaultTreeModel treeModel, Project project) {
-        CurrentFileTodosTreeBuilder builder = new CurrentFileTodosTreeBuilder(tree, treeModel, project);
+      protected TodoTreeBuilder createTreeBuilder(JTree tree, Project project) {
+        CurrentFileTodosTreeBuilder builder = new CurrentFileTodosTreeBuilder(tree, project);
         builder.init();
         return builder;
       }
@@ -147,14 +146,12 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     Disposer.register(this, currentFileTodos);
     currentFileTodosContent.setComponent(currentFileTodos);
 
-    myChangeListTodosContent = contentFactory
-      .createContent(null, IdeBundle.message("changelist.todo.title",
-                                             ChangeListManager.getInstance(myProject).getDefaultChangeList().getName()),
-                     false);
+    String tabName = getTabNameForChangeList(ChangeListManager.getInstance(myProject).getDefaultChangeList().getName());
+    myChangeListTodosContent = contentFactory.createContent(null, tabName, false);
     ChangeListTodosPanel changeListTodos = new ChangeListTodosPanel(myProject, state.current, myChangeListTodosContent) {
       @Override
-      protected TodoTreeBuilder createTreeBuilder(JTree tree, DefaultTreeModel treeModel, Project project) {
-        ChangeListTodosTreeBuilder builder = new ChangeListTodosTreeBuilder(tree, treeModel, project);
+      protected TodoTreeBuilder createTreeBuilder(JTree tree, Project project) {
+        ChangeListTodosTreeBuilder builder = new ChangeListTodosTreeBuilder(tree, project);
         builder.init();
         return builder;
       }
@@ -230,15 +227,23 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
         return expander != null && expander.canCollapse();
       }
     };
-
-    ((ToolWindowEx)toolWindow)
-      .setTitleActions(CommonActionsManager.getInstance().createExpandAllAction(proxyExpander, toolWindow.getComponent()),
-                       CommonActionsManager.getInstance().createCollapseAllAction(proxyExpander, toolWindow.getComponent()));
+    //CommonActionsManager.getInstance().createExpandAllAction(proxyExpander, toolWindow.getComponent());
+    //CommonActionsManager.getInstance().createCollapseAllAction(proxyExpander, toolWindow.getComponent());
+    //((ToolWindowEx)toolWindow)
+    //  .setTitleActions(CommonActionsManager.getInstance().createExpandAllAction(proxyExpander, toolWindow.getComponent()),
+    //                   CommonActionsManager.getInstance().createCollapseAllAction(proxyExpander, toolWindow.getComponent()));
   }
 
   @NotNull
-  protected AllTodosTreeBuilder createAllTodoBuilder(JTree tree, DefaultTreeModel treeModel, Project project) {
-    return new AllTodosTreeBuilder(tree, treeModel, project);
+  static String getTabNameForChangeList(@NotNull String changelistName) {
+    changelistName = changelistName.trim();
+    String suffix = "Changelist";
+    return StringUtil.endsWithIgnoreCase(changelistName, suffix) ? changelistName : changelistName + " " + suffix;
+  }
+
+  @NotNull
+  protected AllTodosTreeBuilder createAllTodoBuilder(JTree tree, Project project) {
+    return new AllTodosTreeBuilder(tree, project);
   }
 
   private final class MyVcsListener implements VcsListener {
@@ -334,8 +339,8 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     Content content = ContentFactory.SERVICE.getInstance().createContent(null, title, true);
     final ChangeListTodosPanel panel = new ChangeListTodosPanel(myProject, settings, content) {
       @Override
-      protected TodoTreeBuilder createTreeBuilder(JTree tree, DefaultTreeModel treeModel, Project project) {
-        TodoTreeBuilder todoTreeBuilder = factory.createTreeBuilder(tree, treeModel, project);
+      protected TodoTreeBuilder createTreeBuilder(JTree tree, Project project) {
+        TodoTreeBuilder todoTreeBuilder = factory.createTreeBuilder(tree, project);
         todoTreeBuilder.init();
         return todoTreeBuilder;
       }

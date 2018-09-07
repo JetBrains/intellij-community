@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac;
 
 import io.netty.bootstrap.Bootstrap;
@@ -60,7 +46,7 @@ public class ExternalJavacProcess {
     }
     InternalLoggerFactory.setDefaultFactory(new Log4JLoggerFactory());
   }
-  
+
   public ExternalJavacProcess() {
     final JavacRemoteProto.Message msgDefaultInstance = JavacRemoteProto.Message.getDefaultInstance();
 
@@ -77,9 +63,9 @@ public class ExternalJavacProcess {
       }
     };
   }
-  
+
   //static volatile long myGlobalStart;
-  
+
   public static void main(String[] args) {
     //myGlobalStart = System.currentTimeMillis();
     UUID uuid = null;
@@ -93,9 +79,9 @@ public class ExternalJavacProcess {
         System.err.println("Error parsing session id: " + e.getMessage());
         System.exit(-1);
       }
-      
+
       host = args[1];
-      
+
       try {
         port = Integer.parseInt(args[2]);
       }
@@ -142,15 +128,16 @@ public class ExternalJavacProcess {
   }
 
   private static JavacRemoteProto.Message compile(final ChannelHandlerContext context,
-                                                 final UUID sessionId,
-                                                 List<String> options,
-                                                 Collection<File> files,
-                                                 Collection<File> classpath,
-                                                 Collection<File> platformCp,
-                                                 Collection<File> modulePath,
-                                                 Collection<File> sourcePath,
-                                                 Map<File, Set<File>> outs,
-                                                 final CanceledStatus canceledStatus) {
+                                                  final UUID sessionId,
+                                                  List<String> options,
+                                                  Collection<File> files,
+                                                  Collection<File> classpath,
+                                                  Collection<File> platformCp,
+                                                  Collection<File> modulePath,
+                                                  Collection<File> upgradeModulePath,
+                                                  Collection<File> sourcePath,
+                                                  Map<File, Set<File>> outs,
+                                                  final CanceledStatus canceledStatus) {
     //final long compileStart = System.currentTimeMillis();
     //System.err.println("Compile start; since global start: " + (compileStart - myGlobalStart));
     final DiagnosticOutputConsumer diagnostic = new DiagnosticOutputConsumer() {
@@ -193,7 +180,7 @@ public class ExternalJavacProcess {
     try {
       JavaCompilingTool tool = getCompilingTool();
       final boolean rc = JavacMain.compile(
-        options, files, classpath, platformCp, modulePath, sourcePath, outs, diagnostic, outputSink, canceledStatus, tool
+        options, files, classpath, platformCp, modulePath, upgradeModulePath, sourcePath, outs, diagnostic, outputSink, canceledStatus, tool
       );
       return JavacProtoUtil.toMessage(sessionId, JavacProtoUtil.createBuildCompletedResponse(rc));
     }
@@ -207,7 +194,7 @@ public class ExternalJavacProcess {
     //  System.err.println("Compiled in " + (compileEnd - compileStart) + " ms; since global start: " + (compileEnd - myGlobalStart));
     //}
   }
-  
+
   private static JavaCompilingTool getCompilingTool() {
     String property = System.getProperty(JPS_JAVA_COMPILING_TOOL_PROPERTY);
     if (property != null) {
@@ -242,6 +229,7 @@ public class ExternalJavacProcess {
               final List<File> platformCp = toFiles(request.getPlatformClasspathList());
               final List<File> srcPath = toFiles(request.getSourcepathList());
               final List<File> modulePath = toFiles(request.getModulePathList());
+              final List<File> upgradeModulePath = toFiles(request.getUpgradeModulePathList());
 
               final Map<File, Set<File>> outs = new HashMap<File, Set<File>>();
               for (JavacRemoteProto.Message.Request.OutputGroup outputGroup : request.getOutputList()) {
@@ -259,7 +247,7 @@ public class ExternalJavacProcess {
                 public void run() {
                   try {
                     context.channel().writeAndFlush(
-                      compile(context, sessionId, options, files, cp, platformCp, modulePath, srcPath, outs, cancelHandler)
+                      compile(context, sessionId, options, files, cp, platformCp, modulePath, upgradeModulePath, srcPath, outs, cancelHandler)
                     ).awaitUninterruptibly();
                   }
                   finally {
@@ -299,7 +287,7 @@ public class ExternalJavacProcess {
       }
     }
   }
-  
+
   public void stop() {
     try {
       //final long stopStart = System.currentTimeMillis();
@@ -326,7 +314,7 @@ public class ExternalJavacProcess {
     }
     return files;
   }
-  
+
   public void cancelBuild() {
     final CancelHandler cancelHandler = myCancelHandler;
     if (cancelHandler != null) {

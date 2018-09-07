@@ -101,7 +101,7 @@ public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
   }
 
   @Override
-  protected String getPopupTitle(AnActionEvent e) {
+  protected String getPopupTitle(@NotNull AnActionEvent e) {
     return "Refactor This";
   }
 }

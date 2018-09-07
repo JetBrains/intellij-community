@@ -20,6 +20,7 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrM
     super(ref, kinds, forceRValue);
   }
 
+  @Override
   @NotNull
   public List<GroovyResolveResult> getCandidates() {
     List<GroovyResolveResult> candidates;

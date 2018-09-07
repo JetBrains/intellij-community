@@ -100,11 +100,11 @@ class MockVcsHelper(project: Project) : AbstractVcsHelper(project) {
     throw UnsupportedOperationException()
   }
 
-  override fun selectFilesToProcess(files: List<VirtualFile>, title: String, prompt: String?, singleFileTitle: String, singleFilePromptTemplate: String, confirmationOption: VcsShowConfirmationOption): Collection<VirtualFile>? {
+  override fun selectFilesToProcess(files: List<VirtualFile>, title: String, prompt: String?, singleFileTitle: String?, singleFilePromptTemplate: String?, confirmationOption: VcsShowConfirmationOption): Collection<VirtualFile>? {
     throw UnsupportedOperationException()
   }
 
-  override fun selectFilePathsToProcess(files: List<FilePath>, title: String, prompt: String?, singleFileTitle: String, singleFilePromptTemplate: String, confirmationOption: VcsShowConfirmationOption): Collection<FilePath>? {
+  override fun selectFilePathsToProcess(files: List<FilePath>, title: String, prompt: String?, singleFileTitle: String?, singleFilePromptTemplate: String?, confirmationOption: VcsShowConfirmationOption): Collection<FilePath>? {
     throw UnsupportedOperationException()
   }
 

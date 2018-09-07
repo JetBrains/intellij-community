@@ -1,22 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.impl;
 
-import com.intellij.execution.*;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.Executor;
+import com.intellij.execution.ExecutorRegistry;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.icons.AllIcons;
@@ -26,6 +15,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorListener;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBCheckBox;
@@ -47,6 +37,7 @@ import java.awt.event.ActionListener;
 public final class SingleConfigurationConfigurable<Config extends RunConfiguration>
     extends BaseRCSettingsConfigurable {
   private static final Logger LOG = Logger.getInstance(SingleConfigurationConfigurable.class);
+
   private final PlainDocument myNameDocument = new PlainDocument();
   @Nullable private final Executor myExecutor;
 
@@ -57,7 +48,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   private final String myHelpTopic;
   private final boolean myBrokenConfiguration;
   private boolean myStoreProjectConfiguration;
-  private boolean mySingleton;
+  private boolean mySingleton = true;
   private String myFolderName;
   private boolean myChangingNameFromCode;
 
@@ -76,7 +67,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     setNameText(configuration.getName());
     myNameDocument.addDocumentListener(new DocumentAdapter() {
       @Override
-      public void textChanged(DocumentEvent event) {
+      public void textChanged(@NotNull DocumentEvent event) {
         setModified(true);
         if (!myChangingNameFromCode) {
           RunConfiguration runConfiguration = getSettings().getConfiguration();
@@ -89,7 +80,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
     getEditor().addSettingsEditorListener(new SettingsEditorListener<RunnerAndConfigurationSettings>() {
       @Override
-      public void stateChanged(SettingsEditor<RunnerAndConfigurationSettings> settingsEditor) {
+      public void stateChanged(@NotNull SettingsEditor<RunnerAndConfigurationSettings> settingsEditor) {
         myValidationResultValid = false;
       }
     });
@@ -101,7 +92,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     configurable.reset();
     return configurable;
   }
-  
+
   @Override
   void applySnapshotToComparison(RunnerAndConfigurationSettings original, RunnerAndConfigurationSettings snapshot) {
     snapshot.setTemporary(original.isTemporary());
@@ -111,18 +102,13 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   }
 
   @Override
-  boolean isSnapshotSpecificallyModified(RunManagerImpl runManager,
-                                         RunnerAndConfigurationSettings original,
-                                         RunnerAndConfigurationSettings snapshot) {
+  boolean isSnapshotSpecificallyModified(@NotNull RunnerAndConfigurationSettings original, @NotNull RunnerAndConfigurationSettings snapshot) {
     return original.isShared() != myStoreProjectConfiguration;
   }
 
   @Override
   public void apply() throws ConfigurationException {
     RunnerAndConfigurationSettings settings = getSettings();
-    if (settings == null) {
-      return;
-    }
 
     RunConfiguration runConfiguration = settings.getConfiguration();
     settings.setName(getNameText());
@@ -170,50 +156,50 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     return myStoreProjectConfiguration;
   }
 
-  public boolean isSingleton() {
-    return mySingleton;
-  }
-
   @Nullable
   private ValidationResult getValidationResult() {
     if (!myValidationResultValid) {
       myLastValidationResult = null;
       RunnerAndConfigurationSettings snapshot = null;
       try {
-        snapshot = getSnapshot();
-        if (snapshot != null) {
-          snapshot.setName(getNameText());
-          snapshot.checkSettings(myExecutor);
-          for (Executor executor : ExecutorRegistry.getInstance().getRegisteredExecutors()) {
-            ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), snapshot.getConfiguration());
-            if (runner != null) {
-              checkConfiguration(runner, snapshot);
-            }
+        snapshot = createSnapshot(false);
+        snapshot.setName(getNameText());
+        snapshot.checkSettings(myExecutor);
+        for (Executor executor : ExecutorRegistry.getInstance().getRegisteredExecutors()) {
+          ProgramRunner runner = ProgramRunner.getRunner(executor.getId(), snapshot.getConfiguration());
+          if (runner != null) {
+            checkConfiguration(runner, snapshot);
           }
         }
       }
-      catch (RuntimeConfigurationException exception) {
-        final Runnable quickFix = exception.getQuickFix();
-        Runnable resultQuickFix;
-        if (quickFix != null && snapshot != null) {
-          final RunnerAndConfigurationSettings fixedSettings = snapshot;
-          resultQuickFix = () -> {
-            quickFix.run();
-            getEditor().resetFrom(fixedSettings);
-          };
-        }
-        else {
-          resultQuickFix = quickFix;
-        }
-        myLastValidationResult = new ValidationResult(exception.getLocalizedMessage(), exception.getTitle(), resultQuickFix);
-      }
       catch (ConfigurationException e) {
-        myLastValidationResult = new ValidationResult(e.getLocalizedMessage(), ExecutionBundle.message("invalid.data.dialog.title"), null);
+        myLastValidationResult = createValidationResult(snapshot, e);
       }
 
       myValidationResultValid = true;
     }
     return myLastValidationResult;
+  }
+
+  private ValidationResult createValidationResult(RunnerAndConfigurationSettings snapshot, ConfigurationException e) {
+    if (!e.shouldShowInDumbMode() && DumbService.isDumb(getConfiguration().getProject())) return null;
+
+    return new ValidationResult(
+      e.getLocalizedMessage(),
+      e instanceof RuntimeConfigurationException ? e.getTitle() : ExecutionBundle.message("invalid.data.dialog.title"),
+      getQuickFix(snapshot, e));
+  }
+
+  @Nullable
+  private Runnable getQuickFix(RunnerAndConfigurationSettings snapshot, ConfigurationException exception) {
+    Runnable quickFix = exception.getQuickFix();
+    if (quickFix != null && snapshot != null) {
+      return () -> {
+        quickFix.run();
+        getEditor().resetFrom(snapshot);
+      };
+    }
+    return quickFix;
   }
 
   private static void checkConfiguration(final ProgramRunner runner, final RunnerAndConfigurationSettings snapshot)
@@ -293,11 +279,12 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     return (Config)getSettings().getConfiguration();
   }
 
-  public RunnerAndConfigurationSettings getSnapshot() throws ConfigurationException {
-    final SettingsEditor<RunnerAndConfigurationSettings> editor = getEditor();
-    RunnerAndConfigurationSettings snapshot = editor == null ? null : editor.getSnapshot();
-    if (snapshot != null) {
-      snapshot.setSingleton(isSingleton());
+  @NotNull
+  public RunnerAndConfigurationSettings createSnapshot(boolean cloneBeforeRunTasks) throws ConfigurationException {
+    RunnerAndConfigurationSettings snapshot = getEditor().getSnapshot();
+    snapshot.setSingleton(mySingleton);
+    if (cloneBeforeRunTasks) {
+      RunManagerImplKt.cloneBeforeRunTasks(snapshot.getConfiguration());
     }
     return snapshot;
   }
@@ -328,18 +315,18 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     private JButton myFixButton;
     private JSeparator mySeparator;
     private JCheckBox myCbStoreProjectConfiguration;
-    private JBCheckBox myCbSingleton;
+    private JBCheckBox myIsAllowMultipleInstances;
     private JPanel myValidationPanel;
 
     private Runnable myQuickFix = null;
 
-    public MyValidatableComponent() {
+    MyValidatableComponent() {
       myNameLabel.setLabelFor(myNameText);
       myNameText.setDocument(myNameDocument);
 
       getEditor().addSettingsEditorListener(settingsEditor -> updateWarning());
       myWarningLabel.setCopyable(true);
-      myWarningLabel.setIcon(AllIcons.RunConfigurations.ConfigurationWarning);
+      myWarningLabel.setIcon(AllIcons.General.BalloonError);
 
       myComponentPlace.setLayout(new GridBagLayout());
       myComponentPlace.add(getEditorComponent(),
@@ -364,11 +351,11 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         public void actionPerformed(ActionEvent e) {
           setModified(true);
           myStoreProjectConfiguration = myCbStoreProjectConfiguration.isSelected();
-          mySingleton = myCbSingleton.isSelected();
+          mySingleton = !myIsAllowMultipleInstances.isSelected();
         }
       };
       myCbStoreProjectConfiguration.addActionListener(actionListener);
-      myCbSingleton.addActionListener(actionListener);
+      myIsAllowMultipleInstances.addActionListener(actionListener);
     }
 
     private void doReset(RunnerAndConfigurationSettings settings) {
@@ -379,9 +366,9 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       myCbStoreProjectConfiguration.setVisible(!settings.isTemplate());
 
       mySingleton = settings.isSingleton();
-      myCbSingleton.setEnabled(!isUnknownRunConfiguration);
-      myCbSingleton.setSelected(mySingleton);
-      myCbSingleton.setVisible(settings.getFactory().canConfigurationBeSingleton());
+      myIsAllowMultipleInstances.setEnabled(!isUnknownRunConfiguration);
+      myIsAllowMultipleInstances.setSelected(!mySingleton);
+      myIsAllowMultipleInstances.setVisible(settings.getFactory().getSingletonPolicy().isPolicyConfigurable());
     }
 
     public final JComponent getWholePanel() {
@@ -432,7 +419,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
     @Nullable
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (ConfigurationSettingsEditorWrapper.CONFIGURATION_EDITOR_KEY.is(dataId)) {
         return getEditor();
       }

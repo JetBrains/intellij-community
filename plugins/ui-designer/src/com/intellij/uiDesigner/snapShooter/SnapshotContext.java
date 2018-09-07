@@ -41,7 +41,7 @@ public class SnapshotContext {
     public String name;
     public JComponent value;
 
-    public ComponentProperty(final JComponent owner, final String name, final JComponent value) {
+    ComponentProperty(final JComponent owner, final String name, final JComponent value) {
       this.owner = owner;
       this.name = name;
       this.value = value;

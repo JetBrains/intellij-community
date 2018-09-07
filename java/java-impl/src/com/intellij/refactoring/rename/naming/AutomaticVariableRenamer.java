@@ -27,13 +27,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
-import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author dsl
@@ -138,18 +134,22 @@ public class AutomaticVariableRenamer extends AutomaticRenamer {
     }
   }
 
+  @Override
   public String getDialogTitle() {
     return RefactoringBundle.message("rename.variables.title");
   }
 
+  @Override
   public String getDialogDescription() {
     return RefactoringBundle.message("rename.variables.with.the.following.names.to");
   }
 
+  @Override
   public String entityName() {
     return RefactoringBundle.message("entity.name.variable");
   }
 
+  @Override
   public String nameToCanonicalName(@NotNull String name, PsiNamedElement psiVariable) {
     final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(psiVariable.getProject());
     final String propertyName = codeStyleManager.variableNameToPropertyName(name, codeStyleManager.getVariableKind((PsiVariable)psiVariable));
@@ -161,6 +161,7 @@ public class AutomaticVariableRenamer extends AutomaticRenamer {
     return propertyName;
   }
 
+  @Override
   public String canonicalNameToName(String canonicalName, PsiNamedElement psiVariable) {
     final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(psiVariable.getProject());
     final String variableName =

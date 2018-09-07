@@ -120,7 +120,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   private static class MyDirectoryRenderer extends ColoredTableCellRenderer {
     private final Project myProject;
 
-    public MyDirectoryRenderer(Project project) {
+    MyDirectoryRenderer(Project project) {
       myProject = project;
     }
 
@@ -536,17 +536,17 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
         }
       }).setAddActionUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled(AnActionEvent e) {
+        public boolean isEnabled(@NotNull AnActionEvent e) {
           return !myIsDisabled && rootsOfOneKindInSelection();
         }
       }).setEditActionUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled(AnActionEvent e) {
+        public boolean isEnabled(@NotNull AnActionEvent e) {
           return !myIsDisabled && onlyRegisteredRootsInSelection();
         }
       }).setRemoveActionUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled(AnActionEvent e) {
+        public boolean isEnabled(@NotNull AnActionEvent e) {
           return !myIsDisabled && onlyRegisteredRootsInSelection();
         }
       }).disableUpDownActions().createPanel();

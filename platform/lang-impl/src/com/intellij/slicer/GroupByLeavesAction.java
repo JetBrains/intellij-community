@@ -33,7 +33,7 @@ public class GroupByLeavesAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setText(TEXT + (myTreeBuilder.analysisInProgress ? " (Analysis in progress)" : ""));
     e.getPresentation().setEnabled(isAvailabale());
   }
@@ -43,7 +43,7 @@ public class GroupByLeavesAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     myTreeBuilder.switchToGroupedByLeavesNodes();
   }
 }

@@ -14,7 +14,10 @@ import org.jetbrains.plugins.groovy.util.SdkHomeSettings;
 /**
  * @author peter
  */
-@State(name = "GantSettings", storages = @Storage("gant_config.xml"))
+@State(name = "GantSettings", storages = {
+  @Storage("ant.xml"),
+  @Storage(value = "gant_config.xml", deprecated = true),
+})
 public class GantSettings extends SdkHomeSettings {
   private final Project myProject;
 

@@ -17,13 +17,14 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ide.SmartSelectProvider;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class SmartUnSelect extends SmartSelect {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     SmartSelectProvider provider = getProvider(e.getDataContext());
     assert provider != null;
     //noinspection unchecked

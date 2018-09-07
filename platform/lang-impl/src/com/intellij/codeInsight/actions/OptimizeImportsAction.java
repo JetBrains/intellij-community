@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
@@ -34,7 +35,7 @@ public class OptimizeImportsAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent event) {
+  public void actionPerformed(@NotNull AnActionEvent event) {
     actionPerformedImpl(event.getDataContext());
   }
 
@@ -144,7 +145,7 @@ public class OptimizeImportsAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent event){
+  public void update(@NotNull AnActionEvent event){
     if (!LanguageImportStatements.INSTANCE.hasAnyExtensions()) {
       event.getPresentation().setVisible(false);
       return;

@@ -26,7 +26,7 @@ public class TemplateVariable {
 
   public TemplateVariable(@NotNull @NonNls String name, @NotNull @NonNls String value) {
     myName = name;
-    myValue = String.valueOf(value);
+    myValue = value;
     myReadOnly = false;
     myDescription = "";
   }
@@ -106,6 +106,7 @@ public class TemplateVariable {
     myShownOnFirstTab = shownOnFirstTab;
   }
 
+  @Override
   public TemplateVariable clone() {
     return new TemplateVariable(this);
   }

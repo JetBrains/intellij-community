@@ -1,10 +1,13 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.CheckoutProvider;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.update.UpdateSession;
@@ -12,7 +15,6 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
-import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.Revision;
@@ -20,6 +22,8 @@ import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.auth.*;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,10 +31,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.testFramework.UsefulTestCase.assertExists;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
-public class SvnNativeClientAuthTest extends Svn17TestCase {
-  private SvnVcs myVcs;
+@Ignore
+public class SvnNativeClientAuthTest extends SvnTestCase {
   private AcceptResult myCertificateAnswer = AcceptResult.ACCEPTED_TEMPORARILY;
   private boolean myCredentialsCorrect = true;
   private boolean mySaveCredentials = false;
@@ -54,14 +61,12 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
   public void setUp() throws Exception {
     super.setUp();
     final File certFile = new File(myPluginRoot, getTestDataDir() + "/svn/____.pfx");
-    setNativeAcceleration(true);
-    myVcs = SvnVcs.getInstance(myProject);
     // replace authentication provider so that pass credentials without dialogs
     final SvnConfiguration configuration = SvnConfiguration.getInstance(myProject);
     final File svnconfig = FileUtil.createTempDirectory("svnconfig", "");
     configuration.setConfigurationDirParameters(false, svnconfig.getPath());
 
-    final SvnAuthenticationManager interactiveManager = configuration.getInteractiveManager(myVcs);
+    final SvnAuthenticationManager interactiveManager = configuration.getInteractiveManager(vcs);
     final SvnTestInteractiveAuthentication authentication = new SvnTestInteractiveAuthentication() {
       @Override
       public AcceptResult acceptServerAuthentication(Url url, String realm, Object certificate, boolean canCache) {
@@ -77,7 +82,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     };
     interactiveManager.setAuthenticationProvider(authentication);
 
-    final SvnAuthenticationManager manager = configuration.getAuthenticationManager(myVcs);
+    final SvnAuthenticationManager manager = configuration.getAuthenticationManager(vcs);
     // will be the same as in interactive -> authentication notifier is not used
     manager.setAuthenticationProvider(authentication);
 
@@ -476,18 +481,17 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
   }
 
   private File testCommitImpl(File wc1) throws IOException {
-    Assert.assertTrue(wc1.isDirectory());
+    assertTrue(wc1.isDirectory());
     final File file = FileUtil.createTempFile(wc1, "file", ".txt");
     final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-    Assert.assertNotNull(vf);
+    assertNotNull(vf);
     final ArrayList<VirtualFile> files = new ArrayList<>();
     files.add(vf);
-    final List<VcsException> exceptions = myVcs.getCheckinEnvironment().scheduleUnversionedFilesForAddition(files);
-    Assert.assertTrue(exceptions.isEmpty());
+    final List<VcsException> exceptions = vcs.getCheckinEnvironment().scheduleUnversionedFilesForAddition(files);
+    assertTrue(exceptions.isEmpty());
 
     final Change change = new Change(null, new CurrentContentRevision(VcsUtil.getFilePath(vf)));
-    final List<VcsException> commit = myVcs.getCheckinEnvironment().commit(Collections.singletonList(change), "commit");
-    Assert.assertTrue(commit.isEmpty());
+    commit(Collections.singletonList(change), "commit");
     ++ myExpectedCreds;
     ++ myExpectedCert;
     return file;
@@ -496,7 +500,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
   private File testCheckoutImpl(@NotNull Url url) throws IOException {
     final File root = FileUtil.createTempDirectory("checkoutRoot", "");
     root.deleteOnExit();
-    Assert.assertTrue(root.exists());
+    assertExists(root);
     SvnCheckoutProvider
       .checkout(myProject, root, url, Revision.HEAD, Depth.INFINITY, false, new CheckoutProvider.Listener() {
         @Override
@@ -513,27 +517,27 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
       ++ cnt[0];
       return ! (cnt[0] > 1);
     });
-    Assert.assertTrue(cnt[0] > 1);
+    assertTrue(cnt[0] > 1);
     myIsSecure = "https".equals(url.getProtocol());
     if (myIsSecure) {
       ++ myExpectedCreds;
       ++ myExpectedCert;
     }
-    ProjectLevelVcsManager.getInstance(myProject).setDirectoryMapping(root.getPath(), SvnVcs.VCS_NAME);
+    vcsManager.setDirectoryMapping(root.getPath(), SvnVcs.VCS_NAME);
     refreshSvnMappingsSynchronously();
     return root;
   }
 
   private void updateExpectAuthCanceled(File wc1, String expectedText) {
-    Assert.assertTrue(wc1.isDirectory());
+    assertTrue(wc1.isDirectory());
     final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(wc1);
     final UpdatedFiles files = UpdatedFiles.create();
     final UpdateSession session =
-      myVcs.getUpdateEnvironment().updateDirectories(new FilePath[]{VcsUtil.getFilePath(vf)}, files, new EmptyProgressIndicator(),
-                                                     new Ref<>());
-    Assert.assertTrue(session.getExceptions() != null && ! session.getExceptions().isEmpty());
-    Assert.assertTrue(!session.isCanceled());
-    Assert.assertTrue(session.getExceptions().get(0).getMessage().contains(expectedText));
+      vcs.getUpdateEnvironment().updateDirectories(new FilePath[]{VcsUtil.getFilePath(vf)}, files, new EmptyProgressIndicator(),
+                                                   new Ref<>());
+    assertTrue(session.getExceptions() != null && !session.getExceptions().isEmpty());
+    assertTrue(!session.isCanceled());
+    assertTrue(session.getExceptions().get(0).getMessage().contains(expectedText));
 
     if (myIsSecure) {
       ++ myExpectedCreds;
@@ -542,19 +546,17 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
   }
 
   private void updateSimple(File wc1) {
-    Assert.assertTrue(wc1.isDirectory());
+    assertTrue(wc1.isDirectory());
     final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(wc1);
     final UpdatedFiles files = UpdatedFiles.create();
     final UpdateSession session =
-      myVcs.getUpdateEnvironment().updateDirectories(new FilePath[]{VcsUtil.getFilePath(vf)}, files, new EmptyProgressIndicator(),
-                                                     new Ref<>());
-    Assert.assertTrue(session.getExceptions() == null || session.getExceptions().isEmpty());
-    Assert.assertTrue(!session.isCanceled());
+      vcs.getUpdateEnvironment().updateDirectories(new FilePath[]{VcsUtil.getFilePath(vf)}, files, new EmptyProgressIndicator(),
+                                                   new Ref<>());
+    assertTrue(session.getExceptions() == null || session.getExceptions().isEmpty());
+    assertTrue(!session.isCanceled());
     if (myIsSecure) {
       ++ myExpectedCreds;
       ++ myExpectedCert;
     }
   }
-
-  private static @interface Test {}
 }

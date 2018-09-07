@@ -18,6 +18,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.CommittedChangeListForRevision;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
@@ -33,6 +35,8 @@ import static java.util.Collections.singletonList;
 
 public class VcsLogUtil {
   public static final int MAX_SELECTED_COMMITS = 1000;
+  public static final int FULL_HASH_LENGTH = 40;
+  public static final int SHORT_HASH_LENGTH = 8;
 
   @NotNull
   public static Map<VirtualFile, Set<VcsRef>> groupRefsByRoot(@NotNull Collection<VcsRef> refs) {
@@ -176,7 +180,7 @@ public class VcsLogUtil {
   public static String getSingleFilteredBranch(@NotNull VcsLogFilterCollection filters, @NotNull VcsLogRefs refs) {
     VcsLogBranchFilter filter = filters.get(VcsLogFilterCollection.BRANCH_FILTER);
     if (filter == null) return null;
-    
+
     String branchName = null;
     Set<VirtualFile> checkedRoots = ContainerUtil.newHashSet();
     for (VcsRef branch : refs.getBranches()) {
@@ -208,7 +212,8 @@ public class VcsLogUtil {
   }
 
   public static void triggerUsage(@NotNull String text, boolean isFromHistory) {
-    String feature = isFromHistory ? "history." : "log." + UsageDescriptorKeyValidator.ensureProperKey(text);
+    String prefix = isFromHistory ? "history." : "log.";
+    String feature = prefix + UsageDescriptorKeyValidator.ensureProperKey(text);
     FUSApplicationUsageTrigger.getInstance().trigger(VcsLogUsageTriggerCollector.class, feature);
   }
 
@@ -257,5 +262,16 @@ public class VcsLogUtil {
   public static void registerWithParentAndProject(@NotNull Disposable parent, @NotNull Project project, @NotNull Disposable disposable) {
     Disposer.register(parent, () -> Disposer.dispose(disposable));
     Disposer.register(project, disposable);
+  }
+
+  @NotNull
+  public static String getShortHash(@NotNull String hashString) {
+    return hashString.substring(0, Math.min(SHORT_HASH_LENGTH, hashString.length()));
+  }
+
+  @Nullable
+  public static VcsRef findBranch(@NotNull RefsModel refs, @NotNull VirtualFile root, @NotNull String branchName) {
+    Stream<VcsRef> branches = refs.getAllRefsByRoot().get(root).streamBranches();
+    return branches.filter(vcsRef -> vcsRef.getName().equals(branchName)).findFirst().orElse(null);
   }
 }

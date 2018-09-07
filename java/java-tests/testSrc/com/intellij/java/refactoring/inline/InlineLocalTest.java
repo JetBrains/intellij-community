@@ -270,6 +270,10 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     doTest(false);
   }
 
+  public void testDisableShortCircuit() {
+    doTest(false);
+  }
+
   public void testOperationPrecedenceWhenInlineToStringConcatenation() {
     doTest(false);
   }

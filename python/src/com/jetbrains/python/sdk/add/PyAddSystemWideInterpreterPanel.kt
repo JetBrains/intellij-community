@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.sdk.add
 
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.JBLabel
@@ -28,9 +29,9 @@ import java.awt.BorderLayout
 /**
  * @author vlan
  */
-class PyAddSystemWideInterpreterPanel(private val existingSdks: List<Sdk>) : PyAddSdkPanel() {
+class PyAddSystemWideInterpreterPanel(module: Module?, private val existingSdks: List<Sdk>) : PyAddSdkPanel() {
   override val panelName: String = "System interpreter"
-  private val sdkComboBox = PySdkPathChoosingComboBox(detectSystemWideSdks(existingSdks), null)
+  private val sdkComboBox = PySdkPathChoosingComboBox(detectSystemWideSdks(module, existingSdks), null)
 
   init {
     layout = BorderLayout()

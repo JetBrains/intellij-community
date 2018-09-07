@@ -30,6 +30,7 @@ public class ArgValueData extends DescriptorData<ArgumentValueDescriptorImpl>{
     myValue = value;
   }
 
+  @Override
   protected ArgumentValueDescriptorImpl createDescriptorImpl(@NotNull Project project) {
     return new ArgumentValueDescriptorImpl(project, myVariable, myValue);
   }
@@ -44,6 +45,7 @@ public class ArgValueData extends DescriptorData<ArgumentValueDescriptorImpl>{
     return myVariable.getSlot();
   }
 
+  @Override
   public DisplayKey<ArgumentValueDescriptorImpl> getDisplayKey() {
     return new SimpleDisplayKey<>(myVariable.getSlot());
   }

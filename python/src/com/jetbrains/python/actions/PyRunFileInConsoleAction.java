@@ -50,7 +50,7 @@ public class PyRunFileInConsoleAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final PsiFile file = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
     if (file == null) return;
     final Project project = e.getProject();

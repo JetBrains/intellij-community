@@ -81,7 +81,7 @@ public class AssignTargetAnnotator extends PyAnnotator {
     private final String CANT_ASSIGN_TO_FUNCTION_CALL = message("ANN.cant.assign.to.call");
     private final String CANT_DELETE_FUNCTION_CALL = message("ANN.cant.delete.call");
 
-    public ExprVisitor(Operation op) {
+    ExprVisitor(Operation op) {
       myOp = op;
     }
 

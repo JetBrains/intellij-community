@@ -44,6 +44,7 @@ public class BooleanTableCellEditor extends DefaultCellEditor {
     return super.getTableCellEditorComponent(table, value, true, row, column);
   }
 
+  @Override
   public Object getCellEditorValue() {
     Object value = super.getCellEditorValue();
     if (myStringEditor && value instanceof Boolean) {

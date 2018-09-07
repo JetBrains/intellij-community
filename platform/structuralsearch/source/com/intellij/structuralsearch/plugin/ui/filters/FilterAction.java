@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleColoredComponent;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -33,7 +34,7 @@ public abstract class FilterAction extends AnAction implements Filter {
   }
 
   @Override
-  public final void actionPerformed(AnActionEvent e) {
+  public final void actionPerformed(@NotNull AnActionEvent e) {
     myTable.addFilter(this);
   }
 

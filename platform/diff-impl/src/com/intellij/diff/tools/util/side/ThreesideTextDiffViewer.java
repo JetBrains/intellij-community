@@ -323,7 +323,7 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (DiffDataKeys.CURRENT_EDITOR.is(dataId)) {
       return getCurrentEditor();
     }
@@ -333,12 +333,12 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
   private class MyVisibleAreaListener implements VisibleAreaListener {
     @NotNull Side mySide;
 
-    public MyVisibleAreaListener(@NotNull Side side) {
+    MyVisibleAreaListener(@NotNull Side side) {
       mySide = side;
     }
 
     @Override
-    public void visibleAreaChanged(VisibleAreaEvent e) {
+    public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
       if (mySyncScrollSupport != null) mySyncScrollSupport.visibleAreaChanged(e);
       myContentPanel.repaint();
     }
@@ -366,8 +366,8 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
   }
 
   protected class TextShowPartialDiffAction extends ShowPartialDiffAction {
-    public TextShowPartialDiffAction(@NotNull PartialDiffMode mode, boolean hasFourSides) {
-      super(mode, hasFourSides);
+    public TextShowPartialDiffAction(@NotNull PartialDiffMode mode) {
+      super(mode);
     }
 
     @NotNull

@@ -26,6 +26,8 @@ class ControlFlowTest extends LightCodeInsightFixtureTestCase {
 
   void testFor1() { doTest() }
 
+  void testFor2() { doTest() }
+
   void testForeach1() { doTest() }
 
   void testGrvy1497() { doTest() }

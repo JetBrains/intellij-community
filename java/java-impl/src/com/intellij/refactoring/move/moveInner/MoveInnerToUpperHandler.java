@@ -33,6 +33,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.Nullable;
 
 public class MoveInnerToUpperHandler extends MoveHandlerDelegate {
+  @Override
   public boolean canMove(final PsiElement[] elements, @Nullable final PsiElement targetContainer) {
     if (elements.length != 1) return false;
     PsiElement element = elements [0];
@@ -44,10 +45,12 @@ public class MoveInnerToUpperHandler extends MoveHandlerDelegate {
            !((PsiClass) element).hasModifierProperty(PsiModifier.STATIC);
   }
 
+  @Override
   public void doMove(final Project project, final PsiElement[] elements, final PsiElement targetContainer, final MoveCallback callback) {
     MoveInnerImpl.doMove(project, elements, callback, targetContainer);
   }
 
+  @Override
   public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext, final PsiReference reference,
                            final Editor editor) {
     if (isNonStaticInnerClass(element) && !JavaMoveClassesOrPackagesHandler.isReferenceInAnonymousClass(reference)) {

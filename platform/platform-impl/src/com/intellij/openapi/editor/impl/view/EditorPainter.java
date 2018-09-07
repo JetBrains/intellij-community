@@ -510,7 +510,7 @@ public class EditorPainter implements TextDrawingCallback {
 
   @Nullable
   private TextAttributes getInnerHighlighterAttributes(@NotNull FoldRegion region) {
-    if (Boolean.TRUE.equals(region.getUserData(FoldRegion.MUTE_INNER_HIGHLIGHTERS))) return null;
+    if (region.areInnerHighlightersMuted()) return null;
     List<RangeHighlighterEx> innerHighlighters = new ArrayList<>();
     collectVisibleInnerHighlighters(region, myEditor.getMarkupModel(), innerHighlighters);
     collectVisibleInnerHighlighters(region, myEditor.getFilteredDocumentMarkupModel(), innerHighlighters);
@@ -1233,7 +1233,7 @@ public class EditorPainter implements TextDrawingCallback {
     private int currentLeadingEdge;
     private int currentTrailingEdge;
 
-    public LineWhitespacePaintingStrategy(EditorSettings settings) {
+    LineWhitespacePaintingStrategy(EditorSettings settings) {
       myWhitespaceShown = settings.isWhitespacesShown();
       myLeadingWhitespaceShown = settings.isLeadingWhitespaceShown();
       myInnerWhitespaceShown = settings.isInnerWhitespaceShown();

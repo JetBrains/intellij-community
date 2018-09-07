@@ -47,13 +47,13 @@ public class GradleRefreshProjectDependenciesAction extends RefreshExternalProje
   }
 
   @Override
-  protected boolean isEnabled(AnActionEvent e) {
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
     if (!GradleConstants.SYSTEM_ID.equals(getSystemId(e))) return false;
     return super.isEnabled(e);
   }
 
   @Override
-  protected boolean isVisible(AnActionEvent e) {
+  protected boolean isVisible(@NotNull AnActionEvent e) {
     if (!GradleConstants.SYSTEM_ID.equals(getSystemId(e))) return false;
     return super.isVisible(e);
   }

@@ -56,6 +56,7 @@ Function customSilentConfigReader
   IfErrors no_silent_config
 
   ${ConfigRead} "$R1" "mode=" $R0
+  IfErrors no_silent_config
   StrCpy $silentMode "user"
   IfErrors run_in_user_mode
   StrCpy $silentMode $R0
@@ -122,7 +123,9 @@ loop:
 
 update_settings:
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Settings" "NumFields" "$R0"
+  goto done
 no_silent_config:
+  Call IncorrectSilentInstallParameters
 done:
 FunctionEnd
 

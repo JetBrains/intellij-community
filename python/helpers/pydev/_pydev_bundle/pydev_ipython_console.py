@@ -17,11 +17,9 @@ class InterpreterInterface(BaseInterpreterInterface):
         The methods in this class should be registered in the xml-rpc server.
     '''
 
-    def __init__(self, host, client_port, main_thread, show_banner=True, connect_status_queue=None):
-        BaseInterpreterInterface.__init__(self, main_thread, connect_status_queue)
-        self.client_port = client_port
-        self.host = host
-        self.interpreter = get_pydev_frontend(host, client_port)
+    def __init__(self, main_thread, show_banner=True, connect_status_queue=None, rpc_client=None):
+        BaseInterpreterInterface.__init__(self, main_thread, connect_status_queue, rpc_client)
+        self.interpreter = get_pydev_frontend(rpc_client)
         self._input_error_printed = False
         self.notification_succeeded = False
         self.notification_tries = 0
@@ -47,9 +45,6 @@ class InterpreterInterface(BaseInterpreterInterface):
     def get_namespace(self):
         return self.interpreter.get_namespace()
 
-    def getCompletions(self, text, act_tok):
-        return self.interpreter.getCompletions(text, act_tok)
-
     def close(self):
         sys.exit(0)
 
@@ -58,14 +53,14 @@ class InterpreterInterface(BaseInterpreterInterface):
             self.notification_tries+=1
             if self.notification_tries>self.notification_max_tries:
                 return
-            completions = self.getCompletions("%", "%")
+            completions = self.do_get_completions("%", "%")
             magic_commands = [x[0] for x in completions]
 
             server = self.get_server()
 
             if server is not None:
                 try:
-                    server.NotifyAboutMagic(magic_commands, self.interpreter.is_automagic())
+                    server.notifyAboutMagic(magic_commands, self.interpreter.is_automagic())
                     self.notification_succeeded = True
                 except :
                     self.notification_succeeded = False

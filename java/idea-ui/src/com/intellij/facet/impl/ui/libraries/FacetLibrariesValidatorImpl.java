@@ -57,20 +57,24 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
     myDescription = description;
   }
 
+  @Override
   public void setRequiredLibraries(final LibraryInfo[] requiredLibraries) {
     myRequiredLibraries = new RequiredLibrariesInfo(requiredLibraries);
     onChange();
   }
 
+  @Override
   public boolean isLibrariesAdded() {
     return false;
   }
 
+  @Override
   public void setDescription(@NotNull final FacetLibrariesValidatorDescription description) {
     myDescription = description;
     onChange();
   }
 
+  @Override
   @NotNull
   public ValidationResult check() {
     if (myRequiredLibraries == null) {
@@ -95,6 +99,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
     }
   }
 
+  @Override
   public void onFacetInitialized(Facet facet) {
     for (Library addedLibrary : myAddedLibraries) {
       myDescription.onLibraryAdded(facet, addedLibrary);
@@ -113,11 +118,12 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
   private class LibrariesQuickFix extends FacetConfigurationQuickFix {
     private final CustomLibraryDescription myDescription;
 
-    public LibrariesQuickFix(CustomLibraryDescription description) {
+    LibrariesQuickFix(CustomLibraryDescription description) {
       super(IdeBundle.message("button.fix"));
       myDescription = description;
     }
 
+    @Override
     public void run(final JComponent place) {
       AddCustomLibraryDialog dialog = AddCustomLibraryDialog.createDialog(myDescription, myContext.getLibrariesContainer(),
                                                                      myContext.getModule(), myContext.getModifiableRootModel(), null);

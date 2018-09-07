@@ -15,11 +15,10 @@
  */
 package org.intellij.lang.xpath.xslt.refactoring.introduceParameter;
 
+import com.intellij.psi.xml.XmlTag;
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.xslt.refactoring.BaseIntroduceAction;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
-
-import com.intellij.psi.xml.XmlTag;
 
 import java.util.List;
 import java.util.Set;
@@ -27,15 +26,18 @@ import java.util.Set;
 public class XsltIntroduceParameterAction extends BaseIntroduceAction<IntroduceParameterOptions> {
     static final String COMMAND_NAME = "Introduce XSLT Parameter";
 
+    @Override
     public String getRefactoringName() {
         return "Introduce Parameter";
     }
 
+    @Override
     @SuppressWarnings({"ConstantConditions"})
     protected String getCommandName() {
         return null;
     }
 
+    @Override
     protected IntroduceParameterOptions getSettings(XPathExpression expression, Set<XPathExpression> matchingExpressions) {
         final boolean forceDefault = XsltCodeInsightUtil.getTemplateTag(expression, true, true) == null;
         final IntroduceParameterDialog dialog = new IntroduceParameterDialog(expression, matchingExpressions.size() + 1, forceDefault);
@@ -43,6 +45,7 @@ public class XsltIntroduceParameterAction extends BaseIntroduceAction<IntroduceP
         return dialog;
     }
 
+    @Override
     protected boolean extractImpl(XPathExpression expression, Set<XPathExpression> matchingExpressions, List<XmlTag> otherMatches, IntroduceParameterOptions settings) {
         new IntroduceParameterProcessor(expression.getProject(), expression, matchingExpressions, settings).run();
         return false;

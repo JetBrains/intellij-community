@@ -37,25 +37,30 @@ public class CheckNodeTest extends XPathInspection {
     @NonNls
     private static final String SHORT_NAME = "CheckNodeTest";
 
+    @Override
     protected Visitor createVisitor(InspectionManager manager, boolean isOnTheFly) {
         return new MyVisitor(manager, isOnTheFly);
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return "Check Node Test";
     }
 
+    @Override
     @NotNull
     @NonNls
     public String getShortName() {
         return SHORT_NAME;
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
+    @Override
     protected boolean acceptsLanguage(Language language) {
       return language == XPathFileType.XPATH.getLanguage() || language == XPathFileType.XPATH2.getLanguage();
     }
@@ -65,6 +70,7 @@ public class CheckNodeTest extends XPathInspection {
             super(manager, isOnTheFly);
         }
 
+        @Override
         protected void checkNodeTest(XPathNodeTest nodeTest) {
             final ContextProvider contextProvider = ContextProvider.getContextProvider(nodeTest.getContainingFile());
             final XmlElement contextNode = contextProvider.getContextElement();

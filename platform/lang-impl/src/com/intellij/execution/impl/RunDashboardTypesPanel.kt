@@ -2,7 +2,6 @@
 package com.intellij.execution.impl
 
 import com.intellij.execution.ExecutionBundle
-import com.intellij.execution.RunManager
 import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.dashboard.RunDashboardManager
 import com.intellij.ide.util.PropertiesComponent
@@ -63,7 +62,9 @@ internal class RunDashboardTypesPanel(private val myProject: Project) : JPanel(B
       toolbarDecorator.setAsUsualTopToolbar()
     }
     toolbarDecorator.setAddAction { showAddPopup(it, true) }
-    toolbarDecorator.setRemoveAction { list.selectedValuesList.forEach { listModel.remove(it) } }
+    toolbarDecorator.setRemoveAction { _ ->
+      list.selectedValuesList.forEach { listModel.remove(it) }
+    }
     toolbarDecorator.setMoveUpAction(null)
     toolbarDecorator.setMoveDownAction(null)
 
@@ -92,7 +93,7 @@ internal class RunDashboardTypesPanel(private val myProject: Project) : JPanel(B
   }
 
   private fun showAddPopup(button: AnActionButton, showApplicableTypesOnly: Boolean) {
-    val allTypes = RunManager.getInstance(myProject).configurationFactoriesWithoutUnknown.filter { !listModel.contains(it) }
+    val allTypes = ConfigurationType.CONFIGURATION_TYPE_EP.extensionList.filter { !listModel.contains(it) }
     val configurationTypes = getTypesToShow(showApplicableTypesOnly, allTypes).toMutableList()
     configurationTypes.sortWith(IGNORE_CASE_DISPLAY_NAME_COMPARATOR)
     val hiddenCount = allTypes.size - configurationTypes.size
@@ -100,7 +101,7 @@ internal class RunDashboardTypesPanel(private val myProject: Project) : JPanel(B
     val actionGroup = DefaultActionGroup(null, false)
     configurationTypes.forEach {
       actionGroup.add(object : AnAction(it.displayName, null, it.icon) {
-        override fun actionPerformed(e: AnActionEvent?) {
+        override fun actionPerformed(e: AnActionEvent) {
           listModel.add(it)
           listModel.sort(IGNORE_CASE_DISPLAY_NAME_COMPARATOR)
           list.selectedIndex = listModel.getElementIndex(it)
@@ -109,7 +110,7 @@ internal class RunDashboardTypesPanel(private val myProject: Project) : JPanel(B
     }
     if (hiddenCount > 0) {
       actionGroup.add(object : AnAction(ExecutionBundle.message("show.irrelevant.configurations.action.name", hiddenCount)) {
-        override fun actionPerformed(e: AnActionEvent?) {
+        override fun actionPerformed(e: AnActionEvent) {
           showAddPopup(button, false)
         }
       })
@@ -130,7 +131,7 @@ internal class RunDashboardTypesPanel(private val myProject: Project) : JPanel(B
 
   private fun getTypesToShow(showApplicableTypesOnly: Boolean, allTypes: List<ConfigurationType>): List<ConfigurationType> {
     if (showApplicableTypesOnly) {
-      val applicableTypes = allTypes.filter { it.configurationFactories.any { it.isApplicable(myProject) } }
+      val applicableTypes = allTypes.filter { type -> type.configurationFactories.any { it.isApplicable(myProject) } }
       if (applicableTypes.size < (allTypes.size - 3)) {
         return applicableTypes
       }
@@ -159,7 +160,7 @@ internal class RunDashboardTypesPanel(private val myProject: Project) : JPanel(B
   fun reset() {
     listModel.removeAll()
     val types = RunDashboardManager.getInstance(myProject).types
-    listModel.add(RunManagerImpl.getInstanceImpl(myProject).configurationFactoriesWithoutUnknown.filter { types.contains(it.id) })
+    listModel.add(ConfigurationType.CONFIGURATION_TYPE_EP.extensionList.filter { types.contains(it.id) })
     listModel.sort(IGNORE_CASE_DISPLAY_NAME_COMPARATOR)
   }
 

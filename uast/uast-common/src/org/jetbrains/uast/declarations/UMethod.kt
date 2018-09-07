@@ -41,7 +41,17 @@ interface UMethod : UDeclaration, PsiMethod {
 
   /**
    * Returns true, if the method overrides a method of a super class.
+   *
+   * **Deprecated:** current implementation for Java relies on presence of `@Override` annotation which is not fully reliable.
+   * Please perform your own check with required level of reliability.
+   * To be removed in IDEA 2019.2
    */
+  @Deprecated("Redundant method with uncertain implementation",
+              ReplaceWith(
+                "javaPsi.modifierList.hasAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE) || javaPsi.findSuperMethods().isNotEmpty()",
+                "com.intellij.psi.CommonClassNames"
+              )
+  )
   val isOverride: Boolean
 
   override fun getName(): String

@@ -5,7 +5,7 @@ package com.intellij;
 import com.intellij.idea.Bombed;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.JITSensitive;
+import com.intellij.testFramework.RunFirst;
 import com.intellij.testFramework.TeamCityLogger;
 import com.intellij.testFramework.TestFrameworkUtil;
 import com.intellij.util.containers.MultiMap;
@@ -82,14 +82,8 @@ public class TestCaseLoader {
     MultiMap<String, String> groups = MultiMap.createLinked();
 
     for (URL fileUrl : groupingFileUrls) {
-      try {
-        InputStreamReader reader = new InputStreamReader(fileUrl.openStream());
-        try {
-          groups.putAllValues(GroupBasedTestClassFilter.readGroups(reader));
-        }
-        finally {
-          reader.close();
-        }
+      try (InputStreamReader reader = new InputStreamReader(fileUrl.openStream())) {
+        groups.putAllValues(GroupBasedTestClassFilter.readGroups(reader));
       }
       catch (IOException e) {
         e.printStackTrace();
@@ -230,9 +224,8 @@ public class TestCaseLoader {
   }
 
   private static int getRank(Class aClass) {
-    if (isPerformanceTestsRun()) {
-      return moveToStart(aClass) ? 0 : 1;
-    }
+    if (runFirst(aClass)) return 0;
+    if (isPerformanceTestsRun()) return 1;
 
     // PlatformLiteFixture is the very special test case because it doesn't load all the XMLs with component/extension declarations
     // (that is, uses a mock application). Instead, it allows to declare them manually using its registerComponent/registerExtension
@@ -252,8 +245,8 @@ public class TestCaseLoader {
     return ourRankList.size();
   }
 
-  private static boolean moveToStart(Class testClass) {
-    return testClass.getAnnotation(JITSensitive.class) != null;
+  private static boolean runFirst(Class testClass) {
+    return testClass.getAnnotation(RunFirst.class) != null;
   }
 
   private static boolean isPlatformLiteFixture(Class aClass) {

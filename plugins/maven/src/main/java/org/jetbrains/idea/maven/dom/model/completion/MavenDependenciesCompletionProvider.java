@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom.model.completion;
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
@@ -70,7 +71,7 @@ public class MavenDependenciesCompletionProvider extends CompletionContributor {
     public static final InsertHandler<LookupElement> INSTANCE = new MavenDependencyInsertHandler();
 
     @Override
-    public void handleInsert(final InsertionContext context, LookupElement item) {
+    public void handleInsert(@NotNull final InsertionContext context, @NotNull LookupElement item) {
       String s = item.getLookupString();
       int idx = s.indexOf(':');
 

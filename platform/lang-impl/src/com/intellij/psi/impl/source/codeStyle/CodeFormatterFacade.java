@@ -464,7 +464,7 @@ public class CodeFormatterFacade {
   }
 
   public void doWrapLongLinesIfNecessary(@NotNull final Editor editor, @NotNull final Project project, @NotNull Document document,
-                                         int startOffset, int endOffset, List<TextRange> enabledRanges) {
+                                         int startOffset, int endOffset, List<? extends TextRange> enabledRanges) {
     // Normalization.
     int startOffsetToUse = Math.min(document.getTextLength(), Math.max(0, startOffset));
     int endOffsetToUse = Math.min(document.getTextLength(), Math.max(0, endOffset));
@@ -536,7 +536,7 @@ public class CodeFormatterFacade {
     }
   }
   
-  private static boolean canWrapLine(int startOffset, int endOffset, int offsetShift, @NotNull List<TextRange> enabledRanges) {
+  private static boolean canWrapLine(int startOffset, int endOffset, int offsetShift, @NotNull List<? extends TextRange> enabledRanges) {
     for (TextRange range : enabledRanges)  {
       if (range.containsOffset(startOffset - offsetShift) && range.containsOffset(endOffset - offsetShift)) return true;
     }
@@ -741,7 +741,7 @@ public class CodeFormatterFacade {
     final DataContext baseDataContext = DataManager.getInstance().getDataContext(component);
     return new DelegatingDataContext(baseDataContext) {
       @Override
-      public Object getData(@NonNls String dataId) {
+      public Object getData(@NotNull @NonNls String dataId) {
         Object result = baseDataContext.getData(dataId);
         if (result == null && CommonDataKeys.PROJECT.is(dataId)) {
           result = project;
@@ -767,7 +767,7 @@ public class CodeFormatterFacade {
     }
 
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       return myDataContextDelegate.getData(dataId);
     }
 

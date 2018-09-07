@@ -229,11 +229,23 @@ public abstract class InplaceRefactoring {
   protected PsiElement checkLocalScope() {
     final SearchScope searchScope = PsiSearchHelper.getInstance(myElementToRename.getProject()).getUseScope(myElementToRename);
     if (searchScope instanceof LocalSearchScope) {
-      final PsiElement[] elements = ((LocalSearchScope)searchScope).getScope();
+      final PsiElement[] elements = getElements((LocalSearchScope)searchScope);
       return PsiTreeUtil.findCommonParent(elements);
     }
 
     return null;
+  }
+
+  @NotNull
+  private PsiElement[] getElements(LocalSearchScope searchScope) {
+    final PsiElement[] elements = searchScope.getScope();
+    FileViewProvider provider = myElementToRename.getContainingFile().getViewProvider();
+    for (PsiElement element : elements) {
+      if (!(element instanceof PsiFile) || ((PsiFile)element).getViewProvider() != provider) {
+        return elements;
+      }
+    }
+    return new PsiElement[] { myElementToRename.getContainingFile() };
   }
 
   protected abstract void collectAdditionalElementsToRename(@NotNull List<Pair<PsiElement, TextRange>> stringUsages);
@@ -861,7 +873,7 @@ public abstract class InplaceRefactoring {
     protected abstract void restoreDaemonUpdateState();
 
     @Override
-    public void beforeTemplateFinished(final TemplateState templateState, Template template) {
+    public void beforeTemplateFinished(@NotNull final TemplateState templateState, Template template) {
       try {
         final TextResult value = templateState.getVariableValue(PRIMARY_VARIABLE_NAME);
         myInsertedName = value != null ? value.toString().trim() : null;
@@ -886,7 +898,7 @@ public abstract class InplaceRefactoring {
     }
 
     @Override
-    public void templateFinished(Template template, final boolean brokenOff) {
+    public void templateFinished(@NotNull Template template, final boolean brokenOff) {
       boolean bind = false;
       try {
         if (!brokenOff) {

@@ -168,6 +168,7 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
                          new JpsModuleSourcePackagingElementSerializer());
   }
 
+  @Override
   @NotNull
   public List<? extends JpsLibraryPropertiesSerializer<?>> getLibraryPropertiesSerializers() {
     return Collections.singletonList(new JpsRepositoryLibraryPropertiesSerializer());
@@ -319,7 +320,7 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
   }
 
   private static class JavaProjectExtensionSerializer extends JpsProjectExtensionSerializer {
-    public JavaProjectExtensionSerializer() {
+    JavaProjectExtensionSerializer() {
       super(null, "ProjectRootManager");
     }
 
@@ -411,7 +412,7 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
     private static final String EXCLUDE_TAG = "exclude";
     private static final String DEPENDENCY_TAG = "dependency";
 
-    public JpsRepositoryLibraryPropertiesSerializer() {
+    JpsRepositoryLibraryPropertiesSerializer() {
       super(JpsRepositoryLibraryType.INSTANCE, JpsRepositoryLibraryType.INSTANCE.getTypeId());
     }
 

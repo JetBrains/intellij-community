@@ -77,14 +77,17 @@ public class FixedSizeButton extends JButton {
     this(-1, component);
   }
 
+  @Override
   public Dimension getMinimumSize() {
     return getPreferredSize();
   }
 
+  @Override
   public Dimension getMaximumSize() {
     return getPreferredSize();
   }
 
+  @Override
   public Dimension getPreferredSize() {
     if (mySize != -1) {
       return new Dimension(mySize, mySize);

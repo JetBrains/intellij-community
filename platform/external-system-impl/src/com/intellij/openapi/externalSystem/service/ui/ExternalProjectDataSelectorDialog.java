@@ -666,19 +666,19 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
     boolean isRequiredSelectionEnabled;
     @Nullable String message;
 
-    public SelectionState(boolean isRequiredSelectionEnabled, @Nullable String message) {
+    SelectionState(boolean isRequiredSelectionEnabled, @Nullable String message) {
       this.isRequiredSelectionEnabled = isRequiredSelectionEnabled;
       this.message = message;
     }
   }
 
   private class SelectAllButton extends AnActionButton {
-    public SelectAllButton() {
+    SelectAllButton() {
       super("Select All", AllIcons.Actions.Selectall);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
       final Object root = treeModel.getRoot();
       if (!(root instanceof CheckedTreeNode)) return;
@@ -696,12 +696,12 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
   }
 
   private class UnselectAllButton extends AnActionButton {
-    public UnselectAllButton() {
+    UnselectAllButton() {
       super("Unselect All", AllIcons.Actions.Unselectall);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
       final Object root = treeModel.getRoot();
       if (!(root instanceof CheckedTreeNode)) return;
@@ -721,7 +721,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
 
   private class ShowSelectedOnlyButton extends ToggleActionButton {
 
-    public ShowSelectedOnlyButton() {
+    ShowSelectedOnlyButton() {
       super("Show Selected Only", AllIcons.Actions.ShowHiddens);
     }
 
@@ -738,19 +738,19 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
   }
 
   private class SelectRequiredButton extends AnActionButton {
-    public SelectRequiredButton() {
+    SelectRequiredButton() {
       super("Select Required", "select modules depended on currently selected modules", AllIcons.Actions.IntentionBulb);
 
       addCustomUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled(AnActionEvent e) {
+        public boolean isEnabled(@NotNull AnActionEvent e) {
           return selectionState.getValue().isRequiredSelectionEnabled;
         }
       });
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       boolean showSelectedRowsOnly = myShowSelectedRowsOnly;
       if (showSelectedRowsOnly) {
         myShowSelectedRowsOnly = false;

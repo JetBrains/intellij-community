@@ -165,10 +165,9 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     }
 
     @EntryPointWithVisibilityLevel.VisibilityLevelResult
-    int minLevel = EntryPointWithVisibilityLevel.ACCESS_LEVEL_INVALID;
+    int minLevel = getMinVisibilityLevel(refElement);
     //ignore entry points.
     if (refElement.isEntry()) {
-      minLevel = getMinVisibilityLevel(refElement);
       if (minLevel == EntryPointWithVisibilityLevel.ACCESS_LEVEL_INVALID) return null;
     }
 

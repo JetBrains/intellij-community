@@ -56,11 +56,13 @@ public class CommandLineApplication {
       return new CommandLineDataContext();
     }
 
+    @NotNull
     @Override
     public DataContext getDataContext(Component component) {
       return getDataContext();
     }
 
+    @NotNull
     @Override
     public DataContext getDataContext(@NotNull Component component, int x, int y) {
       return getDataContext();
@@ -68,7 +70,7 @@ public class CommandLineApplication {
 
     private static class CommandLineDataContext extends UserDataHolderBase implements DataContext {
       @Override
-      public Object getData(String dataId) {
+      public Object getData(@NotNull String dataId) {
         return ourInstance.getData(dataId);
       }
     }

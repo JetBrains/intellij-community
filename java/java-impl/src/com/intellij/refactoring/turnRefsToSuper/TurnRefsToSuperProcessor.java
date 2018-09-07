@@ -51,12 +51,14 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
     mySuper = aSuper;
   }
 
+  @Override
   @NotNull
   protected String getCommandName() {
     return RefactoringBundle.message("turn.refs.to.super.command",
                                      DescriptiveNameUtil.getDescriptiveName(myClass), DescriptiveNameUtil.getDescriptiveName(mySuper));
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     return new RefsToSuperViewDescriptor(myClass, mySuper);
@@ -67,6 +69,7 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
     mySuper = aSuper;
   }
 
+  @Override
   @NotNull
   protected UsageInfo[] findUsages() {
     final PsiReference[] refs = ReferencesSearch.search(myClass, GlobalSearchScope.projectScope(myProject), false).toArray(
@@ -84,6 +87,7 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
     setClasses ((PsiClass) elements[0], (PsiClass) elements[1]);
   }
 
+  @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     if (!ApplicationManager.getApplication().isUnitTestMode() && refUsages.get().length == 0) {
       String message = RefactoringBundle.message("no.usages.can.be.replaced", myClass.getQualifiedName(), mySuper.getQualifiedName());
@@ -94,11 +98,13 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
     return super.preprocessUsages(refUsages);
   }
 
+  @Override
   protected boolean canTurnToSuper(final PsiElement refElement) {
     return super.canTurnToSuper(refElement) &&
            JavaPsiFacade.getInstance(myProject).getResolveHelper().isAccessible(mySuper, refElement, null);
   }
 
+  @Override
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
     try {
       final PsiClass aSuper = mySuper;
@@ -111,6 +117,7 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
     performVariablesRenaming();
   }
 
+  @Override
   protected boolean isInSuper(PsiElement member) {
     if (!(member instanceof PsiMember)) return false;
     final PsiManager manager = member.getManager();
@@ -129,6 +136,7 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
     return false;
   }
 
+  @Override
   protected boolean isSuperInheritor(PsiClass aClass) {
     return InheritanceUtil.isInheritorOrSelf(mySuper, aClass, true);
   }

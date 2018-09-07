@@ -59,7 +59,7 @@ public abstract class AbstractSyntheticBlock implements Block {
     return myTag != null && myXmlFormattingPolicy.keepWhiteSpacesInsideTag(myTag);
   }
 
-  private ASTNode getFirstNode(final List<Block> subBlocks) {
+  private ASTNode getFirstNode(final List<? extends Block> subBlocks) {
     LOG.assertTrue(!subBlocks.isEmpty());
     final Block firstBlock = subBlocks.get(0);
     if (firstBlock instanceof AbstractBlock) {
@@ -70,7 +70,7 @@ public abstract class AbstractSyntheticBlock implements Block {
     }
   }
 
-  private ASTNode getLastNode(final List<Block> subBlocks) {
+  private ASTNode getLastNode(final List<? extends Block> subBlocks) {
     LOG.assertTrue(!subBlocks.isEmpty());
     final Block lastBlock = subBlocks.get(subBlocks.size() - 1);
     if (lastBlock instanceof AbstractBlock) {
@@ -118,8 +118,7 @@ public abstract class AbstractSyntheticBlock implements Block {
   }
 
   public boolean isTagDescription() {
-    final ASTNode startTreeNode = myStartTreeNode;
-    return isTagDescription(startTreeNode);
+    return isTagDescription(myStartTreeNode);
   }
 
   private static boolean isTagDescription(final ASTNode startTreeNode) {
@@ -162,7 +161,7 @@ public abstract class AbstractSyntheticBlock implements Block {
     return isTagDescription(myStartTreeNode);
   }
 
-  protected static TextRange calculateTextRange(final List<Block> subBlocks) {
+  protected static TextRange calculateTextRange(final List<? extends Block> subBlocks) {
     return new TextRange(subBlocks.get(0).getTextRange().getStartOffset(),
                          subBlocks.get(subBlocks.size() - 1).getTextRange().getEndOffset());
   }

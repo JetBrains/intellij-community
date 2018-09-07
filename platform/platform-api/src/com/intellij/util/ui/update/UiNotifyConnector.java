@@ -47,6 +47,7 @@ public class UiNotifyConnector implements Disposable, HierarchyListener{
     component.addHierarchyListener(this);
   }
 
+  @Override
   public void hierarchyChanged(@NotNull HierarchyEvent e) {
     if (isDisposed()) return;
 
@@ -80,6 +81,7 @@ public class UiNotifyConnector implements Disposable, HierarchyListener{
     myTarget.showNotify();
   }
 
+  @Override
   public void dispose() {
     if (isDisposed()) return;
 
@@ -106,12 +108,14 @@ public class UiNotifyConnector implements Disposable, HierarchyListener{
       super(component, target);
     }
 
+    @Override
     protected final void hideNotify() {
       super.hideNotify();
       myHidden = true;
       disposeIfNeeded();
     }
 
+    @Override
     protected final void showNotify() {
       super.showNotify();
       myShown = true;
@@ -131,10 +135,12 @@ public class UiNotifyConnector implements Disposable, HierarchyListener{
 
   public static void doWhenFirstShown(@NotNull Component c, @NotNull final Runnable runnable) {
     Activatable activatable = new Activatable() {
+      @Override
       public void showNotify() {
         runnable.run();
       }
 
+      @Override
       public void hideNotify() {
       }
     };

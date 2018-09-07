@@ -417,7 +417,7 @@ public class ControlFlowUtil {
       // process chain of goto's
       gotoOffset = promoteThroughGotoChain(flow, gotoOffset);
 
-      if (!exitPoints.contains(gotoOffset) && (gotoOffset >= end || gotoOffset < start) && gotoOffset > 0) {
+      if (gotoOffset > 0 && (gotoOffset >= end || gotoOffset < start) && !exitPoints.contains(gotoOffset)) {
         exitPoints.add(gotoOffset);
       }
       if (gotoOffset >= end || gotoOffset < start) {
@@ -577,7 +577,7 @@ public class ControlFlowUtil {
       }
 
       @NotNull
-      private IntArrayList getCatchOrFinallyOffsets(@NotNull List<PsiTryStatement> tryStatements, @NotNull List<PsiClassType> thrownExceptions) {
+      private IntArrayList getCatchOrFinallyOffsets(@NotNull List<? extends PsiTryStatement> tryStatements, @NotNull List<? extends PsiClassType> thrownExceptions) {
         final IntArrayList catchOrFinallyOffsets = new IntArrayList();
         for (PsiTryStatement tryStatement : tryStatements) {
           final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
@@ -922,7 +922,7 @@ public class ControlFlowUtil {
       // false if control flow at this offset terminates either by return called or exception thrown
       private final boolean[] isNormalCompletion = new boolean[flow.getSize() + 1];
 
-      public MyVisitor() {
+      MyVisitor() {
         int i;
         final int length = flow.getSize();
         for (i = 0; i < startOffset; i++) {
@@ -1506,7 +1506,7 @@ public class ControlFlowUtil {
     internalDepthFirstSearch(flow.getInstructions(), visitor, startOffset, endOffset);
   }
 
-  private static void internalDepthFirstSearch(@NotNull List<Instruction> instructions,
+  private static void internalDepthFirstSearch(@NotNull List<? extends Instruction> instructions,
                                                @NotNull InstructionClientVisitor clientVisitor,
                                                int startOffset,
                                                int endOffset) {
@@ -1720,7 +1720,7 @@ public class ControlFlowUtil {
       this(Arrays.asList(infos));
     }
 
-    CopyOnWriteList(@NotNull Collection<VariableInfo> infos) {
+    CopyOnWriteList(@NotNull Collection<? extends VariableInfo> infos) {
       list = new SmartList<>(infos);
     }
 

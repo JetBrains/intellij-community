@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.ide.actions.QuickSwitchSchemeAction;
@@ -23,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsActions;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.JBIterable;
@@ -45,16 +32,18 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
     myActionPlace = ActionPlaces.ACTION_PLACE_VCS_QUICK_LIST_POPUP_ACTION;
   }
 
-  protected String getPopupTitle(AnActionEvent e) {
+  @Override
+  protected String getPopupTitle(@NotNull AnActionEvent e) {
     return VcsBundle.message("vcs.quicklist.popup.title");
   }
 
+  @Override
   protected void fillActions(@Nullable Project project,
                              @NotNull DefaultActionGroup group,
                              @NotNull DataContext dataContext) {
     if (project == null) return;
     CustomActionsSchema schema = CustomActionsSchema.getInstance();
-    group.add(schema.getCorrectedAction("Vcs.Operations.Popup"));
+    group.add(schema.getCorrectedAction(VcsActions.VCS_OPERATIONS_POPUP));
   }
 
   @NotNull
@@ -116,7 +105,7 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
 
   public static class VcsAware extends DefaultActionGroup implements DumbAware {
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       DataContext dataContext = e.getDataContext();
       Pair<SupportedVCS, AbstractVcs> pair = project == null ? Pair.empty() : getActiveVCS(project, dataContext);
@@ -133,7 +122,7 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
 
   public static class NonVcsAware extends DefaultActionGroup implements DumbAware {
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       Pair<SupportedVCS, AbstractVcs> pair = project == null ? Pair.empty() : getActiveVCS(project, e.getDataContext());
       e.getPresentation().setVisible(pair.first == SupportedVCS.NOT_IN_VCS);

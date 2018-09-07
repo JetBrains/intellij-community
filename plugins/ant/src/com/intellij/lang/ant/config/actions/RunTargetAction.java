@@ -51,7 +51,7 @@ public class RunTargetAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Pair<AntBuildFileBase, AntDomTarget> antTarget = findAntTarget(e);
     if (antTarget == null) return;
 
@@ -65,7 +65,7 @@ public class RunTargetAction extends AnAction {
 
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
 
     final Presentation presentation = e.getPresentation();

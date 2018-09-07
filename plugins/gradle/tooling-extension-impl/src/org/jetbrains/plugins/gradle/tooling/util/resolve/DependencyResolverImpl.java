@@ -410,7 +410,7 @@ public class DependencyResolverImpl implements DependencyResolver {
     }
 
     try {
-      compileClasspathFiles = compileClasspathFiles.isEmpty() ? sourceSet.getCompileClasspath().getFiles() : compileClasspathFiles;
+      compileClasspathFiles = compileClasspathFiles.isEmpty() ? new LinkedHashSet<File>(sourceSet.getCompileClasspath().getFiles()) : compileClasspathFiles;
     } catch (Exception e) {
       // ignore
     }
@@ -601,9 +601,8 @@ public class DependencyResolverImpl implements DependencyResolver {
         File artifactDir = parents.get(parents.size() - 2);
         File versionDir = parents.get(parents.size() - 3);
 
-        File parentFile = versionDir;
-        if (parentFile != null) {
-          File[] hashDirs = parentFile.listFiles();
+        if (versionDir != null) {
+          File[] hashDirs = versionDir.listFiles();
           if (hashDirs != null) {
             for (File hashDir : hashDirs) {
               File[] sourcesJars = hashDir.listFiles(new FilenameFilter() {
@@ -765,7 +764,7 @@ public class DependencyResolverImpl implements DependencyResolver {
           projectDependency.setScope(scope);
           projectDependency.setProjectPath(project.getPath());
           projectDependency.setConfigurationName(targetConfiguration.getName());
-          Set<File> artifacts = targetConfiguration.getAllArtifacts().getFiles().getFiles();
+          Set<File> artifacts = new LinkedHashSet<File>(targetConfiguration.getAllArtifacts().getFiles().getFiles());
           projectDependency.setProjectDependencyArtifacts(artifacts);
           projectDependency.setProjectDependencyArtifactsSources(findArtifactSources(artifacts, mySourceSetFinder));
 

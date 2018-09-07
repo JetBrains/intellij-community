@@ -102,7 +102,7 @@ public abstract class AbstractQuickFixManager {
 
     AnAction showHintAction = new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         if (myDesigner != null) {
           showHint();
           showPopup();
@@ -110,7 +110,7 @@ public abstract class AbstractQuickFixManager {
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(e.getData(CommonDataKeys.EDITOR) == null);
       }
     };
@@ -253,7 +253,7 @@ public abstract class AbstractQuickFixManager {
   //////////////////////////////////////////////////////////////////////////////////////////
 
   private class FirstStep extends BaseListPopupStep<ErrorInfo> {
-    public FirstStep(List<ErrorInfo> errorInfos) {
+    FirstStep(List<ErrorInfo> errorInfos) {
       super(null, errorInfos);
     }
 
@@ -289,7 +289,7 @@ public abstract class AbstractQuickFixManager {
   }
 
   private class SecondStep extends BaseListPopupStep<QuickFix> {
-    public SecondStep(List<QuickFix> fixList) {
+    SecondStep(List<QuickFix> fixList) {
       super(null, fixList);
     }
 

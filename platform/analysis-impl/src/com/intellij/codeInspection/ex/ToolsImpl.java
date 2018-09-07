@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.profile.ProfileEx;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -19,7 +20,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -412,8 +412,9 @@ public class ToolsImpl implements Tools {
               }
             }
             else {
-              if (packageSet instanceof PackageSetBase &&
-                  ((PackageSetBase)packageSet).contains(PsiUtilCore.getVirtualFile(element), project, validationManager)) {
+              VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
+              if (packageSet instanceof PackageSetBase && virtualFile != null &&
+                  ((PackageSetBase)packageSet).contains(virtualFile, project, validationManager)) {
                 state.setEnabled(false);
                 return;
               }

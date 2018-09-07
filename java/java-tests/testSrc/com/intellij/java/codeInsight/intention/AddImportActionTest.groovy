@@ -18,7 +18,6 @@ package com.intellij.java.codeInsight.intention
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
@@ -86,6 +85,17 @@ public class Foo {
     String<caret>Value sv;
 }
 '''
+  }
+
+  void testInaccessibleInnerInSuper() {
+    myFixture.addClass 'package foo; class Super { private class Inner {}}'
+    myFixture.configureByText 'a.java', '''\
+package foo;
+public class Foo {
+    In<caret>ner in;
+}
+'''
+    assert !myFixture.filterAvailableIntentions("Import class")
   }
 
   void testPackageLocalInner() {

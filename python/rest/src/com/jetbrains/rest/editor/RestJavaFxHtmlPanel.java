@@ -48,7 +48,7 @@ public class RestJavaFxHtmlPanel extends JavaFxHtmlPanel implements RestPreviewP
 
   private class RestLafManagerListener implements LafManagerListener {
     @Override
-    public void lookAndFeelChanged(LafManager manager) {
+    public void lookAndFeelChanged(@NotNull LafManager manager) {
       updateLaf(manager.getCurrentLookAndFeel() instanceof DarculaLookAndFeelInfo);
     }
   }
@@ -70,7 +70,7 @@ public class RestJavaFxHtmlPanel extends JavaFxHtmlPanel implements RestPreviewP
     private static final String EVENT_TYPE_CLICK = "click";
     private final WebEngine myEngine;
 
-    public HyperlinkRedirectListener(WebView view) {
+    private HyperlinkRedirectListener(WebView view) {
       myEngine = view.getEngine();
     }
 

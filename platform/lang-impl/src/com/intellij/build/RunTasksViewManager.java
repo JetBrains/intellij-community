@@ -17,6 +17,7 @@ package com.intellij.build;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -28,6 +29,7 @@ public class RunTasksViewManager extends TasksViewManager {
     super(project, buildContentManager);
   }
 
+  @NotNull
   @Override
   public String getViewName() {
     return "Run";

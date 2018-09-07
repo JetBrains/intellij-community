@@ -127,7 +127,7 @@ public class JsonSchemaResolver {
     final JsonSchemaType type = JsonSchemaType.getType(value);
     if (type == null) return true;
     if (!areSchemaTypesCompatible(schema, type)) return false;
-    final JsonSchemaAnnotatorChecker checker = new JsonSchemaAnnotatorChecker();
+    final JsonSchemaAnnotatorChecker checker = new JsonSchemaAnnotatorChecker(JsonComplianceCheckerOptions.RELAX_ENUM_CHECK);
     checker.checkByScheme(value, schema);
     return checker.isCorrect();
   }

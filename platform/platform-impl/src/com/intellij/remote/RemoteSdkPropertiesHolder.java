@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remote;
 
 import com.google.common.collect.Lists;
@@ -81,6 +67,7 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
     myHelpersPath = helpersPath;
   }
 
+  @Override
   public String getDefaultHelpersName() {
     return myHelpersDefaultDirName;
   }
@@ -129,10 +116,12 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
     myHelpersVersionChecked = helpersVersionChecked;
   }
 
+  @Override
   public void setSdkId(String sdkId) {
     mySdkId = sdkId;
   }
 
+  @Override
   public String getSdkId() {
     return mySdkId;
   }
@@ -191,9 +180,9 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
 
     setRemoteRoots(JDOMExternalizer.loadStringsList(element, REMOTE_ROOTS, REMOTE_PATH));
 
-    setInitialized(StringUtil.parseBoolean(element.getAttributeValue(INITIALIZED), true));
+    setInitialized(Boolean.parseBoolean(element.getAttributeValue(INITIALIZED)));
 
-    setValid(StringUtil.parseBoolean(element.getAttributeValue(VALID), true));
+    setValid(Boolean.parseBoolean(element.getAttributeValue(VALID)));
 
     setPathMappings(PathMappingSettings.readExternal(element));
   }

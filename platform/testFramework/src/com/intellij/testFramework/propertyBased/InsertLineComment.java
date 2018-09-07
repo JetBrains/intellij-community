@@ -13,7 +13,7 @@ public class InsertLineComment extends ActionOnFile {
 
   private final String myToInsert;
 
-  public InsertLineComment(PsiFile file, String toInsert) {
+  public InsertLineComment(@NotNull PsiFile file, @NotNull String toInsert) {
     super(file);
     myToInsert = toInsert;
   }
@@ -26,7 +26,10 @@ public class InsertLineComment extends ActionOnFile {
     PsiElement leaf = getFile().findElementAt(randomOffset);
     TextRange leafRange = leaf != null ? leaf.getTextRange() : null;
     int insertOffset = leafRange != null ? leafRange.getEndOffset() : 0;
-    env.logMessage("Inserting '" + StringUtil.escapeStringCharacters(myToInsert) + "' at " + insertOffset);
+    env.logMessage("Inserting '" +
+                   StringUtil.escapeStringCharacters(myToInsert) +
+                   "' at " +
+                   MadTestingUtil.getPositionDescription(insertOffset, getDocument()));
     WriteCommandAction.runWriteCommandAction(getProject(), () -> getDocument().insertString(insertOffset, myToInsert));
   }
 

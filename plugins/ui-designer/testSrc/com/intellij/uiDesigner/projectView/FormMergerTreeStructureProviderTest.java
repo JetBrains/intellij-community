@@ -23,6 +23,7 @@ import com.intellij.projectView.BaseProjectViewTestCase;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
+import org.jetbrains.annotations.NotNull;
 
 
 public class FormMergerTreeStructureProviderTest extends BaseProjectViewTestCase {
@@ -51,6 +52,7 @@ public class FormMergerTreeStructureProviderTest extends BaseProjectViewTestCase
     myStructure.checkNavigateFromSourceBehaviour(psiClass, psiClass.getContainingFile().getVirtualFile(), pane);
   }
 
+  @NotNull
   @Override
   protected String getTestDirectoryName() {
     return "standardProviders";

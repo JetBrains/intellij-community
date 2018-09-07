@@ -36,7 +36,7 @@ public class GradleInspectionBundle {
 
   private static Reference<ResourceBundle> ourBundle;
   @NonNls
-  private static final String BUNDLE = "org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle";
+  private static final String BUNDLE = "i18n.GradleInspectionBundle";
 
   private static ResourceBundle getBundle() {
     ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);

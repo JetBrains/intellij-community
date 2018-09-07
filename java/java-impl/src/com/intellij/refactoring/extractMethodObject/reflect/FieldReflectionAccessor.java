@@ -28,8 +28,7 @@ public class FieldReflectionAccessor extends ReferenceReflectionAccessorBase<Fie
     final PsiElement resolved = expression.resolve();
     if (resolved instanceof PsiField) {
       final PsiField field = (PsiField)resolved;
-      String name = field.getName();
-      if (name != null && !Objects.equals(field.getContainingClass(), getOuterClass()) && needReplace(field, expression)) {
+      if (!Objects.equals(field.getContainingClass(), getOuterClass()) && needReplace(field, expression)) {
         return new FieldDescriptor(field, expression);
       }
     }

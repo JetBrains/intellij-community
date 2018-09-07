@@ -20,6 +20,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,5 +41,14 @@ public class PyQuickFixUtil {
       }
     }
     return null;
+  }
+
+  @Nullable
+  public static PsiElement dereference(PsiElement element) {
+    if (element instanceof PyReferenceExpression) {
+      final PsiReference reference = element.getReference();
+      return reference != null ? reference.resolve() : null;
+    }
+    return element;
   }
 }

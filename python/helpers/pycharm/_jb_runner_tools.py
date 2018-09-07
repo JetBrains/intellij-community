@@ -18,12 +18,13 @@ if teamcity_presence_env_var not in os.environ:
 # anything sent to stdout/stderr goes to IDE directly, not after test is over like it is done by default.
 # out and err are not in sync, so output may go to wrong test
 JB_DISABLE_BUFFERING = "JB_DISABLE_BUFFERING" in os.environ
-PROJECT_DIR = os.getcwd()
+# getcwd resolves symlinks, but PWD is not supported by some shells
+PROJECT_DIR = os.getenv('PWD', os.getcwd())
 
 def _parse_parametrized(part):
     """
 
-    Support nose generators / py.test parameters and other functions that provides names like foo(1,2)
+    Support nose generators / pytest parameters and other functions that provides names like foo(1,2)
     Until https://github.com/JetBrains/teamcity-messages/issues/121, all such tests are provided
     with parentheses.
     

@@ -66,16 +66,19 @@ public class GraphGenerator<Node> implements Graph<Node> {
     }
   }
 
+  @NotNull
   @Override
   public Collection<Node> getNodes() {
     return myGraph.getNodes();
   }
 
+  @NotNull
   @Override
   public Iterator<Node> getIn(Node n) {
     return myGraph.getIn(n);
   }
 
+  @NotNull
   @Override
   public Iterator<Node> getOut(Node n) {
     final List<Node> outNodes = myOuts.get(n);
@@ -86,8 +89,12 @@ public class GraphGenerator<Node> implements Graph<Node> {
 
   //<editor-fold desc="Deprecated stuff.">
   public interface SemiGraph<Node> extends InboundSemiGraph<Node> {
+    @Override
+    @NotNull
     Collection<Node> getNodes();
 
+    @NotNull
+    @Override
     Iterator<Node> getIn(Node n);
   }
 

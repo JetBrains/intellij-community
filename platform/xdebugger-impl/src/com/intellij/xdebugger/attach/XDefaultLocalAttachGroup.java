@@ -60,11 +60,13 @@ public class XDefaultLocalAttachGroup implements XLocalAttachGroup {
     return null;
   }
 
+  @Override
   @NotNull
   public Icon getProcessIcon(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
     return AllIcons.RunConfigurations.Application;
   }
 
+  @Override
   @NotNull
   public String getProcessDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
     return info.getExecutableDisplayName();

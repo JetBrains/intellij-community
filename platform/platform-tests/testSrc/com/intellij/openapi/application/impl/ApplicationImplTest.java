@@ -43,11 +43,14 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @SuppressWarnings("StatementWithEmptyBody")
-@JITSensitive
+@RunFirst
 public class ApplicationImplTest extends LightPlatformTestCase {
   @Override
   protected void setUp() throws Exception {

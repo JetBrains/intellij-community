@@ -30,13 +30,13 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ToggleShowImportPopupsAction extends ToggleAction {
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     PsiFile file = getFile(e);
     return file != null && DaemonCodeAnalyzer.getInstance(file.getProject()).isImportHintsEnabled(file);
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     PsiFile file = getFile(e);
     if (file != null) {
       DaemonCodeAnalyzer.getInstance(file.getProject()).setImportHintsEnabled(file, state);
@@ -52,7 +52,7 @@ public class ToggleShowImportPopupsAction extends ToggleAction {
   }
 
   @Nullable
-  private static PsiFile getFile(AnActionEvent e) {
+  private static PsiFile getFile(@NotNull AnActionEvent e) {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     return editor == null ? null : e.getData(CommonDataKeys.PSI_FILE);
   }

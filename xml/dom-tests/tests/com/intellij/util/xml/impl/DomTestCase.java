@@ -25,6 +25,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -36,7 +37,7 @@ public abstract class DomTestCase extends LightIdeaTestCase {
   protected CallRegistry<DomEvent> myCallRegistry;
   private final DomEventListener myListener = new DomEventListener() {
     @Override
-    public void eventOccured(DomEvent event) {
+    public void eventOccured(@NotNull DomEvent event) {
       myCallRegistry.putActual(event);
     }
   };

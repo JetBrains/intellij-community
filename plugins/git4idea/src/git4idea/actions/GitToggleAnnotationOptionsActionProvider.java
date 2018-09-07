@@ -5,13 +5,11 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.annotate.AnnotationGutterActionProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.changes.VcsAnnotationRefresher;
 import git4idea.GitVcs;
 import git4idea.annotate.GitFileAnnotation;
 import git4idea.config.GitVcsApplicationSettings;
@@ -30,13 +28,13 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
 
   private static void resetAllAnnotations(@NotNull Project project) {
     ProjectLevelVcsManager.getInstance(project).getVcsHistoryCache().clearAnnotations();
-    BackgroundTaskUtil.syncPublisher(project, VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).configurationChanged(GitVcs.getKey());
+    ProjectLevelVcsManager.getInstance(project).getAnnotationLocalChangesListener().reloadAnnotationsForVcs(GitVcs.getKey());
   }
 
   private static class MyGroup extends ActionGroup {
     private final FileAnnotation myAnnotation;
 
-    public MyGroup(@NotNull FileAnnotation annotation) {
+    MyGroup(@NotNull FileAnnotation annotation) {
       super("Options", true);
       myAnnotation = annotation;
     }
@@ -58,18 +56,18 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
   private static class ToggleIgnoreWhitespaces extends ToggleAction implements DumbAware {
     @NotNull private final Project myProject;
 
-    public ToggleIgnoreWhitespaces(@NotNull Project project) {
+    ToggleIgnoreWhitespaces(@NotNull Project project) {
       super("Ignore Whitespaces");
       myProject = project;
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return SETTINGS.isIgnoreWhitespaces();
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean enabled) {
+    public void setSelected(@NotNull AnActionEvent e, boolean enabled) {
       SETTINGS.setIgnoreWhitespaces(enabled);
       resetAllAnnotations(myProject);
     }
@@ -78,19 +76,19 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
   private static class ToggleInnerMovementsWhitespaces extends ToggleAction implements DumbAware {
     @NotNull private final Project myProject;
 
-    public ToggleInnerMovementsWhitespaces(@NotNull Project project) {
+    ToggleInnerMovementsWhitespaces(@NotNull Project project) {
       super("Detect Movements Within File");
       myProject = project;
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return SETTINGS.getAnnotateDetectMovementsOption() == AnnotateDetectMovementsOption.INNER ||
              SETTINGS.getAnnotateDetectMovementsOption() == AnnotateDetectMovementsOption.OUTER;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean enabled) {
+    public void setSelected(@NotNull AnActionEvent e, boolean enabled) {
       if (enabled) {
         SETTINGS.setAnnotateDetectMovementsOption(AnnotateDetectMovementsOption.INNER);
       }
@@ -104,18 +102,18 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
   private static class ToggleOuterMovementsWhitespaces extends ToggleAction implements DumbAware {
     @NotNull private final Project myProject;
 
-    public ToggleOuterMovementsWhitespaces(@NotNull Project project) {
+    ToggleOuterMovementsWhitespaces(@NotNull Project project) {
       super("Detect Movements Across Files");
       myProject = project;
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return SETTINGS.getAnnotateDetectMovementsOption() == AnnotateDetectMovementsOption.OUTER;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean enabled) {
+    public void setSelected(@NotNull AnActionEvent e, boolean enabled) {
       if (enabled) {
         SETTINGS.setAnnotateDetectMovementsOption(AnnotateDetectMovementsOption.OUTER);
       }

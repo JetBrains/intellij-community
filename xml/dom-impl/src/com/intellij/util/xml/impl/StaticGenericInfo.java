@@ -264,7 +264,7 @@ public class StaticGenericInfo extends DomGenericInfoEx {
   }
 
   @Override
-  public boolean processAttributeChildrenDescriptions(Processor<AttributeChildDescriptionImpl> processor) {
+  public boolean processAttributeChildrenDescriptions(Processor<? super AttributeChildDescriptionImpl> processor) {
     List<AttributeChildDescriptionImpl> descriptions = getAttributeChildrenDescriptions();
     return ContainerUtil.process(descriptions, processor);
   }

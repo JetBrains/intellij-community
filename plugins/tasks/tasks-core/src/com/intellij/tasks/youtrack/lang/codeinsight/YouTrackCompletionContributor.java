@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.youtrack.lang.codeinsight;
 
 import com.intellij.codeInsight.completion.*;
@@ -17,7 +18,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -105,7 +105,7 @@ public class YouTrackCompletionContributor extends CompletionContributor {
    */
   private static class MyInsertHandler implements InsertHandler<LookupElement> {
     @Override
-    public void handleInsert(InsertionContext context, LookupElement item) {
+    public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
       final CompletionItem completionItem = (CompletionItem)item.getObject();
       final Document document = context.getDocument();
       final Editor editor = context.getEditor();

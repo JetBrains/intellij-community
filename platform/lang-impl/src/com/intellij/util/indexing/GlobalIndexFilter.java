@@ -2,7 +2,6 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +28,7 @@ public interface GlobalIndexFilter {
    * Returns true if the given file should be excluded from indexing by any of the registered filters.
    */
   static boolean isExcludedFromIndexViaFilters(@NotNull VirtualFile file, @NotNull IndexId<?, ?> indexId) {
-    for (GlobalIndexFilter filter : Extensions.getExtensions(EP_NAME)) {
+    for (GlobalIndexFilter filter : EP_NAME.getExtensionList()) {
       if (filter.isExcludedFromIndex(file, indexId)) {
         return true;
       }
@@ -39,7 +38,7 @@ public interface GlobalIndexFilter {
 
   static int getFiltersVersion(@NotNull IndexId<?, ?> indexId) {
     int result = 0;
-    for (GlobalIndexFilter extension: Extensions.getExtensions(EP_NAME)) {
+    for (GlobalIndexFilter extension: EP_NAME.getExtensionList()) {
       if (extension.affectsIndex(indexId)) {
         result += extension.getVersion();
       }

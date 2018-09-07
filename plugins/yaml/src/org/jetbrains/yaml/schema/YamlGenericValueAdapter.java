@@ -1,13 +1,16 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.schema;
 
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.jsonSchema.extension.adapters.JsonArrayValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.yaml.psi.YAMLAnchor;
 import org.jetbrains.yaml.psi.YAMLValue;
 
 import java.util.regex.Pattern;
@@ -34,8 +37,20 @@ public class YamlGenericValueAdapter implements JsonValueAdapter {
 
   @Override
   public boolean isStringLiteral() {
-    String text = myValue.getText();
+    String text = getTextWithoutRefs();
     return !hasNonStringTags(text); /*values should always validate as string*/
+  }
+
+  private String getTextWithoutRefs() {
+    YAMLAnchor[] anchors = PsiTreeUtil.getChildrenOfType(myValue, YAMLAnchor.class);
+    if (anchors == null || anchors.length == 0) return myValue.getText();
+    int endOffset = anchors[anchors.length - 1].getTextRange().getEndOffset();
+    TextRange valueTextRange = myValue.getTextRange();
+    int offset = valueTextRange.getEndOffset();
+    TextRange range = new TextRange(endOffset, offset);
+    range = range.shiftLeft(valueTextRange.getStartOffset());
+    String text = myValue.getText();
+    return text.substring(range.getStartOffset()).trim();
   }
 
   private static boolean hasNonStringTags(@NotNull String text) {
@@ -51,19 +66,19 @@ public class YamlGenericValueAdapter implements JsonValueAdapter {
 
   @Override
   public boolean isNumberLiteral() {
-    String text = myValue.getText();
+    String text = getTextWithoutRefs();
     return isNumber(text);
   }
 
   @Override
   public boolean isBooleanLiteral() {
-    String text = myValue.getText();
+    String text = getTextWithoutRefs();
     return "true".equals(text) || "false".equals(text) || hasTag(text, "bool");
   }
 
   @Override
   public boolean isNull() {
-    String text = myValue.getText();
+    String text = getTextWithoutRefs();
     return "null".equals(text) || hasTag(text, "null");
   }
 

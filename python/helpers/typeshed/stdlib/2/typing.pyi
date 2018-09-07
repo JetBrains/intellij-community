@@ -360,7 +360,7 @@ class Match(Generic[AnyStr]):
 
     # The regular expression object whose match() or search() method produced
     # this match instance.
-    re = ...  # type: 'Pattern[AnyStr]'
+    re = ...  # type: Pattern[AnyStr]
 
     def expand(self, template: AnyStr) -> AnyStr: ...
 

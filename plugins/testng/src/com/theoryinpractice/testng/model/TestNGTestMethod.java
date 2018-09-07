@@ -25,6 +25,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
+import com.theoryinpractice.testng.util.TestNGUtil;
 
 import java.util.List;
 import java.util.Map;
@@ -75,8 +76,8 @@ public class TestNGTestMethod extends TestNGTestObject {
       throw new RuntimeConfigurationException("Method '" + data.getMethodName() + "' not found");
     }
     for (PsiMethod method : methods) {
-      if (!method.hasModifierProperty(PsiModifier.PUBLIC)) {
-        throw new RuntimeConfigurationException("Non public method '" + data.getMethodName() + "'specified");
+      if (!TestNGUtil.hasTest(method)) {
+        throw new RuntimeConfigurationException("Method '" + data.getMethodName() + "' doesn't contain test");
       }
     }
   }

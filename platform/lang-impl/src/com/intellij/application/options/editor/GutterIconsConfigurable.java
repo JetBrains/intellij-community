@@ -29,6 +29,8 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.ListSpeedSearch;
@@ -161,7 +163,9 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
     for (GutterIconDescriptor descriptor : myDescriptors) {
       LineMarkerSettings.getSettings().setEnabled(descriptor, myList.isItemSelected(descriptor));
     }
-    EditorOptionsPanel.restartDaemons();
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      DaemonCodeAnalyzer.getInstance(project).restart();
+    }
     ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorOptionsListener.GUTTER_ICONS_CONFIGURABLE_TOPIC).changesApplied();
   }
 
@@ -246,7 +250,7 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       ShowSettingsUtil.getInstance().showSettingsDialog(null, GutterIconsConfigurable.class);
     }
   }

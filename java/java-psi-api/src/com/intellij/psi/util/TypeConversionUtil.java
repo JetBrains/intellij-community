@@ -229,14 +229,16 @@ public class TypeConversionUtil {
     PsiClassType.ClassResolveResult fromResult = fromClassType.resolveGenerics();
     final PsiClass fromClass = fromResult.getElement();
     if (fromClass == null) return false;
-    if (fromClass instanceof PsiTypeParameter)
+    if (fromClass instanceof PsiTypeParameter) {
       return isNarrowingReferenceConversionAllowed(obtainSafeSuperType((PsiTypeParameter)fromClass), toType);
+    }
 
     PsiClassType.ClassResolveResult toResult = toClassType.resolveGenerics();
     final PsiClass toClass = toResult.getElement();
     if (toClass == null) return false;
-    if (toClass instanceof PsiTypeParameter)
+    if (toClass instanceof PsiTypeParameter) {
       return isNarrowingReferenceConversionAllowed(fromType, obtainSafeSuperType((PsiTypeParameter)toClass));
+    }
     //Done with type parameters
 
     PsiManager manager = fromClass.getManager();

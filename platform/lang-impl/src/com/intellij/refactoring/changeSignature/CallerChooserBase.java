@@ -17,6 +17,7 @@ package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -29,6 +30,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -158,9 +160,12 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
       EditorColorsManager colorManager = EditorColorsManager.getInstance();
       TextAttributes attributes = colorManager.getGlobalScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
       int start = getStartOffset(caller);
+      InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(myProject);
       for (PsiElement element : findElementsToHighlight(caller, callee)) {
-        highlighter.addRangeHighlight(myCallerEditor, element.getTextRange().getStartOffset() - start,
-                                      element.getTextRange().getEndOffset() - start, attributes, false, null);
+        TextRange textRange = element.getTextRange();
+        textRange = injectedLanguageManager.injectedToHost(element, textRange);
+        highlighter.addRangeHighlight(myCallerEditor, textRange.getStartOffset() - start,
+                                      textRange.getEndOffset() - start, attributes, false, null);
       }
     }
   }
@@ -267,13 +272,13 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     return myMethod;
   }
   
-  private void getSelectedMethods(Set<M> methods) {
+  private void getSelectedMethods(Set<? super M> methods) {
     MemberNodeBase<M> node = myRoot;
     getSelectedMethodsInner(node, methods);
     methods.remove(node.getMember());
   }
 
-  private void getSelectedMethodsInner(final MemberNodeBase<M> node, final Set<M> allMethods) {
+  private void getSelectedMethodsInner(final MemberNodeBase<? extends M> node, final Set<? super M> allMethods) {
     if (node.isChecked()) {
       M method = node.getMember();
       final M[] superMethods = method == myMethod ? null : findDeepestSuperMethods(method);
@@ -297,7 +302,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     return nodes;
   }
   
-  private void collectSelectedNodes(final MemberNodeBase<M> node, final Set<MemberNodeBase<M>> nodes) {
+  private void collectSelectedNodes(final MemberNodeBase<M> node, final Set<? super MemberNodeBase<M>> nodes) {
     if (node.isChecked()) {
       nodes.add(node);
       final Enumeration children = node.children();

@@ -1,18 +1,3 @@
-/**
- * Copyright 2006 Sascha Weinreuter
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package org.intellij.plugins.xpathView.search;
 
 import com.intellij.openapi.module.Module;
@@ -43,6 +28,21 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 
+/**
+ * Copyright 2006 Sascha Weinreuter
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 public final class SearchScope {
   public enum ScopeType {
     PROJECT, MODULE, DIRECTORY, CUSTOM
@@ -69,7 +69,7 @@ public final class SearchScope {
     myScopeName = scopeName;
   }
 
-  public void setCustomScope(com.intellij.psi.search.SearchScope customScope) {
+  void setCustomScope(com.intellij.psi.search.SearchScope customScope) {
     myCustomScope = customScope;
   }
 
@@ -147,9 +147,9 @@ public final class SearchScope {
 
     switch (getScopeType()) {
       case MODULE:
-        return moduleName != null && moduleName.length() > 0;
+        return moduleName != null && !moduleName.isEmpty();
       case DIRECTORY:
-        return dirName != null && dirName.length() > 0 && findFile(dirName) != null;
+        return dirName != null && !dirName.isEmpty() && findFile(dirName) != null;
       case CUSTOM:
         return myCustomScope != null;
       case PROJECT:
@@ -158,7 +158,7 @@ public final class SearchScope {
     return false;
   }
 
-  public void iterateContent(@NotNull final Project project, final Processor<VirtualFile> processor) {
+  void iterateContent(@NotNull final Project project, @NotNull Processor<? super VirtualFile> processor) {
     switch (getScopeType()) {
       case PROJECT:
         //noinspection unchecked
@@ -242,7 +242,7 @@ public final class SearchScope {
     return LocalFileSystem.getInstance().findFileByPath(dirName.replace('\\', '/'));
   }
 
-  private static void iterateRecursively(VirtualFile virtualFile, final Processor<VirtualFile> processor, boolean recursive) {
+  private static void iterateRecursively(VirtualFile virtualFile, final Processor<? super VirtualFile> processor, boolean recursive) {
     VfsUtilCore.visitChildrenRecursively(virtualFile, new VirtualFileVisitor(recursive ? null : VirtualFileVisitor.ONE_LEVEL_DEEP) {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
@@ -255,16 +255,16 @@ public final class SearchScope {
   }
 
   private static class MyFileIterator implements ContentIterator {
-    private final Processor<VirtualFile> myProcessor;
-    private final Condition<VirtualFile> myCondition;
+    private final Processor<? super VirtualFile> myProcessor;
+    private final Condition<? super VirtualFile> myCondition;
 
-    public MyFileIterator(Processor<VirtualFile> processor, Condition<VirtualFile> condition) {
+    MyFileIterator(Processor<? super VirtualFile> processor, Condition<? super VirtualFile> condition) {
       myCondition = condition;
       myProcessor = processor;
     }
 
     @Override
-    public boolean processFile(VirtualFile fileOrDir) {
+    public boolean processFile(@NotNull VirtualFile fileOrDir) {
       if (!fileOrDir.isDirectory() && myCondition.value(fileOrDir)) {
         myProcessor.process(fileOrDir);
       }

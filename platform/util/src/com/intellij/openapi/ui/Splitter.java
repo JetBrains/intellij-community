@@ -51,7 +51,7 @@ public class Splitter extends JPanel implements Splittable {
   private final FocusWatcher myFocusWatcher;
   private boolean myShowDividerIcon;
   private boolean myShowDividerControls;
-  private boolean mySkipNextLayouting;
+  private boolean mySkipNextLayout;
   private static final Rectangle myNullBounds = new Rectangle();
 
   public enum LackOfSpaceStrategy {
@@ -233,14 +233,14 @@ public class Splitter extends JPanel implements Splittable {
 
     return super.getPreferredSize();
   }
-  public void skipNextLayouting() {
-    mySkipNextLayouting = true;
+  public void skipNextLayout() {
+    mySkipNextLayout = true;
   }
 
   @Override
   public void doLayout() {
-    if (mySkipNextLayouting) {
-      mySkipNextLayouting = false;
+    if (mySkipNextLayout) {
+      mySkipNextLayout = false;
       return;
     }
     int width = getWidth();
@@ -381,6 +381,7 @@ public class Splitter extends JPanel implements Splittable {
     return myProportion;
   }
 
+  @Override
   public void setProportion(float proportion) {
     if (myProportion == proportion) {
       return;
@@ -411,6 +412,7 @@ public class Splitter extends JPanel implements Splittable {
   /**
    * @return {@code true} if splitter has vertical orientation, {@code false} otherwise
    */
+  @Override
   public boolean getOrientation() {
     return myVerticalSplit;
   }
@@ -425,6 +427,7 @@ public class Splitter extends JPanel implements Splittable {
   /**
    * @param verticalSplit {@code true} means that splitter will have vertical split
    */
+  @Override
   public void setOrientation(boolean verticalSplit) {
     boolean changed = myVerticalSplit != verticalSplit;
     myVerticalSplit = verticalSplit;
@@ -439,10 +442,8 @@ public class Splitter extends JPanel implements Splittable {
   }
 
   /**
-   * Sets component which is located as the "first" splitted area. The method doesn't validate and
-   * repaint the splitter. If there is already
-   *
-   * @param component
+   * Sets component which is located as the "first" split area. The method doesn't validate and
+   * repaint the splitter if there is one already.
    */
   public void setFirstComponent(@Nullable JComponent component) {
     if (myFirstComponent != component) {
@@ -470,10 +471,8 @@ public class Splitter extends JPanel implements Splittable {
   }
 
   /**
-   * Sets component which is located as the "second" splitted area. The method doesn't validate and
+   * Sets component which is located as the "second" split area. The method doesn't validate and
    * repaint the splitter.
-   *
-   * @param component
    */
   public void setSecondComponent(@Nullable JComponent component) {
     if (mySecondComponent != component) {
@@ -489,6 +488,7 @@ public class Splitter extends JPanel implements Splittable {
     }
   }
 
+  @Override
   public float getMinProportion(boolean first) {
     JComponent component = first? myFirstComponent : mySecondComponent;
     if (isHonorMinimumSize()) {
@@ -535,6 +535,7 @@ public class Splitter extends JPanel implements Splittable {
       setOrientation(myVerticalSplit);
     }
 
+    @Override
     public void setOrientation(boolean isVerticalSplit) {
       removeAll();
 
@@ -557,9 +558,9 @@ public class Splitter extends JPanel implements Splittable {
         int leftInsetArrow = 0;
         int leftInsetIcon = 1;
 
-        JLabel splitDownlabel = new JLabel(isVerticalSplit ? AllIcons.General.SplitDown : AllIcons.General.SplitRight);
-        splitDownlabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        splitDownlabel.setToolTipText(isVerticalSplit ? UIBundle.message("splitter.down.tooltip.text") : UIBundle
+        JLabel splitDownLabel = new JLabel(isVerticalSplit ? AllIcons.General.SplitDown : AllIcons.General.SplitRight);
+        splitDownLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        splitDownLabel.setToolTipText(isVerticalSplit ? UIBundle.message("splitter.down.tooltip.text") : UIBundle
           .message("splitter.right.tooltip.text"));
         new ClickListener() {
           @Override
@@ -567,27 +568,27 @@ public class Splitter extends JPanel implements Splittable {
             setProportion(1.0f - getMinProportion(false));
             return true;
           }
-        }.installOn(splitDownlabel);
+        }.installOn(splitDownLabel);
 
-        add(splitDownlabel, new GridBagConstraints(isVerticalSplit ? 1 : 0, isVerticalSplit ? 0 : 5, 1, 1, 0, 0, GridBagConstraints.CENTER,
+        add(splitDownLabel, new GridBagConstraints(isVerticalSplit ? 1 : 0, isVerticalSplit ? 0 : 5, 1, 1, 0, 0, GridBagConstraints.CENTER,
                                                    GridBagConstraints.NONE, new Insets(0, leftInsetArrow, 0, 0), 0, 0));
         //
         add(new JLabel(glueIcon),
             new GridBagConstraints(2 * xMask, 2 * yMask, 1, 1, 0, 0, GridBagConstraints.CENTER, glueFill,
                                    new Insets(0, leftInsetIcon, 0, 0), 0, 0));
-        JLabel splitCenterlabel =
+        JLabel splitCenterLabel =
           new JLabel(isVerticalSplit ? AllIcons.General.SplitCenterV : AllIcons.General.SplitCenterH);
-        splitCenterlabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        splitCenterlabel.setToolTipText(UIBundle.message("splitter.center.tooltip.text"));
+        splitCenterLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        splitCenterLabel.setToolTipText(UIBundle.message("splitter.center.tooltip.text"));
         new ClickListener() {
           @Override
           public boolean onClick(@NotNull MouseEvent e, int clickCount) {
             setProportion(.5f);
             return true;
           }
-        }.installOn(splitCenterlabel);
+        }.installOn(splitCenterLabel);
 
-        add(splitCenterlabel, new GridBagConstraints(3 * xMask, 3 * yMask, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
+        add(splitCenterLabel, new GridBagConstraints(3 * xMask, 3 * yMask, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
                                                      new Insets(0, leftInsetArrow, 0, 0), 0, 0));
         add(new JLabel(glueIcon),
             new GridBagConstraints(4 * xMask, 4 * yMask, 1, 1, 0, 0, GridBagConstraints.CENTER, glueFill,
@@ -657,6 +658,7 @@ public class Splitter extends JPanel implements Splittable {
       }
     }
 
+    @Override
     public void setResizeEnabled(boolean resizeEnabled) {
       myResizeEnabled = resizeEnabled;
       if (!myResizeEnabled) {
@@ -669,6 +671,7 @@ public class Splitter extends JPanel implements Splittable {
       }
     }
 
+    @Override
     public void setSwitchOrientationEnabled(boolean switchOrientationEnabled) {
       mySwitchOrientationEnabled = switchOrientationEnabled;
     }

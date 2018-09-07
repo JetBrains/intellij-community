@@ -5,10 +5,7 @@ import com.intellij.codeInspection.dataFlow.HardcodedContracts;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizableStringList;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex;
@@ -28,7 +25,7 @@ import static com.intellij.codeInsight.AnnotationUtil.NOT_NULL;
 import static com.intellij.codeInsight.AnnotationUtil.NULLABLE;
 
 @State(name = "NullableNotNullManager")
-public class NullableNotNullManagerImpl extends NullableNotNullManager implements PersistentStateComponent<Element> {
+public class NullableNotNullManagerImpl extends NullableNotNullManager implements PersistentStateComponent<Element>, ModificationTracker {
   public static final String TYPE_QUALIFIER_NICKNAME = "javax.annotation.meta.TypeQualifierNickname";
   private static final String INSTRUMENTED_NOT_NULLS_TAG = "instrumentedNotNulls";
 
@@ -37,6 +34,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   @SuppressWarnings("deprecation") public final JDOMExternalizableStringList myNullables = new JDOMExternalizableStringList(Arrays.asList(DEFAULT_NULLABLES));
   @SuppressWarnings("deprecation") public final JDOMExternalizableStringList myNotNulls = new JDOMExternalizableStringList(Arrays.asList(DEFAULT_NOT_NULLS));
   private List<String> myInstrumentedNotNulls = ContainerUtil.newArrayList(NOT_NULL);
+  private final SimpleModificationTracker myTracker = new SimpleModificationTracker();
 
   public NullableNotNullManagerImpl(Project project) {
     super(project);
@@ -66,6 +64,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   public void setDefaultNullable(@NotNull String defaultNullable) {
     LOG.assertTrue(getNullables().contains(defaultNullable));
     myDefaultNullable = defaultNullable;
+    myTracker.incModificationCount();
   }
 
   @Override
@@ -78,6 +77,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   public void setDefaultNotNull(@NotNull String defaultNotNull) {
     LOG.assertTrue(getNotNulls().contains(defaultNotNull));
     myDefaultNotNull = defaultNotNull;
+    myTracker.incModificationCount();
   }
 
   @Override
@@ -101,6 +101,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   @Override
   public void setInstrumentedNotNulls(@NotNull List<String> names) {
     myInstrumentedNotNulls = ContainerUtil.sorted(names);
+    myTracker.incModificationCount();
   }
 
   @Override
@@ -166,6 +167,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
     myNullables.removeAll(ContainerUtil.newHashSet(DEFAULT_NOT_NULLS));
     myNullables.addAll(ContainerUtil.filter(DEFAULT_NULLABLES, s -> !myNullables.contains(s)));
     myNotNulls.addAll(ContainerUtil.filter(DEFAULT_NOT_NULLS, s -> !myNotNulls.contains(s)));
+    myTracker.incModificationCount();
   }
 
   private List<PsiClass> getAllNullabilityNickNames() {
@@ -287,5 +289,10 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
     return CachedValuesManager.getManager(myProject).getCachedValue(myProject, () ->
       CachedValueProvider.Result.create(ContainerUtil.concat(getNotNulls(), filterNickNames(Nullability.NOT_NULL)),
                                         PsiModificationTracker.MODIFICATION_COUNT));
+  }
+
+  @Override
+  public long getModificationCount() {
+    return myTracker.getModificationCount();
   }
 }

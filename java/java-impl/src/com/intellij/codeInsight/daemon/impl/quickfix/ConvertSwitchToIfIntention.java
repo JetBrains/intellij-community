@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -12,8 +10,8 @@ import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
@@ -50,7 +48,7 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     doProcessIntention(mySwitchExpression);
   }
 
@@ -80,7 +78,7 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
     boolean useEquals = isSwitchOnString;
     if (!useEquals) {
       final PsiClass aClass = PsiUtil.resolveClassInType(switchExpressionType);
-      useEquals = aClass != null && !aClass.isEnum();
+      useEquals = aClass != null && !aClass.isEnum() && !TypeConversionUtil.isPrimitiveWrapper(aClass.getQualifiedName());
     }
     final String declarationString;
     final boolean hadSideEffects;
@@ -280,6 +278,8 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
         out.append(variable.getType().getCanonicalText()).append(' ').append(variable.getName()).append(';');
       }
     }
+
+    boolean addLineBreak = true;
     for (PsiElement bodyStatement : bodyStatements) {
       if (bodyStatement instanceof PsiBlockStatement) {
         final PsiBlockStatement blockStatement = (PsiBlockStatement)bodyStatement;
@@ -289,20 +289,25 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
         }
       }
       else {
-        appendElement(bodyStatement, out, commentTracker);
+        addLineBreak = appendElement(bodyStatement, out, commentTracker);
       }
     }
-    out.append("\n}");
+    if (addLineBreak) {
+      out.append("\n");
+    }
+    out.append("}");
   }
 
-  private static void appendElement(PsiElement element, @NonNls StringBuilder out, CommentTracker commentTracker) {
+  private static boolean appendElement(PsiElement element, @NonNls StringBuilder out, CommentTracker commentTracker) {
     if (element instanceof PsiBreakStatement) {
       final PsiBreakStatement breakStatement = (PsiBreakStatement)element;
       final PsiIdentifier identifier = breakStatement.getLabelIdentifier();
       if (identifier == null) {
-        return;
+        return false;
       }
     }
     out.append(commentTracker.text(element));
+
+    return true;
   }
 }

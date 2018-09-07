@@ -99,7 +99,7 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
   }
 
   @Override
-  protected void update(final PresentationData presentation) {
+  protected void update(@NotNull final PresentationData presentation) {
     try {
       if (validate()) {
         updateValidData(presentation, getValue());
@@ -184,6 +184,14 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
     if (element instanceof PsiDirectory) {
       final PsiDirectory directory = (PsiDirectory)element;
       return Arrays.asList(value.getPackage().getDirectories()).contains(directory);
+    }
+    if (element instanceof VirtualFile) {
+      VirtualFile file = (VirtualFile)element;
+      if (file.isDirectory()) {
+        for (PsiDirectory directory : value.getPackage().getDirectories()) {
+          if (file.equals(directory.getVirtualFile())) return true;
+        }
+      }
     }
     return false;
   }

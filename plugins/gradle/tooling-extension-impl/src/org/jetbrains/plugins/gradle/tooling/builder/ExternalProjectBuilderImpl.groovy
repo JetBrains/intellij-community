@@ -136,7 +136,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     Map<String, Set<File>> artifactsByConfiguration = new HashMap<String, Set<File>>()
     for (Map.Entry<String, Configuration> configurationEntry : configurationsByName.entrySet()) {
       Set<File> files = configurationEntry.getValue().getAllArtifacts().getFiles().getFiles()
-      artifactsByConfiguration.put(configurationEntry.getKey(), files)
+      artifactsByConfiguration.put(configurationEntry.getKey(), new LinkedHashSet<>(files))
     }
     externalProject.setArtifactsByConfiguration(artifactsByConfiguration)
   }
@@ -183,19 +183,25 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     def ideaPluginTestOutDir = ideaPluginModule?.testOutputDir
     def generatedSourceDirs
     def ideaSourceDirs
+    def ideaResourceDirs
     def ideaTestSourceDirs
+    def ideaTestResourceDirs
     def downloadJavadoc = false
     def downloadSources = true
-    if(ideaPluginModule) {
-      generatedSourceDirs = ideaPluginModule.hasProperty("generatedSourceDirs") ? new LinkedHashSet<>(ideaPluginModule.generatedSourceDirs): null
+    if (ideaPluginModule) {
+      generatedSourceDirs = ideaPluginModule.hasProperty("generatedSourceDirs") ? new LinkedHashSet<>(ideaPluginModule.generatedSourceDirs) : null
       ideaSourceDirs = new LinkedHashSet<>(ideaPluginModule.sourceDirs)
+      ideaResourceDirs = ideaPluginModule.hasProperty("resourceDirs") ? new LinkedHashSet<>(ideaPluginModule.resourceDirs) : []
       ideaTestSourceDirs = new LinkedHashSet<>(ideaPluginModule.testSourceDirs)
+      ideaTestResourceDirs = ideaPluginModule.hasProperty("testResourceDirs") ? new LinkedHashSet<>(ideaPluginModule.testResourceDirs) : []
       downloadJavadoc = ideaPluginModule.downloadJavadoc
       downloadSources = ideaPluginModule.downloadSources
     } else {
       generatedSourceDirs = null
       ideaSourceDirs = null
+      ideaResourceDirs = null
       ideaTestSourceDirs = null
+      ideaTestResourceDirs = null
     }
 
     def projectSourceCompatibility
@@ -410,7 +416,9 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
         if (ideaPluginModule && SourceSet.MAIN_SOURCE_SET_NAME != sourceSet.name && SourceSet.TEST_SOURCE_SET_NAME != sourceSet.name) {
           sources.values().each {
             ideaSourceDirs.removeAll(it.srcDirs)
+            ideaResourceDirs.removeAll(it.srcDirs)
             ideaTestSourceDirs.removeAll(it.srcDirs)
+            ideaTestResourceDirs.removeAll(it.srcDirs)
           }
         }
       }
@@ -431,6 +439,10 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
         def mainSourceDirectorySet = mainSourceSet.sources[ExternalSystemSourceType.SOURCE]
         if(mainSourceDirectorySet) {
           mainSourceDirectorySet.srcDirs.addAll(ideaSourceDirs - (mainGradleSourceSet.resources.srcDirs + generatedSourceDirs))
+        }
+        def mainResourceDirectorySet = mainSourceSet.sources[ExternalSystemSourceType.RESOURCE]
+        if(mainResourceDirectorySet) {
+          mainResourceDirectorySet.srcDirs.addAll(ideaResourceDirs)
         }
 
         if (!additionalIdeaGenDirs.isEmpty()) {
@@ -459,6 +471,10 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
         def testSourceDirectorySet = testSourceSet.sources[ExternalSystemSourceType.TEST]
         if(testSourceDirectorySet) {
           testSourceDirectorySet.srcDirs.addAll(ideaTestSourceDirs - (testGradleSourceSet.resources.srcDirs + generatedSourceDirs))
+        }
+        def testResourceDirectorySet = testSourceSet.sources[ExternalSystemSourceType.TEST_RESOURCE]
+        if(testResourceDirectorySet) {
+          testResourceDirectorySet.srcDirs.addAll(ideaTestResourceDirs)
         }
 
         if (!additionalIdeaGenDirs.isEmpty()) {

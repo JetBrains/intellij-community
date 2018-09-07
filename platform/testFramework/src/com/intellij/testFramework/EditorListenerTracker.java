@@ -21,22 +21,25 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.containers.hash.LinkedHashMap;
+import org.jetbrains.annotations.TestOnly;
 import org.junit.Assert;
 
+import java.util.ArrayList;
+import java.util.EventListener;
 import java.util.List;
 import java.util.Map;
 
 /**
  * @author cdr
  */
+@TestOnly
 public class EditorListenerTracker {
-  private final Map<Class, List> before;
+  private final Map<Class<? extends EventListener>, List<? extends EventListener>> before;
   private final boolean myDefaultProjectInitialized;
 
   public EditorListenerTracker() {
     EncodingManager.getInstance(); //adds listeners
-    EditorEventMulticasterImpl multicaster = (EditorEventMulticasterImpl)EditorFactory.getInstance().getEventMulticaster();
-    before = multicaster.getListeners();
+    before = ((EditorEventMulticasterImpl)EditorFactory.getInstance().getEventMulticaster()).getListeners();
     myDefaultProjectInitialized = ((ProjectManagerImpl)ProjectManager.getInstance()).isDefaultProjectInitialized();
   }
 
@@ -46,12 +49,12 @@ public class EditorListenerTracker {
       if (myDefaultProjectInitialized != ((ProjectManagerImpl)ProjectManager.getInstance()).isDefaultProjectInitialized()) return;
 
       EditorEventMulticasterImpl multicaster = (EditorEventMulticasterImpl)EditorFactory.getInstance().getEventMulticaster();
-      Map<Class, List> after = multicaster.getListeners();
-      Map<Class, List> leaked = new LinkedHashMap<>();
-      for (Map.Entry<Class, List> entry : after.entrySet()) {
-        Class aClass = entry.getKey();
-        List beforeList = before.get(aClass);
-        List afterList = entry.getValue();
+      Map<Class<? extends EventListener>, List<? extends EventListener>> after = multicaster.getListeners();
+      Map<Class<? extends EventListener>, List<? extends EventListener>> leaked = new LinkedHashMap<>();
+      for (Map.Entry<Class<? extends EventListener>, List<? extends EventListener>> entry : after.entrySet()) {
+        Class<? extends EventListener> aClass = entry.getKey();
+        List<? extends EventListener> beforeList = before.get(aClass);
+        List<EventListener> afterList = new ArrayList<>(entry.getValue());
         if (beforeList != null) {
           afterList.removeAll(beforeList);
         }
@@ -60,9 +63,9 @@ public class EditorListenerTracker {
         }
       }
 
-      for (Map.Entry<Class, List> entry : leaked.entrySet()) {
-        Class aClass = entry.getKey();
-        List list = entry.getValue();
+      for (Map.Entry<Class<? extends EventListener>, List<? extends EventListener>> entry : leaked.entrySet()) {
+        Class<? extends EventListener> aClass = entry.getKey();
+        List<? extends EventListener> list = entry.getValue();
         Assert.fail("Listeners leaked for " + aClass+":\n"+list);
       }
     }

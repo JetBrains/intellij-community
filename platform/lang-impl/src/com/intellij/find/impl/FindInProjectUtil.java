@@ -208,8 +208,8 @@ public class FindInProjectUtil {
   public static void findUsages(@NotNull FindModel findModel,
                                 @NotNull final Project project,
                                 @NotNull FindUsagesProcessPresentation processPresentation,
-                                @NotNull Set<VirtualFile> filesToStart,
-                                @NotNull final Processor<UsageInfo> consumer) {
+                                @NotNull Set<? extends VirtualFile> filesToStart,
+                                @NotNull final Processor<? super UsageInfo> consumer) {
     new FindInProjectTask(findModel, project, filesToStart).findUsages(processPresentation, consumer);
   }
 
@@ -217,7 +217,7 @@ public class FindInProjectUtil {
   static int processUsagesInFile(@NotNull final PsiFile psiFile,
                                  @NotNull final VirtualFile virtualFile,
                                  @NotNull final FindModel findModel,
-                                 @NotNull final Processor<UsageInfo> consumer) {
+                                 @NotNull final Processor<? super UsageInfo> consumer) {
     if (findModel.getStringToFind().isEmpty()) {
       if (!ReadAction.compute(() -> consumer.process(new UsageInfo(psiFile)))) {
         throw new ProcessCanceledException();
@@ -264,7 +264,7 @@ public class FindInProjectUtil {
 
       final int prevOffset = offset;
       offset = result.getEndOffset();
-      if (prevOffset == offset) {
+      if (prevOffset == offset || offset == result.getStartOffset()) {
         // for regular expr the size of the match could be zero -> could be infinite loop in finding usages!
         ++offset;
       }

@@ -87,13 +87,13 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
   }
 
   @NotNull
-  public static List<LineMarkerInfo<PsiElement>> merge(@NotNull List<? extends MergeableLineMarkerInfo> markers) {
+  public static List<LineMarkerInfo<PsiElement>> merge(@NotNull List<? extends MergeableLineMarkerInfo<PsiElement>> markers) {
     List<LineMarkerInfo<PsiElement>> result = new SmartList<>();
     for (int i = 0; i < markers.size(); i++) {
-      MergeableLineMarkerInfo marker = markers.get(i);
-      List<MergeableLineMarkerInfo> toMerge = new SmartList<>();
+      MergeableLineMarkerInfo<PsiElement> marker = markers.get(i);
+      List<MergeableLineMarkerInfo<PsiElement>> toMerge = new SmartList<>();
       for (int k = markers.size() - 1; k > i; k--) {
-        MergeableLineMarkerInfo current = markers.get(k);
+        MergeableLineMarkerInfo<PsiElement> current = markers.get(k);
         boolean canMergeWith = marker.canMergeWith(current);
         if (ApplicationManager.getApplication().isUnitTestMode() && !canMergeWith && current.canMergeWith(marker)) {
           LOG.error(current.getClass() +
@@ -124,7 +124,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
   }
 
   private static class MyLineMarkerInfo extends LineMarkerInfo<PsiElement> {
-    private MyLineMarkerInfo(@NotNull List<? extends MergeableLineMarkerInfo> markers) {
+    private MyLineMarkerInfo(@NotNull List<? extends MergeableLineMarkerInfo<PsiElement>> markers) {
       this(markers, markers.get(0));
     }
 
@@ -165,6 +165,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
       myInfos = Collections.unmodifiableList(infos);
     }
 
+    @NotNull
     List<LineMarkerInfo> getMergedLineMarkersInfos() {
       return myInfos;
     }

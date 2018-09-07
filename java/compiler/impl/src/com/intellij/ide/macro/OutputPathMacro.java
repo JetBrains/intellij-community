@@ -31,14 +31,17 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import java.io.File;
 
 public final class OutputPathMacro extends Macro {
+  @Override
   public String getName() {
     return "OutputPath";
   }
 
+  @Override
   public String getDescription() {
     return IdeBundle.message("macro.output.path");
   }
 
+  @Override
   public String expand(DataContext dataContext) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
@@ -51,7 +54,7 @@ public final class OutputPathMacro extends Macro {
       Module module = projectFileIndex.getModuleForFile(file);
       if (module != null){
         boolean isTest = projectFileIndex.isInTestSourceContent(file);
-        String outputPathUrl = isTest ? CompilerModuleExtension.getInstance(module).getCompilerOutputUrlForTests() 
+        String outputPathUrl = isTest ? CompilerModuleExtension.getInstance(module).getCompilerOutputUrlForTests()
                                : CompilerModuleExtension.getInstance(module).getCompilerOutputUrl();
         if (outputPathUrl == null) return null;
         return VirtualFileManager.extractPath(outputPathUrl).replace('/', File.separatorChar);
@@ -63,7 +66,7 @@ public final class OutputPathMacro extends Macro {
       return null;
     }
     String[] paths = CompilerPathsEx.getOutputPaths(allModules);
-    final StringBuffer outputPath = new StringBuffer();
+    final StringBuilder outputPath = new StringBuilder();
     for (int idx = 0; idx < paths.length; idx++) {
       String path = paths[idx];
       if (idx > 0) {

@@ -144,14 +144,14 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
     severitiesChanged();
   }
 
-  private OrderMap ensureAllStandardIncluded(List<HighlightSeverity> read, final List<HighlightSeverity> knownSeverities) {
+  private OrderMap ensureAllStandardIncluded(List<? extends HighlightSeverity> read, final List<? extends HighlightSeverity> knownSeverities) {
     OrderMap orderMap = fromList(read);
     if (orderMap.isEmpty()) {
       orderMap = fromList(knownSeverities);
     }
     else {
       //enforce include all known
-      List<HighlightSeverity> list = getAllSeverities();
+      List<HighlightSeverity> list = getSortedSeverities(orderMap);
       for (HighlightSeverity stdSeverity : knownSeverities) {
         if (!list.contains(stdSeverity)) {
           for (int oIdx = 0; oIdx < list.size(); oIdx++) {
@@ -200,9 +200,14 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
 
   @NotNull
   public List<HighlightSeverity> getAllSeverities() {
-    return Arrays.stream(getOrderMap().keys())
+    return getSortedSeverities(getOrderMap());
+  }
+
+  @NotNull
+  private List<HighlightSeverity> getSortedSeverities(OrderMap map) {
+    return Arrays.stream(map.keys())
                  .map(o -> (HighlightSeverity)o)
-                 .sorted(this)
+                 .sorted((o1, o2) -> compare(o1, o2, map))
                  .collect(Collectors.toList());
   }
 
@@ -264,7 +269,12 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
 
   @Override
   public int compare(@NotNull HighlightSeverity s1, @NotNull HighlightSeverity s2) {
-    OrderMap orderMap = getOrderMap();
+    return compare(s1, s2, getOrderMap());
+  }
+
+  private int compare(@NotNull HighlightSeverity s1,
+                      @NotNull HighlightSeverity s2,
+                      @NotNull OrderMap orderMap) {
     int o1 = orderMap.getOrder(s1);
     int o2 = orderMap.getOrder(s2);
     return o1 - o2;
@@ -290,7 +300,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
   private static final AtomicFieldUpdater<SeverityRegistrar, OrderMap> ORDER_MAP_UPDATER = AtomicFieldUpdater.forFieldOfType(SeverityRegistrar.class, OrderMap.class);
 
   @NotNull
-  private static OrderMap fromList(@NotNull List<HighlightSeverity> orderList) {
+  private static OrderMap fromList(@NotNull List<? extends HighlightSeverity> orderList) {
     if (orderList.size() != new HashSet<>(orderList).size()) {
       LOG.error("Severities order list MUST contain only unique severities: " + orderList);
     }
@@ -316,7 +326,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
     return order;
   }
 
-  public void setOrder(@NotNull List<HighlightSeverity> orderList) {
+  public void setOrder(@NotNull List<? extends HighlightSeverity> orderList) {
     myOrderMap = ensureAllStandardIncluded(orderList, getDefaultOrder());
     myReadOrder = null;
     severitiesChanged();
@@ -338,7 +348,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
   }
 
   private static class OrderMap extends TObjectIntHashMap<HighlightSeverity> {
-    private OrderMap(@NotNull TObjectIntHashMap<HighlightSeverity> map) {
+    private OrderMap(@NotNull TObjectIntHashMap<? extends HighlightSeverity> map) {
       super(map.size());
       map.forEachEntry((key, value) -> {
         super.put(key, value);

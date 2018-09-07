@@ -51,7 +51,7 @@ public class JsonCompletionContributor extends CompletionContributor {
 
     @Override
     protected void addCompletions(@NotNull CompletionParameters parameters,
-                                  ProcessingContext context,
+                                  @NotNull ProcessingContext context,
                                   @NotNull CompletionResultSet result) {
       for (String keyword : KEYWORDS) {
         result.addElement(LookupElementBuilder.create(keyword).bold());

@@ -12,12 +12,13 @@ import com.intellij.ui.EngravedTextGraphics;
 import com.intellij.ui.Gray;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.util.SmartList;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimedDeadzone;
+import com.intellij.util.ui.UIUtilities;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -25,15 +26,13 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 class ContentTabLabel extends BaseLabel {
-  private final int MAX_WIDTH = JBUI.scale(300);
-  private final int DEFAULT_HORIZONTAL_INSET = JBUI.scale(12);
+  private static final int MAX_WIDTH = JBUI.scale(300);
+  private static final int DEFAULT_HORIZONTAL_INSET = JBUI.scale(12);
   protected static final int ICONS_GAP = JBUI.scale(3);
 
   private final ActiveIcon myCloseIcon = new ActiveIcon(JBUI.CurrentTheme.ToolWindow.closeTabIcon(true),
@@ -41,7 +40,7 @@ class ContentTabLabel extends BaseLabel {
   private final Content myContent;
   private final TabContentLayout myLayout;
 
-  private final List<AdditionalIcon> myAdditionalIcons = new ArrayList<>();
+  private final List<AdditionalIcon> myAdditionalIcons = new SmartList<>();
   private String myText = null;
   private int myIconWithInsetsWidth;
 
@@ -75,7 +74,7 @@ class ContentTabLabel extends BaseLabel {
       return UISettings.getShadowInstance().getCloseTabButtonOnTheRight() || !UISettings.getShadowInstance().getShowCloseButton();
     }
 
-    @Nullable
+    @NotNull
     @Override
     public String getTooltip() {
       String text =
@@ -124,6 +123,7 @@ class ContentTabLabel extends BaseLabel {
   }
 
   BaseButtonBehavior behavior = new BaseButtonBehavior(this) {
+    @Override
     protected void execute(final MouseEvent e) {
 
       Optional<Runnable> first = myAdditionalIcons.stream()
@@ -147,14 +147,14 @@ class ContentTabLabel extends BaseLabel {
 
   private void updateText() {
     FontMetrics fm = getFontMetrics(getFont());
-    int textWidth = SwingUtilities2.stringWidth(this, fm, myText);
+    int textWidth = UIUtilities.stringWidth(this, fm, myText);
     int prefWidth = myIconWithInsetsWidth + textWidth;
 
     int maxWidth = getMaximumSize().width;
 
     if(prefWidth > maxWidth) {
       int offset = maxWidth - myIconWithInsetsWidth;
-      String s = SwingUtilities2.clipString(this, fm, myText, offset);
+      String s = UIUtilities.clipString(this, fm, myText, offset);
       super.setText(s);
       return;
     }
@@ -172,7 +172,7 @@ class ContentTabLabel extends BaseLabel {
     return icon.contains(point);
   }
 
-  public ContentTabLabel(@NotNull Content content, @NotNull TabContentLayout layout) {
+  ContentTabLabel(@NotNull Content content, @NotNull TabContentLayout layout) {
     super(layout.myUi, false);
     myLayout = layout;
     myContent = content;
@@ -226,7 +226,7 @@ class ContentTabLabel extends BaseLabel {
   }
 
   public final boolean canBeClosed() {
-    return myContent.isCloseable() && contentManager().canCloseContents();
+    return myContent.isCloseable() && myUi.myWindow.canCloseContents();
   }
 
   protected void selectContent() {
@@ -250,8 +250,12 @@ class ContentTabLabel extends BaseLabel {
   public Dimension getPreferredSize() {
     final Dimension size = super.getPreferredSize();
     int iconWidth = 0;
-    Map<Boolean, List<AdditionalIcon>> map =
-      myAdditionalIcons.stream().filter(icon -> icon.getAvailable()).collect(Collectors.groupingBy(icon -> icon.getAfterText()));
+    Map<Boolean, List<AdditionalIcon>> map = new THashMap<>();
+    for (AdditionalIcon myAdditionalIcon : myAdditionalIcons) {
+      if (myAdditionalIcon.getAvailable()) {
+        map.computeIfAbsent(myAdditionalIcon.getAfterText(), k -> new SmartList<>()).add(myAdditionalIcon);
+      }
+    }
 
     int right = DEFAULT_HORIZONTAL_INSET;
     int left = DEFAULT_HORIZONTAL_INSET;
@@ -314,6 +318,7 @@ class ContentTabLabel extends BaseLabel {
     }
   }
 
+  @Override
   protected void paintComponent(final Graphics g) {
     super.paintComponent(g);
     paintIcons(g);
@@ -350,7 +355,7 @@ class ContentTabLabel extends BaseLabel {
     final IdeTooltip currentTooltip;
     final AdditionalIcon icon;
 
-    public CurrentTooltip(IdeTooltip currentTooltip, AdditionalIcon icon) {
+    CurrentTooltip(IdeTooltip currentTooltip, AdditionalIcon icon) {
       this.currentTooltip = currentTooltip;
       this.icon = icon;
     }

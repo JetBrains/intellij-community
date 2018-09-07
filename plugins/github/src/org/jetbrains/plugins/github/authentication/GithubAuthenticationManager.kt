@@ -1,25 +1,25 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication
 
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import git4idea.DialogManager
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
 import org.jetbrains.plugins.github.authentication.ui.GithubLoginDialog
-import javax.swing.JComponent
+import java.awt.Component
 
 /**
  * Entry point for interactions with Github authentication subsystem
  */
-class GithubAuthenticationManager internal constructor(private val accountManager: GithubAccountManager) {
+class GithubAuthenticationManager internal constructor(private val accountManager: GithubAccountManager,
+                                                       private val executorFactory: GithubApiRequestExecutor.Factory) {
   @CalledInAny
   fun hasAccounts(): Boolean = accountManager.accounts.isNotEmpty()
 
@@ -29,20 +29,17 @@ class GithubAuthenticationManager internal constructor(private val accountManage
   @CalledInAny
   internal fun getTokenForAccount(account: GithubAccount): String? = accountManager.getTokenForAccount(account)
 
+  @CalledInAwt
   @JvmOverloads
-  @CalledInAny
   internal fun getOrRequestTokenForAccount(account: GithubAccount,
-                                           project: Project? = null,
-                                           parentComponent: JComponent? = null,
-                                           modalityStateSupplier: () -> ModalityState = { ModalityState.any() }): String? {
-    return getTokenForAccount(account) ?: invokeAndWaitIfNeed(modalityStateSupplier()) {
-      requestNewToken(account, project, parentComponent)
-    }
+                                           project: Project?,
+                                           parentComponent: Component? = null): String? {
+    return getTokenForAccount(account) ?: requestNewToken(account, project, parentComponent)
   }
 
   @CalledInAwt
-  private fun requestNewToken(account: GithubAccount, project: Project?, parentComponent: JComponent?): String? {
-    val dialog = GithubLoginDialog(project, parentComponent, message = "Missing access token for $account")
+  private fun requestNewToken(account: GithubAccount, project: Project?, parentComponent: Component? = null): String? {
+    val dialog = GithubLoginDialog(executorFactory, project, parentComponent, message = "Missing access token for $account")
       .withServer(account.server.toString(), false)
       .withCredentials(account.name)
       .withToken()
@@ -56,29 +53,38 @@ class GithubAuthenticationManager internal constructor(private val accountManage
     return token
   }
 
-  fun hasTokenForAccount(account: GithubAccount): Boolean = getTokenForAccount(account) != null
-
   @CalledInAwt
-  fun requestNewAccount(project: Project): GithubAccount? {
-    fun isAccountUnique(name: String, server: GithubServerPath) =
-      accountManager.accounts.none { it.name == name && it.server == server }
-
-    val dialog = GithubLoginDialog(project, null, ::isAccountUnique)
+  @JvmOverloads
+  fun requestNewAccount(project: Project?, parentComponent: Component? = null): GithubAccount? {
+    val dialog = GithubLoginDialog(executorFactory, project, parentComponent, ::isAccountUnique)
     DialogManager.show(dialog)
     if (!dialog.isOK) return null
 
-    val account = GithubAccountManager.createAccount(dialog.getLogin(), dialog.getServer())
+    return registerAccount(dialog.getLogin(), dialog.getServer(), dialog.getToken())
+  }
+
+  @CalledInAwt
+  @JvmOverloads
+  fun requestNewAccountForServer(server: GithubServerPath, project: Project?, parentComponent: Component? = null): GithubAccount? {
+    val dialog = GithubLoginDialog(executorFactory, project, parentComponent, ::isAccountUnique).withServer(server.toUrl(), false)
+    DialogManager.show(dialog)
+    if (!dialog.isOK) return null
+
+    return registerAccount(dialog.getLogin(), dialog.getServer(), dialog.getToken())
+  }
+
+  private fun isAccountUnique(name: String, server: GithubServerPath) = accountManager.accounts.none { it.name == name && it.server == server }
+
+  private fun registerAccount(name: String, server: GithubServerPath, token: String): GithubAccount {
+    val account = GithubAccountManager.createAccount(name, server)
     accountManager.accounts += account
-    accountManager.updateAccountToken(account, dialog.getToken())
+    accountManager.updateAccountToken(account, token)
     return account
   }
 
   @TestOnly
   fun registerAccount(name: String, host: String, token: String): GithubAccount {
-    val account = GithubAccountManager.createAccount(name, GithubServerPath.from(host))
-    accountManager.accounts += account
-    accountManager.updateAccountToken(account, token)
-    return account
+    return registerAccount(name, GithubServerPath.from(host), token)
   }
 
   @TestOnly
@@ -96,23 +102,15 @@ class GithubAuthenticationManager internal constructor(private val accountManage
     project.service<GithubProjectDefaultAccountHolder>().account = account
   }
 
-  fun ensureHasAccounts(project: Project): Boolean {
+  @CalledInAwt
+  @JvmOverloads
+  fun ensureHasAccounts(project: Project?, parentComponent: Component? = null): Boolean {
     if (!hasAccounts()) {
-      if (requestNewAccount(project) == null) {
+      if (requestNewAccount(project, parentComponent) == null) {
         return false
       }
     }
     return true
-  }
-
-  @CalledInAwt
-  fun ensureHasAccountsWithTokens(project: Project): Boolean {
-    if (!ensureHasAccounts(project)) return false
-    var atLeastOneHasToken = false
-    for (account in getAccounts()) {
-      atLeastOneHasToken = getOrRequestTokenForAccount(account, project) != null
-    }
-    return atLeastOneHasToken
   }
 
   fun getSingleOrDefaultAccount(project: Project): GithubAccount? {

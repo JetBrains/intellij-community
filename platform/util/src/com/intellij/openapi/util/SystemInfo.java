@@ -20,6 +20,10 @@ public class SystemInfo extends SystemInfoRt {
   public static final String JAVA_VERSION = System.getProperty("java.version");
   public static final String JAVA_RUNTIME_VERSION = getRtVersion(JAVA_VERSION);
   public static final String JAVA_VENDOR = System.getProperty("java.vm.vendor", "Unknown");
+
+  /**
+   * @deprecated use {@link #is32Bit} or {@link #is64Bit} instead
+   */
   public static final String ARCH_DATA_MODEL = System.getProperty("sun.arch.data.model");
   public static final String SUN_DESKTOP = System.getProperty("sun.desktop", "");
 
@@ -80,8 +84,8 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isFileSystemCaseSensitive = SystemInfoRt.isFileSystemCaseSensitive;
   public static final boolean areSymLinksSupported = isUnix || isWinVistaOrNewer;
 
-  public static final boolean is32Bit = ARCH_DATA_MODEL == null || ARCH_DATA_MODEL.equals("32");
-  public static final boolean is64Bit = !is32Bit;
+  public static final boolean is32Bit = SystemInfoRt.is32Bit;
+  public static final boolean is64Bit = SystemInfoRt.is64Bit;
   public static final boolean isMacIntel64 = isMac && "x86_64".equals(OS_ARCH);
 
   private static final NotNullLazyValue<Boolean> ourHasXdgOpen = new PathExecLazyValue("xdg-open");
@@ -104,6 +108,7 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isMacOSElCapitan = isMac && isOsVersionAtLeast("10.11");
   public static final boolean isMacOSSierra = isMac && isOsVersionAtLeast("10.12");
   public static final boolean isMacOSHighSierra = isMac && isOsVersionAtLeast("10.13");
+  public static final boolean isMacOSMojave = isMac && isOsVersionAtLeast("10.14");
 
   @NotNull
   public static String getMacOSMajorVersion() {

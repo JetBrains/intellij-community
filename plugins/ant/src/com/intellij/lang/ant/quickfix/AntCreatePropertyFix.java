@@ -53,6 +53,7 @@ public class AntCreatePropertyFix implements LocalQuickFix {
     myPropFile = propertiesFile;
   }
 
+  @Override
   @NotNull
   public String getName() {
     if (myPropFile != null) {
@@ -61,6 +62,7 @@ public class AntCreatePropertyFix implements LocalQuickFix {
     return AntBundle.message("create.property.quickfix.name", myCanonicalText);
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return AntBundle.message("ant.intention.create.property.family.name");
@@ -71,6 +73,7 @@ public class AntCreatePropertyFix implements LocalQuickFix {
     return false;
   }
 
+  @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement psiElement = descriptor.getPsiElement();
     final PsiFile containingFile = psiElement.getContainingFile();

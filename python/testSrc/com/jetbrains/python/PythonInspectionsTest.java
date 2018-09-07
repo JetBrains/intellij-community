@@ -228,6 +228,10 @@ public class PythonInspectionsTest extends PyTestCase {
     doHighlightingTest(PyArgumentEqualDefaultInspection.class);
   }
 
+  public void testPyArgumentEqualDefaultInspectionPy3() {
+    doHighlightingTest(PyArgumentEqualDefaultInspection.class, LanguageLevel.PYTHON34);
+  }
+
   public void testPyNonAsciiCharInspection() {    //PY-5868
     doHighlightingTest(PyNonAsciiCharInspection.class);
   }

@@ -98,7 +98,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     presentation.setEnabled(e.getProject() != null);
   }
@@ -166,7 +166,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
                                CompilerBundle.message("generate.ant.build.title"));
     }
     else {
-      StringBuffer filesString = new StringBuffer();
+      StringBuilder filesString = new StringBuilder();
       for (int idx = 0; idx < _generated.size(); idx++) {
         final File file = _generated.get(idx);
         if (idx > 0) {
@@ -183,7 +183,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
     }
   }
 
-  private boolean backup(final File file, final Project project, GenerationOptions genOptions, List<File> filesToRefresh) {
+  private boolean backup(final File file, final Project project, GenerationOptions genOptions, List<? super File> filesToRefresh) {
     if (!genOptions.backupPreviouslyGeneratedFiles || !file.exists()) {
       return true;
     }
@@ -210,7 +210,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
     return ok;
   }
 
-  private File[] generateSingleFileBuild(Project project, GenerationOptions genOptions, List<File> filesToRefresh) throws IOException {
+  private File[] generateSingleFileBuild(Project project, GenerationOptions genOptions, List<? super File> filesToRefresh) throws IOException {
     final File projectBuildFileDestDir = VfsUtil.virtualToIoFile(project.getBaseDir());
     projectBuildFileDestDir.mkdirs();
     final File destFile = new File(projectBuildFileDestDir, genOptions.getBuildFileName());
@@ -236,19 +236,11 @@ public class GenerateAntBuildAction extends CompileActionBase {
                                              final File propertiesFile) throws IOException {
     FileUtil.createIfDoesntExist(buildxmlFile);
     FileUtil.createIfDoesntExist(propertiesFile);
-    final PrintWriter dataOutput = makeWriter(buildxmlFile);
-    try {
+    try (PrintWriter dataOutput = makeWriter(buildxmlFile)) {
       new SingleFileProjectBuild(project, genOptions).generate(dataOutput);
     }
-    finally {
-      dataOutput.close();
-    }
-    final PrintWriter propertiesOut = makeWriter(propertiesFile);
-    try {
+    try (PrintWriter propertiesOut = makeWriter(propertiesFile)) {
       new PropertyFileGeneratorImpl(project, genOptions).generate(propertiesOut);
-    }
-    finally {
-      propertiesOut.close();
     }
   }
 
@@ -280,7 +272,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
     }
   }
 
-  public File[] generateMultipleFileBuild(Project project, GenerationOptions genOptions, List<File> filesToRefresh) throws IOException {
+  public File[] generateMultipleFileBuild(Project project, GenerationOptions genOptions, List<? super File> filesToRefresh) throws IOException {
     final File projectBuildFileDestDir = VfsUtil.virtualToIoFile(project.getBaseDir());
     projectBuildFileDestDir.mkdirs();
     final List<File> generated = new ArrayList<>();
@@ -303,8 +295,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
     }
 
     FileUtil.createIfDoesntExist(projectBuildFile);
-    final PrintWriter mainDataOutput = makeWriter(projectBuildFile);
-    try {
+    try (PrintWriter mainDataOutput = makeWriter(projectBuildFile)) {
       final MultipleFileProjectBuild build = new MultipleFileProjectBuild(project, genOptions);
       build.generate(mainDataOutput);
       generated.add(projectBuildFile);
@@ -324,27 +315,16 @@ public class GenerateAntBuildAction extends CompileActionBase {
         }
 
         FileUtil.createIfDoesntExist(chunkBuildFile);
-        final PrintWriter out = makeWriter(chunkBuildFile);
-        try {
+        try (PrintWriter out = makeWriter(chunkBuildFile)) {
           new ModuleChunkAntProject(project, chunk, genOptions).generate(out);
           generated.add(chunkBuildFile);
         }
-        finally {
-          out.close();
-        }
       }
     }
-    finally {
-      mainDataOutput.close();
-    }
     // properties
-    final PrintWriter propertiesOut = makeWriter(propertiesFile);
-    try {
+    try (PrintWriter propertiesOut = makeWriter(propertiesFile)) {
       new PropertyFileGeneratorImpl(project, genOptions).generate(propertiesOut);
       generated.add(propertiesFile);
-    }
-    finally {
-      propertiesOut.close();
     }
 
     filesToRefresh.addAll(generated);

@@ -5,17 +5,13 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
 import com.intellij.lang.java.lexer.JavaLexer
-import com.intellij.openapi.components.AbstractProjectComponent
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.project.Project
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
 
-class JavaSoftKeywordHighlightingPassFactory(project: Project, registrar: TextEditorHighlightingPassRegistrar) :
-  AbstractProjectComponent(project), TextEditorHighlightingPassFactory {
-
+class JavaSoftKeywordHighlightingPassFactory(registrar: TextEditorHighlightingPassRegistrar) : TextEditorHighlightingPassFactory {
   init {
     registrar.registerTextEditorHighlightingPass(this, null, null, false, -1)
   }

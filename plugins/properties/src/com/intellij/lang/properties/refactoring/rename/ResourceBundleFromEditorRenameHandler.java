@@ -49,7 +49,7 @@ public class ResourceBundleFromEditorRenameHandler implements RenameHandler {
       return false;
     }
     final VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
-    return !(!(virtualFile instanceof ResourceBundleAsVirtualFile));
+    return virtualFile instanceof ResourceBundleAsVirtualFile;
   }
 
   @Override

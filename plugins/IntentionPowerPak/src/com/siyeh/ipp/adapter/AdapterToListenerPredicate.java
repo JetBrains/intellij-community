@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NonNls;
 
 class AdapterToListenerPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof PsiJavaCodeReferenceElement)) {
       return false;

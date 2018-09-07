@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.debugger
 
+import com.intellij.execution.DefaultExecutionResult
 import com.intellij.execution.ExecutionResult
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.openapi.application.runReadAction
@@ -15,6 +16,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointHandler
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.frame.XSuspendContext
+import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.debugger.connection.RemoteVmConnection
@@ -83,6 +85,9 @@ abstract class DebugProcessImpl<out C : VmConnection<*>>(session: XDebugSession,
     get() = (session.suspendContext?.activeExecutionStack as? ExecutionStackView)?.suspendContext?.vm ?: mainVm
 
   init {
+    if (session is XDebugSessionImpl && executionResult is DefaultExecutionResult) {
+      session.addRestartActions(*executionResult.restartActions)
+    }
     connection.stateChanged {
       when (it.status) {
         ConnectionStatus.DISCONNECTED, ConnectionStatus.DETACHED -> {

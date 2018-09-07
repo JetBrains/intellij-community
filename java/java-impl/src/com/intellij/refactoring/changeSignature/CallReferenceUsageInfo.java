@@ -29,6 +29,7 @@ public class CallReferenceUsageInfo extends UsageInfo {
     myReference = reference;
   }
 
+  @Override
   public PsiCallReference getReference() {
     return myReference;
   }

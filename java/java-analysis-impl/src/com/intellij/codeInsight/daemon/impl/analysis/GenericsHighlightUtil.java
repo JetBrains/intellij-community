@@ -28,6 +28,7 @@ import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -340,7 +341,7 @@ public class GenericsHighlightUtil {
                                                                  @NotNull PsiElement place,
                                                                  @NotNull PsiSubstitutor derivedSubstitutor,
                                                                  @NotNull Map<PsiClass, PsiSubstitutor> inheritedClasses,
-                                                                 @NotNull Set<PsiClass> visited,
+                                                                 @NotNull Set<? super PsiClass> visited,
                                                                  @NotNull TextRange textRange) {
     final List<PsiClassType.ClassResolveResult> superTypes = PsiClassImplUtil.getScopeCorrectedSuperTypes(aClass, place.getResolveScope());
     for (PsiClassType.ClassResolveResult result : superTypes) {
@@ -506,11 +507,11 @@ public class GenericsHighlightUtil {
            unrelatedMethodContainingClass.isInheritor(defaultMethodContainingClass, true);
   }
 
-  private static boolean hasNotOverriddenAbstract(@NotNull List<PsiClass> defaultContainingClasses, @NotNull PsiClass abstractMethodContainingClass) {
+  private static boolean hasNotOverriddenAbstract(@NotNull List<? extends PsiClass> defaultContainingClasses, @NotNull PsiClass abstractMethodContainingClass) {
     return defaultContainingClasses.stream().noneMatch(containingClass -> belongToOneHierarchy(containingClass, abstractMethodContainingClass));
   }
 
-  private static String hasUnrelatedDefaults(@NotNull List<PsiClass> defaults) {
+  private static String hasUnrelatedDefaults(@NotNull List<? extends PsiClass> defaults) {
     if (defaults.size() > 1) {
       PsiClass[] defaultClasses = defaults.toArray(PsiClass.EMPTY_ARRAY);
       ArrayList<PsiClass> classes = new ArrayList<>(defaults);
@@ -645,13 +646,8 @@ public class GenericsHighlightUtil {
     final PsiType retErasure2 = TypeConversionUtil.erasure(superMethod.getReturnType());
 
     boolean differentReturnTypeErasure = !Comparing.equal(retErasure1, retErasure2);
-    if (checkEqualsSuper && atLeast17) {
-      if (retErasure1 != null && retErasure2 != null) {
-        differentReturnTypeErasure = !TypeConversionUtil.isAssignable(retErasure1, retErasure2);
-      }
-      else {
-        differentReturnTypeErasure = !(retErasure1 == null && retErasure2 == null);
-      }
+    if (checkEqualsSuper && atLeast17 && retErasure1 != null && retErasure2 != null) {
+      differentReturnTypeErasure = !TypeConversionUtil.isAssignable(retErasure1, retErasure2);
     }
 
     if (differentReturnTypeErasure &&
@@ -838,8 +834,7 @@ public class GenericsHighlightUtil {
   @Nullable
   static HighlightInfo checkEnumInstantiation(@NotNull PsiElement expression, @Nullable PsiClass aClass) {
     if (aClass != null && aClass.isEnum() &&
-        (!(expression instanceof PsiNewExpression) ||
-         ((PsiNewExpression)expression).getArrayDimensions().length == 0 && ((PsiNewExpression)expression).getArrayInitializer() == null)) {
+        !(expression instanceof PsiNewExpression && ExpressionUtils.isArrayCreationExpression((PsiNewExpression)expression))) {
       String description = JavaErrorMessages.message("enum.types.cannot.be.instantiated");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
     }
@@ -1011,7 +1006,7 @@ public class GenericsHighlightUtil {
         return highlightInfo;
       }
       PsiClass superClass = superMethod.getMethod().getContainingClass();
-      if (languageLevel.equals(LanguageLevel.JDK_1_5) &&
+      if (languageLevel == LanguageLevel.JDK_1_5 &&
           superClass != null &&
           superClass.isInterface()) {
         String description = JavaErrorMessages.message("override.not.allowed.in.interfaces");
@@ -1522,7 +1517,7 @@ public class GenericsHighlightUtil {
 
   @Nullable
   private static String isTypeAccessible(@Nullable PsiType type,
-                                         @NotNull Set<PsiClass> classes,
+                                         @NotNull Set<? super PsiClass> classes,
                                          boolean checkParameters,
                                          @NotNull GlobalSearchScope resolveScope,
                                          @NotNull JavaPsiFacade factory) {

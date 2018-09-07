@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -41,6 +39,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   private static final PsiClassConverter CLASS_CONVERTER = new PluginPsiClassConverter();
   private static final Converter LANGUAGE_CONVERTER = new LanguageResolvingConverter();
   private static final DomExtender EXTENSION_EXTENDER = new DomExtender() {
+    @Override
     public void registerExtensions(@NotNull final DomElement domElement, @NotNull final DomExtensionsRegistrar registrar) {
       final ExtensionPoint extensionPoint = (ExtensionPoint)domElement.getChildDescription().getDomDeclaration();
       assert extensionPoint != null;
@@ -155,7 +154,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
       final String attrName = getStringAttribute(attrAnno, "value", evalHelper);
       if (attrName != null) {
         Class clazz = String.class;
-        if (withElement != null || isClassField(fieldName)) {
+        if (withElement != null && isClassField(fieldName)) {
           clazz = PsiClass.class;
         } else if (PsiType.BOOLEAN.equals(field.getType())) {
           clazz = Boolean.class;
@@ -202,24 +201,25 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   }
 
   private static void markAsClass(DomExtension extension, String fieldName, @Nullable With withElement) {
-    if (withElement != null) {
-      final String withClassName = withElement.getImplements().getStringValue();
-      extension.addCustomAnnotation(new ExtendClassImpl() {
-        @Override
-        public String value() {
-          return withClassName;
-        }
-      });
-    }
-    if (withElement != null || isClassField(fieldName)) {
+    if (withElement == null) return;
+
+    final String withClassName = withElement.getImplements().getStringValue();
+    extension.addCustomAnnotation(new ExtendClassImpl() {
+      @Override
+      public String value() {
+        return withClassName;
+      }
+    });
+
+    if (isClassField(fieldName)) {
       extension.setConverter(CLASS_CONVERTER);
     }
   }
 
   public static boolean isClassField(String fieldName) {
-    return (fieldName.endsWith("Class") && !fieldName.equals("forClass")) || 
-           fieldName.equals("implementation") || 
-           fieldName.equals("serviceInterface") || 
+    return (fieldName.endsWith("Class") && !fieldName.equals("forClass")) ||
+           fieldName.equals("implementation") ||
+           fieldName.equals("serviceInterface") ||
            fieldName.equals("serviceImplementation");
   }
 
@@ -360,6 +360,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     return result;
   }
 
+  @Override
   public void registerExtensions(@NotNull final Extensions extensions, @NotNull final DomExtensionsRegistrar registrar) {
     IdeaPlugin ideaPlugin = extensions.getParentOfType(IdeaPlugin.class, true);
     if (ideaPlugin == null) return;

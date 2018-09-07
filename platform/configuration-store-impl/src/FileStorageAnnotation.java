@@ -29,6 +29,11 @@ public class FileStorageAnnotation implements Storage {
   }
 
   @Override
+  public boolean exportable() {
+    return false;
+  }
+
+  @Override
   public String file() {
     return value();
   }

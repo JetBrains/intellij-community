@@ -232,7 +232,7 @@ public class ByChar {
     public final int[] characters;
     public final int[] offsets;
 
-    public CharOffsets(int[] characters, int[] offsets) {
+    CharOffsets(int[] characters, int[] offsets) {
       this.characters = characters;
       this.offsets = offsets;
     }

@@ -31,27 +31,31 @@ public class DefaultTreeExpander implements TreeExpander {
     myTree = tree;
   }
 
+  @Override
   public void expandAll() {
     TreeUtil.expandAll(myTree);
     showSelectionCentered();
   }
 
+  @Override
   public boolean canExpand() {
     return myTree.isShowing();
   }
 
+  @Override
   public void collapseAll() {
     TreeUtil.collapseAll(myTree, 1);
     showSelectionCentered();
   }
 
   private void showSelectionCentered() {
-    final int[] rowz = myTree.getSelectionRows();
-    if (rowz != null && rowz.length > 0) {
-      TreeUtil.showRowCentered(myTree, rowz[0], false);
+    int[] rows = myTree.getSelectionRows();
+    if (rows != null && rows.length > 0) {
+      TreeUtil.showRowCentered(myTree, rows[0], false);
     }
   }
 
+  @Override
   public boolean canCollapse() {
     return myTree.isShowing();
   }

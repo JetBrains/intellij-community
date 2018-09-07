@@ -64,7 +64,7 @@ public interface CompileContext extends UserDataHolder, MessageHandler {
 
   long getCompilationStartStamp(BuildTarget<?> target);
 
-  void setCompilationStartStamp(Collection<BuildTarget<?>> target, long stamp);
+  void setCompilationStartStamp(Collection<? extends BuildTarget<?>> target, long stamp);
 
   void markNonIncremental(ModuleBuildTarget target);
 

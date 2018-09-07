@@ -74,7 +74,7 @@ public class AddMethodQualifierFix implements IntentionAction {
   @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     final PsiMethodCallExpression element = myMethodCall.getElement();
-    if (element == null || !element.isValid()) {
+    if (element == null || !element.isValid() || element.getMethodExpression().getQualifierExpression() != null) {
       return false;
     }
     if (myCandidates == null) {

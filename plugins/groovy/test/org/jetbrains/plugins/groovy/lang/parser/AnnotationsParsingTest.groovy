@@ -38,4 +38,8 @@ class AnnotationsParsingTest extends GroovyParsingTestCase {
   void testTypeParameters() { doTest() }
 
   void testUnfinishedReference() { doTest() }
+
+  void testEmptyArrayValue() { doTest() }
+
+  void testTrailingCommaInArrayValue() { doTest() }
 }

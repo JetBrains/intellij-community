@@ -25,7 +25,7 @@ import java.util.List;
 * @author irengrig
 */
 class DummyChangesView implements ChangesViewI {
-  public DummyChangesView(Project project) {
+  DummyChangesView(Project project) {
   }
 
   @Override

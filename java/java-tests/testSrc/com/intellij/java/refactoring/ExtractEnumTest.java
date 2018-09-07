@@ -176,7 +176,7 @@ public class ExtractEnumTest extends MultiFileTestCase {
       try {
         final ExtractClassProcessor processor =
           new ExtractClassProcessor(aClass, fields, methods, new ArrayList<>(), "", null, "EEnum",
-                                    null, generateAccessors, enumConstants);
+                                    null, generateAccessors, enumConstants, false);
 
         processor.run();
         LocalFileSystem.getInstance().refresh(false);

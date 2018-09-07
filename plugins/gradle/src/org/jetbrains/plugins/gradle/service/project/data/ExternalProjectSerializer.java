@@ -295,7 +295,7 @@ public class ExternalProjectSerializer {
   private static class FileSerializer extends Serializer<File> {
     private final Kryo myStdKryo;
 
-    public FileSerializer() {
+    FileSerializer() {
       myStdKryo = new Kryo();
       myStdKryo.register(File.class);
       myStdKryo.setInstantiatorStrategy(new StdInstantiatorStrategy());

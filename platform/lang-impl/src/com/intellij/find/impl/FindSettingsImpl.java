@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.impl;
 
 import com.intellij.find.FindBundle;
@@ -20,13 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-@State(
-  name = "FindSettings",
-  storages = {
-    @Storage("find.xml"),
-    @Storage(value = "other.xml", deprecated = true)
-  }
-)
+@State(name = "FindSettings", storages = @Storage("find.xml"))
 public class FindSettingsImpl extends FindSettings implements PersistentStateComponent<FindSettingsImpl> {
   @NonNls private static final String FIND_DIRECTION_FORWARD = "forward";
   @NonNls private static final String FIND_DIRECTION_BACKWARD = "backward";

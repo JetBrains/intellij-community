@@ -9,7 +9,7 @@ import com.intellij.util.xmlb.annotations.Transient
 /**
  * Passed params will be used as default values, so, do not use constructor if instance will be used as a state (unless you want to change defaults)
  */
-@State(name = "UsageViewSettings", storages = [(Storage("usageView.xml")), (Storage(value = "other.xml", deprecated = true))])
+@State(name = "UsageViewSettings", storages = [Storage("usageView.xml")])
 open class UsageViewSettings(
   isGroupByFileStructure: Boolean = true,
   isGroupByModule: Boolean = true,

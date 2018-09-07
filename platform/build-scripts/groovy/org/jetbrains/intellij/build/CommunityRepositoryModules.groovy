@@ -153,8 +153,8 @@ class CommunityRepositoryModules {
       withResource("maven3-server-common/lib", "lib/maven3-server-lib")
       withResource("maven2-server-impl/lib/maven2", "lib/maven2")
       withModuleLibrary("JAXB", "intellij.maven.server.m2.impl", "maven2-server-lib")
+      withModuleLibrary("javax-activation", "intellij.maven.server.m2.impl", "maven2-server-lib")
       [
-        "activation-1.1.jar",
         "archetype-common-2.0-alpha-4-SNAPSHOT.jar",
         "commons-beanutils.jar",
         "maven-dependency-tree-1.2.jar",
@@ -206,6 +206,7 @@ class CommunityRepositoryModules {
     },
     plugin("intellij.cucumber.java") {
       withModule("intellij.cucumber.jvmFormatter")
+      withModule("intellij.cucumber.jvmFormatter3")
       withResource("../../community/lib/cucumber-core-1.2.4.jar", "lib")
       withResource("../../community/lib/gherkin-2.12.2.jar", "lib")
       doNotCreateSeparateJarForLocalizableResources()
@@ -248,9 +249,9 @@ class CommunityRepositoryModules {
       withModule("intellij.android.rt", "android-rt.jar", null)
 
       withModule("intellij.android", "android.jar", null)
-      withModule("intellij.android.android-adb", "android.jar")
-      withModule("intellij.android.android-debuggers", "android.jar")
-      withModule("intellij.android.android-lang", "android.jar")
+      withModule("intellij.android.adb", "android.jar")
+      withModule("intellij.android.debuggers", "android.jar")
+      withModule("intellij.android.lang", "android.jar")
       withModule("intellij.android.plugin", "android.jar")
       withModule("intellij.android.artwork")
       withModule("intellij.android.observable", "android.jar")
@@ -265,8 +266,8 @@ class CommunityRepositoryModules {
       withModule("intellij.android.profilers", "android-profilers.jar")
       withModule("intellij.android.profilers.ui", "android-profilers.jar")
       withModule("intellij.android.apkanalyzer", "android.jar")
-      withModule("intellij.android.project-system", "android.jar")
-      withModule("intellij.android.project-system-gradle", "android.jar")
+      withModule("intellij.android.projectSystem", "android.jar")
+      withModule("intellij.android.projectSystem.gradle", "android.jar")
       withModule("intellij.android.adt.ui", "adt-ui.jar")
       withModule("intellij.android.adt.ui.model", "adt-ui.jar")
       withModule("android.sdktools.sdklib", "sdklib.jar")
@@ -307,6 +308,9 @@ class CommunityRepositoryModules {
       withResourceFromModule("intellij.android","lib/androidWidgets", "lib/androidWidgets")
       withResourceFromModule("intellij.android.artwork","resources/device-art-resources", "lib/device-art-resources")
       withResourceFromModule("intellij.android","lib/sampleData", "lib/sampleData")
+      withResourceFromModule("intellij.android.adt.ui", "lib/libwebp/linux", "lib/libwebp/linux")
+      withResourceFromModule("intellij.android.adt.ui", "lib/libwebp/mac", "lib/libwebp/mac")
+      withResourceFromModule("intellij.android.adt.ui", "lib/libwebp/win", "lib/libwebp/win")
       withResourceArchive("../android/annotations", "lib/androidAnnotations.jar")
 
       // here go some differences from original Android Studio layout

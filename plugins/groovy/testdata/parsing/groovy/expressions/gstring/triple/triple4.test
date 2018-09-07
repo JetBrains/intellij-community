@@ -4,10 +4,10 @@
 -----
 Groovy script
   Literal
-    PsiElement(Gstring)('""""""')
+    PsiElement(triple double quoted string)('""""""')
   PsiElement(new line)('\n')
   Literal
-    PsiElement(Gstring)('"""\$"""')
+    PsiElement(triple double quoted string)('"""\$"""')
   PsiElement(new line)('\n')
   Literal
-    PsiElement(Gstring)('"""\""""')
+    PsiElement(triple double quoted string)('"""\""""')

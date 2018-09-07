@@ -58,24 +58,6 @@ public class MergeRequestImpl extends MergeRequest {
          cancelButtonPresentation);
   }
 
-  public MergeRequestImpl(@NotNull DiffContent left,
-                          @NotNull MergeVersion base,
-                          @NotNull DiffContent right,
-                          @Nullable Project project,
-                          @Nullable final ActionButtonPresentation okButtonPresentation,
-                          @Nullable final ActionButtonPresentation cancelButtonPresentation) {
-    this(left, new MergeContent(base, project), right, project, okButtonPresentation, cancelButtonPresentation);
-  }
-
-  public MergeRequestImpl(@NotNull String left,
-                          @NotNull String base,
-                          @NotNull String right,
-                          @Nullable Project project,
-                          @Nullable final ActionButtonPresentation okButtonPresentation,
-                          @Nullable final ActionButtonPresentation cancelButtonPresentation) {
-    this(left, base, right, null, project, okButtonPresentation, cancelButtonPresentation);
-  }
-
   public MergeRequestImpl(@NotNull String left,
                           @NotNull String base,
                           @NotNull String right,
@@ -154,14 +136,13 @@ public class MergeRequestImpl extends MergeRequest {
   }
 
   @Nullable
-  private MergeContent getMergeContent() {
+  public MergeContent getMergeContent() {
     if (myDiffContents[1] instanceof MergeContent) {
       return (MergeContent)myDiffContents[1];
     }
     return null;
   }
 
-  @Override
   @Nullable
   public DiffContent getResultContent() {
     return getMergeContent();
@@ -285,6 +266,11 @@ public class MergeRequestImpl extends MergeRequest {
     public void restoreOriginalContent() {
       myTarget.restoreOriginalContent(myProject);
     }
+
+    @NotNull
+    public MergeVersion getMergeVersion() {
+      return myTarget;
+    }
   }
 
   private static class AllResolvedListener implements ChangeCounter.Listener, Runnable {
@@ -320,7 +306,7 @@ public class MergeRequestImpl extends MergeRequest {
     }
 
     @Override
-    public void onCountersChanged(ChangeCounter counter) {
+    public void onCountersChanged(@NotNull ChangeCounter counter) {
       if (myWasInvoked) return;
       if (counter.getChangeCounter() != 0 || counter.getConflictCounter() != 0) return;
       ApplicationManager.getApplication().invokeLater(this);

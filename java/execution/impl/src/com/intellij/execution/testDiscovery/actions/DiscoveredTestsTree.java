@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 class DiscoveredTestsTree extends Tree implements DataProvider {
   private final DiscoveredTestsTreeModel myModel;
 
-  public DiscoveredTestsTree(String title) {
+  DiscoveredTestsTree(String title) {
     myModel = new DiscoveredTestsTreeModel();
     setModel(new AsyncTreeModel(myModel));
     HintUpdateSupply.installHintUpdateSupply(this, DiscoveredTestsTree::obj2psi);
@@ -88,7 +88,7 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
       //TODO
       boolean myAlreadyDone;
       @Override
-      protected void process(TreeModelEvent event, EventType type) {
+      protected void process(@NotNull TreeModelEvent event, @NotNull EventType type) {
         if (!myAlreadyDone && getTestCount() != 0) {
           myAlreadyDone = true;
           EdtInvocationManager.getInstance().invokeLater(() -> {
@@ -149,7 +149,7 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       TreePath[] paths = getSelectionModel().getSelectionPaths();
       List<PsiElement> result = ContainerUtil.newSmartList();

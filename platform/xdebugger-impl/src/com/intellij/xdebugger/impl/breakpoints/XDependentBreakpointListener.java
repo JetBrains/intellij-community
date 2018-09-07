@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
@@ -24,7 +25,7 @@ import java.util.EventListener;
  */
 public interface XDependentBreakpointListener extends EventListener {
 
-  void dependencySet(XBreakpoint<?> slave, XBreakpoint<?> master);
+  void dependencySet(@NotNull XBreakpoint<?> slave, @NotNull XBreakpoint<?> master);
 
   void dependencyCleared(XBreakpoint<?> breakpoint);
 }

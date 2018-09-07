@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl
 
 import com.google.common.collect.HashMultiset
@@ -28,7 +14,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
 import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.components.ProjectComponent
+import com.intellij.openapi.components.BaseComponent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -36,15 +22,14 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.editor.event.EditorFactoryAdapter
 import com.intellij.openapi.editor.event.EditorFactoryEvent
+import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.DirectoryIndex
 import com.intellij.openapi.startup.StartupManager
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
@@ -66,7 +51,10 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.VcsUtil
-import org.jetbrains.annotations.*
+import org.jetbrains.annotations.CalledInAny
+import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.CalledInBackground
+import org.jetbrains.annotations.TestOnly
 import java.nio.charset.Charset
 import java.util.*
 
@@ -78,10 +66,9 @@ class LineStatusTrackerManager(
   private val fileDocumentManager: FileDocumentManager,
   private val fileEditorManager: FileEditorManagerEx,
   @Suppress("UNUSED_PARAMETER") makeSureIndexIsInitializedFirst: DirectoryIndex
-) : ProjectComponent, LineStatusTrackerManagerI {
+) : BaseComponent, LineStatusTrackerManagerI, Disposable {
 
   private val LOCK = Any()
-  private val disposable: Disposable = Disposer.newDisposable()
   private var isDisposed = false
 
   private val trackers = HashMap<Document, TrackerData>()
@@ -116,33 +103,30 @@ class LineStatusTrackerManager(
     StartupManager.getInstance(project).registerPreStartupActivity {
       if (isDisposed) return@registerPreStartupActivity
 
-      application.addApplicationListener(MyApplicationListener(), disposable)
+      application.addApplicationListener(MyApplicationListener(), this)
 
-      val projectConnection = project.messageBus.connect(disposable)
-      projectConnection.subscribe(LineStatusTrackerSettingListener.TOPIC, MyLineStatusTrackerSettingListener())
-
-      val appConnection = application.messageBus.connect(disposable)
-      appConnection.subscribe(BatchFileChangeListener.TOPIC, MyBatchFileChangeListener())
+      val busConnection = project.messageBus.connect(this)
+      busConnection.subscribe(LineStatusTrackerSettingListener.TOPIC, MyLineStatusTrackerSettingListener())
+      busConnection.subscribe(BatchFileChangeListener.TOPIC, MyBatchFileChangeListener())
 
       val fsManager = FileStatusManager.getInstance(project)
-      fsManager.addFileStatusListener(MyFileStatusListener(), disposable)
+      fsManager.addFileStatusListener(MyFileStatusListener(), this)
 
       val editorFactory = EditorFactory.getInstance()
-      editorFactory.addEditorFactoryListener(MyEditorFactoryListener(), disposable)
-      editorFactory.eventMulticaster.addDocumentListener(MyDocumentListener(), disposable)
+      editorFactory.addEditorFactoryListener(MyEditorFactoryListener(), this)
+      editorFactory.eventMulticaster.addDocumentListener(MyDocumentListener(), this)
 
       changeListManager.addChangeListListener(MyChangeListListener())
 
       val virtualFileManager = VirtualFileManager.getInstance()
-      virtualFileManager.addVirtualFileListener(MyVirtualFileListener(), disposable)
+      virtualFileManager.addVirtualFileListener(MyVirtualFileListener(), this)
 
-      CommandProcessor.getInstance().addCommandListener(MyCommandListener(), disposable)
+      busConnection.subscribe(CommandListener.TOPIC, MyCommandListener())
     }
   }
 
-  override fun disposeComponent() {
+  override fun dispose() {
     isDisposed = true
-    Disposer.dispose(disposable)
 
     synchronized(LOCK) {
       for ((document, multiset) in forcedDocuments) {
@@ -160,11 +144,6 @@ class LineStatusTrackerManager(
 
       loader.dispose()
     }
-  }
-
-  @NonNls
-  override fun getComponentName(): String {
-    return "LineStatusTrackerManager"
   }
 
   override fun getLineStatusTracker(document: Document): LineStatusTracker<*>? {
@@ -244,10 +223,9 @@ class LineStatusTrackerManager(
       if (forcedDocuments.containsKey(document)) return
 
       if (data.tracker is PartialLocalLineStatusTracker) {
-        val hasPartialChanges = data.tracker.affectedChangeListsIds.size > 1
-        val hasBlocksExcludedFromCommit = data.tracker.hasBlocksExcludedFromCommit()
+        val hasPartialChanges = data.tracker.hasPartialState()
         val isLoading = loader.hasRequest(RefreshRequest(document))
-        if (hasPartialChanges || hasBlocksExcludedFromCommit || isLoading) return
+        if (hasPartialChanges || isLoading) return
       }
 
       releaseTracker(document)
@@ -619,7 +597,7 @@ class LineStatusTrackerManager(
     }
   }
 
-  private inner class MyEditorFactoryListener : EditorFactoryAdapter() {
+  private inner class MyEditorFactoryListener : EditorFactoryListener {
     override fun editorCreated(event: EditorFactoryEvent) {
       val editor = event.editor
       if (isTrackedEditor(editor)) {
@@ -662,19 +640,35 @@ class LineStatusTrackerManager(
       if (!partialChangeListsEnabled) return
 
       synchronized(LOCK) {
-        if (file.isDirectory) {
-          for (data in trackers.values) {
-            if (VfsUtil.isAncestor(file, data.tracker.virtualFile, false)) {
-              reregisterTrackerInCLM(data)
-            }
-          }
-        }
-        else {
-          val document = fileDocumentManager.getCachedDocument(file) ?: return
-          val data = trackers[document] ?: return
-
+        forEachTrackerUnder(file) { data ->
           reregisterTrackerInCLM(data)
         }
+      }
+    }
+
+    override fun fileDeleted(event: VirtualFileEvent) {
+      if (!partialChangeListsEnabled) return
+
+      synchronized(LOCK) {
+        forEachTrackerUnder(event.file) { data ->
+          releaseTracker(data.tracker.document)
+        }
+      }
+    }
+
+    private fun forEachTrackerUnder(file: VirtualFile, action: (TrackerData) -> Unit) {
+      if (file.isDirectory) {
+        for (data in trackers.values) {
+          if (VfsUtil.isAncestor(file, data.tracker.virtualFile, false)) {
+            action(data)
+          }
+        }
+      }
+      else {
+        val document = fileDocumentManager.getCachedDocument(file) ?: return
+        val data = trackers[document] ?: return
+
+        action(data)
       }
     }
   }
@@ -743,7 +737,7 @@ class LineStatusTrackerManager(
   }
 
   private inner class MyCommandListener : CommandListener {
-    override fun commandFinished(event: CommandEvent?) {
+    override fun commandFinished(event: CommandEvent) {
       if (!partialChangeListsEnabled) return
 
       if (CommandProcessor.getInstance().currentCommand == null &&
@@ -1025,6 +1019,10 @@ class LineStatusTrackerManager(
 
   @TestOnly
   fun waitUntilBaseContentsLoaded() {
+    if (ApplicationManager.getApplication().isDispatchThread) {
+      UIUtil.dispatchAllInvocationEvents()
+    }
+
     val semaphore = Semaphore()
     semaphore.down()
 

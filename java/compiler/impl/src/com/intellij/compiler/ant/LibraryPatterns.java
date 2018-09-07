@@ -59,6 +59,7 @@ public class LibraryPatterns extends Generator {
   /**
    * {@inheritDoc}
    */
+  @Override
   public void generate(final PrintWriter out) throws IOException {
     myPatternSet.generate(out);
   }

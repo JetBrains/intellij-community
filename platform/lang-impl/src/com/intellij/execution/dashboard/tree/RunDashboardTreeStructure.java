@@ -91,7 +91,7 @@ public class RunDashboardTreeStructure extends AbstractTreeStructureBase {
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
     }
   }
 

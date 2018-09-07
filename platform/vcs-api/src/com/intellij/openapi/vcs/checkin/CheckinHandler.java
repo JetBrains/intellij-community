@@ -4,7 +4,9 @@ package com.intellij.openapi.vcs.checkin;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.changes.LocalCommitExecutor;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
@@ -22,7 +24,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
  *
  * @author lesya
  * @since 5.1
- * @see BaseCheckinHandlerFactory#createHandler(com.intellij.openapi.vcs.CheckinProjectPanel, CommitContext)
+ * @see BaseCheckinHandlerFactory#createHandler(CheckinProjectPanel, CommitContext)
  * @see CodeAnalysisBeforeCheckinHandler
  */
 public abstract class CheckinHandler {
@@ -60,7 +62,6 @@ public abstract class CheckinHandler {
    *
    * @return the panel instance, or null if the handler does not provide any options to show in the
    * "After Check In" group.
-   * @param parentDisposable
    */
   @Nullable
   public RefreshableOnComponent getAfterCheckinConfigurationPanel(final Disposable parentDisposable) {
@@ -74,7 +75,6 @@ public abstract class CheckinHandler {
    * get information about the files to be checked in.
    *
    * @param executor the commit executor, or null if the standard commit operation is executed.
-   * @param additionalDataConsumer
    * @return the code indicating whether the check-in operation should be performed or aborted.
    */
   public ReturnResult beforeCheckin(@Nullable CommitExecutor executor, PairConsumer<Object, Object> additionalDataConsumer) {

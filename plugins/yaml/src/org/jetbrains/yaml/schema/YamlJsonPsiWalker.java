@@ -1,8 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.schema;
 
+import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.CompletionUtilCore;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -111,10 +114,15 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
   @Override
   public Set<String> getPropertyNamesOfParentObject(@NotNull PsiElement originalPosition, PsiElement computedPosition) {
     YAMLMapping object = PsiTreeUtil.getParentOfType(originalPosition, YAMLMapping.class);
-    if (object == null) object = PsiTreeUtil.getParentOfType(computedPosition, YAMLMapping.class);
+    YAMLMapping otherObject = PsiTreeUtil.getParentOfType(computedPosition, YAMLMapping.class);
+    // the original position can be either a sound element or a whitespace; whitespaces can belong to the parent
+    if (object == null || otherObject != null
+                          && PsiTreeUtil.isAncestor(CompletionUtil.getOriginalOrSelf(object),
+                                                    CompletionUtil.getOriginalOrSelf(otherObject), true)) {
+      object = otherObject;
+    }
     if (object == null) return Collections.emptySet();
-    return object.getKeyValues().stream().filter(p -> p != null && p.getName() != null)
-                 .map(p -> p.getName()).collect(Collectors.toSet());
+    return new YamlObjectAdapter(object).getPropertyList().stream().map(p -> p.getName()).collect(Collectors.toSet());
   }
 
   @Nullable
@@ -149,6 +157,7 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
       } else if (current instanceof YAMLMapping && position instanceof YAMLKeyValue) {
         // if either value or not first in the chain - needed for completion variant
         final String propertyName = StringUtil.notNullize(((YAMLKeyValue)position).getName());
+        if (propertyName.contains(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED)) continue;
         steps.add(JsonSchemaVariantsTreeBuilder.Step.createPropertyStep(propertyName));
       } else if (breakCondition(current)) {
         break;
@@ -156,8 +165,7 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
         if (current instanceof YAMLMapping) {
           List<YAMLPsiElement> elements = ((YAMLMapping)current).getYAMLElements();
           if (elements.size() == 0) return null;
-          YAMLPsiElement last = elements.get(elements.size() - 1);
-          if (last == position) {
+          if (position instanceof YAMLPsiElement && elements.contains(position)) {
             continue;
           }
         }
@@ -179,18 +187,20 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
   }
 
   @Override
-  public String getDefaultObjectValue(boolean includeWhitespaces) {
-    return includeWhitespaces ? "\n  " : "";
+  public String getDefaultObjectValue() {
+    return "";
   }
-
-  @Nullable public String defaultObjectValueDescription() { return "start object"; }
 
   @Override
-  public String getDefaultArrayValue(boolean includeWhitespaces) {
-    return includeWhitespaces ? "\n  - " : "- ";
+  @Nullable public String defaultObjectValueDescription() { return "{...}"; }
+
+  @Override
+  public String getDefaultArrayValue() {
+    return "- ";
   }
 
-  @Nullable public String defaultArrayValueDescription() { return "start array"; }
+  @Override
+  @Nullable public String defaultArrayValueDescription() { return "[...]"; }
 
   @Override
   public boolean invokeEnterBeforeObjectAndArray() {
@@ -200,10 +210,19 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
   @Override
   public String getNodeTextForValidation(PsiElement element) {
     String text = element.getText();
-    if (!StringUtil.startsWith(text, "!!")) return text;
+    if (!StringUtil.startsWith(text, "!!") && !StringUtil.startsWithChar(text, '&')) return text;
     // remove tags
     int spaceIndex = text.indexOf(' ');
     return spaceIndex > 0 ? text.substring(spaceIndex + 1) : text;
+  }
+
+  @Override
+  public TextRange adjustErrorHighlightingRange(@NotNull PsiElement element) {
+    YAMLAnchor[] anchors = PsiTreeUtil.getChildrenOfType(element, YAMLAnchor.class);
+    if (anchors == null || anchors.length == 0) return element.getTextRange();
+    YAMLAnchor lastAnchor = anchors[anchors.length - 1];
+    PsiElement next = PsiTreeUtil.skipWhitespacesForward(lastAnchor);
+    return next == null ? element.getTextRange() : next.getTextRange();
   }
 
   @Override
@@ -215,7 +234,19 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
       @Override
       public PsiElement getPropertyValue(PsiElement property) {
         assert property instanceof YAMLKeyValue;
-        return ((YAMLKeyValue)property).getValue();
+        YAMLValue value = ((YAMLKeyValue)property).getValue();
+        if (value == null) return null;
+        return adjustValue(property);
+      }
+
+      @NotNull
+      @Override
+      public PsiElement adjustValue(@NotNull PsiElement value) {
+        if (!(value instanceof YAMLValue)) return value;
+        YAMLAnchor[] anchors = PsiTreeUtil.getChildrenOfType(value, YAMLAnchor.class);
+        if (anchors == null || anchors.length == 0) return value;
+        PsiElement next = PsiTreeUtil.skipWhitespacesForward(anchors[anchors.length - 1]);
+        return next == null ? value : next;
       }
 
       @Nullable
@@ -252,8 +283,8 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
       }
 
       @Override
-      public boolean fixWhitespaceBefore() {
-        return false;
+      public boolean fixWhitespaceBefore(PsiElement initialElement, PsiElement element) {
+        return initialElement instanceof YAMLValue && initialElement != element;
       }
     };
   }

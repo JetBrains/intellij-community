@@ -43,12 +43,7 @@ public class GotoInstruction extends Instruction implements JumpInstruction {
 
   @Override
   public void setOffset(final int offset) {
-    myOffset = new ControlFlow.ControlFlowOffset() {
-      @Override
-      public int getInstructionOffset() {
-        return offset;
-      }
-    };
+    myOffset = new ControlFlow.FixedOffset(offset);
   }
 
 }

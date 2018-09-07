@@ -1,12 +1,9 @@
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-  <title>javaClass</title>
-  <g>
-    <g>
-      <polygon points="7 1 3 5 7 5 7 1" fill="#9aa7b0" opacity="0.8" style="isolation: isolate"/>
-      <rect x="1" y="9" width="15" height="7" fill="#40b6e0" opacity="0.7"/>
-      <polygon points="8 1 8 5 8 6 7 6 3 6 3 8 13 8 13 1 8 1" fill="#9aa7b0" opacity="0.8" style="isolation: isolate"/>
-    </g>
-    <path d="M3,12.51378v-.0135C3,11.11855,3.79979,10,5.00641,10,6.20662,10,7,11.10505,7,12.48622v.01406C7,13.88145,6.19968,15,4.99359,15,3.787,15,3,13.895,3,12.51378Zm3.30735.00165v-.01512c0-1.06775-.5215-1.94211-1.31453-1.94211-.79362,0-1.30017.85105-1.30017,1.92636v.01575c0,1.06712.51373,1.94148,1.31453,1.94148S6.30735,13.57562,6.30735,12.51543Z" fill="#231f20" opacity="0.7"/>
-    <polygon points="9.413 10 8.107 10.463 8.248 11 8.839 11 9.158 10.912 9.158 15 10 15 10 10 9.413 10" fill="#231f20" opacity="0.7"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <g fill="none" fill-rule="evenodd">
+    <polygon fill="#40B6E0" fill-opacity=".7" points="1 16 16 16 16 9 1 9"/>
+    <polygon fill="#9AA7B0" fill-opacity=".8" points="7 1 3 5 7 5"/>
+    <polygon fill="#9AA7B0" fill-opacity=".8" points="8 1 8 6 3 6 3 8 13 8 13 1"/>
+    <path fill="#231F20" fill-opacity=".7" d="M2,1 C1.292,1 1,1.54 1,2.5 C1,3.46 1.285,4 2,4 C2.715,4 3,3.446 3,2.5 C3,1.554 2.708,1 2,1 Z M2,-0.0003 C3.207,-0.0003 4,1.1177 4,2.4997 C4,3.8817 3.206,4.9997 2,4.9997 C0.794,4.9997 2.84217094e-14,3.881 2.84217094e-14,2.5 C2.84217094e-14,0.958803662 0.793,-0.0003 2,-0.0003 Z" transform="translate(3 10)"/>
+    <polygon fill="#231F20" fill-opacity=".7" points="1.1 0 0 .443 .157 1.225 1 1 1 5 2 5 2 0" transform="translate(8 10)"/>
   </g>
 </svg>

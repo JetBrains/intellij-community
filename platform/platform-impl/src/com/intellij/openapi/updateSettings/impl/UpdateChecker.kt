@@ -8,6 +8,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.externalComponents.ExternalComponentManager
 import com.intellij.ide.plugins.*
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger
 import com.intellij.notification.*
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationInfoEx
@@ -389,9 +390,9 @@ object UpdateChecker {
 
     if (updatedChannel != null && newBuild != null) {
       val runnable = {
-        val patch = checkForUpdateResult.findPatchForBuild(ApplicationInfo.getInstance().build)
+        val patches = checkForUpdateResult.patches
         val forceHttps = updateSettings.canUseSecureConnection()
-        UpdateInfoDialog(updatedChannel, newBuild, patch, enableLink, forceHttps, updatedPlugins, incompatiblePlugins).show()
+        UpdateInfoDialog(updatedChannel, newBuild, patches, enableLink, forceHttps, updatedPlugins, incompatiblePlugins).show()
       }
 
       ourShownNotifications.remove(NotificationUniqueType.PLATFORM)?.forEach { it.expire() }
@@ -400,8 +401,12 @@ object UpdateChecker {
         runnable.invoke()
       }
       else {
+        FUSApplicationUsageTrigger.getInstance().trigger(IdeUpdateUsageTriggerCollector::class.java, "notification.shown")
         val message = IdeBundle.message("updates.ready.message", ApplicationNamesInfo.getInstance().fullProductName)
-        showNotification(project, message, runnable, NotificationUniqueType.PLATFORM)
+        showNotification(project, message, {
+          FUSApplicationUsageTrigger.getInstance().trigger(IdeUpdateUsageTriggerCollector::class.java, "notification.clicked")
+          runnable()
+        }, NotificationUniqueType.PLATFORM)
       }
       return
     }
@@ -543,12 +548,12 @@ object UpdateChecker {
 
     val channel: UpdateChannel?
     val newBuild: BuildInfo?
-    val patch: PatchInfo?
+    val patches: UpdateChain?
     if (forceUpdate) {
       val node = loadElement(updateInfoText).getChild("product")?.getChild("channel") ?: throw IllegalArgumentException("//channel missing")
       channel = UpdateChannel(node)
       newBuild = channel.builds.firstOrNull() ?: throw IllegalArgumentException("//build missing")
-      patch = newBuild.patches.firstOrNull()
+      patches = newBuild.patches.firstOrNull()?.let { UpdateChain(listOf(it.fromBuild, newBuild.number), it.size) }
     }
     else {
       val updateInfo = UpdatesInfo(loadElement(updateInfoText))
@@ -556,12 +561,12 @@ object UpdateChecker {
       val checkForUpdateResult = strategy.checkForUpdates()
       channel = checkForUpdateResult.updatedChannel
       newBuild = checkForUpdateResult.newBuild
-      patch = checkForUpdateResult.findPatchForBuild(ApplicationInfo.getInstance().build)
+      patches = checkForUpdateResult.patches
     }
 
     if (channel != null && newBuild != null) {
       val patchFile = if (patchFilePath != null) File(FileUtil.toSystemDependentName(patchFilePath)) else null
-      UpdateInfoDialog(channel, newBuild, patch, patchFile).show()
+      UpdateInfoDialog(channel, newBuild, patches, patchFile).show()
     }
     else {
       NoUpdatesDialog(true).show()

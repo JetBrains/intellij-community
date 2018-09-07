@@ -49,7 +49,7 @@ public class CacheUpdateRunner {
   public static void processFiles(@NotNull ProgressIndicator indicator,
                                   @NotNull Collection<VirtualFile> files,
                                   @NotNull Project project,
-                                  @NotNull Consumer<FileContent> processor) {
+                                  @NotNull Consumer<? super FileContent> processor) {
     indicator.checkCanceled();
     final FileContentQueue queue = new FileContentQueue(project, files, indicator);
     final double total = files.size();
@@ -105,7 +105,7 @@ public class CacheUpdateRunner {
                                                              @NotNull ProgressUpdater progressUpdater,
                                                              @NotNull ProgressIndicator suspendableIndicator,
                                                              @NotNull Project project,
-                                                             @NotNull Consumer<FileContent> fileProcessor) {
+                                                             @NotNull Consumer<? super FileContent> fileProcessor) {
     final ProgressIndicatorBase innerIndicator = new ProgressIndicatorBase() {
       @Override
       protected boolean isCancelable() {
@@ -187,7 +187,7 @@ public class CacheUpdateRunner {
     private final AtomicBoolean myFinished;
     private final ProgressUpdater myProgressUpdater;
     @NotNull private final Project myProject;
-    @NotNull private final Consumer<FileContent> myProcessor;
+    @NotNull private final Consumer<? super FileContent> myProcessor;
 
     MyRunnable(@NotNull ProgressIndicatorBase innerIndicator,
                @NotNull ProgressIndicator suspendableIndicator,
@@ -195,7 +195,7 @@ public class CacheUpdateRunner {
                @NotNull AtomicBoolean finished,
                @NotNull ProgressUpdater progressUpdater,
                @NotNull Project project,
-               @NotNull Consumer<FileContent> fileProcessor) {
+               @NotNull Consumer<? super FileContent> fileProcessor) {
       myInnerIndicator = innerIndicator;
       mySuspendableIndicator = suspendableIndicator;
       myQueue = queue;

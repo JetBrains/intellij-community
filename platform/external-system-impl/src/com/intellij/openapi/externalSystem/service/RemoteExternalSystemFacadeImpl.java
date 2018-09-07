@@ -23,10 +23,10 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.rmi.RemoteException;
@@ -114,6 +114,9 @@ public class RemoteExternalSystemFacadeImpl<S extends ExternalSystemExecutionSet
         try {
           return method.invoke(impl, args);
         }
+        catch (InvocationTargetException e) {
+          throw e.getCause();
+        }
         finally {
           myCallsInProgressNumber.decrementAndGet();
           updateAutoShutdownTime();
@@ -159,7 +162,7 @@ public class RemoteExternalSystemFacadeImpl<S extends ExternalSystemExecutionSet
         @Override
         public void write(int b) {
           char c = (char)b;
-          myBuffer.append(Character.toString(c));
+          myBuffer.append(c);
           if (c == '\n') {
             doFlush();
           }

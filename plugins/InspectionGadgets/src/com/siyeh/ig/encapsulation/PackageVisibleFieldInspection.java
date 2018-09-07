@@ -16,13 +16,60 @@
 package com.siyeh.ig.encapsulation;
 
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiModifier;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.EncapsulateVariableFix;
+import org.jetbrains.annotations.NotNull;
 
-public class PackageVisibleFieldInspection extends PackageVisibleFieldInspectionBase {
+public class PackageVisibleFieldInspection extends BaseInspection {
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     final PsiField field = (PsiField)infos[0];
     return new EncapsulateVariableFix(field.getName());
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "package.visible.field.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "package.visible.field.problem.descriptor");
+  }
+
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new PackageVisibleFieldVisitor();
+  }
+
+  private static class PackageVisibleFieldVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitField(@NotNull PsiField field) {
+      if (field.hasModifierProperty(PsiModifier.PROTECTED) ||
+          field.hasModifierProperty(PsiModifier.PUBLIC) ||
+          field.hasModifierProperty(PsiModifier.PRIVATE)) {
+        return;
+      }
+      if (field.hasModifierProperty(PsiModifier.STATIC) &&
+          field.hasModifierProperty(PsiModifier.FINAL)) {
+        return;
+      }
+      registerFieldError(field, field);
+    }
   }
 }

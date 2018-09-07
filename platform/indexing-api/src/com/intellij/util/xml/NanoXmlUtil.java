@@ -135,12 +135,8 @@ public class NanoXmlUtil {
 
   @NotNull
   public static XmlFileHeader parseHeaderWithException(final VirtualFile file) throws IOException {
-    final InputStream stream = file.getInputStream();
-    try {
+    try (InputStream stream = file.getInputStream()) {
       return parseHeader(new MyXMLReader(stream));
-    }
-    finally {
-      stream.close();
     }
   }
 
@@ -329,11 +325,11 @@ public class NanoXmlUtil {
     private String publicId;
     private String systemId;
 
-    public MyXMLReader(final Reader documentReader) {
+    MyXMLReader(final Reader documentReader) {
       super(documentReader);
     }
 
-    public MyXMLReader(InputStream stream) throws IOException {
+    MyXMLReader(InputStream stream) throws IOException {
       super(stream);
     }
 

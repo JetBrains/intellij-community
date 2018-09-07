@@ -345,11 +345,6 @@
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.strings</categoryKey>
     </intentionAction>
-    <intentionAction>
-      <className>com.siyeh.ipp.chartostring.StringToCharIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.strings</categoryKey>
-    </intentionAction>
 
     <!-- Try Statements -->
     <intentionAction>

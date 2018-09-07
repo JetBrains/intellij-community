@@ -25,6 +25,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
+import com.intellij.psi.impl.source.resolve.reference.impl.JavaLangClassMemberReference;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
@@ -53,6 +54,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inline.InlineMethodProcessor");
@@ -118,16 +120,19 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     myDescriptiveName = DescriptiveNameUtil.getDescriptiveName(myMethod);
   }
 
+  @Override
   @NotNull
   protected String getCommandName() {
     return RefactoringBundle.message("inline.method.command", myDescriptiveName);
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     return new InlineViewDescriptor(myMethod);
   }
 
+  @Override
   @NotNull
   protected UsageInfo[] findUsages() {
     if (myInlineThisOnly) return new UsageInfo[]{new UsageInfo(myReference)};
@@ -185,6 +190,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     myMethod = (PsiMethod)elements[0];
   }
 
+  @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     if (!myInlineThisOnly && checkReadOnly()) {
       if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, myMethod)) return false;
@@ -205,6 +211,10 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         final PsiElement element = info.getElement();
         if (element instanceof PsiDocMethodOrFieldRef && !PsiTreeUtil.isAncestor(myMethod, element, false)) {
           conflicts.putValue(element, "Inlined method is used in javadoc");
+        }
+        if (element instanceof PsiLiteralExpression &&
+            Stream.of(element.getReferences()).anyMatch(JavaLangClassMemberReference.class::isInstance)) {
+          conflicts.putValue(element, "Inlined method is used reflectively");
         }
         if (element instanceof PsiMethodReferenceExpression) {
           final PsiExpression qualifierExpression = ((PsiMethodReferenceExpression)element).getQualifierExpression();
@@ -368,6 +378,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     return result;
   }
 
+  @Override
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
     RangeMarker position = null;
     if (myEditor != null) {
@@ -408,7 +419,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private void doRefactoring(UsageInfo[] usages) {
     try {
       if (myInlineThisOnly) {
-        if (myMethod.isConstructor() && InlineMethodHandler.isChainingConstructor(myMethod)) {
+        if (myMethod.isConstructor() && InlineUtil.isChainingConstructor(myMethod)) {
           if (myReference instanceof PsiMethodReferenceExpression) {
             inlineMethodReference((PsiMethodReferenceExpression)myReference);
           }
@@ -623,7 +634,9 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       if (enumConstant != null) {
         PsiExpression returnExpr = getSimpleReturnedExpression(myMethod);
         if (returnExpr != null) {
+          ChangeContextUtil.encodeContextInfo(returnExpr, true);
           PsiElement copy = returnExpr.copy();
+          ChangeContextUtil.clearContextInfo(returnExpr);
           copy.accept(new JavaRecursiveElementVisitor() {
             @Override
             public void visitReferenceExpression(PsiReferenceExpression expression) {
@@ -640,7 +653,10 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
               }
             }
           });
-          methodCall.replace(copy);
+          PsiElement replace = methodCall.replace(copy);
+          if (blockData.thisVar != null) {
+            ChangeContextUtil.decodeContextInfo(replace, myMethod.getContainingClass(), blockData.thisVar.getInitializer());
+          }
         }
       }
       return;
@@ -951,7 +967,10 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         if (parent instanceof PsiClass) {
           PsiClass parentClass = (PsiClass)parent;
           final PsiClass containingClass = myMethod.getContainingClass();
-          if (InheritanceUtil.isInheritorOrSelf(parentClass, containingClass, true)) {
+          if (containingClass != null && parentClass.isInheritor(containingClass, true)) {
+            qualifier = myFactory.createExpressionFromText(parentClass.getName() + ".this", null);
+          }
+          else if (containingClass != null && parentClass.equals(containingClass)) {
             qualifier = myFactory.createExpressionFromText("this", null);
           }
           else {
@@ -1424,6 +1443,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       PsiExpression callExpr = JavaPsiFacade.getInstance(myProject).getParserFacade().createExpressionFromText(text, call);
       PsiElement classExpr = ref.replace(callExpr);
       classExpr.accept(new JavaRecursiveElementWalkingVisitor() {
+        @Override
         public void visitReturnStatement(final PsiReturnStatement statement) {
           super.visitReturnStatement(statement);
           PsiExpression expr = statement.getReturnValue();
@@ -1620,7 +1640,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     final PsiLocalVariable[] parmVars;
     final PsiLocalVariable resultVar;
 
-    public BlockData(PsiCodeBlock block, PsiLocalVariable thisVar, PsiLocalVariable[] parmVars, PsiLocalVariable resultVar) {
+    BlockData(PsiCodeBlock block, PsiLocalVariable thisVar, PsiLocalVariable[] parmVars, PsiLocalVariable resultVar) {
       this.block = block;
       this.thisVar = thisVar;
       this.parmVars = parmVars;

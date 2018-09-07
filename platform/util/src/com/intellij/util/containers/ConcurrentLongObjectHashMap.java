@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.util.containers;
 
@@ -355,7 +341,7 @@ class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V> {
    *                                  elements is negative or the load factor is nonpositive
    * @since 1.6
    */
-  public ConcurrentLongObjectHashMap(int initialCapacity, float loadFactor) {
+  ConcurrentLongObjectHashMap(int initialCapacity, float loadFactor) {
     this(initialCapacity, loadFactor, 1);
   }
 
@@ -377,7 +363,7 @@ class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V> {
    *                                  negative or the load factor or concurrencyLevel are
    *                                  nonpositive
    */
-  public ConcurrentLongObjectHashMap(int initialCapacity,
+  ConcurrentLongObjectHashMap(int initialCapacity,
                                      float loadFactor, int concurrencyLevel) {
     if (!(loadFactor > 0.0f) || initialCapacity < 0 || concurrencyLevel <= 0) {
       throw new IllegalArgumentException();
@@ -948,6 +934,7 @@ class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V> {
    * @return an enumeration of the values in this table
    * @see #values()
    */
+  @Override
   @NotNull
   public Enumeration<V> elements() {
     Node<V>[] t;

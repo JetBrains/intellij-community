@@ -17,6 +17,7 @@ package com.intellij.util.graph;
 
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.graph.impl.GraphAlgorithmsImpl;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.util.*;
@@ -62,11 +63,13 @@ public class DFSTBuilderTest {
 
   private static Graph<TestNode> graphByNodes(TestNode[] allNodes, Map<TestNode, TestNode[]> mapIn) {
     return GraphGenerator.generate(new InboundSemiGraph<TestNode>() {
+      @NotNull
       @Override
       public Collection<TestNode> getNodes() {
         return Arrays.asList(allNodes);
       }
 
+      @NotNull
       @Override
       public Iterator<TestNode> getIn(TestNode n) {
         return GraphTestUtil.iteratorOfArray(ObjectUtils.notNull(mapIn.get(n), new TestNode[0]));

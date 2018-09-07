@@ -98,7 +98,12 @@ public class SwingUpdaterUI implements UpdaterUI {
 
   @Override
   public void setDescription(String oldBuildDesc, String newBuildDesc) {
-    invokeLater(() -> myProcessTitle.setText("Updating " + oldBuildDesc + " to " + newBuildDesc + " ..."));
+    setDescription("Updating " + oldBuildDesc + " to " + newBuildDesc + " ...");
+  }
+
+  @Override
+  public void setDescription(String text) {
+    invokeLater(() -> myProcessTitle.setText(text.isEmpty() ? " " : text));
   }
 
   @Override
@@ -154,7 +159,7 @@ public class SwingUpdaterUI implements UpdaterUI {
   }
 
   @Override
-  public Map<String, ValidationResult.Option> askUser(List<ValidationResult> validationResults) throws OperationCancelledException {
+  public Map<String, ValidationResult.Option> askUser(List<? extends ValidationResult> validationResults) throws OperationCancelledException {
     boolean canProceed = validationResults.stream().noneMatch(r -> r.options.contains(ValidationResult.Option.NONE));
     Map<String, ValidationResult.Option> result = new HashMap<>();
 
@@ -258,7 +263,7 @@ public class SwingUpdaterUI implements UpdaterUI {
 
     private final List<Item> myItems = new ArrayList<>();
 
-    public MyTableModel(List<ValidationResult> validationResults) {
+    MyTableModel(List<? extends ValidationResult> validationResults) {
       for (ValidationResult each : validationResults) {
         myItems.add(new Item(each, each.options.get(0)));
       }
@@ -343,7 +348,7 @@ public class SwingUpdaterUI implements UpdaterUI {
   }
 
   private static class MyCellEditor extends DefaultCellEditor {
-    public MyCellEditor() {
+    MyCellEditor() {
       super(new JComboBox());
     }
 

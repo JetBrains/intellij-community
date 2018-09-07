@@ -109,7 +109,7 @@ public abstract class PlatformIdTableBuilding {
     private final DataIndexer<TodoIndexEntry, Integer, FileContent>[] indexers;
 
     @SafeVarargs
-    public CompositeTodoIndexer(@NotNull DataIndexer<TodoIndexEntry, Integer, FileContent>... indexers) {
+    CompositeTodoIndexer(@NotNull DataIndexer<TodoIndexEntry, Integer, FileContent>... indexers) {
       this.indexers = indexers;
     }
 
@@ -145,7 +145,7 @@ public abstract class PlatformIdTableBuilding {
     @NotNull private final TokenSet myCommentTokens;
     private final VirtualFile myFile;
 
-    public TokenSetTodoIndexer(@NotNull final TokenSet commentTokens, @NotNull final VirtualFile file) {
+    TokenSetTodoIndexer(@NotNull final TokenSet commentTokens, @NotNull final VirtualFile file) {
       myCommentTokens = commentTokens;
       myFile = file;
     }

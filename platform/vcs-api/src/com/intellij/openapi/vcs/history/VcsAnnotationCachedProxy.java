@@ -84,11 +84,10 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider {
    */
   private FileAnnotation annotate(VirtualFile file, final VcsRevisionNumber revisionNumber, final boolean currentRevision,
                                   final ThrowableComputable<FileAnnotation, VcsException> delegate) throws VcsException {
-    final AnnotationProvider annotationProvider = myAnnotationProvider;
 
     final FilePath filePath = VcsUtil.getFilePath(file);
 
-    final VcsCacheableAnnotationProvider cacheableAnnotationProvider = (VcsCacheableAnnotationProvider)annotationProvider;
+    final VcsCacheableAnnotationProvider cacheableAnnotationProvider = (VcsCacheableAnnotationProvider)myAnnotationProvider;
 
     VcsAnnotation vcsAnnotation = null;
     if (revisionNumber != null) {
@@ -192,18 +191,6 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider {
         @Override
         public void reportException(VcsException exception) {
           exc[0] = exception;
-        }
-
-        @Override
-        public void finished() {
-        }
-
-        @Override
-        public void beforeRefresh() {
-        }
-
-        @Override
-        public void forceRefresh() {
         }
       });
     } catch (ProcessCanceledException e) {

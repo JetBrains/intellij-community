@@ -8,7 +8,6 @@
     <orderEntry type="jdk" jdkName="IDEA jdk" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.maven.server" />
-    <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>
@@ -86,9 +85,10 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library>
+      <library name="javax-activation" type="repository">
+        <properties include-transitive-deps="false" maven-id="javax.activation:activation:1.1" />
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/activation-1.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/javax/activation/activation/1.1/activation-1.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

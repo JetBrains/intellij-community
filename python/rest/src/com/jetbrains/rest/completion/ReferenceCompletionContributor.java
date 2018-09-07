@@ -47,7 +47,7 @@ public class ReferenceCompletionContributor extends CompletionContributor {
        new CompletionProvider<CompletionParameters>() {
          @Override
          protected void addCompletions(@NotNull CompletionParameters parameters,
-                                       ProcessingContext context,
+                                       @NotNull ProcessingContext context,
                                        @NotNull CompletionResultSet result) {
            PsiElement original = parameters.getPosition();
            PsiFile file = original.getContainingFile();

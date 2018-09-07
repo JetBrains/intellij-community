@@ -13,9 +13,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
@@ -61,10 +63,10 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   /**
    * Per-task progress indicators. Modified from EDT only.
-   * The task is removed from this map after it's finished or when the project is disposed. 
+   * The task is removed from this map after it's finished or when the project is disposed.
    */
   private final Map<DumbModeTask, ProgressIndicatorEx> myProgresses = ContainerUtil.newConcurrentMap();
-  
+
   private final Queue<Runnable> myRunWhenSmartQueue = new Queue<>(5);
   private final Project myProject;
   private final ThreadLocal<Integer> myAlternativeResolution = new ThreadLocal<>();
@@ -80,7 +82,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     ApplicationManager.getApplication().getMessageBus().connect(project)
                       .subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener() {
                         @SuppressWarnings("UnnecessaryFullyQualifiedName") // synchronized, can be accessed from different threads
-                        java.util.Stack<AccessToken> stack = new Stack<>(); 
+                        java.util.Stack<AccessToken> stack = new Stack<>();
 
                         @Override
                         public void batchChangeStarted(@NotNull Project project, @Nullable String activityName) {
@@ -233,7 +235,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   @Override
   public void queueTask(@NotNull DumbModeTask task) {
     if (LOG.isDebugEnabled()) LOG.debug("Scheduling task " + task);
-    LOG.assertTrue(!myProject.isDefault(), "No indexing tasks should be created for default project: " + task);
+    if (myProject.isDefault()) {
+      LOG.error("No indexing tasks should be created for default project: " + task);
+    }
     final Application application = ApplicationManager.getApplication();
 
     if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
@@ -482,6 +486,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   private void runBackgroundProcess(@NotNull final ProgressIndicator visibleIndicator) {
+    ((ProgressManagerImpl)ProgressManager.getInstance()).markProgressSafe((ProgressWindow)visibleIndicator);
+
     if (!myState.compareAndSet(State.SCHEDULED_TASKS, State.RUNNING_DUMB_TASKS)) return;
 
     ProgressSuspender suspender = ProgressSuspender.markSuspendable(visibleIndicator, "Indexing paused");
@@ -493,9 +499,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     try {
       shutdownTracker.registerStopperThread(self);
 
-      if (visibleIndicator instanceof ProgressIndicatorEx) {
-        ((ProgressIndicatorEx)visibleIndicator).addStateDelegate(new AppIconProgress());
-      }
+      ((ProgressIndicatorEx)visibleIndicator).addStateDelegate(new AppIconProgress());
 
       DumbModeTask task = null;
       while (true) {
@@ -504,15 +508,13 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
         task = pair.first;
         ProgressIndicatorEx taskIndicator = pair.second;
-        if (visibleIndicator instanceof ProgressIndicatorEx) {
-          taskIndicator.addStateDelegate(new AbstractProgressIndicatorExBase() {
-            @Override
-            protected void delegateProgressChange(@NotNull IndicatorAction action) {
-              super.delegateProgressChange(action);
-              action.execute((ProgressIndicatorEx)visibleIndicator);
-            }
-          });
-        }
+        taskIndicator.addStateDelegate(new AbstractProgressIndicatorExBase() {
+          @Override
+          protected void delegateProgressChange(@NotNull IndicatorAction action) {
+            super.delegateProgressChange(action);
+            action.execute((ProgressIndicatorEx)visibleIndicator);
+          }
+        });
         try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Performing indexing tasks")) {
           runSingleTask(task, taskIndicator);
         }
@@ -529,8 +531,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   private static void runSingleTask(final DumbModeTask task, final ProgressIndicatorEx taskIndicator) {
     if (ApplicationManager.getApplication().isInternal()) LOG.info("Running dumb mode task: " + task);
-    
-    // nested runProcess is needed for taskIndicator to be honored in ProgressManager.checkCanceled calls deep inside tasks 
+
+    // nested runProcess is needed for taskIndicator to be honored in ProgressManager.checkCanceled calls deep inside tasks
     ProgressManager.getInstance().runProcess(() -> {
       try {
         taskIndicator.checkCanceled();
@@ -612,7 +614,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private void completeWhenProjectClosed(CompletableFuture<Pair<DumbModeTask, ProgressIndicatorEx>> result) {
     ProjectManagerListener listener = new ProjectManagerListener() {
       @Override
-      public void projectClosed(Project project) {
+      public void projectClosed(@NotNull Project project) {
         result.completeExceptionally(new ProcessCanceledException());
       }
     };

@@ -89,10 +89,10 @@ public class PyTestConfigurationProducer extends PythonTestLegacyConfigurationPr
     if (keywords != null) {
       ((PyTestRunConfiguration)configuration).useKeyword(true);
       ((PyTestRunConfiguration)configuration).setKeywords(keywords);
-      configuration.setName("py.test in " + keywords);
+      configuration.setName("pytest in " + keywords);
     }
     else {
-      configuration.setName("py.test in " + file.getName());
+      configuration.setName("pytest in " + file.getName());
     }
     return true;
   }

@@ -20,6 +20,7 @@ public class NullNode extends SimpleNode {
     super();
   }
 
+  @Override
   public SimpleNode[] getChildren() {
     return NO_CHILDREN;
   }

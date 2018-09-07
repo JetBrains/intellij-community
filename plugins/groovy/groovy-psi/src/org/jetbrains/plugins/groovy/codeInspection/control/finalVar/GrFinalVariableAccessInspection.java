@@ -183,7 +183,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
 
       private void highlightInvalidWriteAccess(@NotNull Instruction[] flow,
                                                @NotNull Map<String, GrVariable> variables,
-                                               @NotNull Set<GrVariable> initializedVariables) {
+                                               @NotNull Set<? super GrVariable> initializedVariables) {
         final List<ReadWriteVariableInstruction> result =
           InvalidWriteAccessSearcher.findInvalidWriteAccess(flow, variables, initializedVariables);
 
@@ -223,8 +223,8 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
   }
 
   private static void appendFieldInitializedInDeclaration(boolean isStatic,
-                                                          @NotNull List<GrField> fields,
-                                                          @NotNull Set<GrVariable> initializedFields) {
+                                                          @NotNull List<? extends GrField> fields,
+                                                          @NotNull Set<? super GrVariable> initializedFields) {
     for (GrField field : fields) {
       if (field.hasModifierProperty(PsiModifier.STATIC) == isStatic && field.getInitializerGroovy() != null) {
         initializedFields.add(field);
@@ -235,8 +235,8 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
   private static void appendFieldsInitializedInClassInitializer(@NotNull GrClassInitializer[] initializers,
                                                                 @Nullable GrClassInitializer initializerToStop,
                                                                 boolean isStatic,
-                                                                @NotNull List<GrField> fields,
-                                                                @NotNull Set<GrVariable> initializedFields) {
+                                                                @NotNull List<? extends GrField> fields,
+                                                                @NotNull Set<? super GrVariable> initializedFields) {
     for (GrClassInitializer curInit : initializers) {
       if (curInit.isStatic() != isStatic) continue;
       if (curInit == initializerToStop) break;
@@ -255,8 +255,8 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
   }
 
   private static void appendInitializationFromChainedConstructors(@NotNull GrMethod constructor,
-                                                                  @NotNull List<GrField> fields,
-                                                                  @NotNull Set<GrVariable> initializedFields) {
+                                                                  @NotNull List<? extends GrField> fields,
+                                                                  @NotNull Set<? super GrVariable> initializedFields) {
     final List<GrMethod> chained = getChainedConstructors(constructor);
     chained.remove(0);
 
@@ -277,7 +277,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
   }
 
   @NotNull
-  private static Map<String, GrVariable> buildVarMap(@NotNull List<GrField> fields, boolean isStatic) {
+  private static Map<String, GrVariable> buildVarMap(@NotNull List<? extends GrField> fields, boolean isStatic) {
     Map<String, GrVariable> result = ContainerUtil.newHashMap();
     for (GrField field : fields) {
       if (field.hasModifierProperty(PsiModifier.STATIC) == isStatic) {

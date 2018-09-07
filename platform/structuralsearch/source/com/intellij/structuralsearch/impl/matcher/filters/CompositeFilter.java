@@ -7,6 +7,7 @@ public class CompositeFilter implements NodeFilter {
   private final NodeFilter first;
   private final NodeFilter second;
 
+  @Override
   public boolean accepts(PsiElement element) {
     return first.accepts(element) ||
            second.accepts(element);

@@ -95,7 +95,7 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
   @NotNull
   @Override
   @SuppressWarnings("SpellCheckingInspection")
-  public Object[] getDependences(){
+  public Object[] getDependencies(){
     return new Object[]{myElementDecl, ExternalResourceManager.getInstance()};
   }
 

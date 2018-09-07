@@ -28,7 +28,7 @@ import java.util.List;
  */
 public class Modifier {
   private final ChangeListWorker myWorker;
-  private boolean myInsideUpdate;
+  private volatile boolean myInsideUpdate;
   private final List<ChangeListCommand> myCommandQueue;
   private final DelayedNotificator myNotificator;
 

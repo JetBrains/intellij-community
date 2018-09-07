@@ -24,6 +24,7 @@ import java.util.List;
 public class UnnamedConfigurableGroup implements UnnamedConfigurable {
   private final List<UnnamedConfigurable> myConfigurables = new ArrayList<>();
 
+  @Override
   public JComponent createComponent() {
     JPanel panel = new JPanel(new VerticalFlowLayout());
     for (UnnamedConfigurable configurable : myConfigurables) {
@@ -33,6 +34,7 @@ public class UnnamedConfigurableGroup implements UnnamedConfigurable {
     return panel;
   }
 
+  @Override
   public boolean isModified() {
     for (UnnamedConfigurable myConfigurable : myConfigurables) {
       if (myConfigurable.isModified()) return true;
@@ -40,18 +42,21 @@ public class UnnamedConfigurableGroup implements UnnamedConfigurable {
     return false;
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     for (UnnamedConfigurable myConfigurable : myConfigurables) {
       myConfigurable.apply();
     }
   }
 
+  @Override
   public void reset() {
     for (UnnamedConfigurable myConfigurable : myConfigurables) {
       myConfigurable.reset();
     }
   }
 
+  @Override
   public void disposeUIResources() {
     for (UnnamedConfigurable myConfigurable : myConfigurables) {
       myConfigurable.disposeUIResources();

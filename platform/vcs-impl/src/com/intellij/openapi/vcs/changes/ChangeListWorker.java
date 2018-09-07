@@ -21,7 +21,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ui.PlusMinusModify;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -618,7 +621,7 @@ public class ChangeListWorker {
                                      @NotNull PlusMinusModify<BaseRevision> deltaListener) {
     HashMap<Change, ListData> oldChangeMappings = new HashMap<>(myChangeMappings);
 
-    boolean somethingChanged = notifyPathsChanged(myIdx, updatedWorker.myIdx, deltaListener);
+    notifyPathsChanged(myIdx, updatedWorker.myIdx, deltaListener);
 
     myIdx.copyFrom(updatedWorker.myIdx);
     myChangeMappings.clear();
@@ -654,10 +657,6 @@ public class ChangeListWorker {
       }
     }
 
-    if (somethingChanged) {
-      FileStatusManager.getInstance(myProject).fileStatusesChanged();
-    }
-
     if (myMainWorker) {
       myDelayedNotificator.allChangeListsMappingsChanged();
     }
@@ -667,8 +666,8 @@ public class ChangeListWorker {
     }
   }
 
-  private static boolean notifyPathsChanged(@NotNull ChangeListsIndexes was, @NotNull ChangeListsIndexes became,
-                                            @NotNull PlusMinusModify<BaseRevision> deltaListener) {
+  private static void notifyPathsChanged(@NotNull ChangeListsIndexes was, @NotNull ChangeListsIndexes became,
+                                         @NotNull PlusMinusModify<BaseRevision> deltaListener) {
     final Set<BaseRevision> toRemove = new HashSet<>();
     final Set<BaseRevision> toAdd = new HashSet<>();
     final Set<BeforeAfter<BaseRevision>> toModify = new HashSet<>();
@@ -683,7 +682,6 @@ public class ChangeListWorker {
     for (BeforeAfter<BaseRevision> beforeAfter : toModify) {
       deltaListener.modify(beforeAfter.getBefore(), beforeAfter.getAfter());
     }
-    return !toRemove.isEmpty() || !toAdd.isEmpty();
   }
 
   void setChangeLists(@NotNull Collection<LocalChangeListImpl> lists) {
@@ -842,12 +840,12 @@ public class ChangeListWorker {
     public boolean isDefault = false;
     public boolean isReadOnly = false; // read-only lists cannot be removed or renamed
 
-    public ListData(@Nullable String id, @NotNull String name) {
+    ListData(@Nullable String id, @NotNull String name) {
       this.id = id != null ? id : LocalChangeListImpl.generateChangelistId();
       this.name = name;
     }
 
-    public ListData(@NotNull LocalChangeListImpl list) {
+    ListData(@NotNull LocalChangeListImpl list) {
       this.id = list.getId();
       this.name = list.getName();
       this.comment = list.getComment();
@@ -856,7 +854,7 @@ public class ChangeListWorker {
       this.isReadOnly = list.isReadOnly();
     }
 
-    public ListData(@NotNull ListData list) {
+    ListData(@NotNull ListData list) {
       this.id = list.id;
       this.name = list.name;
       this.comment = list.comment;
@@ -1255,7 +1253,7 @@ public class ChangeListWorker {
     @NotNull private final Set<String> myChangeListsIds;
     @NotNull private String myDefaultId;
 
-    public PartialChangeTrackerDump(@NotNull PartialChangeTracker tracker,
+    PartialChangeTrackerDump(@NotNull PartialChangeTracker tracker,
                                     @NotNull ListData defaultList) {
       myChangeListsIds = new HashSet<>(tracker.getAffectedChangeListsIds());
       myDefaultId = defaultList.id;

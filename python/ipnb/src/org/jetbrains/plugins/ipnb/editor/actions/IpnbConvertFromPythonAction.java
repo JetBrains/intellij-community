@@ -32,7 +32,7 @@ public class IpnbConvertFromPythonAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(true);
     e.getPresentation().setVisible(true);
 

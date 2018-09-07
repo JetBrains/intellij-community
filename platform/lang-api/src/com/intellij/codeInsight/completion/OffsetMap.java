@@ -95,7 +95,7 @@ public class OffsetMap implements Disposable {
     RangeMarker old = myMap.get(key);
     if (old != null) old.dispose();
     final RangeMarker marker = myDocument.createRangeMarker(offset, offset);
-    marker.setGreedyToRight(key.isMoveableToRight());
+    marker.setGreedyToRight(key.isMovableToRight());
     myMap.put(key, marker);
   }
 

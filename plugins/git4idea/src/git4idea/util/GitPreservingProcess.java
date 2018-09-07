@@ -104,6 +104,7 @@ public class GitPreservingProcess {
   private GitChangesSaver configureSaver(@NotNull GitVcsSettings.UpdateChangesPolicy saveMethod) {
     GitChangesSaver saver = GitChangesSaver.getSaver(myProject, myGit, myProgressIndicator, myStashMessage, saveMethod);
     MergeDialogCustomizer mergeDialogCustomizer = new MergeDialogCustomizer() {
+      @NotNull
       @Override
       public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
         return String.format(
@@ -111,11 +112,13 @@ public class GitPreservingProcess {
           myOperationTitle, myDestinationName);
       }
 
+      @NotNull
       @Override
       public String getLeftPanelTitle(@NotNull VirtualFile file) {
         return "Uncommitted changes from stash";
       }
 
+      @NotNull
       @Override
       public String getRightPanelTitle(@NotNull VirtualFile file, VcsRevisionNumber revisionNumber) {
         return String.format("<html>Changes from <b><code>%s</code></b></html>", myDestinationName);

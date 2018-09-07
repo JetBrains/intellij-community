@@ -33,8 +33,8 @@ public class ProgramRunnerUtil {
   }
 
   @Nullable
-  public static ProgramRunner getRunner(@NotNull final String executorId, final RunnerAndConfigurationSettings configuration) {
-    return configuration == null ? null : RunnerRegistry.getInstance().getRunner(executorId, configuration.getConfiguration());
+  public static ProgramRunner getRunner(@NotNull String executorId, @Nullable RunnerAndConfigurationSettings configuration) {
+    return configuration == null ? null : ProgramRunner.getRunner(executorId, configuration.getConfiguration());
   }
 
   public static void executeConfiguration(@NotNull final ExecutionEnvironment environment, boolean showSettings, boolean assignNewId) {
@@ -198,7 +198,7 @@ public class ProgramRunnerUtil {
   @NotNull
   public static Icon getRawIcon(@NotNull RunnerAndConfigurationSettings settings) {
     Icon icon = settings.getFactory().getIcon(settings.getConfiguration());
-    return icon == null ? AllIcons.RunConfigurations.Unknown : icon;
+    return icon == null ? AllIcons.Actions.Help : icon;
   }
 
   public static Icon getTemporaryIcon(@NotNull Icon rawIcon) {

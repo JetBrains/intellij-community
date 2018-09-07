@@ -35,7 +35,7 @@ import java.util.List;
  */
 public class ShowRecentFindUsagesGroup extends ActionGroup {
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     e.getPresentation().setEnabled(project != null);
     e.getPresentation().setVisible(project != null);
@@ -62,7 +62,7 @@ public class ShowRecentFindUsagesGroup extends ActionGroup {
       String text = usageTarget.getLongDescriptiveName();
       AnAction action = new AnAction(text, description, null) {
         @Override
-        public void actionPerformed(final AnActionEvent e) {
+        public void actionPerformed(@NotNull final AnActionEvent e) {
           findUsagesManager.rerunAndRecallFromHistory(usageTarget);
         }
       };

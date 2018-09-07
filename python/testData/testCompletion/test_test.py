@@ -3,15 +3,19 @@ import pytest
 #
 @pytest.fixture
 def my_fixture():
-    pass
+    yield "hello"
 
 @pytest.fixture
 def ham(my_fixt<caret>):
-    pass
+    return 42
 
 
 def test_sample_test(my_fixt<caret>):
     pass
+
+def test_ham(ham, my_fixture):
+    ham.bit_len<caret>#
+    my_fixture.swapca<caret>#
 
 @pytest.mark.parametrize(('spam,eggs'), [(1,1), (2,3), (3,3)])
 @pytest.mark.parametrize('first,second', [(1,1), (2,3), (3,3)])

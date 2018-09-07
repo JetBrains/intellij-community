@@ -8,7 +8,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.inspections.PyStringFormatParser;
 import com.jetbrains.python.inspections.PyStringFormatParser.NewStyleSubstitutionChunk;
@@ -473,11 +472,5 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
       }
     }
     return Ref.create(expression);
-  }
-
-  @NotNull
-  @Override
-  public Object[] getVariants() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 }

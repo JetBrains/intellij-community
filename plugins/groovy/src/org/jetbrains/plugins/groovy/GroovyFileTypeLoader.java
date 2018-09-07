@@ -39,7 +39,7 @@ public class GroovyFileTypeLoader extends FileTypeFactory{
     return strings;
   }
 
-  public static List<String> getAllGroovyExtensions() {
+  private static List<String> getAllGroovyExtensions() {
     final ArrayList<String> strings = new ArrayList<>();
     strings.add(GroovyFileType.DEFAULT_EXTENSION);
     strings.addAll(getCustomGroovyScriptExtensions());

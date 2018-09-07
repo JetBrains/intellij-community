@@ -15,7 +15,6 @@ package org.netbeans.lib.cvsclient.util;
 import org.netbeans.lib.cvsclient.file.AbstractFileObject;
 import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
 
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -27,7 +26,7 @@ public final class DefaultIgnoreFileFilter
 
 	// Fields =================================================================
 
-	private final List patterns = new LinkedList();
+	private final List<IStringPattern> patterns = new LinkedList<>();
 
 	// Setup ==================================================================
 
@@ -62,12 +61,12 @@ public final class DefaultIgnoreFileFilter
 	 * A file is checked against the patterns in the filter.
 	 * If any of these matches, the file should be ignored.
 	 */
-	public boolean shouldBeIgnored(AbstractFileObject abstractFileObject, ICvsFileSystem cvsFileSystem) {
+	@Override
+        public boolean shouldBeIgnored(AbstractFileObject abstractFileObject, ICvsFileSystem cvsFileSystem) {
 		final String noneCvsFile = abstractFileObject.getName();
 		// current implementation ignores the directory parameter.
 		// in future or different implementations can add the directory dependant .cvsignore lists
-		for (Iterator it = patterns.iterator(); it.hasNext();) {
-			final IStringPattern pattern = (IStringPattern)it.next();
+		for (IStringPattern pattern : patterns) {
 			if (pattern.doesMatch(noneCvsFile)) {
 				return true;
 			}

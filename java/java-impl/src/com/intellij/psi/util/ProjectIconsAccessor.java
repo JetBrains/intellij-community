@@ -123,7 +123,7 @@ public class ProjectIconsAccessor {
         }
       }
     }
-    return iconInfo == null ? null : iconInfo.getSecond();
+    return Pair.getSecond(iconInfo);
   }
 
   public static boolean isIconClassType(PsiType type) {

@@ -127,7 +127,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
 
         myDocument.addDocumentListener(new DocumentListener() {
             @Override
-            public void documentChanged(DocumentEvent e) {
+            public void documentChanged(@NotNull DocumentEvent e) {
                 updateOkAction();
             }
         });
@@ -298,7 +298,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
         // not sure why this is required...
         assert document != null;
         document.setReadOnly(false);
-        
+
         assert document.isWritable() : "WTF, document is not writable? Text = <" + expression + ">";
         return document;
     }
@@ -412,7 +412,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
     private static class MyVariableResolver extends SimpleVariableContext {
         private final HistoryModel myModel;
 
-        public MyVariableResolver(HistoryModel model) {
+        MyVariableResolver(HistoryModel model) {
             myModel = model;
         }
 
@@ -434,7 +434,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
         private final MyVariableResolver myVariableResolver;
         private final EvalExpressionDialog.MyNamespaceContext myNamespaceContext;
 
-        public InteractiveContextProvider(XmlElement contextElement, NamespaceCollector.CollectedInfo collectedInfo, HistoryModel model) {
+        InteractiveContextProvider(XmlElement contextElement, NamespaceCollector.CollectedInfo collectedInfo, HistoryModel model) {
             myContextElement = contextElement;
             myCollectedInfo = collectedInfo;
             myVariableResolver = new MyVariableResolver(model);
@@ -544,7 +544,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
     private class MyRegisterPrefixAction implements IntentionAction {
         private final PsiReference myReference;
 
-        public MyRegisterPrefixAction(PsiReference reference) {
+        MyRegisterPrefixAction(PsiReference reference) {
             myReference = reference;
         }
 

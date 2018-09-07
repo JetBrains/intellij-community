@@ -16,6 +16,8 @@ import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.associatedModule
+import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.pipenv.pipFileLockRequirements
 import com.jetbrains.python.sdk.pipenv.runPipEnv
 import com.jetbrains.python.sdk.pythonSdk
@@ -44,6 +46,7 @@ class PyPipEnvPackageManager(val sdk: Sdk) : PyPackageManager() {
       runPipEnv(sdk, *args.toTypedArray())
     }
     finally {
+      sdk.associatedModule?.baseDir?.refresh(true, false)
       refreshAndGetPackages(true)
     }
   }
@@ -55,6 +58,7 @@ class PyPipEnvPackageManager(val sdk: Sdk) : PyPackageManager() {
       runPipEnv(sdk, *args.toTypedArray())
     }
     finally {
+      sdk.associatedModule?.baseDir?.refresh(true, false)
       refreshAndGetPackages(true)
     }
   }
@@ -131,7 +135,9 @@ class PyPipEnvPackageManager(val sdk: Sdk) : PyPackageManager() {
       return entries
         .asSequence()
         .filterNotNull()
-        .map { PyPackage(it.pkg.packageName, it.pkg.installedVersion, null, emptyList()) }
+        .flatMap { sequenceOf(it.pkg) + it.dependencies.asSequence() }
+        .map { PyPackage(it.packageName, it.installedVersion, null, emptyList()) }
+        .distinct()
         .toList()
     }
   }

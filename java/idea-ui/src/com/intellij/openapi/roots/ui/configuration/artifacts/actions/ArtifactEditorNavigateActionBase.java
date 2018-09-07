@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.packaging.ui.TreeNodePresentation;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -34,7 +35,7 @@ public abstract class ArtifactEditorNavigateActionBase extends DumbAwareAction {
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     final TreeNodePresentation presentation = getPresentation();
     e.getPresentation().setEnabled(presentation != null && presentation.canNavigateToSource());
   }
@@ -43,7 +44,7 @@ public abstract class ArtifactEditorNavigateActionBase extends DumbAwareAction {
   protected abstract TreeNodePresentation getPresentation();
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final TreeNodePresentation presentation = getPresentation();
     if (presentation != null) {
       presentation.navigateToSource();

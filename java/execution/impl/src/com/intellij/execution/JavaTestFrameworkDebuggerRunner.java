@@ -21,8 +21,6 @@ import com.intellij.debugger.DefaultDebugEnvironment;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.impl.GenericDebuggerRunner;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.JavaTestFrameworkRunnableState;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
@@ -64,34 +62,25 @@ public abstract class JavaTestFrameworkDebuggerRunner extends GenericDebuggerRun
       Thread thread = new Thread(getThreadName() + " debugger runner") {
         @Override
         public void run() {
-          try {
-            final Socket accept = socket.accept();
-            try {
-              DataInputStream stream = new DataInputStream(accept.getInputStream());
-              try {
-                int read = stream.readInt();
-                while (read != -1) {
-                  final DebugProcess process =
-                    DebuggerManager.getInstance(environment.getProject()).getDebugProcess(res.getProcessHandler());
-                  if (process == null) break;
-                  final RemoteConnection connection = new RemoteConnection(true, "127.0.0.1", String.valueOf(read), true);
-                  final DebugEnvironment env = new DefaultDebugEnvironment(environment, state, connection, true);
-                  SwingUtilities.invokeLater(() -> {
-                    try {
-                      ((DebugProcessImpl)process).reattach(env);
-                      accept.getOutputStream().write(0);
-                    }
-                    catch (Exception e) {
-                      e.printStackTrace();
-                    }
-                  });
-                  read = stream.readInt();
+          try (Socket accept = socket.accept();
+               DataInputStream stream = new DataInputStream(accept.getInputStream())) {
+            int read = stream.readInt();
+            while (read != -1) {
+              final DebugProcess process =
+                DebuggerManager.getInstance(environment.getProject()).getDebugProcess(res.getProcessHandler());
+              if (process == null) break;
+              final RemoteConnection connection = new RemoteConnection(true, "127.0.0.1", String.valueOf(read), true);
+              final DebugEnvironment env = new DefaultDebugEnvironment(environment, state, connection, true);
+              SwingUtilities.invokeLater(() -> {
+                try {
+                  ((DebugProcessImpl)process).reattach(env);
+                  accept.getOutputStream().write(0);
                 }
-              } finally {
-                stream.close();
-              }
-            } finally {
-              accept.close();
+                catch (Exception e) {
+                  e.printStackTrace();
+                }
+              });
+              read = stream.readInt();
             }
           }
           catch (EOFException ignored) {}

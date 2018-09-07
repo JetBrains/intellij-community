@@ -20,14 +20,17 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.task.ProjectTaskManager;
+import org.jetbrains.annotations.NotNull;
 
 public class CompileDirtyAction extends CompileActionBase {
 
+  @Override
   protected void doAction(DataContext dataContext, Project project) {
     ProjectTaskManager.getInstance(project).buildAllModules();
   }
 
-  public void update(AnActionEvent e){
+  @Override
+  public void update(@NotNull AnActionEvent e){
     super.update(e);
     Presentation presentation = e.getPresentation();
     if (!presentation.isEnabled()) {

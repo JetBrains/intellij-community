@@ -699,7 +699,7 @@ public class PsiBuilderQuickTest extends LightPlatformTestCase {
   private static class MyChameleon1Type extends MyLazyElementType {
     private final IElementType myCHAMELEON_2;
 
-    public MyChameleon1Type(IElementType CHAMELEON_2) {
+    MyChameleon1Type(IElementType CHAMELEON_2) {
       super("CHAMELEON_1");
       myCHAMELEON_2 = CHAMELEON_2;
     }
@@ -740,7 +740,7 @@ public class PsiBuilderQuickTest extends LightPlatformTestCase {
   }
 
   private static class MyChameleon2Type extends MyLazyElementType {
-    public MyChameleon2Type() {
+    MyChameleon2Type() {
       super("CHAMELEON_2");
     }
 

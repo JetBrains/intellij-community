@@ -230,7 +230,7 @@ public class ScratchFileActions {
 
   public static class LanguageAction extends DumbAwareAction {
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       JBIterable<VirtualFile> files = JBIterable.of(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
       if (project == null || files.isEmpty()) {
@@ -256,7 +256,7 @@ public class ScratchFileActions {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       JBIterable<VirtualFile> files = JBIterable.of(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)).
         filter(fileFilter(project));
@@ -285,7 +285,7 @@ public class ScratchFileActions {
     protected void actionPerformedImpl(@NotNull AnActionEvent e,
                                        @NotNull Project project,
                                        @NotNull String title,
-                                       @NotNull JBIterable<VirtualFile> files) {
+                                       @NotNull JBIterable<? extends VirtualFile> files) {
       ScratchFileService fileService = ScratchFileService.getInstance();
       PerFileMappings<Language> mapping = fileService.getScratchesMapping();
       LRUPopupBuilder.forFileLanguages(project, title, files, mapping)

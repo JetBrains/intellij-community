@@ -427,7 +427,7 @@ public class GriffonFramework extends MvcFramework {
     public static final String[] SRC_DIR_SUBFOLDER = new String[]{"main", "cli"};
     public static final String[] GRIFFON_APP_SOURCE_ROOTS = new String[]{"models", "views", "controllers", "services", "conf", "lifecycle"};
 
-    public GriffonProjectStructure(Module module, final boolean auxModule) {
+    GriffonProjectStructure(Module module, final boolean auxModule) {
       super(module, auxModule, getUserHomeGriffon(), GriffonFramework.getInstance().getSdkWorkDir(module));
     }
 

@@ -221,7 +221,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     if (element instanceof PsiFile) {
       PsiFile psiFile = (PsiFile)element;
       VirtualFile vFile = psiFile.getVirtualFile();
-      Icon baseIcon = vFile != null ? IconUtil.getIcon(vFile, vFile.getFileType(), flags & ~ICON_FLAG_READ_STATUS, psiFile.getProject())
+      Icon baseIcon = vFile != null ? IconUtil.getIcon(vFile, flags & ~ICON_FLAG_READ_STATUS, psiFile.getProject())
                                     : psiFile.getFileType().getIcon();
       return createLayeredIcon(this, baseIcon, elementFlags);
     }

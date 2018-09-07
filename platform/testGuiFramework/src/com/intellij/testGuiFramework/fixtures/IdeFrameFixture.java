@@ -29,6 +29,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -38,8 +39,10 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.testGuiFramework.framework.GuiTestUtil;
+import com.intellij.testGuiFramework.framework.Timeouts;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import org.fest.swing.core.GenericTypeMatcher;
@@ -50,6 +53,7 @@ import org.fest.swing.edt.GuiQuery;
 import org.fest.swing.edt.GuiTask;
 import org.fest.swing.exception.ComponentLookupException;
 import org.fest.swing.exception.WaitTimedOutError;
+import org.fest.swing.fixture.ContainerFixture;
 import org.fest.swing.timing.Condition;
 import org.fest.swing.timing.Timeout;
 import org.jetbrains.annotations.Contract;
@@ -63,8 +67,8 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static com.intellij.openapi.util.io.FileUtil.getRelativePath;
@@ -80,7 +84,7 @@ import static org.fest.util.Strings.quote;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 
-public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameImpl> {
+public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameImpl> implements ContainerFixture<IdeFrameImpl> {
   @NotNull private final File myProjectPath;
 
   private MainToolbarFixture myToolbar;
@@ -340,7 +344,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   /**
    * Invokes an action by menu path
    *
-   * @param path the series of menu names, e.g. {@link invokeActionByMenuPath("Build", "Make Project")}
+   * @param path the series of menu names, e.g. {@code invokeActionByMenuPath("Build", "Make Project")}
    */
   public void invokeMenuPath(@NotNull String... path) {
     getMenuFixture().invokeMenuPath(path);
@@ -349,7 +353,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   /**
    * Returns a JMenuItem for a corresponding path
    *
-   * @param path the series of menu names, e.g. {@link invokeActionByMenuPath("Build", "Make Project")}
+   * @param path the series of menu names, e.g. {@code invokeActionByMenuPath("Build", "Make Project")}
    */
   public MenuFixture.MenuItemFixture getMenuPath(@NotNull String... path) {
     return getMenuFixture().getMenuItemFixture(path);
@@ -358,7 +362,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   /**
    * Invokes an action from main menu
    *
-   * @param mainMenuAction is the typical AnAction with ActionPlaces.MAIN_MENU
+   * @param mainMenuActionId is the typical AnAction with ActionPlaces.MAIN_MENU
    */
   public void invokeMainMenu(@NotNull String mainMenuActionId) {
     ActionManager actionManager = ActionManager.getInstance();
@@ -367,9 +371,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
     MouseEvent fakeMainMenuMouseEvent =
       new MouseEvent(jMenuBar, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, MouseInfo.getPointerInfo().getLocation().x,
                      MouseInfo.getPointerInfo().getLocation().y, 1, false);
-    ApplicationManager.getApplication()
-                      .invokeLater(
-                        () -> actionManager.tryToExecute(mainMenuAction, fakeMainMenuMouseEvent, null, ActionPlaces.MAIN_MENU, true));
+    DumbService.getInstance(getProject()).smartInvokeLater(() -> actionManager.tryToExecute(mainMenuAction, fakeMainMenuMouseEvent, null, ActionPlaces.MAIN_MENU, true));
   }
 
   /**
@@ -377,7 +379,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
    * useful when the menu items can change dynamically, such as the labels of Undo actions, Run actions,
    * etc.
    *
-   * @param path the series of menu name regular expressions, e.g. {@link invokeActionByMenuPath("Build", "Make( Project)?")}
+   * @param path the series of menu name regular expressions, e.g. {@code invokeActionByMenuPath("Build", "Make( Project)?")}
    */
   public void invokeMenuPathRegex(@NotNull String... path) {
     getMenuFixture().invokeMenuPathRegex(path);
@@ -408,7 +410,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   //      }
   //      return myGradleProjectEventListener.isBuildFinished(buildMode);
   //    }
-  //  }, LONG_TIMEOUT);
+  //  }, Timeouts.INSTANCE.getMinutes05);
   //
   //  waitForBackgroundTasksToFinish();
   //  robot().waitForIdle();
@@ -465,10 +467,10 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
         RunConfigurationComboBoxFixture runConfigurationComboBox = RunConfigurationComboBoxFixture.find(IdeFrameFixture.this);
         return isNotEmpty(runConfigurationComboBox.getText());
       }
-    }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
+    }, Timeouts.INSTANCE.getMinutes02());
 
     waitForBackgroundTasksToFinish();
-    findGradleSyncAction().waitUntilEnabledAndShowing();
+    findGradleSyncAction();
     // TODO figure out why in IDEA 15 even though an action is enabled, visible and showing, clicking it (via UI testing infrastructure)
     // does not work consistently
 
@@ -502,7 +504,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   //      public boolean test() {
   //        return myGradleProjectEventListener.isSyncStarted();
   //      }
-  //    }, SHORT_TIMEOUT);
+  //    }, Timeouts.INSTANCE.getMinutes02);
   //  }
   //  return this;
   //}
@@ -531,9 +533,9 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   //      }
   //      return syncFinished;
   //    }
-  //  }, LONG_TIMEOUT);
+  //  }, Timeouts.INSTANCE.getMinutes05);
   //
-  //  findGradleSyncAction().waitUntilEnabledAndShowing();
+  //  findGradleSyncAction().waitEnabledAndShowing();
   //
   //  if (myGradleProjectEventListener.hasSyncError()) {
   //    RuntimeException syncError = myGradleProjectEventListener.getSyncError();
@@ -550,17 +552,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
 
   @NotNull
   public IdeFrameFixture waitForBackgroundTasksToFinish() {
-    pause(new Condition("Background tasks to finish") {
-                  @Override
-                  public boolean test() {
-                    ProgressManager progressManager = ProgressManager.getInstance();
-                    return !progressManager.hasModalProgressIndicator() &&
-                           !progressManager.hasProgressIndicator() &&
-                           !progressManager.hasUnsafeProgressIndicator();
-                  }
-                }
-      , GuiTestUtil.INSTANCE.getFIFTEEN_MIN_TIMEOUT());
-    robot().waitForIdle();
+    DumbService.getInstance(getProject()).waitForSmartMode();
     return this;
   }
 
@@ -590,7 +582,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
 
   @NotNull
   private ActionButtonFixture findActionButtonByActionId(String actionId) {
-    return ActionButtonFixture.findByActionId(actionId, robot(), target());
+    return ActionButtonFixture.Companion.fixtureByActionId(target(), robot(), actionId);
   }
 
   @NotNull
@@ -748,7 +740,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
       @Override
       public boolean test() {
         for (Frame frame : Frame.getFrames()) {
-          if (frame == WelcomeFrame.getInstance() && frame.isShowing()) {
+          if (frame instanceof FlatWelcomeFrame && frame.isShowing()) {
             return true;
           }
         }
@@ -820,7 +812,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
     });
     assertNotNull(actionToolbarContainer);
 
-    ComboBoxActionFixture comboBoxActionFixture = ComboBoxActionFixture.findComboBox(robot(), actionToolbarContainer);
+    ComboBoxActionFixture comboBoxActionFixture = ComboBoxActionFixture.Companion.findComboBox(robot(), actionToolbarContainer);
     comboBoxActionFixture.selectItem(appName);
     robot().pressAndReleaseKey(KeyEvent.VK_ENTER);
     robot().waitForIdle();
@@ -865,7 +857,6 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   // "{@code level} * {@code numIndentSpaces}" whitespaces. Each node is printed on a separate line. The indent level for every child node
   // is 1 more than their parent.
   private static void printNode(XDebuggerTreeNode node, StringBuilder builder, int level, int numIndentSpaces) {
-    int numIndent = level;
     if (builder.length() > 0) {
       builder.append(System.getProperty("line.separator"));
     }

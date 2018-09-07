@@ -62,7 +62,7 @@ internal class ConfigureIcsAction : DumbAwareAction() {
       return
     }
 
-    if (icsManager.active) {
+    if (icsManager.isActive) {
       e.presentation.isEnabledAndVisible = true
     }
     else {

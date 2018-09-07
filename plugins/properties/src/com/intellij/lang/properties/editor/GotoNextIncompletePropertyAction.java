@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Batkovich
@@ -27,14 +28,14 @@ public class GotoNextIncompletePropertyAction extends AnAction {
   private final static Logger LOG = Logger.getInstance(GotoNextIncompletePropertyAction.class);
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final ResourceBundleEditor editor = (ResourceBundleEditor)PlatformDataKeys.FILE_EDITOR.getData(e.getDataContext());
     LOG.assertTrue(editor != null);
     editor.selectNextIncompleteProperty();
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(PlatformDataKeys.FILE_EDITOR.getData(e.getDataContext()) instanceof ResourceBundleEditor);
   }
 }

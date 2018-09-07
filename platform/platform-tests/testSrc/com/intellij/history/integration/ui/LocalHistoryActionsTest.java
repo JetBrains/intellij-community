@@ -133,7 +133,7 @@ public class LocalHistoryActionsTest extends LocalHistoryUITestCase {
     DataContext dc = new DataContext() {
       @Override
       @Nullable
-      public Object getData(String id) {
+      public Object getData(@NotNull String id) {
         if (VcsDataKeys.VIRTUAL_FILE_STREAM.is(id)) return stream(files);
         if (CommonDataKeys.EDITOR.is(id)) return editor;
         if (CommonDataKeys.PROJECT.is(id)) return p;

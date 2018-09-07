@@ -5,6 +5,7 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.ConstantNode;
+import com.intellij.codeInsight.template.impl.EmptyNode;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.macro.CompleteMacro;
 import com.intellij.codeInspection.*;
@@ -16,6 +17,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -72,17 +74,21 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix<Commo
     }
     TemplateManager templateManager = TemplateManager.getInstance(project);
     TemplateBuilderImpl builder = new TemplateBuilderImpl(newElement);
-    builder.replaceElement(value, myData.myMissingPropertyIssues.iterator().next().hasEnumItems
-                                    ? new MacroCallNode(new CompleteMacro())
-                                    : new ConstantNode(value.getText()));
-    Template template = builder.buildTemplate();
-    int offset = newElement.getTextRange().getEndOffset();
-    // yes, we need separate write actions for each step
-    WriteAction.run(() -> editor.getCaretModel().moveToOffset(hadComma.get() ? offset + 1 : offset));
-    WriteAction.run(() -> newElement.delete());
-    WriteAction.run(() -> editor.getDocument().insertString(editor.getCaretModel().getOffset(), "\n"));
-    template.setToReformat(true);
-    templateManager.startTemplate(editor, template);
+    String text = value.getText();
+    boolean isEmptyArray = StringUtil.equalsIgnoreWhitespaces(text, "[]");
+    boolean isEmptyObject = StringUtil.equalsIgnoreWhitespaces(text, "{}");
+    boolean goInside = isEmptyArray || isEmptyObject || StringUtil.isQuotedString(text);
+    TextRange range = goInside ? TextRange.create(1, text.length() - 1) : TextRange.create(0, text.length());
+    builder.replaceElement(value, range, myData.myMissingPropertyIssues.iterator().next().enumItemsCount > 1 || isEmptyObject
+                                          ? new MacroCallNode(new CompleteMacro())
+                                          : isEmptyArray ? new EmptyNode() : new ConstantNode(goInside ? StringUtil.unquoteString(text) : text));
+    editor.getCaretModel().moveToOffset(newElement.getTextRange().getStartOffset());
+    builder.setEndVariableAfter(newElement);
+    WriteAction.run(() -> {
+            Template template = builder.buildInlineTemplate();
+            template.setToReformat(true);
+            templateManager.startTemplate(editor, template);
+          });
   }
 
   private PsiElement performFix(PsiElement element, Ref<Boolean> hadComma) {

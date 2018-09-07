@@ -255,7 +255,7 @@ public class SearchTextField extends JPanel {
     }
   }
 
-  private boolean toClearTextOnEscape() {
+  protected boolean toClearTextOnEscape() {
     return ApplicationManager.getApplication() != null;
   }
 
@@ -290,7 +290,7 @@ public class SearchTextField extends JPanel {
   }
 
   protected boolean hasIconsOutsideOfTextField() {
-    return UIUtil.isUnderGTKLookAndFeel();
+    return false;
   }
 
   protected boolean customSetupUIAndTextField(@NotNull TextFieldWithProcessing textField, @NotNull Consumer<? super TextUI> uiConsumer) {
@@ -405,7 +405,7 @@ public class SearchTextField extends JPanel {
                    .doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(getTextEditor(), true));
   }
 
-  private void setHistoryPropertyName(String historyPropertyName) {
+  protected void setHistoryPropertyName(String historyPropertyName) {
     myHistoryPropertyName = historyPropertyName;
     myTextField.putClientProperty("JTextField.Search.InplaceHistory", myHistoryPropertyName);
     reset();
@@ -425,9 +425,14 @@ public class SearchTextField extends JPanel {
       }
       setHistory(result);
     }
+    else {
+      setEmptyHistory();
+    }
     setSelectedItem("");
   }
 
+  protected void setEmptyHistory() {
+  }
 
   public class MyModel extends AbstractListModel {
     private List<String> myFullList = new ArrayList<>();
@@ -590,7 +595,7 @@ public class SearchTextField extends JPanel {
 
   public static final class FindAction extends DumbAwareAction {
     @Override
-    public void actionPerformed(AnActionEvent event) {
+    public void actionPerformed(@NotNull AnActionEvent event) {
       SearchTextField search = event.getData(KEY);
       if (search != null) {
         search.selectText();
@@ -599,7 +604,7 @@ public class SearchTextField extends JPanel {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(e.getData(KEY) != null);
     }
   }

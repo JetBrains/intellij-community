@@ -17,14 +17,15 @@ package com.siyeh.ipp.opassign;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class ReplaceAssignmentWithPostfixExpressionPredicate implements PsiElementPredicate {
 
-  private static final Integer ONE = Integer.valueOf(1);
-
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof PsiAssignmentExpression)) {
       return false;
@@ -44,34 +45,21 @@ class ReplaceAssignmentWithPostfixExpressionPredicate implements PsiElementPredi
       return false;
     }
     final PsiVariable variable = (PsiVariable)target;
-    final PsiExpression rhs = assignmentExpression.getRExpression();
+    final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(assignmentExpression.getRExpression());
     if (!(rhs instanceof PsiBinaryExpression)) {
       return false;
     }
     final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)rhs;
-    final PsiExpression rOperand = binaryExpression.getROperand();
-    if (rOperand == null) {
-      return false;
-    }
-    final PsiExpression lOperand = binaryExpression.getLOperand();
+    final PsiExpression lOperand = PsiUtil.skipParenthesizedExprDown(binaryExpression.getLOperand());
+    final PsiExpression rOperand = PsiUtil.skipParenthesizedExprDown(binaryExpression.getROperand());
     final IElementType tokenType = binaryExpression.getOperationTokenType();
-    if (lOperand instanceof PsiLiteral) {
-      final PsiLiteral literal = (PsiLiteral)lOperand;
-      final Object value = literal.getValue();
-      if (ONE != value) {
-        return false;
-      }
+    if (ExpressionUtils.isLiteral(lOperand, 1)) {
       if (!VariableAccessUtils.evaluatesToVariable(rOperand, variable)) {
         return false;
       }
       return JavaTokenType.PLUS.equals(tokenType);
     }
-    else if (rOperand instanceof PsiLiteral) {
-      final PsiLiteral literal = (PsiLiteral)rOperand;
-      final Object value = literal.getValue();
-      if (ONE != value) {
-        return false;
-      }
+    else if (ExpressionUtils.isLiteral(rOperand, 1)) {
       if (!VariableAccessUtils.evaluatesToVariable(lOperand, variable)) {
         return false;
       }

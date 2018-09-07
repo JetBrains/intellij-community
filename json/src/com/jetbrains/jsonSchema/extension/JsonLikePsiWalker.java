@@ -3,6 +3,7 @@ package com.jetbrains.jsonSchema.extension;
 
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ThreeState;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
@@ -45,6 +46,10 @@ public interface JsonLikePsiWalker {
   @Nullable
   JsonValueAdapter createValueAdapter(@NotNull PsiElement element);
 
+  default TextRange adjustErrorHighlightingRange(@NotNull PsiElement element) {
+    return element.getTextRange();
+  }
+
   @Nullable
   static JsonLikePsiWalker getWalker(@NotNull final PsiElement element, JsonSchemaObject schemaObject) {
     if (JSON_ORIGINAL_PSI_WALKER.handles(element)) return JSON_ORIGINAL_PSI_WALKER;
@@ -56,9 +61,9 @@ public interface JsonLikePsiWalker {
       .orElse(null);
   }
 
-  default String getDefaultObjectValue(boolean includeWhitespaces) { return "{}"; }
+  default String getDefaultObjectValue() { return "{}"; }
   @Nullable default String defaultObjectValueDescription() { return null; }
-  default String getDefaultArrayValue(boolean includeWhitespaces) { return "[]"; }
+  default String getDefaultArrayValue() { return "[]"; }
   @Nullable default String defaultArrayValueDescription() { return null; }
 
   default boolean invokeEnterBeforeObjectAndArray() { return false; }
@@ -68,10 +73,11 @@ public interface JsonLikePsiWalker {
   default QuickFixAdapter getQuickFixAdapter(Project project) { return null; }
   interface QuickFixAdapter {
     @Nullable PsiElement getPropertyValue(PsiElement property);
+    default @NotNull PsiElement adjustValue(@NotNull PsiElement value) { return value; }
     @Nullable String getPropertyName(PsiElement property);
     @NotNull PsiElement createProperty(@NotNull final String name, @NotNull final String value);
     boolean ensureComma(PsiElement backward, PsiElement self, PsiElement newElement);
     void removeIfComma(PsiElement forward);
-    boolean fixWhitespaceBefore();
+    boolean fixWhitespaceBefore(PsiElement initialElement, PsiElement element);
   }
 }

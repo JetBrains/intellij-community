@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs.browser;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -75,7 +75,8 @@ public class CopyOptionsDialog extends DialogWrapper {
     myNameField.setText(myURL.getTail());
     myNameField.selectAll();
     myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(DocumentEvent e) {
+      @Override
+      protected void textChanged(@NotNull DocumentEvent e) {
         update();
       }
     });
@@ -114,7 +115,7 @@ public class CopyOptionsDialog extends DialogWrapper {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new RepositoryBrowserDialog.MkDirAction(myBrowser) {
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         super.update(e);
         e.getPresentation().setText("New Remote Folder...");
       }
@@ -189,6 +190,7 @@ public class CopyOptionsDialog extends DialogWrapper {
     return wrapper;
   }
 
+  @Override
   @NonNls
   protected String getDimensionServiceKey() {
     return "svn4idea.copy.options";
@@ -223,6 +225,7 @@ public class CopyOptionsDialog extends DialogWrapper {
     return myBrowser.getSelectedNode();
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
     return myMainPanel;
@@ -253,6 +256,7 @@ public class CopyOptionsDialog extends DialogWrapper {
   }
 
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myNameField;
   }

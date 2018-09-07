@@ -17,14 +17,16 @@ class InplaceButtonFixture(selfType: Class<InplaceButtonFixture>,
 
   companion object {
 
-    fun findInplaceButtonFixture(root: Container, robot: Robot, icon: Icon, timeoutInSeconds: Long): InplaceButtonFixture {
-      if (timeoutInSeconds < 0L) throw Exception("Unable to wait less than 0 seconds")
-      val inplaceButton = if (timeoutInSeconds == 0L) {
+    fun findInplaceButtonFixture(root: Container, robot: Robot, icon: Icon, timeout: Timeout): InplaceButtonFixture {
+      val inplaceButton = if (timeout.duration() == 0L) {
         findInplaceButton(root, robot, icon)
       }
       else {
-        GuiTestUtil.waitUntilFound(robot, root, GuiTestUtilKt.typeMatcher(InplaceButton::class.java, { it.icon == icon }),
-                                   Timeout.timeout((timeoutInSeconds), TimeUnit.SECONDS))
+        GuiTestUtil.waitUntilFound(
+          robot,
+          root,
+          GuiTestUtilKt.typeMatcher(InplaceButton::class.java) { it.icon == icon },
+          timeout)
       }
       return InplaceButtonFixture(InplaceButtonFixture::class.java, robot, inplaceButton)
     }

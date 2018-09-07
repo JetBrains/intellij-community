@@ -26,6 +26,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 
 /**
@@ -33,7 +34,7 @@ import org.jetbrains.plugins.groovy.GroovyLanguage;
  */
 public class ExcludeFromStubGenerationAction extends AnAction implements DumbAware {
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final PsiFile file = e.getData(DataKeys.PSI_FILE);
 
     assert file != null && file.getLanguage() == GroovyLanguage.INSTANCE;
@@ -51,7 +52,7 @@ public class ExcludeFromStubGenerationAction extends AnAction implements DumbAwa
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
 
     boolean enabled = isEnabled(e);

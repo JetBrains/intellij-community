@@ -50,7 +50,6 @@ import java.util.List;
 public class SimpleColoredComponent extends JComponent implements Accessible, ColoredTextContainer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.SimpleColoredComponent");
 
-  private static final Color SHADOW_COLOR = new JBColor(new Color(250, 250, 250, 140), Gray._0.withAlpha(50));
   public static final int FRAGMENT_ICON = -2;
 
   private final List<String> myFragments;
@@ -825,11 +824,6 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       }
 
       if (!secondPass) {
-        if (shouldDrawMacShadow()) {
-          g.setColor(ColorUtil.srcOver(SHADOW_COLOR, getBackground()));
-          doDrawString(g, i, offset, textBaseline + 1);
-        }
-
         if (shouldDrawDimmed()) {
           color = ColorUtil.dimmer(color);
         }
@@ -882,12 +876,6 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         continue;
       }
       g.setFont(frag.font);
-
-      if (shouldDrawMacShadow()) {
-        g.setColor(SHADOW_COLOR);
-        g.drawString(text, x1, baseline + 1);
-      }
-
       g.setColor(fgColor);
       g.drawString(text, x1, baseline);
 
@@ -965,6 +953,9 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     return 0;
   }
 
+  /**
+   * @deprecated and won't be used anymore
+   */
   protected boolean shouldDrawMacShadow() {
     return false;
   }

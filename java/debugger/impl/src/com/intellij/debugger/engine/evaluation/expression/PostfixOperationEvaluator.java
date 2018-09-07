@@ -30,6 +30,7 @@ public class PostfixOperationEvaluator implements Evaluator{
     myIncrementImpl = DisableGC.create(incrementImpl);
   }
 
+  @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     final Object value = myOperandEvaluator.evaluate(context);
     myModifier = myOperandEvaluator.getModifier();
@@ -38,6 +39,7 @@ public class PostfixOperationEvaluator implements Evaluator{
     return value;
   }
 
+  @Override
   public Modifier getModifier() {
     return myModifier;
   }

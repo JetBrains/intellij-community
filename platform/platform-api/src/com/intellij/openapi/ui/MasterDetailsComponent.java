@@ -231,7 +231,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     }
   }
 
-  protected boolean updateMultiSelection(final List<NamedConfigurable> selectedConfigurables) {
+  protected boolean updateMultiSelection(final List<? extends NamedConfigurable> selectedConfigurables) {
     return false;
   }
 
@@ -596,7 +596,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     return findNodeByCondition(root, configurable -> Comparing.equal(editableObject, configurable.getEditableObject()));
   }
 
-  protected static MyNode findNodeByCondition(final TreeNode root, final Condition<NamedConfigurable> condition) {
+  protected static MyNode findNodeByCondition(final TreeNode root, final Condition<? super NamedConfigurable> condition) {
     return TreeUtil.treeNodeTraverser(root)
       .filter(MyNode.class)
       .filter(node -> condition.value(node.getConfigurable()))
@@ -775,7 +775,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
       presentation.setEnabled(false);
       final TreePath[] selectionPath = myTree.getSelectionPaths();
@@ -787,7 +787,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       removePaths(myTree.getSelectionPaths());
     }
   }
@@ -919,7 +919,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       JBPopupFactory popupFactory = JBPopupFactory.getInstance();
       DataContext dataContext = e.getDataContext();
       ListPopupStep step = popupFactory.createActionsStep(

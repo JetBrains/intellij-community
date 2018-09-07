@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
+import com.intellij.openapi.editor.impl.event.EditorEventMulticasterImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
@@ -54,11 +55,12 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
                                 @NotNull PsiManager psiManager,
                                 @NotNull EditorFactory editorFactory,
                                 @NotNull MessageBus bus,
-                                @NonNls @NotNull final DocumentCommitProcessor documentCommitThread) {
+                                @NotNull final DocumentCommitProcessor documentCommitThread) {
     super(project, psiManager, bus, documentCommitThread);
     myDocumentCommitThread = documentCommitThread;
     editorFactory.getEventMulticaster().addDocumentListener(this, project);
-    MessageBusConnection connection = bus.connect();
+    ((EditorEventMulticasterImpl)editorFactory.getEventMulticaster()).addPrioritizedDocumentListener(new PriorityEventCollector(), project);
+    MessageBusConnection connection = bus.connect(this);
     connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
       @Override
       public void fileContentLoaded(@NotNull final VirtualFile virtualFile, @NotNull Document document) {
@@ -94,7 +96,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
   }
 
   @Override
-  public void documentChanged(DocumentEvent event) {
+  public void documentChanged(@NotNull DocumentEvent event) {
     super.documentChanged(event);
     // optimisation: avoid documents piling up during batch processing
     if (isUncommited(event.getDocument()) && FileDocumentManagerImpl.areTooManyDocumentsInTheQueue(myUncommittedDocuments)) {
@@ -139,8 +141,8 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
 
   @Override
   protected boolean finishCommitInWriteAction(@NotNull Document document,
-                                              @NotNull List<BooleanRunnable> finishProcessors,
-                                              @NotNull List<BooleanRunnable> reparseInjectedProcessors,
+                                              @NotNull List<? extends BooleanRunnable> finishProcessors,
+                                              @NotNull List<? extends BooleanRunnable> reparseInjectedProcessors,
                                               boolean synchronously,
                                               boolean forceNoPsiCommit) {
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) { // can be false for non-physical PSI
@@ -192,7 +194,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
         PsiFile injectedPsiFile = getCachedPsiFile(document);
         if (injectedPsiFile  == null || !injectedPsiFile.isValid()) continue;
 
-        BooleanRunnable runnable = InjectedLanguageUtil.reparse(injectedPsiFile, document, hostPsiFile, hostViewProvider, indicator, oldRoot, newRoot);
+        BooleanRunnable runnable = InjectedLanguageUtil.reparse(injectedPsiFile, document, hostPsiFile, hostDocument, hostViewProvider, indicator, oldRoot, newRoot, this);
         ContainerUtil.addIfNotNull(result, runnable);
       }
     }
@@ -225,7 +227,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
       if (cachedDocument != null && cachedDocument != document) {
         throw new IllegalStateException("Can't replace existing document");
       }
-      
+
       FileDocumentManagerImpl.registerDocument(document, vFile);
     }
   }

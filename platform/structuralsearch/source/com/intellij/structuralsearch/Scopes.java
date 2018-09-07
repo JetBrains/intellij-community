@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
-import com.intellij.ide.util.scopeChooser.ScopeChooserUtils;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope;
@@ -10,12 +9,14 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopesCore;
-import com.intellij.psi.search.ProjectScopeImpl;
-import com.intellij.psi.search.SearchScope;
+import com.intellij.packageDependencies.ChangeListsScopesProvider;
+import com.intellij.psi.search.*;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author Bas Leijdekkers
@@ -77,9 +78,37 @@ public final class Scopes {
       return new GlobalSearchScopesCore.DirectoryScope(project, virtualFile, recursive);
     }
     else if (scopeType == Type.NAMED) {
-      return ScopeChooserUtils.findScopeByName(project, descriptor);
+      return findScopeByName(project, descriptor);
     }
     assert false;
+    return null;
+  }
+
+  @Nullable
+  public static SearchScope findScopeByName(@NotNull Project project, @NotNull String scopeName) {
+    // can't use ScopeChooserUtils.findScopeByName() because it returns intersection scopes that can't be presented the user
+    // and doesn't return all predefined scopes
+    final List<SearchScope> predefinedScopes =
+      PredefinedSearchScopeProvider.getInstance().getPredefinedScopes(project, null, true, false, true, true, true);
+    for (SearchScope predefinedScope : predefinedScopes) {
+      if (predefinedScope.getDisplayName().equals(scopeName)) {
+        return predefinedScope;
+      }
+    }
+
+    for (NamedScope scope: ChangeListsScopesProvider.getInstance(project).getFilteredScopes()) {
+      if (scope.getName().equals(scopeName)) {
+        return GlobalSearchScopesCore.filterScope(project, scope);
+      }
+    }
+
+    for (NamedScopesHolder holder: NamedScopesHolder.getAllNamedScopeHolders(project)) {
+      for (NamedScope scope: holder.getEditableScopes()) {
+        if (scope.getName().equals(scopeName)) {
+          return GlobalSearchScopesCore.filterScope(project, scope);
+        }
+      }
+    }
     return null;
   }
 

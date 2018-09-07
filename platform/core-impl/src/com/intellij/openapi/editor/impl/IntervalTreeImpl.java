@@ -170,6 +170,13 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
       }
     }
 
+    void addIntervalsFrom(@NotNull IntervalNode<E> otherNode) {
+      for (Getter<E> key : otherNode.intervals) {
+        E interval = key.get();
+        if (interval != null) addInterval(interval);
+      }
+    }
+
     protected Getter<E> createGetter(@NotNull E interval) {
       return new WeakReferencedGetter<>(interval, myIntervalTree.myReferenceQueue);
     }
@@ -756,7 +763,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     return node;
   }
 
-  private void deleteNodes(@NotNull List<IntervalNode<T>> collectedAway) {
+  private void deleteNodes(@NotNull List<? extends IntervalNode<T>> collectedAway) {
     if (collectedAway.isEmpty()) return;
     try {
       l.writeLock().lock();

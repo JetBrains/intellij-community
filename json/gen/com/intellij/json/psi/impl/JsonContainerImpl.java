@@ -12,7 +12,7 @@ import com.intellij.json.psi.*;
 
 public class JsonContainerImpl extends JsonValueImpl implements JsonContainer {
 
-  public JsonContainerImpl(ASTNode node) {
+  public JsonContainerImpl(@NotNull ASTNode node) {
     super(node);
   }
 

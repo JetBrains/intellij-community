@@ -38,7 +38,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   private final JsonSchemaService myService;
   private static final String ID = "JSONSchemaSelector";
 
-  public JsonSchemaStatusWidget(Project project) {
+  JsonSchemaStatusWidget(Project project) {
     super(project);
     myService = JsonSchemaService.Impl.get(project);
     myService.registerRemoteUpdateCallback(myUpdateCallback);
@@ -49,7 +49,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
   private static class MyWidgetState extends WidgetState {
     boolean warning = false;
-    public MyWidgetState(String toolTip, String text, boolean actionEnabled) {
+    MyWidgetState(String toolTip, String text, boolean actionEnabled) {
       super(toolTip, text, actionEnabled);
     }
 
@@ -119,6 +119,9 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     VirtualFile schemaFile = schemaFiles.iterator().next();
     schemaFile = ((JsonSchemaServiceImpl)myService).replaceHttpFileWithBuiltinIfNeeded(schemaFile);
 
+    String tooltip = isJsonFile ? JSON_SCHEMA_TOOLTIP : JSON_SCHEMA_TOOLTIP_OTHER_FILES;
+    String bar = isJsonFile ? JSON_SCHEMA_BAR : JSON_SCHEMA_BAR_OTHER_FILES;
+
     if (schemaFile instanceof HttpVirtualFile) {
       RemoteFileInfo info = ((HttpVirtualFile)schemaFile).getFileInfo();
       if (info == null) return getDownloadErrorState(null);
@@ -126,23 +129,11 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
       //noinspection EnumSwitchStatementWhichMissesCases
       switch (info.getState()) {
         case DOWNLOADING_NOT_STARTED:
+          addDownloadingUpdateListener(info);
+          return new MyWidgetState(tooltip + getSchemaFileDesc(schemaFile), bar + getPresentableNameForFile(schemaFile),
+                                   true);
         case DOWNLOADING_IN_PROGRESS:
-          info.addDownloadingListener(new FileDownloadingAdapter() {
-            @Override
-            public void fileDownloaded(VirtualFile localFile) {
-              update();
-            }
-
-            @Override
-            public void errorOccurred(@NotNull String errorMessage) {
-              update();
-            }
-
-            @Override
-            public void downloadingCancelled() {
-              update();
-            }
-          });
+          addDownloadingUpdateListener(info);
           return new MyWidgetState("Download is scheduled or in progress", "Downloading JSON schema", false);
         case ERROR_OCCURRED:
           return getDownloadErrorState(info.getErrorMessage());
@@ -154,9 +145,6 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
       state.setWarning(true);
       return state;
     }
-
-    String tooltip = isJsonFile ? JSON_SCHEMA_TOOLTIP : JSON_SCHEMA_TOOLTIP_OTHER_FILES;
-    String bar = isJsonFile ? JSON_SCHEMA_BAR : JSON_SCHEMA_BAR_OTHER_FILES;
 
     JsonSchemaFileProvider provider = myService.getSchemaProvider(schemaFile);
     if (provider != null) {
@@ -171,10 +159,27 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
                              true);
   }
 
-  private boolean isValidSchemaFile(VirtualFile schemaFile) {
-    if (schemaFile == null || !myService.isApplicableToFile(schemaFile) || !myService.isSchemaFile(schemaFile)) return false;
-    FileType type = schemaFile.getFileType();
-    return type instanceof LanguageFileType && ((LanguageFileType)type).getLanguage() instanceof JsonLanguage;
+  private void addDownloadingUpdateListener(@NotNull RemoteFileInfo info) {
+    info.addDownloadingListener(new FileDownloadingAdapter() {
+      @Override
+      public void fileDownloaded(@NotNull VirtualFile localFile) {
+        update();
+      }
+
+      @Override
+      public void errorOccurred(@NotNull String errorMessage) {
+        update();
+      }
+
+      @Override
+      public void downloadingCancelled() {
+        update();
+      }
+    });
+  }
+
+  private boolean isValidSchemaFile(@Nullable VirtualFile schemaFile) {
+    return schemaFile != null && myService.isSchemaFile(schemaFile) && myService.isApplicableToFile(schemaFile);
   }
 
   @Nullable

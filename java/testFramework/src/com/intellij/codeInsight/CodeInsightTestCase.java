@@ -310,7 +310,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     return editorInfos;
   }
 
-  private EditorInfo copyContent(@NotNull VirtualFile from, @NotNull VirtualFile to, @NotNull List<OutputStream> streamsToClose) throws IOException {
+  private EditorInfo copyContent(@NotNull VirtualFile from, @NotNull VirtualFile to, @NotNull List<? super OutputStream> streamsToClose) throws IOException {
     byte[] content = from.getFileType().isBinary() ? from.contentsToByteArray(): null;
     final String fileText = from.getFileType().isBinary() ? null : StringUtil.convertLineSeparators(VfsUtilCore.loadText(from));
 
@@ -352,7 +352,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   private void doWrite(final String newFileText,
                        @NotNull VirtualFile newVFile,
                        byte[] content,
-                       @NotNull List<OutputStream> streamsToClose) throws IOException {
+                       @NotNull List<? super OutputStream> streamsToClose) throws IOException {
     if (newFileText == null) {
       final OutputStream outputStream = newVFile.getOutputStream(this, -1, -1);
       outputStream.write(content);

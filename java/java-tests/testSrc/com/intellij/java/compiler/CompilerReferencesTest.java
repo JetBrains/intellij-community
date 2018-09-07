@@ -5,10 +5,8 @@ import com.intellij.JavaTestUtil;
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
 import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -154,7 +152,7 @@ public class CompilerReferencesTest extends CompilerReferencesTestBase {
     final CompilerReferenceServiceImpl compilerReferenceService = (CompilerReferenceServiceImpl) CompilerReferenceService
       .getInstance(myFixture.getProject());
     compilerReferenceService.getScopeWithoutCodeReferences(foo);
-    assertOneElement(compilerReferenceService.getDirtyScopeHolder().getAllDirtyModulesForTest());
+    assertOneElement(compilerReferenceService.getAllDirtyModulesForTest());
   }
 
   public void testReverseExtensionRename() {

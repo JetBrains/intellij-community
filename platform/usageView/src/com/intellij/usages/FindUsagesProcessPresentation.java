@@ -36,7 +36,7 @@ public class FindUsagesProcessPresentation {
   private Collection<VirtualFile> myLargeFiles;
   private boolean myShowFindOptionsPrompt = true;
   private volatile Runnable mySearchWithProjectFiles;
-  private boolean myCanceled;
+  private volatile boolean myCanceled;
 
   public FindUsagesProcessPresentation(@NotNull UsageViewPresentation presentation) {
     myUsageViewPresentation = presentation;

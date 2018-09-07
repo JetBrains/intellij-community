@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -35,6 +21,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -139,6 +126,7 @@ public class ChooseActionsDialog extends DialogWrapper {
     final JComponent searchToolbar = actionToolbar.getComponent();
     final Alarm alarm = new Alarm();
     myFilterComponent = new FilterComponent("KEYMAP_IN_QUICK_LISTS", 5) {
+      @Override
       public void filter() {
         alarm.cancelAllRequests();
         alarm.addRequest(() -> {
@@ -163,7 +151,8 @@ public class ChooseActionsDialog extends DialogWrapper {
     group.add(new AnAction(KeyMapBundle.message("filter.shortcut.action.text"),
                            KeyMapBundle.message("filter.shortcut.action.text"),
                            AllIcons.Actions.ShortcutFilter) {
-      public void actionPerformed(AnActionEvent e) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
         myFilterComponent.reset();
         myActionsTree.reset(myKeymap, myQuicklists);
         myFilteringPanel.showPopup(searchToolbar, e.getInputEvent().getComponent());
@@ -172,14 +161,15 @@ public class ChooseActionsDialog extends DialogWrapper {
     group.add(new AnAction(KeyMapBundle.message("filter.clear.action.text"),
                            KeyMapBundle.message("filter.clear.action.text"), AllIcons.Actions.GC) {
       @Override
-      public void update(AnActionEvent event) {
+      public void update(@NotNull AnActionEvent event) {
         boolean enabled = null != myFilteringPanel.getShortcut();
         Presentation presentation = event.getPresentation();
         presentation.setEnabled(enabled);
         presentation.setIcon(enabled ? AllIcons.Actions.Cancel : EmptyIcon.ICON_16);
       }
 
-      public void actionPerformed(AnActionEvent e) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
         myFilteringPanel.setShortcut(null);
         myActionsTree.filter(null, myQuicklists); //clear filtering
         TreeUtil.collapseAll(myActionsTree.getTree(), 0);
@@ -199,6 +189,7 @@ public class ChooseActionsDialog extends DialogWrapper {
     TreeUtil.expandAll(tree);
   }
 
+  @Override
   public void dispose() {
     super.dispose();
     myFilteringPanel.hidePopup();

@@ -2,19 +2,20 @@
 package com.intellij.testGuiFramework.fixtures
 
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
-import com.intellij.testGuiFramework.framework.GuiTestUtil
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.GuiRobotHolder
 import com.intellij.testGuiFramework.impl.actionLink
-import com.intellij.testGuiFramework.impl.popupClick
+import com.intellij.testGuiFramework.impl.popupMenu
 import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
+import org.fest.swing.fixture.ContainerFixture
 import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
 import java.awt.Frame
 
 class WelcomeFrameFixture private constructor(robot: Robot,
                                               target: FlatWelcomeFrame) : ComponentFixture<WelcomeFrameFixture, FlatWelcomeFrame>(
-  WelcomeFrameFixture::class.java, robot, target) {
+  WelcomeFrameFixture::class.java, robot, target), ContainerFixture<FlatWelcomeFrame> {
 
   fun createNewProject(): WelcomeFrameFixture {
     findActionLinkByActionId("WelcomeScreen.CreateNewProject").click()
@@ -35,13 +36,13 @@ class WelcomeFrameFixture private constructor(robot: Robot,
     return ActionLinkFixture.findByActionId(actionId, robot(), target())
   }
 
-  fun findMessageDialog(title: String): MessagesFixture {
+  fun findMessageDialog(title: String): MessagesFixture<*> {
     return MessagesFixture.findByTitle(robot(), target(), title)
   }
 
   fun openPluginsDialog()/*: JDialogFixture*/{
     actionLink("Configure").click()
-    popupClick("Plugins")
+    popupMenu("Plugins").clickSearchedItem()
     // TODO: make return JDialogFixture object of Plugins dialog
     // need to rework PluginsDialogModel to get rid of GuiTestCase object
   }
@@ -57,7 +58,7 @@ class WelcomeFrameFixture private constructor(robot: Robot,
           }
           return false
         }
-      }, GuiTestUtil.LONG_TIMEOUT)
+      }, Timeouts.minutes05)
 
       for (frame in Frame.getFrames()) {
         if (frame is FlatWelcomeFrame && frame.isShowing()) {

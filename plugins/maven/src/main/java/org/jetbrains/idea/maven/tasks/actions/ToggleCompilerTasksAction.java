@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.tasks.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.tasks.MavenCompilerTask;
@@ -39,7 +40,7 @@ public abstract class ToggleCompilerTasksAction extends MavenToggleAction {
   }
 
   @Override
-  protected boolean isAvailable(AnActionEvent e) {
+  protected boolean isAvailable(@NotNull AnActionEvent e) {
     return super.isAvailable(e) && !getTasks(e.getDataContext()).isEmpty();
   }
 
@@ -50,7 +51,7 @@ public abstract class ToggleCompilerTasksAction extends MavenToggleAction {
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     final DataContext context = e.getDataContext();
     final MavenTasksManager tasksManager = getTasksManager(context);
     List<MavenCompilerTask> tasks = getTasks(context);

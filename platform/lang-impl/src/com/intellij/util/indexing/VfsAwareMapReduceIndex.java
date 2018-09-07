@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.util.indexing;
 
@@ -92,7 +78,8 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
       final SnapshotInputMappings.Snapshot<Key, Value> snapshot = mySnapshotInputMappings.readPersistentDataOrMap(content);
       data = snapshot.getData();
       hashId = snapshot.getHashId();
-    } else {
+    }
+    else {
       data = mapInput(content);
       hashId = 0;
     }
@@ -143,6 +130,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
     return IndexingStamp.isFileIndexedStateCurrent(fileId, (ID<?, ?>)myIndexId);
   }
 
+  @Override
   public void removeTransientDataForFile(int inputId) {
     Lock lock = getWriteLock();
     lock.lock();
@@ -152,13 +140,13 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
         Map<Key, Value> keyValueMap = myInMemoryKeysAndValues.remove(inputId);
         keyCollection = keyValueMap != null ? keyValueMap.keySet() : null;
       }
-      
+
       if (keyCollection == null) return;
-      
+
       try {
         removeTransientDataForKeys(inputId, keyCollection);
 
-        InputDataDiffBuilder<Key, Value> builder; 
+        InputDataDiffBuilder<Key, Value> builder;
         if (mySnapshotInputMappings != null) {
           builder =  new MapInputDataDiffBuilder<>(inputId, mySnapshotInputMappings.readInputKeys(inputId));
         } else {
@@ -172,7 +160,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
           }
         } else {
           Set<Key> diskKeySet = new THashSet<>();
-          
+
           builder.differentiate(
             Collections.emptyMap(),
             (key, value, inputId1) -> {
@@ -192,13 +180,15 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
     }
   }
 
-  public void removeTransientDataForKeys(int inputId, Collection<Key> keys) {
+  public void removeTransientDataForKeys(int inputId, @NotNull Collection<? extends Key> keys) {
     MemoryIndexStorage memoryIndexStorage = (MemoryIndexStorage)getStorage();
-    for(Key key:keys) memoryIndexStorage.clearMemoryMapForId(key, inputId);
+    for (Key key : keys) {
+      memoryIndexStorage.clearMemoryMapForId(key, inputId);
+    }
   }
 
   @Override
-  public boolean processAllKeys(@NotNull Processor<Key> processor, @NotNull GlobalSearchScope scope, IdFilter idFilter) throws StorageException {
+  public boolean processAllKeys(@NotNull Processor<Key> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) throws StorageException {
     final Lock lock = getReadLock();
     lock.lock();
     try {

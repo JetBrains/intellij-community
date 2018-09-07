@@ -13,7 +13,7 @@
 Groovy script
   Call expression
     Reference expression
-      PsiElement(string)(''a'')
+      PsiElement(single quoted string)(''a'')
     PsiWhiteSpace(' ')
     Command arguments
       Reference expression
@@ -21,7 +21,7 @@ Groovy script
   PsiElement(new line)('\n')
   Call expression
     Reference expression
-      PsiElement(string)(''a'')
+      PsiElement(single quoted string)(''a'')
     PsiWhiteSpace(' ')
     Command arguments
       Literal
@@ -29,7 +29,7 @@ Groovy script
   PsiElement(new line)('\n')
   Call expression
     Reference expression
-      PsiElement(string)(''a'')
+      PsiElement(single quoted string)(''a'')
     PsiWhiteSpace(' ')
     Command arguments
       builtin type class expression
@@ -37,7 +37,7 @@ Groovy script
   PsiElement(new line)('\n')
   Call expression
     Reference expression
-      PsiElement(string)(''a'')
+      PsiElement(single quoted string)(''a'')
     PsiWhiteSpace(' ')
     Command arguments
       Unary expression
@@ -47,15 +47,15 @@ Groovy script
   PsiElement(new line)('\n')
   Call expression
     Reference expression
-      PsiElement(string)(''a'')
+      PsiElement(single quoted string)(''a'')
     PsiWhiteSpace(' ')
     Command arguments
       Literal
-        PsiElement(string)(''a'')
+        PsiElement(single quoted string)(''a'')
   PsiElement(new line)('\n')
   Call expression
     Reference expression
-      PsiElement(string)(''a'')
+      PsiElement(single quoted string)(''a'')
     PsiWhiteSpace(' ')
     Command arguments
       Reference expression
@@ -63,7 +63,7 @@ Groovy script
   PsiElement(new line)('\n')
   Call expression
     Reference expression
-      PsiElement(string)(''a'')
+      PsiElement(single quoted string)(''a'')
     PsiWhiteSpace(' ')
     Command arguments
       Reference expression
@@ -71,7 +71,7 @@ Groovy script
   PsiElement(new line)('\n')
   Call expression
     Reference expression
-      PsiElement(string)(''a'')
+      PsiElement(single quoted string)(''a'')
     PsiWhiteSpace(' ')
     Command arguments
       Unary expression
@@ -81,12 +81,12 @@ Groovy script
   PsiElement(new line)('\n')
   Call expression
     Reference expression
-      PsiElement(string)(''a'')
+      PsiElement(single quoted string)(''a'')
     PsiWhiteSpace(' ')
     Command arguments
       Method call
         Reference expression
-          PsiElement(string)(''b'')
+          PsiElement(single quoted string)(''b'')
         PsiWhiteSpace(' ')
         Arguments
           <empty list>
@@ -98,11 +98,11 @@ Groovy script
   PsiElement(new line)('\n')
   Call expression
     Reference expression
-      PsiElement(string)(''a'')
+      PsiElement(single quoted string)(''a'')
     PsiWhiteSpace(' ')
     Command arguments
       Literal
-        PsiElement(string)(''b'')
+        PsiElement(single quoted string)(''b'')
   PsiElement(new line)('\n')
   Closable block
     PsiElement({)('{')

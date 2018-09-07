@@ -7,13 +7,14 @@ import com.intellij.openapi.diff.impl.dir.DirDiffElementImpl;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Comparing;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
  */
 public class CancelComparingNewFilesWithEachOtherAction extends DumbAwareAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     DirDiffTableModel model = SetOperationToBase.getModel(e);
     if (model == null) return;
     for (DirDiffElementImpl element : model.getSelectedElements()) {
@@ -25,7 +26,7 @@ public class CancelComparingNewFilesWithEachOtherAction extends DumbAwareAction 
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     DirDiffTableModel model = SetOperationToBase.getModel(e);
     e.getPresentation().setEnabledAndVisible(model != null && model.getSelectedElements().stream().anyMatch(
       it -> isChangedOrEqual(it) && Comparing.equal(model.getReplacementName(it), it.getTargetName())

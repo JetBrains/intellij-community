@@ -28,7 +28,7 @@ class RefCountingRecordsTable extends AbstractRecordsTable {
 
   private static final byte[] ZEROES = new byte[RECORD_SIZE];
 
-  public RefCountingRecordsTable(File recordsFile, PagePool pool) throws IOException {
+  RefCountingRecordsTable(File recordsFile, PagePool pool) throws IOException {
     super(recordsFile, pool);
   }
 

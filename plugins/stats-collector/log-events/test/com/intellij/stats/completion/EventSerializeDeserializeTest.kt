@@ -125,7 +125,13 @@ class EventSerializeDeserializeTest {
         assertThat(obj.unknownFields).hasSize(1)
         assertThat(obj.unknownFields).contains("unknown_field")
     }
-    
+
+    @Test
+    fun `ignore static fields`() {
+        val obj = JsonSerializer.fromJson(JsonSerializer.toJson(WithStaticField()), WithStaticField::class.java)
+        assertThat(obj.absentFields).hasSize(0)
+        assertThat(obj.unknownFields).hasSize(0)
+    }
 }
 
 
@@ -140,5 +146,13 @@ class Second {
     val just_field: String = ""
     val absent_field0: Double = 1.0
     val absent_field1: Double = 1.0
+}
+
+@Suppress("unused")
+class WithStaticField {
+    companion object {
+        @JvmStatic
+        val STATIC_FIELD = 10
+    }
 }
 

@@ -91,6 +91,7 @@ public class JavaGuiTestConfigurator extends GuiTestConfiguratorBase {
     System.out.println("Skipping source generation on project sync.");
   }
 
+  @Override
   protected boolean shouldSkipTest() throws Throwable {
     if (myMinimumJdkVersion != null) {
       Class<?> target = loadMyClassWithTestClassLoader();

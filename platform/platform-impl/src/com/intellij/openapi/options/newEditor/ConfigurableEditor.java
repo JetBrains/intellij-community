@@ -5,11 +5,11 @@ import com.intellij.CommonBundle;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.eventLog.FeatureUsageUiEventsKt;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -99,7 +99,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     add(BorderLayout.SOUTH, RelativeFont.HUGE.install(myErrorLabel));
     add(BorderLayout.CENTER, myCardPanel);
     Disposer.register(this, myCardPanel);
-    ActionManager.getInstance().addAnActionListener(this, this);
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(TOPIC, this);
     getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.KEY_EVENT_MASK);
     if (configurable != null) {
       myConfigurable = configurable;
@@ -141,15 +141,15 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   }
 
   @Override
-  public final void beforeEditorTyping(char ch, DataContext context) {
+  public final void beforeEditorTyping(char ch, @NotNull DataContext context) {
   }
 
   @Override
-  public final void beforeActionPerformed(AnAction action, DataContext context, AnActionEvent event) {
+  public final void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext context, AnActionEvent event) {
   }
 
   @Override
-  public final void afterActionPerformed(AnAction action, DataContext context, AnActionEvent event) {
+  public final void afterActionPerformed(AnAction action, @NotNull DataContext context, AnActionEvent event) {
     requestUpdate();
   }
 

@@ -143,6 +143,12 @@ class Intf {
     assert gotoFile('i') == [i, index]
   }
 
+  void "test prefer shorter filename match"() {
+    def shorter = addEmptyFile("foo/cp-users.txt")
+    def longer = addEmptyFile("cp-users-and-smth.html")
+    assert gotoFile('cpusers') == [shorter, longer]
+  }
+
   void "test consider dot-idea files out of project"() {
     def outside = addEmptyFile(".idea/workspace.xml")
     def inside = addEmptyFile("workspace.txt")

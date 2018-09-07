@@ -40,6 +40,7 @@ public abstract class NullableNotNullManager {
     "edu.umd.cs.findbugs.annotations.Nullable",
     "android.support.annotation.Nullable",
     "androidx.annotation.Nullable",
+    "androidx.annotation.RecentlyNullable",
     "org.checkerframework.checker.nullness.qual.Nullable",
     "org.checkerframework.checker.nullness.compatqual.NullableDecl",
     "org.checkerframework.checker.nullness.compatqual.NullableType"
@@ -47,10 +48,10 @@ public abstract class NullableNotNullManager {
   static final String[] DEFAULT_NOT_NULLS = {
     NotNull.class.getName(),
     "javax.annotation.Nonnull",
-    "javax.validation.constraints.NotNull",
     "edu.umd.cs.findbugs.annotations.NonNull",
     "android.support.annotation.NonNull",
     "androidx.annotation.NonNull",
+    "androidx.annotation.RecentlyNonNull",
     "org.checkerframework.checker.nullness.qual.NonNull",
     "org.checkerframework.checker.nullness.compatqual.NonNullDecl",
     "org.checkerframework.checker.nullness.compatqual.NonNullType"
@@ -110,9 +111,11 @@ public abstract class NullableNotNullManager {
 
   @Nullable
   public PsiAnnotation copyNullableOrNotNullAnnotation(@NotNull PsiModifierListOwner original, @NotNull PsiModifierListOwner generated) {
-    NullabilityAnnotationInfo info = findOwnNullabilityInfo(original);
-    if (info == null) return null;
-    return copyAnnotation(info.getAnnotation(), generated);
+    NullabilityAnnotationInfo src = findOwnNullabilityInfo(original);
+    if (src == null) return null;
+    NullabilityAnnotationInfo effective = findEffectiveNullabilityInfo(generated);
+    if (effective != null && effective.getNullability() == src.getNullability()) return null;
+    return copyAnnotation(src.getAnnotation(), generated);
   }
 
   @Nullable

@@ -390,7 +390,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
         return new Result<>(null, this, file[0] == null ? this : file[0],
                                                 ExternalResourceManager.getInstance());
       }
-      return new Result<>(descriptor, descriptor.getDependences(), this);
+      return new Result<>(descriptor, descriptor.getDependencies(), this);
     }, false));
 
     return map;
@@ -696,7 +696,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
     return CachedValuesManager.getManager(getProject()).getParameterizedCachedValue(this, SUBTAGS_KEY, CACHED_VALUE_PROVIDER, false, this);
   }
 
-  protected void fillSubTags(final List<XmlTag> result) {
+  protected void fillSubTags(final List<? super XmlTag> result) {
     processElements(new PsiElementProcessor() {
       @Override
       public boolean execute(@NotNull PsiElement element) {

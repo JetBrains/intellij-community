@@ -69,7 +69,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
         }
       }
 
-      private void addAffectedJavaSdk(VFileEvent event, Set<Sdk> affected) {
+      private void addAffectedJavaSdk(VFileEvent event, Set<? super Sdk> affected) {
         final VirtualFile file = event.getFile();
         CharSequence fileName = null;
         if (file != null && file.isValid()) {

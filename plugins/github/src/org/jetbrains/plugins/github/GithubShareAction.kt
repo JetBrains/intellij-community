@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -57,12 +58,11 @@ import git4idea.commands.GitLineHandler
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.util.GitFileUtils
-import icons.GithubIcons
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.plugins.github.api.GithubApiTaskExecutor
-import org.jetbrains.plugins.github.api.GithubApiUtil
-import org.jetbrains.plugins.github.api.GithubTask
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
+import org.jetbrains.plugins.github.api.GithubApiRequests
+import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
@@ -82,7 +82,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily share project on GitHub", GithubIcons.Github_icon) {
+class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily share project on GitHub", AllIcons.Vcs.Vendors.Github) {
   override fun update(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT)
     e.presentation.isEnabledAndVisible = project != null && !project.isDefault
@@ -123,7 +123,7 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
       val accounts = authManager.getAccounts()
 
       val progressManager = service<ProgressManager>()
-      val apiTaskExecutor = service<GithubApiTaskExecutor>()
+      val requestExecutorManager = service<GithubApiRequestExecutorManager>()
       val accountInformationProvider = service<GithubAccountInformationProvider>()
       val gitHelper = service<GithubGitHelper>()
       val git = service<Git>()
@@ -142,14 +142,15 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
 
         @Throws(IOException::class)
         override fun invoke(account: GithubAccount, parentComponent: Component) = loadedInfo.getOrPut(account) {
+          val requestExecutor = requestExecutorManager.getExecutor(account, parentComponent) ?: throw ProcessCanceledException()
           progressManager.runProcessWithProgressSynchronously(ThrowableComputable<Pair<Boolean, Set<String>>, IOException> {
-            apiTaskExecutor.execute(progressManager.progressIndicator, account, GithubTask { connection ->
-              // ability to create private repos and list of repos
-              val user = GithubApiUtil.getCurrentUser(connection)
-              val canCreatePrivateRepo = user.canCreatePrivateRepo()
-              val names = GithubApiUtil.getUserRepos(connection).mapSmartSet { it.name }
-              canCreatePrivateRepo to names
-            })
+
+            val user = requestExecutor.execute(progressManager.progressIndicator, GithubApiRequests.CurrentUser.get(account.server))
+            val names = GithubApiPagesLoader
+              .loadAll(requestExecutor, progressManager.progressIndicator,
+                       GithubApiRequests.CurrentUser.Repos.pages(account.server, false))
+              .mapSmartSet { it.name }
+            user.canCreatePrivateRepo() to names
           }, "Loading Account Information For $account", true, project)
         }
       }
@@ -170,6 +171,7 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
       val description: String = shareDialog.getDescription()
       val account: GithubAccount = shareDialog.getAccount()
 
+      val requestExecutor = requestExecutorManager.getExecutor(account, project) ?: return
       object : Task.Backgroundable(project, "Sharing Project on GitHub...") {
         private lateinit var url: String
 
@@ -177,8 +179,8 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
           // create GitHub repo (network)
           LOG.info("Creating GitHub repository")
           indicator.text = "Creating GitHub repository..."
-          url = apiTaskExecutor
-            .execute(indicator, account, GithubTask { c -> GithubApiUtil.createRepo(c, name, description, isPrivate).htmlUrl })
+          url = requestExecutor
+            .execute(indicator, GithubApiRequests.CurrentUser.Repos.create(account.server, name, description, isPrivate)).htmlUrl
           LOG.info("Successfully created GitHub repository")
 
           val root = gitRepository?.root ?: project.baseDir
@@ -200,13 +202,13 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
           }
 
           indicator.text = "Retrieving username..."
-          val username = apiTaskExecutor.execute(indicator, account, accountInformationProvider.usernameTask)
+          val username = accountInformationProvider.getInformation(requestExecutor, indicator, account).login
           val remoteUrl = gitHelper.getRemoteUrl(account.server, username, name)
 
           //git remote add origin git@github.com:login/name.git
           LOG.info("Adding GitHub as a remote host")
           indicator.text = "Adding GitHub as a remote host..."
-          git.addRemote(repository, remoteName, remoteUrl).getOutputOrThrow()
+          git.addRemote(repository, remoteName, remoteUrl).throwOnError()
           repository.update()
 
           // create sample commit for binding project
@@ -291,7 +293,7 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
             handler.setStdoutSuppressed(false)
             handler.addParameters("-m", dialog.commitMessage)
             handler.endOptions()
-            Git.getInstance().runCommand(handler).getOutputOrThrow()
+            Git.getInstance().runCommand(handler).throwOnError()
 
             VcsFileUtil.markFilesDirty(project, modified)
           }
@@ -380,7 +382,7 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
 
   @TestOnly
   class GithubUntrackedFilesDialog(private val myProject: Project, untrackedFiles: List<VirtualFile>) :
-    SelectFilesDialog(myProject, untrackedFiles, null, null, true, false, false),
+    SelectFilesDialog(myProject, untrackedFiles, null, null, true, false),
     DataProvider {
     private var myCommitMessagePanel: CommitMessage? = null
 

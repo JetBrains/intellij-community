@@ -17,7 +17,9 @@ package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.Location;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiModificationTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,5 +57,15 @@ public interface SMTestLocator {
   default List<Location> getLocation(@NotNull String stacktraceLine,
                                      @NotNull Project project, @NotNull GlobalSearchScope scope) {
     return Collections.emptyList();
+  }
+
+  /**
+   * @param project Project instance
+   * @return ModificationTracker instance used to cache result of {{@link #getLocation(String, String, Project, GlobalSearchScope)}};
+   *         To disable caching, override and return {@link ModificationTracker#EVER_CHANGED}.
+   */
+  @NotNull
+  default ModificationTracker getLocationCacheModificationTracker(@NotNull Project project) {
+    return PsiModificationTracker.SERVICE.getInstance(project); // invalidates cache on entering/exiting dumb mode
   }
 }

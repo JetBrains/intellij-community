@@ -521,7 +521,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     private int myLastResultIndex = -1;
     private PyClass myLastVisitedClass = null;
 
-    public NameFinder(String... names) {
+    NameFinder(String... names) {
       myNames = names;
       myResult = null;
     }
@@ -569,7 +569,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     @Nullable
     private PyClass myLastVisitedClass;
 
-    public MultiNameFinder(@NotNull String... names) {
+    MultiNameFinder(@NotNull String... names) {
       myResult = new ArrayList<>();
       myNames = names;
       myLastVisitedClass = null;
@@ -1509,11 +1509,9 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       return null;
     }
     try {
-      final String abcMeta = "abc." + PyNames.ABC_META_CLASS;
-
       return classTypes
         .stream()
-        .filter(t -> !abcMeta.equals(t.getClassQName()))
+        .filter(t -> !PyNames.ABC_META.equals(t.getClassQName()))
         .max(
           (t1, t2) -> {
             if (Objects.equals(t1, t2)) {

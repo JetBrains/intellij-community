@@ -51,7 +51,7 @@ public class GroovyConsoleStateService implements PersistentStateComponent<Groov
       for (Map.Entry<VirtualFile, Pair<Module, String>> entry : myFileModuleMap.entrySet()) {
         final VirtualFile file = entry.getKey();
         final Pair<Module, String> pair = entry.getValue();
-        final Module module = pair == null ? null : pair.first;
+        final Module module = Pair.getFirst(pair);
         final Entry e = new Entry();
         e.url = file.getUrl();
         e.moduleName = module == null ? "" : module.getName();
@@ -84,13 +84,13 @@ public class GroovyConsoleStateService implements PersistentStateComponent<Groov
   @Nullable
   public Module getSelectedModule(@NotNull VirtualFile file) {
     final Pair<Module, String> pair = myFileModuleMap.get(file);
-    return pair == null ? null : pair.first;
+    return Pair.getFirst(pair);
   }
 
   @Nullable
   public String getSelectedModuleTitle(@NotNull VirtualFile file) {
     final Pair<Module, String> pair = myFileModuleMap.get(file);
-    return pair == null ? null : pair.second;
+    return Pair.getSecond(pair);
   }
 
   public void setFileModule(@NotNull VirtualFile file, @NotNull Module module) {

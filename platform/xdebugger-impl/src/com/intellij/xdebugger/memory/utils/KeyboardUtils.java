@@ -16,7 +16,7 @@ public class KeyboardUtils {
     return keyCode == KeyEvent.VK_BACK_SPACE;
   }
 
-  public static boolean isCharacter(int keyCode) {
-    return KeyEvent.getKeyText(keyCode).length() == 1;
+  public static boolean isCharacter(KeyEvent event) {
+    return event.getKeyChar() != KeyEvent.CHAR_UNDEFINED;
   }
 }
