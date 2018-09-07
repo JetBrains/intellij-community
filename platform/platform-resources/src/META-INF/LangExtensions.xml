@@ -243,8 +243,8 @@
                     serviceImplementation="com.intellij.psi.impl.PsiCachedValuesFactory"/>
 
 
-    <projectService serviceInterface="com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable"
-                    serviceImplementation="com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable"/>
+    <projectService serviceInterface="com.intellij.openapi.roots.impl.libraries.ProjectLibraryTableInterface"
+                    serviceImplementation="com.intellij.openapi.roots.impl.libraries.ProjectLibraryTableImpl"/>
 
     <projectService serviceInterface="com.intellij.psi.search.ProjectScopeBuilder"
                     serviceImplementation="com.intellij.psi.search.ProjectScopeBuilderImpl"/>
