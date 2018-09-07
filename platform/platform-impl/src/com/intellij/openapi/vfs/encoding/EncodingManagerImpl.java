@@ -50,6 +50,7 @@ import java.util.Collection;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @State(name = "Encoding", storages = @Storage("encoding.xml"))
 public class EncodingManagerImpl extends EncodingManager implements PersistentStateComponent<EncodingManagerImpl.State>, Disposable {
@@ -125,8 +126,6 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
 
   @NonNls public static final String PROP_CACHED_ENCODING_CHANGED = "cachedEncoding";
 
-  // stores number of re-detection requests for this document
-  private static final Key<Integer> RUNNING_REDETECTS_KEY = Key.create("DETECTING_ENCODING_KEY");
   private void handleDocument(@NotNull final Document document) {
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     if (virtualFile == null) return;
@@ -174,14 +173,17 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     myDisposed.set(true);
   }
 
+  // stores number of re-detection requests for this document
+  private static final Key<AtomicInteger> RUNNING_REDETECTS_KEY = Key.create("DETECTING_ENCODING_KEY");
+
   private static int addNumberOfRequestedRedetects(@NotNull Document document, int delta) {
-    while (true) {
-      Integer oldData = document.getUserData(RUNNING_REDETECTS_KEY);
-      int n = oldData == null ? 0 : oldData;
-      int newData = n + delta;
-      if (((UserDataHolderEx)document).replace(RUNNING_REDETECTS_KEY, oldData, newData == 0 ? null : newData)) return newData;
+    AtomicInteger oldData = document.getUserData(RUNNING_REDETECTS_KEY);
+    if (oldData == null) {
+      oldData = ((UserDataHolderEx)document).putUserDataIfAbsent(RUNNING_REDETECTS_KEY, new AtomicInteger());
     }
+    return oldData.addAndGet(delta);
   }
+
   void queueUpdateEncodingFromContent(@NotNull Document document) {
     if (myDisposed.get()) return; // ignore re-detect requests on app close
     if (addNumberOfRequestedRedetects(document, 1) == 1) {
