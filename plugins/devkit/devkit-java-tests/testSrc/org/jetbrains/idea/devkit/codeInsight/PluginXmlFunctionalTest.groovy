@@ -521,4 +521,20 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
                                 "registrationCheck/module/MainModulePlugin_after.xml",
                                 true)
   }
+
+  void testValuesMaxLengths() {
+    myFixture.testHighlighting("ValuesMaxLengths.xml")
+  }
+
+  void testValuesRequired() {
+    myFixture.testHighlighting("ValuesRequired.xml")
+  }
+
+  void testValuesTemplateTexts() {
+    myFixture.testHighlighting("ValuesTemplateTexts.xml")
+  }
+
+  void testPluginWithSinceBuildGreaterThanUntilBuild() {
+    myFixture.testHighlighting("pluginWithSinceBuildGreaterThanUntilBuild.xml")
+  }
 }

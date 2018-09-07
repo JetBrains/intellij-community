@@ -68,6 +68,7 @@ public interface IdeaPlugin extends DomElement {
 
   @NotNull
   @Stubbed
+  @Required(false)
   GenericDomValue<String> getName();
 
 
