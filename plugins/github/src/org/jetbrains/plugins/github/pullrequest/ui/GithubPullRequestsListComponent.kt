@@ -48,7 +48,9 @@ class GithubPullRequestsListComponent(project: Project,
   private val errorPanel = HtmlErrorPanel()
   private val progressStripe = ProgressStripe(scrollPane, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
   private val searchModel = GithubPullRequestSearchModel()
-  private val search = GithubPullRequestSearchComponent(project, autoPopupController, searchModel)
+  private val search = GithubPullRequestSearchComponent(project, autoPopupController, searchModel).apply {
+    border = IdeBorderFactory.createBorder(SideBorder.RIGHT)
+  }
   private val tableToolbarWrapper: Wrapper
 
   init {
