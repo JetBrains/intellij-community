@@ -132,7 +132,7 @@ public class CustomFrameTitlePane extends JPanel {
   private void installSubcomponents() {
     int decorationStyle = getWindowDecorationStyle();
     if (decorationStyle == JRootPane.FRAME) {
-      setLayout(new MigLayout("debug, novisualpadding, fillx, ins 0, gap 0", "[pref!][pref!]push[pref!]"));
+      setLayout(new MigLayout("novisualpadding, fillx, ins 0, gap 0", "[pref!][pref!]push[pref!]"));
 
       createActions();
       buttonPanes = ResizableCustomFrameTitleButtons.Companion.create(myCloseAction,
