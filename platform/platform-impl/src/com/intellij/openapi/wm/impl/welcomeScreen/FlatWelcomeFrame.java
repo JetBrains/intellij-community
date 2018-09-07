@@ -807,7 +807,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   }
 
   private static JLabel createArrow(final ActionLink link) {
-    JLabel arrow = new JLabel(AllIcons.General.Combo3);
+    JLabel arrow = new JLabel(AllIcons.General.ArrowDown);
     arrow.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     arrow.setVerticalAlignment(SwingConstants.BOTTOM);
     new ClickListener() {
