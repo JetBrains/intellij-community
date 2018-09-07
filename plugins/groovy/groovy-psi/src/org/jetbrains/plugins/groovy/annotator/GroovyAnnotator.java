@@ -162,22 +162,11 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitApplicationStatement(@NotNull GrApplicationStatement applicationStatement) {
-    super.visitApplicationStatement(applicationStatement);
-    checkForCommandExpressionSyntax(applicationStatement);
-  }
-
-  @Override
-  public void visitMethodCallExpression(@NotNull GrMethodCallExpression methodCallExpression) {
-    super.visitMethodCallExpression(methodCallExpression);
-    checkForCommandExpressionSyntax(methodCallExpression);
-  }
-
-  private void checkForCommandExpressionSyntax(GrMethodCall methodCall) {
+  public void visitMethodCall(@NotNull GrMethodCall call) {
+    super.visitMethodCall(call);
     final GroovyConfigUtils groovyConfig = GroovyConfigUtils.getInstance();
-    if (methodCall.isCommandExpression() && !groovyConfig.isVersionAtLeast(methodCall, GroovyConfigUtils.GROOVY1_8)) {
-      myHolder
-        .createErrorAnnotation(methodCall, GroovyBundle.message("is.not.supported.in.version", groovyConfig.getSDKVersion(methodCall)));
+    if (call.isCommandExpression() && !groovyConfig.isVersionAtLeast(call, GroovyConfigUtils.GROOVY1_8)) {
+      myHolder.createErrorAnnotation(call, GroovyBundle.message("is.not.supported.in.version", groovyConfig.getSDKVersion(call)));
     }
   }
 
