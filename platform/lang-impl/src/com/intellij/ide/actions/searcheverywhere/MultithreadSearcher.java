@@ -71,6 +71,7 @@ class MultithreadSearcher implements SESearcher {
       protected void onRunningChange() {
         if (isCanceled()) {
           accumulator.stop();
+          phaser.forceTermination();
         }
       }
     };
