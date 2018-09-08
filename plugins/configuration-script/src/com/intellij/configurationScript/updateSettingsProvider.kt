@@ -33,7 +33,7 @@ internal fun readPluginsConfiguration(rootNode: MappingNode): PluginsConfigurati
     val keyNode = tuple.keyNode
     if (keyNode is ScalarNode && keyNode.value == Keys.plugins) {
       val valueNode = tuple.valueNode as? MappingNode ?: continue
-      return readObject(PluginsConfiguration::class.java, valueNode) as PluginsConfiguration
+      return readObject(PluginsConfiguration(), valueNode) as PluginsConfiguration
     }
   }
   return null

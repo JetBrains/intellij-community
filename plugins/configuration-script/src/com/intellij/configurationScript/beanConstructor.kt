@@ -4,14 +4,12 @@ import com.intellij.configurationStore.properties.CollectionStoredProperty
 import com.intellij.configurationStore.properties.MapStoredProperty
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.ScalarProperty
-import com.intellij.util.ReflectionUtil
 import org.yaml.snakeyaml.nodes.MappingNode
 import org.yaml.snakeyaml.nodes.ScalarNode
 import org.yaml.snakeyaml.nodes.SequenceNode
 
-internal fun readObject(optionsClass: Class<out BaseState>, node: MappingNode): BaseState {
-  val state = ReflectionUtil.newInstance(optionsClass)
-  val properties = state.__getProperties()
+internal fun readObject(instance: BaseState, node: MappingNode): BaseState {
+  val properties = instance.__getProperties()
   for (tuple in node.value) {
     val valueNode = tuple.valueNode
     val key = (tuple.keyNode as ScalarNode).value
@@ -40,7 +38,7 @@ internal fun readObject(optionsClass: Class<out BaseState>, node: MappingNode): 
       }
     }
   }
-  return state
+  return instance
 }
 
 private fun readCollection(property: CollectionStoredProperty<*, *>, valueNode: SequenceNode) {

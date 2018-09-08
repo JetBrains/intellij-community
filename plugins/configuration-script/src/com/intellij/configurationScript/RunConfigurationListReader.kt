@@ -2,9 +2,11 @@ package com.intellij.configurationScript
 
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.ConfigurationType
+import com.intellij.execution.configurations.RunConfigurationOptions
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.util.ReflectionUtil
 import gnu.trove.THashMap
 import org.yaml.snakeyaml.nodes.MappingNode
 import org.yaml.snakeyaml.nodes.Node
@@ -105,6 +107,11 @@ internal class RunConfigurationListReader(private val processor: (factory: Confi
   }
 
   private fun readRunConfiguration(optionsClass: Class<out BaseState>, node: MappingNode, factory: ConfigurationFactory) {
-    processor(factory, readObject(optionsClass, node))
+    val instance = ReflectionUtil.newInstance(optionsClass)
+    if (instance is RunConfigurationOptions) {
+      // very important - set BEFORE read to ensure that user can set any value for isAllowRunningInParallel and it will be not overridden by us later
+      instance.isAllowRunningInParallel = factory.singletonPolicy.isAllowRunningInParallel
+    }
+    processor(factory, readObject(instance, node))
   }
 }

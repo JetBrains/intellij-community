@@ -40,8 +40,9 @@ private class MyRunConfigurationTemplateProvider(private val project: Project) :
       }
 
       val configuration = factory.createTemplateConfiguration(runManager.project, runManager)
+      // see readRunConfiguration about how do we set isAllowRunningInParallel
       (configuration as RunConfigurationBase).setState(item.state as BaseState)
-      settings = RunnerAndConfigurationSettingsImpl(runManager, configuration, isTemplate = true, isSingleton = factory.singletonPolicy.isSingleton)
+      settings = RunnerAndConfigurationSettingsImpl(runManager, configuration, isTemplate = true)
       item.state = null
       item.settings = settings
       return settings

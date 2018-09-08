@@ -2,6 +2,7 @@ package com.intellij.configurationScript
 
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.ConfigurationType
+import com.intellij.openapi.components.JsonSchemaType
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ReflectionUtil
@@ -175,6 +176,12 @@ internal class RunConfigurationJsonSchemaGenerator {
         "description" toUnescaped description
       }
       map("properties") {
+        map("isAllowRunningInParallel") {
+          "type" to JsonSchemaType.BOOLEAN.jsonName
+          // we don't specify default value ("default") because it is tricky - not value from factory, but from RC template maybe used,
+          // and on time when schema is generated, we cannot compute efficient default value
+        }
+
         buildJsonSchema(state, this)
       }
     }

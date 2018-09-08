@@ -48,7 +48,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   private final String myHelpTopic;
   private final boolean myBrokenConfiguration;
   private boolean myStoreProjectConfiguration;
-  private boolean mySingleton = true;
+  private boolean myIsAllowRunningInParallel = false;
   private String myFolderName;
   private boolean myChangingNameFromCode;
 
@@ -97,7 +97,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   void applySnapshotToComparison(RunnerAndConfigurationSettings original, RunnerAndConfigurationSettings snapshot) {
     snapshot.setTemporary(original.isTemporary());
     snapshot.setName(getNameText());
-    snapshot.setSingleton(mySingleton);
+    snapshot.getConfiguration().setAllowRunningInParallel(myIsAllowRunningInParallel);
     snapshot.setFolderName(myFolderName);
   }
 
@@ -112,7 +112,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
     RunConfiguration runConfiguration = settings.getConfiguration();
     settings.setName(getNameText());
-    settings.setSingleton(mySingleton);
+    runConfiguration.setAllowRunningInParallel(myIsAllowRunningInParallel);
     settings.setFolderName(myFolderName);
     settings.setShared(myStoreProjectConfiguration);
     super.apply();
@@ -282,7 +282,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   @NotNull
   public RunnerAndConfigurationSettings createSnapshot(boolean cloneBeforeRunTasks) throws ConfigurationException {
     RunnerAndConfigurationSettings snapshot = getEditor().getSnapshot();
-    snapshot.setSingleton(mySingleton);
+    snapshot.getConfiguration().setAllowRunningInParallel(myIsAllowRunningInParallel);
     if (cloneBeforeRunTasks) {
       RunManagerImplKt.cloneBeforeRunTasks(snapshot.getConfiguration());
     }
@@ -315,7 +315,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     private JButton myFixButton;
     private JSeparator mySeparator;
     private JCheckBox myCbStoreProjectConfiguration;
-    private JBCheckBox myIsAllowMultipleInstances;
+    private JBCheckBox myIsAllowRunningInParallelCheckBox;
     private JPanel myValidationPanel;
 
     private Runnable myQuickFix = null;
@@ -351,11 +351,11 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         public void actionPerformed(ActionEvent e) {
           setModified(true);
           myStoreProjectConfiguration = myCbStoreProjectConfiguration.isSelected();
-          mySingleton = !myIsAllowMultipleInstances.isSelected();
+          myIsAllowRunningInParallel = myIsAllowRunningInParallelCheckBox.isSelected();
         }
       };
       myCbStoreProjectConfiguration.addActionListener(actionListener);
-      myIsAllowMultipleInstances.addActionListener(actionListener);
+      myIsAllowRunningInParallelCheckBox.addActionListener(actionListener);
     }
 
     private void doReset(RunnerAndConfigurationSettings settings) {
@@ -365,10 +365,10 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       myCbStoreProjectConfiguration.setSelected(myStoreProjectConfiguration);
       myCbStoreProjectConfiguration.setVisible(!settings.isTemplate());
 
-      mySingleton = settings.isSingleton();
-      myIsAllowMultipleInstances.setEnabled(!isUnknownRunConfiguration);
-      myIsAllowMultipleInstances.setSelected(!mySingleton);
-      myIsAllowMultipleInstances.setVisible(settings.getFactory().getSingletonPolicy().isPolicyConfigurable());
+      myIsAllowRunningInParallel = settings.getConfiguration().isAllowRunningInParallel();
+      myIsAllowRunningInParallelCheckBox.setEnabled(!isUnknownRunConfiguration);
+      myIsAllowRunningInParallelCheckBox.setSelected(myIsAllowRunningInParallel);
+      myIsAllowRunningInParallelCheckBox.setVisible(settings.getFactory().getSingletonPolicy().isPolicyConfigurable());
     }
 
     public final JComponent getWholePanel() {

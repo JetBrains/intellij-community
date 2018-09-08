@@ -12,7 +12,7 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaReader
 import org.intellij.lang.annotations.Language
 import java.nio.charset.StandardCharsets
 
-class IntelliJConfigurationSchemaTest : CompletionTestCase() {
+internal class IntelliJConfigurationSchemaTest : CompletionTestCase() {
   companion object {
     private val schemaFile by lazy {
       LightVirtualFile("scheme.json", JsonFileType.INSTANCE, generateConfigurationSchema(), StandardCharsets.UTF_8, 0)
@@ -26,10 +26,15 @@ class IntelliJConfigurationSchemaTest : CompletionTestCase() {
         <caret>
     """.trimIndent())
 
-    val variant = variants.first { it.lookupString == "env" }
+    checkDescription(variants, "env", "Environment variables")
+    checkDescription(variants, "isAllowRunningInParallel", "Allow running in parallel")
+  }
+
+  private fun checkDescription(variants: List<LookupElement>, name: String, expectedDescription: String) {
+    val variant = variants.first { it.lookupString == name }
     val presentation = LookupElementPresentation()
     variant.renderElement(presentation)
-    assertThat(presentation.typeText).isEqualTo("Environment variables")
+    assertThat(presentation.typeText).isEqualTo(expectedDescription)
   }
 
   private fun test(@Language("YAML") text: String): List<LookupElement> {

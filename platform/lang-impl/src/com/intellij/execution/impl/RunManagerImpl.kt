@@ -292,9 +292,8 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
   internal fun createTemplateSettings(factory: ConfigurationFactory): RunnerAndConfigurationSettingsImpl {
     val configuration = factory.createTemplateConfiguration(project, this)
-    val template = RunnerAndConfigurationSettingsImpl(this, configuration,
-                                                      isTemplate = true,
-                                                      isSingleton = factory.singletonPolicy.isSingleton)
+    configuration.isAllowRunningInParallel = factory.singletonPolicy.isAllowRunningInParallel
+    val template = RunnerAndConfigurationSettingsImpl(this, configuration, isTemplate = true)
     if (configuration is UnknownRunConfiguration) {
       configuration.isDoNotStore = true
     }

@@ -25,6 +25,10 @@ open class RunConfigurationOptions : BaseState() {
   @get:Property(surroundWithTag = false)
   @get:XCollection
   var logFiles by list<LogFileOptions>()
+
+  @com.intellij.configurationStore.Property(description = "Allow running in parallel")
+  @get:Transient
+  var isAllowRunningInParallel by property(false)
 }
 
 open class LocatableRunConfigurationOptions : RunConfigurationOptions() {
