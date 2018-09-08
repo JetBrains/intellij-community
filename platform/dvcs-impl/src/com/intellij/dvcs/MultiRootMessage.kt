@@ -22,35 +22,41 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcsUtil.VcsImplUtil.getShortVcsRootName
 
-class MultiRootMessage(private val project: Project, private val allRoots: Collection<VirtualFile>, html: Boolean) {
-  private val LOG = Logger.getInstance(MultiRootMessage::class.java)
-  private val messages = ContainerUtil.newLinkedHashMap<VirtualFile, String>()
+class MultiRootMessage(project: Project, allValues: Collection<VirtualFile>, html: Boolean = true) :
+    MultiMessage<VirtualFile>(allValues, VirtualFile::getPath, { getShortVcsRootName(project, it) }, html)
+
+open class MultiMessage<Aspect>(private val allValues: Collection<Aspect>,
+                                private val logPresentation: (Aspect) -> String,
+                                private val shortPresentation: (Aspect) -> String,
+                                html: Boolean = true) {
+  private val LOG = Logger.getInstance(MultiMessage::class.java)
+  private val messages = ContainerUtil.newLinkedHashMap<Aspect, String>()
   private val lineSeparator = if (html) "<br/>\n" else "\n"
 
-  fun append(root: VirtualFile, message: String): MultiRootMessage {
-    if (!allRoots.contains(root)) {
-      LOG.error("The root ${root.path} is unexpected: $allRoots")
+  fun append(aspect: Aspect, message: String): MultiMessage<Aspect> {
+    if (!allValues.contains(aspect)) {
+      LOG.error("The aspect value ${logPresentation(aspect)} is unexpected: $allValues")
       return this
     }
-    if (messages.containsKey(root)) {
-      LOG.error("Duplicate root ${root.path} reporting message [$message]")
+    if (messages.containsKey(aspect)) {
+      LOG.error("Duplicate aspect value ${logPresentation(aspect)} reporting message [$message]")
     }
-    messages.put(root, message)
+    messages.put(aspect, message)
     return this
   }
 
   fun asString(): String {
-    if (messages.isEmpty()) return "";
-    if (allRoots.size == 1) return messages.values.first()
+    if (messages.isEmpty()) return ""
+    if (allValues.size == 1) return messages.values.first()
     if (messages.size == 1) {
-      val (root, message) = messages.entries.first()
-      return "$message in ${getShortVcsRootName(project, root)}"
+      val (aspect, message) = messages.entries.first()
+      return "$message in ${shortPresentation(aspect)}"
     }
     val grouped = messages.keys.groupBy { messages[it]!!.trim() }
-    if (grouped.size == 1 && allRoots.size == messages.size) return messages.values.first()
+    if (grouped.size == 1 && allValues.size == messages.size) return messages.values.first()
     return grouped.keys.joinToString(lineSeparator) {
-      val shortRootNames = grouped[it]!!.map { getShortVcsRootName(project, it) }
-      "$it in ${joinWithAnd(shortRootNames, 5)}" }
+      val presentableNames = grouped[it]!!.map { shortPresentation(it) }
+      "$it in ${joinWithAnd(presentableNames, 5)}" }
   }
 
   override fun toString(): String {
