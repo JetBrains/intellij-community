@@ -1518,7 +1518,6 @@ public class AllIcons {
     public static final Icon C_public = IconLoader.getIcon("/nodes/c_public.svg"); // 16x16
     public static final Icon Class = IconLoader.getIcon("/nodes/class.svg"); // 16x16
     public static final Icon ClassInitializer = IconLoader.getIcon("/nodes/classInitializer.svg"); // 16x16
-    public static final Icon CollapseNode = IconLoader.getIcon("/nodes/collapseNode.png"); // 9x9
     public static final Icon CompiledClassesFolder = IconLoader.getIcon("/nodes/compiledClassesFolder.svg"); // 16x16
     public static final Icon CopyOfFolder = IconLoader.getIcon("/nodes/copyOfFolder.svg"); // 16x16
     public static final Icon CustomRegion = IconLoader.getIcon("/nodes/customRegion.svg"); // 16x16
@@ -1548,7 +1547,6 @@ public class AllIcons {
     public static final Icon ErrorMark = IconLoader.getIcon("/nodes/errorMark.svg"); // 16x16
     public static final Icon ExceptionClass = IconLoader.getIcon("/nodes/exceptionClass.svg"); // 16x16
     public static final Icon ExcludedFromCompile = IconLoader.getIcon("/nodes/excludedFromCompile.svg"); // 16x16
-    public static final Icon ExpandNode = IconLoader.getIcon("/nodes/expandNode.png"); // 9x9
     public static final Icon ExtractedFolder = IconLoader.getIcon("/nodes/extractedFolder.svg"); // 16x16
     public static final Icon Favorite = IconLoader.getIcon("/nodes/favorite.svg"); // 16x16
     public static final Icon FavoriteOnHover = IconLoader.getIcon("/nodes/favoriteOnHover.png"); // 16x16
@@ -1652,9 +1650,7 @@ public class AllIcons {
     public static final Icon TestGroup = IconLoader.getIcon("/nodes/testGroup.svg"); // 16x16
     public static final Icon TestIgnored = IconLoader.getIcon("/nodes/testIgnored.svg"); // 16x16
     public static final Icon TestSourceFolder = IconLoader.getIcon("/nodes/testSourceFolder.svg"); // 16x16
-    public static final Icon TreeCollapseNode = IconLoader.getIcon("/nodes/treeCollapseNode.png"); // 16x16
     public static final Icon TreeDownArrow = IconLoader.getIcon("/nodes/treeDownArrow.png"); // 11x11
-    public static final Icon TreeExpandNode = IconLoader.getIcon("/nodes/treeExpandNode.png"); // 16x16
     public static final Icon TreeRightArrow = IconLoader.getIcon("/nodes/treeRightArrow.png"); // 11x11
     public static final Icon Undeploy = IconLoader.getIcon("/nodes/undeploy.svg"); // 16x16
     public static final Icon UnknownJdk = IconLoader.getIcon("/nodes/unknownJdk.svg"); // 16x16
@@ -1665,6 +1661,16 @@ public class AllIcons {
     public static final Icon WebFolder = IconLoader.getIcon("/nodes/webFolder.svg"); // 16x16
     public static final Icon Weblistener = IconLoader.getIcon("/nodes/weblistener.svg"); // 16x16
     public static final Icon Write_access = IconLoader.getIcon("/nodes/write-access.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.TreeDownArrow */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon CollapseNode = AllIcons.Nodes.TreeDownArrow;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.TreeRightArrow */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon ExpandNode = AllIcons.Nodes.TreeRightArrow;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Folder */
     @SuppressWarnings("unused")
@@ -1680,6 +1686,16 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon TreeClosed = AllIcons.Nodes.Folder;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.TreeDownArrow */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon TreeCollapseNode = AllIcons.Nodes.TreeDownArrow;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.TreeRightArrow */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon TreeExpandNode = AllIcons.Nodes.TreeRightArrow;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Folder */
     @SuppressWarnings("unused")
