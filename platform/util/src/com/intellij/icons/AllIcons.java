@@ -768,7 +768,6 @@ public class AllIcons {
     public static final Icon Manifest = IconLoader.getIcon("/fileTypes/manifest.svg"); // 16x16
     public static final Icon Properties = IconLoader.getIcon("/fileTypes/properties.svg"); // 16x16
     public static final Icon Text = IconLoader.getIcon("/fileTypes/text.svg"); // 16x16
-    public static final Icon TypeScript = IconLoader.getIcon("/fileTypes/typeScript.svg"); // 16x16
     public static final Icon UiForm = IconLoader.getIcon("/fileTypes/uiForm.svg"); // 16x16
     public static final Icon Unknown = IconLoader.getIcon("/fileTypes/unknown.svg"); // 16x16
     public static final Icon WsdlFile = IconLoader.getIcon("/fileTypes/wsdlFile.svg"); // 16x16
@@ -785,6 +784,11 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon FacesConfig = IconLoader.getIcon("/fileTypes/facesConfig.svg");
+
+    /** @deprecated to be removed in IDEA 2020 - use JavaScriptPsiIcons.FileTypes.TypeScriptFile */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon TypeScript = IconLoader.getIcon("/fileTypes/typeScript.svg");
 
   }
 
