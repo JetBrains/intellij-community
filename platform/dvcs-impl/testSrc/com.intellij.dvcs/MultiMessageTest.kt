@@ -26,7 +26,7 @@ import org.mockito.Mockito
 import org.mockito.Mockito.mock
 import java.io.File
 
-class MultiRootMessageTest {
+class MultiMessageTest {
 
   private lateinit var project: Project
 
