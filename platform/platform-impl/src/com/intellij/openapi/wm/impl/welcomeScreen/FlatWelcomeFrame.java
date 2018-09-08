@@ -539,11 +539,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         }
 
         @Override
-        public Accessible getAccessibleParent() {
-          if (getParent() instanceof Accessible) {
-            return (Accessible)getParent();
-          }
-          return super.getAccessibleParent();
+        public Container getDelegateParent() {
+          return getParent();
         }
 
         @Override
