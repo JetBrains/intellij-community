@@ -35,6 +35,7 @@ public interface Project extends ComponentManager, AreaInstance {
    * Returns a project base directory - a parent directory of a {@code .ipr} file or {@code .idea} directory.<br/>
    * Returns {@code null} for default project.
    *
+   * @see com.intellij.openapi.project.ProjectUtil#guessProjectDir
    * @deprecated Use {@link #getBasePath()}
    */
   @Deprecated

@@ -105,7 +105,7 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
     private boolean myShouldStop;
     private boolean myUnparsable;
 
-    public InjectionProcessor(@NotNull Configuration configuration, @NotNull LanguageInjectionSupport support, @NotNull PsiElement... operands) {
+    InjectionProcessor(@NotNull Configuration configuration, @NotNull LanguageInjectionSupport support, @NotNull PsiElement... operands) {
       myConfiguration = configuration;
       mySupport = support;
       myOperands = operands;

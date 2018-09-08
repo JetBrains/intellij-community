@@ -11,7 +11,7 @@ import kotlin.reflect.KProperty
 /**
  * AbstractCollectionBinding modifies collection directly, so, we cannot use null as default null and return empty list on get.
  */
-internal open class CollectionStoredProperty<E, C : MutableCollection<E>>(protected val value: C) : StoredPropertyBase<C>() {
+open class CollectionStoredProperty<E, C : MutableCollection<E>>(protected val value: C) : StoredPropertyBase<C>() {
   override val jsonType: JsonSchemaType
     get() = JsonSchemaType.ARRAY
 
@@ -45,13 +45,16 @@ internal open class CollectionStoredProperty<E, C : MutableCollection<E>>(protec
     @Suppress("UNCHECKED_CAST")
     return doSetValue(value, (other as CollectionStoredProperty<E, C>).value)
   }
+
+  @Suppress("FunctionName")
+  fun __getValue() = value
 }
 
 internal class ListStoredProperty<T> : CollectionStoredProperty<T, SmartList<T>>(SmartList()) {
   override fun getModificationCount() = value.modificationCount.toLong()
 }
 
-internal class MapStoredProperty<K: Any, V>(private val value: MutableMap<K, V>) : StoredPropertyBase<MutableMap<K, V>>() {
+class MapStoredProperty<K: Any, V>(private val value: MutableMap<K, V>) : StoredPropertyBase<MutableMap<K, V>>() {
   override val jsonType: JsonSchemaType
     get() = JsonSchemaType.OBJECT
 
@@ -85,4 +88,7 @@ internal class MapStoredProperty<K: Any, V>(private val value: MutableMap<K, V>)
     @Suppress("UNCHECKED_CAST")
     return doSetValue(value, (other as MapStoredProperty<K, V>).value)
   }
+
+  @Suppress("FunctionName")
+  fun __getValue() = value
 }

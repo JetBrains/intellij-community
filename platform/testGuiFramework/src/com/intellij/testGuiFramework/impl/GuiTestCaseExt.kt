@@ -112,6 +112,20 @@ fun GuiTestCase.testTreeItemExist(name: String, vararg expectedItem: String) {
 }
 
 /**
+ * Performs test whether the specified item exists in a list
+ * Note: the dialog with the investigated list must be open
+ * before using this test
+ * @param expectedItem - expected exact item
+ * @param name - name of item kind, such as "Library" or "Facet". Used for understandable error message
+ * */
+fun GuiTestCase.testListItemExist(name: String, expectedItem: String) {
+  ideFrame {
+    logInfo("Check that $name -> $expectedItem exists in a list element")
+    kotlin.assert(exists { jList(expectedItem, timeout = Timeouts.noTimeout) }) { "$name '$expectedItem' not found" }
+  }
+}
+
+/**
  * Selects specified [path] in the tree by keyboard searching
  * @param path in string form
  * @param testCase - test case is required only because of keyboard related functions

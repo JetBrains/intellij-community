@@ -27,7 +27,7 @@ public class ShowProgressTestDialogAction extends AnAction implements DumbAware 
     private final List<JProgressBar> pbList = new ArrayList<>();
     private final Alarm alarm = new Alarm(getDisposable());
 
-    public MyDialogWrapper(Project project) {
+    MyDialogWrapper(Project project) {
       super(project);
       init();
     }

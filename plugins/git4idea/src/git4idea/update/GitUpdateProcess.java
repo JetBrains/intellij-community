@@ -33,6 +33,8 @@ import git4idea.merge.GitMerger;
 import git4idea.rebase.GitRebaser;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
+import git4idea.repo.GitSubmodule;
+import git4idea.repo.GitSubmoduleKt;
 import git4idea.util.GitPreservingProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,6 +60,7 @@ public class GitUpdateProcess {
   @NotNull private final ChangeListManager myChangeListManager;
 
   @NotNull private final List<GitRepository> myRepositories;
+  @NotNull private final Map<GitRepository, GitSubmodule> mySubmodules;
   private final boolean myCheckRebaseOverMergeProblem;
   private final boolean myCheckForTrackedBranchExistence;
   private final UpdatedFiles myUpdatedFiles;
@@ -83,6 +86,14 @@ public class GitUpdateProcess {
     myRepositories = GitUtil.getRepositoryManager(project).sortByDependency(repositories);
     myProgressIndicator = progressIndicator == null ? new EmptyProgressIndicator() : progressIndicator;
     myMerger = new GitMerger(myProject);
+
+    mySubmodules = ContainerUtil.newLinkedHashMap();
+    for (GitRepository repository : myRepositories) {
+      GitSubmodule submodule = GitSubmoduleKt.asSubmodule(repository);
+      if (submodule != null) {
+        mySubmodules.put(repository, submodule);
+      }
+    }
   }
 
   /**
@@ -199,7 +210,7 @@ public class GitUpdateProcess {
                                LOG.info("updateImpl: updating...");
                                GitRepository currentlyUpdatedRoot = null;
                                try {
-                                 for (GitRepository repo : myRepositories) {
+                                 for (GitRepository repo : finalUpdaters.keySet()) {
                                    GitUpdater updater = finalUpdaters.get(repo);
                                    if (updater == null) continue;
                                    currentlyUpdatedRoot = repo;
@@ -232,8 +243,8 @@ public class GitUpdateProcess {
     return ContainerUtil.mapNotNull(updaters.keySet(), repo -> {
       GitUpdater updater = updaters.get(repo);
       if (updater instanceof GitRebaseUpdater) {
-        String currentRef = updater.getSourceAndTarget().getBranch().getFullName();
-        String baseRef = ObjectUtils.assertNotNull(updater.getSourceAndTarget().getDest()).getFullName();
+        String currentRef = ((GitRebaseUpdater)updater).getSourceAndTarget().getBranch().getFullName();
+        String baseRef = ObjectUtils.assertNotNull(((GitRebaseUpdater)updater).getSourceAndTarget().getDest()).getFullName();
         return GitRebaseOverMergeProblem.hasProblem(myProject, repo.getRoot(), baseRef, currentRef) ? repo : null;
       }
       return null;
@@ -242,12 +253,11 @@ public class GitUpdateProcess {
 
   @NotNull
   private Map<GitRepository, GitUpdater> tryFastForwardMergeForRebaseUpdaters(@NotNull Map<GitRepository, GitUpdater> updaters) {
-    Map<GitRepository, GitUpdater> modifiedUpdaters = new HashMap<>();
+    Map<GitRepository, GitUpdater> modifiedUpdaters = new LinkedHashMap<>();
     Map<VirtualFile, Collection<Change>> changesUnderRoots =
       new LocalChangesUnderRoots(myChangeListManager, myVcsManager).getChangesUnderRoots(getRootsFromRepositories(updaters.keySet()));
-    for (GitRepository repository : myRepositories) {
+    for (GitRepository repository : updaters.keySet()) {
       GitUpdater updater = updaters.get(repository);
-      if (updater == null) continue;
       Collection<Change> changes = changesUnderRoots.get(repository.getRoot());
       LOG.debug("Changes under root '" + getShortRepositoryName(repository) + "': " + changes);
       if (updater instanceof GitRebaseUpdater && changes != null && !changes.isEmpty()) {
@@ -265,18 +275,24 @@ public class GitUpdateProcess {
   @NotNull
   private Map<GitRepository, GitUpdater> defineUpdaters(@NotNull UpdateMethod updateMethod,
                                                         @NotNull Map<GitRepository, GitBranchPair> trackedBranches) throws VcsException {
-    final Map<GitRepository, GitUpdater> updaters = new HashMap<>();
-    LOG.info("updateImpl: defining updaters...");
-    for (GitRepository repository : myRepositories) {
+    Map<GitRepository, GitUpdater> updaters = new LinkedHashMap<>();
+    for (GitRepository repository : trackedBranches.keySet()) {
       GitBranchPair branchAndTracked = trackedBranches.get(repository);
-      if (branchAndTracked == null) continue;
       GitUpdater updater = GitUpdater.getUpdater(myProject, myGit, branchAndTracked, repository, myProgressIndicator, myUpdatedFiles,
                                                  updateMethod);
-      if (updater.isUpdateNeeded()) {
+      if (updater.isUpdateNeeded(branchAndTracked)) {
         updaters.put(repository, updater);
       }
-      LOG.info("update| root=" + repository.getRoot() + " ,updater=" + updater);
     }
+
+    for (GitRepository repository : mySubmodules.keySet()) {
+      GitUpdater updater = new GitSubmoduleUpdater(myProject, myGit, mySubmodules.get(repository).getParent(), repository,
+                                                   myProgressIndicator, myUpdatedFiles);
+      updaters.put(repository, updater);
+    }
+
+    LOG.info("Updaters: " + updaters);
+
     return updaters;
   }
 
@@ -310,13 +326,18 @@ public class GitUpdateProcess {
     Map<GitRepository, GitLocalBranch> currentBranches = ContainerUtil.newLinkedHashMap();
     List<GitRepository> detachedHeads = ContainerUtil.newArrayList();
     for (GitRepository repository : myRepositories) {
+      if (mySubmodules.containsKey(repository)) {
+        LOG.debug("Repository " + repository + " is a submodule, not checking its tracked branch");
+        continue;
+      }
+
       GitLocalBranch branch = repository.getCurrentBranch();
       if (branch != null) {
         currentBranches.put(repository, branch);
       }
       else {
         detachedHeads.add(repository);
-        LOG.info("checkTrackedBranchesConfigured: current branch is null in " + repository);
+        LOG.info(String.format("skipping update of [%s] (detached HEAD)", getShortRepositoryName(repository)));
       }
     }
 
@@ -340,7 +361,8 @@ public class GitUpdateProcess {
       }
       else {
         noTrackedBranch.add(repository);
-        LOG.info(String.format("checkTrackedBranchesConfiguration: no track info for current branch %s in %s", branch, repository));
+        LOG.info(String.format("skipping update of [%s] (no tracked branch for current branch [%s])",
+                               getShortRepositoryName(repository), branch));
       }
     }
 

@@ -126,7 +126,7 @@ public class SortedListModel<T> extends AbstractListModel<T> {
     private final Iterator<T> myIterator;
     private int myCounter = -1;
 
-    public MyIterator() {
+    MyIterator() {
       myIterator = myItems.iterator();
     }
 

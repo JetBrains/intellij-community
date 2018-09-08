@@ -193,7 +193,7 @@ public class ExternalJavacMessageHandler {
     private final JavaFileObject mySrcFileObject;
     private final JavacRemoteProto.Message.Response.CompileMessage myCompileMessage;
 
-    public DummyDiagnostic(final Kind messageKind, JavaFileObject srcFileObject, JavacRemoteProto.Message.Response.CompileMessage compileMessage) {
+    DummyDiagnostic(final Kind messageKind, JavaFileObject srcFileObject, JavacRemoteProto.Message.Response.CompileMessage compileMessage) {
       myMessageKind = messageKind;
       mySrcFileObject = srcFileObject;
       myCompileMessage = compileMessage;

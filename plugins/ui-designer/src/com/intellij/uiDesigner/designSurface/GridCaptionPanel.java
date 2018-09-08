@@ -609,7 +609,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     public boolean isRow;
     public int[] cells;
 
-    public MyDragBean(final boolean row, final int[] cells) {
+    MyDragBean(final boolean row, final int[] cells) {
       isRow = row;
       this.cells = cells;
     }

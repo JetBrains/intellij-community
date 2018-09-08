@@ -4,7 +4,6 @@ package com.intellij.execution.compound;
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.ExecutionTarget;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunConfigurationBeforeRunProvider;
 import com.intellij.execution.impl.RunConfigurationSelector;
@@ -107,15 +106,13 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
     return decorator.disableUpDownActions().setAddAction(new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton button) {
-        final List<RunConfiguration> all = new ArrayList<>();
-        for (ConfigurationType type : ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList()) {
-          for (RunnerAndConfigurationSettings settings : myRunManager.getConfigurationSettingsList(type)) {
-            all.add(settings.getConfiguration());
+        List<RunConfiguration> configurations = new ArrayList<>();
+        for (RunnerAndConfigurationSettings settings : myRunManager.getAllSettings()) {
+          RunConfiguration configuration = settings.getConfiguration();
+          if (!mySnapshot.getConfigurationsWithTargets().keySet().contains(configuration) && canBeAdded(configuration, mySnapshot)) {
+            configurations.add(configuration);
           }
         }
-
-        final List<RunConfiguration> configurations = ContainerUtil.filter(all,
-                                                                           configuration -> !mySnapshot.getConfigurationsWithTargets().keySet().contains(configuration) && canBeAdded(configuration, mySnapshot));
 
         ConfigurationSelectionUtil.createPopup(myProject, myRunManager, configurations, (selectedConfigs, selectedTarget) -> {
           for (RunConfiguration each : selectedConfigs) {

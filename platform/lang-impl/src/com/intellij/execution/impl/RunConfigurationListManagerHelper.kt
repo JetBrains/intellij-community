@@ -3,10 +3,13 @@ package com.intellij.execution.impl
 
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.compound.CompoundRunConfiguration
+import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.execution.configurations.UnknownConfigurationType
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.ObjectIntHashMap
+import com.intellij.util.isEmpty
 import org.jdom.Element
 import java.util.*
 
@@ -16,7 +19,7 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
 
   private val customOrder = ObjectIntHashMap<String>()
 
-  private var isSorted = true
+  private var isSorted = false
     set(value) {
       if (field != value) {
         field = value
@@ -29,43 +32,83 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
   @Volatile
   var immutableSortedSettingsList: List<RunnerAndConfigurationSettings>? = emptyList()
 
-  fun setOrder(comparator: Comparator<RunnerAndConfigurationSettings>) {
-    val sorted = idToSettings.values.filterTo(ArrayList(idToSettings.size)) { it.type.isManaged }
-    sorted.sortWith(comparator)
+  fun setOrder(comparator: Comparator<RunnerAndConfigurationSettings>, isApplyAdditionalSortByTypeAndGroup: Boolean) {
+    val sorted = idToSettings.values.toTypedArray()
+    if (isApplyAdditionalSortByTypeAndGroup) {
+      val folderNames = getSortedFolderNames(idToSettings.values)
+      sorted.sortWith(compareByTypeAndFolderAndCustomComparator(folderNames, comparator))
+    }
+    else {
+      sorted.sortWith(comparator)
+    }
     customOrder.clear()
     customOrder.ensureCapacity(sorted.size)
     sorted.mapIndexed { index, settings -> customOrder.put(settings.uniqueID, index) }
     immutableSortedSettingsList = null
-    isSorted = false
+    isSorted = true
+    idToSettings.clear()
+    for (settings in sorted) {
+      idToSettings.put(settings.uniqueID, settings)
+    }
+  }
+
+  private fun compareByTypeAndFolderAndCustomComparator(folderNames: List<String?>, comparator: Comparator<RunnerAndConfigurationSettings>): Comparator<RunnerAndConfigurationSettings> {
+    return kotlin.Comparator { o1, o2 ->
+      val type1 = o1.type
+      val type2 = o2.type
+      if (type1 !== type2) {
+        return@Comparator compareTypesForUi(type1, type2)
+      }
+
+      if (o1.folderName != o2.folderName) {
+        val i1 = folderNames.indexOf(o1.folderName)
+        val i2 = folderNames.indexOf(o2.folderName)
+        if (i1 != i2) {
+          return@Comparator i1 - i2
+        }
+      }
+
+      val temporary1 = o1.isTemporary
+      val temporary2 = o2.isTemporary
+      when {
+        temporary1 == temporary2 -> {
+          comparator.compare(o1, o2)
+        }
+        temporary1 -> 1
+        else -> -1
+      }
+    }
   }
 
   fun requestSort() {
-    if (customOrder.isEmpty) {
-      sortAlphabetically()
-    }
-    else {
-      isSorted = false
-    }
+    isSorted = false
     immutableSortedSettingsList = null
   }
 
+  fun writeOrder(parent: Element) {
+    if (customOrder.isEmpty) {
+      return
+    }
+
+    val listElement = Element("list")
+    idToSettings.values.forEachManaged {
+      listElement.addContent(Element("item").setAttribute("itemvalue", it.uniqueID))
+    }
+
+    if (!listElement.isEmpty()) {
+      parent.addContent(listElement)
+    }
+  }
+
   fun readCustomOrder(element: Element) {
-    var isRequestSort = false
     element.getChild("list")?.let { listElement ->
       val order = listElement.getChildren("item").mapNotNull { it.getAttributeValue("itemvalue") }
       customOrder.clear()
       customOrder.ensureCapacity(order.size)
       order.mapIndexed { index, id -> customOrder.put(id, index) }
-      isRequestSort = true
     }
 
-    if (isRequestSort) {
-      requestSort()
-    }
-    else {
-      isSorted = false
-      immutableSortedSettingsList = null
-    }
+    requestSort()
   }
 
   private fun sortAlphabetically() {
@@ -74,31 +117,7 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
     }
 
     val folderNames = getSortedFolderNames(idToSettings.values)
-    val list = idToSettings.values.sortedWith(Comparator { o1, o2 ->
-      val type1 = o1.type
-      val type2 = o2.type
-      if (type1 !== type2) {
-        return@Comparator NaturalComparator.INSTANCE.compare(type1.displayName, type2.displayName)
-      }
-
-      val temporary1 = o1.isTemporary
-      val temporary2 = o2.isTemporary
-      when {
-        temporary1 == temporary2 -> {
-          if (o1.folderName != o2.folderName) {
-            val folder1 = folderNames.indexOf(o1.folderName)
-            val folder2 = folderNames.indexOf(o2.folderName)
-            if (folder1 != folder2) {
-              return@Comparator folder1 - folder2
-            }
-          }
-
-          NaturalComparator.INSTANCE.compare(o1.name, o2.name)
-        }
-        temporary1 -> 1
-        else -> -1
-      }
-    })
+    val list = idToSettings.values.sortedWith(compareByTypeAndFolderAndCustomComparator(folderNames, kotlin.Comparator { o1, o2 -> NaturalComparator.INSTANCE.compare(o1.name, o2.name) }))
     idToSettings.clear()
     for (settings in list) {
       idToSettings.put(settings.uniqueID, settings)
@@ -133,33 +152,17 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
   private fun doCustomSort() {
     val list = idToSettings.values.toTypedArray()
     val folderNames = getSortedFolderNames(idToSettings.values)
-
-    list.sortWith(Comparator { o1, o2 ->
-      if (o1.folderName != o2.folderName) {
-        val i1 = folderNames.indexOf(o1.folderName)
-        val i2 = folderNames.indexOf(o2.folderName)
-        if (i1 != i2) {
-          return@Comparator i1 - i2
-        }
+    // customOrder maybe outdated (order specified not all RC), so, base sort by type and folder is applied)
+    list.sortWith(compareByTypeAndFolderAndCustomComparator(folderNames, Comparator { o1, o2 ->
+      val index1 = customOrder.get(o1.uniqueID)
+      val index2 = customOrder.get(o2.uniqueID)
+      if (index1 == -1 && index2 == -1) {
+        o1.name.compareTo(o2.name)
       }
-
-      val temporary1 = o1.isTemporary
-      val temporary2 = o2.isTemporary
-      when {
-        temporary1 == temporary2 -> {
-          val index1 = customOrder.get(o1.uniqueID)
-          val index2 = customOrder.get(o2.uniqueID)
-          if (index1 == -1 && index2 == -1) {
-            o1.name.compareTo(o2.name)
-          }
-          else {
-            index1 - index2
-          }
-        }
-        temporary1 -> 1
-        else -> -1
+      else {
+        index1 - index2
       }
-    })
+    }))
 
     isSorted = true
     idToSettings.clear()
@@ -208,15 +211,32 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
 }
 
 private fun getSortedFolderNames(list: Collection<RunnerAndConfigurationSettings>): List<String?> {
-  val folderNames = ArrayList<String?>()
+  val result = ArrayList<String?>()
   for (settings in list) {
     val folderName = settings.folderName
-    if (folderName != null && !folderNames.contains(folderName)) {
-      folderNames.add(folderName)
+    if (folderName != null && !result.contains(folderName)) {
+      result.add(folderName)
     }
   }
 
-  folderNames.sortWith(NaturalComparator.INSTANCE)
-  folderNames.add(null)
-  return folderNames
+  result.sortWith(NaturalComparator.INSTANCE)
+  result.add(null)
+  return result
+}
+
+internal inline fun Collection<RunnerAndConfigurationSettings>.forEachManaged(handler: (settings: RunnerAndConfigurationSettings) -> Unit) {
+  for (settings in this) {
+    if (settings.type.isManaged) {
+      handler(settings)
+    }
+  }
+}
+
+internal fun compareTypesForUi(type1: ConfigurationType, type2: ConfigurationType): Int {
+  when {
+    type1 === type2 -> return 0
+    type1 === UnknownConfigurationType.getInstance() -> return 1
+    type2 === UnknownConfigurationType.getInstance() -> return -1
+    else -> return NaturalComparator.INSTANCE.compare(type1.displayName, type2.displayName)
+  }
 }

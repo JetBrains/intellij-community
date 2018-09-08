@@ -30,7 +30,7 @@ class MergedCompositeConfigurable implements SearchableConfigurable {
   private final String displayName;
   private final String helpTopic;
 
-  public MergedCompositeConfigurable(@NotNull String id,
+  MergedCompositeConfigurable(@NotNull String id,
                                      @NotNull String displayName,
                                      @Nullable String helpTopic,
                                      @NotNull Configurable[] children) {
@@ -76,11 +76,13 @@ class MergedCompositeConfigurable implements SearchableConfigurable {
     if (rootComponent == null) {
       Configurable firstConfigurable = children[0];
       if (children.length == 1) {
-        rootComponent = firstConfigurable.createComponent();
+        JComponent component = firstConfigurable.createComponent();
         String rootComponentDisplayName = firstConfigurable.getDisplayName();
         if (!StringUtil.isEmpty(rootComponentDisplayName) && !isTargetedToProduct(firstConfigurable)) {
-          rootComponent.setBorder(IdeBorderFactory.createTitledBorder(rootComponentDisplayName, false, FIRST_COMPONENT_INSETS));
+          component.setBorder(IdeBorderFactory.createTitledBorder(rootComponentDisplayName, false, FIRST_COMPONENT_INSETS));
         }
+        rootComponent = createPanel(true);
+        rootComponent.add(component);
       }
       else {
         boolean isFirstNamed = true;

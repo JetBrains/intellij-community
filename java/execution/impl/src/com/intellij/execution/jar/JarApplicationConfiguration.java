@@ -36,7 +36,7 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
   private JarApplicationConfigurationBean myBean = new JarApplicationConfigurationBean();
   private Map<String, String> myEnvs = new LinkedHashMap<>();
   private JavaRunConfigurationModule myConfigurationModule;
-  private InputRedirectAware.InputRedirectOptions myInputRedirectOptions = new InputRedirectOptions();
+  private InputRedirectAware.InputRedirectOptionsImpl myInputRedirectOptions = new InputRedirectOptionsImpl();
 
   @NotNull
   @Override

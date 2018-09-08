@@ -564,7 +564,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     if (UIUtil.isUnderWin10LookAndFeel()) {
       uiDefaults.put("Menu.arrowIcon", new Win10MenuArrowIcon());
     } else if ((SystemInfo.isLinux || SystemInfo.isWindows) && (UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula())) {
-      uiDefaults.put("Menu.arrowIcon", new DefaultMenuArrowIcon(AllIcons.General.SplitRight));
+      uiDefaults.put("Menu.arrowIcon", new DefaultMenuArrowIcon(AllIcons.General.ArrowRight));
     }
 
     uiDefaults.put("MenuItem.background", UIManager.getColor("Menu.background"));
@@ -791,7 +791,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     private final PopupFactory myDelegate;
 
-    public OurPopupFactory(final PopupFactory delegate) {
+    OurPopupFactory(final PopupFactory delegate) {
       myDelegate = delegate;
     }
 

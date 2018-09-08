@@ -57,8 +57,8 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
   }
 
   @Override
-  public void fetchElements(String pattern, boolean everywhere, SearchEverywhereContributorFilter<Void> filter,
-                            ProgressIndicator progressIndicator, Function<Object, Boolean> consumer) {
+  public void fetchElements(@NotNull String pattern, boolean everywhere, @Nullable SearchEverywhereContributorFilter<Void> filter,
+                            @NotNull ProgressIndicator progressIndicator, @NotNull Function<Object, Boolean> consumer) {
     if (StringUtil.isEmptyOrSpaces(pattern)) {
       return;
     }
@@ -80,8 +80,9 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
 
   }
 
+  @NotNull
   @Override
-  public ListCellRenderer getElementsRenderer(JList<?> list) {
+  public ListCellRenderer getElementsRenderer(@NotNull JList<?> list) {
     return new GotoActionModel.GotoActionListCellRenderer(myModel::getGroupName, true);
   }
 
@@ -97,7 +98,7 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
   }
 
   @Override
-  public Object getDataForItem(Object element, String dataId) {
+  public Object getDataForItem(@NotNull Object element, @NotNull String dataId) {
     if (SetShortcutAction.SELECTED_ACTION.is(dataId)) {
       Object value = ((GotoActionModel.MatchedValue)element).value;
       if (value instanceof GotoActionModel.ActionWrapper) {
@@ -113,7 +114,7 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
   }
 
   @Override
-  public boolean processSelectedItem(Object selected, int modifiers, String text) {
+  public boolean processSelectedItem(@NotNull Object selected, int modifiers, @NotNull String text) {
     selected = ((GotoActionModel.MatchedValue) selected).value;
 
     if (selected instanceof BooleanOptionDescription) {

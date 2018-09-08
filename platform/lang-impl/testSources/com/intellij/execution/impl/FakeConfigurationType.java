@@ -34,9 +34,4 @@ public final class FakeConfigurationType implements ConfigurationType {
   public ConfigurationFactory[] getConfigurationFactories() {
     return new ConfigurationFactory[0];
   }
-
-  @Override
-  public String getHelpTopic() {
-    return null;
-  }
 }

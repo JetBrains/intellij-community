@@ -33,7 +33,7 @@ class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> {
   @NotNull private final JsonSchemaService myService;
   private static final Icon EMPTY_ICON = JBUI.scale(EmptyIcon.create(AllIcons.General.Add.getIconWidth()));
 
-  public JsonSchemaInfoPopupStep(@NotNull List<JsonSchemaInfo> allSchemas, @NotNull Project project, @NotNull VirtualFile virtualFile,
+  JsonSchemaInfoPopupStep(@NotNull List<JsonSchemaInfo> allSchemas, @NotNull Project project, @NotNull VirtualFile virtualFile,
                                  @NotNull JsonSchemaService service) {
     super(null, allSchemas);
     myProject = project;

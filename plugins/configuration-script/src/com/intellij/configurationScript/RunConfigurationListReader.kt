@@ -3,10 +3,8 @@ package com.intellij.configurationScript
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.openapi.components.BaseState
-import com.intellij.openapi.components.ScalarProperty
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.runAndLogException
-import com.intellij.util.ReflectionUtil
 import gnu.trove.THashMap
 import org.yaml.snakeyaml.nodes.MappingNode
 import org.yaml.snakeyaml.nodes.Node
@@ -15,7 +13,7 @@ import org.yaml.snakeyaml.nodes.SequenceNode
 
 internal class RunConfigurationListReader(private val processor: (factory: ConfigurationFactory, state: Any) -> Unit) {
   // rc grouped by type
-  fun read(parentNode: MappingNode) {
+  fun read(parentNode: MappingNode, isTemplatesOnly: Boolean) {
     val keyToType = THashMap<String, ConfigurationType>()
     processConfigurationTypes { configurationType, propertyName, _ ->
       keyToType.put(propertyName.toString(), configurationType)
@@ -25,6 +23,13 @@ internal class RunConfigurationListReader(private val processor: (factory: Confi
       val keyNode = tuple.keyNode
       if (keyNode !is ScalarNode) {
         LOG.warn("Unexpected keyNode type: ${keyNode.nodeId}")
+        continue
+      }
+
+      if (keyNode.value == Keys.templates) {
+        if (isTemplatesOnly) {
+          read(tuple.valueNode as? MappingNode ?: continue, false)
+        }
         continue
       }
 
@@ -85,33 +90,21 @@ internal class RunConfigurationListReader(private val processor: (factory: Confi
     if (node is MappingNode) {
       // direct child
       LOG.runAndLogException {
-        readRc(optionsClass, node, factory)
+        readRunConfiguration(optionsClass, node, factory)
       }
     }
     else if (node is SequenceNode) {
       // array of child
       for (itemNode in node.value) {
+        @Suppress("IfThenToSafeAccess")
         if (itemNode is MappingNode) {
-          readRc(optionsClass, itemNode, factory)
+          readRunConfiguration(optionsClass, itemNode, factory)
         }
       }
     }
   }
 
-  private fun readRc(optionsClass: Class<out BaseState>, node: MappingNode, factory: ConfigurationFactory) {
-    val state = ReflectionUtil.newInstance(optionsClass)
-    val properties = state.getProperties()
-    for (tuple in node.value) {
-      val valueNode = tuple.valueNode
-      val key = (tuple.keyNode as ScalarNode).value
-      if (valueNode is ScalarNode) {
-        for (property in properties) {
-          if (property is ScalarProperty && property.jsonType.isScalar && key == property.name) {
-            property.parseAndSetValue(valueNode.value)
-          }
-        }
-      }
-    }
-    processor(factory, state)
+  private fun readRunConfiguration(optionsClass: Class<out BaseState>, node: MappingNode, factory: ConfigurationFactory) {
+    processor(factory, readObject(optionsClass, node))
   }
 }

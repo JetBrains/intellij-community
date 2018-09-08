@@ -86,7 +86,7 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
   static class MySchemeListItem<T extends Scheme> {
     private @Nullable final T myScheme;
 
-    public MySchemeListItem(@Nullable T scheme) {
+    MySchemeListItem(@Nullable T scheme) {
       myScheme = scheme;
     }
 
@@ -164,7 +164,7 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
 
     private final String myTitle;
 
-    public MySeparatorItem(@NotNull String title) {
+    MySeparatorItem(@NotNull String title) {
       super(null);
       myTitle = title;
     }
@@ -183,7 +183,7 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
 
   private static class MyTitledSeparator extends JPanel {
 
-    public MyTitledSeparator(@NotNull String titleText) {
+    MyTitledSeparator(@NotNull String titleText) {
       super();
       setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
       JLabel label = new JLabel(titleText);

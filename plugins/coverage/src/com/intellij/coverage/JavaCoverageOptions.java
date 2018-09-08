@@ -61,7 +61,7 @@ public class JavaCoverageOptions extends CoverageOptions {
     private final JCheckBox myImplicitCheckBox = new JCheckBox("Ignore implicitly declared default constructors", true);
     private final JCheckBox myEmptyCheckBox = new JCheckBox("Ignore empty private constructors of utility classes", true);
 
-    public JavaCoverageOptionsEditor() {
+    JavaCoverageOptionsEditor() {
       myPanel.setBorder(IdeBorderFactory.createTitledBorder("Java coverage"));
       myPanel.add(myImplicitCheckBox);
       myPanel.add(myEmptyCheckBox);

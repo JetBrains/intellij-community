@@ -12,5 +12,9 @@ public abstract class JavaTestConfigurationWithDiscoverySupport extends JavaTest
     super(name, configurationModule, factory);
   }
 
+  public JavaTestConfigurationWithDiscoverySupport(@NotNull JavaRunConfigurationModule configurationModule, @NotNull ConfigurationFactory factory) {
+    super(configurationModule, factory);
+  }
+
   public abstract byte getTestFrameworkId();
 }

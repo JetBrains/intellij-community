@@ -40,7 +40,7 @@ class InstrumentationAdapter extends FailSafeMethodVisitor implements Opcodes {
 
   private Label myAssertLabel;
 
-  public InstrumentationAdapter(PatternInstrumenter instrumenter,
+  InstrumentationAdapter(PatternInstrumenter instrumenter,
                                 MethodVisitor methodvisitor,
                                 Type[] argTypes,
                                 Type returnType,
@@ -220,7 +220,7 @@ class InstrumentationAdapter extends FailSafeMethodVisitor implements Opcodes {
     private final AnnotationVisitor av;
     private final PatternValue myPatternValue;
 
-    public MyAnnotationVisitor(AnnotationVisitor annotationvisitor, PatternValue v) {
+    MyAnnotationVisitor(AnnotationVisitor annotationvisitor, PatternValue v) {
       super(Opcodes.API_VERSION);
       av = annotationvisitor;
       myPatternValue = v;

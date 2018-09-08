@@ -87,7 +87,7 @@ public class PyChainedComparisonsInspection extends PyInspection {
     boolean isConstantInTheMiddle;
     boolean ignoreConstantInTheMiddle;
 
-    public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session, boolean ignoreConstantInTheMiddle) {
+    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session, boolean ignoreConstantInTheMiddle) {
       super(holder, session);
       this.ignoreConstantInTheMiddle = ignoreConstantInTheMiddle;
     }

@@ -120,7 +120,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   private static class MyDirectoryRenderer extends ColoredTableCellRenderer {
     private final Project myProject;
 
-    public MyDirectoryRenderer(Project project) {
+    MyDirectoryRenderer(Project project) {
       myProject = project;
     }
 

@@ -198,7 +198,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
 
     private TestFrameworkRunningModel myModel;
 
-    public SortByDurationAction(TestConsoleProperties properties) {
+    SortByDurationAction(TestConsoleProperties properties) {
       super(ExecutionBundle.message("junit.runing.info.sort.by.statistics.action.name"),
             ExecutionBundle.message("junit.runing.info.sort.by.statistics.action.description"),
             AllIcons.RunConfigurations.SortbyDuration, properties,

@@ -36,7 +36,7 @@ class MultithreadSearcher implements SESearcher {
    * @param listener {@link Listener} to get notifications about searching process
    * @param notificationExecutor searcher guarantees that all listener methods will be called only through this executor
    */
-  public MultithreadSearcher(@NotNull Listener listener, @NotNull Executor notificationExecutor) {
+  MultithreadSearcher(@NotNull Listener listener, @NotNull Executor notificationExecutor) {
     myListener = listener;
     myNotificationExecutor = notificationExecutor;
   }
@@ -47,7 +47,7 @@ class MultithreadSearcher implements SESearcher {
    * @param listener {@link Listener} to get notifications about searching process
    */
   @SuppressWarnings("unused")
-  public MultithreadSearcher(@NotNull Listener listener) {
+  MultithreadSearcher(@NotNull Listener listener) {
     this(listener, Runnable::run);
   }
 
@@ -223,7 +223,7 @@ class MultithreadSearcher implements SESearcher {
     private final int myNewLimit;
     private volatile boolean hasMore;
 
-    public ShowMoreResultsAccumulator(Map<SearchEverywhereContributor<?>, Collection<ElementInfo>> alreadyFound, SearchEverywhereContributor<?> contributor,
+    ShowMoreResultsAccumulator(Map<SearchEverywhereContributor<?>, Collection<ElementInfo>> alreadyFound, SearchEverywhereContributor<?> contributor,
                                       int newLimit, Listener listener, Executor notificationExecutor) {
       super(new ConcurrentHashMap<>(alreadyFound), listener, notificationExecutor);
       myExpandedContributor = contributor;

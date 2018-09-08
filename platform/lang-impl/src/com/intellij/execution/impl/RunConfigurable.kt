@@ -73,9 +73,9 @@ private fun getName(userObject: Any): String {
 
 open class RunConfigurable @JvmOverloads constructor(private val project: Project, var runDialog: RunDialogBase? = null) : Configurable, Disposable {
   @Volatile private var isDisposed: Boolean = false
-  val root: DefaultMutableTreeNode = DefaultMutableTreeNode("Root")
-  val treeModel: MyTreeModel = MyTreeModel(root)
-  val tree: Tree = Tree(treeModel)
+  val root = DefaultMutableTreeNode("Root")
+  val treeModel = MyTreeModel(root)
+  val tree = Tree(treeModel)
   private val rightPanel = JPanel(BorderLayout())
   private val splitter = JBSplitter("RunConfigurable.dividerProportion", 0.3f)
   private var wholePanel: JPanel? = null
@@ -85,7 +85,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
   private val additionalSettings = ArrayList<Pair<UnnamedConfigurable, JComponent>>()
   private val storedComponents = THashMap<ConfigurationFactory, Configurable>()
   private var toolbarDecorator: ToolbarDecorator? = null
-  private var isFolderCreating: Boolean = false
+  private var isFolderCreating = false
   private val toolbarAddAction = MyToolbarAddAction()
   private val runDashboardTypesPanel = RunDashboardTypesPanel(project)
 
@@ -620,7 +620,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
         manager.config.recentsLimit = recentLimit
         manager.checkRecentsLimit()
       }
-      recentsLimit.text = "" + recentLimit
+      recentsLimit.text = recentLimit.toString()
       recentsLimit.putClientProperty(INITIAL_VALUE_KEY, recentsLimit.text)
       manager.config.isRestartRequiresConfirmation = confirmation.isSelected
       confirmation.putClientProperty(INITIAL_VALUE_KEY, confirmation.isSelected)
@@ -635,7 +635,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
 
       additionalSettings.forEach { it.first.apply() }
 
-      manager.setOrder(Comparator.comparingInt(ToIntFunction<RunnerAndConfigurationSettings> { settingsToOrder.get(it) }))
+      manager.setOrder(Comparator.comparingInt(ToIntFunction { settingsToOrder.get(it) }), isApplyAdditionalSortByTypeAndGroup = false)
     }
     finally {
       manager.fireEndUpdate()
@@ -1000,7 +1000,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
     private fun showAddPopup(showApplicableTypesOnly: Boolean) {
       val allTypes = ConfigurationType.CONFIGURATION_TYPE_EP.extensionList
       val configurationTypes: MutableList<ConfigurationType?> = getTypesToShow(showApplicableTypesOnly, allTypes).toMutableList()
-      configurationTypes.sortWith(kotlin.Comparator { type1, type2 -> type1!!.displayName.compareTo(type2!!.displayName, ignoreCase = true) })
+      configurationTypes.sortWith(kotlin.Comparator { type1, type2 -> compareTypesForUi(type1!!, type2!!) })
       val hiddenCount = allTypes.size - configurationTypes.size
       if (hiddenCount > 0) {
         configurationTypes.add(null)

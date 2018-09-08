@@ -170,7 +170,7 @@ public abstract class VcsLogPopupComponent extends JPanel {
   private static class FilledRoundedBorder extends LineBorder {
     private final int myArcSize;
 
-    public FilledRoundedBorder(@NotNull Color color, int arcSize, int thickness) {
+    FilledRoundedBorder(@NotNull Color color, int arcSize, int thickness) {
       super(color, thickness);
       myArcSize = arcSize;
     }

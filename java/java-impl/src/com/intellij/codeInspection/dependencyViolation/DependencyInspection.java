@@ -131,7 +131,7 @@ public class DependencyInspection extends AbstractBaseJavaLocalInspectionTool {
 
   private static class EditDependencyRulesAction implements LocalQuickFix {
     private final DependencyRule myRule;
-    public EditDependencyRulesAction(DependencyRule rule) {
+    EditDependencyRulesAction(DependencyRule rule) {
       myRule = rule;
     }
 

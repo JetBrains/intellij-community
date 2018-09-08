@@ -418,7 +418,7 @@ public class PushController implements Disposable {
     private final int myTotalSteps;
     private final AtomicInteger myFinishedTasks = new AtomicInteger();
 
-    public StepsProgressIndicator(@NotNull ProgressIndicator indicator, int totalSteps) {
+    StepsProgressIndicator(@NotNull ProgressIndicator indicator, int totalSteps) {
       super(indicator);
       myTotalSteps = totalSteps;
     }
@@ -667,7 +667,7 @@ public class PushController implements Disposable {
     @NotNull List<? extends VcsFullCommitDetails> myLoadedCommits = emptyList();
     @NotNull private final CheckBoxModel myCheckBoxModel;
 
-    public MyRepoModel(@NotNull Repo repository,
+    MyRepoModel(@NotNull Repo repository,
                        @NotNull PushSupport<Repo, S, T> supportForRepo,
                        boolean isSelected, @NotNull S source, @Nullable T target) {
       myRepository = repository;

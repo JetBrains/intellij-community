@@ -12,7 +12,7 @@ import java.util.List;
 class TreeNodeOnVcsRevision extends DefaultMutableTreeNode implements DualTreeElement {
   @NotNull private final VcsFileRevision myRevision;
 
-  public TreeNodeOnVcsRevision(@Nullable VcsFileRevision revision, @NotNull List<TreeItem<VcsFileRevision>> roots) {
+  TreeNodeOnVcsRevision(@Nullable VcsFileRevision revision, @NotNull List<TreeItem<VcsFileRevision>> roots) {
     myRevision = revision == null ? VcsFileRevision.NULL : revision;
     for (TreeItem<VcsFileRevision> root : roots) {
       add(new TreeNodeOnVcsRevision(root.getData(), root.getChildren()));

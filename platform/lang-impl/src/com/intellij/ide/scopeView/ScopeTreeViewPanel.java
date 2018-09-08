@@ -115,11 +115,9 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
   private final FileStatusListener myFileStatusListener = new FileStatusListener() {
     @Override
     public void fileStatusesChanged() {
-      TreeUtil.visitVisibleRows(myTree, path -> {
-        PackageDependenciesNode node = TreeUtil.getLastUserObject(PackageDependenciesNode.class, path);
-        if (node != null) node.updateColor();
-        return TreeVisitor.Action.CONTINUE;
-      });
+      TreeUtil.visitVisibleRows(myTree,
+                                path -> TreeUtil.getLastUserObject(PackageDependenciesNode.class, path),
+                                node -> node.updateColor());
     }
 
     @Override

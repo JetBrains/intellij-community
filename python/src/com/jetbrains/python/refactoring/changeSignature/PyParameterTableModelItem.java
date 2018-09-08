@@ -23,7 +23,7 @@ import com.intellij.refactoring.changeSignature.ParameterTableModelItemBase;
 */
 class PyParameterTableModelItem extends ParameterTableModelItemBase<PyParameterInfo> {
 
-  public PyParameterTableModelItem(PyParameterInfo parameter,
+  PyParameterTableModelItem(PyParameterInfo parameter,
                                    PsiCodeFragment typeCodeFragment,
                                    PsiCodeFragment defaultValueCodeFragment, boolean defaultInSignature) {
     super(parameter, typeCodeFragment, defaultValueCodeFragment);

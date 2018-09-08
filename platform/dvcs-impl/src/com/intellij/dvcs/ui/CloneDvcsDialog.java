@@ -639,7 +639,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     @NotNull private final JPanel myPanel;
     @NotNull private final List<Action> myActions;
 
-    public LoginButtonComponent(@NotNull List<Action> actions) {
+    LoginButtonComponent(@NotNull List<Action> actions) {
       myButton = new JBOptionButton(ContainerUtil.getFirstItem(actions), getActionsAfterFirst(actions));
       myPanel = PanelFactory.panel(myButton)
                             .withTooltip(DvcsBundle.getString("clone.repository.url.autocomplete.login.tooltip"))

@@ -10,7 +10,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 final class RootDescriptor extends NodeDescriptor{
   private final Object myRootElement;
 
-  public RootDescriptor(final NodeDescriptor parentDescriptor,final Object rootElement){
+  RootDescriptor(final NodeDescriptor parentDescriptor,final Object rootElement){
     super(null,parentDescriptor);
     myRootElement=rootElement;
   }

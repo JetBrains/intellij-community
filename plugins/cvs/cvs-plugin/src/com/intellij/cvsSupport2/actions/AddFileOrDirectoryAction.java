@@ -171,7 +171,7 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
     private final Map<VirtualFile, AddedFileInfo> myResult = new HashMap<>();
     private final Project myProject;
 
-    public CreateTreeOnFileList(Collection<VirtualFile> files, Project project) {
+    CreateTreeOnFileList(Collection<VirtualFile> files, Project project) {
       myFiles = files;
       myProject = project;
       fillFileToInfoMap();

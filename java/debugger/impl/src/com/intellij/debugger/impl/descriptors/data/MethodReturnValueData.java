@@ -57,7 +57,7 @@ public final class MethodReturnValueData extends DescriptorData<MethodReturnValu
   }
 
   private static final class MethodReturnValueDisplayKey extends Pair<Method, Value> implements DisplayKey<MethodReturnValueDescriptorImpl> {
-    public MethodReturnValueDisplayKey(@NotNull Method method, @Nullable Value value) {
+    MethodReturnValueDisplayKey(@NotNull Method method, @Nullable Value value) {
       super(method, value);
     }
   }

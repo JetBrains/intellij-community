@@ -14,7 +14,7 @@ abstract class KeyGestureState {
 
   final StateContext myContext;
 
-  public KeyGestureState(final KeyboardGestureProcessor processor) {
+  KeyGestureState(final KeyboardGestureProcessor processor) {
     myProcessor = processor;
     myContext = processor.myContext;
   }

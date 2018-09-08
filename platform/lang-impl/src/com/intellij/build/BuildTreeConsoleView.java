@@ -615,7 +615,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     private final ConsoleView myConsole;
     private final JPanel myPanel;
 
-    public DetailsHandler(Project project,
+    DetailsHandler(Project project,
                           TreeTableTree tree,
                           ThreeComponentsSplitter threeComponentsSplitter) {
       myConsole = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();

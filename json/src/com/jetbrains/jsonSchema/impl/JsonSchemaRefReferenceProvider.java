@@ -109,7 +109,7 @@ public class JsonSchemaRefReferenceProvider extends PsiReferenceProvider {
   private static class JsonSchemaRefReference extends JsonSchemaBaseReference<JsonValue> {
     private final String myFullPath;
 
-    public JsonSchemaRefReference(JsonValue element, TextRange textRange, String curPath) {
+    JsonSchemaRefReference(JsonValue element, TextRange textRange, String curPath) {
       super(element, textRange);
       myFullPath = curPath;
     }

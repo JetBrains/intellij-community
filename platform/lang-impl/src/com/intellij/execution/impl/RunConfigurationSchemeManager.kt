@@ -23,7 +23,7 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
   LazySchemeProcessor<RunnerAndConfigurationSettingsImpl, RunnerAndConfigurationSettingsImpl>(), SchemeContentChangedHandler<RunnerAndConfigurationSettingsImpl> {
 
   private val converters by lazy {
-    ConfigurationType.CONFIGURATION_TYPE_EP.extensions.filterIsInstance(RunConfigurationConverter::class.java)
+    ConfigurationType.CONFIGURATION_TYPE_EP.extensionList.filterIsInstance(RunConfigurationConverter::class.java)
   }
 
   override fun getSchemeKey(scheme: RunnerAndConfigurationSettingsImpl): String {

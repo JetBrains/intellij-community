@@ -253,7 +253,7 @@ public abstract class AbstractQuickFixManager {
   //////////////////////////////////////////////////////////////////////////////////////////
 
   private class FirstStep extends BaseListPopupStep<ErrorInfo> {
-    public FirstStep(List<ErrorInfo> errorInfos) {
+    FirstStep(List<ErrorInfo> errorInfos) {
       super(null, errorInfos);
     }
 
@@ -289,7 +289,7 @@ public abstract class AbstractQuickFixManager {
   }
 
   private class SecondStep extends BaseListPopupStep<QuickFix> {
-    public SecondStep(List<QuickFix> fixList) {
+    SecondStep(List<QuickFix> fixList) {
       super(null, fixList);
     }
 

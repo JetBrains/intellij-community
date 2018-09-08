@@ -88,7 +88,7 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
 
     private ApplicationState myApplicationState = ApplicationState.UNKNOWN;
 
-    public FocusDrawer() {
+    FocusDrawer() {
       super("focus debugger");
       Application app = ApplicationManager.getApplication();
       app.getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC, this);

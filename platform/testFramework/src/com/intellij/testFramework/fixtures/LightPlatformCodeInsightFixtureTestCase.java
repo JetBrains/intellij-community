@@ -42,7 +42,6 @@ public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTest
   }
 
   @Override
-  @SuppressWarnings("Duplicates")
   protected void tearDown() throws Exception {
     try {
       myFixture.tearDown();

@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  * @author oleg
  */
 final class YAMLPsiManager extends PsiTreeChangePreprocessorBase {
-  public YAMLPsiManager(@NotNull PsiManager psiManager) {
+  YAMLPsiManager(@NotNull PsiManager psiManager) {
     super(psiManager);
   }
 

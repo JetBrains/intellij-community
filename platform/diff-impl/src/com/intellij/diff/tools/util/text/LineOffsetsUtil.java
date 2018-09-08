@@ -108,7 +108,7 @@ public class LineOffsetsUtil {
   private static class LineOffsetsDocumentWrapper implements LineOffsets {
     @NotNull private final Document myDocument;
 
-    public LineOffsetsDocumentWrapper(@NotNull Document document) {
+    LineOffsetsDocumentWrapper(@NotNull Document document) {
       myDocument = document;
     }
 

@@ -97,8 +97,7 @@ public class HorizontalLabeledIcon implements Icon {
 
       x += myIcon.getIconWidth() + 5;
       y += (height - getTextHeight()) / 2 + fontMetrics.getHeight() - fontMetrics.getDescent();
-      for (int i = 0; i < myStrings.length; i++) {
-        String string = myStrings[i];
+      for (String string : myStrings) {
         g.drawString(string, x, y);
         y += fontMetrics.getHeight();
       }

@@ -129,7 +129,7 @@ public class AnActionListEditor<T> extends JPanel {
     private JList myList;
     private final ReorderableListToolbar<T> myListController;
 
-    public Form() {
+    Form() {
       myList.setModel(new DefaultListModel());
       if (ApplicationManager.getApplication() == null) {
         myListController = new ReorderableListToolbar<>(myList);

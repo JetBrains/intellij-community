@@ -74,7 +74,7 @@ public class ThreadsDebuggerTree extends DebuggerTree {
   private class RefreshThreadsTreeCommand extends DebuggerCommandImpl{
     private final DebuggerSession mySession;
 
-    public RefreshThreadsTreeCommand(DebuggerSession session) {
+    RefreshThreadsTreeCommand(DebuggerSession session) {
       mySession = session;
     }
 

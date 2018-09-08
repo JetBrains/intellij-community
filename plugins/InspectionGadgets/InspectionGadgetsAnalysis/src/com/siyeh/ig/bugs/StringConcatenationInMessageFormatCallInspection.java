@@ -56,7 +56,7 @@ public class StringConcatenationInMessageFormatCallInspection extends BaseInspec
 
     private final String variableName;
 
-    public StringConcatenationInFormatCallFix(String variableName) {
+    StringConcatenationInFormatCallFix(String variableName) {
       this.variableName = variableName;
     }
 

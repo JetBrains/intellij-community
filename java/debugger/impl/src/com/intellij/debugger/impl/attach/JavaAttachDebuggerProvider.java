@@ -45,7 +45,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     private final Project myProject;
     private final LocalAttachInfo myInfo;
 
-    public JavaLocalAttachDebugger(@NotNull Project project, @NotNull LocalAttachInfo info) {
+    JavaLocalAttachDebugger(@NotNull Project project, @NotNull LocalAttachInfo info) {
       myProject = project;
       myInfo = info;
     }
@@ -235,7 +235,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     final boolean myUseSocket;
     final String myAddress;
 
-    public DebuggerLocalAttachInfo(boolean socket, @NotNull String address, String aClass, String pid) {
+    DebuggerLocalAttachInfo(boolean socket, @NotNull String address, String aClass, String pid) {
       super(aClass, pid, "");
       myUseSocket = socket;
       myAddress = address;

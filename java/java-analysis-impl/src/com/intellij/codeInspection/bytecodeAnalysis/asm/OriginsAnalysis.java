@@ -28,7 +28,7 @@ public class OriginsAnalysis {
     final boolean local;
     final int slot;
 
-    public PreValue(boolean local, int slot, int size) {
+    PreValue(boolean local, int slot, int size) {
       super(size);
       this.local = local;
       this.slot = slot;

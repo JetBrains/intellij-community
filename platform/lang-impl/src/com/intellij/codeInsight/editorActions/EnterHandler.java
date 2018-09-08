@@ -330,7 +330,7 @@ public class EnterHandler extends BaseEnterHandler {
     
     private boolean myIsIndentAdjustmentNeeded = true;
 
-    public DoEnterAction(PsiFile file, Editor view, Document document, DataContext dataContext, int offset, boolean insertSpace,
+    DoEnterAction(PsiFile file, Editor view, Document document, DataContext dataContext, int offset, boolean insertSpace,
                          int caretAdvance, Project project) 
     {
       myEditor = view;

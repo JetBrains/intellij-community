@@ -168,11 +168,11 @@ public class GradleParentProjectForm implements Disposable {
     private final boolean myEmbeddedIntoDialogWrapper;
     private final boolean myUseSoftWraps;
 
-    public TextViewer(@NotNull String initialText, @NotNull Project project) {
+    TextViewer(@NotNull String initialText, @NotNull Project project) {
       this(createDocument(initialText), project, true, true);
     }
 
-    public TextViewer(@NotNull Document document, @NotNull Project project, boolean embeddedIntoDialogWrapper, boolean useSoftWraps) {
+    TextViewer(@NotNull Document document, @NotNull Project project, boolean embeddedIntoDialogWrapper, boolean useSoftWraps) {
       super(document, project, FileTypes.PLAIN_TEXT, true, false);
       myEmbeddedIntoDialogWrapper = embeddedIntoDialogWrapper;
       myUseSoftWraps = useSoftWraps;

@@ -101,7 +101,7 @@ public class BorderLayoutPanel extends JBPanel<BorderLayoutPanel> {
   }
 
   private class MyAccessibleContextDelegate extends AccessibleContextDelegate {
-    public MyAccessibleContextDelegate(AccessibleContext context) {super(context);}
+    MyAccessibleContextDelegate(AccessibleContext context) {super(context);}
 
     /**
      * The parent should be the Swing parent of this panel, not the parent of the wrapped context,

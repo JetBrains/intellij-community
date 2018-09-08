@@ -873,7 +873,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private static class ModifierTracker extends KeyAdapter {
     private final JComponent myContentComponent;
 
-    public ModifierTracker(JComponent contentComponent) {
+    ModifierTracker(JComponent contentComponent) {
       myContentComponent = contentComponent;
     }
 

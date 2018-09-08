@@ -533,7 +533,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   private class MyTreeExpander extends DefaultTreeExpander {
-    public MyTreeExpander() {
+    MyTreeExpander() {
       super(ChangesTree.this);
     }
 
@@ -553,7 +553,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     private final ThreeStateCheckBox myCheckBox;
 
 
-    public MyTreeCellRenderer(@NotNull ChangesBrowserNodeRenderer textRenderer) {
+    MyTreeCellRenderer(@NotNull ChangesBrowserNodeRenderer textRenderer) {
       super(new BorderLayout());
       myCheckBox = new ThreeStateCheckBox();
       myTextRenderer = textRenderer;

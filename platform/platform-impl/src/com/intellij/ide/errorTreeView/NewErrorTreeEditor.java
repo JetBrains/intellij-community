@@ -120,7 +120,7 @@ public class NewErrorTreeEditor extends AbstractCellEditor implements TreeCellEd
       return myRight;
     }
 
-    public MyWrapperEditor(final TreeCellRenderer left, final TreeCellEditor right) {
+    MyWrapperEditor(final TreeCellRenderer left, final TreeCellEditor right) {
       myLeft = left;
       myRight = right;
       myPanel = new JPanel(new BorderLayout());

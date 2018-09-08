@@ -490,7 +490,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
 
   class MyBuilder extends BaseTreeBuilder {
 
-    public MyBuilder() {
+    MyBuilder() {
       super(AbstractTreeBuilderTest.this.myTree, AbstractTreeBuilderTest.this.myTreeModel, AbstractTreeBuilderTest.this.myStructure, myComparator,
             false);
 

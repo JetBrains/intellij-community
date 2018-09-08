@@ -121,22 +121,14 @@ public final class TreeUtil {
     return null;
   }
 
+  /**
+   * @param tree a tree, which selection is processed
+   * @param type a {@code Class} object to filter selected user objects
+   * @return a list of user objects of the specified type retrieved from all selected paths
+   */
   @NotNull
-  public static <T> List<T> collectSelectedObjectsOfType(@NotNull JTree tree, @NotNull Class<T> clazz) {
-    final TreePath[] selections = tree.getSelectionPaths();
-    if (selections != null) {
-      final ArrayList<T> result = new ArrayList<>();
-      for (TreePath selection : selections) {
-        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selection.getLastPathComponent();
-        final Object userObject = node.getUserObject();
-        if (clazz.isInstance(userObject)) {
-          //noinspection unchecked
-          result.add((T)userObject);
-        }
-      }
-      return result;
-    }
-    return Collections.emptyList();
+  public static <T> List<T> collectSelectedObjectsOfType(@NotNull JTree tree, @NotNull Class<T> type) {
+    return collectSelectedObjects(tree, path -> getLastUserObject(type, path));
   }
 
   /**
@@ -933,8 +925,7 @@ public final class TreeUtil {
   }
 
   /**
-   * @param tree   a tree, which selection is processed
-   * @param mapper a function to convert a selected tree path to a corresponding object
+   * @param tree a tree, which selection is processed
    * @return a list of all selected paths
    */
   @NotNull
@@ -943,8 +934,7 @@ public final class TreeUtil {
   }
 
   /**
-   * @param tree   a tree, which selection is processed
-   * @param mapper a function to convert a selected tree path to a corresponding object
+   * @param tree a tree, which selection is processed
    * @return a list of user objects which correspond to all selected paths
    */
   @NotNull
@@ -1494,6 +1484,21 @@ public final class TreeUtil {
   }
 
   /**
+   * Processes visible nodes in the specified tree.
+   *
+   * @param tree     a tree, which nodes should be processed
+   * @param mapper   a function to convert a visible tree path to a corresponding object
+   * @param consumer a visible path processor
+   */
+  public static <T> void visitVisibleRows(@NotNull JTree tree, @NotNull Function<TreePath, T> mapper, @NotNull Consumer<T> consumer) {
+    visitVisibleRows(tree, path -> {
+      T object = mapper.apply(path);
+      if (object != null) consumer.accept(object);
+      return TreeVisitor.Action.CONTINUE;
+    });
+  }
+
+  /**
    * @param tree   a tree, which visible paths are processed
    * @param filter a predicate to filter visible tree paths
    * @param mapper a function to convert a visible tree path to a corresponding object
@@ -1506,13 +1511,7 @@ public final class TreeUtil {
     int count = tree.getRowCount();
     if (count == 0) return Collections.emptyList();
     List<T> list = new ArrayList<>(count);
-    visitVisibleRows(tree, path -> {
-      if (filter.test(path)) {
-        T object = mapper.apply(path);
-        if (object != null) list.add(object);
-      }
-      return TreeVisitor.Action.CONTINUE;
-    });
+    visitVisibleRows(tree, path -> filter.test(path) ? mapper.apply(path) : null, list::add);
     return list;
   }
 }

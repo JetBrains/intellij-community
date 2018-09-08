@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 class ResourceBundleEditorKeepEmptyValueToggleAction extends CheckboxAction {
   private final static String SELECTION_KEY = "resource.bundle.editor.insert.empty.values";
 
-  public ResourceBundleEditorKeepEmptyValueToggleAction() {
+  ResourceBundleEditorKeepEmptyValueToggleAction() {
     super("Do not insert properties with empty value",
           "Do not create value if value text field is empty. Delete existed value if text field become empty.", null);
   }

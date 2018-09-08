@@ -1,7 +1,7 @@
 package com.siyeh.igtest.bugs.assert_with_side_effects;
 import java.sql.*;
 import java.util.*;
-import java.util.regex.*;
+
 public class AssertWithSideEffects {
     private int sideEffect = 0;
     private boolean noEffect = false;
@@ -10,11 +10,11 @@ public class AssertWithSideEffects {
     }
 
     void bar(int i) {
-        assert i++ < 10;
+        <warning descr="'assert' has side effects">assert</warning> i++ < 10;
     }
 
     void abc() {
-        assert isSideEffect();
+        <warning descr="'assert' has side effects">assert</warning> isSideEffect();
     }
 
     boolean isSideEffect() {
@@ -28,13 +28,6 @@ public class AssertWithSideEffects {
     }
 
     void jdbc(ResultSet rs) throws SQLException {
-      assert rs.last();
-    }
-
-    void assertMutation(Set<String> set) {
-        assert set.add("foo");
-
-        Matcher m = Pattern.compile("foobar").matcher("foo");
-        assert m.matches();
+      <warning descr="'assert' has side effects">assert</warning> rs.last();
     }
 }

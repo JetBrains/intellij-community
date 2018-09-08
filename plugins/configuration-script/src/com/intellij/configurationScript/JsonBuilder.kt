@@ -76,16 +76,24 @@ internal class JsonObjectBuilder(private val builder: StringBuilder) {
   }
 
   fun rawMap(key: CharSequence, build: (StringBuilder) -> Unit) {
+    mapOrArray('{', '}', key, build)
+  }
+
+  fun rawArray(key: CharSequence, build: (StringBuilder) -> Unit) {
+    mapOrArray('[', ']', key, build)
+  }
+
+  private fun mapOrArray(openChar: Char, closeChar: Char, key: CharSequence, build: (StringBuilder) -> Unit) {
     builder
       .appendCommaIfNeed()
       .jsonEscapedString(key)
       .append(':')
-      .append('{')
+      .append(openChar)
       .append('\n')
     build(builder)
     builder
       .append('\n')
-      .append('}')
+      .append(closeChar)
   }
 
   fun rawBuilder(key: CharSequence, child: JsonObjectBuilder) {

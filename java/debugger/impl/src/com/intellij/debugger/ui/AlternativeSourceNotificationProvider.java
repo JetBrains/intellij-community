@@ -126,7 +126,7 @@ public class AlternativeSourceNotificationProvider extends EditorNotifications.P
     private final PsiClass myClass;
     private String myText;
 
-    public ComboBoxClassElement(PsiClass aClass) {
+    ComboBoxClassElement(PsiClass aClass) {
       myClass = aClass;
     }
 
@@ -153,7 +153,7 @@ public class AlternativeSourceNotificationProvider extends EditorNotifications.P
   }
 
   private static class AlternativeSourceNotificationPanel extends EditorNotificationPanel {
-    public AlternativeSourceNotificationPanel(ComboBoxClassElement[] alternatives,
+    AlternativeSourceNotificationPanel(ComboBoxClassElement[] alternatives,
                                               final PsiClass aClass,
                                               final Project project,
                                               final VirtualFile file,

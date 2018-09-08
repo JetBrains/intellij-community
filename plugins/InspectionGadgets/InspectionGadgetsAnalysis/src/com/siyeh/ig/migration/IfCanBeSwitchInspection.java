@@ -147,7 +147,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
 
   private static class IfCanBeSwitchFix extends InspectionGadgetsFix {
 
-    public IfCanBeSwitchFix() {}
+    IfCanBeSwitchFix() {}
 
     @Override
     @NotNull

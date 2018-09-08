@@ -59,10 +59,7 @@ internal class IntellijConfigurationJsonSchemaProviderFactory : JsonSchemaProvid
 
       override fun isUserVisible() = false
 
-      override fun isAvailable(file: VirtualFile): Boolean {
-        val nameSequence = file.nameSequence
-        return StringUtil.equals(nameSequence, IDE_FILE) || StringUtil.equals(nameSequence, IDE_FILE_VARIANT_2)
-      }
+      override fun isAvailable(file: VirtualFile) = isConfigurationFile(file)
     })
     return (project as UserDataHolderBase).putUserDataIfAbsent(PROVIDER_KEY, result)
   }
@@ -85,6 +82,12 @@ internal fun generateConfigurationSchema(): CharSequence {
       map(Keys.runConfigurations) {
         definitionReference(runConfigurationGenerator.definitionPointerPrefix, Keys.runConfigurations)
       }
+      map(Keys.plugins) {
+        "type" to "object"
+        map("properties") {
+          buildJsonSchema(PluginsConfiguration(), this)
+        }
+      }
     }
     "additionalProperties" to false
   }
@@ -95,4 +98,6 @@ internal fun generateConfigurationSchema(): CharSequence {
 internal object Keys {
   const val runConfigurations = "runConfigurations"
   const val templates = "templates"
+
+  const val plugins = "plugins"
 }

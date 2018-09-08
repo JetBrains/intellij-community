@@ -134,7 +134,7 @@ public class UpdateSettingsConfigurable implements SearchableConfigurable {
     private JLabel myLastCheckedDate;
     @SuppressWarnings("unused") private ActionLink myIgnoredBuildsLink;
 
-    public UpdatesSettingsPanel(boolean checkNowEnabled) {
+    UpdatesSettingsPanel(boolean checkNowEnabled) {
       mySettings = UpdateSettings.getInstance();
 
       ChannelStatus current = mySettings.getSelectedActiveChannel();

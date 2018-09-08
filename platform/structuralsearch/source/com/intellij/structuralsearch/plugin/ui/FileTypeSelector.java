@@ -118,7 +118,7 @@ public class FileTypeSelector extends ComboBox<FileTypeInfo> {
   }
 
   private static class MyComboBoxModel extends DefaultComboBoxModel<FileTypeInfo> {
-    public MyComboBoxModel(List<FileTypeInfo> infos) {
+    MyComboBoxModel(List<FileTypeInfo> infos) {
       super(infos.toArray(FileTypeInfo.EMPTY_ARRAY));
     }
   }
@@ -155,7 +155,7 @@ public class FileTypeSelector extends ComboBox<FileTypeInfo> {
   }
 
   private static class MySpeedSearch extends ComboboxSpeedSearch {
-    public MySpeedSearch(FileTypeSelector comboBox) {super(comboBox);}
+    MySpeedSearch(FileTypeSelector comboBox) {super(comboBox);}
 
     @Override
     protected String getElementText(Object element) {

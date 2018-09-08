@@ -1342,7 +1342,7 @@ public class PluginManagerConfigurableNew
     private final String myBaseName;
     private int myCount = -1;
 
-    public CountTabName(@NotNull TabHeaderComponent component, @NotNull String baseName) {
+    CountTabName(@NotNull TabHeaderComponent component, @NotNull String baseName) {
       myTabComponent = component;
       myBaseName = baseName;
     }

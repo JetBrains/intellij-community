@@ -194,10 +194,10 @@ public class AllIcons {
     @Deprecated
     public static final Icon DiffWithCurrent = AllIcons.Actions.Diff;
 
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.SplitDown */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowDown */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon Down = AllIcons.General.SplitDown;
+    public static final Icon Down = AllIcons.General.ArrowDown;
 
     /** @deprecated to be removed in IDEA 2020 - use J2EEIcons.ErDiagram */
     @SuppressWarnings("unused")
@@ -238,10 +238,10 @@ public class AllIcons {
     @Deprecated
     public static final Icon Get = AllIcons.Actions.Download;
 
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.SplitLeft */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowLeft */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon Left = AllIcons.General.SplitLeft;
+    public static final Icon Left = AllIcons.General.ArrowLeft;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Find */
     @SuppressWarnings("unused")
@@ -308,10 +308,10 @@ public class AllIcons {
     @Deprecated
     public static final Icon Reset_to_empty = AllIcons.Actions.Uninstall;
 
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.SplitRight */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowRight */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon Right = AllIcons.General.SplitRight;
+    public static final Icon Right = AllIcons.General.ArrowRight;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Preview */
     @SuppressWarnings("unused")
@@ -342,10 +342,10 @@ public class AllIcons {
     @Deprecated
     public static final Icon SynchronizeFS = AllIcons.Actions.Refresh;
 
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.SplitUp */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowUp */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon UP = AllIcons.General.SplitUp;
+    public static final Icon UP = AllIcons.General.ArrowUp;
 
   }
 
@@ -785,8 +785,13 @@ public class AllIcons {
     public static final Icon Add = IconLoader.getIcon("/general/add.svg"); // 16x16
     public static final Icon AddFavoritesList = IconLoader.getIcon("/general/addFavoritesList.svg"); // 16x16
     public static final Icon AddJdk = IconLoader.getIcon("/general/addJdk.svg"); // 16x16
-    public static final Icon ArrowDown = IconLoader.getIcon("/general/arrowDown.png"); // 7x6
-    public static final Icon ArrowDown_white = IconLoader.getIcon("/general/arrowDown_white.png"); // 7x6
+    public static final Icon ArrowDown = IconLoader.getIcon("/general/arrowDown.svg"); // 16x16
+    public static final Icon ArrowDownSmall = IconLoader.getIcon("/general/arrowDownSmall.svg"); // 9x5
+    public static final Icon ArrowLeft = IconLoader.getIcon("/general/arrowLeft.svg"); // 16x16
+    public static final Icon ArrowRight = IconLoader.getIcon("/general/arrowRight.svg"); // 16x16
+    public static final Icon ArrowSplitCenterH = IconLoader.getIcon("/general/arrowSplitCenterH.svg"); // 16x16
+    public static final Icon ArrowSplitCenterV = IconLoader.getIcon("/general/arrowSplitCenterV.svg"); // 16x16
+    public static final Icon ArrowUp = IconLoader.getIcon("/general/arrowUp.svg"); // 16x16
     public static final Icon AutoscrollFromSource = IconLoader.getIcon("/general/autoscrollFromSource.svg"); // 16x16
     public static final Icon AutoscrollToSource = IconLoader.getIcon("/general/autoscrollToSource.svg"); // 16x16
     public static final Icon Balloon = IconLoader.getIcon("/general/balloon.svg"); // 16x16
@@ -798,16 +803,6 @@ public class AllIcons {
     public static final Icon Bullet = IconLoader.getIcon("/general/bullet.png"); // 16x16
     public static final Icon CollapseComponent = IconLoader.getIcon("/general/collapseComponent.svg"); // 12x12
     public static final Icon CollapseComponentHover = IconLoader.getIcon("/general/collapseComponentHover.svg"); // 12x12
-    public static final Icon Combo = IconLoader.getIcon("/general/combo.png"); // 16x16
-    public static final Icon Combo2 = IconLoader.getIcon("/general/combo2.png"); // 16x16
-    public static final Icon Combo3 = IconLoader.getIcon("/general/combo3.png"); // 16x16
-    public static final Icon ComboArrow = IconLoader.getIcon("/general/comboArrow.png"); // 16x16
-    public static final Icon ComboArrowDown = IconLoader.getIcon("/general/comboArrowDown.png"); // 9x5
-    public static final Icon ComboArrowLeft = IconLoader.getIcon("/general/comboArrowLeft.png"); // 5x9
-    public static final Icon ComboArrowLeftPassive = IconLoader.getIcon("/general/comboArrowLeftPassive.png"); // 5x9
-    public static final Icon ComboArrowRight = IconLoader.getIcon("/general/comboArrowRight.png"); // 5x9
-    public static final Icon ComboArrowRightPassive = IconLoader.getIcon("/general/comboArrowRightPassive.png"); // 5x9
-    public static final Icon ComboBoxButtonArrow = IconLoader.getIcon("/general/comboBoxButtonArrow.png"); // 16x16
     public static final Icon ComboUpPassive = IconLoader.getIcon("/general/comboUpPassive.png"); // 16x16
     public static final Icon ContextHelp = IconLoader.getIcon("/general/contextHelp.png"); // 16x16
     public static final Icon CopyHovered = IconLoader.getIcon("/general/copyHovered.svg"); // 16x16
@@ -904,14 +899,8 @@ public class AllIcons {
     public static final Icon Show_to_implement = IconLoader.getIcon("/general/show_to_implement.png"); // 16x16
     public static final Icon Show_to_override = IconLoader.getIcon("/general/show_to_override.png"); // 16x16
     public static final Icon SmallConfigurableVcs = IconLoader.getIcon("/general/smallConfigurableVcs.png"); // 16x16
-    public static final Icon SplitCenterH = IconLoader.getIcon("/general/splitCenterH.png"); // 7x7
-    public static final Icon SplitCenterV = IconLoader.getIcon("/general/splitCenterV.png"); // 6x7
-    public static final Icon SplitDown = IconLoader.getIcon("/general/splitDown.png"); // 7x7
     public static final Icon SplitGlueH = IconLoader.getIcon("/general/splitGlueH.png"); // 6x17
     public static final Icon SplitGlueV = IconLoader.getIcon("/general/splitGlueV.png"); // 17x6
-    public static final Icon SplitLeft = IconLoader.getIcon("/general/splitLeft.png"); // 7x7
-    public static final Icon SplitRight = IconLoader.getIcon("/general/splitRight.png"); // 7x7
-    public static final Icon SplitUp = IconLoader.getIcon("/general/splitUp.png"); // 7x7
     public static final Icon Tab_white_center = IconLoader.getIcon("/general/tab-white-center.png"); // 1x17
     public static final Icon Tab_white_left = IconLoader.getIcon("/general/tab-white-left.png"); // 4x17
     public static final Icon Tab_white_right = IconLoader.getIcon("/general/tab-white-right.png"); // 4x17
@@ -935,6 +924,11 @@ public class AllIcons {
     public static final Icon WebSettings = IconLoader.getIcon("/general/webSettings.png"); // 16x16
     public static final Icon ZoomIn = IconLoader.getIcon("/general/zoomIn.svg"); // 16x16
     public static final Icon ZoomOut = IconLoader.getIcon("/general/zoomOut.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowDown */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon ArrowDown_white = AllIcons.General.ArrowDown;
 
     /** @deprecated to be removed in IDEA 2020 - AllIcons.General.Pin_tab */
     @SuppressWarnings("unused")
@@ -960,6 +954,56 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon CollapseAllHover = IconLoader.getIcon("/actions/collapseall.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowDown */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Combo = AllIcons.General.ArrowDown;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowDown */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Combo2 = AllIcons.General.ArrowDown;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowDown */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Combo3 = AllIcons.General.ArrowDown;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowDown */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon ComboArrow = AllIcons.General.ArrowDown;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowDownSmall */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon ComboArrowDown = AllIcons.General.ArrowDownSmall;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowLeft */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon ComboArrowLeft = AllIcons.General.ArrowLeft;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowLeft */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon ComboArrowLeftPassive = AllIcons.General.ArrowLeft;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowRight */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon ComboArrowRight = AllIcons.General.ArrowRight;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowRight */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon ComboArrowRightPassive = AllIcons.General.ArrowRight;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowDown */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon ComboBoxButtonArrow = AllIcons.General.ArrowDown;
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -1090,6 +1134,36 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon SecondaryGroup = AllIcons.General.GearPlain;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowSplitCenterH */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon SplitCenterH = AllIcons.General.ArrowSplitCenterH;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowSplitCenterV */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon SplitCenterV = AllIcons.General.ArrowSplitCenterV;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowDown */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon SplitDown = AllIcons.General.ArrowDown;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowLeft */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon SplitLeft = AllIcons.General.ArrowLeft;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowRight */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon SplitRight = AllIcons.General.ArrowRight;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowUp */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon SplitUp = AllIcons.General.ArrowUp;
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -1298,13 +1372,11 @@ public class AllIcons {
   public static class Javaee {
     public static final Icon Application_xml = IconLoader.getIcon("/javaee/application_xml.png"); // 16x16
     public static final Icon BuildOnFrameDeactivation = IconLoader.getIcon("/javaee/buildOnFrameDeactivation.png"); // 16x16
-    public static final Icon DbSchemaImportBig = IconLoader.getIcon("/javaee/dbSchemaImportBig.png"); // 32x32
     public static final Icon Ejb_jar_xml = IconLoader.getIcon("/javaee/ejb-jar_xml.png"); // 16x16
     public static final Icon EjbClass = IconLoader.getIcon("/javaee/ejbClass.png"); // 16x16
     public static final Icon EjbModule = IconLoader.getIcon("/javaee/ejbModule.png"); // 16x16
     public static final Icon EmbeddedAttributeOverlay = IconLoader.getIcon("/javaee/embeddedAttributeOverlay.png"); // 16x16
     public static final Icon EntityBean = IconLoader.getIcon("/javaee/entityBean.png"); // 16x16
-    public static final Icon EntityBeanBig = IconLoader.getIcon("/javaee/entityBeanBig.png"); // 24x24
     public static final Icon Home = IconLoader.getIcon("/javaee/home.png"); // 16x16
     public static final Icon InheritedAttributeOverlay = IconLoader.getIcon("/javaee/inheritedAttributeOverlay.png"); // 16x16
     public static final Icon InterceptorClass = IconLoader.getIcon("/javaee/interceptorClass.png"); // 16x16
@@ -1338,6 +1410,16 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon DataSourceImport = IconLoader.getIcon("/javaee/dataSourceImport.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon DbSchemaImportBig = IconLoader.getIcon("/javaee/dbSchemaImportBig.png");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon EntityBeanBig = IconLoader.getIcon("/javaee/entityBeanBig.png");
 
   }
 

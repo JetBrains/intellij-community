@@ -224,7 +224,7 @@ public class AnchorReferenceImpl implements AnchorReference, PsiReference, Empty
   private static class MapCachedValueProvider implements CachedValueProvider<Map<String, XmlTag>> {
     private final XmlFile myFile;
 
-    public MapCachedValueProvider(XmlFile file) {
+    MapCachedValueProvider(XmlFile file) {
       myFile = file;
     }
 

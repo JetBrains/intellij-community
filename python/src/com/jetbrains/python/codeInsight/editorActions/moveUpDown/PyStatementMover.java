@@ -597,7 +597,7 @@ public class PyStatementMover extends LineMover {
     int size = 0;
     int statementsSize = 0;
 
-    public MyLineRange(@NotNull PsiElement start, PsiElement end) {
+    MyLineRange(@NotNull PsiElement start, PsiElement end) {
       super(start, end);
       myStartElement = start;
       myEndElement = end;
@@ -626,7 +626,7 @@ public class PyStatementMover extends LineMover {
     private final int myAdditional;
     private final boolean myAtTheBeginning;
 
-    public SelectionContainer(int len, int additional, boolean atTheBeginning) {
+    SelectionContainer(int len, int additional, boolean atTheBeginning) {
       myLen = len;
       myAdditional = additional;
       myAtTheBeginning = atTheBeginning;
@@ -639,14 +639,14 @@ public class PyStatementMover extends LineMover {
     private final boolean addBefore;
     private boolean theSameLevel;
 
-    public ScopeRange(@NotNull PsiElement scope, @NotNull PsiElement anchor, boolean before) {
+    ScopeRange(@NotNull PsiElement scope, @NotNull PsiElement anchor, boolean before) {
       super(scope);
       myScope = scope;
       myAnchor = anchor;
       addBefore = before;
     }
 
-    public ScopeRange(PyElement scope, @NotNull PsiElement anchor, boolean before, boolean b) {
+    ScopeRange(PyElement scope, @NotNull PsiElement anchor, boolean before, boolean b) {
       super(scope);
       myScope = scope;
       myAnchor = anchor;

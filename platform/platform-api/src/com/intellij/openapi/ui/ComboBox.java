@@ -280,7 +280,7 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
     private final JComboBox myComboBox;
     private final ComboBoxEditor myDelegate;
 
-    public MyEditor(final JComboBox comboBox, final ComboBoxEditor delegate) {
+    MyEditor(final JComboBox comboBox, final ComboBoxEditor delegate) {
       myComboBox = comboBox;
       myDelegate = delegate;
       if (myDelegate != null) {

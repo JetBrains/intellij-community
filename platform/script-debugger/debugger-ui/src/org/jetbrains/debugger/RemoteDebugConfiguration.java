@@ -128,7 +128,7 @@ public abstract class RemoteDebugConfiguration extends LocatableConfigurationBas
     private final JTextField hostField;
     private final PortField portField;
 
-    public RemoteDebugConfigurationSettingsEditor() {
+    RemoteDebugConfigurationSettingsEditor() {
       hostField = GuiUtils.createUndoableTextField();
       portField = new PortField(defaultPort, 1024);
     }

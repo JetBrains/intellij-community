@@ -321,7 +321,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
     @NotNull private final LanguageLevel myLanguageLevel;
     private final boolean myShouldSuppressSizeLimit;
 
-    public UpdateRootTask(@NotNull Project project, @NotNull VirtualFile root, @NotNull LanguageLevel languageLevel,
+    UpdateRootTask(@NotNull Project project, @NotNull VirtualFile root, @NotNull LanguageLevel languageLevel,
                           boolean shouldSuppressSizeLimit) {
       myProject = project;
       myRoot = root;

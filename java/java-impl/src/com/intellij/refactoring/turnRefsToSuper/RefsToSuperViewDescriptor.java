@@ -27,7 +27,7 @@ class RefsToSuperViewDescriptor implements UsageViewDescriptor{
   private final PsiClass myClass;
   private final PsiClass mySuper;
 
-  public RefsToSuperViewDescriptor(
+  RefsToSuperViewDescriptor(
     PsiClass aClass,
     PsiClass anInterface
   ) {

@@ -69,7 +69,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
 
   private static class MethodReference extends PsiReferenceBase<PsiLiteral> {
 
-    public MethodReference(PsiLiteral element) {
+    MethodReference(PsiLiteral element) {
       super(element, false);
     }
 
@@ -138,7 +138,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
   private static class GroupReference extends PsiReferenceBase<PsiLiteral> {
     private final Project myProject;
 
-    public GroupReference(Project project, PsiLiteral element) {
+    GroupReference(Project project, PsiLiteral element) {
       super(element, false);
       myProject = project;
     }
@@ -173,7 +173,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
 
     private final String myParameterName;
 
-    public TestAnnotationFilter(@NotNull @NonNls String parameterName) {
+    TestAnnotationFilter(@NotNull @NonNls String parameterName) {
       myParameterName = parameterName;
     }
 

@@ -56,8 +56,7 @@ public final class TypeHierarchyTreeStructure extends SubtypesHierarchyTreeStruc
       final PsiClass aClass1 = aClass;
       final PsiClass[] superTypes = aClass1.getSupers();
       PsiClass superType = null;
-      for (int i = 0; i < superTypes.length; i++) {
-        final PsiClass type = superTypes[i];
+      for (final PsiClass type : superTypes) {
         if (!type.isInterface()) {
           superType = type;
           break;

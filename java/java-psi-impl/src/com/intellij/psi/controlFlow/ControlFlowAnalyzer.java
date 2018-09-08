@@ -1747,7 +1747,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     private final PsiElement myElement;
     private final List<CallInstruction> myCalls;
 
-    public FinallyBlockSubroutine(@NotNull PsiElement element) {
+    FinallyBlockSubroutine(@NotNull PsiElement element) {
       myElement = element;
       myCalls = new ArrayList<>();
     }

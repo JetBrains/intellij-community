@@ -300,7 +300,7 @@ public class GroovyInlineMethodUtil {
       return declaration.hasModifierProperty(PsiModifier.STATIC);
     }
 
-    public ReferenceExpressionInfo(GrReferenceExpression expression, int offsetInMethod, PsiMember declaration, PsiClass containingClass) {
+    ReferenceExpressionInfo(GrReferenceExpression expression, int offsetInMethod, PsiMember declaration, PsiClass containingClass) {
       this.expression = expression;
       this.offsetInMethod = offsetInMethod;
       this.declaration = declaration;
@@ -353,7 +353,7 @@ public class GroovyInlineMethodUtil {
 
     private final PsiMethod myMethod;
 
-    public InlineMethodDialog(Project project,
+    InlineMethodDialog(Project project,
                               PsiMethod method,
                               boolean invokedOnReference,
                               final boolean allowInlineThisOnly) {

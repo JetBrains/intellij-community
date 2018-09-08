@@ -10,6 +10,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -212,12 +213,10 @@ public class UITheme {
         String tail = key.substring(1);
         Object finalValue = value;
 
-        //please DO NOT invoke forEach on UIDefaults directly
-        ((UIDefaults)defaults.clone()).entrySet().forEach(e -> {
-          if (e.getKey() instanceof String && ((String)e.getKey()).endsWith(tail)) {
-            defaults.put(e.getKey(), finalValue);
-          }
-        });
+        //please DO NOT stream on UIDefaults directly
+        ((UIDefaults)defaults.clone()).keySet().stream()
+          .filter(k -> k instanceof String && ((String)k).endsWith(tail))
+          .forEach(k -> defaults.put(k, finalValue));
       } else {
         defaults.put(key, value);
       }
@@ -235,8 +234,17 @@ public class UITheme {
       return parseInsets(value);
     } else if (key.endsWith("Border") || key.endsWith("border")) {
       try {
-        if (StringUtil.split(value, ",").size() == 4) {
+        List<String> ints = StringUtil.split(value, ",");
+        if (ints.size() == 4) {
           return new BorderUIResource.EmptyBorderUIResource(parseInsets(value));
+        } else if (ints.size() == 5) {
+          return JBUI.Borders.customLine(ColorUtil.fromHex(ints.get(4)),
+                                         Integer.parseInt(ints.get(0)),
+                                         Integer.parseInt(ints.get(1)),
+                                         Integer.parseInt(ints.get(2)),
+                                         Integer.parseInt(ints.get(3)));
+        } else if (ColorUtil.fromHex(value, null) != null) {
+          return JBUI.Borders.customLine(ColorUtil.fromHex(value), 1);
         } else {
           return Class.forName(value).newInstance();
         }

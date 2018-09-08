@@ -134,7 +134,7 @@ public abstract class AbstractDependencyVisitor extends ClassVisitor {
 
     private Label myFirstLabel = null;
 
-    public DependencyMethodVisitor() {
+    DependencyMethodVisitor() {
       super(Opcodes.API_VERSION);
     }
 
@@ -253,7 +253,7 @@ public abstract class AbstractDependencyVisitor extends ClassVisitor {
 
   private class DependencyFieldVisitor extends FieldVisitor {
 
-    public DependencyFieldVisitor() {
+    DependencyFieldVisitor() {
       super(Opcodes.API_VERSION);
     }
 
@@ -272,7 +272,7 @@ public abstract class AbstractDependencyVisitor extends ClassVisitor {
 
   private class AnnotationDependencyVisitor extends AnnotationVisitor {
 
-    public AnnotationDependencyVisitor() {
+    AnnotationDependencyVisitor() {
       super(Opcodes.API_VERSION);
     }
 
@@ -300,7 +300,7 @@ public abstract class AbstractDependencyVisitor extends ClassVisitor {
 
   private class DependencySignatureVisitor extends SignatureVisitor {
 
-    public DependencySignatureVisitor() {
+    DependencySignatureVisitor() {
       super(Opcodes.API_VERSION);
     }
 

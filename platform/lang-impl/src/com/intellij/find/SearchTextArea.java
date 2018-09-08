@@ -322,7 +322,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
 
   private class ShowHistoryAction extends DumbAwareAction {
 
-    public ShowHistoryAction() {
+    ShowHistoryAction() {
       super((mySearchMode ? "Search" : "Replace") + " History",
             (mySearchMode ? "Search" : "Replace") + " history",
             myHelper.getShowHistoryIcon());
@@ -357,7 +357,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
   }
 
   private class ClearAction extends DumbAwareAction {
-    public ClearAction() {
+    ClearAction() {
       super(null, null, myHelper.getClearIcon());
     }
 
@@ -369,7 +369,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
   }
 
   private class NewLineAction extends DumbAwareAction {
-    public NewLineAction() {
+    NewLineAction() {
       super(null, "New line (" + KeymapUtil.getKeystrokeText(NEW_LINE_KEYSTROKE) + ")",
             AllIcons.Actions.SearchNewLine);
     }

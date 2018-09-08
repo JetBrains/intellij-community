@@ -112,7 +112,7 @@ public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchIn
     private final String myRequiredModuleName;
     private final Set<String> myImportedPackages;
 
-    public DeleteRedundantRequiresStatementFix(String requiredModuleName, Set<String> importedPackages) {
+    DeleteRedundantRequiresStatementFix(String requiredModuleName, Set<String> importedPackages) {
       myRequiredModuleName = requiredModuleName;
       myImportedPackages = importedPackages;
     }

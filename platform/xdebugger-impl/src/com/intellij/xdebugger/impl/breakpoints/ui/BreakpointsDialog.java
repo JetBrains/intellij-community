@@ -176,7 +176,7 @@ public class BreakpointsDialog extends DialogWrapper {
   private class ToggleBreakpointGroupingRuleEnabledAction extends ToggleActionButton {
     private final XBreakpointGroupingRule myRule;
 
-    public ToggleBreakpointGroupingRuleEnabledAction(XBreakpointGroupingRule rule) {
+    ToggleBreakpointGroupingRuleEnabledAction(XBreakpointGroupingRule rule) {
       super(rule.getPresentableName(), rule.getIcon());
       myRule = rule;
       getTemplatePresentation().setText(rule.getPresentableName());
@@ -421,7 +421,7 @@ public class BreakpointsDialog extends DialogWrapper {
   private class AddXBreakpointAction extends AnAction implements DumbAware {
     private final XBreakpointType<?, ?> myType;
 
-    public AddXBreakpointAction(XBreakpointType<?, ?> type) {
+    AddXBreakpointAction(XBreakpointType<?, ?> type) {
       myType = type;
       getTemplatePresentation().setIcon(type.getEnabledIcon());
       getTemplatePresentation().setText(type.getTitle());

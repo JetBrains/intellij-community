@@ -147,7 +147,7 @@ public class VcsLogFullDetailsIndex<T, D extends VcsFullCommitDetails> implement
   }
 
   private class MyMapReduceIndex extends MapReduceIndex<Integer, T, D> {
-    public MyMapReduceIndex(@NotNull MyIndexExtension<T, D> extension,
+    MyMapReduceIndex(@NotNull MyIndexExtension<T, D> extension,
                             @NotNull MyMapIndexStorage<T> mapIndexStorage,
                             @NotNull ForwardIndex<Integer, T> forwardIndex) {
       super(extension, mapIndexStorage, forwardIndex);
@@ -173,7 +173,7 @@ public class VcsLogFullDetailsIndex<T, D extends VcsFullCommitDetails> implement
   }
 
   private static class MyMapIndexStorage<T> extends MapIndexStorage<Integer, T> {
-    public MyMapIndexStorage(@NotNull String name, @NotNull StorageId storageId, @NotNull DataExternalizer<T> externalizer)
+    MyMapIndexStorage(@NotNull String name, @NotNull StorageId storageId, @NotNull DataExternalizer<T> externalizer)
       throws IOException {
       super(storageId.getStorageFile(name, true), EnumeratorIntegerDescriptor.INSTANCE, externalizer, 5000, false);
     }
@@ -190,7 +190,7 @@ public class VcsLogFullDetailsIndex<T, D extends VcsFullCommitDetails> implement
     @NotNull private final DataExternalizer<T> myExternalizer;
     private final int myVersion;
 
-    public MyIndexExtension(@NotNull String name, @NotNull DataIndexer<Integer, T, D> indexer,
+    MyIndexExtension(@NotNull String name, @NotNull DataIndexer<Integer, T, D> indexer,
                             @NotNull DataExternalizer<T> externalizer,
                             int version) {
       myID = IndexId.create(name);

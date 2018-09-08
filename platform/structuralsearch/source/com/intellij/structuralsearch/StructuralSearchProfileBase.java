@@ -556,7 +556,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
   private static class MySubstitutionHandler extends SubstitutionHandler {
     final Set<PsiElement> myExceptedNodes;
 
-    public MySubstitutionHandler(String name, boolean target, int minOccurs, int maxOccurs, boolean greedy) {
+    MySubstitutionHandler(String name, boolean target, int minOccurs, int maxOccurs, boolean greedy) {
       super(name, target, minOccurs, maxOccurs, greedy);
       myExceptedNodes = new HashSet<>();
     }

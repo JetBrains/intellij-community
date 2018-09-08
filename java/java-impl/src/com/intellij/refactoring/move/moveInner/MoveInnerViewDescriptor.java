@@ -27,7 +27,7 @@ class MoveInnerViewDescriptor implements UsageViewDescriptor {
 
   private final PsiClass myInnerClass;
 
-  public MoveInnerViewDescriptor(PsiClass innerClass) {
+  MoveInnerViewDescriptor(PsiClass innerClass) {
     myInnerClass = innerClass;
   }
 

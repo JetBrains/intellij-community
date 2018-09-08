@@ -293,7 +293,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   private final class ImageContainerPane extends JBLayeredPane {
     private final ImageComponent imageComponent;
 
-    public ImageContainerPane(final ImageComponent imageComponent) {
+    ImageContainerPane(final ImageComponent imageComponent) {
       this.imageComponent = imageComponent;
       add(imageComponent);
 
@@ -649,7 +649,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   private static class ImageTransferable implements Transferable {
     private final BufferedImage myImage;
 
-    public ImageTransferable(@NotNull BufferedImage image) {
+    ImageTransferable(@NotNull BufferedImage image) {
       myImage = image;
     }
 

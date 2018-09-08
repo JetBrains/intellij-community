@@ -97,7 +97,7 @@ public abstract class JavaHomeFinder {
 
   private static class MacFinder extends DefaultFinder {
 
-    public MacFinder() {
+    MacFinder() {
       super("/Library/Java/JavaVirtualMachines", "/System/Library/Java/JavaVirtualMachines");
     }
 

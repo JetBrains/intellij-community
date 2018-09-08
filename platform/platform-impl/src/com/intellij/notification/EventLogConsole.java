@@ -220,7 +220,7 @@ class EventLogConsole {
     private final NotificationDisplayType myType;
     private final NotificationDisplayType myCurrent;
 
-    public DisplayTypeAction(@NotNull NotificationSettings settings,
+    DisplayTypeAction(@NotNull NotificationSettings settings,
                              @NotNull NotificationDisplayType type,
                              @NotNull NotificationDisplayType current) {
       super(type.getTitle());

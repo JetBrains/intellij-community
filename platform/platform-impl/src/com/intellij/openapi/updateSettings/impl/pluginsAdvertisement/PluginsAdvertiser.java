@@ -490,7 +490,7 @@ public class PluginsAdvertiser implements StartupActivity {
     private final Set<PluginDownloader> myPlugins;
     private final Map<Plugin, IdeaPluginDescriptor> myDisabledPlugins;
 
-    public ConfigurePluginsListener(Set<UnknownFeature> unknownFeatures,
+    ConfigurePluginsListener(Set<UnknownFeature> unknownFeatures,
                                     Project project,
                                     List<IdeaPluginDescriptor> allPlugins,
                                     Set<PluginDownloader> plugins,

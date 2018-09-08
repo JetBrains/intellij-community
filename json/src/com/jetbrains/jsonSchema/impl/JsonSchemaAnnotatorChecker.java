@@ -661,6 +661,12 @@ class JsonSchemaAnnotatorChecker {
       if (JsonSchemaType._integer.equals(input) && matchTypes.contains(JsonSchemaType._number)) {
         return input;
       }
+      if (JsonSchemaType._string_number.equals(input) &&
+          (matchTypes.contains(JsonSchemaType._number)
+           || matchTypes.contains(JsonSchemaType._integer)
+           || matchTypes.contains(JsonSchemaType._string))) {
+        return input;
+      }
       //nothing matches, lets return one of the list so that other heuristics does not match
       return matchTypes.iterator().next();
     }

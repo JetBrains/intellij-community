@@ -53,7 +53,6 @@ public interface PsiSearchHelper {
    *
    * @param identifier  the identifier to search.
    * @param searchScope the scope in which occurrences are searched.
-   * @param processor
    * @return false if processor returned false, true otherwise
    */
   boolean processCommentsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope, @NotNull Processor<? super PsiElement> processor);
@@ -97,7 +96,7 @@ public interface PsiSearchHelper {
 
   /**
    * Returns the scope in which references to the specified element are searched. This scope includes the result of
-   * {@link com.intellij.psi.PsiElement#getUseScope()} and also the results returned from the registered
+   * {@link PsiElement#getUseScope()} and also the results returned from the registered
    * com.intellij.psi.search.UseScopeEnlarger instances.
    *
    * @param element the element to return the use scope form.

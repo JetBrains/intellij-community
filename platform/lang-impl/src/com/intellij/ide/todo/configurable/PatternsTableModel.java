@@ -34,7 +34,7 @@ final class PatternsTableModel extends AbstractTableModel implements ItemRemovab
 
   private final List<? extends TodoPattern> myPatterns;
 
-  public PatternsTableModel(List<? extends TodoPattern> patterns){
+  PatternsTableModel(List<? extends TodoPattern> patterns){
     myPatterns=patterns;
   }
 

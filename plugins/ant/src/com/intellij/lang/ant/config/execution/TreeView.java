@@ -613,7 +613,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
   }
 
   private class MyTree extends Tree implements DataProvider {
-    public MyTree() {
+    MyTree() {
       super(myTreeModel);
     }
 

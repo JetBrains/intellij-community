@@ -289,7 +289,7 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
     private Entry<K, V> previous;
     private Entry<K, V> hashNext;
 
-    public Entry(final K key, final V value, int hash) {
+    Entry(final K key, final V value, int hash) {
       this.key = key;
       keyHash = hash;
       this.value = value;

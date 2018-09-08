@@ -144,7 +144,7 @@ public class ArtifactSorter {
   private static class ArtifactsGraph implements InboundSemiGraph<JpsArtifact> {
     private final Set<JpsArtifact> myArtifactNodes;
 
-    public ArtifactsGraph(final JpsModel model) {
+    ArtifactsGraph(final JpsModel model) {
       myArtifactNodes = new LinkedHashSet<>(JpsBuilderArtifactService.getInstance().getArtifacts(model, true));
     }
 

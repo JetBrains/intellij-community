@@ -23,7 +23,7 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
 
   @Nullable private String myLastAskedKeyPath = null;
 
-  public GitNativeSshGuiAuthenticator(Project project, boolean isIgnoreAuthenticationRequest, boolean doNotRememberPasswords) {
+  GitNativeSshGuiAuthenticator(Project project, boolean isIgnoreAuthenticationRequest, boolean doNotRememberPasswords) {
     myProject = project;
     myIgnoreAuthenticationRequest = isIgnoreAuthenticationRequest;
     myDoNotRememberPasswords = doNotRememberPasswords;

@@ -52,7 +52,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     void reportMessage(final Diagnostic.Kind kind, String message);
   }
 
-  public JavacFileManager(Context context, Collection<JavaSourceTransformer> transformers) {
+  JavacFileManager(Context context, Collection<JavaSourceTransformer> transformers) {
     super(context.getStandardFileManager());
     myContext = context;
     mySourceTransformers = transformers;

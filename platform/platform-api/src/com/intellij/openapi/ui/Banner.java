@@ -31,7 +31,7 @@ class Banner extends NonOpaquePanel implements PropertyChangeListener{
 
   private final Map<Action, LinkLabel> myActions = new HashMap<>();
 
-  public Banner() {
+  Banner() {
     setLayout(new BorderLayout());
 
     setBorder(JBUI.Borders.empty(2, 12, 2, 4));

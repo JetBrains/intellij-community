@@ -2,7 +2,6 @@
 package com.intellij.mock
 
 import com.intellij.execution.BeforeRunTask
-import com.intellij.execution.RunManagerConfig
 import com.intellij.execution.RunManagerEx
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.configurations.ConfigurationFactory
@@ -49,10 +48,6 @@ class MockRunManager : RunManagerEx() {
   }
 
   override fun setTemporaryConfiguration(tempConfiguration: RunnerAndConfigurationSettings?) {}
-
-  override fun getConfig(): RunManagerConfig {
-    throw UnsupportedOperationException()
-  }
 
   override fun createConfiguration(name: String, factory: ConfigurationFactory): RunnerAndConfigurationSettings {
     throw UnsupportedOperationException()

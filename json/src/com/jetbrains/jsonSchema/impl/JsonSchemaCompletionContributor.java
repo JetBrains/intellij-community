@@ -96,6 +96,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
   }
 
   @TestOnly
+  @NotNull
   public static List<LookupElement> getCompletionVariants(@NotNull final JsonSchemaObject schema,
                                                           @NotNull final PsiElement position, @NotNull final PsiElement originalPosition) {
     final List<LookupElement> result = new ArrayList<>();
@@ -134,7 +135,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
     private final Set<LookupElement> myVariants;
     private final JsonLikePsiWalker myWalker;
 
-    public Worker(@NotNull JsonSchemaObject rootSchema, @NotNull PsiElement position,
+    Worker(@NotNull JsonSchemaObject rootSchema, @NotNull PsiElement position,
                   @NotNull PsiElement originalPosition, @NotNull final Consumer<LookupElement> resultConsumer) {
       myRootSchema = rootSchema;
       myPosition = position;

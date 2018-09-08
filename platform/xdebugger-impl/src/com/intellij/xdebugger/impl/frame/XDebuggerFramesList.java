@@ -147,7 +147,7 @@ public class XDebuggerFramesList extends DebuggerFramesList {
   private class XDebuggerGroupedFrameListRenderer extends GroupedItemsListRenderer {
     private final XDebuggerFrameListRenderer myOriginalRenderer = new XDebuggerFrameListRenderer(myProject);
 
-    public XDebuggerGroupedFrameListRenderer() {
+    XDebuggerGroupedFrameListRenderer() {
       super(new ListItemDescriptorAdapter() {
         @Nullable
         @Override
@@ -191,7 +191,7 @@ public class XDebuggerFramesList extends DebuggerFramesList {
   private class XDebuggerFrameListRenderer extends ColoredListCellRenderer {
     private final FileColorManager myColorsManager;
 
-    public XDebuggerFrameListRenderer(@NotNull Project project) {
+    XDebuggerFrameListRenderer(@NotNull Project project) {
       myColorsManager = FileColorManager.getInstance(project);
     }
 

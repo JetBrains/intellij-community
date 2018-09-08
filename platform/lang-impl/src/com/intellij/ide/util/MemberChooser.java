@@ -760,7 +760,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   }
 
   private class SelectNoneAction extends AbstractAction {
-    public SelectNoneAction() {
+    SelectNoneAction() {
       super(IdeBundle.message("action.select.none"));
     }
 
@@ -804,7 +804,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   }
 
   private class SortEmAction extends ToggleAction {
-    public SortEmAction() {
+    SortEmAction() {
       super(IdeBundle.message("action.sort.alphabetically"),
             IdeBundle.message("action.sort.alphabetically"), AllIcons.ObjectBrowser.Sorted);
     }
@@ -852,7 +852,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   }
 
   private class ExpandAllAction extends AnAction {
-    public ExpandAllAction() {
+    ExpandAllAction() {
       super(IdeBundle.message("action.expand.all"), IdeBundle.message("action.expand.all"),
             AllIcons.Actions.Expandall);
     }
@@ -864,7 +864,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   }
 
   private class CollapseAllAction extends AnAction {
-    public CollapseAllAction() {
+    CollapseAllAction() {
       super(IdeBundle.message("action.collapse.all"), IdeBundle.message("action.collapse.all"),
             AllIcons.Actions.Collapseall);
     }
@@ -903,7 +903,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   private static class ElementNodeComparatorWrapper<T> implements Comparator<ElementNode> {
     private final Comparator<? super T> myDelegate;
 
-    public ElementNodeComparatorWrapper(final Comparator<? super T> delegate) {
+    ElementNodeComparatorWrapper(final Comparator<? super T> delegate) {
       myDelegate = delegate;
     }
 

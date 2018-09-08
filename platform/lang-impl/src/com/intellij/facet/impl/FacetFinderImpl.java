@@ -122,7 +122,7 @@ public class FacetFinderImpl extends FacetFinder {
   }
 
   private static class AllFacetsOfTypeModificationTracker<F extends Facet> extends SimpleModificationTracker implements Disposable, ProjectWideFacetListener<F> {
-    public AllFacetsOfTypeModificationTracker(final Project project, final FacetTypeId<F> type) {
+    AllFacetsOfTypeModificationTracker(final Project project, final FacetTypeId<F> type) {
       ProjectWideFacetListenersRegistry.getInstance(project).registerListener(type, this, this);
     }
 

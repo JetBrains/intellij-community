@@ -85,7 +85,7 @@ public class YAMLLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
   private static class YAMLIndentOptionsEditor extends SmartIndentOptionsEditor {
     private JCheckBox myIndentSequence;
 
-    public YAMLIndentOptionsEditor(@Nullable LanguageCodeStyleSettingsProvider provider) {
+    YAMLIndentOptionsEditor(@Nullable LanguageCodeStyleSettingsProvider provider) {
       super(provider);
     }
 

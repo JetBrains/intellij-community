@@ -197,8 +197,8 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
       public void perform(@NotNull final Project project, @NotNull final Executor executor, @NotNull DataContext context) {
         final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
         List<ConfigurationType> typesToShow = ContainerUtil.filter(ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList(), configurationType -> {
-          ConfigurationFactory factory;
-          return ((factory = runManager.getFactory(configurationType.getId(), null)) != null) &&
+          ConfigurationFactory factory = runManager.getFactory(configurationType, null);
+          return factory != null &&
                  ProgramRunner.getRunner(executor.getId(), runManager.getConfigurationTemplate(factory).getConfiguration()) != null;
         });
         final ListPopup popup = NewRunConfigurationPopup.createAddPopup(typesToShow, "",

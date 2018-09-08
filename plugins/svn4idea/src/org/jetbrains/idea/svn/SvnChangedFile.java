@@ -14,11 +14,11 @@ class SvnChangedFile {
   @NotNull private final Status myStatus;
   @Nullable private final Url myCopyFromURL;
 
-  public SvnChangedFile(@NotNull FilePath filePath, @NotNull Status status) {
+  SvnChangedFile(@NotNull FilePath filePath, @NotNull Status status) {
     this(filePath, status, null);
   }
 
-  public SvnChangedFile(@NotNull FilePath filePath, @NotNull Status status, @Nullable Url copyFromURL) {
+  SvnChangedFile(@NotNull FilePath filePath, @NotNull Status status, @Nullable Url copyFromURL) {
     myFilePath = filePath;
     myStatus = status;
     myCopyFromURL = copyFromURL;

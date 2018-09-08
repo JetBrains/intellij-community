@@ -410,7 +410,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     DefaultActionGroup toolbarActions = new DefaultActionGroup();
     toolbarActions.add(actions);
     toolbarActions.addAction(new ShowAsToolwindowAction()).setAsSecondary(true);
-    toolbarActions.addAction(new MyShowSettingsAction()).setAsSecondary(true);
+    toolbarActions.addAction(new MyShowSettingsAction(true)).setAsSecondary(true);
     toolbarActions.addAction(new ShowToolbarAction()).setAsSecondary(true);
     toolbarActions.addAction(new RestoreDefaultSizeAction()).setAsSecondary(true);
     myToolBar = new ActionToolbarImpl(ActionPlaces.JAVADOC_TOOLBAR, toolbarActions, true,
@@ -469,7 +469,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     DefaultActionGroup gearActions = new MyGearActionGroup();
     gearActions.add(new ShowAsToolwindowAction());
-    gearActions.add(new MyShowSettingsAction());
+    gearActions.add(new MyShowSettingsAction(false));
     gearActions.add(new ShowToolbarAction());
     gearActions.add(new RestoreDefaultSizeAction());
     gearActions.addSeparator();
@@ -525,7 +525,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   public AnAction getFontSizeAction() {
-    return new MyShowSettingsAction();
+    return new MyShowSettingsAction(false);
   }
 
   public void removeCornerMenu() {
@@ -1545,8 +1545,19 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private class MyShowSettingsAction extends AnAction implements HintManagerImpl.ActionToIgnore {
-    MyShowSettingsAction() {
+    private final boolean myOnToolbar;
+
+    MyShowSettingsAction(boolean onToolbar) {
       super("Adjust font size...");
+      myOnToolbar = onToolbar;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      if (myOnToolbar && myManager.myToolWindow != null) {
+        e.getPresentation().setEnabledAndVisible(false);
+      }
     }
 
     @Override
@@ -1643,6 +1654,14 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private class ShowToolbarAction extends ToggleAction implements HintManagerImpl.ActionToIgnore {
     ShowToolbarAction() {
       super("Show Toolbar");
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      if (myManager.myToolWindow != null) {
+        e.getPresentation().setEnabledAndVisible(false);
+      }
     }
 
     @Override

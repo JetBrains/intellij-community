@@ -80,7 +80,7 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
   private final RunConfigurationBase myConfig;
 
   private static class MyClassFilterEditor extends ClassFilterEditor {
-    public MyClassFilterEditor(Project project) {
+    MyClassFilterEditor(Project project) {
       super(project, new ClassFilter() {
         @Override
         public boolean isAccepted(PsiClass aClass) {

@@ -27,7 +27,7 @@ class SerializableInnerClassWithNonSerializableOuterClassVisitor
 
   private final SerializableInspectionBase inspection;
 
-  public SerializableInnerClassWithNonSerializableOuterClassVisitor(
+  SerializableInnerClassWithNonSerializableOuterClassVisitor(
     SerializableInspectionBase inspection) {
     this.inspection = inspection;
   }

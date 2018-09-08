@@ -3,6 +3,7 @@ package com.intellij.psi.impl.file.impl;
 
 import com.intellij.AppTopics;
 import com.intellij.ProjectTopics;
+import com.intellij.application.Topics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -79,7 +80,7 @@ public class PsiVFSListener implements BulkFileListener {
    */
   private static void installGlobalListener() {
     if (ourGlobalListenerInstalled.compareAndSet(false, true)) {
-      ApplicationManager.getApplication().getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      Topics.subscribe(VirtualFileManager.VFS_CHANGES, null, new BulkFileListener() {
         @Override
         public void before(@NotNull List<? extends VFileEvent> events) {
           for (Project project : ProjectManager.getInstance().getOpenProjects()) {
@@ -112,7 +113,6 @@ public class PsiVFSListener implements BulkFileListener {
   private PsiDirectory getCachedDirectory(VirtualFile parent) {
     return parent == null ? null : myFileManager.getCachedDirectory(parent);
   }
-
 
   private void fileCreated(@NotNull VirtualFile vFile) {
     ApplicationManager.getApplication().runWriteAction(
@@ -434,15 +434,15 @@ public class PsiVFSListener implements BulkFileListener {
         boolean isExcluded = vFile.isDirectory() &&
                              Registry.is("ide.hide.excluded.files") && myProjectRootManager.getFileIndex().isExcluded(vFile);
         if (oldParentDir != null && !isExcluded) {
+          PsiElement eventChild = vFile.isDirectory() ? myFileManager.findDirectory(vFile) : myFileManager.findFile(vFile);
+          treeEvent.setChild(eventChild);
           if (newParentDir != null) {
             treeEvent.setOldParent(oldParentDir);
             treeEvent.setNewParent(newParentDir);
-            findEventChild(vFile, treeEvent);
             myManager.beforeChildMovement(treeEvent);
           }
           else {
             treeEvent.setParent(oldParentDir);
-            findEventChild(vFile, treeEvent);
             myManager.beforeChildRemoval(treeEvent);
           }
         }
@@ -453,17 +453,6 @@ public class PsiVFSListener implements BulkFileListener {
         }
       }
     );
-  }
-
-  private void findEventChild(@NotNull VirtualFile vFile, @NotNull PsiTreeChangeEventImpl treeEvent) {
-    if (vFile.isDirectory()) {
-      PsiDirectory psiDir = myFileManager.findDirectory(vFile);
-      treeEvent.setChild(psiDir);
-    }
-    else {
-      PsiFile psiFile = myFileManager.findFile(vFile);
-      treeEvent.setChild(psiFile);
-    }
   }
 
   private void filesMoved(@NotNull List<? extends VFileEvent> events) {
@@ -706,7 +695,7 @@ public class PsiVFSListener implements BulkFileListener {
             propertyChanged((VFilePropertyChangeEvent)event);
           }
         }
-      
+
         prev = null;
         prevI = i+1;
         continue;

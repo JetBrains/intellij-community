@@ -2,21 +2,24 @@
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class LocalTestDiscoveryProducer implements TestDiscoveryProducer {
   @Override
   @NotNull
   public MultiMap<String, String> getDiscoveredTests(@NotNull Project project,
-                                                     @NotNull String classFQName,
-                                                     @Nullable String methodName,
+                                                     @NotNull List<Couple<String>> classesAndMethods,
                                                      byte frameworkId) {
+    MultiMap<String, String> result = new MultiMap<>();
     TestDiscoveryIndex instance = TestDiscoveryIndex.getInstance(project);
-    return methodName == null ?
-           instance.getTestsByClassName(classFQName, frameworkId) :
-           instance.getTestsByMethodName(classFQName, methodName, frameworkId);
+    classesAndMethods.forEach(couple -> result.putAllValues(couple.second == null ?
+                                                            instance.getTestsByClassName(couple.first, frameworkId) :
+                                                            instance.getTestsByMethodName(couple.first, couple.second, frameworkId)));
+    return result;
   }
 
   @Override

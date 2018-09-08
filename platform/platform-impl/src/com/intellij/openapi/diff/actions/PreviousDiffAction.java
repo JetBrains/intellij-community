@@ -20,8 +20,7 @@ public class PreviousDiffAction extends DiffWalkerAction {
     int[] fragmentBeginnings = side.getFragmentStartingLines();
     int gotoLine = -1;
     if (fragmentBeginnings == null) return -1;
-    for (int i = 0; i < fragmentBeginnings.length; i++) {
-      int line = fragmentBeginnings[i];
+    for (int line : fragmentBeginnings) {
       if (line < editor.getCaretModel().getLogicalPosition().line) {
         gotoLine = line;
       }

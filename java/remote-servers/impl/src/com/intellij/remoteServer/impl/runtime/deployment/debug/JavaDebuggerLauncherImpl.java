@@ -73,7 +73,7 @@ public class JavaDebuggerLauncherImpl extends JavaDebuggerLauncher {
     private final DebugEnvironment myEnvironment;
     private final ExecutionEnvironment myExecutionEnvironment;
 
-    public RemoteServerDebugUIEnvironment(DebugEnvironment environment, ExecutionEnvironment executionEnvironment) {
+    RemoteServerDebugUIEnvironment(DebugEnvironment environment, ExecutionEnvironment executionEnvironment) {
       myEnvironment = environment;
       myExecutionEnvironment = executionEnvironment;
     }
@@ -113,7 +113,7 @@ public class JavaDebuggerLauncherImpl extends JavaDebuggerLauncher {
     private final RemoteConnection myRemoteConnection;
     private final RunProfile myRunProfile;
 
-    public RemoteServerDebugEnvironment(Project project, RemoteConnection remoteConnection, RunProfile runProfile) {
+    RemoteServerDebugEnvironment(Project project, RemoteConnection remoteConnection, RunProfile runProfile) {
       myProject = project;
       mySearchScope = SearchScopeProvider.createSearchScope(project, runProfile);
       myRemoteConnection = remoteConnection;

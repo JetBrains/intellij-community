@@ -2,6 +2,7 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +44,7 @@ public abstract class LocatableConfigurationBase extends RunConfigurationBase im
    * Renames the configuration to its suggested name.
    */
   public void setGeneratedName() {
-    setName(suggestedName());
+    setName(StringUtilRt.notNullize(suggestedName()));
     getOptions().setNameGenerated(true);
   }
 

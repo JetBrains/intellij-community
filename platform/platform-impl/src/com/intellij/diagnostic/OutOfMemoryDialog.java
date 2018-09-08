@@ -181,7 +181,6 @@ public class OutOfMemoryDialog extends DialogWrapper {
     new Thread(task, "OOME Heap Dump").start();
   }
 
-  @SuppressWarnings("Duplicates")
   private void enableControls(boolean enabled) {
     myHeapSizeField.setEnabled(enabled);
     myMetaspaceSizeField.setEnabled(enabled);

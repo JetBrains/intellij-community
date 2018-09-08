@@ -184,7 +184,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
 
     private final List<MavenIndex> myIndices;
 
-    public MyTableModel(List<MavenIndex> indices) {
+    MyTableModel(List<MavenIndex> indices) {
       myIndices = indices;
     }
 

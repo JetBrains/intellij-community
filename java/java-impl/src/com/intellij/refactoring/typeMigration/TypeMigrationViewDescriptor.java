@@ -25,7 +25,7 @@ class TypeMigrationViewDescriptor implements UsageViewDescriptor {
 
   private final PsiElement myElement;
 
-  public TypeMigrationViewDescriptor(PsiElement elements) {
+  TypeMigrationViewDescriptor(PsiElement elements) {
     myElement = elements;
   }
 

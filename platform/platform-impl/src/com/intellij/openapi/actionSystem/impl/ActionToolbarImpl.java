@@ -1356,7 +1356,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   abstract static class PopupToolbar extends ActionToolbarImpl implements AnActionListener, Disposable {
     private final JComponent myParent;
 
-    public PopupToolbar(final String place,
+    PopupToolbar(final String place,
                         final ActionGroup actionGroup,
                         final boolean horizontal,
                         final DataManager dataManager,

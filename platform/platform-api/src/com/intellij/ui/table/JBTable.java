@@ -571,7 +571,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   private final class MyCellEditorRemover extends Activatable.Adapter implements PropertyChangeListener {
     private boolean myIsActive = false;
 
-    public MyCellEditorRemover() {
+    MyCellEditorRemover() {
       addPropertyChangeListener("tableCellEditor", this);
       new UiNotifyConnector(JBTable.this, this);
     }
@@ -1006,7 +1006,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     private int myStartXCoordinate = 0;
     private int myStartYCoordinate = 0;
 
-    public MyBasicTableHeaderUI(@NotNull InvisibleResizableHeader tableHeader) {
+    MyBasicTableHeaderUI(@NotNull InvisibleResizableHeader tableHeader) {
       header = tableHeader;
       mouseInputListener = createMouseInputListener();
     }

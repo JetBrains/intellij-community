@@ -166,7 +166,7 @@ public abstract class Decompressor<Stream> {
     private final String name;
     private final boolean isDirectory;
 
-    public Entry(String name, boolean isDirectory) {
+    Entry(String name, boolean isDirectory) {
       this.name = name;
       this.isDirectory = isDirectory;
     }

@@ -545,7 +545,7 @@ public class JDOMUtil {
   }
 
   private final static class MyXMLOutputter extends XMLOutputter {
-    public MyXMLOutputter(@NotNull Format format) {
+    MyXMLOutputter(@NotNull Format format) {
       super(format);
     }
 

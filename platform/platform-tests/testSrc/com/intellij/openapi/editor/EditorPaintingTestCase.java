@@ -352,7 +352,7 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     private class Iterator implements HighlighterIterator {
       private int myOffset;
 
-      public Iterator(int startOffset) {
+      Iterator(int startOffset) {
         myOffset = startOffset;
       }
 

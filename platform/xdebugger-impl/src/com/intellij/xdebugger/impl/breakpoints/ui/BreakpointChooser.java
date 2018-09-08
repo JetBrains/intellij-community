@@ -147,7 +147,7 @@ public class BreakpointChooser {
     private final PreviewEditorState myPushed;
     private ItemWrapper myCurrentItem;
 
-    public MyDetailView(PreviewEditorState pushed) {
+    MyDetailView(PreviewEditorState pushed) {
       myPushed = pushed;
       putUserData(BreakpointItem.EDITOR_ONLY, Boolean.TRUE);
     }

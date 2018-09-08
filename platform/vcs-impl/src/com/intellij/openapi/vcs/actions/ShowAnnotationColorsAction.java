@@ -56,7 +56,7 @@ public class ShowAnnotationColorsAction extends ActionGroup implements DumbAware
   private static class SetColorModeAction extends ToggleAction implements DumbAware {
     private final ColorMode myType;
 
-    public SetColorModeAction(ColorMode type) {
+    SetColorModeAction(ColorMode type) {
       super(type.getDescription());
       myType = type;
     }

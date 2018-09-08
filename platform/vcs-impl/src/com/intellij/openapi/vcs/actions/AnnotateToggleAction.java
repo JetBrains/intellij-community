@@ -342,7 +342,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     private final Editor myEditor;
     private final Runnable myShowAnnotations;
 
-    public MyEditorNotificationPanel(@NotNull Editor editor, @NotNull AbstractVcs vcs, @NotNull Runnable doShowAnnotations) {
+    MyEditorNotificationPanel(@NotNull Editor editor, @NotNull AbstractVcs vcs, @NotNull Runnable doShowAnnotations) {
       super(LightColors.RED);
       myEditor = editor;
       myShowAnnotations = doShowAnnotations;

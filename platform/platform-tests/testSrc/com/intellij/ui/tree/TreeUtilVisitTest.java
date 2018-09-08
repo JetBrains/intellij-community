@@ -791,6 +791,26 @@ public final class TreeUtilVisitTest {
   }
 
   @Test
+  public void testCollectSelectedObjectsOfType() {
+    TreeTest.test(() -> node(Boolean.TRUE, node(101), node(1.1f)), test
+      -> test.assertTree("+true\n", ()
+      -> TreeUtil.expandAll(test.getTree(), ()
+      -> test.assertTree("-true\n 101\n 1.1\n", ()
+      -> {
+      TreeUtil.visitVisibleRows(test.getTree(), path -> path, path -> test.getTree().addSelectionPath(path));
+      test.assertTree("-[true]\n [101]\n [1.1]\n", true, () -> {
+        Assert.assertEquals(3, TreeUtil.collectSelectedObjectsOfType(test.getTree(), Object.class).size());
+        Assert.assertEquals(2, TreeUtil.collectSelectedObjectsOfType(test.getTree(), Number.class).size());
+        Assert.assertEquals(1, TreeUtil.collectSelectedObjectsOfType(test.getTree(), Boolean.class).size());
+        Assert.assertEquals(1, TreeUtil.collectSelectedObjectsOfType(test.getTree(), Integer.class).size());
+        Assert.assertEquals(1, TreeUtil.collectSelectedObjectsOfType(test.getTree(), Float.class).size());
+        Assert.assertEquals(0, TreeUtil.collectSelectedObjectsOfType(test.getTree(), String.class).size());
+        test.done();
+      });
+    }))));
+  }
+
+  @Test
   public void testSelectFirstEmpty() {
     testSelectFirst(() -> null, true, "");
   }

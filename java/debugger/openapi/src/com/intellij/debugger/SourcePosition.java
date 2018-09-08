@@ -48,7 +48,7 @@ public abstract class SourcePosition implements Navigatable{
     private Integer myLine;
     private Integer myOffset;
 
-    public SourcePositionCache(@NotNull PsiFile file) {
+    SourcePositionCache(@NotNull PsiFile file) {
       myFile = file;
       myFilePointer = ReadAction.compute(
         () -> file.isValid() ? SmartPointerManager.getInstance(file.getProject()).createSmartPsiElementPointer(file) : null);

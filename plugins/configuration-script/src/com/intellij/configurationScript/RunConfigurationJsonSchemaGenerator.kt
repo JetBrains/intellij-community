@@ -2,7 +2,6 @@ package com.intellij.configurationScript
 
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.ConfigurationType
-import com.intellij.openapi.components.buildJsonSchema
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ReflectionUtil
@@ -175,7 +174,9 @@ internal class RunConfigurationJsonSchemaGenerator {
       if (description != null) {
         "description" toUnescaped description
       }
-      rawMap("properties") { buildJsonSchema(state, it) }
+      map("properties") {
+        buildJsonSchema(state, this)
+      }
     }
     "additionalProperties" to false
   }

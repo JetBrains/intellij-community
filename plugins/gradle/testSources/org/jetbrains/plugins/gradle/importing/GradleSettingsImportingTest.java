@@ -392,7 +392,7 @@ class TestRunConfigurationImporter implements RunConfigurationImporter {
   private final String myTypeName;
   private final Map<String, Map<String, Object>> myConfigs = new HashMap<>();
 
-  public TestRunConfigurationImporter(@NotNull String typeName) {
+  TestRunConfigurationImporter(@NotNull String typeName) {
     myTypeName = typeName;
   }
 

@@ -53,7 +53,7 @@ public class SourcesOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
   private static class SourcesPathEditor extends SdkPathEditor {
     private final Sdk mySdk;
 
-    public SourcesPathEditor(Sdk sdk, FileChooserDescriptor descriptor) {
+    SourcesPathEditor(Sdk sdk, FileChooserDescriptor descriptor) {
       super(ProjectBundle.message("sdk.configure.sourcepath.tab"), OrderRootType.SOURCES, descriptor);
       mySdk = sdk;
     }

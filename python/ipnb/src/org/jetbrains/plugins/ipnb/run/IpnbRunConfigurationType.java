@@ -52,7 +52,7 @@ public final class IpnbRunConfigurationType implements ConfigurationType {
   }
 
   private static class IpnbRunConfigurationFactory extends PythonConfigurationFactoryBase {
-    public IpnbRunConfigurationFactory(@NotNull ConfigurationType type) {
+    IpnbRunConfigurationFactory(@NotNull ConfigurationType type) {
       super(type);
     }
 

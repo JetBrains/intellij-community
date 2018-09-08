@@ -57,8 +57,9 @@ public final class MavenRunConfigurationType implements ConfigurationType {
         return new MavenRunConfiguration(project, this, "");
       }
 
+      @NotNull
       @Override
-      public RunConfiguration createConfiguration(String name, RunConfiguration template) {
+      public RunConfiguration createConfiguration(@Nullable String name, @NotNull RunConfiguration template) {
         MavenRunConfiguration cfg = (MavenRunConfiguration)super.createConfiguration(name, template);
 
         if (!StringUtil.isEmptyOrSpaces(cfg.getRunnerParameters().getWorkingDirPath())) return cfg;

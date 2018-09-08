@@ -30,7 +30,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import org.jetbrains.annotations.NotNull;
 
 class TestClass extends TestObject {
-  public TestClass(JUnitConfiguration configuration, ExecutionEnvironment environment) {
+  TestClass(JUnitConfiguration configuration, ExecutionEnvironment environment) {
     super(configuration, environment);
   }
 

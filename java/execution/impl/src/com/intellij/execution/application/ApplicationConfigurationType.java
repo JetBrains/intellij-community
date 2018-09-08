@@ -29,7 +29,7 @@ public class ApplicationConfigurationType implements ConfigurationType {
     myFactory = new ConfigurationFactory(this) {
       @Override
       public Class<? extends BaseState> getOptionsClass() {
-        return ApplicationConfigurationOptions.class;
+        return JvmMainMethodRunConfigurationOptions.class;
       }
 
       @NotNull

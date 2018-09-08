@@ -28,7 +28,7 @@ abstract class RemappedSourcePosition extends SourcePosition {
   private SourcePosition myDelegate;
   private boolean myMapped = false;
 
-  public RemappedSourcePosition(@NotNull SourcePosition delegate) {
+  RemappedSourcePosition(@NotNull SourcePosition delegate) {
     myDelegate = delegate;
   }
 

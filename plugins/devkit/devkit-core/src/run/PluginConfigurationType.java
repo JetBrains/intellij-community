@@ -13,6 +13,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.LazyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 
@@ -46,8 +47,9 @@ public final class PluginConfigurationType extends SimpleConfigurationType {
     return ModuleUtil.hasModulesOfType(project, PluginModuleType.getInstance());
   }
 
+  @NotNull
   @Override
-  public RunConfiguration createConfiguration(String name, RunConfiguration template) {
+  public RunConfiguration createConfiguration(@Nullable String name, @NotNull RunConfiguration template) {
     PluginRunConfiguration pluginRunConfiguration = (PluginRunConfiguration)template;
     if (pluginRunConfiguration.getModule() == null) {
       Collection<Module> modules = ModuleUtil.getModulesOfType(pluginRunConfiguration.getProject(), PluginModuleType.getInstance());

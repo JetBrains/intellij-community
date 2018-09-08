@@ -31,7 +31,7 @@ class ClsPackageStatementImpl extends ClsElementImpl implements PsiPackageStatem
     myPackageName = null;
   }
 
-  public ClsPackageStatementImpl(@NotNull ClsFileImpl file, String packageName) {
+  ClsPackageStatementImpl(@NotNull ClsFileImpl file, String packageName) {
     myFile = file;
     myPackageName = packageName;
   }

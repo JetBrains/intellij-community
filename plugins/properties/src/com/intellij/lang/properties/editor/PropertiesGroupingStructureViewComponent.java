@@ -62,7 +62,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
   private class ChangeGroupSeparatorAction extends DefaultActionGroup {
     private final Set<String> myPredefinedSeparators = new LinkedHashSet<>();
 
-    public ChangeGroupSeparatorAction() {
+    ChangeGroupSeparatorAction() {
       super("Group by: ", true);
       myPredefinedSeparators.add(".");
       myPredefinedSeparators.add("_");
@@ -107,7 +107,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
 
     private final class SelectSeparatorAction extends AnAction {
 
-      public SelectSeparatorAction() {
+      SelectSeparatorAction() {
         super(PropertiesBundle.message("select.separator.action.with.empty.separator.name"));
       }
 

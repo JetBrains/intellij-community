@@ -498,7 +498,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
     private final Map<ProjectSystemId, MyNotification> myNotificationMap;
     private final Set<String> projectPaths;
 
-    public MyNotification(Project project,
+    MyNotification(Project project,
                           Map<ProjectSystemId, MyNotification> notificationMap,
                           ProjectSystemId systemId,
                           String projectPath) {
@@ -553,7 +553,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
     private List<VirtualFile> filesToUpdate;
     private List<VirtualFile> filesToRemove;
 
-    public MyFileChangeListener(ExternalSystemProjectsWatcherImpl watcher) {
+    MyFileChangeListener(ExternalSystemProjectsWatcherImpl watcher) {
       myWatcher = watcher;
     }
 

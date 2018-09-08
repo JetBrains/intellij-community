@@ -26,9 +26,6 @@ public abstract class RunManagerEx extends RunManager {
     setSelectedConfiguration(configuration);
   }
 
-  @NotNull
-  public abstract RunManagerConfig getConfig();
-
   @Deprecated
   public final void addConfiguration(RunnerAndConfigurationSettings settings, boolean isShared, List<BeforeRunTask> tasks, boolean addTemplateTasksIfAbsent) {
     settings.setShared(isShared);
