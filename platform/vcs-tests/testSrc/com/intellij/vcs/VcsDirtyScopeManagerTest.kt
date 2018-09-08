@@ -80,7 +80,7 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
     dirtyScopeManager.filePathsDirty(listOf(file), listOf(otherRoot))
 
     val invalidated = retrieveDirtyScopes()
-    assertDirtiness(invalidated, file, otherRoot, subFile)
+    assertDirtiness(invalidated, file, subFile)
     val scope = assertOneScope(invalidated)
     assertTrue(scope.recursivelyDirtyDirectories.contains(otherRoot))
     assertTrue(scope.dirtyFiles.contains(file))
@@ -106,8 +106,10 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
     dirtyScopeManager.filePathsDirty(listOf(), listOf(basePath, otherRoot))
 
     val invalidated = retrieveDirtyScopes()
-    assertOneScope(invalidated)
-    assertDirtiness(invalidated, file, otherRoot, subFile)
+    val scope = assertOneScope(invalidated)
+    assertDirtiness(invalidated, file, subFile)
+    assertTrue(scope.recursivelyDirtyDirectories.contains(basePath))
+    assertTrue(scope.recursivelyDirtyDirectories.contains(otherRoot))
   }
 
   fun `test marking file outside of any VCS root dirty has no effect`() {
