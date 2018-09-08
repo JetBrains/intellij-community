@@ -1572,13 +1572,21 @@ public class AllIcons {
       public static final Icon Component = IconLoader.getIcon("/nodes/jsf/component.svg"); // 16x16
       public static final Icon Converter = IconLoader.getIcon("/nodes/jsf/converter.svg"); // 16x16
       public static final Icon General = IconLoader.getIcon("/nodes/jsf/general.svg"); // 16x16
-      public static final Icon GenericValue = IconLoader.getIcon("/nodes/jsf/genericValue.png"); // 16x16
       public static final Icon ManagedBean = IconLoader.getIcon("/nodes/jsf/managedBean.svg"); // 16x16
-      public static final Icon NavigationCase = IconLoader.getIcon("/nodes/jsf/navigationCase.png"); // 16x16
       public static final Icon NavigationRule = IconLoader.getIcon("/nodes/jsf/navigationRule.svg"); // 16x16
       public static final Icon Renderer = IconLoader.getIcon("/nodes/jsf/renderer.svg"); // 16x16
       public static final Icon RenderKit = IconLoader.getIcon("/nodes/jsf/renderKit.svg"); // 16x16
       public static final Icon Validator = IconLoader.getIcon("/nodes/jsf/validator.svg"); // 16x16
+
+      /** @deprecated to be removed in IDEA 2020 - AllIcons.Nodes.Parameter */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final Icon GenericValue = IconLoader.getIcon("/nodes/parameter.svg"); // 16x16
+
+      /** @deprecated to be removed in IDEA 2020 - AllIcons.Nodes.UpFolder */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final Icon NavigationCase = IconLoader.getIcon("/nodes/upFolder.svg"); // 16x16
 
     }
     public static final Icon Jsr45 = IconLoader.getIcon("/nodes/jsr45.svg"); // 16x16
