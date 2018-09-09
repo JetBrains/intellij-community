@@ -555,6 +555,14 @@ class GitBranchPopupActions {
       brancher.compare(myBranchName, myRepositories, mySelectedRepository);
       reportUsage(myProject, "git.branch.compare");
     }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      String description = String.format("Compare commits in %1$s and %2$s, and the file tree in %1$s and its current state",
+                                         getBranchPresentation(myBranchName),
+                                         getCurrentBranchPresentation(myRepositories));
+      e.getPresentation().setDescription(description);
+    }
   }
 
   private static class MergeAction extends DumbAwareAction {
