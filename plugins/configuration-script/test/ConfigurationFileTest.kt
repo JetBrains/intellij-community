@@ -121,7 +121,7 @@ class ConfigurationFileTest {
 
 internal fun readRunConfigurations(@Language("YAML") data: String, isTemplatesOnly: Boolean = false): List<Any> {
   val list = SmartList<Any>()
-  readRunConfigurations(doRead(data.trimIndent().reader())!!, isTemplatesOnly) { _, state ->
+  com.intellij.configurationScript.providers.readRunConfigurations(doRead(data.trimIndent().reader())!!, isTemplatesOnly) { _, state ->
     list.add(state)
   }
   return list

@@ -1,5 +1,9 @@
-package com.intellij.configurationScript
+package com.intellij.configurationScript.providers
 
+import com.intellij.configurationScript.ConfigurationFileManager
+import com.intellij.configurationScript.Keys
+import com.intellij.configurationScript.RunConfigurationListReader
+import com.intellij.configurationScript.SynchronizedClearableLazy
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.impl.RunConfigurationTemplateProvider
@@ -19,7 +23,8 @@ private class FactoryEntry(state: Any) {
 
 private class MyRunConfigurationTemplateProvider(private val project: Project) : RunConfigurationTemplateProvider {
   private val map = SynchronizedClearableLazy<Map<ConfigurationFactory, FactoryEntry>> {
-    val node = project.service<ConfigurationFileManager>().getConfigurationNode() ?: return@SynchronizedClearableLazy emptyMap()
+    val node = project.service<ConfigurationFileManager>().getConfigurationNode()
+               ?: return@SynchronizedClearableLazy emptyMap()
     val map = THashMap<ConfigurationFactory, FactoryEntry>()
     readRunConfigurations(node, isTemplatesOnly = true) { factory, state ->
       map.put(factory, FactoryEntry(state))

@@ -1,5 +1,7 @@
 package com.intellij.configurationScript
 
+import com.intellij.configurationScript.providers.PluginsConfiguration
+import com.intellij.configurationScript.providers.readPluginsConfiguration
 import com.intellij.execution.ShortenCommandLine
 import com.intellij.execution.application.JvmMainMethodRunConfigurationOptions
 import com.intellij.testFramework.ProjectRule

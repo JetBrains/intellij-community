@@ -1,5 +1,9 @@
-package com.intellij.configurationScript
+package com.intellij.configurationScript.providers
 
+import com.intellij.configurationScript.ConfigurationFileManager
+import com.intellij.configurationScript.Keys
+import com.intellij.configurationScript.SynchronizedClearableLazy
+import com.intellij.configurationScript.readObject
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -9,7 +13,8 @@ import org.yaml.snakeyaml.nodes.ScalarNode
 
 private class MyUpdateSettingsProvider(project: Project) : UpdateSettingsProvider {
   private val data = SynchronizedClearableLazy<PluginsConfiguration?> {
-    val node = project.service<ConfigurationFileManager>().getConfigurationNode() ?: return@SynchronizedClearableLazy null
+    val node = project.service<ConfigurationFileManager>().getConfigurationNode()
+               ?: return@SynchronizedClearableLazy null
     readPluginsConfiguration(node)
   }
 
@@ -33,7 +38,8 @@ internal fun readPluginsConfiguration(rootNode: MappingNode): PluginsConfigurati
     val keyNode = tuple.keyNode
     if (keyNode is ScalarNode && keyNode.value == Keys.plugins) {
       val valueNode = tuple.valueNode as? MappingNode ?: continue
-      return readObject(PluginsConfiguration(), valueNode) as PluginsConfiguration
+      return readObject(PluginsConfiguration(),
+                        valueNode) as PluginsConfiguration
     }
   }
   return null
