@@ -1,6 +1,7 @@
 package com.intellij.configurationScript
 
 import com.intellij.configurationStore.Property
+import com.intellij.configurationStore.properties.CollectionStoredProperty
 import com.intellij.configurationStore.properties.EnumStoredProperty
 import com.intellij.configurationStore.properties.MapStoredProperty
 import com.intellij.openapi.components.BaseState
@@ -42,12 +43,17 @@ internal fun buildJsonSchema(state: BaseState, builder: JsonObjectBuilder, custo
         }
       }
 
-      if (property is EnumStoredProperty<*>) {
-        describeEnum(property)
-      }
-      else if (property is MapStoredProperty<*, *>) {
-        map("additionalProperties") {
-          "type" to "string"
+      when (property) {
+        is EnumStoredProperty<*> -> describeEnum(property)
+        is MapStoredProperty<*, *> -> {
+          map("additionalProperties") {
+            "type" to "string"
+          }
+        }
+        is CollectionStoredProperty<*, *> -> {
+          map("items") {
+            "type" to "string"
+          }
         }
       }
 
