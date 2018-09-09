@@ -12,11 +12,9 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.exists
 import com.intellij.util.io.inputStreamIfExists
-import org.yaml.snakeyaml.composer.Composer
 import org.yaml.snakeyaml.nodes.MappingNode
 import org.yaml.snakeyaml.parser.ParserImpl
 import org.yaml.snakeyaml.reader.StreamReader
-import org.yaml.snakeyaml.resolver.Resolver
 import java.io.Reader
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -24,9 +22,10 @@ import java.nio.file.Paths
 internal const val IDE_FILE = "intellij.yaml"
 internal const val IDE_FILE_VARIANT_2 = "intellij.yml"
 
+// we cannot use the same approach as we generate JSON scheme because we should load option classes only in a lazy manner
+// that's why we don't use snakeyaml TypeDescription approach to load
 internal class ConfigurationFileManager(project: Project) {
   private val clearableLazyValues = ContainerUtil.createConcurrentList<SynchronizedClearableLazy<*>>()
-  private val yamlResolver by lazy { Resolver() }
 
   private val yamlData = SynchronizedClearableLazy {
     if (!Registry.`is`("run.manager.use.intellij.config.file", false)) {
@@ -36,7 +35,7 @@ internal class ConfigurationFileManager(project: Project) {
     val file = findConfigurationFile(project) ?: return@SynchronizedClearableLazy null
     try {
       val inputStream = file.inputStreamIfExists() ?: return@SynchronizedClearableLazy null
-      return@SynchronizedClearableLazy doRead(inputStream.bufferedReader(), yamlResolver)
+      return@SynchronizedClearableLazy doRead(inputStream.bufferedReader())
     }
     catch (e: Throwable) {
       LOG.error("Cannot parse \"$file\"", e)
@@ -90,10 +89,9 @@ internal class ConfigurationFileManager(project: Project) {
   fun getConfigurationNode() = yamlData.value
 }
 
-internal fun doRead(reader: Reader, resolver: Resolver = Resolver()): MappingNode? {
+internal fun doRead(reader: Reader): MappingNode? {
   reader.use {
-    val composer = Composer(ParserImpl(StreamReader(it)), resolver)
-    return composer.singleNode as? MappingNode
+    return LightweightComposer(ParserImpl(StreamReader(it))).getSingleNode() as? MappingNode
   }
 }
 

@@ -55,8 +55,6 @@ private class MyRunConfigurationTemplateProvider(private val project: Project) :
   }
 }
 
-// we cannot use the same approach as we generate JSON scheme because we should load option classes only in a lazy manner
-// that's why we don't use snakeyaml TypeDescription approach to load
 internal fun readRunConfigurations(rootNode: MappingNode, isTemplatesOnly: Boolean, processor: (factory: ConfigurationFactory, state: Any) -> Unit) {
   // later we can avoid full node graph building, but for now just use simple implementation (problem is that Yaml supports references and merge - proper support of it can be tricky)
   // "load" under the hood uses "compose" - i.e. Yaml itself doesn't use stream API to build object model.

@@ -12,7 +12,7 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaReader
 import org.intellij.lang.annotations.Language
 import java.nio.charset.StandardCharsets
 
-internal class IntelliJConfigurationSchemaTest : CompletionTestCase() {
+internal class ConfigurationSchemaTest : CompletionTestCase() {
   companion object {
     private val schemaFile by lazy {
       LightVirtualFile("scheme.json", JsonFileType.INSTANCE, generateConfigurationSchema(), StandardCharsets.UTF_8, 0)
