@@ -8,7 +8,7 @@ import gnu.trove.THashMap
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.memberProperties
 
-internal fun buildJsonSchema(state: BaseState, builder: JsonObjectBuilder) {
+internal fun buildJsonSchema(state: BaseState, builder: JsonObjectBuilder, customFilter: ((name: String) -> Boolean)? = null) {
   val properties = state.__getProperties()
   val memberProperties = state::class.memberProperties
   var propertyToAnnotation: MutableMap<String, Property>? = null
@@ -26,6 +26,10 @@ internal fun buildJsonSchema(state: BaseState, builder: JsonObjectBuilder) {
     val name = property.name!!
     val annotation = propertyToAnnotation?.get(name)
     if (annotation?.ignore == true) {
+      continue
+    }
+
+    if (customFilter != null && !customFilter(name)) {
       continue
     }
 

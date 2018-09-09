@@ -12,6 +12,7 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaReader
 import org.intellij.lang.annotations.Language
 import java.nio.charset.StandardCharsets
 
+// this test requires YamlJsonSchemaCompletionContributor, that's why intellij.yaml is added as test dependency
 internal class ConfigurationSchemaTest : CompletionTestCase() {
   companion object {
     private val schemaFile by lazy {
@@ -30,6 +31,21 @@ internal class ConfigurationSchemaTest : CompletionTestCase() {
     checkDescription(variants, "isAllowRunningInParallel", "Allow running in parallel")
   }
 
+  fun `test no isAllowRunningInParallel if singleton policy not configurable`() {
+    val variants = test("""
+    runConfigurations:
+      compound:
+        <caret>
+    """.trimIndent())
+
+    assertThat(variantsToText(variants)).isEqualTo("""
+    fileOutput (object)
+    isShowConsoleOnStdErr (Show console when a message is printed to standard error stream)
+    isShowConsoleOnStdOut (Show console when a message is printed to standard output stream)
+    logFiles (array)
+    """.trimIndent())
+  }
+  
   private fun checkDescription(variants: List<LookupElement>, name: String, expectedDescription: String) {
     val variant = variants.first { it.lookupString == name }
     val presentation = LookupElementPresentation()
@@ -50,4 +66,17 @@ internal class ConfigurationSchemaTest : CompletionTestCase() {
 
     return JsonSchemaCompletionContributor.getCompletionVariants(schemaObject, element!!, element)
   }
+}
+
+private fun variantsToText(variants: List<LookupElement>): String {
+  return variants
+    .asSequence()
+    .sortedBy { it.lookupString }
+    .joinToString("\n") { "${it.lookupString} (${getTypeTest(it)})" }
+}
+
+private fun getTypeTest(variant: LookupElement): String {
+  val presentation = LookupElementPresentation()
+  variant.renderElement(presentation)
+  return presentation.typeText!!
 }

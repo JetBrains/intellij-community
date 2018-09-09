@@ -17,8 +17,10 @@ open class RunConfigurationOptions : BaseState() {
   @get:Property(surroundWithTag = false)
   var fileOutput by property(OutputFileOptions())
 
+  @com.intellij.configurationStore.Property(description = "Show console when a message is printed to standard output stream")
   @get:Attribute("show_console_on_std_out")
   var isShowConsoleOnStdOut by property(false)
+  @com.intellij.configurationStore.Property(description = "Show console when a message is printed to standard error stream")
   @get:Attribute("show_console_on_std_err")
   var isShowConsoleOnStdErr by property(false)
 

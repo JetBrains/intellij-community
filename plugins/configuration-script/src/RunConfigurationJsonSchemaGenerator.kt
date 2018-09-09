@@ -2,7 +2,8 @@ package com.intellij.configurationScript
 
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.ConfigurationType
-import com.intellij.openapi.components.JsonSchemaType
+import com.intellij.execution.configurations.RunConfigurationOptions
+import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ReflectionUtil
@@ -156,33 +157,33 @@ internal class RunConfigurationJsonSchemaGenerator {
 
   private fun describeFactory(factory: ConfigurationFactory, definitionId: CharSequence, description: String?) {
     val optionsClass = factory.optionsClass
+    val state: BaseState
     if (optionsClass == null) {
-      LOG.debug { "Configuration factory \"${factory.name}\" is not described because options class not defined" }
-
-      definitions.map(definitionId) {
-        "type" to "object"
-        if (description != null) {
-          "description" toUnescaped description
-        }
-        "additionalProperties" to true
-      }
-      return
+      LOG.debug { "Configuration factory \"${factory.name}\" is not fully described because options class not defined" }
+      // nor LocatableRunConfigurationOptions, neither ModuleBasedConfigurationOptions define any useful properties, so, 
+      // RunConfigurationOptions is enough without guessing actual RC type.
+      state = RunConfigurationOptions()
+    }
+    else {
+      state = ReflectionUtil.newInstance(optionsClass)
     }
 
-    val state = ReflectionUtil.newInstance(optionsClass)
     definitions.map(definitionId) {
       "type" to "object"
       if (description != null) {
         "description" toUnescaped description
       }
       map("properties") {
-        map("isAllowRunningInParallel") {
-          "type" to JsonSchemaType.BOOLEAN.jsonName
+        buildJsonSchema(state, this) { name ->
           // we don't specify default value ("default") because it is tricky - not value from factory, but from RC template maybe used,
           // and on time when schema is generated, we cannot compute efficient default value
+          if (name == "isAllowRunningInParallel") {
+            factory.singletonPolicy.isPolicyConfigurable
+          }
+          else {
+            true
+          }
         }
-
-        buildJsonSchema(state, this)
       }
     }
     "additionalProperties" to false
