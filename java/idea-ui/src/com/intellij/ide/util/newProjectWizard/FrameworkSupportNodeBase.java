@@ -45,7 +45,7 @@ public abstract class FrameworkSupportNodeBase<T extends FrameworkOrGroup> exten
     return (T)super.getUserObject();
   }
 
-  public static void sortByName(@Nullable List<FrameworkSupportNodeBase> nodes, @Nullable final Comparator<FrameworkSupportNodeBase> comparator) {
+  public static void sortByName(@Nullable List<? extends FrameworkSupportNodeBase> nodes, @Nullable final Comparator<? super FrameworkSupportNodeBase> comparator) {
     if (nodes == null) return;
 
     Collections.sort(nodes, (o1, o2) -> {

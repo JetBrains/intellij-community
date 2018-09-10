@@ -83,7 +83,7 @@ public class ButtonToolbarImpl extends JPanel {
   private class ActionJButton extends JButton {
     private final AnAction myAction;
 
-    public ActionJButton(final AnAction action) {
+    ActionJButton(final AnAction action) {
       super(action.getTemplatePresentation().getText());
       myAction = action;
       setMnemonic(action.getTemplatePresentation().getMnemonic());

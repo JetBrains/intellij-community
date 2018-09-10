@@ -38,7 +38,7 @@ class UnifiedFragmentBuilder {
   @NotNull private final LineNumberConvertor.Builder myConvertor2 = new LineNumberConvertor.Builder();
   @NotNull private final List<LineRange> myChangedLines = new ArrayList<>();
 
-  public UnifiedFragmentBuilder(@NotNull List<LineFragment> fragments,
+  UnifiedFragmentBuilder(@NotNull List<LineFragment> fragments,
                                 @NotNull Document document1,
                                 @NotNull Document document2,
                                 @NotNull Side masterSide) {

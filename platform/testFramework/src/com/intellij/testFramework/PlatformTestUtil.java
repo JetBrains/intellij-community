@@ -167,14 +167,14 @@ public class PlatformTestUtil {
     return print(tree, path,  withSelection, printInfo, null);
   }
 
-  public static String print(JTree tree, boolean withSelection, @Nullable Predicate<String> nodePrintCondition) {
+  public static String print(JTree tree, boolean withSelection, @Nullable Predicate<? super String> nodePrintCondition) {
     return print(tree, new TreePath(tree.getModel().getRoot()), withSelection, null, nodePrintCondition);
   }
 
   private static String print(JTree tree, TreePath path,
                              boolean withSelection,
                              @Nullable Queryable.PrintInfo printInfo,
-                             @Nullable Predicate<String> nodePrintCondition) {
+                             @Nullable Predicate<? super String> nodePrintCondition) {
     return StringUtil.join(printAsList(tree, path, withSelection, printInfo, nodePrintCondition), "\n");
   }
 
@@ -182,7 +182,7 @@ public class PlatformTestUtil {
                                                 TreePath path,
                                                 boolean withSelection,
                                                 @Nullable Queryable.PrintInfo printInfo,
-                                                @Nullable Predicate<String> nodePrintCondition) {
+                                                @Nullable Predicate<? super String> nodePrintCondition) {
     Collection<String> strings = new ArrayList<>();
     printImpl(tree, path, strings, 0, withSelection, printInfo, nodePrintCondition);
     return strings;
@@ -190,11 +190,11 @@ public class PlatformTestUtil {
 
   private static void printImpl(JTree tree,
                                 TreePath path,
-                                Collection<String> strings,
+                                Collection<? super String> strings,
                                 int level,
                                 boolean withSelection,
                                 @Nullable Queryable.PrintInfo printInfo,
-                                @Nullable Predicate<String> nodePrintCondition) {
+                                @Nullable Predicate<? super String> nodePrintCondition) {
     Object pathComponent = path.getLastPathComponent();
     Object userObject = TreeUtil.getUserObject(pathComponent);
     String nodeText = toString(userObject, printInfo);
@@ -971,9 +971,9 @@ public class PlatformTestUtil {
   }
 
 
-  public static <T> void assertComparisonContractNotViolated(@NotNull List<T> values,
-                                                             @NotNull Comparator<T> comparator,
-                                                             @NotNull Equality<T> equality) {
+  public static <T> void assertComparisonContractNotViolated(@NotNull List<? extends T> values,
+                                                             @NotNull Comparator<? super T> comparator,
+                                                             @NotNull Equality<? super T> equality) {
     for (int i1 = 0; i1 < values.size(); i1++) {
       for (int i2 = i1; i2 < values.size(); i2++) {
         T value1 = values.get(i1);

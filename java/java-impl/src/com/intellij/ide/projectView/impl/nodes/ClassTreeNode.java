@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -71,7 +72,7 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass>{
   }
 
   @Override
-  public void updateImpl(PresentationData data) {
+  public void updateImpl(@NotNull PresentationData data) {
     final PsiClass aClass = getValue();
     if (aClass != null) {
       data.setPresentableText(aClass.getName());

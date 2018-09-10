@@ -45,8 +45,8 @@ public interface FoldRegion extends RangeMarker {
   /**
    * If inner highlighters are muted for a collapsed fold region, there will be no visual indication
    * that region contains certain highlighters inside. By default such indication is added.
-   * <p>
-   * See also {@code isVisibleIfFolded()} method in {@code com.intellij.openapi.editor.ex.RangeHighlighterEx} class.
+   *
+   * @see com.intellij.openapi.editor.ex.RangeHighlighterEx#isVisibleIfFolded()
    */
   default void setInnerHighlightersMuted(boolean value) {}
 

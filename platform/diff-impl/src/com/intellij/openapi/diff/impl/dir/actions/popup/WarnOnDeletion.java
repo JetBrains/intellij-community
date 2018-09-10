@@ -29,12 +29,12 @@ public class WarnOnDeletion extends ToggleAction implements DumbAware {
   private static final String PROPERTY_NAME = "dir.diff.do.not.show.warnings.when.deleting";
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return isWarnWhenDeleteItems();
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     setWarnWhenDeleteItems(state);
   }
 

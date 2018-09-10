@@ -201,7 +201,7 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
         MessageBusConnection busConnection = project.getMessageBus().connect();
         busConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
           @Override
-          public void projectOpened(Project project) {
+          public void projectOpened(@NotNull Project project) {
             ProjectInspectionProfileManager.getInstance(project).forceLoadSchemes();
           }
         });

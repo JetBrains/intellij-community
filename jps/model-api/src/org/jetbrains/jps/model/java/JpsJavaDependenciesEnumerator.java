@@ -92,7 +92,7 @@ public interface JpsJavaDependenciesEnumerator extends JpsDependenciesEnumerator
 
   @NotNull
   @Override
-  JpsJavaDependenciesEnumerator satisfying(@NotNull Condition<JpsDependencyElement> condition);
+  JpsJavaDependenciesEnumerator satisfying(@NotNull Condition<? super JpsDependencyElement> condition);
 
   /**
    * Process only dependencies which should be included in the classpath specified by {@code classpathKind} parameter

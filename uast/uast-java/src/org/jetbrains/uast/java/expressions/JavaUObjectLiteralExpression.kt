@@ -18,12 +18,13 @@ package org.jetbrains.uast.java
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiNewExpression
 import com.intellij.psi.PsiType
+import com.intellij.psi.ResolveResult
 import org.jetbrains.uast.*
 
 class JavaUObjectLiteralExpression(
   override val psi: PsiNewExpression,
   givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), UObjectLiteralExpression, UCallExpressionEx {
+) : JavaAbstractUExpression(givenParent), UObjectLiteralExpression, UCallExpressionExMultiResolve, UMultiResolvable {
   override val declaration: UClass by lz { JavaUClass.create(psi.anonymousClass!!, this) }
 
   override val classReference: UReferenceExpression? by lz {
@@ -39,7 +40,7 @@ class JavaUObjectLiteralExpression(
     psi.argumentList?.expressions?.map { JavaConverter.convertOrEmpty(it, this) } ?: emptyList()
   }
 
-  override fun getArgumentForParameter(i: Int): UExpression? = valueArguments.getOrNull(i)
+  override fun getArgumentForParameter(i: Int, multiResolve: Boolean, incompleteCode: Boolean): UExpression? = valueArguments.getOrNull(i)
 
   override val typeArgumentCount: Int by lz { psi.classReference?.typeParameters?.size ?: 0 }
 
@@ -47,4 +48,7 @@ class JavaUObjectLiteralExpression(
     get() = psi.classReference?.typeParameters?.toList() ?: emptyList()
 
   override fun resolve(): PsiMethod? = psi.resolveMethod()
+
+  override fun multiResolve(incompleteCode: Boolean): Iterable<ResolveResult> =
+    psi.classReference?.multiResolve(incompleteCode)?.asIterable() ?: emptyList()
 }

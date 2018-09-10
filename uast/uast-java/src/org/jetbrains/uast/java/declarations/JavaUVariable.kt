@@ -17,6 +17,7 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.*
+import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.uast.*
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
 
@@ -107,7 +108,7 @@ open class JavaULocalVariable(
 open class JavaUEnumConstant(
   psi: PsiEnumConstant,
   givenParent: UElement?
-) : AbstractJavaUVariable(givenParent), UEnumConstantEx, UCallExpressionEx, PsiEnumConstant by psi {
+) : AbstractJavaUVariable(givenParent), UEnumConstantEx, UCallExpressionExMultiResolve, PsiEnumConstant by psi, UMultiResolvable {
   override val initializingClass: UClass? by lz { getLanguagePlugin().convertOpt<UClass>(psi.initializingClass, this) }
 
   override val psi: PsiEnumConstant
@@ -138,12 +139,15 @@ open class JavaUEnumConstant(
     } ?: emptyList()
   }
 
-  override fun getArgumentForParameter(i: Int): UExpression? = valueArguments.getOrNull(i)
+  override fun getArgumentForParameter(i: Int, multiResolve: Boolean, incompleteCode: Boolean): UExpression? = valueArguments.getOrNull(i)
 
   override val returnType: PsiType?
     get() = psi.type
 
   override fun resolve(): PsiMethod? = psi.resolveMethod()
+
+  override fun multiResolve(incompleteCode: Boolean): Iterable<ResolveResult> =
+    listOfNotNull(psi.resolveMethodGenerics())
 
   override val methodName: String?
     get() = null
@@ -151,10 +155,14 @@ open class JavaUEnumConstant(
   private class JavaEnumConstantClassReference(
     override val psi: PsiEnumConstant,
     givenParent: UElement?
-  ) : JavaAbstractUExpression(givenParent), USimpleNameReferenceExpression {
+  ) : JavaAbstractUExpression(givenParent), USimpleNameReferenceExpression, UMultiResolvable {
     override fun resolve() = psi.containingClass
+    override fun multiResolve(incompleteCode: Boolean): Iterable<ResolveResult> =
+      listOfNotNull(resolve()?.let { PsiTypesUtil.getClassType(it).resolveGenerics() })
+
     override val resolvedName: String?
       get() = psi.containingClass?.name
+
     override val identifier: String
       get() = psi.containingClass?.name ?: "<error>"
   }

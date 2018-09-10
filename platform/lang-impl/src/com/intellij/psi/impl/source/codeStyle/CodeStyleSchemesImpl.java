@@ -27,7 +27,7 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
       @Override
       public CodeStyleSchemeImpl createScheme(@NotNull SchemeDataHolder<? super CodeStyleSchemeImpl> dataHolder,
                                               @NotNull String name,
-                                              @NotNull Function<String, String> attributeProvider,
+                                              @NotNull Function<? super String, String> attributeProvider,
                                               boolean isBundled) {
         return new CodeStyleSchemeImpl(attributeProvider.apply("name"), attributeProvider.apply("parent"), dataHolder);
       }

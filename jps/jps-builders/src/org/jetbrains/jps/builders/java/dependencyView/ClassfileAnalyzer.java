@@ -224,7 +224,7 @@ class ClassfileAnalyzer {
     }
 
     private class ModuleCrawler extends ModuleVisitor {
-      public ModuleCrawler() {
+      ModuleCrawler() {
         super(ASM_API_VERSION);
       }
 
@@ -334,7 +334,7 @@ class ClassfileAnalyzer {
     private final Set<ModuleRequiresRepr> myModuleRequires = new THashSet<>();
     private final Set<ModulePackageRepr> myModuleExports = new THashSet<>();
 
-    public ClassCrawler(final int fn) {
+    ClassCrawler(final int fn) {
       super(ASM_API_VERSION);
       myFileName = fn;
     }
@@ -753,7 +753,7 @@ class ClassfileAnalyzer {
     }
 
     private class BaseSignatureVisitor extends SignatureVisitor {
-      public BaseSignatureVisitor() {
+      BaseSignatureVisitor() {
         super(ASM_API_VERSION);
       }
 

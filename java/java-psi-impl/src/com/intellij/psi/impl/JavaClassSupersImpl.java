@@ -147,7 +147,7 @@ public class JavaClassSupersImpl extends JavaClassSupers {
   private static PsiSubstitutor processTypeParameter(PsiTypeParameter parameter,
                                                      GlobalSearchScope scope,
                                                      PsiClass superClass,
-                                                     Set<PsiTypeParameter> visited,
+                                                     Set<? super PsiTypeParameter> visited,
                                                      PsiSubstitutor derivedSubstitutor) {
     if (parameter.getManager().areElementsEquivalent(parameter, superClass)) return PsiSubstitutor.EMPTY;
     if (!visited.add(parameter)) return null;

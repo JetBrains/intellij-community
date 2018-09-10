@@ -269,7 +269,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
     @NotNull private final Map<String, MqPatchDetails> myPatchesWithDetails = ContainerUtil.newHashMap();
     @NotNull private final List<String> myPatches;
 
-    public MyPatchModel(@NotNull List<String> names) {
+    MyPatchModel(@NotNull List<String> names) {
       myPatches = ContainerUtil.newArrayList(names);
       readMqPatchesDetails();
     }
@@ -356,7 +356,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
   }
 
   private class MyPatchTable extends JBTable {
-    public MyPatchTable(MyPatchModel model) {
+    MyPatchTable(MyPatchModel model) {
       super(model);
     }
 

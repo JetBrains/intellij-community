@@ -345,7 +345,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myScrollPane = new MyScrollPane(); // create UI after scheme initialization
     myIsViewer = viewer;
     myKind = kind;
-    mySettings = new SettingsImpl(this, project, kind);
+    mySettings = new SettingsImpl(this, kind);
     if (!mySettings.isUseSoftWraps() && shouldSoftWrapsBeForced()) {
       mySettings.setUseSoftWrapsQuiet();
       putUserData(FORCED_SOFT_WRAPS, Boolean.TRUE);
@@ -699,7 +699,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myLineExtensionPainters.add(lineExtensionPainter);
   }
 
-  public boolean processLineExtensions(int line, Processor<LineExtensionInfo> processor) {
+  public boolean processLineExtensions(int line, Processor<? super LineExtensionInfo> processor) {
     for (IntFunction<Collection<LineExtensionInfo>> painter : myLineExtensionPainters) {
       for (LineExtensionInfo extension : painter.apply(line)) {
         if (!processor.process(extension)) {

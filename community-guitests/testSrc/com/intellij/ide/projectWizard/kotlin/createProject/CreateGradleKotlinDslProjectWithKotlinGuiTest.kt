@@ -4,6 +4,7 @@ package com.intellij.ide.projectWizard.kotlin.createProject
 import com.intellij.ide.projectWizard.kotlin.model.*
 import com.intellij.testGuiFramework.impl.gradleReimport
 import com.intellij.testGuiFramework.impl.waitAMoment
+import com.intellij.testGuiFramework.impl.waitForGradleReimport
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel
 import com.intellij.testGuiFramework.util.scenarios.projectStructureDialogScenarios
 import org.junit.Test
@@ -35,7 +36,6 @@ class CreateGradleKotlinDslProjectWithKotlinGuiTest : KotlinGuiTestCase() {
      project: ProjectProperties,
      expectedFacet: FacetStructure) {
     val groupName = "group_gradle"
-    val extraTimeOut = 4000L
     createGradleProject(
       projectPath = projectFolder,
       gradleOptions = NewProjectDialogModel.GradleProjectOptions(
@@ -45,15 +45,17 @@ class CreateGradleKotlinDslProjectWithKotlinGuiTest : KotlinGuiTestCase() {
         framework = project.frameworkName
       )
     )
-    waitAMoment(extraTimeOut)
-    waitAMoment(extraTimeOut)
+    waitAMoment()
+    waitForGradleReimport(projectName, waitForProject = false)
     editSettingsGradle()
     editBuildGradle(
       kotlinVersion = kotlinVersion,
       isKotlinDslUsed = true
     )
+     waitAMoment()
     gradleReimport()
-    waitAMoment(extraTimeOut)
+     waitForGradleReimport(projectName, waitForProject = true)
+     waitAMoment()
 
      projectStructureDialogScenarios.checkGradleExplicitModuleGroups(
        project, kotlinVersion, projectName, expectedFacet

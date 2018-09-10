@@ -155,7 +155,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     return findActionWithText(getAvailableActions(), text);
   }
 
-  public static IntentionAction findActionWithText(@NotNull List<IntentionAction> actions, @NotNull String text) {
+  public static IntentionAction findActionWithText(@NotNull List<? extends IntentionAction> actions, @NotNull String text) {
     for (IntentionAction action : actions) {
       if (text.equals(action.getText())) {
         return action;

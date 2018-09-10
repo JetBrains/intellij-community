@@ -631,7 +631,7 @@ public class AttachToProcessActionTest extends PlatformTestCase {
     @Nullable String myName;
     @Nullable Integer myOrder;
 
-    public TestAttachGroup(@Nullable String name, @Nullable Integer order) {
+    TestAttachGroup(@Nullable String name, @Nullable Integer order) {
       myName = name;
       myOrder = order;
     }
@@ -653,7 +653,7 @@ public class AttachToProcessActionTest extends PlatformTestCase {
     @NotNull private final XLocalAttachGroup myGroup;
     @NotNull private final List<XLocalAttachDebugger> myDebuggers;
 
-    public TestDebuggerProvider(@Nullable Integer filterPID,
+    TestDebuggerProvider(@Nullable Integer filterPID,
                                 @NotNull XLocalAttachGroup group,
                                 @NotNull List<XLocalAttachDebugger> debuggers) {
       myFilterPID = filterPID;
@@ -661,15 +661,15 @@ public class AttachToProcessActionTest extends PlatformTestCase {
       myDebuggers = debuggers;
     }
 
-    public TestDebuggerProvider(@Nullable Integer filterPID, @NotNull XLocalAttachGroup group, String... names) {
+    TestDebuggerProvider(@Nullable Integer filterPID, @NotNull XLocalAttachGroup group, String... names) {
       this(filterPID, group, createDebuggers(names));
     }
 
-    public TestDebuggerProvider(@NotNull XLocalAttachGroup group, String... names) {
+    TestDebuggerProvider(@NotNull XLocalAttachGroup group, String... names) {
       this(null, group, names);
     }
 
-    public TestDebuggerProvider(String... names) {
+    TestDebuggerProvider(String... names) {
       this(XDefaultLocalAttachGroup.INSTANCE, names);
     }
 

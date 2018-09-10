@@ -51,6 +51,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Collections;
 
+import static com.intellij.diff.DiffRequestFactoryImpl.DIFF_TITLE_RENAME_SEPARATOR;
 import static com.intellij.diff.DiffRequestFactoryImpl.getTitle;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
@@ -82,7 +83,7 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
                           DiffContent leftDiffContent = createDiffContent(root, leftPath, leftHash);
                           DiffContent rightDiffContent = createDiffContent(root, rightPath, rightHash);
 
-                          return new SimpleDiffRequest(getTitle(leftPath, rightPath, " -> "),
+                          return new SimpleDiffRequest(getTitle(leftPath, rightPath, DIFF_TITLE_RENAME_SEPARATOR),
                                                        leftDiffContent, rightDiffContent,
                                                        leftHash.asString(), rightHash.asString());
                         }
@@ -108,7 +109,7 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
                           LOG.assertTrue(file != null);
                           DiffContent rightDiffContent = myDiffContentFactory.create(myProject, file);
 
-                          return new SimpleDiffRequest(getTitle(revisionPath, localPath, " -> "),
+                          return new SimpleDiffRequest(getTitle(revisionPath, localPath, DIFF_TITLE_RENAME_SEPARATOR),
                                                        leftDiffContent, rightDiffContent,
                                                        revisionHash.asString(), "(Local)");
                         }
@@ -129,7 +130,7 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
                                            " and " +
                                            (rightRevision == null ? "current revision" : rightRevision.asString()) +
                                            " in " +
-                                           getTitle(directoryPath, directoryPath, " -> ");
+                                           getTitle(directoryPath, directoryPath, DIFF_TITLE_RENAME_SEPARATOR);
                       VcsDiffUtil.showChangesDialog(myProject, dialogTitle, ContainerUtil.newArrayList(diff));
                     }, "Calculating Diff for " + directoryPath.getName());
   }

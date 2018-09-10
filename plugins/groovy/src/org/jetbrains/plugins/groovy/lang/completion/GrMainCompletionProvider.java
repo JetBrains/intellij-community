@@ -259,7 +259,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
 
   private static Runnable addStaticMembers(CompletionParameters parameters,
                                        final PrefixMatcher matcher,
-                                       final Map<PsiModifierListOwner, LookupElement> staticMembers, final Consumer<LookupElement> consumer) {
+                                       final Map<PsiModifierListOwner, LookupElement> staticMembers, final Consumer<? super LookupElement> consumer) {
     final StaticMemberProcessor processor = completeStaticMembers(parameters);
     processor.processMembersOfRegisteredClasses(matcher, (member, psiClass) -> {
       if (member instanceof GrAccessorMethod) {

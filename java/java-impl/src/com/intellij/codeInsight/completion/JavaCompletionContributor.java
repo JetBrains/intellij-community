@@ -312,7 +312,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     return false;
   }
 
-  private static void suggestSmartCast(CompletionParameters parameters, JavaCompletionSession session, boolean quick, Consumer<LookupElement> result) {
+  private static void suggestSmartCast(CompletionParameters parameters, JavaCompletionSession session, boolean quick, Consumer<? super LookupElement> result) {
     if (SmartCastProvider.shouldSuggestCast(parameters)) {
       session.flushBatchItems();
       SmartCastProvider.addCastVariants(parameters, session.getMatcher(), element -> {
@@ -944,7 +944,7 @@ public class JavaCompletionContributor extends CompletionContributor {
   }
 
   static class IndentingDecorator extends LookupElementDecorator<LookupElement> {
-    public IndentingDecorator(LookupElement delegate) {
+    IndentingDecorator(LookupElement delegate) {
       super(delegate);
     }
 
@@ -962,7 +962,7 @@ public class JavaCompletionContributor extends CompletionContributor {
   private static class SearchScopeFilter implements ElementFilter {
     private final GlobalSearchScope myScope;
 
-    public SearchScopeFilter(GlobalSearchScope scope) {
+    SearchScopeFilter(GlobalSearchScope scope) {
       myScope = scope;
     }
 

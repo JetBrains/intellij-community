@@ -4,7 +4,6 @@ package com.intellij.ide.util.projectWizard;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperPeer;
@@ -21,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.KeyEvent;
 
 /**
  * @author Dennis.Ushakov
@@ -56,8 +54,6 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
 
     Pair<JPanel, JBList<AnAction>> pair = FlatWelcomeFrame.createActionGroupPanel(root, null, getDisposable());
     JPanel component = pair.first;
-    DumbAwareAction.create(e -> close(CANCEL_EXIT_CODE))
-      .registerCustomShortcutSet(KeyEvent.VK_ESCAPE, 0, component);
     myPair = pair;
     UiNotifyConnector.doWhenFirstShown(myPair.second, () -> ScrollingUtil.ensureSelectionExists(myPair.second));
 

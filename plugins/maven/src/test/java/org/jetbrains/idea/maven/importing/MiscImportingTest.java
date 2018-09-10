@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.testFramework.PlatformTestUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenId;
@@ -51,12 +52,12 @@ public class MiscImportingTest extends MavenImportingTestCase {
     super.setUp();
     myProject.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void beforeRootsChange(ModuleRootEvent event) {
+      public void beforeRootsChange(@NotNull ModuleRootEvent event) {
         beforeRootsChangedCount++;
       }
 
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         rootsChangedCount++;
       }
     });
@@ -420,7 +421,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
   private static class NameSettingMavenImporter extends MavenImporter {
     private final String myName;
 
-    public NameSettingMavenImporter(String name) {
+    NameSettingMavenImporter(String name) {
       super("gid", "id");
       myName = name;
     }

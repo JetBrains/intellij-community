@@ -36,7 +36,7 @@ public class ExcludedFiles {
   }
 
 
-  public void setDescriptors(@NotNull List<FileSetDescriptor> descriptors) {
+  public void setDescriptors(@NotNull List<? extends FileSetDescriptor> descriptors) {
     myDescriptors.clear();
     myDescriptors.addAll(descriptors);
   }

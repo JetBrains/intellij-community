@@ -561,7 +561,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     private final RunContentDescriptor myContentDescriptor;
     private final ExecutionEnvironment myEnvironment;
 
-    public MyTaskRerunAction(BuildProgressListener progressListener,
+    MyTaskRerunAction(BuildProgressListener progressListener,
                              ExecutionEnvironment environment,
                              RunContentDescriptor contentDescriptor) {
       myProgressListener = progressListener;

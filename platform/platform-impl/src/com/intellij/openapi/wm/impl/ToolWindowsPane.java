@@ -31,8 +31,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.util.ui.UIUtil.useSafely;
 
@@ -766,7 +766,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
           @Override
           public String toString() {
-            return "["+String.valueOf(getFirstComponent()) + "|" + String.valueOf(getSecondComponent())+"]";
+            return "[" + getFirstComponent() + "|" + getSecondComponent() + "]";
           }
         }
         Splitter splitter = new MySplitter();
@@ -1200,7 +1200,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   private static class ImageRef extends SoftReference<BufferedImage> {
     private @Nullable BufferedImage myStrongRef;
 
-    public ImageRef(@NotNull BufferedImage image) {
+    ImageRef(@NotNull BufferedImage image) {
       super(image);
       myStrongRef = image;
     }
@@ -1217,7 +1217,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   private static class ImageCache extends ScaleContext.Cache<ImageRef> {
-    public ImageCache(@NotNull Function<ScaleContext, ImageRef> imageProvider) {
+    ImageCache(@NotNull Function<ScaleContext, ImageRef> imageProvider) {
       super(imageProvider);
     }
 

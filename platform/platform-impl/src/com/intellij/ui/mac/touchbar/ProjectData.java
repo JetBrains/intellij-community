@@ -52,13 +52,13 @@ class ProjectData {
       @Override
       public void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler) {
         // System.out.println("processStarted: " + executorId);
-        if (executorId.equals(ToolWindowId.DEBUG))
+        if (ToolWindowId.DEBUG.equals(env.getExecutor().getToolWindowId()))
           myActiveDebugSessions.incrementAndGet();
       }
       @Override
       public void processTerminated(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler, int exitCode) {
         // System.out.println("processTerminated: " + executorId);
-        if (executorId.equals(ToolWindowId.DEBUG)) {
+        if (ToolWindowId.DEBUG.equals(env.getExecutor().getToolWindowId())) {
           final int val = myActiveDebugSessions.decrementAndGet();
           if (val < 0) {
             LOG.error("received 'processTerminated' when no process wasn't started");
@@ -71,8 +71,6 @@ class ProjectData {
     //
     // Listen ToolWindowManager
     //
-    final ToolWindowManagerEx twm = ToolWindowManagerEx.getInstanceEx(myProject);
-
     myProject.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
       @Override
       public void stateChanged() {
@@ -343,7 +341,7 @@ class ProjectData {
     }
 
     @Override
-    public void contentAdded(ContentManagerEvent event) {
+    public void contentAdded(@NotNull ContentManagerEvent event) {
       ApplicationManager.getApplication().assertIsDispatchThread();
 
       final Content content = event.getContent();
@@ -377,12 +375,12 @@ class ProjectData {
     }
 
     @Override
-    public void contentRemoved(ContentManagerEvent event) { _removeContent(event.getContent()); }
+    public void contentRemoved(@NotNull ContentManagerEvent event) { _removeContent(event.getContent()); }
 
     @Override
-    public void contentRemoveQuery(ContentManagerEvent event) {}
+    public void contentRemoveQuery(@NotNull ContentManagerEvent event) {}
     @Override
-    public void selectionChanged(ContentManagerEvent event) {}
+    public void selectionChanged(@NotNull ContentManagerEvent event) {}
 
     private void _registerContent(@NotNull Content content, @NotNull ActionGroup optActions) {
       ApplicationManager.getApplication().assertIsDispatchThread();

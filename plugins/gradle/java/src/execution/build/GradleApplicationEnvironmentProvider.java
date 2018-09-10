@@ -36,7 +36,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.task.ExecuteRunConfigurationTask;
-import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,7 +99,7 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
 
     ExternalSystemTaskExecutionSettings taskSettings = new ExternalSystemTaskExecutionSettings();
     taskSettings.setPassParentEnvs(params.isPassParentEnvs());
-    taskSettings.setEnv(ContainerUtil.newHashMap(params.getEnv()));
+    taskSettings.setEnv(params.getEnv().isEmpty() ? Collections.emptyMap() : new THashMap<>(params.getEnv()));
     taskSettings.setExternalSystemIdString(GradleConstants.SYSTEM_ID.getId());
     String projectPath = GradleRunnerUtil.resolveProjectPath(module);
     taskSettings.setExternalProjectPath(projectPath);

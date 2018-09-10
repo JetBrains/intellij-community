@@ -202,7 +202,6 @@ public class DateFormatUtil {
     return buf.toString().trim();
   }
 
-  @SuppressWarnings("Duplicates")
   private static String composeDurationMessage(final Period period, final int n) {
     switch (period) {
       case DAY:
@@ -272,7 +271,6 @@ public class DateFormatUtil {
 
 
   //<editor-fold desc="Helpers.">
-  @SuppressWarnings("Duplicates")
   private static String someTimeAgoMessage(final Period period, final int n) {
     switch (period) {
       case DAY:
@@ -290,7 +288,6 @@ public class DateFormatUtil {
     }
   }
 
-  @SuppressWarnings("Duplicates")
   private static String composeInSomeTimeMessage(final Period period, final int n) {
     switch (period) {
       case DAY:

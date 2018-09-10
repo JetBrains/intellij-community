@@ -135,7 +135,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
     });
     connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void projectClosed(final Project project) {
+      public void projectClosed(@NotNull final Project project) {
         // perform cleanup
         synchronized (myInProgress) {
           for (Iterator<Trinity<Project, String, String>> it = myInProgress.iterator(); it.hasNext(); ) {
@@ -286,7 +286,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
         return contentDescriptor != null && executionManager.getExecutors(contentDescriptor).contains(myExecutor);
       });
 
-      if (!runningDescriptors.isEmpty() && DefaultRunExecutor.EXECUTOR_ID.equals(myExecutor.getId()) && selectedConfiguration.isSingleton()) {
+      if (!configuration.isAllowRunningInParallel() && !runningDescriptors.isEmpty() && DefaultRunExecutor.EXECUTOR_ID.equals(myExecutor.getId())) {
         return AllIcons.Actions.Restart;
       }
       if (runningDescriptors.isEmpty()) {

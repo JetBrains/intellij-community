@@ -37,10 +37,10 @@ import java.util.function.Consumer;
 public class FlattenModulesToggleAction extends ToggleAction implements DumbAware {
   private final BooleanSupplier myIsEnabled;
   private final BooleanSupplier myIsSelected;
-  private final Consumer<Boolean> mySetSelected;
+  private final Consumer<? super Boolean> mySetSelected;
   private final Project myProject;
 
-  public FlattenModulesToggleAction(Project project, BooleanSupplier isEnabled, BooleanSupplier isSelected, Consumer<Boolean> setSelected) {
+  public FlattenModulesToggleAction(Project project, BooleanSupplier isEnabled, BooleanSupplier isSelected, Consumer<? super Boolean> setSelected) {
     super(ProjectBundle.message("project.roots.flatten.modules.action.text"), ProjectBundle.message("project.roots.flatten.modules.action.description"), AllIcons.ObjectBrowser.FlattenModules);
     myIsEnabled = isEnabled;
     myIsSelected = isSelected;
@@ -62,12 +62,12 @@ public class FlattenModulesToggleAction extends ToggleAction implements DumbAwar
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return myIsSelected.getAsBoolean();
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     mySetSelected.accept(state);
   }
 }

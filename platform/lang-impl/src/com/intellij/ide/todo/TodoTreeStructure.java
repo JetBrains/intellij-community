@@ -122,6 +122,9 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
 
   boolean isAutoExpandNode(NodeDescriptor descriptor){
     Object element=descriptor.getElement();
+    if (element instanceof AbstractTreeNode) {
+      element = ((AbstractTreeNode)element).getValue();
+    }
     return element == getRootElement() || element == mySummaryElement;
   }
 

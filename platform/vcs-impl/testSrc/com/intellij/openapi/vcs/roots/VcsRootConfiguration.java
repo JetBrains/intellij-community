@@ -28,7 +28,7 @@ class VcsRootConfiguration {
   @NotNull private Collection<String> myExtraErrors;
 
 
-  public VcsRootConfiguration() {
+  VcsRootConfiguration() {
     myVcsRoots = Collections.emptyList();
     myMappings = Collections.emptyList();
     myContentRoots = Collections.emptyList();

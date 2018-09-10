@@ -49,7 +49,7 @@ class OptimizedFileManager extends DefaultFileManager {
   private static final boolean ourUseContentCache = Boolean.valueOf(System.getProperty("javac.use.content.cache", "false"));
   private final Map<InputFileObject, SoftReference<CharBuffer>> myContentCache = ourUseContentCache? new HashMap<InputFileObject, SoftReference<CharBuffer>>() : Collections.<InputFileObject, SoftReference<CharBuffer>>emptyMap();
 
-  public OptimizedFileManager() throws Throwable {
+  OptimizedFileManager() throws Throwable {
     super(new Context(), true, null);
     final Field archivesField = DefaultFileManager.class.getDeclaredField("archives");
     archivesField.setAccessible(true);
@@ -296,7 +296,7 @@ class OptimizedFileManager extends DefaultFileManager {
      */
     final File f;
 
-    public InputFileObject(File f) {
+    InputFileObject(File f) {
       this.f = f;
     }
 

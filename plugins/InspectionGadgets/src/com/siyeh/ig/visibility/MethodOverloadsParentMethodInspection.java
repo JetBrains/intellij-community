@@ -99,7 +99,7 @@ public class MethodOverloadsParentMethodInspection extends BaseInspection {
     private boolean processSupers(final PsiMethod method,
                                   final PsiClass psiClass,
                                   final PsiClass initialClass,
-                                  final Set<PsiClass> visitedClasses) {
+                                  final Set<? super PsiClass> visitedClasses) {
       if (!visitedClasses.add(psiClass)) {
         return false;
       }

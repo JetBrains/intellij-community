@@ -92,6 +92,9 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
       for (final CodeStyleSettingsProvider provider : codeStyleSettingsProviders) {
         addCustomSettings(provider.createCustomSettings(this));
       }
+      for (CodeStyleSettingsProvider provider : LanguageCodeStyleSettingsProvider.getSettingsPagesProviders()) {
+        addCustomSettings(provider.createCustomSettings(this));
+      }
     }
   }
 
@@ -987,7 +990,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
    */
   @NotNull
   public IndentOptions getIndentOptionsByFile(@Nullable PsiFile file, @Nullable TextRange formatRange, boolean ignoreDocOptions,
-                                              @Nullable Processor<FileIndentOptionsProvider> providerProcessor) {
+                                              @Nullable Processor<? super FileIndentOptionsProvider> providerProcessor) {
     if (file != null && file.isValid()) {
       boolean isFullReformat = isFileFullyCoveredByRange(file, formatRange);
       if (!ignoreDocOptions && !isFullReformat) {

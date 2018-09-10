@@ -181,7 +181,6 @@ public class PyCustomMember extends UserDataHolderBase {
     if (myTypeName != null) {
 
       final ParameterizedCachedValueProvider<PyClass, PsiElement> provider = new ParameterizedCachedValueProvider<PyClass, PsiElement>() {
-        @Nullable
         @Override
         public CachedValueProvider.Result<PyClass> compute(
           final PsiElement param) {
@@ -269,7 +268,7 @@ public class PyCustomMember extends UserDataHolderBase {
     private final PyClass myClass;
     private final PsiElement myContext;
 
-    public MyInstanceElement(PyClass clazz, PsiElement context, PsiElement resolveTarget) {
+    MyInstanceElement(PyClass clazz, PsiElement context, PsiElement resolveTarget) {
       super(resolveTarget != null ? resolveTarget.getNode() : clazz.getNode());
       myClass = clazz;
       myContext = context;

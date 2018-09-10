@@ -60,13 +60,13 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
     myOptionsPanel = optionsPanel;
     myOptionsPanel.addListener(new ColorDescriptionPanel.Listener() {
       @Override
-      public void onSettingsChanged(ActionEvent e) {
+      public void onSettingsChanged(@NotNull ActionEvent e) {
         myDispatcher.getMulticaster().settingsChanged();
         myOptions.stateChanged();
       }
 
       @Override
-      public void onHyperLinkClicked(HyperlinkEvent e) {
+      public void onHyperLinkClicked(@NotNull HyperlinkEvent e) {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           Settings settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(OptionsPanelImpl.this));
           String pageName = e.getDescription();
@@ -202,9 +202,9 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
     void addListener(@NotNull Listener listener);
 
     interface Listener extends EventListener {
-      void onSettingsChanged(ActionEvent e);
+      void onSettingsChanged(@NotNull ActionEvent e);
 
-      void onHyperLinkClicked(HyperlinkEvent e);
+      void onHyperLinkClicked(@NotNull HyperlinkEvent e);
     }
   }
 

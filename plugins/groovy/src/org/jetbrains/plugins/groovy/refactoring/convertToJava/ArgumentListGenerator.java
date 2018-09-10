@@ -44,7 +44,7 @@ class ArgumentListGenerator {
   private final ExpressionGenerator myExpressionGenerator;
 
 
-  public ArgumentListGenerator(StringBuilder builder, ExpressionContext context) {
+  ArgumentListGenerator(StringBuilder builder, ExpressionContext context) {
     myBuilder = builder;
     myExpressionGenerator = new ExpressionGenerator(builder, context);
   }

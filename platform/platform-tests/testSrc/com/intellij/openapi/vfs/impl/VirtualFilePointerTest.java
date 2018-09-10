@@ -47,9 +47,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
+import static com.intellij.testFramework.UsefulTestCase.*;
 
 /**
  * @author dsl
@@ -59,7 +57,8 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
 
   private final Disposable disposable = Disposer.newDisposable();
   private VirtualFilePointerManagerImpl myVirtualFilePointerManager;
-  private int numberOfPointersBefore, numberOfListenersBefore;
+  private int numberOfPointersBefore;
+  private int numberOfListenersBefore;
 
   @Before
   public void setUp() {
@@ -71,7 +70,8 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
   @After
   public void tearDown() {
     Disposer.dispose(disposable);
-    int nPointers = myVirtualFilePointerManager.numberOfPointers(), nListeners = myVirtualFilePointerManager.numberOfListeners();
+    int nPointers = myVirtualFilePointerManager.numberOfPointers();
+    int nListeners = myVirtualFilePointerManager.numberOfListeners();
     myVirtualFilePointerManager = null;
     assertEquals(numberOfPointersBefore, nPointers);
     assertEquals(numberOfListenersBefore, nListeners);
@@ -124,7 +124,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     getVirtualFile(myTempDir.getRoot()).refresh(false, true);
     assertTrue(fileToCreatePointer.isValid());
     assertEquals("[before:false, after:true]", fileToCreateListener.log.toString());
-    String expectedUrl = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, toSystemIndependentName(fileToCreate.getPath()));
+    String expectedUrl = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(fileToCreate.getPath()));
     assertEquals(expectedUrl.toUpperCase(Locale.US), fileToCreatePointer.getUrl().toUpperCase(Locale.US));
   }
 
@@ -135,8 +135,8 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     LightVirtualFile root = new LightVirtualFile("/");
     LightVirtualFile a = createLightFile(root, "a");
     LightVirtualFile b = createLightFile(root, "b");
-    assertThat(myVirtualFilePointerManager.getPointersUnder(a, "p1")).containsExactly(p1);
-    assertThat(myVirtualFilePointerManager.getPointersUnder(b, "p2")).containsExactly(p2);
+    assertSameElements(myVirtualFilePointerManager.getPointersUnder(a, "p1"), p1);
+    assertSameElements(myVirtualFilePointerManager.getPointersUnder(b, "p2"), p2);
   }
 
   @Test
@@ -147,8 +147,8 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     LightVirtualFile root = new LightVirtualFile("/");
     LightVirtualFile a = createLightFile(root, "a");
     LightVirtualFile b = createLightFile(root, "b");
-    assertThat(myVirtualFilePointerManager.getPointersUnder(a, "p1")).containsExactly(p1);
-    assertThat(myVirtualFilePointerManager.getPointersUnder(b, "p2")).containsExactly(p2);
+    assertSameElements(myVirtualFilePointerManager.getPointersUnder(a, "p1"), p1);
+    assertSameElements(myVirtualFilePointerManager.getPointersUnder(b, "p2"), p2);
   }
 
   private static LightVirtualFile createLightFile(LightVirtualFile parent, String name) {
@@ -283,12 +283,12 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
   public void testTwoPointersBecomeOneAfterFileRenamedUnderTheOtherName() throws IOException {
     File f1 = myTempDir.newFile("f1");
     VirtualFile vFile1 = getVirtualFile(f1);
-    String url1 = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, toSystemIndependentName(f1.getPath()));
+    String url1 = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(f1.getPath()));
     LoggingListener listener1 = new LoggingListener();
     VirtualFilePointer pointer1 = myVirtualFilePointerManager.create(url1, disposable, listener1);
     assertTrue(pointer1.isValid());
 
-    String url2 = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, toSystemIndependentName(f1.getParent()) + "/f2");
+    String url2 = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(f1.getParent()) + "/f2");
     LoggingListener listener2 = new LoggingListener();
     VirtualFilePointer pointer2 = myVirtualFilePointerManager.create(url2, disposable, listener2);
     assertFalse(pointer2.isValid());
@@ -311,8 +311,8 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     getVirtualFile(myTempDir.getRoot()).refresh(false, true);
     assertTrue(fileToCreatePointer.isValid());
     assertEquals("[before:false, after:true]", fileToCreateListener.log.toString());
-    String expectedUrl = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, toSystemIndependentName(fileToCreate.getPath()));
-    assertThat(expectedUrl).isEqualToIgnoringCase(fileToCreatePointer.getUrl());
+    String expectedUrl = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(fileToCreate.getPath()));
+    assertEquals(expectedUrl.toUpperCase(), fileToCreatePointer.getUrl().toUpperCase());
   }
 
   @Test
@@ -341,7 +341,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
 
     VirtualFilePointerListener listener = new LoggingListener();
     VirtualFilePointer jarParentPointer = createPointerByFile(jarParent, listener);
-    String jarUrl = VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, toSystemIndependentName(jar.getPath()) + JarFileSystem.JAR_SEPARATOR);
+    String jarUrl = VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(jar.getPath()) + JarFileSystem.JAR_SEPARATOR);
     VirtualFilePointer jarPointer = myVirtualFilePointerManager.create(jarUrl, disposable, listener);
     VirtualFilePointer[] pointersToWatch = {jarParentPointer, jarPointer};
     assertTrue(jarParentPointer.isValid());
@@ -353,7 +353,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     verifyPointersInCorrectState(pointersToWatch);
     assertFalse(jarParentPointer.isValid());
     assertFalse(jarPointer.isValid());
-    assertThat(vTemp.getChildren()).isEmpty();
+    assertEmpty(vTemp.getChildren());
 
     assertTrue(jarParent.mkdir());
     FileUtil.copy(originalJar, jar);
@@ -361,7 +361,8 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertTrue(jar.exists());
     assertTrue(jarParent.exists());
     assertTrue(jarParent.getParentFile().exists());
-    assertThat(jarParent.list()).containsExactly(jar.getName());
+    File child = assertOneElement(PlatformTestUtil.notNull(jarParent.listFiles()));
+    assertEquals(jar.getName(), child.getName());
     vTemp.refresh(false, true);
     verifyPointersInCorrectState(pointersToWatch);
     assertTrue(jarParentPointer.isValid());
@@ -385,7 +386,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     getVirtualFile(jar); // Make sure we receive events when jar changes
 
     VirtualFilePointerListener listener = new LoggingListener();
-    String jarUrl = VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, toSystemIndependentName(jar.getPath()) + JarFileSystem.JAR_SEPARATOR);
+    String jarUrl = VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(jar.getPath()) + JarFileSystem.JAR_SEPARATOR);
     VirtualFilePointer jarPointer = myVirtualFilePointerManager.create(jarUrl, disposable, listener);
     VirtualFilePointer[] pointersToWatch = {jarPointer};
     assertTrue(jar.delete());
@@ -456,7 +457,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertTrue(pointer.isValid());
     assertNotNull(pointer.getFile());
     assertTrue(pointer.getFile().isValid());
-    Collection<Job<Void>> reads = ContainerUtil.newConcurrentSet();
+    Collection<Job<?>> reads = ContainerUtil.newConcurrentSet();
     VirtualFileListener listener = new VirtualFileListener() {
       @Override
       public void fileCreated(@NotNull VirtualFileEvent event) {
@@ -495,7 +496,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     }
     finally {
       Disposer.dispose(disposable); // unregister listener early
-      for (Job<Void> read : reads) {
+      for (Job<?> read : reads) {
         while (!read.isDone()) {
           read.waitForCompletion(1000);
         }
@@ -503,9 +504,9 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     }
   }
 
-  private static void stressRead(VirtualFilePointer pointer, Collection<Job<Void>> reads) {
+  private static void stressRead(VirtualFilePointer pointer, Collection<? super Job<?>> reads) {
     for (int i = 0; i < 10; i++) {
-      AtomicReference<Job<Void>> reference = new AtomicReference<>();
+      AtomicReference<Job<?>> reference = new AtomicReference<>();
       reference.set(JobLauncher.getInstance().submitToJobThread(() -> ApplicationManager.getApplication().runReadAction(() -> {
         VirtualFile file = pointer.getFile();
         if (file != null && !file.isValid()) {
@@ -571,12 +572,12 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     VirtualFile mockVirtualFile = new MockVirtualFile("test_name", "test_text");
     Disposable disposable = Disposer.newDisposable();
     VirtualFilePointer pointer = myVirtualFilePointerManager.create(mockVirtualFile, disposable, null);
-    assertThat(pointer).isInstanceOf(IdentityVirtualFilePointer.class);
+    assertInstanceOf(pointer, IdentityVirtualFilePointer.class);
     assertTrue(pointer.isValid());
 
     VirtualFile virtualFileWithSameUrl = new MockVirtualFile("test_name", "test_text");
     VirtualFilePointer updatedPointer = myVirtualFilePointerManager.create(virtualFileWithSameUrl, disposable, null);
-    assertThat(updatedPointer).isInstanceOf(IdentityVirtualFilePointer.class);
+    assertInstanceOf(updatedPointer, IdentityVirtualFilePointer.class);
     assertTrue(pointer.isValid());
     assertEquals(1, myVirtualFilePointerManager.numberOfCachedUrlToIdentity());
 
@@ -616,7 +617,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
       };
 
       run.set(true);
-      List<Thread> threads = IntStream.range(0, nThreads).mapToObj(n -> new Thread(read, "reader" + n)).collect(Collectors.toList());
+      List<Thread> threads = IntStream.range(0, nThreads).mapToObj(n -> new Thread(read, "reader " + n)).collect(Collectors.toList());
       threads.forEach(Thread::start);
       ready.await();
 
@@ -726,13 +727,16 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
   }
 
   private VirtualFilePointer createPointerByFile(File file, VirtualFilePointerListener fileListener) {
-    String url = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, toSystemIndependentName(file.getPath()));
+    String url = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(file.getPath()));
     VirtualFile vFile = getVirtualFile(file);
     return vFile != null ? myVirtualFilePointerManager.create(vFile, disposable, fileListener)
                          : myVirtualFilePointerManager.create(url, disposable, fileListener);
   }
 
   private static void verifyPointersInCorrectState(VirtualFilePointer[] pointers) {
-    assertThat(pointers).allMatch(p -> p.getFile() == null || p.getFile().isValid());
+    for (VirtualFilePointer pointer : pointers) {
+      final VirtualFile file = pointer.getFile();
+      assertTrue(file == null || file.isValid());
+    }
   }
 }

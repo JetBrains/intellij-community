@@ -824,7 +824,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     private final SourcePosition mySourcePosition;
     @NotNull private final VirtualFile myFile;
 
-    public JavaXSourcePosition(@NotNull SourcePosition sourcePosition, @NotNull VirtualFile file) {
+    JavaXSourcePosition(@NotNull SourcePosition sourcePosition, @NotNull VirtualFile file) {
       mySourcePosition = sourcePosition;
       myFile = file;
     }

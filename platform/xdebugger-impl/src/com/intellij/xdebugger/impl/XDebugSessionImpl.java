@@ -96,6 +96,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private final @Nullable ExecutionEnvironment myEnvironment;
   private final AtomicBoolean myStopped = new AtomicBoolean();
   private boolean myPauseActionSupported;
+  private boolean myReadOnly = false;
   private final AtomicBoolean myShowTabOnSuspend;
   private final List<AnAction> myRestartActions = new SmartList<>();
   private final List<AnAction> myExtraStopActions = new SmartList<>();
@@ -167,6 +168,14 @@ public class XDebugSessionImpl implements XDebugSession {
   @Override
   public void setPauseActionSupported(final boolean isSupported) {
     myPauseActionSupported = isSupported;
+  }
+
+  public boolean isReadOnly() {
+    return myReadOnly;
+  }
+
+  public void setReadOnly(boolean readOnly) {
+    myReadOnly = readOnly;
   }
 
   @NotNull
@@ -1008,7 +1017,7 @@ public class XDebugSessionImpl implements XDebugSession {
 
   private class MyDependentBreakpointListener implements XDependentBreakpointListener {
     @Override
-    public void dependencySet(final XBreakpoint<?> slave, final XBreakpoint<?> master) {
+    public void dependencySet(@NotNull final XBreakpoint<?> slave, @NotNull final XBreakpoint<?> master) {
       boolean added = myInactiveSlaveBreakpoints.add(slave);
       if (added) {
         processAllHandlers(slave, false);

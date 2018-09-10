@@ -785,7 +785,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       }
     });
     for (DfaValue value : getFactory().getValues()) {
-      if(value instanceof DfaVariableValue && !((DfaVariableValue)value).isNegated()) {
+      if(value instanceof DfaVariableValue) {
         PsiModifierListOwner var = ((DfaVariableValue)value).getPsiVariable();
         if (var instanceof PsiLocalVariable && variables.contains(var)) {
           escapedVars.add((DfaVariableValue)value);
@@ -892,6 +892,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (body != null) {
       PsiStatement[] statements = body.getStatements();
       PsiSwitchLabelStatement defaultLabel = null;
+      ControlFlowOffset offset = null;
       for (PsiStatement statement : statements) {
         if (statement instanceof PsiSwitchLabelStatement) {
           PsiSwitchLabelStatement psiLabelStatement = (PsiSwitchLabelStatement)statement;
@@ -900,7 +901,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
           }
           else {
             try {
-              ControlFlowOffset offset = getStartOffset(statement);
+              offset = getStartOffset(statement);
               PsiExpression caseValue = psiLabelStatement.getCaseValue();
 
               if (enumValues != null && caseValue instanceof PsiReferenceExpression) {
@@ -908,11 +909,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                 enumValues.remove(((PsiReferenceExpression)caseValue).resolve());
               }
 
-              boolean alwaysTrue = enumValues != null && enumValues.isEmpty();
-              if (alwaysTrue) {
-                addInstruction(new PushInstruction(myFactory.getConstFactory().getTrue(), null));
-              }
-              else if (caseValue != null && expressionValue != null) {
+              if (caseValue != null && expressionValue != null) {
                 addInstruction(new PushInstruction(expressionValue, null));
                 caseValue.accept(this);
                 addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, PsiType.BOOLEAN));
@@ -930,10 +927,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         }
       }
 
-      if (enumValues == null || !enumValues.isEmpty()) {
-        ControlFlowOffset offset = defaultLabel != null ? getStartOffset(defaultLabel) : getEndOffset(body);
-        addInstruction(new GotoInstruction(offset));
-      }
+      if (offset == null || enumValues == null || !enumValues.isEmpty()) {
+        offset = defaultLabel != null ? getStartOffset(defaultLabel) : getEndOffset(body);
+      } // else default label goes to the last switch label making it always true
+      addInstruction(new GotoInstruction(offset));
 
       body.accept(this);
     }
@@ -1237,7 +1234,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiExpression[] initializers = expression.getInitializers();
     DfaExpressionFactory expressionFactory = myFactory.getExpressionFactory();
     if (arrayWriteTarget != null) {
-      PsiVariable arrayVariable = (PsiVariable)arrayWriteTarget.getPsiVariable();
+      PsiVariable arrayVariable = ObjectUtils.tryCast(arrayWriteTarget.getPsiVariable(), PsiVariable.class);
       if (arrayWriteTarget.isFlushableByCalls() ||
           arrayVariable == null ||
           VariableAccessUtils.variableIsUsed(arrayVariable, expression) ||

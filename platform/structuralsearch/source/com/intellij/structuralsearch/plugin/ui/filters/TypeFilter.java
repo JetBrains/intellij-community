@@ -68,23 +68,24 @@ public class TypeFilter extends FilterAction {
 
         layout.setHorizontalGroup(
           layout.createParallelGroup()
-                .addGroup(
-                  layout.createSequentialGroup()
-                        .addComponent(myTypeLabel)
-                        .addComponent(myTextField)
-                        .addComponent(myHelpLabel)
-                )
-                .addComponent(myHierarchyCheckBox)
+            .addGroup(
+              layout.createSequentialGroup()
+                .addComponent(myTypeLabel)
+                .addComponent(myTextField)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 1, 1)
+                .addComponent(myHelpLabel)
+            )
+            .addComponent(myHierarchyCheckBox)
         );
         layout.setVerticalGroup(
           layout.createSequentialGroup()
-                .addGroup(
-                  layout.createParallelGroup(GroupLayout.Alignment.CENTER)
-                        .addComponent(myTypeLabel)
-                        .addComponent(myTextField)
-                        .addComponent(myHelpLabel)
-                )
-                .addComponent(myHierarchyCheckBox)
+            .addGroup(
+              layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+                .addComponent(myTypeLabel)
+                .addComponent(myTextField)
+                .addComponent(myHelpLabel)
+            )
+            .addComponent(myHierarchyCheckBox)
         );
       }
 

@@ -51,7 +51,7 @@ public abstract class ToggleCompilerTasksAction extends MavenToggleAction {
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     final DataContext context = e.getDataContext();
     final MavenTasksManager tasksManager = getTasksManager(context);
     List<MavenCompilerTask> tasks = getTasks(context);

@@ -207,7 +207,7 @@ public class URLReference implements PsiReference, EmptyResolveMessageProvider {
     return XmlErrorMessages.message(myIncorrectResourceMapped ? "registered.resource.is.not.recognized":"uri.is.not.registered");
   }
 
-  public static void processWsdlSchemas(final XmlTag rootTag, Processor<XmlTag> processor) {
+  public static void processWsdlSchemas(final XmlTag rootTag, Processor<? super XmlTag> processor) {
     if ("definitions".equals(rootTag.getLocalName())) {
       final String nsPrefix = rootTag.getNamespacePrefix();
       final String types = nsPrefix.isEmpty() ? "types" : nsPrefix  + ":types";

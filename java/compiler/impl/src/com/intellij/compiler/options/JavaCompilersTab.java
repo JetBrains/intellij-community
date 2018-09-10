@@ -48,7 +48,7 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
          ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(project)).getDefaultCompiler());
   }
 
-  public JavaCompilersTab(final Project project, Collection<BackendCompiler> compilers, BackendCompiler defaultCompiler) {
+  public JavaCompilersTab(final Project project, Collection<? extends BackendCompiler> compilers, BackendCompiler defaultCompiler) {
     myProject = project;
     myDefaultCompiler = defaultCompiler;
     myCompilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);

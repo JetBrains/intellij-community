@@ -400,7 +400,7 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
   }
 
   @Nullable
-  static AllowedValues getAllowedValues(@NotNull PsiModifierListOwner element, @Nullable PsiType type, @Nullable Set<PsiClass> visited) {
+  static AllowedValues getAllowedValues(@NotNull PsiModifierListOwner element, @Nullable PsiType type, @Nullable Set<? super PsiClass> visited) {
     PsiManager manager = element.getManager();
     for (PsiAnnotation annotation : getAllAnnotations(element)) {
       if (type != null && MagicConstant.class.getName().equals(annotation.getQualifiedName())) {

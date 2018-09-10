@@ -212,7 +212,7 @@ public class CommonCodeStyleSettings {
   private static class SupportedFieldsDiffFilter extends DifferenceFilter<CommonCodeStyleSettings> {
     private final Set<String> mySupportedFieldNames;
 
-    public SupportedFieldsDiffFilter(final CommonCodeStyleSettings object,
+    SupportedFieldsDiffFilter(final CommonCodeStyleSettings object,
                                      Set<String> supportedFiledNames,
                                      final CommonCodeStyleSettings parentObject) {
       super(object, parentObject);

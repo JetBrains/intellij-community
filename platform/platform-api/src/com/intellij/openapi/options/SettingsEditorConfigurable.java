@@ -17,7 +17,7 @@ public abstract class SettingsEditorConfigurable<Settings> extends BaseConfigura
     mySettings = settings;
     myListener = new SettingsEditorListener<Settings>() {
       @Override
-      public void stateChanged(SettingsEditor<Settings> settingsEditor) {
+      public void stateChanged(@NotNull SettingsEditor<Settings> settingsEditor) {
         setModified(true);
       }
     };

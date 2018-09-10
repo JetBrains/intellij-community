@@ -46,7 +46,7 @@ public class FieldNamingConventionInspection extends AbstractNamingConventionIns
   }
 
   static class FieldNamingConventionBean extends NamingConventionBean {
-    public FieldNamingConventionBean(String regex, int minLength, int maxLength) {
+    FieldNamingConventionBean(String regex, int minLength, int maxLength) {
       super(regex, minLength, maxLength, HardcodedMethodConstants.SERIAL_VERSION_UID);
     }
   }

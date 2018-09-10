@@ -37,7 +37,7 @@ class Line {
   private final String myValue;
   private final TextAttributes myTextAttributes;
 
-  public Line(String value, TextAttributes textAttributes) {
+  Line(String value, TextAttributes textAttributes) {
     myValue = value.replaceAll("\r", "") + "\n";
     myTextAttributes = textAttributes;
   }

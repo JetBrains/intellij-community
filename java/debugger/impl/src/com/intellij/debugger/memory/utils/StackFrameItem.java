@@ -189,7 +189,7 @@ public class StackFrameItem {
     private final String myValue;
     private final VarType myVarType;
 
-    public VariableItem(String name, String type, String value, VarType varType) {
+    VariableItem(String name, String type, String value, VarType varType) {
       super(name);
       myType = type;
       myValue = value;

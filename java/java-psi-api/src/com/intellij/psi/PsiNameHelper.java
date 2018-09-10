@@ -275,7 +275,7 @@ public abstract class PsiNameHelper {
     return appendAnnotations(sb, Arrays.asList(annotations), canonical);
   }
 
-  public static boolean appendAnnotations(@NotNull StringBuilder sb, @NotNull List<PsiAnnotation> annotations, boolean canonical) {
+  public static boolean appendAnnotations(@NotNull StringBuilder sb, @NotNull List<? extends PsiAnnotation> annotations, boolean canonical) {
     boolean updated = false;
     for (PsiAnnotation annotation : annotations) {
       if (canonical) {

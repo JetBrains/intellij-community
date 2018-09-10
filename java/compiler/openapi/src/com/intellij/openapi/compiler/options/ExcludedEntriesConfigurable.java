@@ -125,7 +125,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable, NoScrol
     private JButton myRemoveButton;
     private JBTable myExcludedTable;
 
-    public ExcludedEntriesPanel() {
+    ExcludedEntriesPanel() {
       initPanel();
     }
 
@@ -363,7 +363,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable, NoScrol
   private static class BooleanRenderer extends JCheckBox implements TableCellRenderer {
     private final JPanel myPanel = new JPanel();
 
-    public BooleanRenderer() {
+    BooleanRenderer() {
       setHorizontalAlignment(CENTER);
     }
 
@@ -394,7 +394,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable, NoScrol
   }
 
   private class MyObjectRenderer extends DefaultTableCellRenderer {
-    public MyObjectRenderer() {
+    MyObjectRenderer() {
       setUI(new RightAlignedLabelUI());
     }
 

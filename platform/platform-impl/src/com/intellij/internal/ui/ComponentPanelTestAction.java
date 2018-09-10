@@ -1,15 +1,15 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.ui;
 
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.ComponentWithBrowseButton;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.panel.ComponentPanel;
 import com.intellij.openapi.ui.panel.ProgressPanel;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SideBorder;
@@ -29,7 +29,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -137,6 +139,22 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 1.0, 0, GridBagConstraints.LINE_START, GridBagConstraints.HORIZONTAL, JBUI.insets(5, 0), 0, 0);
 
       JTextField text1 = new JTextField();
+      new ComponentValidator(getDisposable()).withValidator(v -> {
+        String tt = text1.getText();
+        if (StringUtil.isNotEmpty(tt)) {
+          try {
+            Integer.parseInt(tt);
+            v.updateInfo(null);
+          }
+          catch (NumberFormatException nex) {
+            v.updateInfo(new ValidationInfo("Enter a number", text1).asWarning());
+          }
+        }
+        else {
+          v.updateInfo(null);
+        }
+      }).installOn(text1);
+
       Dimension d = text1.getPreferredSize();
       text1.setPreferredSize(new Dimension(JBUI.scale(100), d.height));
 
@@ -146,6 +164,13 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         moveCommentRight().createPanel(), gc);
 
       JTextField text2 = new JTextField();
+      new ComponentValidator(getDisposable()).withValidator(v -> {
+        String tt = text2.getText();
+        v.updateInfo(
+          StringUtil.isEmpty(tt) || tt.length() < 5 ? new ValidationInfo("Message is too short.<br/>Should contain at least 5 symbols.",
+                                                                         text2) : null);
+      }).andStartOnFocusLost().installOn(text2);
+
       gc.gridy++;
       topPanel.add(UI.PanelFactory.panel(text2).withLabel("&Path:").createPanel(), gc);
 
@@ -153,9 +178,19 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       text1.getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
         protected void textChanged(@NotNull DocumentEvent e) {
+          String text = text1.getText();
           if (cp != null) {
-            cp.setCommentText(text1.getText());
+            cp.setCommentText(text);
           }
+
+          ComponentValidator.getInstance(text1).ifPresent(v -> v.revalidate());
+        }
+      });
+
+      text2.getDocument().addDocumentListener(new DocumentAdapter() {
+        @Override
+        protected void textChanged(DocumentEvent e) {
+          ComponentValidator.getInstance(text2).ifPresent(v -> v.revalidate());
         }
       });
 
@@ -207,6 +242,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       });
 
       JTextField cellEditor = new JTextField();
+      cellEditor.putClientProperty(DarculaUIUtil.COMPACT_PROPERTY, Boolean.TRUE);
       cellEditor.getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
         protected void textChanged(@NotNull DocumentEvent e) {
@@ -215,7 +251,18 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         }
       });
 
-      table.getColumnModel().getColumn(0).setCellEditor(new DefaultCellEditor(cellEditor));
+
+      TableColumn col0 = table.getColumnModel().getColumn(0);
+      col0.setCellEditor(new DefaultCellEditor(cellEditor));
+      col0.setCellRenderer(new DefaultTableCellRenderer() {
+        @Override
+        public Dimension getPreferredSize() {
+          Dimension size = super.getPreferredSize();
+          Dimension editorSize = cellEditor.getPreferredSize();
+          size.height = Math.max(size.height, editorSize.height);
+          return size;
+        }
+      });
 
       JComboBox<Integer> rightEditor = new ComboBox<>(Arrays.stream(data).map(i -> Integer.valueOf(i[1])).toArray(Integer[]::new));
       table.getColumnModel().getColumn(1).setCellEditor(new DefaultCellEditor(rightEditor));

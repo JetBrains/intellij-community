@@ -104,7 +104,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   private void addRelevantPointers(VirtualFile parent,
                                    boolean separator,
                                    @NotNull CharSequence childName,
-                                   @NotNull List<FilePointerPartNode> out) {
+                                   @NotNull List<? super FilePointerPartNode> out) {
     for (FilePointerPartNode root : myPointers.values()) {
       root.addRelevantPointersFrom(parent, separator, childName, out);
     }

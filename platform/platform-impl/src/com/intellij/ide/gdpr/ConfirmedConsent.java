@@ -52,7 +52,7 @@ public final class ConfirmedConsent extends ConsentBase {
   }
 
   public String toExternalString() {
-    return getId() + ":" + getVersion().toString() + ":" + (isAccepted() ? "1" : "0") + ":" + Long.toString(myAcceptanceTime);
+    return getId() + ":" + getVersion().toString() + ":" + (isAccepted() ? "1" : "0") + ":" + myAcceptanceTime;
   }
 
   @Nullable

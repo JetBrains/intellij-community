@@ -41,13 +41,21 @@ public class JsonSchemaReader {
     myQueue = new ArrayDeque<>();
   }
 
-  public static JsonSchemaObject readFromFile(@NotNull Project project, @NotNull VirtualFile key) throws Exception {
-    if (!key.isValid()) throw new Exception(String.format("Can not load JSON Schema file '%s'", key.getName()));
-    final PsiFile psiFile = PsiManager.getInstance(project).findFile(key);
-    if (!(psiFile instanceof JsonFile)) throw new Exception(String.format("Can not load code model for JSON Schema file '%s'", key.getName()));
+  @NotNull
+  public static JsonSchemaObject readFromFile(@NotNull Project project, @NotNull VirtualFile file) throws Exception {
+    if (!file.isValid()) {
+      throw new Exception(String.format("Can not load JSON Schema file '%s'", file.getName()));
+    }
+
+    final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+    if (!(psiFile instanceof JsonFile)) {
+      throw new Exception(String.format("Can not load code model for JSON Schema file '%s'", file.getName()));
+    }
+
     final JsonObject value = ObjectUtils.tryCast(((JsonFile)psiFile).getTopLevelValue(), JsonObject.class);
-    if (value == null)
-      throw new Exception(String.format("JSON Schema file '%s' must contain only one top-level object", key.getName()));
+    if (value == null) {
+      throw new Exception(String.format("JSON Schema file '%s' must contain only one top-level object", file.getName()));
+    }
     return new JsonSchemaReader().read(value);
   }
 

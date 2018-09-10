@@ -41,7 +41,7 @@ public class JavaParserUtil {
   private static class PrecedingWhitespacesAndCommentsBinder implements WhitespacesAndCommentsBinder {
     private final boolean myAfterEmptyImport;
 
-    public PrecedingWhitespacesAndCommentsBinder(final boolean afterImport) {
+    PrecedingWhitespacesAndCommentsBinder(final boolean afterImport) {
       this.myAfterEmptyImport = afterImport;
     }
 
@@ -286,7 +286,7 @@ public class JavaParserUtil {
     };
   }
 
-  public static PsiBuilder stoppingBuilder(final PsiBuilder builder, final Condition<Pair<IElementType, String>> condition) {
+  public static PsiBuilder stoppingBuilder(final PsiBuilder builder, final Condition<? super Pair<IElementType, String>> condition) {
     return new PsiBuilderAdapter(builder) {
       @Override
       public IElementType getTokenType() {

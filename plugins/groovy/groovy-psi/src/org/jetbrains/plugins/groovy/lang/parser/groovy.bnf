@@ -428,20 +428,20 @@ enum_constant_initializer ::= class_body
 
 
 // region Methods
-method ::= method_identifier parse_parameter_list nl_throws [mb_nl lazy_block]
+method ::= method_identifier method_parameter_list nl_throws [mb_nl lazy_block]
 {
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrMethodElementType'
-  pin = parse_parameter_list
+  pin = 2
 }
-constructor ::= constructor_identifier parse_parameter_list nl_throws [mb_nl lazy_constructor_block]
+constructor ::= constructor_identifier method_parameter_list nl_throws [mb_nl lazy_constructor_block]
 {
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrConstructorElementType'
-  pin = parse_parameter_list
+  pin = 2
 }
-annotation_method ::= method_identifier parse_parameter_list [mb_nl annotation_method_default] nl_throws
+annotation_method ::= method_identifier method_parameter_list [mb_nl annotation_method_default] nl_throws
 {
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrAnnotationMethodElementType'
-  pin = parse_parameter_list
+  pin = 2
 }
 private annotation_method_default ::= 'default' annotation_value { pin = 1 }
 
@@ -453,11 +453,7 @@ private constructor_identifier ::= <<constructorIdentifier>>
 // region Parameters
 fake parameter_list ::= { elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrParameterListElementType' }
 
-private parse_parameter_list ::= parse_empty_parameter_list | parse_non_empty_parameter_list
-private parse_empty_parameter_list ::= '(' empty_parameter_list ')'
-private parse_non_empty_parameter_list ::= '(' method_parameter_list ')' { pin = 1 }
-
-method_parameter_list ::= <<paren_list_inner parse_parameter>> { elementType = parameter_list }
+method_parameter_list ::= <<paren_list parse_parameter>> { elementType = parameter_list }
 private parse_parameter ::= <<parseTailLeftFlat parameter_start parameter>>
 private parameter_start ::= parameter_start_modifiers | parameter_start_no_modifiers
 private parameter_start_modifiers ::= non_empty_modifier_list parameter_start_after_modifiers { pin = 1 }
@@ -520,14 +516,14 @@ private throws_list_item ::= mb_nl type_code_reference
 
 
 // region Generics
-type_parameter_list ::= '<' type_parameters '>'
+type_parameter_list ::= '<' mb_nl type_parameters mb_nl '>'
 {
   pin = 1
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTypeParameterListElementType'
   consumeTokenMethod = 'consumeTokenFast'
 }
 private type_parameters ::= type_parameter type_parameters_tail*
-private type_parameters_tail ::= ',' type_parameter { pin = 1 }
+private type_parameters_tail ::= ',' mb_nl type_parameter { pin = 1 }
 
 type_parameter ::= IDENTIFIER (type_parameter_bounds_list | empty_type_parameter_bounds_list)
 {
@@ -989,17 +985,8 @@ private property_dot ::= reference_dot | method_reference_dot
 private qualified_reference_expression_identifiers ::= IDENTIFIER
                                                      | string_literal_tokens
                                                      | regex_literal
-                                                     | 'true'
-                                                     | 'false'
-                                                     | 'null'
-                                                     | 'new'
-                                                     | 'class' | 'interface' | 'trait' | 'enum'
-                                                     | 'this' | 'super'
-                                                     | 'case'
-                                                     | 'as' | 'in'
-                                                     | 'else'
                                                      | modifier
-                                                     | statement_keywords
+                                                     | keyword
                                                      | primitive_type
 {
   name = 'property selector'
@@ -1082,10 +1069,8 @@ elvis_expression ::= expression mb_nl ('?:' mb_nl) expression
 }
 
 private priority15 ::= assignment_expression | tuple_assignment_expression
-assignment_expression ::= expression (<<assignmentOperator>> mb_nl) expression application*
-{
-  rightAssociative = true
-}
+assignment_expression ::= expression assignment_expression_rvalue { rightAssociative = true }
+private assignment_expression_rvalue ::= (<<assignmentOperator>> mb_nl) expression_or_application { pin = 1 }
 
 tuple_assignment_expression ::= single_tuple_assignment | multi_tuple_assignment
 private single_tuple_assignment ::= single_tuple tuple_initializer // don't pin because "(foo)" may be a parenthesized expression
@@ -1155,10 +1140,7 @@ private named_argument_tail ::= ':' expression
   pin = 1
   consumeTokenMethod = 'consumeTokenFast'
 }
-argument_label ::= IDENTIFIER | string_literal_tokens | '*' | 'null' | 'class' | primitive_type | 'default'
-{
-  consumeTokenMethod = 'consumeTokenFast'
-}
+argument_label ::= IDENTIFIER | string_literal_tokens | primitive_type | modifier | keyword | '*' { consumeTokenMethod = 'fast' }
 // endregion
 
 
@@ -1287,6 +1269,7 @@ private meta separated_recovery ::= !(<<item_end>> | <<element_start>>)
 
 
 // region Generated parser utils
+private external keyword ::= parseKeyword
 private clear_variants_and_fail ::= clear_variants fail
 private external clear_variants ::= clearVariants
 private external clear_error ::= clearError

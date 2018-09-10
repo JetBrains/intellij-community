@@ -23,6 +23,7 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -171,7 +172,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
       myTextToReformat = myEditor.getDocument().getText();
     }
     else if (useDefaultSample || myTextToReformat == null) {
-      myTextToReformat = getPreviewText();
+      myTextToReformat = StringUtil.convertLineSeparators(getPreviewText());
     }
 
     int currOffs = myEditor.getScrollingModel().getVerticalScrollOffset();

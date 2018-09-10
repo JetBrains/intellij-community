@@ -16,49 +16,45 @@
 package org.jetbrains.plugins.github;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.DialogManager;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor;
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager;
-import org.jetbrains.plugins.github.api.GithubServerPath;
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount;
 import org.jetbrains.plugins.github.ui.GithubCreatePullRequestDialog;
 
 /**
  * @author Aleksey Pivovarov
  */
-public class GithubCreatePullRequestAction extends LegacySingleAccountActionGroup {
+public class GithubCreatePullRequestAction extends AbstractGithubUrlGroupingAction {
   public GithubCreatePullRequestAction() {
     super("Create Pull Request", "Create pull request from current branch", AllIcons.Vcs.Vendors.Github);
   }
 
   @Override
-  public void actionPerformed(@NotNull Project project,
-                              @Nullable VirtualFile file,
-                              @NotNull GitRepository gitRepository,
+  public void actionPerformed(@NotNull AnActionEvent e,
+                              @NotNull Project project,
+                              @NotNull GitRepository repository,
+                              @NotNull GitRemote remote,
+                              @NotNull String remoteUrl,
                               @NotNull GithubAccount account) {
-    createPullRequest(project, gitRepository, account);
-  }
-
-  @Nullable
-  @Override
-  protected Pair<GitRemote, String> getRemote(@NotNull GithubServerPath server, @NotNull GitRepository repository) {
-    return GithubCreatePullRequestWorker.findGithubRemote(server, repository);
+    createPullRequest(project, repository, remote, remoteUrl, account);
   }
 
   static void createPullRequest(@NotNull Project project,
                                 @NotNull GitRepository gitRepository,
+                                @NotNull GitRemote remote,
+                                @NotNull String remoteUrl,
                                 @NotNull GithubAccount account) {
     GithubApiRequestExecutor executor = GithubApiRequestExecutorManager.getInstance().getExecutor(account, project);
-    if(executor == null) return;
+    if (executor == null) return;
 
-    GithubCreatePullRequestWorker worker = GithubCreatePullRequestWorker.create(project, gitRepository, executor, account.getServer());
+    GithubCreatePullRequestWorker worker = GithubCreatePullRequestWorker.create(project, gitRepository, remote, remoteUrl,
+                                                                                executor, account.getServer());
     if (worker == null) {
       return;
     }

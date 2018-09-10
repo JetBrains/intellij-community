@@ -170,7 +170,7 @@ public class CommitMessageInspectionsPanel extends BorderLayoutPanel implements 
   }
 
   private class MyInspectionsTableSettings extends InspectionsConfigTreeTable.InspectionsConfigTreeTableSettings {
-    public MyInspectionsTableSettings(@NotNull Project project, @NotNull InspectionConfigTreeNode root) {
+    MyInspectionsTableSettings(@NotNull Project project, @NotNull InspectionConfigTreeNode root) {
       super(root, project);
     }
 
@@ -191,7 +191,7 @@ public class CommitMessageInspectionsPanel extends BorderLayoutPanel implements 
   }
 
   private static class MyInspectionTreeNode extends InspectionConfigTreeNode.Tool {
-    public MyInspectionTreeNode(@NotNull ToolDescriptors descriptors) {
+    MyInspectionTreeNode(@NotNull ToolDescriptors descriptors) {
       super(() -> descriptors);
     }
 

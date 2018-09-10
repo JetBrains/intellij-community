@@ -118,7 +118,7 @@ class VariableView(override val variableName: String, private val variable: Vari
 
       ValueType.BOOLEAN, ValueType.NULL, ValueType.UNDEFINED -> node.setPresentation(icon, XKeywordValuePresentation(value.valueString!!), false)
 
-      ValueType.NUMBER -> node.setPresentation(icon, createNumberPresentation(value.valueString!!), false)
+      ValueType.NUMBER, ValueType.BIGINT  -> node.setPresentation(icon, createNumberPresentation(value.valueString!!), false)
 
       ValueType.STRING -> {
         node.setPresentation(icon, XStringValuePresentation(value.valueString!!), false)

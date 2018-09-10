@@ -156,7 +156,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
     }
   }
 
@@ -188,7 +188,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       RemoteServer<?> server = getServer();
       ServerConnection connection = getConnection();
       presentation.setPresentableText(server.getName());
@@ -455,7 +455,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       Deployment deployment = getDeployment();
       presentation.setIcon(deployment.getStatus().getIcon());
       presentation.setPresentableText(deployment.getPresentableName());
@@ -478,7 +478,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       presentation.setIcon(AllIcons.Debugger.Console);
       presentation.setPresentableText(getLogName());
     }

@@ -7,7 +7,7 @@ class Test {
 
   private void method() {
     if (timeStamp == null) {
-      timeStamp.<warning descr="Method invocation 'set' will produce 'java.lang.NullPointerException'">set</warning>(Calendar.getInstance().getTimeInMillis()); // not reported
+      timeStamp.<warning descr="Method invocation 'set' will produce 'NullPointerException'">set</warning>(Calendar.getInstance().getTimeInMillis()); // not reported
     }
   }
 }

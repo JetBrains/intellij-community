@@ -62,7 +62,7 @@ public class SynchronizeDiff extends DirDiffAction {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return false;
   }
 

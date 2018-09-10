@@ -11,14 +11,14 @@ import javax.swing.*;
 import javax.swing.text.JTextComponent;
 
 class PasswordInputDialog extends Messages.InputDialog {
-  public PasswordInputDialog(String message,
+  PasswordInputDialog(String message,
                              @Nls(capitalization = Nls.Capitalization.Title) String title,
                              @Nullable Icon icon,
                              @Nullable InputValidator validator) {
     super(message, title, icon, null, validator);
   }
 
-  public PasswordInputDialog(Project project,
+  PasswordInputDialog(Project project,
                              String message,
                              @Nls(capitalization = Nls.Capitalization.Title) String title,
                              @Nullable Icon icon,

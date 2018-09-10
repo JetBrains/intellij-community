@@ -102,7 +102,7 @@ import javax.swing.tree.TreePath
         GuiTestUtilKt.waitUntil(condition = "correct path to click is found", timeout = Timeouts.seconds02) {
           try {
             partialPath = ExtendedJTreePathFinder(tree)
-              .findMatchingPathByPredicate(predicate = predicate, pathStrings = *partialList.toTypedArray())
+              .findMatchingPathByPredicate(predicate = predicate, pathStrings = partialList)
             partialPath != null
           }
           catch (e: Exception) {
@@ -172,9 +172,10 @@ import javax.swing.tree.TreePath
    * Returns list of visible strings not including the first invisible item
    *
    * Note: code `this.path.joinToString()` always includes the first invisible item
+   * @param extendedValue if true return full text for each path item
    * */
-  fun TreePath.getPathStrings(jTree: JTree): List<String> {
+  fun TreePath.getPathStrings(jTree: JTree, extendedValue: Boolean = false): List<String> {
     val cellReader = ExtendedJTreeCellReader()
-    val pathStrings = this.path.map { cellReader.valueAt(jTree, it) ?: throw Exception("Unable to read value (value is null) for a tree")}
-    return if (pathStrings.first().isEmpty()) pathStrings.drop(1) else pathStrings
+    val pathStrings = this.path.map { cellReader.valueAtExtended(jTree, it, extendedValue) ?: throw Exception("Unable to read value (value is null) for a tree")}
+    return if (pathStrings.first().isEmpty() || !jTree.isRootVisible) pathStrings.drop(1) else pathStrings
   }

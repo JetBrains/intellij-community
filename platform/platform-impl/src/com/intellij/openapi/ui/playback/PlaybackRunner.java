@@ -14,6 +14,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.text.StringTokenizer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 
@@ -61,7 +62,7 @@ public class PlaybackRunner {
     myStopOnAppDeactivation = stopOnAppDeactivation;
     myAppListener = new ApplicationActivationListener() {
       @Override
-      public void applicationDeactivated(IdeFrame ideFrame) {
+      public void applicationDeactivated(@NotNull IdeFrame ideFrame) {
         if (myStopOnAppDeactivation) {
           myCallback.message(null, "App lost focus, stopping...", StatusCallback.Type.message);
           stop();

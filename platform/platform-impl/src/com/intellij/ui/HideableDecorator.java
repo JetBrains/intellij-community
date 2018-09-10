@@ -67,7 +67,7 @@ public class HideableDecorator {
   }
 
   private void updateIcon() {
-    Icon icon = myOn ? AllIcons.General.SplitDown : AllIcons.General.SplitRight;
+    Icon icon = myOn ? AllIcons.General.ArrowDown : AllIcons.General.ArrowRight;
     myTitledSeparator.getLabel().setIcon(icon);
     myTitledSeparator.getLabel().setDisabledIcon(IconLoader.getTransparentIcon(icon, 0.5f));
   }

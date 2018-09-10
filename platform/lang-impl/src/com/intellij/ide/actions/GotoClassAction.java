@@ -61,16 +61,15 @@ import java.util.List;
 public class GotoClassAction extends GotoActionBase implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    if (Registry.is("new.search.everywhere")) {
-      showInSearchEverywherePopup(ClassSearchEverywhereContributor.class.getSimpleName(), e, true);
-      return;
-    }
-
     Project project = e.getProject();
     if (project == null) return;
 
     if (!DumbService.getInstance(project).isDumb()) {
-      super.actionPerformed(e);
+      if (Registry.is("new.search.everywhere")) {
+        showInSearchEverywherePopup(ClassSearchEverywhereContributor.class.getSimpleName(), e, true);
+      } else {
+        super.actionPerformed(e);
+      }
     }
     else {
       String message = IdeBundle.message("go.to.class.dumb.mode.message", GotoClassPresentationUpdater.getActionTitle());

@@ -178,7 +178,7 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
   private static class MyIntroduceLookupExpression extends MyLookupExpression {
     private final SmartPsiElementPointer<PsiNamedElement> myPointer;
 
-    public MyIntroduceLookupExpression(final String initialName,
+    MyIntroduceLookupExpression(final String initialName,
                                        final LinkedHashSet<String> names,
                                        final PsiNamedElement elementToRename,
                                        final boolean shouldSelectAll,

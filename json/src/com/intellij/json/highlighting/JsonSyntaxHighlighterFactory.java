@@ -96,7 +96,7 @@ public class JsonSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
       fillMap(ourAttributes, JSON_INVALID_ESCAPE, StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN);
     }
 
-    public MyHighlighter(@Nullable VirtualFile file) {
+    MyHighlighter(@Nullable VirtualFile file) {
       myFile = file;
     }
 

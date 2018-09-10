@@ -205,7 +205,7 @@ public class CommitListPanel extends JPanel implements TypeSafeDataProvider {
 
     @NotNull private final String myMaxString;
 
-    public CommitColumnInfo(@NotNull String name, @NotNull String maxString) {
+    CommitColumnInfo(@NotNull String name, @NotNull String maxString) {
       super(name);
       myMaxString = maxString;
     }

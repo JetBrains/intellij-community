@@ -260,7 +260,7 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
   private class MyRefreshingDownloadingListener extends FileDownloadingAdapter {
     private final Runnable myPostRunnable;
 
-    public MyRefreshingDownloadingListener(final Runnable postRunnable) {
+    MyRefreshingDownloadingListener(final Runnable postRunnable) {
       myPostRunnable = postRunnable;
     }
 
@@ -273,7 +273,7 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
     }
 
     @Override
-    public void fileDownloaded(final VirtualFile localFile) {
+    public void fileDownloaded(@NotNull final VirtualFile localFile) {
       removeDownloadingListener(this);
       if (myPostRunnable != null) {
         myPostRunnable.run();
@@ -313,7 +313,7 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
     final AsyncPromise<VirtualFile> promise = new AsyncPromise<>();
     remoteFileInfo.addDownloadingListener(new FileDownloadingAdapter() {
       @Override
-      public void fileDownloaded(VirtualFile localFile) {
+      public void fileDownloaded(@NotNull VirtualFile localFile) {
         try {
           remoteFileInfo.removeDownloadingListener(this);
         }

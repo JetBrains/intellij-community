@@ -84,7 +84,7 @@ public class YourkitFilter implements Filter{
   private static class MyHyperlinkInfo implements HyperlinkInfo {
     private final PsiFile[] myPsiFiles;
 
-    public MyHyperlinkInfo(final PsiFile[] psiFiles) {
+    MyHyperlinkInfo(final PsiFile[] psiFiles) {
       myPsiFiles = psiFiles;
     }
 

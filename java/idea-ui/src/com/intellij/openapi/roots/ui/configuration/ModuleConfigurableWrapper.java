@@ -27,7 +27,7 @@ import javax.swing.*;
 class ModuleConfigurableWrapper implements ModuleConfigurationEditor {
   private final Configurable myModuleConfigurable;
 
-  public ModuleConfigurableWrapper(Configurable moduleConfigurable) {
+  ModuleConfigurableWrapper(Configurable moduleConfigurable) {
     myModuleConfigurable = moduleConfigurable;
   }
 

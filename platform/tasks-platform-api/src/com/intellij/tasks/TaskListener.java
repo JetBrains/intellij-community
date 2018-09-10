@@ -15,6 +15,8 @@
  */
 package com.intellij.tasks;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.EventListener;
 
 /**
@@ -22,11 +24,11 @@ import java.util.EventListener;
  */
 public interface TaskListener extends EventListener {
 
-  void taskDeactivated(LocalTask task);
+  void taskDeactivated(@NotNull LocalTask task);
 
-  void taskActivated(LocalTask task);
+  void taskActivated(@NotNull LocalTask task);
 
-  void taskAdded(LocalTask task);
+  void taskAdded(@NotNull LocalTask task);
 
-  void taskRemoved(LocalTask task);
+  void taskRemoved(@NotNull LocalTask task);
 }

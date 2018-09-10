@@ -5,8 +5,6 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.editorHeaderActions.Utils;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeTooltip;
-import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder;
 import com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI;
@@ -14,8 +12,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.editor.EditorCopyPasteHelper;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.SystemInfo;
@@ -169,29 +165,6 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     myHelper = createHelper();
 
     myHistoryPopupButton = createButton(new ShowHistoryAction());
-    final KeyStroke oldHistoryKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_H, CTRL_DOWN_MASK);
-    new DumbAwareAction() {
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
-        while(keymap != null) {
-          if ("Visual Studio".equals(keymap.getName())) {
-            e.getPresentation().setEnabled(false);
-            return;
-          }
-          keymap = keymap.getParent();
-        }
-      }
-
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        IdeTooltipManager.getInstance().show(
-          new IdeTooltip(myTextArea, new Point(), new JLabel(
-            "The shortcut was changed. Press " +
-            KeymapUtil.getKeystrokeText(SearchTextField.SHOW_HISTORY_KEYSTROKE) +
-            " to open search history.")), true, true);
-      }
-    }.registerCustomShortcutSet(new CustomShortcutSet(oldHistoryKeyStroke), myTextArea);
     myClearButton = createButton(new ClearAction());
     myNewLineButton = createButton(new NewLineAction());
     myNewLineButton.setVisible(searchMode);
@@ -208,11 +181,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
 
   private void updateFont() {
     if (myTextArea != null) {
-      if (UIUtil.isUnderWindowsLookAndFeel()) {
-        myTextArea.setFont(UIManager.getFont("TextField.font"));
-      } else {
-        Utils.setSmallerFont(myTextArea);
-      }
+      Utils.setSmallerFont(myTextArea);
     }
   }
 
@@ -349,22 +318,11 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
       g.dispose();
     }
     super.paint(graphics);
-
-    if (UIUtil.isUnderGTKLookAndFeel()) {
-      graphics.setColor(myTextArea.getBackground());
-      Rectangle bounds = myScrollPane.getViewport().getBounds();
-      if (myScrollPane.getVerticalScrollBar().isVisible()) {
-        bounds.width -= myScrollPane.getVerticalScrollBar().getWidth();
-      }
-      bounds = SwingUtilities.convertRectangle(myScrollPane.getViewport()/*myTextArea*/, bounds, this);
-      JBInsets.addTo(bounds, new JBInsets(2, 2, -1, -1));
-      ((Graphics2D)graphics).draw(bounds);
-    }
   }
 
   private class ShowHistoryAction extends DumbAwareAction {
 
-    public ShowHistoryAction() {
+    ShowHistoryAction() {
       super((mySearchMode ? "Search" : "Replace") + " History",
             (mySearchMode ? "Search" : "Replace") + " history",
             myHelper.getShowHistoryIcon());
@@ -399,7 +357,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
   }
 
   private class ClearAction extends DumbAwareAction {
-    public ClearAction() {
+    ClearAction() {
       super(null, null, myHelper.getClearIcon());
     }
 
@@ -411,7 +369,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
   }
 
   private class NewLineAction extends DumbAwareAction {
-    public NewLineAction() {
+    NewLineAction() {
       super(null, "New line (" + KeymapUtil.getKeystrokeText(NEW_LINE_KEYSTROKE) + ")",
             AllIcons.Actions.SearchNewLine);
     }

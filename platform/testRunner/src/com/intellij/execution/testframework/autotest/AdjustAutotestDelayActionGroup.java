@@ -64,7 +64,7 @@ public class AdjustAutotestDelayActionGroup extends ActionGroup {
   private static class SetAutoTestDelayAction extends ToggleAction {
     private final int myDelay;
 
-    public SetAutoTestDelayAction(int delay) {
+    SetAutoTestDelayAction(int delay) {
       super(delay + "s");
       myDelay = delay * 1000;
     }
@@ -76,7 +76,7 @@ public class AdjustAutotestDelayActionGroup extends ActionGroup {
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       Project project = e.getProject();
       if (project != null) {
         AutoTestManager.getInstance(project).setDelay(myDelay);

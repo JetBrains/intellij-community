@@ -79,7 +79,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
   private static class Visitor extends PyInspectionVisitor {
     private final Set<String> myIgnoredPackages;
 
-    public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session, Collection<String> ignoredPackages) {
+    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session, Collection<String> ignoredPackages) {
       super(holder, session);
       myIgnoredPackages = ImmutableSet.copyOf(ignoredPackages);
     }
@@ -525,7 +525,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
   private static class IgnoreRequirementFix implements LocalQuickFix {
     @NotNull private final Set<String> myPackageNames;
 
-    public IgnoreRequirementFix(@NotNull Set<String> packageNames) {
+    IgnoreRequirementFix(@NotNull Set<String> packageNames) {
       myPackageNames = packageNames;
     }
 

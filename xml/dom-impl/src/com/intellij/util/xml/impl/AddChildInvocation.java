@@ -26,9 +26,9 @@ public class AddChildInvocation implements Invocation{
   private final CollectionChildDescriptionImpl myDescription;
   private final Type myType;
   private final Function<Object[],Integer> myIndexGetter;
-  private final Function<Object[], Type> myClassGetter;
+  private final Function<Object[], ? extends Type> myClassGetter;
 
-  public AddChildInvocation(final Function<Object[], Type> classGetter,
+  public AddChildInvocation(final Function<Object[], ? extends Type> classGetter,
                             final Function<Object[], Integer> indexGetter,
                             final CollectionChildDescriptionImpl tagName,
                             final Type type) {

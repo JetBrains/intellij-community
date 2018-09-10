@@ -106,12 +106,12 @@ public class WholeFileLocalInspectionsPassFactory implements TextEditorHighlight
       }
 
       @Override
-      void inspectInjectedPsi(@NotNull List<PsiElement> elements,
+      void inspectInjectedPsi(@NotNull List<? extends PsiElement> elements,
                               boolean onTheFly,
                               @NotNull ProgressIndicator indicator,
                               @NotNull InspectionManager iManager,
                               boolean inVisibleRange,
-                              @NotNull List<LocalInspectionToolWrapper> wrappers) {
+                              @NotNull List<? extends LocalInspectionToolWrapper> wrappers) {
         // already inspected in LIP
       }
 

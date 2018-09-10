@@ -22,9 +22,14 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 
 public interface VcsFileContent {
+  @Nullable
   byte[] loadContent() throws IOException, VcsException;
 
+  /**
+   * Use {@link #loadContent()} instead
+   */
   @Nullable
+  @Deprecated
   byte[] getContent() throws IOException, VcsException;
 
 

@@ -94,10 +94,6 @@ public abstract class ComponentNotRegisteredInspectionTestBase extends PluginMod
 
     myFixture.testHighlighting("UnregisteredApplicationComponent." + getSourceFileExtension(),
                                "UnregisteredApplicationComponentInterface." + getSourceFileExtension());
-    final IntentionAction registerAction = myFixture.findSingleIntention("Register Application Component");
-    myFixture.launchAction(registerAction);
-
-    myFixture.checkResultByFile("META-INF/plugin.xml", "unregisteredApplicationComponent-plugin_after.xml", true);
   }
 
 

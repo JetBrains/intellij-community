@@ -76,7 +76,7 @@ public abstract class JavaProjectModelModifier {
    * {@code null} otherwise
    */
   @Nullable
-  public abstract Promise<Void> addExternalLibraryDependency(@NotNull Collection<Module> modules,
+  public abstract Promise<Void> addExternalLibraryDependency(@NotNull Collection<? extends Module> modules,
                                                              @NotNull ExternalLibraryDescriptor descriptor,
                                                              @NotNull DependencyScope scope);
 

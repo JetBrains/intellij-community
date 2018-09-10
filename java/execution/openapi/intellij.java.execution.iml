@@ -9,7 +9,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="module" module-name="intellij.java.resources" />
-    <orderEntry type="module" module-name="intellij.platform.debugger" exported="" />
   </component>
   <component name="copyright">
     <Base>

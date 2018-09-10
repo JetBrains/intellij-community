@@ -948,7 +948,7 @@ public class FormatterImpl extends FormatterEx
   }
 
   private static class FormattingModelInconsistencyException extends Exception {
-    public FormattingModelInconsistencyException(String message) {
+    FormattingModelInconsistencyException(String message) {
       super(message);
     }
   }

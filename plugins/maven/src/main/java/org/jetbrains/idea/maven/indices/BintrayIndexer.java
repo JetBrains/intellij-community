@@ -24,7 +24,7 @@ class BintrayIndexer implements NotNexusIndexer {
 
   private final String myUrlTemplate;
 
-  public BintrayIndexer(@NotNull String subject, @NotNull String repo) {
+  BintrayIndexer(@NotNull String subject, @NotNull String repo) {
     myUrlTemplate = BINTRAY_API_URL + "search/packages/maven?q=*&subject=" + subject + "&repo=" + repo;
   }
 

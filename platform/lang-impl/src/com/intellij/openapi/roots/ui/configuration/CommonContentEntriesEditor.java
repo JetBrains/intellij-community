@@ -416,7 +416,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
   private class AddContentEntryAction extends IconWithTextAction implements DumbAware {
     private final FileChooserDescriptor myDescriptor;
 
-    public AddContentEntryAction() {
+    AddContentEntryAction() {
       super(ProjectBundle.message("module.paths.add.content.action"),
             ProjectBundle.message("module.paths.add.content.action.description"), AllIcons.General.Add);
       myDescriptor = new FileChooserDescriptor(false, true, true, false, true, true) {

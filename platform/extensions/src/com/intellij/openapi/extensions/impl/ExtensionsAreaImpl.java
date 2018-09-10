@@ -168,13 +168,21 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
         throw new RuntimeException("'implementation' attribute not specified for '" + extensionPoint.getName() + "' extension in '"
                                    + pluginDescriptor.getPluginId().getIdString() + "' plugin");
       }
-      adapter = new ExtensionComponentAdapter(implClass, extensionElement, myPicoContainer, pluginDescriptor, shouldDeserializeInstance(extensionElement));
+      adapter = createAdapter(implClass, extensionElement, shouldDeserializeInstance(extensionElement), pluginDescriptor);
     }
     else {
-      adapter = new ExtensionComponentAdapter(extensionPoint.getClassName(), extensionElement, myPicoContainer, pluginDescriptor, !JDOMUtil.isEmpty(extensionElement));
+      adapter = createAdapter(extensionPoint.getClassName(), extensionElement, !JDOMUtil.isEmpty(extensionElement), pluginDescriptor);
     }
     myPicoContainer.registerComponent(adapter);
     ((ExtensionPointImpl)extensionPoint).registerExtensionAdapter(adapter);
+  }
+
+  // this method is not ExtensionComponentAdapter constructor because later ExtensionComponentAdapter will not hold element
+  @NotNull
+  private ExtensionComponentAdapter createAdapter(@NotNull String implementationClassName, @NotNull Element extensionElement, boolean isNeedToDeserialize, @NotNull PluginDescriptor pluginDescriptor) {
+    String orderId = extensionElement.getAttributeValue("id");
+    LoadingOrder order = LoadingOrder.readOrder(extensionElement.getAttributeValue("order"));
+    return new ExtensionComponentAdapter(implementationClassName, myPicoContainer, pluginDescriptor, orderId, order, isNeedToDeserialize ? extensionElement : null);
   }
 
   private static boolean shouldDeserializeInstance(Element extensionElement) {
@@ -270,6 +278,13 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     ExtensionPointImpl<?> ep = myExtensionPoints.get(extensionPointName);
     if (ep != null) {
       listener.extensionPointRegistered(ep);
+    }
+  }
+
+  @Override
+  public void removeAvailabilityListener(@NotNull String extensionPointName, @NotNull ExtensionPointAvailabilityListener listener) {
+    synchronized (myAvailabilityListeners) {
+      myAvailabilityListeners.remove(extensionPointName, listener);
     }
   }
 

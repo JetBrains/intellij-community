@@ -38,7 +38,7 @@ public interface PlatformIcons {
   Icon LIBRARY_ICON = AllIcons.Nodes.PpLib;
   Icon WEB_ICON = AllIcons.Nodes.PpWeb;
   Icon JAR_ICON = AllIcons.Nodes.PpJar;
-  Icon FILE_ICON = AllIcons.Nodes.PpFile;
+  Icon FILE_ICON = AllIcons.Nodes.Folder;
 
   Icon VARIABLE_READ_ACCESS = AllIcons.Nodes.Read_access;
   Icon VARIABLE_WRITE_ACCESS = AllIcons.Nodes.Write_access;
@@ -93,8 +93,8 @@ public interface PlatformIcons {
 
   Icon UP_DOWN_ARROWS = AllIcons.Ide.UpDown;
 
-  Icon COMBOBOX_ARROW_ICON = AllIcons.General.ComboArrow;
-  
+  Icon COMBOBOX_ARROW_ICON = AllIcons.General.ArrowDown;
+
   Icon EXPORT_ICON = AllIcons.ToolbarDecorator.Export;
   Icon IMPORT_ICON = AllIcons.ToolbarDecorator.Import;
 

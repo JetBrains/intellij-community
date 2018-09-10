@@ -30,6 +30,11 @@ class ActionButtonFixture(robot: Robot, target: ActionButton) : JComponentFixtur
       else text == it.action.templatePresentation.text
     }
 
+    fun textMatcherAnyState(text: String): (ActionButton) -> Boolean = {
+      if (!it.isShowing) false
+      else text == it.action.templatePresentation.text
+    }
+
     fun fixtureByActionId(container: Container?, robot: Robot, actionId: String): ActionButtonFixture
       = ActionButtonFixture(robot, robot.findComponent(container, ActionButton::class.java, actionIdMatcher(actionId)))
 
@@ -38,5 +43,8 @@ class ActionButtonFixture(robot: Robot, target: ActionButton) : JComponentFixtur
 
     fun fixtureByText(container: Container?, robot: Robot, text: String): ActionButtonFixture
       = ActionButtonFixture(robot, robot.findComponent(container, ActionButton::class.java, textMatcher(text)))
+
+    fun fixtureByTextAnyState(container: Container?, robot: Robot, text: String): ActionButtonFixture
+      = ActionButtonFixture(robot, robot.findComponent(container, ActionButton::class.java, textMatcherAnyState(text)))
   }
 }

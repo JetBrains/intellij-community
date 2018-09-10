@@ -310,7 +310,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
     @NotNull private final String myTipOfDeletedUnmergedBranch;
     @NotNull private final String myBaseBranch;
 
-    public UnmergedBranchInfo(@NotNull String tipOfDeletedUnmergedBranch, @NotNull String baseBranch) {
+    UnmergedBranchInfo(@NotNull String tipOfDeletedUnmergedBranch, @NotNull String baseBranch) {
       myTipOfDeletedUnmergedBranch = tipOfDeletedUnmergedBranch;
       myBaseBranch = baseBranch;
     }

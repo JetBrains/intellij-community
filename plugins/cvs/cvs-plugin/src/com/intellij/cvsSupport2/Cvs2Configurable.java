@@ -28,7 +28,7 @@ class Cvs2Configurable implements Configurable {
   private CvsConfigurationPanel  myComponent = null;
   private final Project myProject;
 
-  public Cvs2Configurable(Project project) {
+  Cvs2Configurable(Project project) {
     myProject = project;
   }
 

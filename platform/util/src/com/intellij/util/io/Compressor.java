@@ -112,9 +112,9 @@ public abstract class Compressor implements Closeable {
     }
   }
 
-  private Condition<String> myFilter = null;
+  private Condition<? super String> myFilter = null;
 
-  public Compressor filter(@Nullable Condition<String> filter) {
+  public Compressor filter(@Nullable Condition<? super String> filter) {
     myFilter = filter;
     return this;
   }

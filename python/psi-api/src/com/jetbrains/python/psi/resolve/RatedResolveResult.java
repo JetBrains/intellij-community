@@ -47,7 +47,7 @@ public class RatedResolveResult implements ResolveResult {
 
   @Override
   public String toString() {
-    return String.valueOf(myWhat) + "@" + myRate;
+    return myWhat + "@" + myRate;
   }
 
   /**

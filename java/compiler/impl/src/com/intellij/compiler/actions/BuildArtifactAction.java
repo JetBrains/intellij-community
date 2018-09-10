@@ -295,7 +295,7 @@ public class BuildArtifactAction extends DumbAwareAction {
     private final Project myProject;
     private final ArtifactAwareProjectSettingsService mySettingsService;
 
-    public ChooseArtifactStep(List<ArtifactPopupItem> artifacts,
+    ChooseArtifactStep(List<ArtifactPopupItem> artifacts,
                               Artifact first,
                               Project project, final ArtifactAwareProjectSettingsService settingsService) {
       super("Build Artifact", artifacts);

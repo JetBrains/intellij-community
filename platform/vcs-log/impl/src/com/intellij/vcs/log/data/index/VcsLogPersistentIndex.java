@@ -310,7 +310,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
     private volatile boolean myIsFresh;
 
-    public IndexStorage(@NotNull String logId,
+    IndexStorage(@NotNull String logId,
                         @NotNull VcsUserRegistryImpl userRegistry,
                         @NotNull Set<VirtualFile> roots,
                         @NotNull FatalErrorHandler fatalErrorHandler,
@@ -404,7 +404,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     private static final int LOW_PRIORITY = Thread.MIN_PRIORITY;
     @NotNull private final HeavyAwareExecutor myHeavyAwareExecutor;
 
-    public MySingleTaskController(@NotNull Project project, @NotNull Disposable parent) {
+    MySingleTaskController(@NotNull Project project, @NotNull Disposable parent) {
       super(project, "index", EmptyConsumer.getInstance(), false, parent);
       myHeavyAwareExecutor = new HeavyAwareExecutor(project, 50, 100, VcsLogPersistentIndex.this);
     }
@@ -467,7 +467,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     @NotNull private final AtomicInteger myOldCommits = new AtomicInteger();
     private volatile long myStartTime;
 
-    public IndexingRequest(@NotNull VirtualFile root, @NotNull TIntHashSet commits, boolean full, boolean reindex) {
+    IndexingRequest(@NotNull VirtualFile root, @NotNull TIntHashSet commits, boolean full, boolean reindex) {
       myRoot = root;
       myCommits = commits;
       myFull = full;

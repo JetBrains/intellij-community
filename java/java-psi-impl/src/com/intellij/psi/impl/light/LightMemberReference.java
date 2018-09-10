@@ -114,7 +114,7 @@ public class LightMemberReference extends LightElement implements PsiJavaCodeRef
     PsiType[] types = getTypeParameters();
     if (types.length == 0) return name;
 
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
     buf.append(name);
     buf.append('<');
     for (int i = 0; i < types.length; i++) {

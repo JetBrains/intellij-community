@@ -509,7 +509,6 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     configureByText(StdFileTypes.JAVA, text);
 
     JavaCodeStyleSettings javaCodeStyleSettings = CodeStyle.getSettings(getFile()).getCustomSettings(JavaCodeStyleSettings.class);
-    boolean old_imports = javaCodeStyleSettings.INSERT_INNER_CLASS_IMPORTS;
     javaCodeStyleSettings.INSERT_INNER_CLASS_IMPORTS = true;
     boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
     CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
@@ -522,7 +521,6 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
       assertSize(1, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
     }
     finally {
-      javaCodeStyleSettings.INSERT_INNER_CLASS_IMPORTS = old_imports;
       CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
     }
   }

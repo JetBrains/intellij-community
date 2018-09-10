@@ -485,7 +485,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     return task;
   }
 
-  private void addTask(LocalTaskImpl task) {
+  private void addTask(@NotNull LocalTaskImpl task) {
     myTasks.put(task.getId(), task);
     myDispatcher.getMulticaster().taskAdded(task);
   }
@@ -714,6 +714,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     myDispatcher.getMulticaster().taskActivated(myActiveTask);
   }
 
+  @NotNull
   private static LocalTaskImpl createDefaultTask() {
     LocalTaskImpl task = new LocalTaskImpl(LocalTaskImpl.DEFAULT_TASK_ID, "Default task");
     Date date = new Date();
@@ -989,7 +990,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     @Nullable
     protected TaskRepository.CancellableConnection myConnection;
 
-    public TestConnectionTask(String title) {
+    TestConnectionTask(String title) {
       super(TaskManagerImpl.this.myProject, title, true);
     }
 

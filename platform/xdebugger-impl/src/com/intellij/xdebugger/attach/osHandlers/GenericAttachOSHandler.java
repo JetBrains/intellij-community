@@ -5,7 +5,7 @@ import com.intellij.xdebugger.attach.EnvironmentAwareHost;
 import org.jetbrains.annotations.NotNull;
 
 class GenericAttachOSHandler extends AttachOSHandler {
-  public GenericAttachOSHandler(@NotNull EnvironmentAwareHost host) {
+  GenericAttachOSHandler(@NotNull EnvironmentAwareHost host) {
     super(host, OSType.UNKNOWN);
   }
 }

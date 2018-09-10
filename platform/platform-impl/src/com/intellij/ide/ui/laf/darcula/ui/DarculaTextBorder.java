@@ -25,7 +25,7 @@ import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
 public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable {
   @Override
   public Insets getBorderInsets(Component c) {
-    return JBUI.insets(isTableCellEditor(c) ? 2 : 3).asUIResource();
+    return JBUI.insets(isTableCellEditor(c) || isCompact(c) ? 2 : 3).asUIResource();
   }
 
   @Override
@@ -60,7 +60,7 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
         clipForBorder(c, g2, r.width, r.height);
 
         Object op = ((JComponent)c).getClientProperty("JComponent.outline");
-        if (op != null) {
+        if (c.isEnabled() && op != null) {
           paintOutlineBorder(g2, r.width, r.height, 0, isSymmetric(), focused, Outline.valueOf(op.toString()));
         } else {
           if (focused) {

@@ -87,7 +87,7 @@ public class ChangeClassParametersIntention extends PsiElementBaseIntentionActio
           private String myNewType;
 
           @Override
-          public void beforeTemplateFinished(TemplateState state, Template template) {
+          public void beforeTemplateFinished(@NotNull TemplateState state, Template template) {
             final TextResult value = state.getVariableValue(varName);
             myNewType = value != null ? value.getText() : "";
             final int segmentsCount = state.getSegmentsCount();
@@ -101,7 +101,7 @@ public class ChangeClassParametersIntention extends PsiElementBaseIntentionActio
           }
 
           @Override
-          public void templateFinished(Template template, boolean brokenOff) {
+          public void templateFinished(@NotNull Template template, boolean brokenOff) {
             if (!brokenOff) {
               final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
               try {

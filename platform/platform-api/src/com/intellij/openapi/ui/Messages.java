@@ -224,7 +224,7 @@ public class Messages {
   }
 
   public static boolean canShowMacSheetPanel() {
-    return SystemInfo.isMac && !isApplicationInUnitTestOrHeadless() && Registry.is("ide.mac.message.dialogs.as.sheets");
+    return SystemInfo.isMac && ApplicationManager.getApplication() != null && !isApplicationInUnitTestOrHeadless() && Registry.is("ide.mac.message.dialogs.as.sheets");
   }
 
   public static boolean isMacSheetEmulation() {

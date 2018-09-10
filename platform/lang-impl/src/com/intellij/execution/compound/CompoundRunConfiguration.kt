@@ -25,7 +25,7 @@ class CompoundRunConfiguration @JvmOverloads constructor(project: Project, name:
   RunConfigurationBase(project, factory, name), RunnerIconProvider, WithoutOwnBeforeRunSteps, Cloneable {
   companion object {
     @JvmField
-    val COMPARATOR: Comparator<RunConfiguration> = Comparator<RunConfiguration> { o1, o2 ->
+    val COMPARATOR: Comparator<RunConfiguration> = Comparator { o1, o2 ->
       val i = o1.type.displayName.compareTo(o2.type.displayName)
       when {
         i != 0 -> i
@@ -194,7 +194,7 @@ class CompoundRunConfiguration @JvmOverloads constructor(project: Project, name:
         }
 
         val settings = manager.findConfigurationByTypeAndName(configuration.type, configuration.name)
-        if (settings != null && settings.isSingleton && configuration == s.configuration) {
+        if (settings != null && !settings.configuration.isAllowRunningInParallel && configuration == s.configuration) {
           return@getRunningDescriptors true
         }
       }

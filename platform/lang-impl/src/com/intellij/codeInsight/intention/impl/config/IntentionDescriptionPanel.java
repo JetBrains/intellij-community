@@ -110,9 +110,7 @@ public class IntentionDescriptionPanel {
     JComponent owner;
     if (pluginId == null) {
       ApplicationInfo info = ApplicationInfo.getInstance();
-      String label = XmlStringUtil.wrapInHtml(
-        info.getShortCompanyName() + " " +
-        info.getVersionName());
+      String label = XmlStringUtil.wrapInHtml(info.getVersionName());
       owner = new JLabel(label);
     }
     else {
@@ -216,7 +214,7 @@ public class IntentionDescriptionPanel {
     disposeUsagePanels(myAfterUsagePanels);
   }
 
-  private static void disposeUsagePanels(List<IntentionUsagePanel> usagePanels) {
+  private static void disposeUsagePanels(List<? extends IntentionUsagePanel> usagePanels) {
     for (final IntentionUsagePanel usagePanel : usagePanels) {
       Disposer.dispose(usagePanel);
     }

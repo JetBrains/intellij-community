@@ -125,7 +125,7 @@ class FileLoader extends Loader {
     return null;
   }
 
-  private static void readList(BufferedReader reader, List<String> paths) throws IOException {
+  private static void readList(BufferedReader reader, List<? super String> paths) throws IOException {
     String line = reader.readLine();
     int numberOfElements = Integer.parseInt(line);
     for(int i = 0; i < numberOfElements; ++i) paths.add(reader.readLine());
@@ -247,7 +247,7 @@ class FileLoader extends Loader {
     private final URL myUrl;
     private final File myFile;
 
-    public MyResource(URL url, File file) {
+    MyResource(URL url, File file) {
       myUrl = url;
       myFile = file;
     }

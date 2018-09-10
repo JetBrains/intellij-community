@@ -245,7 +245,7 @@ public class FileGroup implements JDOMExternalizable {
     private final String myVcsName;
     private final String myRevision;
 
-    public UpdatedFile(final String path, @NotNull final VcsKey vcsKey, final String revision) {
+    UpdatedFile(final String path, @NotNull final VcsKey vcsKey, final String revision) {
       myPath = path;
       myVcsName = vcsKey.getName();
       myRevision = revision;

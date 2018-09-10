@@ -44,7 +44,7 @@ public class IpnbPyParsingContext extends PyConsoleParsingContext {
   }
 
   private static class IpnbPyExpressionParsing extends ConsoleExpressionParsing {
-    public IpnbPyExpressionParsing(ParsingContext context) {
+    IpnbPyExpressionParsing(ParsingContext context) {
       super(context);
     }
 
@@ -95,7 +95,7 @@ public class IpnbPyParsingContext extends PyConsoleParsingContext {
 
   private static class IpnbPyFunctionParsing extends FunctionParsing {
 
-    public IpnbPyFunctionParsing(ParsingContext context) {
+    IpnbPyFunctionParsing(ParsingContext context) {
       super(context);
     }
 

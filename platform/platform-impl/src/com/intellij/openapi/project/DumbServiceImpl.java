@@ -63,10 +63,10 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   /**
    * Per-task progress indicators. Modified from EDT only.
-   * The task is removed from this map after it's finished or when the project is disposed. 
+   * The task is removed from this map after it's finished or when the project is disposed.
    */
   private final Map<DumbModeTask, ProgressIndicatorEx> myProgresses = ContainerUtil.newConcurrentMap();
-  
+
   private final Queue<Runnable> myRunWhenSmartQueue = new Queue<>(5);
   private final Project myProject;
   private final ThreadLocal<Integer> myAlternativeResolution = new ThreadLocal<>();
@@ -82,7 +82,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     ApplicationManager.getApplication().getMessageBus().connect(project)
                       .subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener() {
                         @SuppressWarnings("UnnecessaryFullyQualifiedName") // synchronized, can be accessed from different threads
-                        java.util.Stack<AccessToken> stack = new Stack<>(); 
+                        java.util.Stack<AccessToken> stack = new Stack<>();
 
                         @Override
                         public void batchChangeStarted(@NotNull Project project, @Nullable String activityName) {
@@ -235,7 +235,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   @Override
   public void queueTask(@NotNull DumbModeTask task) {
     if (LOG.isDebugEnabled()) LOG.debug("Scheduling task " + task);
-    LOG.assertTrue(!myProject.isDefault(), "No indexing tasks should be created for default project: " + task);
+    if (myProject.isDefault()) {
+      LOG.error("No indexing tasks should be created for default project: " + task);
+    }
     final Application application = ApplicationManager.getApplication();
 
     if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
@@ -529,8 +531,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   private static void runSingleTask(final DumbModeTask task, final ProgressIndicatorEx taskIndicator) {
     if (ApplicationManager.getApplication().isInternal()) LOG.info("Running dumb mode task: " + task);
-    
-    // nested runProcess is needed for taskIndicator to be honored in ProgressManager.checkCanceled calls deep inside tasks 
+
+    // nested runProcess is needed for taskIndicator to be honored in ProgressManager.checkCanceled calls deep inside tasks
     ProgressManager.getInstance().runProcess(() -> {
       try {
         taskIndicator.checkCanceled();
@@ -612,7 +614,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private void completeWhenProjectClosed(CompletableFuture<Pair<DumbModeTask, ProgressIndicatorEx>> result) {
     ProjectManagerListener listener = new ProjectManagerListener() {
       @Override
-      public void projectClosed(Project project) {
+      public void projectClosed(@NotNull Project project) {
         result.completeExceptionally(new ProcessCanceledException());
       }
     };

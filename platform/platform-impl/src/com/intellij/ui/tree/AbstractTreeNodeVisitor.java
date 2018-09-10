@@ -7,32 +7,24 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public abstract class AbstractTreeNodeVisitor<T> implements TreeVisitor {
   protected static final Logger LOG = Logger.getInstance(AbstractTreeNodeVisitor.class);
-  private final Supplier<T> supplier;
-  private final Predicate<TreePath> predicate;
+  private final Supplier<? extends T> supplier;
+  private final Predicate<? super TreePath> predicate;
 
-  public AbstractTreeNodeVisitor(Supplier<T> supplier, Predicate<TreePath> predicate) {
+  public AbstractTreeNodeVisitor(@NotNull Supplier<? extends T> supplier, Predicate<? super TreePath> predicate) {
     this.supplier = supplier;
     this.predicate = predicate;
-  }
-
-  public AbstractTreeNodeVisitor(Supplier<T> supplier, Consumer<TreePath> consumer) {
-    this(supplier, consumer == null ? null : path -> {
-      consumer.accept(path);
-      return false;
-    });
   }
 
   @NotNull
   @Override
   public Action visit(@NotNull TreePath path) {
     if (LOG.isTraceEnabled()) LOG.debug("process ", path);
-    T element = supplier == null ? null : supplier.get();
+    T element = supplier.get();
     if (element == null) return Action.SKIP_SIBLINGS;
     Object component = path.getLastPathComponent();
     if (component instanceof AbstractTreeNode) {

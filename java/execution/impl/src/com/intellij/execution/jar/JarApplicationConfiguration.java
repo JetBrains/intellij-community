@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.jar;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
@@ -16,6 +14,8 @@ import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -36,7 +36,7 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
   private JarApplicationConfigurationBean myBean = new JarApplicationConfigurationBean();
   private Map<String, String> myEnvs = new LinkedHashMap<>();
   private JavaRunConfigurationModule myConfigurationModule;
-  private InputRedirectAware.InputRedirectOptions myInputRedirectOptions = new InputRedirectOptions();
+  private InputRedirectAware.InputRedirectOptionsImpl myInputRedirectOptions = new InputRedirectOptionsImpl();
 
   @NotNull
   @Override
@@ -222,6 +222,16 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
   @Override
   public boolean isPassParentEnvs() {
     return myBean.PASS_PARENT_ENVS;
+  }
+
+  @Override
+  public void onNewConfigurationCreated() {
+    super.onNewConfigurationCreated();
+
+    if (StringUtil.isEmpty(getWorkingDirectory())) {
+      String baseDir = FileUtil.toSystemIndependentName(StringUtil.notNullize(getProject().getBasePath()));
+      setWorkingDirectory(baseDir);
+    }
   }
 
   private static class JarApplicationConfigurationBean {

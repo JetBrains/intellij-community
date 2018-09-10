@@ -35,6 +35,11 @@ public abstract class GitPushSource implements PushSource {
   @NotNull
   public abstract GitLocalBranch getBranch();
 
+  @Override
+  public String toString() {
+    return getPresentation();
+  }
+
   private static class OnBranch extends GitPushSource {
     @NotNull private final GitLocalBranch myBranch;
 
@@ -58,7 +63,7 @@ public abstract class GitPushSource implements PushSource {
   private static class DetachedHead extends GitPushSource {
     @NotNull private final String myRevision;
 
-    public DetachedHead(@NotNull String revision) {
+    DetachedHead(@NotNull String revision) {
       myRevision = revision;
     }
 

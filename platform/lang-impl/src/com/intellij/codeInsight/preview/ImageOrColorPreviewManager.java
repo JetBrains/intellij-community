@@ -153,7 +153,7 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
       return Collections.emptySet();
     }
 
-    final Set<PsiElement> elements = Collections.newSetFromMap(ContainerUtil.createWeakMap());
+    final Set<PsiElement> elements = ContainerUtil.createWeakSet();
     final int offset = editor.logicalPositionToOffset(editor.xyToLogicalPosition(point));
     if (documentManager.isCommitted(document)) {
       ContainerUtil.addIfNotNull(elements, InjectedLanguageUtil.findElementAtNoCommit(psiFile, offset));
@@ -180,34 +180,23 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
 
     alarm.cancelAllRequests();
     Point point = event.getMouseEvent().getPoint();
-    if (myElements == null && event.getMouseEvent().isShiftDown()) {
+    Collection<PsiElement> elements = myElements;
+    if (elements == null && event.getMouseEvent().isShiftDown()) {
       alarm.addRequest(new PreviewRequest(point, editor, false), 100);
     }
-    else if (myElements != null) {
-      Collection<PsiElement> elements = myElements;
-      if (!getPsiElementsAt(point, editor).equals(elements)) {
-        myElements = null;
-        for (ElementPreviewProvider provider : Extensions.getExtensions(ElementPreviewProvider.EP_NAME)) {
-          try {
-            if (elements != null) {
-              for (PsiElement element : elements) {
-                provider.hide(element, editor);
-              }
-            } else {
-              provider.hide(null, editor);
-            }
+    else if (elements != null && !getPsiElementsAt(point, editor).equals(elements)) {
+      myElements = null;
+      for (ElementPreviewProvider provider : Extensions.getExtensions(ElementPreviewProvider.EP_NAME)) {
+        try {
+          for (PsiElement element : elements) {
+            provider.hide(element, editor);
           }
-          catch (Exception e) {
-            LOG.error(e);
-          }
+        }
+        catch (Exception e) {
+          LOG.error(e);
         }
       }
     }
-  }
-
-  @Override
-  public void mouseDragged(EditorMouseEvent e) {
-    // nothing
   }
 
   private final class PreviewRequest implements Runnable {
@@ -215,7 +204,7 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
     private final Editor editor;
     private final boolean keyTriggered;
 
-    public PreviewRequest(Point point, Editor editor, boolean keyTriggered) {
+    PreviewRequest(Point point, Editor editor, boolean keyTriggered) {
       this.point = point;
       this.editor = editor;
       this.keyTriggered = keyTriggered;

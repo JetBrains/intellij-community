@@ -292,6 +292,11 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   public void callbackOnPrepareClasses(final ClassPrepareRequestor requestor, final SourcePosition classPosition) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
+    if (!myDebugProcess.getVirtualMachineProxy().canBeModified()) {
+      setInvalid(requestor, "Not available in read only mode");
+      return;
+    }
+
     List<ClassPrepareRequest> prepareRequests = myDebugProcess.getPositionManager().createPrepareRequests(requestor, classPosition);
     if(prepareRequests.isEmpty()) {
       setInvalid(requestor, DebuggerBundle.message("status.invalid.breakpoint.out.of.class"));
@@ -382,7 +387,9 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
   @Override
   public void processAttached(DebugProcessImpl process) {
-    myEventRequestManager = myDebugProcess.getVirtualMachineProxy().eventRequestManager();
+    if (myDebugProcess.getVirtualMachineProxy().canBeModified()) {
+      myEventRequestManager = myDebugProcess.getVirtualMachineProxy().eventRequestManager();
+    }
   }
 
   public void processClassPrepared(final ClassPrepareEvent event) {

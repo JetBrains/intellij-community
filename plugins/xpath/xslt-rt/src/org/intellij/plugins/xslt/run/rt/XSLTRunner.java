@@ -193,7 +193,7 @@ public class XSLTRunner implements XSLTMain {
         private final Set myMessages = new HashSet();
         private final boolean[] myTrouble;
 
-        public MyErrorListener(boolean[] trouble) {
+        MyErrorListener(boolean[] trouble) {
             myTrouble = trouble;
         }
 

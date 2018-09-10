@@ -11,11 +11,11 @@ public class ReplaceAssignmentWithOperatorAssignment
     public void foo()
     {
         int x = 0;
-        x = x + 3;
-        x = x * 3;
-        x = x / 3;
-        x = x - 3;
-        x = x + 2 + 2 + 2;
+        <warning descr="'x = x + 3' could be simplified to 'x += 3'">x = x + 3</warning>;
+        <warning descr="'x = x * 3' could be simplified to 'x *= 3'">x = x * 3</warning>;
+        <warning descr="'x = x / 3' could be simplified to 'x /= 3'">x = x / 3</warning>;
+        <warning descr="'x = x - 3' could be simplified to 'x -= 3'">x = x - 3</warning>;
+        <warning descr="'x = x + 2 + 2 + 2' could be simplified to 'x += 2 + 2 + 2'">x = x + 2 + 2 + 2</warning>;
 
         System.out.println("x = " + x);
 
@@ -24,12 +24,12 @@ public class ReplaceAssignmentWithOperatorAssignment
 
       x = x / 2 / 4;
       x = x >> 1 >> 1;
-      x = x * 2 * 2;
+      <warning descr="'x = x * 2 * 2' could be simplified to 'x *= 2 * 2'">x = x * 2 * 2</warning>;
       float f = 1;
       f = f * 2 * 2;
       int a = Integer.MAX_VALUE;
       double d = Double.MAX_VALUE;
       (a) = (byte)(a + (d - d));// should not warn here
-      (a) = (int)(a + (d - d));// should warn here
+      <warning descr="'(a) = (int)(a + (d - d))' could be simplified to '(a) += (d - d)'">(a) = (int)(a + (d - d))</warning>;// should warn here
     }
 }

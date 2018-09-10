@@ -194,6 +194,7 @@ class CommonCodeStyleSettingsManager {
   }
 
   private static CommonCodeStyleSettings safelyGetDefaults(LanguageCodeStyleSettingsProvider provider) {
+    @SuppressWarnings("deprecation")
     Ref<CommonCodeStyleSettings> defaultSettingsRef =
       RecursionManager.doPreventingRecursion(provider, true, () -> Ref.create(provider.getDefaultCommonSettings()));
     if (defaultSettingsRef == null) {
@@ -201,7 +202,12 @@ class CommonCodeStyleSettingsManager {
       return null;
     }
     else {
-      return defaultSettingsRef.get();
+      CommonCodeStyleSettings defaultSettings = defaultSettingsRef.get();
+      if (defaultSettings instanceof CodeStyleSettings) {
+        LOG.error(
+          provider.getClass().getName() + ".getDefaultCommonSettings() creates root CodeStyleSettings instead of CommonCodeStyleSettings");
+      }
+      return defaultSettings;
     }
   }
 

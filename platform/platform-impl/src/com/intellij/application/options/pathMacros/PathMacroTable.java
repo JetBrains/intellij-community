@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.pathMacros;
 
 import com.intellij.application.options.PathMacrosCollector;
@@ -21,9 +7,11 @@ import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ui.Table;
+import com.intellij.ui.table.JBTable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -31,14 +19,14 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  *  @author dsl
  */
-public class PathMacroTable extends Table {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.pathMacros.PathMacroTable");
+public class PathMacroTable extends JBTable {
+  private static final Logger LOG = Logger.getInstance(PathMacroTable.class);
   private final PathMacros myPathMacros = PathMacros.getInstance();
   private final MyTableModel myTableModel = new MyTableModel();
   private static final int NAME_COLUMN = 0;
@@ -160,11 +148,11 @@ public class PathMacroTable extends Table {
     myTableModel.fireTableDataChanged();
   }
 
-  private void obtainMacroPairs(final List<Couple<String>> macros) {
+  private void obtainMacroPairs(@NotNull List<Couple<String>> macros) {
     macros.clear();
-    final Set<String> macroNames = myPathMacros.getUserMacroNames();
-    for (String name : macroNames) {
-      macros.add(Couple.of(name, myPathMacros.getValue(name).replace('/', File.separatorChar)));
+    final Map<String, String> macroNames = myPathMacros.getUserMacros();
+    for (String name : macroNames.keySet()) {
+      macros.add(Couple.of(name, FileUtilRt.toSystemDependentName(macroNames.get(name))));
     }
 
     if (myUndefinedMacroNames != null) {
@@ -247,7 +235,7 @@ public class PathMacroTable extends Table {
   private class AddValidator implements PathMacroEditor.Validator {
     private final String myTitle;
 
-    public AddValidator(String title) {
+    AddValidator(String title) {
       myTitle = title;
     }
 

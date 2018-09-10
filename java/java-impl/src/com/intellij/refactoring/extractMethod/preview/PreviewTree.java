@@ -34,7 +34,7 @@ class PreviewTree implements Disposable {
   private final List<PreviewTreeListener> myTreeListeners = new SmartList<>();
   private final PreviewTreeModel myModel;
 
-  public PreviewTree(ExtractMethodProcessor processor) {
+  PreviewTree(ExtractMethodProcessor processor) {
     myProject = processor.getProject();
 
     myModel = new PreviewTreeModel(processor);

@@ -17,10 +17,10 @@ import java.util.ArrayList;
  */
 public class ComponentEditor extends ComboBoxPropertyEditor<String> {
   private final Class myPropertyType;
-  private final Condition<RadComponent> myFilter;
+  private final Condition<? super RadComponent> myFilter;
   private String myOldValue;
 
-  public ComponentEditor(final Class propertyType, final Condition<RadComponent> filter) {
+  public ComponentEditor(final Class propertyType, final Condition<? super RadComponent> filter) {
     myPropertyType = propertyType;
     myFilter = filter;
     myCbx.setRenderer(new ComponentRenderer());

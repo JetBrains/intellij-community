@@ -92,7 +92,7 @@ public class ProgramParametersConfigurator {
       }
     }
     workingDirectory = expandPath(workingDirectory, module, project);
-    if (!FileUtil.isAbsolute(workingDirectory) && defaultWorkingDir != null) {
+    if (!FileUtil.isAbsolutePlatformIndependent(workingDirectory) && defaultWorkingDir != null) {
       if (PathMacroUtil.DEPRECATED_MODULE_DIR.equals(workingDirectory)) {
         return defaultWorkingDir;
       }

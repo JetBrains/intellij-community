@@ -254,6 +254,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
               }
               p.add(name, BorderLayout.NORTH);
               p.add(path, BorderLayout.SOUTH);
+              p.setBorder(JBUI.Borders.emptyRight(30));
 
               String projectPath = ((ReopenProjectAction)value).getProjectPath();
               Icon icon = RecentProjectsManagerBase.getProjectIcon(projectPath, UIUtil.isUnderDarcula());

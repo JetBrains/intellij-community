@@ -316,7 +316,7 @@ public class Notification {
     myBalloonRef = new WeakReference<>(balloon);
     balloon.addListener(new JBPopupAdapter() {
       @Override
-      public void onClosed(LightweightWindowEvent event) {
+      public void onClosed(@NotNull LightweightWindowEvent event) {
         if (SoftReference.dereference(myBalloonRef) == balloon) {
           myBalloonRef = null;
         }
@@ -348,7 +348,7 @@ public class Notification {
 
   @NotNull
   private static String calculateId(@NotNull Object notification) {
-    return String.valueOf(System.currentTimeMillis()) + "." + String.valueOf(System.identityHashCode(notification));
+    return System.currentTimeMillis() + "." + System.identityHashCode(notification);
   }
 
   public final void assertHasTitleOrContent() {

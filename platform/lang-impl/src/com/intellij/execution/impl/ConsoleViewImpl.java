@@ -394,6 +394,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private void performLaterWhenNoDeferredOutput(@NotNull Runnable runnable) {
     if (mySpareTimeAlarm.isDisposed()) return;
+    if (myJLayeredPane == null) {
+      getComponent();
+    }
     mySpareTimeAlarm.addRequest(
       () -> performWhenNoDeferredOutput(runnable),
       100,
@@ -1370,11 +1373,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return calcNextOccurrence(-1);
   }
 
+  @NotNull
   @Override
   public String getNextOccurenceActionName() {
     return ExecutionBundle.message("down.the.stack.trace");
   }
 
+  @NotNull
   @Override
   public String getPreviousOccurenceActionName() {
     return ExecutionBundle.message("up.the.stack.trace");

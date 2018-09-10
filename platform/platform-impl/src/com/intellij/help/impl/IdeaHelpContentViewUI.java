@@ -23,7 +23,7 @@ class IdeaHelpContentViewUI extends BasicContentViewerUI{
     return new IdeaHelpContentViewUI((JHelpContentViewer) x);
   }
 
-  public IdeaHelpContentViewUI(JHelpContentViewer contentViewer){
+  IdeaHelpContentViewUI(JHelpContentViewer contentViewer){
     super(contentViewer);
   }
 

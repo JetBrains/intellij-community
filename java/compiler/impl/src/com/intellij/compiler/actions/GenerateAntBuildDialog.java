@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.actions;
 
 import com.intellij.compiler.HelpID;
@@ -20,7 +6,6 @@ import com.intellij.compiler.ModuleCompilerUtil;
 import com.intellij.compiler.ant.BuildProperties;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -37,7 +22,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.table.ComboBoxTableCellEditor;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -249,7 +233,7 @@ public class GenerateAntBuildDialog extends DialogWrapper {
 
     private final List<Pair<String, ListWithSelection>> myItems = new ArrayList<>();
 
-    private MyTableModel(List<Chunk<Module>> chunks) {
+    private MyTableModel(List<? extends Chunk<Module>> chunks) {
       for (final Chunk<Module> chunk : chunks) {
         final ListWithSelection<String> item = new ListWithSelection<>();
         for (final Module module : chunk.getNodes()) {
@@ -260,7 +244,7 @@ public class GenerateAntBuildDialog extends DialogWrapper {
       }
     }
 
-    private static String createCycleName(Chunk<Module> chunk) {
+    private static String createCycleName(Chunk<? extends Module> chunk) {
       final StringBuilder buf = new StringBuilder();
       for (Module module : chunk.getNodes()) {
         if (buf.length() > 0) {
@@ -358,13 +342,7 @@ public class GenerateAntBuildDialog extends DialogWrapper {
   }
 
   @Override
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
-  }
-
-  @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HelpID.GENERATE_ANT_BUILD);
+  protected String getHelpId() {
+    return HelpID.GENERATE_ANT_BUILD;
   }
 }

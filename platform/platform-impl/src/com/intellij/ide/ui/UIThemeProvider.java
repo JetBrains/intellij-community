@@ -12,6 +12,7 @@ import java.io.IOException;
 
 /**
  * @author Konstantin Bulenkov
+ * @since 2018.3
  */
 public final class UIThemeProvider implements PluginAware {
   public static final ExtensionPointName<UIThemeProvider> EP_NAME = ExtensionPointName.create("com.intellij.themeProvider");

@@ -465,7 +465,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   }
 
   private static class ListObjectRenderer extends CompoundReferenceRenderer {
-    public ListObjectRenderer(NodeRendererSettings rendererSettings, ArrayRenderer arrayRenderer) {
+    ListObjectRenderer(NodeRendererSettings rendererSettings, ArrayRenderer arrayRenderer) {
       super(rendererSettings,
             "List",
             createLabelRenderer(" size = ", "size()", null),

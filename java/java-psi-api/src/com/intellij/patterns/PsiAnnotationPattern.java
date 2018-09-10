@@ -32,7 +32,7 @@ public class PsiAnnotationPattern extends PsiElementPattern<PsiAnnotation, PsiAn
     return qName(StandardPatterns.string().equalTo(qname));
   }
 
-  public PsiAnnotationPattern insideAnnotationAttribute(@NotNull final String attributeName, @NotNull final ElementPattern<PsiAnnotation> parentAnnoPattern) {
+  public PsiAnnotationPattern insideAnnotationAttribute(@NotNull final String attributeName, @NotNull final ElementPattern<? extends PsiAnnotation> parentAnnoPattern) {
     return with(new PatternCondition<PsiAnnotation>("insideAnnotationAttribute") {
       final PsiNameValuePairPattern attrPattern = psiNameValuePair().withName(attributeName).withSuperParent(2, parentAnnoPattern);
 

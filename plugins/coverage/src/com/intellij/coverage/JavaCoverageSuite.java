@@ -15,8 +15,11 @@
  */
 package com.intellij.coverage;
 
+import com.intellij.execution.configurations.ModuleBasedConfiguration;
+import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -291,7 +294,15 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
             final DumbService dumbService = DumbService.getInstance(project);
             dumbService.setAlternativeResolveEnabled(true);
             try {
-              return JavaPsiFacade.getInstance(project).findClass(className.replace("$", "."), GlobalSearchScope.allScope(project));
+              GlobalSearchScope searchScope = GlobalSearchScope.allScope(project);
+              RunConfigurationBase configuration = getConfiguration();
+              if (configuration instanceof ModuleBasedConfiguration) {
+                Module module = ((ModuleBasedConfiguration)configuration).getConfigurationModule().getModule();
+                if (module != null) {
+                  searchScope = GlobalSearchScope.moduleRuntimeScope(module, isTrackTestFolders());
+                }
+              }
+              return JavaPsiFacade.getInstance(project).findClass(className.replace("$", "."), searchScope);
             }
             finally {
               dumbService.setAlternativeResolveEnabled(false);

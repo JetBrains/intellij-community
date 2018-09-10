@@ -48,7 +48,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   private final String myHelpTopic;
   private final boolean myBrokenConfiguration;
   private boolean myStoreProjectConfiguration;
-  private boolean mySingleton;
+  private boolean myIsAllowRunningInParallel = false;
   private String myFolderName;
   private boolean myChangingNameFromCode;
 
@@ -80,7 +80,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
     getEditor().addSettingsEditorListener(new SettingsEditorListener<RunnerAndConfigurationSettings>() {
       @Override
-      public void stateChanged(SettingsEditor<RunnerAndConfigurationSettings> settingsEditor) {
+      public void stateChanged(@NotNull SettingsEditor<RunnerAndConfigurationSettings> settingsEditor) {
         myValidationResultValid = false;
       }
     });
@@ -97,7 +97,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   void applySnapshotToComparison(RunnerAndConfigurationSettings original, RunnerAndConfigurationSettings snapshot) {
     snapshot.setTemporary(original.isTemporary());
     snapshot.setName(getNameText());
-    snapshot.setSingleton(mySingleton);
+    snapshot.getConfiguration().setAllowRunningInParallel(myIsAllowRunningInParallel);
     snapshot.setFolderName(myFolderName);
   }
 
@@ -112,7 +112,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
     RunConfiguration runConfiguration = settings.getConfiguration();
     settings.setName(getNameText());
-    settings.setSingleton(mySingleton);
+    runConfiguration.setAllowRunningInParallel(myIsAllowRunningInParallel);
     settings.setFolderName(myFolderName);
     settings.setShared(myStoreProjectConfiguration);
     super.apply();
@@ -154,10 +154,6 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
   public boolean isStoreProjectConfiguration() {
     return myStoreProjectConfiguration;
-  }
-
-  public boolean isSingleton() {
-    return mySingleton;
   }
 
   @Nullable
@@ -286,7 +282,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   @NotNull
   public RunnerAndConfigurationSettings createSnapshot(boolean cloneBeforeRunTasks) throws ConfigurationException {
     RunnerAndConfigurationSettings snapshot = getEditor().getSnapshot();
-    snapshot.setSingleton(isSingleton());
+    snapshot.getConfiguration().setAllowRunningInParallel(myIsAllowRunningInParallel);
     if (cloneBeforeRunTasks) {
       RunManagerImplKt.cloneBeforeRunTasks(snapshot.getConfiguration());
     }
@@ -319,18 +315,18 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     private JButton myFixButton;
     private JSeparator mySeparator;
     private JCheckBox myCbStoreProjectConfiguration;
-    private JBCheckBox myCbSingleton;
+    private JBCheckBox myIsAllowRunningInParallelCheckBox;
     private JPanel myValidationPanel;
 
     private Runnable myQuickFix = null;
 
-    public MyValidatableComponent() {
+    MyValidatableComponent() {
       myNameLabel.setLabelFor(myNameText);
       myNameText.setDocument(myNameDocument);
 
       getEditor().addSettingsEditorListener(settingsEditor -> updateWarning());
       myWarningLabel.setCopyable(true);
-      myWarningLabel.setIcon(AllIcons.RunConfigurations.ConfigurationWarning);
+      myWarningLabel.setIcon(AllIcons.General.BalloonError);
 
       myComponentPlace.setLayout(new GridBagLayout());
       myComponentPlace.add(getEditorComponent(),
@@ -355,11 +351,11 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         public void actionPerformed(ActionEvent e) {
           setModified(true);
           myStoreProjectConfiguration = myCbStoreProjectConfiguration.isSelected();
-          mySingleton = myCbSingleton.isSelected();
+          myIsAllowRunningInParallel = myIsAllowRunningInParallelCheckBox.isSelected();
         }
       };
       myCbStoreProjectConfiguration.addActionListener(actionListener);
-      myCbSingleton.addActionListener(actionListener);
+      myIsAllowRunningInParallelCheckBox.addActionListener(actionListener);
     }
 
     private void doReset(RunnerAndConfigurationSettings settings) {
@@ -369,10 +365,10 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       myCbStoreProjectConfiguration.setSelected(myStoreProjectConfiguration);
       myCbStoreProjectConfiguration.setVisible(!settings.isTemplate());
 
-      mySingleton = settings.isSingleton();
-      myCbSingleton.setEnabled(!isUnknownRunConfiguration);
-      myCbSingleton.setSelected(mySingleton);
-      myCbSingleton.setVisible(settings.getFactory().canConfigurationBeSingleton());
+      myIsAllowRunningInParallel = settings.getConfiguration().isAllowRunningInParallel();
+      myIsAllowRunningInParallelCheckBox.setEnabled(!isUnknownRunConfiguration);
+      myIsAllowRunningInParallelCheckBox.setSelected(myIsAllowRunningInParallel);
+      myIsAllowRunningInParallelCheckBox.setVisible(settings.getFactory().getSingletonPolicy().isPolicyConfigurable());
     }
 
     public final JComponent getWholePanel() {

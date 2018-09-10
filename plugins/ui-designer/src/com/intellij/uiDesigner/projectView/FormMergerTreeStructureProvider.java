@@ -138,7 +138,7 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
   private static class MyDeleteProvider implements DeleteProvider {
     private final PsiElement[] myElements;
 
-    public MyDeleteProvider(final Collection<AbstractTreeNode> selected) {
+    MyDeleteProvider(final Collection<AbstractTreeNode> selected) {
       myElements = collectFormPsiElements(selected);
     }
 

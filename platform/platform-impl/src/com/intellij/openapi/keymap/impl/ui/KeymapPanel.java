@@ -140,7 +140,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   }
 
   @Override
-  public void quickListRenamed(final QuickList oldQuickList, final QuickList newQuickList) {
+  public void quickListRenamed(@NotNull final QuickList oldQuickList, @NotNull final QuickList newQuickList) {
     myManager.visitMutableKeymaps(keymap -> {
       String actionId = oldQuickList.getActionId();
       Shortcut[] shortcuts = keymap.getShortcuts(actionId);
@@ -679,8 +679,9 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       NSDefaults.setShowFnKeysEnabled(appId, myShowFnInitial);
 
       if (myShowFnInitial != NSDefaults.isShowFnKeysEnabled(appId)) {
-        Logger.getInstance(KeymapPanel.class).error("can't write settings via NSDefaults.setShowFnKeysEnabled");
-        return;
+        NSDefaults.setShowFnKeysEnabled(appId, myShowFnInitial, true); // try again with extra checks
+        if (myShowFnInitial != NSDefaults.isShowFnKeysEnabled(appId))
+          return;
       }
 
       ApplicationManager.getApplication().executeOnPooledThread(() -> {

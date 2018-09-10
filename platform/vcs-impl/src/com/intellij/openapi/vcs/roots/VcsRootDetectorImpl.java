@@ -27,11 +27,13 @@ import com.intellij.openapi.vcs.VcsRootChecker;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 import static com.intellij.openapi.vfs.VirtualFileVisitor.CONTINUE;
 
@@ -156,16 +158,11 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
 
   @Nullable
   private AbstractVcs getVcsFor(@NotNull VirtualFile maybeRoot, @Nullable VirtualFile dirToCheckForIgnore) {
-    List<AbstractVcs> vcss = StreamEx.of(myCheckers).
-      filter(it -> it.isRoot(maybeRoot.getPath()) && (dirToCheckForIgnore == null || !it.isIgnored(maybeRoot, dirToCheckForIgnore))).
-      map(it -> myVcsManager.findVcsByName(it.getSupportedVcs().getName())).
-      toList();
-
-    if (vcss.size() == 1) {
-      return vcss.get(0);
-    }
-    else if (vcss.size() > 1) {
-      LOG.info("Dir " + maybeRoot + " is under several VCSs: " + vcss);
+    String path = maybeRoot.getPath();
+    for (VcsRootChecker checker : myCheckers) {
+      if (checker.isRoot(path) && (dirToCheckForIgnore == null || !checker.isIgnored(maybeRoot, dirToCheckForIgnore))) {
+        return myVcsManager.findVcsByName(checker.getSupportedVcs().getName());
+      }
     }
     return null;
   }

@@ -70,13 +70,13 @@ final class SsiFsize implements SsiCommand {
       result = "1k";
     }
     else if (size < ONE_MEGABYTE) {
-      result = Long.toString((size + 512) / ONE_KILOBYTE) + "k";
+      result = (size + 512) / ONE_KILOBYTE + "k";
     }
     else if (size < 99 * ONE_MEGABYTE) {
       result = new DecimalFormat("0.0M").format(size / (double)ONE_MEGABYTE);
     }
     else {
-      result = Long.toString((size + (529 * ONE_KILOBYTE)) / ONE_MEGABYTE) + "M";
+      result = (size + (529 * ONE_KILOBYTE)) / ONE_MEGABYTE + "M";
     }
 
     int charsToAdd = 5 - result.length();

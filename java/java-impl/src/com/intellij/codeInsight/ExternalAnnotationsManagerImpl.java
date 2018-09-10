@@ -49,7 +49,10 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.OptionsMessageDialog;
@@ -73,23 +76,20 @@ import java.util.Set;
  */
 public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsManager {
   private static final Logger LOG = Logger.getInstance(ExternalAnnotationsManagerImpl.class);
-  public static final long ANNOTATION_EDITED_TIMEOUT_MILLIS = 100;
 
   private final MessageBus myBus;
-  private final Alarm myAnnotationDocumentEdited;
 
   public ExternalAnnotationsManagerImpl(@NotNull final Project project, final PsiManager psiManager) {
     super(psiManager);
     myBus = project.getMessageBus();
     myBus.connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         dropCache();
       }
     });
 
     VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(), project);
-    myAnnotationDocumentEdited = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new MyDocumentListener(), project);
   }
 
@@ -113,7 +113,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     LOG.assertTrue(!application.isWriteAccessAllowed());
 
     final Project project = myPsiManager.getProject();
-    final PsiFile containingFile = listOwner.getContainingFile();
+    final PsiFile containingFile = listOwner.getOriginalElement().getContainingFile();
     if (!(containingFile instanceof PsiJavaFile)) {
       notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
       return;
@@ -387,7 +387,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
 
   private boolean processExistingExternalAnnotations(@NotNull final PsiModifierListOwner listOwner,
                                                      @NotNull final String annotationFQN,
-                                                     @NotNull final Processor<XmlTag> annotationTagProcessor) {
+                                                     @NotNull final Processor<? super XmlTag> annotationTagProcessor) {
     try {
       final List<XmlFile> files = findExternalAnnotationsXmlFiles(listOwner);
       if (files == null) {
@@ -456,7 +456,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
   @NotNull
   public AnnotationPlace chooseAnnotationsPlace(@NotNull final PsiElement element) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (!element.isPhysical()) return AnnotationPlace.IN_CODE; //element just created
+    if (!element.isPhysical() && !(element.getOriginalElement() instanceof PsiCompiledElement)) return AnnotationPlace.IN_CODE; //element just created
     if (!element.getManager().isInProject(element)) return AnnotationPlace.EXTERNAL;
     final Project project = myPsiManager.getProject();
 
@@ -853,11 +853,10 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     final FileDocumentManager myFileDocumentManager = FileDocumentManager.getInstance();
 
     @Override
-    public void documentChanged(DocumentEvent event) {
+    public void documentChanged(@NotNull DocumentEvent event) {
       final VirtualFile file = myFileDocumentManager.getFile(event.getDocument());
       if (file != null && ANNOTATIONS_XML.equals(file.getName()) && isUnderAnnotationRoot(file)) {
-        myAnnotationDocumentEdited.cancelAllRequests();
-        myAnnotationDocumentEdited.addRequest(() -> dropCache(), ANNOTATION_EDITED_TIMEOUT_MILLIS);
+        dropCache();
       }
     }
   }

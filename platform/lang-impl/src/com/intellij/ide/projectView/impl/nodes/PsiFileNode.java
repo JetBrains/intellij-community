@@ -70,7 +70,7 @@ public class PsiFileNode extends BasePsiNode<PsiFile> implements NavigatableWith
   }
 
   @Override
-  protected void updateImpl(PresentationData data) {
+  protected void updateImpl(@NotNull PresentationData data) {
     PsiFile value = getValue();
     data.setPresentableText(value.getName());
     data.setIcon(value.getIcon(Iconable.ICON_FLAG_READ_STATUS));

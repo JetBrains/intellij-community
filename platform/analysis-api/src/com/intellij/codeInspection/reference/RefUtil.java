@@ -56,7 +56,7 @@ public class RefUtil {
     return false;
   }
 
-  public static boolean contains(RefEntity element, @NotNull Collection<RefEntity> entities){
+  public static boolean contains(RefEntity element, @NotNull Collection<? extends RefEntity> entities){
     for (RefEntity refEntity : entities) {
       if (Comparing.equal(refEntity, element)) {
         return true;

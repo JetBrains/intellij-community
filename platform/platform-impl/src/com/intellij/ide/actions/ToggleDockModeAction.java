@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 public class ToggleDockModeAction extends ToggleAction implements DumbAware {
 
   @Override
-  public boolean isSelected(AnActionEvent event){
+  public boolean isSelected(@NotNull AnActionEvent event){
     Project project = event.getProject();
     if (project == null) {
       return false;
@@ -28,7 +28,7 @@ public class ToggleDockModeAction extends ToggleAction implements DumbAware {
   }
 
   @Override
-  public void setSelected(AnActionEvent event, boolean flag){
+  public void setSelected(@NotNull AnActionEvent event, boolean flag){
     Project project = event.getProject();
     if (project == null) {
       return;

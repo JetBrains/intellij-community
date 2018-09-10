@@ -285,11 +285,11 @@ public abstract class ContractValue {
     DfaValue makeDfaValue(DfaValueFactory factory, DfaCallArguments arguments) {
       DfaValue left = myLeft.makeDfaValue(factory, arguments);
       DfaValue right = myRight.makeDfaValue(factory, arguments);
-      if (left instanceof DfaConstValue && ((DfaConstValue)left).getType() instanceof PsiPrimitiveType && right instanceof DfaBoxedValue) {
-        right = ((DfaBoxedValue)right).getWrappedValue();
+      if (left instanceof DfaConstValue && ((DfaConstValue)left).getType() instanceof PsiPrimitiveType) {
+        right = DfaUtil.boxUnbox(right, ((DfaConstValue)left).getType());
       }
-      if (right instanceof DfaConstValue && ((DfaConstValue)right).getType() instanceof PsiPrimitiveType && left instanceof DfaBoxedValue) {
-        left = ((DfaBoxedValue)left).getWrappedValue();
+      if (right instanceof DfaConstValue && ((DfaConstValue)right).getType() instanceof PsiPrimitiveType) {
+        left = DfaUtil.boxUnbox(left, ((DfaConstValue)right).getType());
       }
       return factory.createCondition(left, myRelationType, right);
     }

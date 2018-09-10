@@ -14,7 +14,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionException
 import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.util.*
@@ -22,13 +21,12 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.getAttributeBooleanValue
+import com.intellij.util.text.nullize
 import gnu.trove.THashMap
 import gnu.trove.THashSet
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.util.*
-
-private val LOG = logger<RunnerAndConfigurationSettings>()
 
 private const val RUNNER_ID = "RunnerId"
 
@@ -44,7 +42,7 @@ private const val ACTIVATE_TOOLWINDOW_BEFORE_RUN = "activateToolWindowBeforeRun"
 private const val TEMP_CONFIGURATION = "tempConfiguration"
 internal const val TEMPLATE_FLAG_ATTRIBUTE = "default"
 
-const val SINGLETON: String = "singleton"
+const val SINGLETON = "singleton"
 
 enum class RunConfigurationLevel {
   WORKSPACE, PROJECT, TEMPORARY
@@ -53,12 +51,12 @@ enum class RunConfigurationLevel {
 class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: RunManagerImpl,
                                                                    private var _configuration: RunConfiguration? = null,
                                                                    private var isTemplate: Boolean = false,
-                                                                   private var isSingleton: Boolean = false,
                                                                    var level: RunConfigurationLevel = RunConfigurationLevel.WORKSPACE) : Cloneable, RunnerAndConfigurationSettings, Comparable<Any>, SerializableScheme {
   companion object {
     @JvmStatic
     fun getUniqueIdFor(configuration: RunConfiguration): String {
-      if (!configuration.type.isManaged) {
+      val type = configuration.type
+      if (!type.isManaged) {
         configuration.id?.let {
           return it
         }
@@ -83,17 +81,17 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
 
   private var uniqueId: String? = null
 
-  override fun getFactory(): ConfigurationFactory = _configuration?.factory ?: UnknownConfigurationType.getFactory()
+  override fun getFactory() = _configuration?.factory ?: UnknownConfigurationType.getInstance()
 
-  override fun isTemplate(): Boolean = isTemplate
+  override fun isTemplate() = isTemplate
 
-  override fun isTemporary(): Boolean = level == RunConfigurationLevel.TEMPORARY
+  override fun isTemporary() = level == RunConfigurationLevel.TEMPORARY
 
   override fun setTemporary(value: Boolean) {
     level = if (value) RunConfigurationLevel.TEMPORARY else RunConfigurationLevel.WORKSPACE
   }
 
-  override fun isShared(): Boolean = level == RunConfigurationLevel.PROJECT
+  override fun isShared() = level == RunConfigurationLevel.PROJECT
 
   override fun setShared(value: Boolean) {
     if (value) {
@@ -104,7 +102,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
     }
   }
 
-  override fun getConfiguration(): RunConfiguration = _configuration ?: UnknownConfigurationType.getFactory().createTemplateConfiguration(manager.project)
+  override fun getConfiguration() = _configuration ?: UnknownConfigurationType.getInstance().createTemplateConfiguration(manager.project)
 
   override fun createFactory(): Factory<RunnerAndConfigurationSettings> {
     return Factory {
@@ -142,25 +140,19 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
     isEditBeforeRun = value
   }
 
-  override fun isEditBeforeRun(): Boolean = isEditBeforeRun
+  override fun isEditBeforeRun() = isEditBeforeRun
 
   override fun setActivateToolWindowBeforeRun(value: Boolean) {
     isActivateToolWindowBeforeRun = value
   }
 
-  override fun isActivateToolWindowBeforeRun(): Boolean = isActivateToolWindowBeforeRun
-
-  override fun setSingleton(value: Boolean) {
-    isSingleton = value
-  }
-
-  override fun isSingleton(): Boolean = isSingleton
+  override fun isActivateToolWindowBeforeRun() = isActivateToolWindowBeforeRun
 
   override fun setFolderName(value: String?) {
     folderName = value
   }
 
-  override fun getFolderName(): String? = folderName
+  override fun getFolderName() = folderName
 
   fun readExternal(element: Element, isShared: Boolean) {
     isTemplate = element.getAttributeBooleanValue(TEMPLATE_FLAG_ATTRIBUTE)
@@ -179,30 +171,26 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
     folderName = element.getAttributeValue(FOLDER_NAME)
     val factory = manager.getFactory(element.getAttributeValue(CONFIGURATION_TYPE_ATTRIBUTE), element.getAttributeValue(FACTORY_NAME_ATTRIBUTE), !isTemplate) ?: return
 
+    val configuration = factory.createTemplateConfiguration(manager.project, manager)
+    if (!isTemplate) {
+      // shouldn't call createConfiguration since it calls StepBeforeRunProviders that
+      // may not be loaded yet. This creates initialization order issue.
+      configuration.name = element.getAttributeValue(NAME_ATTR) ?: return
+    }
+
     wasSingletonSpecifiedExplicitly = false
     if (isTemplate) {
-      isSingleton = factory.isConfigurationSingletonByDefault
+      configuration.isAllowRunningInParallel = factory.singletonPolicy.isAllowRunningInParallel
     }
     else {
       val singletonStr = element.getAttributeValue(SINGLETON)
       if (singletonStr.isNullOrEmpty()) {
-        isSingleton = factory.isConfigurationSingletonByDefault
+        configuration.isAllowRunningInParallel = factory.singletonPolicy.isAllowRunningInParallel
       }
       else {
         wasSingletonSpecifiedExplicitly = true
-        isSingleton = singletonStr!!.toBoolean()
+        configuration.isAllowRunningInParallel = !singletonStr!!.toBoolean()
       }
-    }
-
-    val configuration = if (isTemplate) {
-      manager.getConfigurationTemplate(factory).configuration
-    }
-    else {
-      // shouldn't call createConfiguration since it calls StepBeforeRunProviders that
-      // may not be loaded yet. This creates initialization order issue.
-      val configuration = factory.createTemplateConfiguration(manager.project, manager)
-      configuration.name = element.getAttributeValue(NAME_ATTR) ?: return
-      configuration
     }
 
     _configuration = configuration
@@ -243,11 +231,17 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
         if (!isNewSerializationAllowed) {
           element.setAttribute(TEMPLATE_FLAG_ATTRIBUTE, "false")
         }
-        element.setAttribute(NAME_ATTR, configuration.name)
+
+        configuration.name.nullize()?.let {
+          element.setAttribute(NAME_ATTR, it)
+        }
       }
 
+      val factory = factory
       element.setAttribute(CONFIGURATION_TYPE_ATTRIBUTE, factory.type.id)
-      element.setAttribute(FACTORY_NAME_ATTRIBUTE, factory.id)
+      if (factory.type !is SimpleConfigurationType) {
+        element.setAttribute(FACTORY_NAME_ATTRIBUTE, factory.id)
+      }
       if (folderName != null) {
         element.setAttribute(FOLDER_NAME, folderName!!)
       }
@@ -258,8 +252,8 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
       if (!isActivateToolWindowBeforeRun) {
         element.setAttribute(ACTIVATE_TOOLWINDOW_BEFORE_RUN, "false")
       }
-      if (wasSingletonSpecifiedExplicitly || isSingleton != factory.isConfigurationSingletonByDefault) {
-        element.setAttribute(SINGLETON, isSingleton.toString())
+      if (wasSingletonSpecifiedExplicitly || configuration.isAllowRunningInParallel != factory.singletonPolicy.isAllowRunningInParallel) {
+        element.setAttribute(SINGLETON, (!configuration.isAllowRunningInParallel).toString())
       }
       if (isTemporary) {
         element.setAttribute(TEMPORARY_ATTRIBUTE, "true")
@@ -327,8 +321,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
     runners.addAll(configurationPerRunnerSettings.settings.keys)
     for (runner in runners) {
       if (executor == null || runner.canRun(executor.id, configuration)) {
-        configuration.checkRunnerSettings(runner, runnerSettings.settings[runner],
-          configurationPerRunnerSettings.settings[runner])
+        configuration.checkRunnerSettings(runner, runnerSettings.settings.get(runner), configurationPerRunnerSettings.settings.get(runner))
       }
     }
     if (executor != null) {
@@ -336,11 +329,11 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
     }
   }
 
-  override fun getRunnerSettings(runner: ProgramRunner<*>): RunnerSettings? = runnerSettings.getOrCreateSettings(runner)
+  override fun getRunnerSettings(runner: ProgramRunner<*>) = runnerSettings.getOrCreateSettings(runner)
 
-  override fun getConfigurationSettings(runner: ProgramRunner<*>): ConfigurationPerRunnerSettings? = configurationPerRunnerSettings.getOrCreateSettings(runner)
+  override fun getConfigurationSettings(runner: ProgramRunner<*>) = configurationPerRunnerSettings.getOrCreateSettings(runner)
 
-  override fun getType(): ConfigurationType = factory.type
+  override fun getType() = factory.type
 
   public override fun clone(): RunnerAndConfigurationSettingsImpl {
     val copy = RunnerAndConfigurationSettingsImpl(manager, _configuration!!.clone())
@@ -352,7 +345,6 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
     importFromTemplate(template.runnerSettings, runnerSettings)
     importFromTemplate(template.configurationPerRunnerSettings, configurationPerRunnerSettings)
 
-    isSingleton = template.isSingleton
     isEditBeforeRun = template.isEditBeforeRun
     isActivateToolWindowBeforeRun = template.isActivateToolWindowBeforeRun
     level = template.level
@@ -375,17 +367,17 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
         (data as JDOMExternalizable).readExternal(temp)
       }
       catch (e: WriteExternalException) {
-        LOG.error(e)
+        RunManagerImpl.LOG.error(e)
       }
       catch (e: InvalidDataException) {
-        LOG.error(e)
+        RunManagerImpl.LOG.error(e)
       }
     }
   }
 
-  override fun compareTo(other: Any): Int = if (other is RunnerAndConfigurationSettings) name.compareTo(other.name) else 0
+  override fun compareTo(other: Any) = if (other is RunnerAndConfigurationSettings) name.compareTo(other.name) else 0
 
-  override fun toString(): String = "${type.displayName}: ${if (isTemplate) "<template>" else name} (level: $level)"
+  override fun toString() = "${type.displayName}: ${if (isTemplate) "<template>" else name} (level: $level)"
 
   private inner class InfoProvider(override val runner: ProgramRunner<*>) : ConfigurationInfoProvider {
     override val configuration: RunConfiguration
@@ -428,17 +420,18 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
         if (runner == null) {
           iterator.remove()
         }
+        @Suppress("IfThenToSafeAccess")
         add(state, runner, if (runner == null) null else createSettings(runner))
       }
     }
 
     private fun findRunner(runnerId: String): ProgramRunner<*>? {
-      val runnersById = ProgramRunner.PROGRAM_RUNNER_EP.extensions.filter { runnerId == it.runnerId }
+      val runnersById = ProgramRunner.PROGRAM_RUNNER_EP.extensionList.filter { runnerId == it.runnerId }
       return when {
         runnersById.isEmpty() -> null
         runnersById.size == 1 -> runnersById.firstOrNull()
         else -> {
-          LOG.error("More than one runner found for ID: $runnerId")
+          RunManagerImpl.LOG.error("More than one runner found for ID: $runnerId")
           for (executor in ExecutorRegistry.getInstance().registeredExecutors) {
             runnersById.firstOrNull { it.canRun(executor.id, configuration)  }?.let {
               return it
@@ -503,7 +496,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
         return settings.getOrPut(runner) { createSettings(runner) }
       }
       catch (ignored: AbstractMethodError) {
-        LOG.error("Update failed for: ${configuration.type.displayName}, runner: ${runner.runnerId}", ExtensionException(runner.javaClass))
+        RunManagerImpl.LOG.error("Update failed for: ${configuration.type.displayName}, runner: ${runner.runnerId}", ExtensionException(runner.javaClass))
         return null
       }
     }

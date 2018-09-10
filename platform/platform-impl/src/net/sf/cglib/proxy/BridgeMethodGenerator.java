@@ -24,8 +24,7 @@ public class BridgeMethodGenerator implements CallbackGenerator {
 
   @Override
   public void generate(ClassEmitter ce, CallbackGenerator.Context context, List methods) {
-    for (Iterator it = methods.iterator(); it.hasNext();) {
-      MethodInfo method = (MethodInfo)it.next();
+    for (MethodInfo method : (List<MethodInfo>)methods) {
       final MethodInfo delegate = myCovariantInfoMap.get(method);
 
       CodeEmitter e = context.beginMethod(ce, method);

@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class XsltRunConfigType implements ConfigurationType {
+public final class XsltRunConfigType implements ConfigurationType {
   private final ConfigurationFactory myFactory;
 
   public XsltRunConfigType() {
@@ -37,6 +37,7 @@ public class XsltRunConfigType implements ConfigurationType {
     return ConfigurationTypeUtil.findConfigurationType(XsltRunConfigType.class);
   }
 
+  @NotNull
   @Override
   public String getDisplayName() {
     return "XSLT";
@@ -64,6 +65,11 @@ public class XsltRunConfigType implements ConfigurationType {
     return new ConfigurationFactory[]{myFactory};
   }
 
+  @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.XSLT";
+  }
+
   private static class MyConfigurationFactory extends ConfigurationFactory {
     MyConfigurationFactory(XsltRunConfigType type) {
       super(type);
@@ -71,7 +77,7 @@ public class XsltRunConfigType implements ConfigurationType {
 
     @Override
     @NotNull
-    public RunConfiguration createTemplateConfiguration(final Project project) {
+    public RunConfiguration createTemplateConfiguration(@NotNull final Project project) {
       return new XsltRunConfiguration(project, this);
     }
   }

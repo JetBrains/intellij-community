@@ -155,7 +155,7 @@ public class GitBinaryHandler extends GitHandler {
       }
 
       @Override
-      public void startFailed(Throwable exception) {
+      public void startFailed(@NotNull Throwable exception) {
         //noinspection ThrowableInstanceNeverThrown
         VcsException e = myException.getAndSet(new VcsException("Start failed: " + exception.getMessage(), exception));
         if (e != null) {

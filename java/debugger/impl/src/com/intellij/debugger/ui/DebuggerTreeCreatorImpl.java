@@ -39,7 +39,7 @@ class DebuggerTreeCreatorImpl implements DebuggerTreeCreator<Pair<NodeDescriptor
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.ValueHintTreeComponent");
   private final Project myProject;
 
-  public DebuggerTreeCreatorImpl(Project project) {
+  DebuggerTreeCreatorImpl(Project project) {
     myProject = project;
   }
 

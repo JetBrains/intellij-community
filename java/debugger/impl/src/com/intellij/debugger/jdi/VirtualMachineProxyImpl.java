@@ -19,8 +19,6 @@ import com.intellij.util.ThreeState;
 import com.sun.jdi.*;
 import com.sun.jdi.event.EventQueue;
 import com.sun.jdi.request.EventRequestManager;
-import com.sun.tools.jdi.JNITypeParser;
-import com.sun.tools.jdi.TargetVM;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -93,7 +91,14 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     static final Method typeNameToSignatureMethod;
 
     static {
-      typeNameToSignatureMethod = ReflectionUtil.getDeclaredMethod(JNITypeParser.class, "typeNameToSignature", String.class);
+      Method method = null;
+      try {
+        method = ReflectionUtil.getDeclaredMethod(Class.forName("com.sun.tools.jdi.JNITypeParser"), "typeNameToSignature", String.class);
+      }
+      catch (ClassNotFoundException e) {
+        LOG.warn(e);
+      }
+      typeNameToSignatureMethod = method;
       if (typeNameToSignatureMethod == null) {
         LOG.warn("Unable to find JNITypeParser.typeNameToSignature method");
       }
@@ -221,6 +226,9 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   public void suspend() {
+    if (!canBeModified()) {
+      return;
+    }
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myPausePressedCount++;
     myVirtualMachine.suspend();
@@ -228,6 +236,9 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   public void resume() {
+    if (!canBeModified()) {
+      return;
+    }
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if (myPausePressedCount > 0) {
       myPausePressedCount--;
@@ -355,7 +366,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     finally {
       if (Patches.JDK_BUG_EVENT_CONTROLLER_LEAK) {
         // Memory leak workaround, see IDEA-163334
-        TargetVM target = ReflectionUtil.getField(myVirtualMachine.getClass(), myVirtualMachine, TargetVM.class, "target");
+        Object target = ReflectionUtil.getField(myVirtualMachine.getClass(), myVirtualMachine, null, "target");
         if (target != null) {
           Thread controller = ReflectionUtil.getField(target.getClass(), target, Thread.class, "eventController");
           if (controller != null) {
@@ -554,6 +565,10 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   };
   public boolean canGetInstanceInfo() {
     return myCanGetInstanceInfo.isAvailable();
+  }
+
+  public boolean canBeModified() {
+    return myVirtualMachine.canBeModified();
   }
 
   @Override

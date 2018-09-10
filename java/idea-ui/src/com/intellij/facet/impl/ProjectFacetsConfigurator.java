@@ -364,7 +364,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
   private class MyProjectConfigurableContext extends ProjectConfigurableContext {
     private final LibrariesContainer myContainer;
 
-    public MyProjectConfigurableContext(final Facet facet, final FacetEditorContext parentContext, final ModuleConfigurationState state) {
+    MyProjectConfigurableContext(final Facet facet, final FacetEditorContext parentContext, final ModuleConfigurationState state) {
       super(facet, ProjectFacetsConfigurator.this.isNewFacet(facet), parentContext, state,
             ProjectFacetsConfigurator.this.getSharedModuleData(facet.getModule()), getProjectData());
       myContainer = LibrariesContainerFactory.createContainer(myContext);

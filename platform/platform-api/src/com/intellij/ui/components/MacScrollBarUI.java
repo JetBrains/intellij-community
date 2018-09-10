@@ -181,7 +181,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
    * @param toRemove the object to remove from the static list of references (ignored if {@code null})
    * @param list     the list to collect all available objects (ignored if {@code null})
    */
-  private static void processReferences(MacScrollBarUI toAdd, MacScrollBarUI toRemove, List<MacScrollBarUI> list) {
+  private static void processReferences(MacScrollBarUI toAdd, MacScrollBarUI toRemove, List<? super MacScrollBarUI> list) {
     synchronized (UI) {
       Iterator<Reference<MacScrollBarUI>> iterator = UI.iterator();
       while (iterator.hasNext()) {
@@ -220,7 +220,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
     return invoke(name, "new");
   }
 
-  private static <T> T callMac(Producer<T> producer) {
+  private static <T> T callMac(Producer<? extends T> producer) {
     if (SystemInfo.isMac) {
       NSAutoreleasePool pool = new NSAutoreleasePool();
       try {
@@ -318,7 +318,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
   private static abstract class Native<T> implements Callback, Runnable, Producer<T> {
     private T myValue;
 
-    public Native() {
+    Native() {
       Logger.getInstance(MacScrollBarUI.class).debug("initialize ", this);
       callMac(() -> initialize());
       UIUtil.invokeLaterIfNeeded(this);

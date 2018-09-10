@@ -85,24 +85,24 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
   private boolean extractInnerClass;
 
   public ExtractClassProcessor(PsiClass sourceClass,
-                               List<PsiField> fields,
-                               List<PsiMethod> methods,
-                               List<PsiClass> innerClasses,
+                               List<? extends PsiField> fields,
+                               List<? extends PsiMethod> methods,
+                               List<? extends PsiClass> innerClasses,
                                String newPackageName,
                                String newClassName) {
     this(sourceClass, fields, methods, innerClasses, newPackageName, null, newClassName, null, false, Collections.emptyList(), false);
   }
 
   public ExtractClassProcessor(PsiClass sourceClass,
-                               List<PsiField> fields,
-                               List<PsiMethod> methods,
-                               List<PsiClass> classes,
+                               List<? extends PsiField> fields,
+                               List<? extends PsiMethod> methods,
+                               List<? extends PsiClass> classes,
                                String packageName,
                                MoveDestination moveDestination,
                                String newClassName,
                                String newVisibility,
                                boolean generateAccessors,
-                               List<MemberInfo> enumConstants,
+                               List<? extends MemberInfo> enumConstants,
                                boolean extractInnerClass) {
     super(sourceClass.getProject());
     this.sourceClass = sourceClass;
@@ -127,7 +127,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       ContainerUtil.addAll(typeParams, sourceClass.getTypeParameters());
     }
     else {
-      final Set<PsiTypeParameter> typeParamSet = new HashSet<>();
+      final Set<PsiTypeParameter> typeParamSet = new LinkedHashSet<>();
       final TypeParametersVisitor visitor = new TypeParametersVisitor(typeParamSet);
       for (PsiField field : fields) {
         field.accept(visitor);
@@ -417,9 +417,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     fieldBuffer.append(fullyQualifiedName);
     if (!typeParams.isEmpty()) {
       fieldBuffer.append('<');
-      for (PsiTypeParameter typeParameter : typeParams) {
-        fieldBuffer.append(typeParameter.getName());
-      }
+      fieldBuffer.append(StringUtil.join(typeParams, param -> param.getName(), ", "));
       fieldBuffer.append('>');
     }
     fieldBuffer.append(' ');
@@ -427,9 +425,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     fieldBuffer.append(" = new ").append(fullyQualifiedName);
     if (!typeParams.isEmpty()) {
       fieldBuffer.append('<');
-      for (PsiTypeParameter typeParameter : typeParams) {
-        fieldBuffer.append(typeParameter.getName());
-      }
+      fieldBuffer.append(StringUtil.join(typeParams, param -> param.getName(), ", "));
       fieldBuffer.append('>');
     }
     fieldBuffer.append('(');
@@ -490,7 +486,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     }
   }
 
-  private void findUsagesForInnerClass(PsiClass innerClass, List<FixableUsageInfo> usages) {
+  private void findUsagesForInnerClass(PsiClass innerClass, List<? super FixableUsageInfo> usages) {
     final PsiManager psiManager = innerClass.getManager();
     final Project project = psiManager.getProject();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
@@ -515,7 +511,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     }
   }
 
-  private void findUsagesForMethod(PsiMethod method, List<FixableUsageInfo> usages) {
+  private void findUsagesForMethod(PsiMethod method, List<? super FixableUsageInfo> usages) {
     final PsiManager psiManager = method.getManager();
     final Project project = psiManager.getProject();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
@@ -549,7 +545,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     }
   }
 
-  private void findUsagesForStaticMethod(PsiMethod method, List<FixableUsageInfo> usages) {
+  private void findUsagesForStaticMethod(PsiMethod method, List<? super FixableUsageInfo> usages) {
     final PsiManager psiManager = method.getManager();
     final Project project = psiManager.getProject();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
@@ -591,7 +587,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     return false;
   }
 
-  private void findUsagesForField(PsiField field, List<FixableUsageInfo> usages) {
+  private void findUsagesForField(PsiField field, List<? super FixableUsageInfo> usages) {
     final PsiManager psiManager = field.getManager();
     final Project project = psiManager.getProject();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);

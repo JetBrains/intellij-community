@@ -397,7 +397,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
 
   protected abstract boolean hasUnresolvedImportWhichCanImport(PsiFile psiFile, String name);
 
-  private static void reduceSuggestedClassesBasedOnDependencyRuleViolation(PsiFile file, List<PsiClass> availableClasses) {
+  private static void reduceSuggestedClassesBasedOnDependencyRuleViolation(PsiFile file, List<? extends PsiClass> availableClasses) {
     final Project project = file.getProject();
     final DependencyValidationManager validationManager = DependencyValidationManager.getInstance(project);
     for (int i = availableClasses.size() - 1; i >= 0; i--) {

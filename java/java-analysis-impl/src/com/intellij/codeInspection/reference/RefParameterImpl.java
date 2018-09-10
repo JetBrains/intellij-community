@@ -17,9 +17,9 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
   private static final int USED_FOR_READING_MASK = 0x10000;
   private static final int USED_FOR_WRITING_MASK = 0x20000;
 
-
   private final short myIndex;
   private Object myActualValueTemplate;
+  private int myUsageCount;
 
   RefParameterImpl(PsiParameter parameter, int index, RefManager manager) {
     super(parameter, manager);
@@ -53,6 +53,11 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
   @Override
   public PsiParameter getElement() {
     return (PsiParameter)super.getElement();
+  }
+
+  @Override
+  public int getUsageCount() {
+    return myUsageCount;
   }
 
   @Override
@@ -92,6 +97,7 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
   }
   
   void updateTemplateValue(PsiExpression expression, @Nullable PsiElement accessPlace) {
+    myUsageCount++;
     if (myActualValueTemplate == VALUE_IS_NOT_CONST) return;
 
     Object newTemplate = getAccessibleExpressionValue(expression, () -> accessPlace == null ? getContainingFile() : accessPlace);

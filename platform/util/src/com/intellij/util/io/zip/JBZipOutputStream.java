@@ -89,7 +89,7 @@ class JBZipOutputStream {
    * @throws IOException on error
    * @since 1.14
    */
-  public JBZipOutputStream(JBZipFile file, long currentCDOffset) throws IOException {
+  JBZipOutputStream(JBZipFile file, long currentCDOffset) throws IOException {
     myFile = file;
     raf = myFile.archive;
     writtenOnDisk = currentCDOffset;
@@ -483,7 +483,7 @@ class JBZipOutputStream {
     private final RandomAccessFile myFile;
     private long myWrittenBytes;
 
-    public RandomAccessFileOutputStream(RandomAccessFile file) {
+    RandomAccessFileOutputStream(RandomAccessFile file) {
       myFile = file;
     }
 

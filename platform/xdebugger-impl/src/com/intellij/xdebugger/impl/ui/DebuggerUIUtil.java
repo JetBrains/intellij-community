@@ -220,7 +220,7 @@ public class DebuggerUIUtil {
 
     balloon.addListener(new JBPopupListener() {
       @Override
-      public void onClosed(LightweightWindowEvent event) {
+      public void onClosed(@NotNull LightweightWindowEvent event) {
         Disposer.dispose(disposable);
         propertiesPanel.saveProperties();
         propertiesPanel.dispose();
@@ -323,7 +323,7 @@ public class DebuggerUIUtil {
     private final AtomicBoolean myObsolete = new AtomicBoolean(false);
     private final EditorTextField myTextArea;
 
-    public FullValueEvaluationCallbackImpl(final EditorTextField textArea) {
+    FullValueEvaluationCallbackImpl(final EditorTextField textArea) {
       myTextArea = textArea;
     }
 

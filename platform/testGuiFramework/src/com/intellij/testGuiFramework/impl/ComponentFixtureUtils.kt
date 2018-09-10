@@ -12,6 +12,7 @@ import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedTableFixture
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.framework.Timeouts.defaultTimeout
+import com.intellij.testGuiFramework.framework.toPrintable
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.typeMatcher
 import com.intellij.testGuiFramework.util.FinderPredicate
 import com.intellij.testGuiFramework.util.Predicate
@@ -19,6 +20,7 @@ import com.intellij.ui.CheckboxTree
 import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
+import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.components.labels.ActionLink
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.treeStructure.treetable.TreeTable
@@ -165,6 +167,15 @@ fun <C : Container> ContainerFixture<C>.actionButton(actionName: String, timeout
   return ActionButtonFixture(robot(), actionButton)
 }
 
+fun <C : Container> ContainerFixture<C>.actionButton(actionName: String, filter: (ActionButton) -> Boolean, timeout: Timeout = defaultTimeout): ActionButtonFixture {
+  val actionButton: ActionButton = try {
+    findComponentWithTimeout(timeout) { ActionButtonFixture.textMatcher(actionName).invoke(it).and(filter.invoke(it)) }
+  }
+  catch (componentLookupException: ComponentLookupException) {
+    findComponentWithTimeout(timeout) { ActionButtonFixture.actionIdMatcher(actionName).invoke(it).and(filter.invoke(it)) }
+  }
+  return ActionButtonFixture(robot(), actionButton)
+}
 
 /**
  * Finds a InplaceButton component in hierarchy of context component by icon and returns InplaceButtonFixture.
@@ -190,6 +201,13 @@ fun <C : Container> ContainerFixture<C>.actionButtonByClass(actionClassName: Str
 
 }
 
+
+fun <C : Container> ContainerFixture<C>.tab(textLabel: String, timeout: Timeout = defaultTimeout): JBTabbedPaneFixture {
+  val jbTabbedPane: JBTabbedPane = findComponentWithTimeout(timeout) {
+    it.indexOfTab(textLabel) != -1
+  }
+  return JBTabbedPaneFixture(textLabel, jbTabbedPane, robot())
+}
 
 /**
  * Finds a JRadioButton component in hierarchy of context component by label text and returns JRadioButtonFixture.
@@ -403,7 +421,7 @@ inline fun <reified ComponentType : Component, ContainerComponentType : Containe
   }
   catch (e: WaitTimedOutError) {
     throw ComponentLookupException(
-      "Unable to find ${ComponentType::class.java.name} ${if (this?.target() != null) "in container ${this.target()}" else ""} in $timeout seconds")
+      "Unable to find ${ComponentType::class.java.name} ${if (this?.target() != null) "in container ${this.target()}" else ""} in ${timeout.toPrintable()} seconds")
   }
 }
 

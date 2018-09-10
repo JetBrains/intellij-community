@@ -28,7 +28,7 @@ class DeleteHandler {
   private final CvsStorageSupportingDeletionComponent myCvsStorageComponent;
   private final Collection<File> myFilesToDeleteEntry = new ArrayList<>();
 
-  public DeleteHandler(Project project, CvsStorageSupportingDeletionComponent cvsStorageComponent) {
+  DeleteHandler(Project project, CvsStorageSupportingDeletionComponent cvsStorageComponent) {
     myProject = project;
     myCvsStorageComponent = cvsStorageComponent;
   }

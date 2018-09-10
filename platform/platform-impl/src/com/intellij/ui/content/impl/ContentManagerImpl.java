@@ -99,7 +99,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   private class MyNonOpaquePanel extends NonOpaquePanel implements DataProvider {
-    public MyNonOpaquePanel() {
+    MyNonOpaquePanel() {
       super(new BorderLayout());
     }
 

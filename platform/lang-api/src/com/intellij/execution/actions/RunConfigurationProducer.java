@@ -4,6 +4,7 @@ package com.intellij.execution.actions;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -43,11 +44,15 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
 
   private final ConfigurationFactory myConfigurationFactory;
 
-  protected RunConfigurationProducer(final ConfigurationFactory configurationFactory) {
+  protected RunConfigurationProducer(@NotNull ConfigurationFactory configurationFactory) {
     myConfigurationFactory = configurationFactory;
   }
 
-  protected RunConfigurationProducer(final ConfigurationType configurationType) {
+  protected RunConfigurationProducer(@NotNull Class<? extends ConfigurationType> type) {
+    this(ConfigurationTypeUtil.findConfigurationType(type));
+  }
+
+  protected RunConfigurationProducer(@NotNull ConfigurationType configurationType) {
     myConfigurationFactory = configurationType.getConfigurationFactories()[0];
   }
 
@@ -219,7 +224,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
     if (original != null) {
       return RunManager.getInstance(context.getProject()).createConfiguration(original.clone(), configurationFactory);
     }
-    return RunManager.getInstance(context.getProject()).createRunConfiguration("", configurationFactory);
+    return RunManager.getInstance(context.getProject()).createConfiguration("", configurationFactory);
   }
 
   @NotNull

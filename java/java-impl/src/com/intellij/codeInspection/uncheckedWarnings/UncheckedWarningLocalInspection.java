@@ -99,7 +99,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
   }
 
   @NotNull
-  static JCheckBox createSetting(@NotNull String cbText, final boolean option, @NotNull Pass<JCheckBox> pass) {
+  static JCheckBox createSetting(@NotNull String cbText, final boolean option, @NotNull Pass<? super JCheckBox> pass) {
     final JCheckBox uncheckedCb = new JCheckBox(cbText, option);
     uncheckedCb.addActionListener(e -> pass.pass(uncheckedCb));
     return uncheckedCb;

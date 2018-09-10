@@ -96,7 +96,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
 
   private static boolean hasSuperMethodCandidates(final PsiMethod method,
                                                   final GlobalSearchScope scope,
-                                                  final Condition<PsiMember> qualifiedMatcher) {
+                                                  final Condition<? super PsiMember> qualifiedMatcher) {
     if (method.hasModifierProperty(PsiModifier.PRIVATE) || method.hasModifierProperty(PsiModifier.STATIC)) return false;
 
     final PsiClass containingClass = method.getContainingClass();
@@ -118,7 +118,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
     });
 
   }
-  private static boolean hasSuperMethod(final PsiMethod method, final GlobalSearchScope scope, final Condition<PsiMember> qualifiedMatcher) {
+  private static boolean hasSuperMethod(final PsiMethod method, final GlobalSearchScope scope, final Condition<? super PsiMember> qualifiedMatcher) {
     if (!hasSuperMethodCandidates(method, scope, qualifiedMatcher)) {
       return false;
     }

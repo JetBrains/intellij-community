@@ -11,6 +11,9 @@ import java.io.File
 import java.io.IOException
 import java.io.OutputStream
 import java.io.PrintStream
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.function.Consumer
 import java.util.stream.Collectors
 
@@ -31,10 +34,13 @@ fun main(args: Array<String>) {
              args.find(syncRemovedIconsInDev)?.toBoolean() ?: true)
 }
 
-private fun ignoreCaseInDirName(path: String) = File(path).let {
-  it.parentFile.listFiles().first {
-    it.absolutePath.equals(FileUtil.toSystemDependentName(path), ignoreCase = true)
-  }.absolutePath
+private fun ignoreCaseInDirName(path: String): String {
+  return Files.list(Paths.get(path).parent)
+    .filter { it.toAbsolutePath().toString().equals(FileUtil.toSystemDependentName(path), ignoreCase = true) }
+    .findFirst()
+    .get()
+    .toAbsolutePath()
+    .toString()
 }
 
 private fun Array<String>.find(arg: String) = this.find {
@@ -124,7 +130,7 @@ fun checkIcons(
 private fun readIconsRepo(iconsRepo: File, iconsRepoDir: String) =
   listGitObjects(iconsRepo, iconsRepoDir) {
     // read icon hashes
-    isIcon(it)
+    isValidIcon(it.toPath())
   }.also {
     if (it.isEmpty()) throw IllegalStateException("Icons repo doesn't contain icons")
   }
@@ -140,7 +146,7 @@ private fun readDevRepo(devRepoRoot: File,
   val skipDirsRegex = skipDirsPattern?.toRegex()
   val devRepoIconFilter = { file: File ->
     // read icon hashes skipping test roots
-    !inTestRoot(file, testRoots, skipDirsRegex) && isIcon(file)
+    !inTestRoot(file, testRoots, skipDirsRegex) && isValidIcon(file.toPath())
   }
   val devIcons = if (devRepoVcsRoots.size == 1
                      && devRepoVcsRoots.contains(devRepoRoot)) {
@@ -176,13 +182,13 @@ private val mutedStream = PrintStream(object : OutputStream() {
   override fun write(b: Int) {}
 })
 
-private fun isIcon(file: File): Boolean {
+private fun isValidIcon(file: Path): Boolean {
   val err = System.err
   System.setErr(mutedStream)
   return try {
     // image
     isImage(file) && imageSize(file)?.let { size ->
-      val pixels = if (file.name.contains("@2x")) 64 else 32
+      val pixels = if (file.fileName.toString().contains("@2x")) 64 else 32
       // small
       size.height <= pixels && size.width <= pixels
     } ?: false

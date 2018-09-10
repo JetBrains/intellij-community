@@ -239,7 +239,7 @@ public abstract class AbstractValueHint {
     };
     myCurrentHint.addHintListener(new HintListener() {
       @Override
-      public void hintHidden(EventObject event) {
+      public void hintHidden(@NotNull EventObject event) {
         if (myHideRunnable != null && !myInsideShow) {
           myHideRunnable.run();
         }
@@ -358,7 +358,7 @@ public abstract class AbstractValueHint {
     if (!myProject.equals(hint.myProject)) return false;
     if (!myEditor.equals(hint.myEditor)) return false;
     if (myType != hint.myType) return false;
-    if (myCurrentRange != null ? !myCurrentRange.equals(hint.myCurrentRange) : hint.myCurrentRange != null) return false;
+    if (!Objects.equals(myCurrentRange, hint.myCurrentRange)) return false;
 
     return true;
   }

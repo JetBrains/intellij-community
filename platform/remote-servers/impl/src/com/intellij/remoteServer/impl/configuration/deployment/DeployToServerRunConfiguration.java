@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.impl.configuration.deployment;
 
 import com.intellij.configurationStore.ComponentSerializationUtil;
@@ -23,6 +21,7 @@ import com.intellij.remoteServer.configuration.deployment.*;
 import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerSettingsEditor.AnySource;
 import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerSettingsEditor.LockedSource;
 import com.intellij.remoteServer.impl.runtime.DeployToServerState;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -31,6 +30,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author nik
@@ -253,6 +254,29 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
       LOG.error(e);
     }
     return result;
+  }
+
+  @Override
+  public void onNewConfigurationCreated() {
+    if (getServerName() == null) {
+      RemoteServer<?> server = ContainerUtil.getFirstItem(RemoteServersManager.getInstance().getServers(myServerType));
+      if (server != null) {
+        setServerName(server.getName());
+      }
+    }
+
+    if (getDeploymentSource() == null) {
+      DeploymentConfigurator<D, S> deploymentConfigurator = getDeploymentConfigurator();
+      List<DeploymentSource> sources = deploymentConfigurator.getAvailableDeploymentSources();
+      DeploymentSource source = ContainerUtil.getFirstItem(sources);
+      if (source != null) {
+        setDeploymentSource(source);
+        setDeploymentConfiguration(deploymentConfigurator.createDefaultConfiguration(source));
+        DeploymentSourceType type = source.getType();
+        //noinspection unchecked
+        type.setBuildBeforeRunTask(this, source);
+      }
+    }
   }
 
   public static class ConfigurationState {

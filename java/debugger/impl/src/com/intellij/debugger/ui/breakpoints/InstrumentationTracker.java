@@ -11,7 +11,6 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
-import com.sun.tools.jdi.ReferenceTypeImpl;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,8 +27,18 @@ public class InstrumentationTracker {
   @SuppressWarnings("FieldCanBeLocal") private final InstrumentationMethodBreakpoint myRetransformBreakpoint;
   @NotNull private final DebugProcessImpl myDebugProcess;
 
-  private static final java.lang.reflect.Method ourNoticeRedefineClassMethod =
-    ReflectionUtil.getDeclaredMethod(ReferenceTypeImpl.class, "noticeRedefineClass");
+  private static final java.lang.reflect.Method ourNoticeRedefineClassMethod;
+
+  static {
+    java.lang.reflect.Method redefineMethod = null;
+    try {
+      redefineMethod = ReflectionUtil.getDeclaredMethod(Class.forName("com.sun.tools.jdi.ReferenceTypeImpl"), "noticeRedefineClass");
+    }
+    catch (ClassNotFoundException e) {
+      LOG.warn(e);
+    }
+    ourNoticeRedefineClassMethod = redefineMethod;
+  }
 
   public static void track(DebugProcessImpl debugProcess) {
     if (ourNoticeRedefineClassMethod != null) {

@@ -57,12 +57,7 @@ import java.util.*;
  */
 public class CustomAntElementsRegistry {
 
-  public static ThreadLocal<Boolean> ourIsBuildingClasspathForCustomTagLoading = new ThreadLocal<Boolean>() {
-    @Override
-    protected Boolean initialValue() {
-      return Boolean.FALSE;
-    }
-  };
+  public static final ThreadLocal<Boolean> ourIsBuildingClasspathForCustomTagLoading = ThreadLocal.withInitial(() -> Boolean.FALSE);
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.dom.CustomAntElementsRegistry");
   private static final Key<CustomAntElementsRegistry> REGISTRY_KEY = Key.create("_custom_element_registry_");
 
@@ -367,7 +362,7 @@ public class CustomAntElementsRegistry {
     private final Set<String> processedAntlibs = new HashSet<>();
     private final AntDomProject myAntProject;
 
-    public CustomTagDefinitionFinder(AntDomProject antProject) {
+    CustomTagDefinitionFinder(AntDomProject antProject) {
       myAntProject = antProject;
     }
 

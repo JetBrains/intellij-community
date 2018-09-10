@@ -42,7 +42,7 @@ public class SdkSetupNotificationProvider extends EditorNotifications.Provider<E
     myProject = project;
     myProject.getMessageBus().connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         notifications.updateAllNotifications();
       }
     });

@@ -139,7 +139,7 @@ public class ChangeStringLiteralToCharInMethodCallFix implements IntentionAction
    * @return {@code true} if exact TYPEs match
    */
   private static boolean findMatchingExpressions(final PsiExpression[] arguments, final PsiMethod existingMethod,
-                                                 final Set<PsiLiteralExpression>result) {
+                                                 final Set<? super PsiLiteralExpression> result) {
     final PsiParameterList parameterList = existingMethod.getParameterList();
     final PsiParameter[] parameters = parameterList.getParameters();
 

@@ -138,7 +138,7 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
   }
 
   private static class VariableCompletionTableCellEditor extends StringTableCellEditor {
-    public VariableCompletionTableCellEditor(Project project) {
+    VariableCompletionTableCellEditor(Project project) {
       super(project);
     }
 
@@ -177,7 +177,7 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
   }
 
   private static class EditorWithExpectedType extends JavaCodeFragmentTableCellEditor {
-    public EditorWithExpectedType(PsiElement typeContext) {
+    EditorWithExpectedType(PsiElement typeContext) {
       super(typeContext.getProject());
     }
 
