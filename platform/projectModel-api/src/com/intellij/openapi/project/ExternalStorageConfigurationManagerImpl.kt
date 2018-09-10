@@ -14,12 +14,7 @@ class ExternalStorageConfiguration : BaseState() {
 }
 
 @State(name = "ExternalStorageConfigurationManager")
-class ExternalStorageConfigurationManager : PersistentStateComponent<ExternalStorageConfiguration>, ModificationTracker {
-  companion object {
-    @JvmStatic
-    fun getInstance(project: Project): ExternalStorageConfigurationManager = ServiceManager.getService(project, ExternalStorageConfigurationManager::class.java)
-  }
-
+class ExternalStorageConfigurationManagerImpl : PersistentStateComponent<ExternalStorageConfiguration>, ModificationTracker, ExternalStorageConfigurationManager {
   private var state = ExternalStorageConfiguration()
 
   override fun getModificationCount(): Long = state.modificationCount
@@ -32,12 +27,12 @@ class ExternalStorageConfigurationManager : PersistentStateComponent<ExternalSto
     this.state = state
   }
 
-  fun isEnabled(): Boolean = state.enabled
+  override fun isEnabled(): Boolean = state.enabled
 
   /**
    * Internal use only. Call ExternalProjectsManagerImpl.setStoreExternally instead.
    */
-  fun setEnabled(value: Boolean) {
+  override fun setEnabled(value: Boolean) {
     state.enabled = value
   }
 }
