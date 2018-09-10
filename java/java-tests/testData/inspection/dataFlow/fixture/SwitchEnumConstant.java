@@ -41,4 +41,19 @@ class InspectionTest {
         break;
     }
   }
+
+  void testLastUnreachable(X x) {
+    if (x == X.A) {
+      System.out.println("It's a");
+    } else {
+      switch (x) {
+        case B:
+          System.out.println("It's b");break;
+        case C:
+          System.out.println("It's c");break;
+        <warning descr="Switch label 'case A:' is unreachable">case A:</warning>
+          System.out.println("It's a again");break;
+      }
+    }
+  }
 }
