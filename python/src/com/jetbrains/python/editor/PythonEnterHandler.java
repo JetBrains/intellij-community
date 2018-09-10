@@ -145,29 +145,33 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
       }
       final String pref = element.getText().substring(0, prefixLength);
       final String quote = element.getText().substring(prefixLength, prefixLength + 1);
-      final boolean nextIsBackslash = "\\".equals(doc.getText(TextRange.create(offset - 1, offset)));
-      final boolean isEscapedQuote = quote.equals(doc.getText(TextRange.create(offset, offset + 1))) && nextIsBackslash;
-      final boolean isEscapedBackslash = "\\".equals(doc.getText(TextRange.create(offset-2, offset - 1))) && nextIsBackslash;
+      
+      // Don't split in the middle of an escape sequence
+      final boolean nextIsBackslash = "\\".equals(doc.getText(TextRange.from(offset - 1, 1)));
+      final boolean isEscapedQuote = quote.equals(doc.getText(TextRange.from(offset, 1))) && nextIsBackslash;
+      final boolean isEscapedBackslash = "\\".equals(doc.getText(TextRange.from(offset - 2, 1))) && nextIsBackslash;
       if (nextIsBackslash && !isEscapedQuote && !isEscapedBackslash) return Result.Continue;
 
-      final StringBuilder replacementString = new StringBuilder();
       myPostprocessShift = prefixLength + quote.length();
 
       if (PsiTreeUtil.getParentOfType(string, IMPLICIT_WRAP_CLASSES) != null) {
+        final StringBuilder replacementString = new StringBuilder();
         replacementString.append(quote).append(pref).append(quote);
         doc.insertString(offset, replacementString);
         caretOffset.set(caretOffset.get() + 1);
         return Result.Continue;
       }
       else {
+        final StringBuilder replacementString = new StringBuilder();
         if (isEscapedQuote) {
           replacementString.append(quote);
           caretOffset.set(caretOffset.get() + 1);
         }
         replacementString.append(quote).append(" \\").append(pref);
-        if (!isEscapedQuote)
+        if (!isEscapedQuote) {
           replacementString.append(quote);
-        doc.insertString(offset, replacementString.toString());
+        }
+        doc.insertString(offset, replacementString);
         caretOffset.set(caretOffset.get() + 3);
         return Result.Continue;
       }
