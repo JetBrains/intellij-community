@@ -1599,7 +1599,6 @@ public class AllIcons {
     public static final Icon Module = IconLoader.getIcon("/nodes/Module.svg"); // 16x16
     public static final Icon ModuleGroup = IconLoader.getIcon("/nodes/moduleGroup.svg"); // 16x16
     public static final Icon NativeLibrariesFolder = IconLoader.getIcon("/nodes/nativeLibrariesFolder.svg"); // 16x16
-    public static final Icon NewException = IconLoader.getIcon("/nodes/newException.svg"); // 16x16
     public static final Icon NewParameter = IconLoader.getIcon("/nodes/newParameter.svg"); // 16x16
     public static final Icon NodePlaceholder = IconLoader.getIcon("/nodes/nodePlaceholder.svg"); // 16x16
     public static final Icon NotFavoriteOnHover = IconLoader.getIcon("/nodes/notFavoriteOnHover.svg"); // 16x16
@@ -1613,14 +1612,12 @@ public class AllIcons {
     public static final Icon Pluginnotinstalled = IconLoader.getIcon("/nodes/pluginnotinstalled.svg"); // 16x16
     public static final Icon Pluginobsolete = IconLoader.getIcon("/nodes/pluginobsolete.svg"); // 16x16
     public static final Icon PluginRestart = IconLoader.getIcon("/nodes/pluginRestart.svg"); // 16x16
-    public static final Icon PluginUpdate = IconLoader.getIcon("/nodes/pluginUpdate.svg"); // 16x16
     public static final Icon PpInvalid = IconLoader.getIcon("/nodes/ppInvalid.svg"); // 16x16
     public static final Icon PpJar = IconLoader.getIcon("/nodes/ppJar.svg"); // 16x16
     public static final Icon PpJdk = IconLoader.getIcon("/nodes/ppJdk.svg"); // 16x16
     public static final Icon PpLib = IconLoader.getIcon("/nodes/ppLib.svg"); // 16x16
     public static final Icon PpLibFolder = IconLoader.getIcon("/nodes/ppLibFolder.svg"); // 16x16
     public static final Icon PpWeb = IconLoader.getIcon("/nodes/ppWeb.svg"); // 16x16
-    public static final Icon PpWebLogo = IconLoader.getIcon("/nodes/ppWebLogo.png"); // 32x32
     public static final Icon Project = IconLoader.getIcon("/nodes/project.svg"); // 16x16
     public static final Icon Property = IconLoader.getIcon("/nodes/property.svg"); // 16x16
     public static final Icon PropertyRead = IconLoader.getIcon("/nodes/propertyRead.svg"); // 16x16
@@ -1675,10 +1672,20 @@ public class AllIcons {
     @Deprecated
     public static final Icon ExpandNode = AllIcons.Nodes.TreeRightArrow;
 
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon NewException = IconLoader.getIcon("/nodes/newException.svg");
+
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Folder */
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon NewFolder = AllIcons.Nodes.Folder;
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon PluginUpdate = IconLoader.getIcon("/nodes/pluginUpdate.svg");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -1689,6 +1696,11 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon PpFile = AllIcons.Nodes.Folder;
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon PpWebLogo = IconLoader.getIcon("/nodes/ppWebLogo.png");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Folder */
     @SuppressWarnings("unused")
