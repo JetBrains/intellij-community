@@ -134,7 +134,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     @Override
     public void treeNodesInserted(TreeModelEvent e) {
       TreePath parentPath = e.getTreePath();
-      if (parentPath == null || parentPath.getPathCount() > 4) return;
+      if (parentPath == null || parentPath.getPathCount() > 2) return;
       Object[] children = e.getChildren();
       for (Object o : children) {
         NodeDescriptor descriptor = TreeUtil.getUserObject(NodeDescriptor.class, o);
