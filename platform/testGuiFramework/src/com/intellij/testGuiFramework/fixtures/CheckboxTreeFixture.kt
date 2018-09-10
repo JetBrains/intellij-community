@@ -40,4 +40,5 @@ class CheckboxTreeFixture(
 
   fun uncheck() = setCheckboxValue(false)
 
+  fun isSelected(): Boolean = getCheckboxComponent()?.isSelected ?: false
 }
