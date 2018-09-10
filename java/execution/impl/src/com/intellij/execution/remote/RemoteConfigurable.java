@@ -168,10 +168,9 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
 
     gc.gridx = 0;
     gc.gridy++;
-    gc.gridwidth = 5;
+    gc.gridwidth = 6;
     gc.weightx = 1.0;
     gc.fill = GridBagConstraints.HORIZONTAL;
-    gc.weightx = 0;
     gc.insets = JBUI.insetsTop(10);
 
     mainPanel.add(UI.PanelFactory.panel(myArgsArea).withLabel("&Command line arguments for remote JVM:").
@@ -184,10 +183,9 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
 
     gc.gridx = 0;
     gc.gridy++;
-    gc.gridwidth = 5;
+    gc.gridwidth = 6;
     gc.weightx = 1.0;
     gc.fill = GridBagConstraints.HORIZONTAL;
-    gc.weightx = 0;
     gc.insets = JBUI.insetsTop(21);
     mainPanel.add(UI.PanelFactory.panel(myModuleCombo).withLabel("Use &module classpath:").
       withComment("First search for sources of the debugged classes in the selected module classpath").createPanel(), gc);
@@ -214,7 +212,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
   }
 
   private void updateArgsText(@NotNull JDKVersionItem vi) {
-    myAutoRestart.setVisible(myModeCombo.getSelectedItem() == Mode.LISTEN);
+    //myAutoRestart.setVisible(myModeCombo.getSelectedItem() == Mode.LISTEN);
     boolean useSockets = myTransportCombo.getSelectedItem() == Transport.SOCKET;
 
     RemoteConnection connection = new RemoteConnection(useSockets, myHostName.getText().trim(),
@@ -295,6 +293,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     JLabel hostLabel = createLabelFor("&Host:", myHostName);
     JLabel portLabel = createLabelFor(myPort.getValueName(), myPort);
 
+    gc.gridwidth = 2;
     panel.add(modeLabel, gc);
 
     gc.gridx += 2;
@@ -307,6 +306,13 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     gc.fill = GridBagConstraints.NONE;
     gc.insets = JBUI.insets(4, 20, 0, 8);
     panel.add(myAutoRestart, gc);
+
+    gc.gridx += 2;
+    gc.gridwidth = 1;
+    gc.weightx = 1.0;
+    gc.fill = GridBagConstraints.HORIZONTAL;
+    gc.insets = JBUI.emptyInsets();
+    panel.add(new JPanel(), gc);
 
     if (SystemInfo.isWindows) {
       JLabel addressLabel = createLabelFor("&Address:", myAddress);
@@ -384,6 +390,12 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     gc.gridx++;
     gc.insets = JBUI.insetsTop(4);
     panel.add(myPort, gc);
+
+    gc.gridx++;
+    gc.weightx = 1.0;
+    gc.fill = GridBagConstraints.HORIZONTAL;
+    gc.insets = JBUI.emptyInsets();
+    panel.add(new JPanel(), gc);
 
     return panel;
   }
