@@ -119,7 +119,7 @@ public class GraphTableModel extends AbstractTableModel {
       requestToLoadMore(EmptyRunnable.INSTANCE);
     }
 
-    VcsShortCommitDetails data = getShortDetails(rowIndex);
+    VcsShortCommitDetails data = getCommitMetadata(rowIndex);
     switch (columnIndex) {
       case ROOT_COLUMN:
         return getRoot(rowIndex);
@@ -186,7 +186,7 @@ public class GraphTableModel extends AbstractTableModel {
   }
 
   @NotNull
-  public VcsShortCommitDetails getShortDetails(int row) {
+  public VcsCommitMetadata getCommitMetadata(int row) {
     return getDetails(row, myLogData.getMiniDetailsGetter());
   }
 
