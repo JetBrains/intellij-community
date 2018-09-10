@@ -19,6 +19,7 @@ import com.intellij.util.io.PowerStatus;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -111,12 +112,14 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator, Pr
     myCache.clear();
     List<LocalChangeList> lists = myChangeListManager.getChangeLists();
     for (LocalChangeList list : lists) {
-      if (list.getChanges().isEmpty()) continue;
+      Collection<Change> changes = list.getChanges();
+      if (changes.isEmpty()) continue;
 
-      PsiMethod[] methods = ShowAffectedTestsAction.findMethods(myProject, ArrayUtil.toObjectArray(list.getChanges(), Change.class));
-      if (methods.length == 0) continue;
+      PsiMethod[] methods = ShowAffectedTestsAction.findMethods(myProject, ArrayUtil.toObjectArray(changes, Change.class));
+      List<String> paths = ShowAffectedTestsAction.getRelativeAffectedPaths(myProject, changes);
+      if (methods.length == 0 && paths.isEmpty()) continue;
       ReadAction.run(
-        () -> ShowAffectedTestsAction.processMethods(myProject, methods, (clazz, method, parameter) -> {
+        () -> ShowAffectedTestsAction.processMethods(myProject, methods, paths, (clazz, method, parameter) -> {
           myCache.add(list.getId());
           return false;
         }, () -> ChangesViewManager.getInstance(myProject).scheduleRefresh()));
