@@ -16,6 +16,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
+import com.siyeh.ig.LightInspectionTestCase;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +51,8 @@ class LightTestMigration {
   private static final Map<String, String> JDK_MAP = EntryStream.of(
     "java 1.7", "JAVA_1_7",
     "java 1.8", "JAVA_8",
-    "java 9", "JAVA_9"
+    "java 9", "JAVA_9",
+    "java 10", "JAVA_10"
   ).toMap();
   private Path myBaseDir;
   private Path myBasePath;
@@ -110,7 +112,7 @@ class LightTestMigration {
   }
 
   private void generateClassTemplate() {
-    String pathSpec;
+    final String pathSpec;
     Set<Class<?>> importedClasses =
       StreamEx.of(myTools.stream().<Class<?>>map(wrapper -> wrapper.getTool().getClass()))
         .append(LightCodeInsightFixtureTestCase.class, LightProjectDescriptor.class, NotNull.class)
@@ -126,7 +128,16 @@ class LightTestMigration {
       Path basePath = Paths.get(PathManagerEx.getCommunityHomePath());
       if (myBaseDir.startsWith(basePath)) {
         Path relativePath = basePath.relativize(myBaseDir);
-        pathSpec = "\"/" + StringUtil.escapeStringCharacters(relativePath.toString().replace('\\', '/')) + '"';
+        String pathText = '/' + relativePath.toString().replace('\\', '/');
+        if (pathText.startsWith(LightInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH)) {
+          importedClasses.add(LightInspectionTestCase.class);
+          pathSpec = "LightInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH + \"" +
+                     StringUtil.escapeStringCharacters(
+                       pathText.substring(LightInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH.length())) + '"';
+        }
+        else {
+          pathSpec = '"' + StringUtil.escapeStringCharacters(pathText) + '"';
+        }
       }
       else {
         pathSpec = "\"!!! Unable to convert path!!! " + StringUtil.escapeStringCharacters(myBaseDir.toString()) + '"';
